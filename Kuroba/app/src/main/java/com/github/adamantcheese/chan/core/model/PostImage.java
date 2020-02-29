@@ -54,7 +54,6 @@ public class PostImage {
     public final long size;
     @Nullable
     public final String fileHash;
-
     public final Type type;
 
     private PostImage(Builder builder) {

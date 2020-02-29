@@ -150,13 +150,13 @@ public class ThreadListLayout
 
         postAdapter = new PostAdapter(recyclerView, postAdapterCallback, postCellCallback, statusCellCallback);
         recyclerView.setAdapter(postAdapter);
-        if (ChanSettings.shiftPostFormat.get()) {
-            recyclerView.getRecycledViewPool().setMaxRecycledViews(TYPE_POST, 0);
-        }
+        // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
+        // back to it onViewRecycled() will be called TWICE for that view. Setting setMaxRecycledViews
+        // solves this problem. What a buggy piece of shit.
+        recyclerView.getRecycledViewPool().setMaxRecycledViews(TYPE_POST, 0);
         recyclerView.addOnScrollListener(scrollListener);
 
         setFastScroll(false);
-
         attachToolbarScroll(true);
 
         if (ChanSettings.moveInputToBottom.get()) {

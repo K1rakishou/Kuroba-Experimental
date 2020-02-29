@@ -42,12 +42,20 @@ public interface PostCellInterface {
             Theme theme
     );
 
+    void onPostRecycled();
+
     Post getPost();
 
     ThumbnailView getThumbnailView(PostImage postImage);
 
     interface PostCellCallback {
         Loadable getLoadable();
+
+        // Only used in PostCell and CardPostCell, no need to use in stubs
+        void onPostBind(Post post);
+
+        // Only used in PostCell and CardPostCell, no need to use in stubs
+        void onPostUnbind(Post post);
 
         void onPostClicked(Post post);
 

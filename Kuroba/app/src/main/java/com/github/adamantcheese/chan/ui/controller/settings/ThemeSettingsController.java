@@ -95,6 +95,16 @@ public class ThemeSettingsController
         }
 
         @Override
+        public void onPostBind(Post post) {
+
+        }
+
+        @Override
+        public void onPostUnbind(Post post) {
+
+        }
+
+        @Override
         public void onPostClicked(Post post) {
         }
 

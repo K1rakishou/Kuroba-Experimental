@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.di.AppModule;
 import com.github.adamantcheese.chan.core.di.DatabaseModule;
 import com.github.adamantcheese.chan.core.di.GsonModule;
+import com.github.adamantcheese.chan.core.di.LoaderModule;
 import com.github.adamantcheese.chan.core.di.ManagerModule;
 import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.di.RepositoryModule;
@@ -104,6 +105,7 @@ public class Chan
                 new GsonModule(),
                 new RepositoryModule(),
                 new SiteModule(),
+                new LoaderModule(),
                 new ManagerModule()
         );
         feather.injectFields(this);

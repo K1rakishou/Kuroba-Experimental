@@ -51,7 +51,6 @@ public class CardPostCell
         implements PostCellInterface, View.OnClickListener {
     private static final int COMMENT_MAX_LENGTH = 200;
 
-    private boolean bound;
     private Post post;
     private Loadable loadable;
     private PostCellInterface.PostCellCallback callback;
@@ -134,25 +133,6 @@ public class CardPostCell
         }
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        if (post != null && bound) {
-            thumbView.setPostImage(loadable, null, false, 0, 0);
-            bound = false;
-        }
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        if (post != null && !bound) {
-            bindPost(post);
-        }
-    }
-
     public void setPost(
             Loadable loadable,
             final Post post,
@@ -168,11 +148,6 @@ public class CardPostCell
     ) {
         if (this.post == post) {
             return;
-        }
-
-        if (this.post != null && bound) {
-            bound = false;
-            this.post = null;
         }
 
         this.loadable = loadable;
@@ -200,8 +175,29 @@ public class CardPostCell
         return false;
     }
 
+    @Override
+    public void onPostRecycled() {
+        unbindPost();
+    }
+
+    private void unbindPost() {
+        if (post == null) {
+            return;
+        }
+
+        if (callback != null) {
+            callback.onPostUnbind(post);
+        }
+
+        thumbView.setPostImage(loadable, null, false, 0, 0);
+        this.post = null;
+        this.callback = null;
+    }
+
     private void bindPost(Post post) {
-        bound = true;
+        if (callback == null) {
+            throw new NullPointerException("Callback is null during bindPost()");
+        }
 
         if (post.image() != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
@@ -247,6 +243,10 @@ public class CardPostCell
         comment.setTextColor(ThemeHelper.getTheme().textPrimary);
 
         replies.setText(getString(R.string.card_stats, post.getReplies(), post.getImagesCount()));
+
+        if (callback != null) {
+            callback.onPostBind(post);
+        }
     }
 
     private void setCompact(boolean compact) {

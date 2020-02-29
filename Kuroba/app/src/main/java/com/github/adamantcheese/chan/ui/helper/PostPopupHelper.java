@@ -44,7 +44,6 @@ public class PostPopupHelper {
 
     public void showPosts(Post forPost, List<Post> posts) {
         RepliesData data = new RepliesData(forPost, posts);
-
         dataQueue.add(data);
 
         if (dataQueue.size() == 1) {
@@ -118,8 +117,6 @@ public class PostPopupHelper {
     public static class RepliesData {
         public List<Post> posts;
         public Post forPost;
-        public int listViewIndex;
-        public int listViewTop;
 
         public RepliesData(Post forPost, List<Post> posts) {
             this.forPost = forPost;

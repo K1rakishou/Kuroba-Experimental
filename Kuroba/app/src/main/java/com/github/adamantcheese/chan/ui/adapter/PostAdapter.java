@@ -20,6 +20,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
@@ -193,12 +194,8 @@ public class PostAdapter
         } else if (itemViewType == TYPE_LAST_SEEN) {
             return -2;
         } else {
-            Post post = displayList.get(getPostPosition(position));
-            int repliesFromSize;
-            synchronized (post.repliesFrom) {
-                repliesFromSize = post.repliesFrom.size();
-            }
-            return ((long) repliesFromSize << 32L) + (long) post.no + (compact ? 1L : 0L);
+            // PostNo is already unique enough
+            return displayList.get(getPostPosition(position)).no;
         }
     }
 
@@ -210,6 +207,23 @@ public class PostAdapter
             PostCell cell = (PostCell) holder.itemView;
             cell.findViewById(R.id.comment).setEnabled(false);
             cell.findViewById(R.id.comment).setEnabled(true);
+        }
+    }
+
+    /**
+     * Do not use onViewAttachedToWindow/onViewDetachedFromWindow in PostCell/CardPostCell etc to
+     * bind/unbind posts because it's really bad and will cause a shit-ton of problems. We should use
+     * onViewRecycled() instead because they both have different lifecycles. So by using
+     * onViewAttachedToWindow/onViewDetachedFromWindow we may end up in a situation where we unbind
+     * a post (null the callbacks etc) but in reality the view is still alive in internal RecycleView
+     * cache (scrap views) so the next time recycler decides to update the view it will either throw
+     * a NPE or will just show an empty view. Using onViewRecycled to unbind posts is the correct
+     * way to handle this issue.
+     * */
+    @Override
+    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
+        if (holder.itemView instanceof PostCellInterface) {
+            ((PostCellInterface) holder.itemView).onPostRecycled();
         }
     }
 

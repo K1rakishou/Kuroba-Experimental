@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.ui.cell;
 
+import android.annotation.SuppressLint;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -53,6 +54,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.ImageLoader.ImageContainer;
@@ -113,7 +115,6 @@ public class PostCell
     private static final int COMMENT_MAX_LENGTH_BOARD = 350;
 
     private List<PostImageThumbnailView> thumbnailViews = new ArrayList<>(1);
-
     private RelativeLayout relativeLayoutContainer;
     private FastTextView title;
     private PostIcons icons;
@@ -130,9 +131,9 @@ public class PostCell
     private boolean threadMode;
     private boolean ignoreNextOnClick;
 
-    private boolean bound = false;
     private Loadable loadable;
     private Post post;
+    @Nullable
     private PostCellCallback callback;
     private boolean inPopup;
     private boolean highlighted;
@@ -141,7 +142,6 @@ public class PostCell
     private boolean showDivider;
 
     private GestureDetector gestureDetector;
-
     private PostViewMovementMethod commentMovementMethod = new PostViewMovementMethod();
     private PostViewFastMovementMethod titleMovementMethod = new PostViewFastMovementMethod();
 
@@ -206,7 +206,9 @@ public class PostCell
             }
 
             if (repliesFromSize > 0) {
-                callback.onShowPostReplies(post);
+                if (callback != null) {
+                    callback.onShowPostReplies(post);
+                }
             }
         };
         replies.setOnClickListener(repliesClickListener);
@@ -215,15 +217,20 @@ public class PostCell
         options.setOnClickListener(v -> {
             List<FloatingMenuItem> items = new ArrayList<>();
             List<FloatingMenuItem> extraItems = new ArrayList<>();
-            Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
-            showOptions(v, items, extraItems, extraOption);
+
+            if (callback != null) {
+                Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
+                showOptions(v, items, extraItems, extraOption);
+            }
         });
 
         setOnClickListener(v -> {
             if (ignoreNextOnClick) {
                 ignoreNextOnClick = false;
             } else {
-                callback.onPostClicked(post);
+                if (callback != null) {
+                    callback.onPostClicked(post);
+                }
             }
         });
 
@@ -245,7 +252,9 @@ public class PostCell
                     showOptions(anchor, extraItems, null, null);
                 }
 
-                callback.onPostOptionClicked(post, item.getId(), inPopup);
+                if (callback != null) {
+                    callback.onPostOptionClicked(post, item.getId(), inPopup);
+                }
             }
 
             @Override
@@ -257,20 +266,9 @@ public class PostCell
     }
 
     @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        if (post != null && bound) {
+    public void onPostRecycled() {
+        if (post != null) {
             unbindPost(post);
-        }
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        if (post != null && !bound) {
-            bindPost(ThemeHelper.getTheme(), post);
         }
     }
 
@@ -287,14 +285,14 @@ public class PostCell
             boolean compact,
             Theme theme
     ) {
-        if (this.post == post && this.inPopup == inPopup && this.highlighted == highlighted && this.selected == selected
-                && this.markedNo == markedNo && this.showDivider == showDivider) {
+        if ((this.post != null && this.post.equals(post))
+                && this.inPopup == inPopup
+                && this.highlighted == highlighted
+                && this.selected == selected
+                && this.markedNo == markedNo
+                && this.showDivider == showDivider
+        ) {
             return;
-        }
-
-        if (this.post != null && bound) {
-            unbindPost(this.post);
-            this.post = null;
         }
 
         this.loadable = loadable;
@@ -328,8 +326,28 @@ public class PostCell
         return false;
     }
 
+    private void unbindPost(Post post) {
+        icons.cancelRequests();
+
+        for (PostImageThumbnailView view : thumbnailViews) {
+            view.setPostImage(loadable, null, false, 0, 0);
+        }
+
+        if (post != null) {
+            setPostLinkableListener(post, false);
+        }
+
+        if (callback != null) {
+            callback.onPostUnbind(post);
+        }
+
+        this.callback = null;
+    }
+
     private void bindPost(Theme theme, Post post) {
-        bound = true;
+        if (callback == null) {
+            throw new NullPointerException("Callback is null during bindPost()");
+        }
 
         // Assume that we're in thread mode if the loadable is null
         threadMode = callback.getLoadable() == null || callback.getLoadable().isThreadMode();
@@ -345,6 +363,53 @@ public class PostCell
             replies.setBackgroundResource(0);
         }
 
+        bindBackgroundColor(theme, post);
+        bindFilterMatchColor(post);
+        bindThumbnails();
+        bindTitle(theme, post);
+        bindIcons(theme, post);
+
+        CharSequence commentText = getCommentText(post);
+        bindPost(theme, post, commentText);
+
+        if (threadMode) {
+            bindThreadPost(post, commentText);
+        } else {
+            bindCatalogPost(commentText);
+        }
+
+        int repliesFromSize;
+        synchronized (post.repliesFrom) {
+            repliesFromSize = post.repliesFrom.size();
+        }
+
+        if ((!threadMode && post.getReplies() > 0) || (repliesFromSize > 0)) {
+            bindThreadReplies(post, repliesFromSize);
+        } else {
+            bindCatalogReplies();
+        }
+
+        divider.setVisibility(showDivider ? VISIBLE : GONE);
+
+        if (ChanSettings.shiftPostFormat.get() && post.images.size() == 1 && !ChanSettings.textOnly.get()) {
+            applyPostShiftFormat();
+        }
+
+        if (callback != null) {
+            callback.onPostBind(post);
+        }
+    }
+
+    private void bindFilterMatchColor(Post post) {
+        if (post.filterHighlightedColor != 0) {
+            filterMatchColor.setVisibility(VISIBLE);
+            filterMatchColor.setBackgroundColor(post.filterHighlightedColor);
+        } else {
+            filterMatchColor.setVisibility(GONE);
+        }
+    }
+
+    private void bindBackgroundColor(Theme theme, Post post) {
         if (highlighted) {
             setBackgroundColor(theme.highlightedColor);
         } else if (post.isSavedReply) {
@@ -356,16 +421,9 @@ public class PostCell
         } else {
             setBackgroundResource(R.drawable.item_background);
         }
+    }
 
-        if (post.filterHighlightedColor != 0) {
-            filterMatchColor.setVisibility(VISIBLE);
-            filterMatchColor.setBackgroundColor(post.filterHighlightedColor);
-        } else {
-            filterMatchColor.setVisibility(GONE);
-        }
-
-        buildThumbnails();
-
+    private void bindTitle(Theme theme, Post post) {
         List<CharSequence> titleParts = new ArrayList<>(5);
 
         if (post.subjectSpan != null) {
@@ -431,28 +489,13 @@ public class PostCell
         }
 
         title.setText(TextUtils.concat(titleParts.toArray(new CharSequence[0])));
+    }
 
-        icons.edit();
-        icons.set(PostIcons.STICKY, post.isSticky());
-        icons.set(PostIcons.CLOSED, post.isClosed());
-        icons.set(PostIcons.DELETED, post.deleted.get());
-        icons.set(PostIcons.ARCHIVED, post.isArchived());
-        icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null);
-
+    private void bindPost(Theme theme, Post post, CharSequence commentText) {
         if (post.httpIcons != null) {
-            icons.setHttpIcons(post.httpIcons, theme, iconSizePx);
             comment.setPadding(paddingPx, paddingPx, paddingPx, 0);
         } else {
             comment.setPadding(paddingPx, paddingPx / 2, paddingPx, 0);
-        }
-
-        icons.apply();
-
-        CharSequence commentText;
-        if (!threadMode && post.comment.length() > COMMENT_MAX_LENGTH_BOARD) {
-            commentText = truncatePostComment(post);
-        } else {
-            commentText = post.comment;
         }
 
         if (!theme.altFontIsMain && ChanSettings.fontAlternate.get()) {
@@ -471,163 +514,189 @@ public class PostCell
             //noinspection ConstantConditions
             comment.setVisibility(isEmpty(commentText) && post.images == null ? GONE : VISIBLE);
         }
+    }
 
-        if (threadMode) {
-            comment.setTextIsSelectable(true);
-            comment.setText(commentText, TextView.BufferType.SPANNABLE);
-            comment.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
-                private MenuItem quoteMenuItem;
-                private MenuItem webSearchItem;
-                private boolean processed;
+    private CharSequence getCommentText(Post post) {
+        CharSequence commentText;
+        if (!threadMode && post.comment.length() > COMMENT_MAX_LENGTH_BOARD) {
+            commentText = truncatePostComment(post);
+        } else {
+            commentText = post.comment;
+        }
+        return commentText;
+    }
 
-                @Override
-                public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                    quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote);
-                    webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search);
-                    return true;
-                }
+    private void bindIcons(Theme theme, Post post) {
+        icons.edit();
+        icons.set(PostIcons.STICKY, post.isSticky());
+        icons.set(PostIcons.CLOSED, post.isClosed());
+        icons.set(PostIcons.DELETED, post.deleted.get());
+        icons.set(PostIcons.ARCHIVED, post.isArchived());
+        icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null);
 
-                @Override
-                public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                    return true;
-                }
+        if (post.httpIcons != null) {
+            icons.setHttpIcons(post.httpIcons, theme, iconSizePx);
+        }
 
-                @Override
-                public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                    CharSequence selection =
-                            comment.getText().subSequence(comment.getSelectionStart(), comment.getSelectionEnd());
-                    if (item == quoteMenuItem) {
+        icons.apply();
+    }
+
+    private void bindCatalogReplies() {
+        replies.setVisibility(GONE);
+        comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), paddingPx);
+        replies.setPadding(replies.getPaddingLeft(), 0, replies.getPaddingRight(), replies.getPaddingBottom());
+    }
+
+    private void bindThreadReplies(Post post, int repliesFromSize) {
+        replies.setVisibility(VISIBLE);
+
+        int replyCount = threadMode ? repliesFromSize : post.getReplies();
+        String text = getQuantityString(R.plurals.reply, replyCount, replyCount);
+
+        if (!threadMode && post.getImagesCount() > 0) {
+            text += ", " + getQuantityString(R.plurals.image, post.getImagesCount(), post.getImagesCount());
+        }
+
+        replies.setText(text);
+        comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), 0);
+        replies.setPadding(replies.getPaddingLeft(),
+                paddingPx,
+                replies.getPaddingRight(),
+                replies.getPaddingBottom()
+        );
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void bindCatalogPost(CharSequence commentText) {
+        comment.setText(commentText);
+        comment.setOnTouchListener(null);
+        comment.setClickable(false);
+
+        // Sets focusable to auto, clickable and longclickable to false.
+        comment.setMovementMethod(null);
+
+        title.setMovementMethod(null);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void bindThreadPost(Post post, CharSequence commentText) {
+        comment.setTextIsSelectable(true);
+        comment.setText(commentText, TextView.BufferType.SPANNABLE);
+        comment.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
+            private MenuItem quoteMenuItem;
+            private MenuItem webSearchItem;
+            private boolean processed;
+
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote);
+                webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search);
+                return true;
+            }
+
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                CharSequence selection =
+                        comment.getText().subSequence(comment.getSelectionStart(), comment.getSelectionEnd());
+                if (item == quoteMenuItem) {
+                    if (callback != null) {
                         callback.onPostSelectionQuoted(post, selection);
                         processed = true;
-                    } else if (item == webSearchItem) {
-                        Intent searchIntent = new Intent(Intent.ACTION_WEB_SEARCH);
-                        searchIntent.putExtra(SearchManager.QUERY, selection.toString());
-                        openIntent(searchIntent);
-                        processed = true;
                     }
-
-                    if (processed) {
-                        mode.finish();
-                        processed = false;
-                        return true;
-                    } else {
-                        return false;
-                    }
+                } else if (item == webSearchItem) {
+                    Intent searchIntent = new Intent(Intent.ACTION_WEB_SEARCH);
+                    searchIntent.putExtra(SearchManager.QUERY, selection.toString());
+                    openIntent(searchIntent);
+                    processed = true;
                 }
 
-                @Override
-                public void onDestroyActionMode(ActionMode mode) {
-                }
-            });
-
-            // Sets focusable to auto, clickable and longclickable to true.
-            comment.setMovementMethod(commentMovementMethod);
-
-            // And this sets clickable to appropriate values again.
-            comment.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
-
-            if (ChanSettings.tapNoReply.get()) {
-                title.setMovementMethod(titleMovementMethod);
-            }
-        } else {
-            comment.setText(commentText);
-            comment.setOnTouchListener(null);
-            comment.setClickable(false);
-
-            // Sets focusable to auto, clickable and longclickable to false.
-            comment.setMovementMethod(null);
-
-            title.setMovementMethod(null);
-        }
-
-        int repliesFromSize;
-        synchronized (post.repliesFrom) {
-            repliesFromSize = post.repliesFrom.size();
-        }
-
-        if ((!threadMode && post.getReplies() > 0) || (repliesFromSize > 0)) {
-            replies.setVisibility(VISIBLE);
-
-            int replyCount = threadMode ? repliesFromSize : post.getReplies();
-            String text = getQuantityString(R.plurals.reply, replyCount, replyCount);
-
-            if (!threadMode && post.getImagesCount() > 0) {
-                text += ", " + getQuantityString(R.plurals.image, post.getImagesCount(), post.getImagesCount());
-            }
-
-            replies.setText(text);
-            comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), 0);
-            replies.setPadding(replies.getPaddingLeft(),
-                    paddingPx,
-                    replies.getPaddingRight(),
-                    replies.getPaddingBottom()
-            );
-        } else {
-            replies.setVisibility(GONE);
-            comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), paddingPx);
-            replies.setPadding(replies.getPaddingLeft(), 0, replies.getPaddingRight(), replies.getPaddingBottom());
-        }
-
-        divider.setVisibility(showDivider ? VISIBLE : GONE);
-
-        if (ChanSettings.shiftPostFormat.get() && post.images.size() == 1 && !ChanSettings.textOnly.get()) {
-            //display width, we don't care about height here
-            Point displaySize = getDisplaySize();
-
-            int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
-            boolean isSplitMode =
-                    ChanSettings.layoutMode.get() == SPLIT || (ChanSettings.layoutMode.get() == AUTO && isTablet());
-
-            //get the width of the cell for calculations, height we don't need but measure it anyways
-            //0.35 is from SplitNavigationControllerLayout; measure for the smaller of the two sides
-            this.measure(
-                    MeasureSpec.makeMeasureSpec(isSplitMode ? (int) (displaySize.x * 0.35) : displaySize.x, AT_MOST),
-                    MeasureSpec.makeMeasureSpec(displaySize.y, AT_MOST)
-            );
-
-            //we want the heights here, but the widths must be the exact size between the thumbnail and view edge so that we calculate offsets right
-            title.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
-                    MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
-            );
-            icons.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
-                    MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
-            );
-            comment.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
-                    MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
-            );
-            int wrapHeight = title.getMeasuredHeight() + icons.getMeasuredHeight();
-            int extraWrapHeight = wrapHeight + comment.getMeasuredHeight();
-            //wrap if the title+icons height is larger than 0.8x the thumbnail size, or if everything is over 1.6x the thumbnail size
-            if ((wrapHeight >= 0.8f * thumbnailSize) || extraWrapHeight >= 1.6f * thumbnailSize) {
-                RelativeLayout.LayoutParams commentParams = (RelativeLayout.LayoutParams) comment.getLayoutParams();
-                commentParams.removeRule(RelativeLayout.RIGHT_OF);
-                if (title.getMeasuredHeight() + (icons.getVisibility() == VISIBLE ? icons.getMeasuredHeight() : 0)
-                        < thumbnailSize) {
-                    commentParams.addRule(RelativeLayout.BELOW, R.id.thumbnail_view);
+                if (processed) {
+                    mode.finish();
+                    processed = false;
+                    return true;
                 } else {
-                    commentParams.addRule(RelativeLayout.BELOW,
-                            (icons.getVisibility() == VISIBLE ? R.id.icons : R.id.title)
-                    );
+                    return false;
                 }
-                comment.setLayoutParams(commentParams);
-
-                RelativeLayout.LayoutParams replyParams = (RelativeLayout.LayoutParams) replies.getLayoutParams();
-                replyParams.removeRule(RelativeLayout.RIGHT_OF);
-                replies.setLayoutParams(replyParams);
-            } else if (comment.getVisibility() == GONE) {
-                RelativeLayout.LayoutParams replyParams = (RelativeLayout.LayoutParams) replies.getLayoutParams();
-                replyParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-                replies.setLayoutParams(replyParams);
-
-                RelativeLayout.LayoutParams replyExtraParams =
-                        (RelativeLayout.LayoutParams) repliesAdditionalArea.getLayoutParams();
-                replyExtraParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-                repliesAdditionalArea.setLayoutParams(replyExtraParams);
             }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+            }
+        });
+
+        // Sets focusable to auto, clickable and longclickable to true.
+        comment.setMovementMethod(commentMovementMethod);
+
+        // And this sets clickable to appropriate values again.
+        comment.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+
+        if (ChanSettings.tapNoReply.get()) {
+            title.setMovementMethod(titleMovementMethod);
         }
     }
 
-    private void buildThumbnails() {
+    private void applyPostShiftFormat() {
+        //display width, we don't care about height here
+        Point displaySize = getDisplaySize();
+
+        int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
+        boolean isSplitMode =
+                ChanSettings.layoutMode.get() == SPLIT || (ChanSettings.layoutMode.get() == AUTO && isTablet());
+
+        //get the width of the cell for calculations, height we don't need but measure it anyways
+        //0.35 is from SplitNavigationControllerLayout; measure for the smaller of the two sides
+        this.measure(
+                MeasureSpec.makeMeasureSpec(isSplitMode ? (int) (displaySize.x * 0.35) : displaySize.x, AT_MOST),
+                MeasureSpec.makeMeasureSpec(displaySize.y, AT_MOST)
+        );
+
+        //we want the heights here, but the widths must be the exact size between the thumbnail and view edge so that we calculate offsets right
+        title.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
+        );
+        icons.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
+        );
+        comment.measure(MeasureSpec.makeMeasureSpec(this.getMeasuredWidth() - thumbnailSize, EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, UNSPECIFIED)
+        );
+        int wrapHeight = title.getMeasuredHeight() + icons.getMeasuredHeight();
+        int extraWrapHeight = wrapHeight + comment.getMeasuredHeight();
+        //wrap if the title+icons height is larger than 0.8x the thumbnail size, or if everything is over 1.6x the thumbnail size
+        if ((wrapHeight >= 0.8f * thumbnailSize) || extraWrapHeight >= 1.6f * thumbnailSize) {
+            RelativeLayout.LayoutParams commentParams = (RelativeLayout.LayoutParams) comment.getLayoutParams();
+            commentParams.removeRule(RelativeLayout.RIGHT_OF);
+            if (title.getMeasuredHeight() + (icons.getVisibility() == VISIBLE ? icons.getMeasuredHeight() : 0)
+                    < thumbnailSize) {
+                commentParams.addRule(RelativeLayout.BELOW, R.id.thumbnail_view);
+            } else {
+                commentParams.addRule(RelativeLayout.BELOW,
+                        (icons.getVisibility() == VISIBLE ? R.id.icons : R.id.title)
+                );
+            }
+            comment.setLayoutParams(commentParams);
+
+            RelativeLayout.LayoutParams replyParams = (RelativeLayout.LayoutParams) replies.getLayoutParams();
+            replyParams.removeRule(RelativeLayout.RIGHT_OF);
+            replies.setLayoutParams(replyParams);
+        } else if (comment.getVisibility() == GONE) {
+            RelativeLayout.LayoutParams replyParams = (RelativeLayout.LayoutParams) replies.getLayoutParams();
+            replyParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            replies.setLayoutParams(replyParams);
+
+            RelativeLayout.LayoutParams replyExtraParams =
+                    (RelativeLayout.LayoutParams) repliesAdditionalArea.getLayoutParams();
+            replyExtraParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            repliesAdditionalArea.setLayoutParams(replyExtraParams);
+        }
+    }
+
+    private void bindThumbnails() {
         for (PostImageThumbnailView thumbnailView : thumbnailViews) {
             relativeLayoutContainer.removeView(thumbnailView);
         }
@@ -665,7 +734,11 @@ public class PostCell
                 v.setClickable(true);
                 //don't set a callback if the post is deleted, but if the file already exists in cache let it through
                 if (!post.deleted.get() || instance(CacheHandler.class).exists(image.imageUrl.toString())) {
-                    v.setOnClickListener(v2 -> callback.onThumbnailClicked(image, v));
+                    v.setOnClickListener(v2 -> {
+                        if (callback != null) {
+                            callback.onThumbnailClicked(image, v);
+                        }
+                    });
                 }
                 v.setRounding(dp(2));
                 p.setMargins(dp(4), first ? dp(4) : 0, 0,
@@ -680,15 +753,6 @@ public class PostCell
                 first = false;
             }
         }
-    }
-
-    private void unbindPost(Post post) {
-        bound = false;
-        icons.cancelRequests();
-        for (PostImageThumbnailView view : thumbnailViews) {
-            view.setPostImage(loadable, null, false, 0, 0);
-        }
-        setPostLinkableListener(post, false);
     }
 
     private void setPostLinkableListener(Post post, boolean bind) {
@@ -762,13 +826,17 @@ public class PostCell
 
                         if (linkable2 == null && linkable1 != null) {
                             //regular, non-spoilered link
-                            callback.onPostLinkableClicked(post, linkable1);
+                            if (callback != null) {
+                                callback.onPostLinkableClicked(post, linkable1);
+                            }
                         } else if (linkable2 != null && linkable1 != null) {
                             //spoilered link, figure out which span is the spoiler
                             if (linkable1.type == PostLinkable.Type.SPOILER) {
                                 if (linkable1.isSpoilerVisible()) {
                                     //linkable2 is the link and we're unspoilered
-                                    callback.onPostLinkableClicked(post, linkable2);
+                                    if (callback != null) {
+                                        callback.onPostLinkableClicked(post, linkable2);
+                                    }
                                 } else {
                                     //linkable2 is the link and we're spoilered; don't do the click event on the link yet
                                     link.remove(linkable2);
@@ -776,14 +844,18 @@ public class PostCell
                             } else if (linkable2.type == PostLinkable.Type.SPOILER) {
                                 if (linkable2.isSpoilerVisible()) {
                                     //linkable 1 is the link and we're unspoilered
-                                    callback.onPostLinkableClicked(post, linkable1);
+                                    if (callback != null) {
+                                        callback.onPostLinkableClicked(post, linkable1);
+                                    }
                                 } else {
                                     //linkable1 is the link and we're spoilered; don't do the click event on the link yet
                                     link.remove(linkable1);
                                 }
                             } else {
                                 //weird case where a double stack of linkables, but isn't spoilered (some 4chan stickied posts)
-                                callback.onPostLinkableClicked(post, linkable1);
+                                if (callback != null) {
+                                    callback.onPostLinkableClicked(post, linkable1);
+                                }
                             }
                         }
 
@@ -820,7 +892,7 @@ public class PostCell
      * This version is for the {@link FastTextView}.<br>
      * See {@link PostLinkable} for more information.
      */
-    private class PostViewFastMovementMethod
+    private static class PostViewFastMovementMethod
             implements FastTextViewMovementMethod {
         @Override
         public boolean onTouchEvent(@NonNull FastTextView widget, @NonNull Spanned buffer, @NonNull MotionEvent event) {
@@ -855,8 +927,10 @@ public class PostCell
     private class PostNumberClickableSpan
             extends ClickableSpan {
         @Override
-        public void onClick(View widget) {
-            callback.onPostNoClicked(post);
+        public void onClick(@NonNull View widget) {
+            if (callback != null) {
+                callback.onPostNoClicked(post);
+            }
         }
 
         @Override
@@ -1070,7 +1144,10 @@ public class PostCell
             extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
-            callback.onPostDoubleClicked(post);
+            if (callback != null) {
+                callback.onPostDoubleClicked(post);
+            }
+
             return true;
         }
     }

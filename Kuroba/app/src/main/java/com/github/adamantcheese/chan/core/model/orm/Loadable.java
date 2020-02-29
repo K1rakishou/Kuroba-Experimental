@@ -90,6 +90,7 @@ public class Loadable
      * a live thread or the local saved copy of a thread (which may be already deleted from the server)
      */
     private transient LoadableDownloadingState loadableDownloadingState = LoadableDownloadingState.NotDownloading;
+    private transient String loadableUidCached = null;
 
     public synchronized void setLoadableState(LoadableDownloadingState state) {
         this.loadableDownloadingState = state;
@@ -248,6 +249,27 @@ public class Loadable
                 ", listViewTop=" + listViewTop + ", lastViewed=" + maskPostNo(lastViewed) + ", lastLoaded=" +
                 maskPostNo(lastLoaded) + ", markedNo=" + maskPostNo(markedNo) + ", dirty=" + dirty +
                 ", loadableDownloadingState=" + loadableDownloadingState.name() + '}';
+    }
+
+    public synchronized String getUniqueId() {
+        if (loadableUidCached != null) {
+            return loadableUidCached;
+        }
+
+        String loadableUid = null;
+
+        if (isThreadMode()) {
+            // Unique cross-site and cross-board id of a thread, e.g. "4chan_g_12345345"
+            loadableUid = String.format(Locale.US, "%s_%s_%d", site.name(), boardCode, no);
+        } else if (isCatalogMode()) {
+            // Unique cross-site id of a board, e.g. "4chan_g"
+            loadableUid = String.format(Locale.US, "%s_%s", site.name(), boardCode);
+        } else {
+            throw new IllegalStateException("Unsupported loadable mode: " + mode);
+        }
+
+        loadableUidCached = loadableUid;
+        return loadableUid;
     }
 
     public boolean isThreadMode() {

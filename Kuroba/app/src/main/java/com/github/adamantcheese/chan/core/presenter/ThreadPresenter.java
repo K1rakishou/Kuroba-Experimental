@@ -30,15 +30,15 @@ import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
-import com.github.adamantcheese.chan.core.cache.FileCacheV2;
-import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
+import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
+import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
@@ -84,8 +84,10 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 import static com.github.adamantcheese.chan.Chan.instance;
-import static com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
@@ -127,9 +129,8 @@ public class ThreadPresenter
     private final PageRequestManager pageRequestManager;
     private final ThreadSaveManager threadSaveManager;
     private final FileManager fileManager;
-    private final FileCacheV2 fileCacheV2;
-    private final CacheHandler cacheHandler;
     private final MockReplyManager mockReplyManager;
+    private final OnDemandContentLoaderManager onDemandContentLoaderManager;
 
     private ThreadPresenterCallback threadPresenterCallback;
     private Loadable loadable;
@@ -141,10 +142,7 @@ public class ThreadPresenter
     private boolean historyAdded;
     private boolean addToLocalBackHistory;
     private Context context;
-
-    @Nullable
-    private List<CancelableDownload> activePrefetches = null;
-    //endregion
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Inject
     public ThreadPresenter(
@@ -153,10 +151,9 @@ public class ThreadPresenter
             ChanLoaderManager chanLoaderManager,
             PageRequestManager pageRequestManager,
             ThreadSaveManager threadSaveManager,
-            FileCacheV2 fileCacheV2,
-            CacheHandler cacheHandler,
             FileManager fileManager,
-            MockReplyManager mockReplyManager
+            MockReplyManager mockReplyManager,
+            OnDemandContentLoaderManager onDemandContentLoaderManager
     ) {
         this.watchManager = watchManager;
         this.databaseManager = databaseManager;
@@ -164,9 +161,8 @@ public class ThreadPresenter
         this.pageRequestManager = pageRequestManager;
         this.threadSaveManager = threadSaveManager;
         this.fileManager = fileManager;
-        this.fileCacheV2 = fileCacheV2;
-        this.cacheHandler = cacheHandler;
         this.mockReplyManager = mockReplyManager;
+        this.onDemandContentLoaderManager = onDemandContentLoaderManager;
     }
 
     public void create(ThreadPresenterCallback threadPresenterCallback) {
@@ -203,6 +199,14 @@ public class ThreadPresenter
             chanLoader = chanLoaderManager.obtain(loadable, watchManager, this);
             loadable.site.actions().archives(Chan.instance(ArchivesManager.class));
             threadPresenterCallback.showLoading();
+
+            Disposable disposable = onDemandContentLoaderManager.listenPostContentUpdates()
+                    .subscribe(
+                            this::onPostUpdatedWithNewContent,
+                            (error) -> Logger.e(TAG, "Post content updates error", error)
+                    );
+
+            compositeDisposable.add(disposable);
         }
     }
 
@@ -212,31 +216,21 @@ public class ThreadPresenter
 
     public void unbindLoadable() {
         if (chanLoader != null) {
+            if (loadable != null) {
+                onDemandContentLoaderManager.cancelAllForLoadable(loadable);
+            }
+
             chanLoader.clearTimer();
             chanLoaderManager.release(chanLoader, this);
             chanLoader = null;
             loadable = null;
             historyAdded = false;
             addToLocalBackHistory = true;
-            cancelPrefetching();
 
             threadPresenterCallback.showLoading();
         }
-    }
 
-    private void cancelPrefetching() {
-        if (activePrefetches == null) {
-            return;
-        }
-
-        Logger.d(TAG, "Cancel previous prefetching");
-
-        for (CancelableDownload cancelableDownload : activePrefetches) {
-            cancelableDownload.cancelPrefetch();
-        }
-
-        activePrefetches.clear();
-        activePrefetches = null;
+        compositeDisposable.clear();
     }
 
     private void stopSavingThreadIfItIsBeingSaved(Loadable loadable) {
@@ -526,6 +520,24 @@ public class ThreadPresenter
         return loadable;
     }
 
+    @Override
+    public void onPostBind(Post post) {
+        if (loadable != null) {
+            onDemandContentLoaderManager.onPostBind(loadable, post);
+        }
+    }
+
+    @Override
+    public void onPostUnbind(Post post) {
+        if (loadable != null) {
+            onDemandContentLoaderManager.onPostUnbind(loadable, post);
+        }
+    }
+
+    private void onPostUpdatedWithNewContent(OnDemandContentLoader.LoaderBatchResult batchResult) {
+        // TODO: update post. ALARME! There is a possibility of an infinite loop
+    }
+
     /*
      * ChanThreadLoader callbacks
      */
@@ -572,36 +584,6 @@ public class ThreadPresenter
                 if (forcePageUpdate) {
                     pageRequestManager.forceUpdateForBoard(loadable.board);
                     forcePageUpdate = false;
-                }
-            }
-
-            if (ChanSettings.autoLoadThreadImages.get() && !loadable.isLocal() && !loadable.isDownloading()) {
-                List<PostImage> postImageList = new ArrayList<>();
-                cancelPrefetching();
-
-                for (Post p : result.getPosts()) {
-                    for (PostImage postImage : p.images) {
-                        if (postImage.imageUrl == null) {
-                            Logger.e(TAG, "onChanLoaderData() postImage.imageUrl == null");
-                            continue;
-                        }
-
-                        if (cacheHandler.exists(postImage.imageUrl.toString())) {
-                            continue;
-                        }
-
-                        if ((postImage.type == PostImage.Type.STATIC || postImage.type == PostImage.Type.GIF)
-                                && shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get())) {
-                            postImageList.add(postImage);
-                        } else if (postImage.type == PostImage.Type.MOVIE
-                                && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get())) {
-                            postImageList.add(postImage);
-                        }
-                    }
-                }
-
-                if (postImageList.size() > 0) {
-                    activePrefetches = fileCacheV2.enqueueMediaPrefetchRequestBatch(loadable, postImageList);
                 }
             }
         }

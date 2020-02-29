@@ -24,6 +24,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -45,10 +47,10 @@ public class PostStubCell
         implements PostCellInterface, View.OnClickListener {
     private static final int TITLE_MAX_LENGTH = 100;
 
-    private boolean bound;
     private Post post;
     private ChanSettings.PostViewMode postViewMode;
     private boolean showDivider;
+    @Nullable
     private PostCellInterface.PostCellCallback callback;
 
     private TextView title;
@@ -91,8 +93,11 @@ public class PostStubCell
         options.setOnClickListener(v -> {
             List<FloatingMenuItem> items = new ArrayList<>();
             List<FloatingMenuItem> extraItems = new ArrayList<>();
-            Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
-            showOptions(v, items, extraItems, extraOption);
+
+            if (callback != null) {
+                Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
+                showOptions(v, items, extraItems, extraOption);
+            }
         });
     }
 
@@ -107,7 +112,9 @@ public class PostStubCell
                     showOptions(anchor, extraItems, null, null);
                 }
 
-                callback.onPostOptionClicked(post, item.getId(), false);
+                if (callback != null) {
+                    callback.onPostOptionClicked(post, item.getId(), false);
+                }
             }
 
             @Override
@@ -119,27 +126,24 @@ public class PostStubCell
 
     @Override
     public void onClick(View v) {
-        if (v == this) {
-            callback.onPostClicked(post);
+        if (callback != null) {
+            if (v == this) {
+                callback.onPostClicked(post);
+            }
         }
     }
 
     @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        if (post != null && bound) {
-            unbindPost();
-        }
+    public void onPostRecycled() {
+        unbindPost();
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-
-        if (post != null && !bound) {
-            bindPost(post);
+    private void unbindPost() {
+        if (callback != null) {
+            callback.onPostUnbind(post);
         }
+
+        callback = null;
     }
 
     public void setPost(
@@ -157,11 +161,6 @@ public class PostStubCell
     ) {
         if (this.post == post) {
             return;
-        }
-
-        if (this.post != null && bound) {
-            unbindPost();
-            this.post = null;
         }
 
         this.post = post;
@@ -186,7 +185,9 @@ public class PostStubCell
     }
 
     private void bindPost(Post post) {
-        bound = true;
+        if (callback == null) {
+            throw new NullPointerException("Callback is null during bindPost()");
+        }
 
         if (!TextUtils.isEmpty(post.subjectSpan)) {
             title.setText(post.subjectSpan);
@@ -201,9 +202,9 @@ public class PostStubCell
         }
 
         divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD ? GONE : (showDivider ? VISIBLE : GONE));
-    }
 
-    private void unbindPost() {
-        bound = false;
+        if (callback != null) {
+            callback.onPostBind(post);
+        }
     }
 }

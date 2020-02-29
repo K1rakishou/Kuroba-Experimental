@@ -24,6 +24,7 @@ import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
+import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
@@ -31,6 +32,8 @@ import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
+import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader;
+import com.github.adamantcheese.chan.core.manager.loader.PrefetchLoader;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
@@ -41,10 +44,12 @@ import com.google.gson.Gson;
 import org.codejargon.feather.Provides;
 
 import java.io.File;
+import java.util.HashSet;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
@@ -185,6 +190,18 @@ public class ManagerModule {
                 threadSaveManager,
                 gson,
                 new File(cacheDir, CRASH_LOGS_DIR_NAME)
+        );
+    }
+
+    @Provides
+    @Singleton
+    public OnDemandContentLoaderManager provideOnDemandContentLoader(PrefetchLoader prefetchLoader) {
+        HashSet<OnDemandContentLoader> loaders = new HashSet<>();
+        loaders.add(prefetchLoader);
+
+        return new OnDemandContentLoaderManager(
+                Schedulers.newThread(),
+                loaders
         );
     }
 }

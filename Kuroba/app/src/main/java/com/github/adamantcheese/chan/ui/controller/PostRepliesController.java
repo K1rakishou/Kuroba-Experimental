@@ -20,10 +20,11 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -45,12 +46,11 @@ public class PostRepliesController
         extends BaseFloatingController {
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
+    private LoadView loadView;
+    private RecyclerView repliesView;
+    private PostPopupHelper.RepliesData displayingData;
 
     private boolean first = true;
-
-    private LoadView loadView;
-    private ListView listView;
-    private PostPopupHelper.RepliesData displayingData;
 
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
         super(context);
@@ -69,17 +69,39 @@ public class PostRepliesController
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        hackyRecycleAllReplyViews();
+    }
+
+    private void hackyRecycleAllReplyViews() {
+        RecyclerView.Adapter adapter = repliesView.getAdapter();
+        if (adapter instanceof RepliesAdapter) {
+            ((RepliesAdapter) adapter).clear();
+            repliesView.getRecycledViewPool().clear();
+
+            for (int i = 0; i < repliesView.getChildCount(); ++i) {
+                View child = repliesView.getChildAt(i);
+                if (child instanceof PostCellInterface) {
+                    ((PostCellInterface) child).onPostRecycled();
+                }
+            }
+        }
+    }
+
+    @Override
     protected int getLayoutId() {
         return R.layout.layout_post_replies_container;
     }
 
     public ThumbnailView getThumbnail(PostImage postImage) {
-        if (listView == null) {
+        if (repliesView == null) {
             return null;
         } else {
             ThumbnailView thumbnail = null;
-            for (int i = 0; i < listView.getChildCount(); i++) {
-                View view = listView.getChildAt(i);
+            for (int i = 0; i < repliesView.getChildCount(); i++) {
+                View view = repliesView.getChildAt(i);
                 if (view instanceof PostCellInterface) {
                     PostCellInterface postView = (PostCellInterface) view;
                     Post post = postView.getPost();
@@ -104,7 +126,7 @@ public class PostRepliesController
     }
 
     public void scrollTo(int displayPosition) {
-        listView.smoothScrollToPosition(displayPosition);
+        repliesView.smoothScrollToPosition(displayPosition);
     }
 
     private void displayData(Loadable loadable, final PostPopupHelper.RepliesData data) {
@@ -117,10 +139,7 @@ public class PostRepliesController
             dataView = inflate(context, R.layout.layout_post_replies);
         }
 
-        listView = dataView.findViewById(R.id.post_list);
-        listView.setDivider(null);
-        listView.setDividerHeight(0);
-
+        repliesView = dataView.findViewById(R.id.post_list);
         View repliesBack = dataView.findViewById(R.id.replies_back);
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());
 
@@ -135,56 +154,112 @@ public class PostRepliesController
         repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
         repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
 
-        ArrayAdapter<Post> adapter = new ArrayAdapter<Post>(context, 0) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                PostCellInterface postCell;
-                if (convertView instanceof PostCellInterface && !ChanSettings.shiftPostFormat.get()) {
-                    postCell = (PostCellInterface) convertView;
-                } else {
-                    postCell = (PostCellInterface) inflate(context, R.layout.cell_post, parent, false);
-                }
-
-                final Post p = getItem(position);
-                boolean showDivider = position < getCount() - 1;
-                postCell.setPost(
-                        loadable,
-                        p,
-                        presenter,
-                        true,
-                        false,
-                        false,
-                        data.forPost.no,
-                        showDivider,
-                        ChanSettings.PostViewMode.LIST,
-                        false,
-                        ThemeHelper.getTheme()
-                );
-
-                return (View) postCell;
-            }
-        };
-
-        adapter.addAll(data.posts);
-        listView.setAdapter(adapter);
-
-        listView.setSelectionFromTop(data.listViewIndex, data.listViewTop);
-        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                data.listViewIndex = view.getFirstVisiblePosition();
-                View v = view.getChildAt(0);
-                data.listViewTop = (v == null) ? 0 : v.getTop();
-            }
-        });
+        RepliesAdapter repliesAdapter = new RepliesAdapter(presenter, loadable);
+        repliesAdapter.setHasStableIds(true);
+        repliesView.setLayoutManager(new LinearLayoutManager(context));
+        repliesView.setAdapter(repliesAdapter);
+        repliesView.getRecycledViewPool().setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0);
+        repliesAdapter.setData(data);
 
         loadView.setFadeDuration(first ? 0 : 150);
-        first = false;
         loadView.setView(dataView);
+
+        first = false;
+    }
+
+    private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
+        public static final int POST_REPLY_VIEW_TYPE = 0;
+
+        private ThreadPresenter presenter;
+        private Loadable loadable;
+        private PostPopupHelper.RepliesData data;
+
+        public RepliesAdapter(ThreadPresenter presenter, Loadable loadable) {
+            this.presenter = presenter;
+            this.loadable = loadable;
+        }
+
+        @NonNull
+        @Override
+        public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = inflate(parent.getContext(), R.layout.cell_post, parent, false);
+
+            return new ReplyViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
+            holder.onBind(
+                    presenter,
+                    loadable,
+                    data.posts.get(position),
+                    data.forPost.no,
+                    position,
+                    getItemCount()
+            );
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return POST_REPLY_VIEW_TYPE;
+        }
+
+        @Override
+        public int getItemCount() {
+            return data.posts.size();
+        }
+
+        @Override
+        public void onViewRecycled(@NonNull ReplyViewHolder holder) {
+            if (holder.itemView instanceof PostCellInterface) {
+                ((PostCellInterface) holder.itemView).onPostRecycled();
+            }
+        }
+
+        public void setData(PostPopupHelper.RepliesData data) {
+            this.data = data;
+            notifyDataSetChanged();
+        }
+
+        public void clear() {
+            int size = this.data.posts.size();
+            notifyItemRangeRemoved(0, size);
+        }
+    }
+
+    private static class ReplyViewHolder extends RecyclerView.ViewHolder {
+        private PostCellInterface postCellInterface;
+
+        public ReplyViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            this.postCellInterface = (PostCellInterface) itemView;
+        }
+
+        public void onBind(
+                ThreadPresenter presenter,
+                Loadable loadable,
+                Post post,
+                int markedNo,
+                int position,
+                int itemCount
+        ) {
+            boolean showDivider = position < itemCount - 1;
+
+            postCellInterface.setPost(
+                    loadable,
+                    post,
+                    presenter,
+                    true,
+                    false,
+                    false,
+                    markedNo,
+                    showDivider,
+                    ChanSettings.PostViewMode.LIST,
+                    false,
+                    ThemeHelper.getTheme()
+            );
+        }
     }
 
     @Override

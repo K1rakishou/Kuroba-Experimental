@@ -212,51 +212,38 @@ class FileCacheV2(
         }
     }
 
-    fun enqueueMediaPrefetchRequestBatch(
-            loadable: Loadable,
-            postImageList: List<PostImage>
-    ): List<CancelableDownload> {
+    fun enqueueMediaPrefetchRequest(loadable: Loadable, postImage: PostImage): CancelableDownload? {
         if (loadable.isLocal || loadable.isDownloading) {
             throw IllegalArgumentException("Cannot use local thread loadable for prefetching!")
         }
 
-        val urls = mutableListOf<String>()
-        val cancelableDownloads = mutableListOf<CancelableDownload>()
+        val url = postImage.imageUrl.toString()
 
-        for (postImage in postImageList) {
-            val url = postImage.imageUrl.toString()
+        val file: RawFile = cacheHandler.getOrCreateCacheFile(url)
+                ?: return null
 
-            val file: RawFile = cacheHandler.getOrCreateCacheFile(url)
-                    ?: continue
+        val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
+                url,
+                null,
+                file,
+                // Always 1 for media prefetching
+                chunksCount = 1,
+                isGalleryBatchDownload = true,
+                isPrefetchDownload = true,
+                // Prefetch downloads always have default extra info (no file size, no file hash)
+                extraInfo = DownloadRequestExtraInfo()
+        )
 
-            val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
-                    url,
-                    null,
-                    file,
-                    // Always 1 for media prefetching
-                    chunksCount = 1,
-                    isGalleryBatchDownload = true,
-                    isPrefetchDownload = true,
-                    // Prefetch downloads always have default extra info (no file size, no file hash)
-                    extraInfo = DownloadRequestExtraInfo()
-            )
-
-            if (alreadyActive) {
-                continue
-            }
-
-            if (checkAlreadyCached(file, url)) {
-                continue
-            }
-
-            urls += url
-            cancelableDownloads += cancelableDownload
+        if (alreadyActive) {
+            return null
         }
 
-        log(TAG, "Prefetching ${urls.size} files")
-        batchRequestQueue.onNext(urls)
+        if (checkAlreadyCached(file, url)) {
+            return null
+        }
 
-        return cancelableDownloads
+        batchRequestQueue.onNext(Collections.singletonList(url))
+        return cancelableDownload
     }
 
     fun enqueueChunkedDownloadFileRequest(
