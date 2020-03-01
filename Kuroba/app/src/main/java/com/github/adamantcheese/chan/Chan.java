@@ -26,6 +26,7 @@ import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.di.AppModule;
 import com.github.adamantcheese.chan.core.di.DatabaseModule;
+import com.github.adamantcheese.chan.core.di.ExecutorsManager;
 import com.github.adamantcheese.chan.core.di.GsonModule;
 import com.github.adamantcheese.chan.core.di.LoaderModule;
 import com.github.adamantcheese.chan.core.di.ManagerModule;
@@ -100,6 +101,7 @@ public class Chan
 
         feather = Feather.with(
                 new AppModule(this),
+                new ExecutorsManager(),
                 new DatabaseModule(),
                 new NetModule(),
                 new GsonModule(),

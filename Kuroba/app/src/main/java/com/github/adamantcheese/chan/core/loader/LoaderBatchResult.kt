@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.manager.loader
+package com.github.adamantcheese.chan.core.loader
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable

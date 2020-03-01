@@ -2,33 +2,34 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import androidx.annotation.GuardedBy
-import com.github.adamantcheese.chan.core.manager.loader.LoaderBatchResult
-import com.github.adamantcheese.chan.core.manager.loader.LoaderResult
-import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader
+import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
+import com.github.adamantcheese.chan.core.loader.LoaderResult
+import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
+import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.PostUtils.getPostUniqueId
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.PublishProcessor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class OnDemandContentLoaderManager(
-        private val scheduler: Scheduler,
+        private val workerScheduler: Scheduler,
         private val loaders: Set<OnDemandContentLoader>
 ) {
     private val rwLock = ReentrantReadWriteLock()
 
-    // HashMap<PostUid, PostLoaderData>()
+    // HashMap<LoadableUid, HashMap<PostUid, PostLoaderData>>()
     @GuardedBy("rwLock")
-    private val activeLoaders = hashMapOf<String, PostLoaderData>()
+    private val activeLoaders = HashMap<String, HashMap<String, PostLoaderData>>()
 
     private val postLoaderRxQueue = PublishProcessor.create<PostLoaderData>()
     private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
@@ -44,8 +45,21 @@ class OnDemandContentLoaderManager(
                 .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
                 .flatMap { value ->
                     return@flatMap Flowable.just(value)
-                            // Add 1 second delay to every emitted event
-                            .zipWith(Flowable.timer(1, TimeUnit.SECONDS, scheduler), ZIP_FUNC)
+                            // Add LOADING_DELAY_TIME_SECONDS seconds delay to every emitted event.
+                            // We do that so that we don't download everything when user quickly
+                            // scrolls through posts. In other words, we only start running the
+                            // loader after LOADING_DELAY_TIME_SECONDS seconds has passed since
+                            // onPostBind() was called. If onPostUnbind() was called during that
+                            // time frame we cancel the loader if it has already started loading or
+                            // just do nothing if it has yet started loading.
+                            .zipWith(
+                                    Flowable.timer(
+                                            LOADING_DELAY_TIME_SECONDS,
+                                            TimeUnit.SECONDS,
+                                            workerScheduler
+                                    ),
+                                    ZIP_FUNC
+                            )
                 }
                 .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
                 .map { (postLoaderData, _) -> postLoaderData }
@@ -66,7 +80,8 @@ class OnDemandContentLoaderManager(
     private fun processLoaders(postLoaderData: PostLoaderData): Flowable<Unit>? {
         return Flowable.fromIterable(loaders)
                 .flatMapSingle { loader ->
-                    return@flatMapSingle loader.startLoading(postLoaderData.loadable, postLoaderData.post)
+                    return@flatMapSingle loader.startLoading(postLoaderData)
+                            .timeout(MAX_LOADER_LOADING_TIME_SECONDS, TimeUnit.SECONDS, workerScheduler)
                             .onErrorReturnItem(LoaderResult.Error(loader.loaderType))
                 }
                 .toList()
@@ -74,44 +89,6 @@ class OnDemandContentLoaderManager(
                 .doOnSuccess(postUpdateRxQueue::onNext)
                 .map { Unit }
                 .toFlowable()
-    }
-
-    fun onPostBind(loadable: Loadable, post: Post) {
-        BackgroundUtils.ensureMainThread()
-        check(loaders.isNotEmpty()) { "No loaders!" }
-
-        if (everythingIsAlreadyCached(loadable, post)) {
-            return
-        }
-
-        val postUid = getPostUniqueId(loadable, post)
-        val postLoaderData = rwLock.write {
-            if (activeLoaders.containsKey(postUid)) {
-                return@write null
-            }
-
-            val postLoaderData = PostLoaderData(loadable, post)
-            activeLoaders[postUid] = postLoaderData
-
-            return@write postLoaderData
-        }
-
-        if (postLoaderData == null) {
-            return
-        }
-
-        postLoaderRxQueue.onNext(postLoaderData)
-    }
-
-    fun onPostUnbind(loadable: Loadable, post: Post) {
-        BackgroundUtils.ensureMainThread()
-        check(loaders.isNotEmpty()) { "No loaders!" }
-
-        val postUid = getPostUniqueId(loadable, post)
-        val postLoaderData = rwLock.write { activeLoaders.remove(postUid) }
-                ?: return
-
-        postLoaderData.disposeAll()
     }
 
     fun listenPostContentUpdates(): Flowable<LoaderBatchResult> {
@@ -122,21 +99,91 @@ class OnDemandContentLoaderManager(
                 .observeOn(AndroidSchedulers.mainThread())
     }
 
-    fun cancelAllForLoadable(loadable: Loadable) {
+    fun onPostBind(loadable: Loadable, post: Post) {
         BackgroundUtils.ensureMainThread()
+        check(loaders.isNotEmpty()) { "No loaders!" }
 
-        // TODO
-    }
+        val loadableUid = loadable.uniqueId
+        val postUid = getPostUniqueId(loadable, post)
 
-    private fun everythingIsAlreadyCached(loadable: Loadable, post: Post): Boolean {
-        val allLoadersAlreadyCached = loaders.all { loader ->
-            loader.isAlreadyCached(loadable, post)
+        Logger.d(TAG, "onPostBind called for $postUid")
+
+        val postLoaderData = PostLoaderData(loadable, post)
+        if (everythingIsAlreadyCached(postLoaderData)) {
+            return
         }
 
+        val alreadyAdded = rwLock.write {
+            if (!activeLoaders.containsKey(loadableUid)) {
+                activeLoaders[loadableUid] = hashMapOf()
+            }
+
+            if (activeLoaders[loadableUid]!!.containsKey(postUid)) {
+                return@write true
+            }
+
+            activeLoaders[loadableUid]!![postUid] = postLoaderData
+            return@write false
+        }
+
+        if (alreadyAdded) {
+            return
+        }
+
+        postLoaderRxQueue.onNext(postLoaderData)
+    }
+
+    fun onPostUnbind(loadable: Loadable, post: Post) {
+        BackgroundUtils.ensureMainThread()
+        check(loaders.isNotEmpty()) { "No loaders!" }
+
+        val loadableUid = loadable.uniqueId
+        val postUid = getPostUniqueId(loadable, post)
+
+        Logger.d(TAG, "onPostUnbind called for $postUid")
+
+        val postLoaderData = rwLock.write {
+            val postLoaderData = activeLoaders[loadableUid]?.remove(postUid)
+                    ?: return@write null
+
+            loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
+            postLoaderData.disposeAll()
+
+            return@write postLoaderData
+        } ?: return
+
+        postLoaderData.disposeAll()
+    }
+
+    fun cancelAllForLoadable(loadable: Loadable) {
+        BackgroundUtils.ensureMainThread()
+        val loadableUid = loadable.uniqueId
+
+        Logger.d(TAG, "cancelAllForLoadable called for $loadableUid")
+
+        rwLock.write {
+            val postLoaderDataList = activeLoaders[loadableUid]
+                    ?: return@write
+
+            postLoaderDataList.values.forEach { postLoaderData ->
+                loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
+                postLoaderData.disposeAll()
+            }
+
+            postLoaderDataList.clear()
+
+            activeLoaders.remove(loadableUid)
+        }
+    }
+
+    private fun everythingIsAlreadyCached(postLoaderData: PostLoaderData): Boolean {
+        val allLoadersAlreadyCached = loaders.all { loader -> loader.isAlreadyCached(postLoaderData) }
         if (allLoadersAlreadyCached) {
             val results = loaders.map { loader -> LoaderResult.Success(loader.loaderType) }
 
-            postUpdateRxQueue.onNext(LoaderBatchResult(loadable, post, results))
+            postUpdateRxQueue.onNext(
+                    LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results)
+            )
             return true
         }
 
@@ -144,50 +191,23 @@ class OnDemandContentLoaderManager(
     }
 
     private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
-        return rwLock.read { activeLoaders.containsKey(postLoaderData.getPostUniqueId()) }
-    }
+        return rwLock.read {
+            val loadableUid = postLoaderData.getLoadableUniqueId()
+            val postUid = postLoaderData.getPostUniqueId()
 
-    class PostLoaderData(
-            val loadable: Loadable,
-            val post: Post,
-            private val disposeFuncList: MutableList<() -> Unit> = mutableListOf()
-    ) {
-        private val disposed = AtomicBoolean(false)
-
-        fun getPostUniqueId(): String {
-            return getPostUniqueId(loadable, post)
+            return@read activeLoaders[loadableUid]?.containsKey(postUid)
+                    ?: false
         }
-
-        @Synchronized
-        fun addDisposeFunc(disposeFunc: () -> Unit) {
-            if (disposed.get()) {
-                disposeFunc.invoke()
-                return
-            }
-
-            disposeFuncList += disposeFunc
-        }
-
-        @Synchronized
-        fun disposeAll() {
-            if (disposed.compareAndSet(false, true)) {
-                disposeFuncList.forEach { func -> func.invoke() }
-                disposeFuncList.clear()
-            }
-        }
-
     }
 
     companion object {
         private const val TAG = "OnDemandContentLoaderManager"
         private const val MIN_QUEUE_CAPACITY = 32
+        private const val LOADING_DELAY_TIME_SECONDS = 1L
+        private const val MAX_LOADER_LOADING_TIME_SECONDS = 10L
 
         private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
             Pair(postLoaderData, timer)
-        }
-
-        private fun getPostUniqueId(loadable: Loadable, post: Post): String {
-            return String.format("%s_%d", loadable.uniqueId, post.no)
         }
     }
 }

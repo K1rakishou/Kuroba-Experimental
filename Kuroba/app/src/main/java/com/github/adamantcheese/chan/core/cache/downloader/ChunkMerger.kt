@@ -136,6 +136,10 @@ internal class ChunkMerger(
         }
 
         if (!cacheHandler.markFileDownloaded(request.output)) {
+            if (!request.cancelableDownload.isRunning()) {
+                activeDownloads.throwCancellationException(url)
+            }
+
             throw FileCacheException.CouldNotMarkFileAsDownloaded(request.output)
         }
     }

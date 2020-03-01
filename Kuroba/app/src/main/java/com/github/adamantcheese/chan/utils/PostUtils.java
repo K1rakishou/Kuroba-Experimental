@@ -6,12 +6,14 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -140,5 +142,9 @@ public class PostUtils {
         }
 
         return new ArrayList<>(newHiddenPosts);
+    }
+
+    public static String getPostUniqueId(Loadable loadable, Post post) {
+        return String.format(Locale.US, "%s_%d", loadable.getUniqueId(), post.no);
     }
 }

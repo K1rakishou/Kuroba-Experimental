@@ -36,7 +36,6 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -218,17 +217,6 @@ class CacheHandler(
 
             val cacheFileMeta = readCacheFileMeta(cacheFileMetaFile)
             if (cacheFileMeta == null) {
-                deleteCacheFile(cacheFile)
-                return false
-            }
-
-            // If the cache file has less than MIN_REMAINING_CACHE_FILE_LIFE_TIME of lifetime left
-            // then delete that file. We do that because we need some time to do all kind of other
-            // checks and during those checks the cache file may get trimmed so we will end up
-            // with deleted file and an exception. This happens in some really rare cases but still,
-            // it happens.
-            val deltaTime = System.currentTimeMillis() - cacheFileMeta.createdOn
-            if (cacheFileMeta.isDownloaded && deltaTime < MIN_REMAINING_CACHE_FILE_LIFE_TIME) {
                 deleteCacheFile(cacheFile)
                 return false
             }
@@ -899,7 +887,6 @@ class CacheHandler(
         internal const val CACHE_META_EXTENSION = "cache_meta"
         internal const val CHUNK_CACHE_EXTENSION = "chunk"
 
-        private val MIN_REMAINING_CACHE_FILE_LIFE_TIME = TimeUnit.SECONDS.toMillis(10)
         private val MIN_CACHE_FILE_LIFE_TIME = MINUTES.toMillis(5)
         private val MIN_TRIM_INTERVAL = MINUTES.toMillis(1)
 

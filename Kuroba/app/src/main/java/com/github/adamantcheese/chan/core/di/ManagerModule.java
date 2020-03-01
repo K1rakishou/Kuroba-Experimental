@@ -19,6 +19,8 @@ package com.github.adamantcheese.chan.core.di;
 import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
+import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
@@ -32,8 +34,6 @@ import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
-import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader;
-import com.github.adamantcheese.chan.core.manager.loader.PrefetchLoader;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
@@ -45,6 +45,7 @@ import org.codejargon.feather.Provides;
 
 import java.io.File;
 import java.util.HashSet;
+import java.util.concurrent.Executor;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -195,12 +196,15 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public OnDemandContentLoaderManager provideOnDemandContentLoader(PrefetchLoader prefetchLoader) {
+    public OnDemandContentLoaderManager provideOnDemandContentLoader(
+            PrefetchLoader prefetchLoader,
+            @Named(ExecutorsManager.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+    ) {
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
         loaders.add(prefetchLoader);
 
         return new OnDemandContentLoaderManager(
-                Schedulers.newThread(),
+                Schedulers.from(onDemandContentLoaderExecutor),
                 loaders
         );
     }

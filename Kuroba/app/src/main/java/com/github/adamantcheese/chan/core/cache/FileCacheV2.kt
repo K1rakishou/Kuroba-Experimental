@@ -33,15 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.ArrayList
 
-/**
- * A file downloader with two reactive queues:
- * - One queue is for viewing images/webms/gifs in the gallery
- * - Second queue is for downloading image albums in huge batches (or for the media prefetching feature).
- *
- * This should prevent normal image viewing getting stuck when using media prefetching.
- * In the future this thing will be made 100% reactive (right now it still uses callbacks) as well
- * as the MultiImageView/ImageViewPresenter.
- * */
 class FileCacheV2(
         private val fileManager: FileManager,
         private val cacheHandler: CacheHandler,
@@ -51,34 +42,13 @@ class FileCacheV2(
 ) {
     private val activeDownloads = ActiveDownloads()
 
-    /**
-     * We use two rx queues here. One for the normal file/image downloading (like when user clicks a
-     * image thumbnail to view a full-size image) and the other queue for when user downloads full
-     * image albums or for media-prefetching etc.
-     * */
     private val normalRequestQueue = PublishProcessor.create<String>()
-    private val batchRequestQueue = PublishProcessor.create<List<String>>()
-
     private val chunksCount = ChanSettings.concurrentDownloadChunkCount.get().toInt()
     private val threadsCount = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(4)
     private val requestCancellationThread = Executors.newSingleThreadExecutor()
     private val verboseLogs = ChanSettings.verboseLogs.get()
 
     private val normalThreadIndex = AtomicInteger(0)
-    private val batchThreadIndex = AtomicInteger(0)
-
-    private val batchScheduler = Schedulers.from(
-            Executors.newFixedThreadPool(1) { runnable ->
-                return@newFixedThreadPool Thread(
-                        runnable,
-                        String.format(
-                                Locale.US,
-                                BATCH_THREAD_NAME_FORMAT,
-                                batchThreadIndex.getAndIncrement()
-                        )
-                )
-            }
-    )
     private val workerScheduler = Schedulers.from(
             Executors.newFixedThreadPool(threadsCount) { runnable ->
                 return@newFixedThreadPool Thread(
@@ -136,7 +106,6 @@ class FileCacheV2(
         log(TAG, "chunksCount = $chunksCount")
 
         initNormalRxWorkerQueue()
-        initBatchRequestQueue()
     }
 
     /**
@@ -170,42 +139,6 @@ class FileCacheV2(
                 })
     }
 
-    /**
-     * This is a singleton class so we don't care about the disposable since we will never should
-     * dispose of this stream
-     * */
-    @SuppressLint("CheckResult")
-    private fun initBatchRequestQueue() {
-        batchRequestQueue
-                .observeOn(batchScheduler)
-                .onBackpressureBuffer()
-                .concatMap { urlList ->
-                    return@concatMap Flowable.fromIterable(urlList)
-                            .subscribeOn(batchScheduler)
-                            .concatMap { url ->
-                                return@concatMap handleFileDownload(url)
-                                        .onErrorReturn { throwable ->
-                                            ErrorMapper.mapError(url, throwable, activeDownloads)
-                                        }
-                                        .map { result -> Pair(url, result) }
-                                        .doOnNext { (url, result) ->
-                                            handleResults(url, result)
-                                        }
-                            }
-                }
-                .subscribe({
-                    // Do nothing
-                }, { error ->
-                    throw RuntimeException("$TAG Uncaught exception!!! " +
-                            "workerQueue is in error state now!!! " +
-                            "This should not happen!!!, original error = " + error.message)
-                }, {
-                    throw RuntimeException(
-                            "$TAG workerQueue stream has completed!!! This should not happen!!!"
-                    )
-                })
-    }
-
     fun isRunning(url: String): Boolean {
         return synchronized(activeDownloads) {
             activeDownloads.getState(url) == DownloadState.Running
@@ -219,7 +152,7 @@ class FileCacheV2(
 
         val url = postImage.imageUrl.toString()
 
-        val file: RawFile = cacheHandler.getOrCreateCacheFile(url)
+        val file = cacheHandler.getOrCreateCacheFile(url)
                 ?: return null
 
         val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
@@ -242,7 +175,7 @@ class FileCacheV2(
             return null
         }
 
-        batchRequestQueue.onNext(Collections.singletonList(url))
+        normalRequestQueue.onNext(url)
         return cancelableDownload
     }
 
@@ -399,9 +332,9 @@ class FileCacheV2(
         return true
     }
 
-    // FIXME: if a request is added, then immediately canceled, and after that another one is added,
-    //  then in case of the first one not being fast enough to get cancelled before the second one
-    //  is added - the two of them will get merged and get canceled together.
+    // FIXME: if a request is added, then immediately canceled, and after that the same request is
+    //  added again, then in case of the first one not being fast enough to get cancelled before
+    //  the second one is added - the two of them will get merged and get canceled together.
     //  Maybe I could add a new flag and right in the end when handling terminal events
     //  I could check whether this flag is true or not and if it is re-add this request again?
     private fun getOrCreateCancelableDownload(
