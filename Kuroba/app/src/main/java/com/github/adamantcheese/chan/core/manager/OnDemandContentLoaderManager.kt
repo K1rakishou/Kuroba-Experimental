@@ -2,6 +2,8 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.chan.core.manager.loader.LoaderBatchResult
+import com.github.adamantcheese.chan.core.manager.loader.LoaderResult
 import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
@@ -13,6 +15,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.PublishProcessor
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -28,7 +31,7 @@ class OnDemandContentLoaderManager(
     private val activeLoaders = hashMapOf<String, PostLoaderData>()
 
     private val postLoaderRxQueue = PublishProcessor.create<PostLoaderData>()
-    private val postUpdateRxQueue = PublishProcessor.create<OnDemandContentLoader.LoaderBatchResult>()
+    private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
 
     init {
         Logger.d(TAG, "Loaders count = ${loaders.size}")
@@ -38,10 +41,11 @@ class OnDemandContentLoaderManager(
     @SuppressLint("CheckResult")
     private fun initPostLoaderRxQueue() {
         postLoaderRxQueue
-                .onBackpressureBuffer(32, false, true)
+                .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
                 .flatMap { value ->
                     return@flatMap Flowable.just(value)
-                            .zipWith(Flowable.timer(1, TimeUnit.SECONDS, scheduler), zipper)
+                            // Add 1 second delay to every emitted event
+                            .zipWith(Flowable.timer(1, TimeUnit.SECONDS, scheduler), ZIP_FUNC)
                 }
                 .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
                 .map { (postLoaderData, _) -> postLoaderData }
@@ -63,15 +67,10 @@ class OnDemandContentLoaderManager(
         return Flowable.fromIterable(loaders)
                 .flatMapSingle { loader ->
                     return@flatMapSingle loader.startLoading(postLoaderData.loadable, postLoaderData.post)
-                            .onErrorReturnItem(OnDemandContentLoader.LoaderResult.Error(loader.loaderType))
+                            .onErrorReturnItem(LoaderResult.Error(loader.loaderType))
                 }
                 .toList()
-                .map { results ->
-                    OnDemandContentLoader.LoaderBatchResult(
-                            postLoaderData.loadable,
-                            postLoaderData.post, results
-                    )
-                }
+                .map { results -> LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results) }
                 .doOnSuccess(postUpdateRxQueue::onNext)
                 .map { Unit }
                 .toFlowable()
@@ -115,7 +114,7 @@ class OnDemandContentLoaderManager(
         postLoaderData.disposeAll()
     }
 
-    fun listenPostContentUpdates(): Flowable<OnDemandContentLoader.LoaderBatchResult> {
+    fun listenPostContentUpdates(): Flowable<LoaderBatchResult> {
         BackgroundUtils.ensureMainThread()
 
         return postUpdateRxQueue
@@ -135,14 +134,9 @@ class OnDemandContentLoaderManager(
         }
 
         if (allLoadersAlreadyCached) {
-            val results = loaders.map { loader ->
-                OnDemandContentLoader.LoaderResult.Success(loader.loaderType)
-            }
+            val results = loaders.map { loader -> LoaderResult.Success(loader.loaderType) }
 
-            postUpdateRxQueue.onNext(
-                    OnDemandContentLoader.LoaderBatchResult(loadable, post, results)
-            )
-
+            postUpdateRxQueue.onNext(LoaderBatchResult(loadable, post, results))
             return true
         }
 
@@ -158,6 +152,7 @@ class OnDemandContentLoaderManager(
             val post: Post,
             private val disposeFuncList: MutableList<() -> Unit> = mutableListOf()
     ) {
+        private val disposed = AtomicBoolean(false)
 
         fun getPostUniqueId(): String {
             return getPostUniqueId(loadable, post)
@@ -165,21 +160,29 @@ class OnDemandContentLoaderManager(
 
         @Synchronized
         fun addDisposeFunc(disposeFunc: () -> Unit) {
+            if (disposed.get()) {
+                disposeFunc.invoke()
+                return
+            }
+
             disposeFuncList += disposeFunc
         }
 
         @Synchronized
         fun disposeAll() {
-            disposeFuncList.forEach { func -> func.invoke() }
-            disposeFuncList.clear()
+            if (disposed.compareAndSet(false, true)) {
+                disposeFuncList.forEach { func -> func.invoke() }
+                disposeFuncList.clear()
+            }
         }
 
     }
 
     companion object {
         private const val TAG = "OnDemandContentLoaderManager"
+        private const val MIN_QUEUE_CAPACITY = 32
 
-        private val zipper = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
+        private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
             Pair(postLoaderData, timer)
         }
 

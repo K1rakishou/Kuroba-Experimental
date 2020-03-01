@@ -38,7 +38,7 @@ import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
-import com.github.adamantcheese.chan.core.manager.loader.OnDemandContentLoader;
+import com.github.adamantcheese.chan.core.manager.loader.LoaderBatchResult;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
@@ -534,7 +534,7 @@ public class ThreadPresenter
         }
     }
 
-    private void onPostUpdatedWithNewContent(OnDemandContentLoader.LoaderBatchResult batchResult) {
+    private void onPostUpdatedWithNewContent(LoaderBatchResult batchResult) {
         // TODO: update post. ALARME! There is a possibility of an infinite loop
     }
 

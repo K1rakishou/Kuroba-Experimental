@@ -36,6 +36,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.util.*
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -112,7 +113,7 @@ class CacheHandler(
         createDirectories()
         var cacheFile = getCacheFileInternal(url)
 
-        return try {
+        try {
             if (!fileManager.exists(cacheFile)) {
                 val createdFile = fileManager.create(cacheFile) as RawFile?
                         ?: throw IOException(
@@ -139,11 +140,11 @@ class CacheHandler(
                 }
             }
 
-            cacheFile
+            return cacheFile
         } catch (error: IOException) {
             Logger.e(TAG, "Error while trying to get or create cache file", error)
             deleteCacheFile(cacheFile)
-            null
+            return null
         }
     }
 
@@ -177,7 +178,7 @@ class CacheHandler(
      * [cacheFile] must be the cache file, not cache file meta!
      * */
     fun isAlreadyDownloaded(cacheFile: RawFile): Boolean {
-        return try {
+        try {
             if (!fileManager.exists(cacheFile)) {
                 deleteCacheFile(cacheFile)
                 return false
@@ -221,11 +222,22 @@ class CacheHandler(
                 return false
             }
 
-            cacheFileMeta.isDownloaded
+            // If the cache file has less than MIN_REMAINING_CACHE_FILE_LIFE_TIME of lifetime left
+            // then delete that file. We do that because we need some time to do all kind of other
+            // checks and during those checks the cache file may get trimmed so we will end up
+            // with deleted file and an exception. This happens in some really rare cases but still,
+            // it happens.
+            val deltaTime = System.currentTimeMillis() - cacheFileMeta.createdOn
+            if (cacheFileMeta.isDownloaded && deltaTime < MIN_REMAINING_CACHE_FILE_LIFE_TIME) {
+                deleteCacheFile(cacheFile)
+                return false
+            }
+
+            return cacheFileMeta.isDownloaded
         } catch (error: Throwable) {
             Logger.e(TAG, "Error while trying to check whether the file is already downloaded", error)
             deleteCacheFile(cacheFile)
-            false
+            return false
         }
     }
 
@@ -234,7 +246,7 @@ class CacheHandler(
      * deletes the file so it can be re-downloaded again.
      * */
     fun markFileDownloaded(output: AbstractFile): Boolean {
-        return try {
+        try {
             if (!fileManager.exists(output)) {
                 Logger.e(TAG, "File does not exist! file = ${output.getFullPath()}")
                 deleteCacheFile(output)
@@ -258,11 +270,11 @@ class CacheHandler(
                 deleteCacheFile(output)
             }
 
-            updateResult
+            return updateResult
         } catch (error: Throwable) {
             Logger.e(TAG, "Error while trying to mark file as downloaded", error)
             deleteCacheFile(output)
-            false
+            return false
         }
     }
 
@@ -887,6 +899,7 @@ class CacheHandler(
         internal const val CACHE_META_EXTENSION = "cache_meta"
         internal const val CHUNK_CACHE_EXTENSION = "chunk"
 
+        private val MIN_REMAINING_CACHE_FILE_LIFE_TIME = TimeUnit.SECONDS.toMillis(10)
         private val MIN_CACHE_FILE_LIFE_TIME = MINUTES.toMillis(5)
         private val MIN_TRIM_INTERVAL = MINUTES.toMillis(1)
 
