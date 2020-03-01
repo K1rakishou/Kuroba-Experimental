@@ -35,69 +35,42 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Post
         implements Comparable<Post> {
     public final String boardId;
-
     public final Board board;
-
     public final int no;
-
     public final boolean isOP;
-
     public final String name;
-
-    public final CharSequence comment;
-
+    private CharSequence comment;
     public final String subject;
-
     /**
      * Unix timestamp, in seconds.
      */
     public final long time;
-
     public final List<PostImage> images;
-
     public final String tripcode;
-
     public final String id;
-
     public final int opId;
-
     public final String capcode;
-
     public final List<PostHttpIcon> httpIcons;
-
     public final boolean isSavedReply;
-
     public final int filterHighlightedColor;
-
     public final boolean filterStub;
-
     public final boolean filterRemove;
-
     public final boolean filterWatch;
-
     public final boolean filterReplies;
-
     public final boolean filterOnlyOP;
-
     public final boolean filterSaved;
-
     /**
      * This post replies to the these ids.
      */
     public final Set<Integer> repliesTo;
-
     public final List<PostLinkable> linkables;
-
     public final CharSequence subjectSpan;
-
     public final CharSequence nameTripcodeIdCapcodeSpan;
-
     /**
      * This post has been deleted (the server isn't sending it anymore).
      * <p><b>This boolean is modified in worker threads, use {@code .get()} to access it.</b>
      */
     public final AtomicBoolean deleted = new AtomicBoolean(false);
-
     /**
      * These ids replied to this post.
      * <p><b>Manual synchronization is needed, since this list can be modified from any thread.
@@ -169,6 +142,14 @@ public class Post
 
         linkables = Collections.unmodifiableList(new ArrayList<>(builder.linkables));
         repliesTo = Collections.unmodifiableSet(builder.repliesToIds);
+    }
+
+    public synchronized CharSequence getComment() {
+        return comment;
+    }
+
+    public synchronized void setComment(CharSequence newComment) {
+        this.comment = newComment;
     }
 
     @AnyThread

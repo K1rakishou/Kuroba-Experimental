@@ -52,8 +52,8 @@ public class PostHelper {
         if (post != null) {
             if (!TextUtils.isEmpty(post.subject)) {
                 return post.subject;
-            } else if (!TextUtils.isEmpty(post.comment)) {
-                return "/" + post.boardId + "/ - " + post.comment.subSequence(0, Math.min(post.comment.length(), 200));
+            } else if (!TextUtils.isEmpty(post.getComment())) {
+                return "/" + post.boardId + "/ - " + post.getComment().subSequence(0, Math.min(post.getComment().length(), 200));
             } else {
                 return "/" + post.boardId + "/" + post.no;
             }

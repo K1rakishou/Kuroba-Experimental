@@ -27,16 +27,16 @@ class PrefetchLoader(
         val loadable = postLoaderData.loadable
 
         if (post.images.isEmpty()) {
-            return Single.just(LoaderResult.Success(loaderType))
+            return reject()
         }
 
         if (!isLoadableSuitableForPrefetch(loadable)) {
-            return Single.just(LoaderResult.Rejected(loaderType))
+            return reject()
         }
 
         val prefetchList = getPrefetchBatch(post, loadable)
         if (prefetchList.isEmpty()) {
-            return Single.just(LoaderResult.Success(loaderType))
+            return reject()
         }
 
         prefetchList.forEach { prefetch ->
@@ -53,7 +53,7 @@ class PrefetchLoader(
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
 
-        return Single.just(LoaderResult.Success(loaderType))
+        return success()
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {

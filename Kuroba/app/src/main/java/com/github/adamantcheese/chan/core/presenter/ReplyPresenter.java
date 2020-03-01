@@ -435,7 +435,7 @@ public class ReplyPresenter
     }
 
     public void quote(Post post, boolean withText) {
-        handleQuote(post, withText ? post.comment.toString() : null);
+        handleQuote(post, withText ? post.getComment().toString() : null);
     }
 
     public void quote(Post post, CharSequence text) {

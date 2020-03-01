@@ -323,7 +323,7 @@ public class ThreadLayout
     }
 
     public void clipboardPost(Post post) {
-        setClipboardContent("Post text", post.comment.toString());
+        setClipboardContent("Post text", post.getComment().toString());
         showToast(getContext(), R.string.post_text_copied);
     }
 

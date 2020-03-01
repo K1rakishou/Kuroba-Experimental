@@ -233,10 +233,10 @@ public class CardPostCell
         }
 
         CharSequence commentText;
-        if (post.comment.length() > COMMENT_MAX_LENGTH) {
-            commentText = post.comment.subSequence(0, COMMENT_MAX_LENGTH);
+        if (post.getComment().length() > COMMENT_MAX_LENGTH) {
+            commentText = post.getComment().subSequence(0, COMMENT_MAX_LENGTH);
         } else {
-            commentText = post.comment;
+            commentText = post.getComment();
         }
 
         comment.setText(commentText);

@@ -327,10 +327,10 @@ public class WatchNotification
                 }
 
                 CharSequence comment = postForExpandedLine.image() != null ? "(img) " : "";
-                if (postForExpandedLine.comment.length() > 0) {
+                if (postForExpandedLine.getComment().length() > 0) {
                     // FIXME: this thing is pretty slow sometimes (50-200ms).
                     //  Can we replace it with something faster?
-                    comment = TextUtils.concat(comment, postForExpandedLine.comment);
+                    comment = TextUtils.concat(comment, postForExpandedLine.getComment());
                 }
 
                 // Replace >>123456789 with >789 to shorten the notification

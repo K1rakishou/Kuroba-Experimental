@@ -115,7 +115,7 @@ public class PostsFilter {
             while (i.hasNext()) {
                 Post item = i.next();
                 add = false;
-                if (item.comment.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                if (item.getComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                     add = true;
                 } else if (item.subject.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                     add = true;

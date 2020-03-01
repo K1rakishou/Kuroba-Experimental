@@ -20,6 +20,7 @@ import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
+import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
@@ -198,10 +199,12 @@ public class ManagerModule {
     @Singleton
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
             PrefetchLoader prefetchLoader,
+            PostExtraContentLoader postExtraContentLoader,
             @Named(ExecutorsManager.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
         loaders.add(prefetchLoader);
+        loaders.add(postExtraContentLoader);
 
         return new OnDemandContentLoaderManager(
                 Schedulers.from(onDemandContentLoaderExecutor),

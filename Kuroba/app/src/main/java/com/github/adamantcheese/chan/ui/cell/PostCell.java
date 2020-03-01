@@ -518,10 +518,10 @@ public class PostCell
 
     private CharSequence getCommentText(Post post) {
         CharSequence commentText;
-        if (!threadMode && post.comment.length() > COMMENT_MAX_LENGTH_BOARD) {
+        if (!threadMode && post.getComment().length() > COMMENT_MAX_LENGTH_BOARD) {
             commentText = truncatePostComment(post);
         } else {
-            commentText = post.comment;
+            commentText = post.getComment();
         }
         return commentText;
     }
@@ -756,8 +756,8 @@ public class PostCell
     }
 
     private void setPostLinkableListener(Post post, boolean bind) {
-        if (post.comment instanceof Spanned) {
-            Spanned commentSpanned = (Spanned) post.comment;
+        if (post.getComment() instanceof Spanned) {
+            Spanned commentSpanned = (Spanned) post.getComment();
             PostLinkable[] linkables = commentSpanned.getSpans(0, commentSpanned.length(), PostLinkable.class);
             for (PostLinkable linkable : linkables) {
                 linkable.setMarkedNo(bind ? markedNo : -1);
@@ -774,12 +774,12 @@ public class PostCell
 
     private CharSequence truncatePostComment(Post post) {
         BreakIterator bi = BreakIterator.getWordInstance();
-        bi.setText(post.comment.toString());
+        bi.setText(post.getComment().toString());
         int precedingBoundary = bi.following(PostCell.COMMENT_MAX_LENGTH_BOARD);
         // Fallback to old method in case the comment does not have any spaces/individual words
         CharSequence commentText = precedingBoundary > 0
-                ? post.comment.subSequence(0, precedingBoundary)
-                : post.comment.subSequence(0, PostCell.COMMENT_MAX_LENGTH_BOARD);
+                ? post.getComment().subSequence(0, precedingBoundary)
+                : post.getComment().subSequence(0, PostCell.COMMENT_MAX_LENGTH_BOARD);
         return TextUtils.concat(commentText, "\u2026"); // append ellipsis
     }
 

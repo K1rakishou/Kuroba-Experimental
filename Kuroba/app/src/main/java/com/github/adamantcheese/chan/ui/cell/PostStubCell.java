@@ -193,10 +193,10 @@ public class PostStubCell
             title.setText(post.subjectSpan);
         } else {
             CharSequence titleText;
-            if (post.comment.length() > TITLE_MAX_LENGTH) {
-                titleText = post.comment.subSequence(0, TITLE_MAX_LENGTH);
+            if (post.getComment().length() > TITLE_MAX_LENGTH) {
+                titleText = post.getComment().subSequence(0, TITLE_MAX_LENGTH);
             } else {
-                titleText = post.comment;
+                titleText = post.getComment();
             }
             title.setText(titleText);
         }

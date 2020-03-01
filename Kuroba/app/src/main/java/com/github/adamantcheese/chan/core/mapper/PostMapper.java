@@ -27,7 +27,7 @@ public class PostMapper {
                 post.no,
                 post.isOP,
                 post.name,
-                SpannableStringMapper.serializeSpannableString(post.comment),
+                SpannableStringMapper.serializeSpannableString(post.getComment()),
                 SpannableStringMapper.serializeSpannableString(post.subject),
                 post.time,
                 PostImageMapper.toSerializablePostImageList(post.images),
