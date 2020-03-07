@@ -61,13 +61,7 @@ public class PostUtils {
             if (post.no == id && !postsSet.contains(post)) {
                 postsSet.add(post);
 
-                List<Integer> repliesFrom;
-
-                synchronized (post.repliesFrom) {
-                    repliesFrom = new ArrayList<>(post.repliesFrom);
-                }
-
-                for (Integer replyId : repliesFrom) {
+                for (Integer replyId : post.getRepliesFrom()) {
                     findPostWithRepliesRecursive(replyId, posts, postsSet);
                 }
             }
@@ -118,7 +112,7 @@ public class PostUtils {
             }
 
             // enumerate all replies for every post
-            for (Integer replyTo : post.repliesTo) {
+            for (Integer replyTo : post.getRepliesTo()) {
                 Post repliedToPost = postsFastLookupMap.get(replyTo);
                 if (repliedToPost == null) {
                     // probably a cross-thread post

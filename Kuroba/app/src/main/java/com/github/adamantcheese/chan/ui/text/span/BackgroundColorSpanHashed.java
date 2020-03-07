@@ -14,17 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.ui.text;
+package com.github.adamantcheese.chan.ui.text.span;
 
-import android.text.style.AbsoluteSizeSpan;
+import android.text.style.BackgroundColorSpan;
 
 /**
- * A version of AbsoluteSizeSpan that has proper equals and hashCode implementations. Used to fix the hashcode result from SpannableStringBuilder.
+ * A version of BackgroundColorSpan that has proper equals and hashCode implementations. Used to fix the hashcode result from SpannableStringBuilder.
  */
-public class AbsoluteSizeSpanHashed
-        extends AbsoluteSizeSpan {
-    public AbsoluteSizeSpanHashed(int size) {
-        super(size);
+public class BackgroundColorSpanHashed
+        extends BackgroundColorSpan {
+    public BackgroundColorSpanHashed(int color) {
+        super(color);
     }
 
     @Override
@@ -32,16 +32,13 @@ public class AbsoluteSizeSpanHashed
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        AbsoluteSizeSpanHashed that = (AbsoluteSizeSpanHashed) o;
+        BackgroundColorSpanHashed that = (BackgroundColorSpanHashed) o;
 
-        if (getSize() != that.getSize()) return false;
-        return getDip() == that.getDip();
+        return getBackgroundColor() == that.getBackgroundColor();
     }
 
     @Override
     public int hashCode() {
-        int result = getSize();
-        result = 31 * result + (getDip() ? 1 : 0);
-        return result;
+        return getBackgroundColor();
     }
 }

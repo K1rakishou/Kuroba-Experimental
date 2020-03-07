@@ -65,15 +65,15 @@ import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
-import com.github.adamantcheese.chan.ui.text.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod;
-import com.github.adamantcheese.chan.ui.text.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.FloatingMenu;
@@ -200,12 +200,8 @@ public class PostCell
             if (replies.getVisibility() != VISIBLE || !threadMode) {
                 return;
             }
-            int repliesFromSize;
-            synchronized (post.repliesFrom) {
-                repliesFromSize = post.repliesFrom.size();
-            }
 
-            if (repliesFromSize > 0) {
+            if (post.getRepliesFromCount() > 0) {
                 if (callback != null) {
                     callback.onShowPostReplies(post);
                 }
@@ -378,13 +374,8 @@ public class PostCell
             bindCatalogPost(commentText);
         }
 
-        int repliesFromSize;
-        synchronized (post.repliesFrom) {
-            repliesFromSize = post.repliesFrom.size();
-        }
-
-        if ((!threadMode && post.getReplies() > 0) || (repliesFromSize > 0)) {
-            bindThreadReplies(post, repliesFromSize);
+        if ((!threadMode && post.getReplies() > 0) || (post.getRepliesFromCount() > 0)) {
+            bindThreadReplies(post, post.getRepliesFromCount());
         } else {
             bindCatalogReplies();
         }

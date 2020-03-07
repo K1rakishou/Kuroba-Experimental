@@ -20,6 +20,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.MainThread;
 
 import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,7 +40,7 @@ public class Post
     public final int no;
     public final boolean isOP;
     public final String name;
-    private CharSequence comment;
+    private PostComment comment;
     public final String subject;
     /**
      * Unix timestamp, in seconds.
@@ -52,6 +53,10 @@ public class Post
     public final String capcode;
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
+    public final CharSequence subjectSpan;
+    public final CharSequence nameTripcodeIdCapcodeSpan;
+
+    // TODO(ODL): extract everything related to filters into PostFilter object
     public final int filterHighlightedColor;
     public final boolean filterStub;
     public final boolean filterRemove;
@@ -59,24 +64,30 @@ public class Post
     public final boolean filterReplies;
     public final boolean filterOnlyOP;
     public final boolean filterSaved;
-    /**
-     * This post replies to the these ids.
-     */
-    public final Set<Integer> repliesTo;
-    public final List<PostLinkable> linkables;
-    public final CharSequence subjectSpan;
-    public final CharSequence nameTripcodeIdCapcodeSpan;
+
     /**
      * This post has been deleted (the server isn't sending it anymore).
      * <p><b>This boolean is modified in worker threads, use {@code .get()} to access it.</b>
      */
     public final AtomicBoolean deleted = new AtomicBoolean(false);
     /**
+     * We use this flag to avoid infinite loops when binding posts since after all post content
+     * loaders have done it's job we update the post via notifyItemChange, which trigger onPostBind()
+     * again.
+     * */
+    public final AtomicBoolean onDemandContentLoaded = new AtomicBoolean(false);
+    /**
+     * This post replies to the these ids.
+     */
+    // TODO(ODL):
+    private final Set<Integer> repliesTo;
+    /**
      * These ids replied to this post.
      * <p><b>Manual synchronization is needed, since this list can be modified from any thread.
      * Wrap all accesses in a {@code synchronized} block.</b>
      */
-    public final List<Integer> repliesFrom = new ArrayList<>();
+    // TODO(ODL):
+    private final List<Integer> repliesFrom = new ArrayList<>();
 
     // These members may only mutate on the main thread.
     private boolean sticky;
@@ -108,7 +119,7 @@ public class Post
 
         subject = builder.subject;
         name = builder.name;
-        comment = builder.comment;
+        comment = builder.postCommentBuilder.toPostComment();
         tripcode = builder.tripcode;
 
         time = builder.unixTimestampSeconds;
@@ -140,16 +151,36 @@ public class Post
         subjectSpan = builder.subjectSpan;
         nameTripcodeIdCapcodeSpan = builder.nameTripcodeIdCapcodeSpan;
 
-        linkables = Collections.unmodifiableList(new ArrayList<>(builder.linkables));
         repliesTo = Collections.unmodifiableSet(builder.repliesToIds);
     }
 
-    public synchronized CharSequence getComment() {
-        return comment;
+    public synchronized List<PostLinkable> getLinkables() {
+        return comment.getAllLinkables();
     }
 
-    public synchronized void setComment(CharSequence newComment) {
-        this.comment = newComment;
+    public synchronized void setComment(CharSequence comment) {
+        this.comment.setComment(comment);
+    }
+
+    public synchronized CharSequence getComment() {
+        return comment.getComment();
+    }
+
+    public synchronized int getRepliesFromCount() {
+        return repliesFrom.size();
+    }
+
+    public synchronized Set<Integer> getRepliesTo() {
+        return repliesTo;
+    }
+
+    public synchronized void setRepliesFrom(List<Integer> repliesFrom) {
+        this.repliesFrom.clear();
+        this.repliesFrom.addAll(repliesFrom);
+    }
+
+    public synchronized List<Integer> getRepliesFrom() {
+        return repliesFrom;
     }
 
     @AnyThread
@@ -292,7 +323,6 @@ public class Post
         public Board board;
         public int id = -1;
         public int opId = -1;
-
         public boolean op;
         public int replies = -1;
         public int imagesCount = -1;
@@ -301,23 +331,23 @@ public class Post
         public boolean closed;
         public boolean archived;
         public long lastModified = -1L;
-
         public String subject = "";
         public String name = "";
-        public CharSequence comment = "";
+        public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
         public String tripcode = "";
-
         public long unixTimestampSeconds = -1L;
         public List<PostImage> images;
-
         public List<PostHttpIcon> httpIcons;
-
         public String posterId = "";
         public String moderatorCapcode = "";
-
         public int idColor;
         public boolean isLightColor;
+        public boolean isSavedReply;
+        public CharSequence subjectSpan;
+        public CharSequence nameTripcodeIdCapcodeSpan;
+        private Set<Integer> repliesToIds = new HashSet<>();
 
+        // TODO(ODL): extract everything related to filters into PostFilter object
         public int filterHighlightedColor;
         public boolean filterStub;
         public boolean filterRemove;
@@ -325,13 +355,6 @@ public class Post
         public boolean filterReplies;
         public boolean filterOnlyOP;
         public boolean filterSaved;
-        public boolean isSavedReply;
-
-        public CharSequence subjectSpan;
-        public CharSequence nameTripcodeIdCapcodeSpan;
-
-        private Set<PostLinkable> linkables = new HashSet<>();
-        private Set<Integer> repliesToIds = new HashSet<>();
 
         public Builder() {
         }
@@ -402,7 +425,7 @@ public class Post
         }
 
         public Builder comment(CharSequence comment) {
-            this.comment = comment;
+            this.postCommentBuilder.setComment(comment);
             return this;
         }
 
@@ -495,25 +518,21 @@ public class Post
 
         public Builder addLinkable(PostLinkable linkable) {
             synchronized (this) {
-                linkables.add(linkable);
+                this.postCommentBuilder.addPostLinkable(linkable);
                 return this;
             }
         }
 
         public Builder linkables(List<PostLinkable> linkables) {
             synchronized (this) {
-                this.linkables = new HashSet<>(linkables);
+                this.postCommentBuilder.setPostLinkables(new HashSet<>(linkables));
                 return this;
             }
         }
 
         public List<PostLinkable> getLinkables() {
             synchronized (this) {
-                List<PostLinkable> result = new ArrayList<>();
-                if (linkables != null) {
-                    result.addAll(linkables);
-                }
-                return result;
+                return postCommentBuilder.getAllLinkables();
             }
         }
 
@@ -528,7 +547,7 @@ public class Post
         }
 
         public Post build() {
-            if (board == null || id < 0 || opId < 0 || unixTimestampSeconds < 0 || comment == null) {
+            if (board == null || id < 0 || opId < 0 || unixTimestampSeconds < 0 || !postCommentBuilder.hasComment()) {
                 throw new IllegalArgumentException("Post data not complete");
             }
 

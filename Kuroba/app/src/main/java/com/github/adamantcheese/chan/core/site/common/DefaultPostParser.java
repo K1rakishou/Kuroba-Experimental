@@ -27,8 +27,8 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.core.site.parser.PostParser;
-import com.github.adamantcheese.chan.ui.text.AbsoluteSizeSpanHashed;
-import com.github.adamantcheese.chan.ui.text.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -73,10 +73,12 @@ public class DefaultPostParser
 
         parseSpans(theme, builder);
 
-        if (builder.comment != null) {
-            builder.comment = parseComment(theme, builder, builder.comment, callback);
+        if (builder.postCommentBuilder.hasComment()) {
+            builder.postCommentBuilder.setComment(
+                    parseComment(theme, builder, builder.postCommentBuilder.getComment(), callback)
+            );
         } else {
-            builder.comment = new SpannableString("");
+            builder.postCommentBuilder.setComment(new SpannableString(""));
         }
 
         return builder.build();
@@ -204,17 +206,9 @@ public class DefaultPostParser
                             || text.startsWith("[eqn]"))) {
                 text = processEmojiMath(text);
             }
-            //we need to replace youtube links with their titles before linkifying anything else
-            //because the string itself changes as a result of the titles shrinking/expanding the string length
-            //this would mess up the rest of the spans if we did it afterwards, so we do it as the first step
-            SpannableString spannable;
-            if (ChanSettings.parseYoutubeTitles.get()) {
-                spannable = CommentParserHelper.replaceYoutubeLinks(theme, post, text);
-                CommentParserHelper.detectLinks(theme, post, spannable.toString(), spannable);
-            } else {
-                spannable = new SpannableString(text);
-                CommentParserHelper.detectLinks(theme, post, text, spannable);
-            }
+
+            SpannableString spannable = new SpannableString(text);
+            CommentParserHelper.detectLinks(theme, post, text, spannable);
 
             return spannable;
         } else if (node instanceof Element) {

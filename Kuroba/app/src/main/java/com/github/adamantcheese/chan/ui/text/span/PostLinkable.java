@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.model;
+package com.github.adamantcheese.chan.ui.text.span;
 
 import android.text.TextPaint;
 import android.text.style.ClickableSpan;
@@ -27,11 +27,11 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
-import static com.github.adamantcheese.chan.core.model.PostLinkable.Type.BOARD;
-import static com.github.adamantcheese.chan.core.model.PostLinkable.Type.LINK;
-import static com.github.adamantcheese.chan.core.model.PostLinkable.Type.QUOTE;
-import static com.github.adamantcheese.chan.core.model.PostLinkable.Type.SPOILER;
-import static com.github.adamantcheese.chan.core.model.PostLinkable.Type.THREAD;
+import static com.github.adamantcheese.chan.ui.text.span.PostLinkable.Type.BOARD;
+import static com.github.adamantcheese.chan.ui.text.span.PostLinkable.Type.LINK;
+import static com.github.adamantcheese.chan.ui.text.span.PostLinkable.Type.QUOTE;
+import static com.github.adamantcheese.chan.ui.text.span.PostLinkable.Type.SPOILER;
+import static com.github.adamantcheese.chan.ui.text.span.PostLinkable.Type.THREAD;
 
 /**
  * A Clickable span that handles post clicks. These are created in PostParser for post quotes, spoilers etc.<br>

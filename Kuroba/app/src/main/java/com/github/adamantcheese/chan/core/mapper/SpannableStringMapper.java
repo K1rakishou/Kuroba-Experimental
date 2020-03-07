@@ -9,7 +9,6 @@ import android.text.style.TypefaceSpan;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.save.spans.SerializableAbsoluteSizeSpan;
 import com.github.adamantcheese.chan.core.model.save.spans.SerializableBackgroundColorSpan;
 import com.github.adamantcheese.chan.core.model.save.spans.SerializableForegroundColorSpan;
@@ -24,9 +23,10 @@ import com.github.adamantcheese.chan.core.model.save.spans.linkable.PostLinkable
 import com.github.adamantcheese.chan.core.model.save.spans.linkable.PostLinkableSearchLinkValue;
 import com.github.adamantcheese.chan.core.model.save.spans.linkable.PostLinkableSpoilerValue;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
-import com.github.adamantcheese.chan.ui.text.AbsoluteSizeSpanHashed;
-import com.github.adamantcheese.chan.ui.text.BackgroundColorSpanHashed;
-import com.github.adamantcheese.chan.ui.text.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.BackgroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.google.gson.Gson;

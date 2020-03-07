@@ -373,6 +373,17 @@ public class PostAdapter
         return loadable != null && loadable.isThreadMode();
     }
 
+    public void updatePost(Post post) {
+        BackgroundUtils.ensureMainThread();
+
+        int postIndex = displayList.indexOf(post);
+        if (postIndex < 0) {
+            return;
+        }
+
+        notifyItemChanged(postIndex);
+    }
+
     //region Holders
     public static class PostViewHolder
             extends RecyclerView.ViewHolder {

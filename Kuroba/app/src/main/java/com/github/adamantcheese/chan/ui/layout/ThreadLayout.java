@@ -41,7 +41,6 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
@@ -52,6 +51,7 @@ import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.helper.PostPopupHelper;
 import com.github.adamantcheese.chan.ui.helper.RemovedPostsHelper;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.HidingFloatingActionButton;
@@ -100,9 +100,7 @@ public class ThreadLayout
     ThreadPresenter presenter;
 
     private ThreadLayoutCallback callback;
-
     private View progressLayout;
-
     private LoadView loadView;
     private HidingFloatingActionButton replyButton;
     private ThreadListLayout threadListLayout;
@@ -311,7 +309,7 @@ public class ThreadLayout
     }
 
     public void showPostLinkables(final Post post) {
-        final List<PostLinkable> linkables = post.linkables;
+        final List<PostLinkable> linkables = post.getLinkables();
         String[] keys = new String[linkables.size()];
         for (int i = 0; i < linkables.size(); i++) {
             keys[i] = linkables.get(i).key.toString();
@@ -587,6 +585,11 @@ public class ThreadLayout
         snackbar.setGestureInsetBottomIgnored(true);
         snackbar.show();
         fixSnackbarText(getContext(), snackbar);
+    }
+
+    @Override
+    public void onPostUpdated(Post post) {
+        threadListLayout.onPostUpdated(post);
     }
 
     @Override

@@ -193,7 +193,7 @@ public class FilterEngine {
 
         if (typeMatches(filter, TRIPCODE) && matches(filter, post.tripcode, false)) return true;
         if (typeMatches(filter, NAME) && matches(filter, post.name, false)) return true;
-        if (typeMatches(filter, COMMENT) && matches(filter, post.comment.toString(), false)) return true;
+        if (typeMatches(filter, COMMENT) && matches(filter, post.postCommentBuilder.getComment().toString(), false)) return true;
         if (typeMatches(filter, ID) && matches(filter, post.posterId, false)) return true;
         if (typeMatches(filter, SUBJECT) && matches(filter, post.subject, false)) return true;
 

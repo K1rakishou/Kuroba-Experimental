@@ -18,9 +18,9 @@ package com.github.adamantcheese.chan.ui.cell;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;

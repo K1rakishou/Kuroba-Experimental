@@ -61,6 +61,7 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.FastScroller;
 import com.github.adamantcheese.chan.ui.view.FastScrollerHelper;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
 import java.util.ArrayList;
@@ -839,6 +840,14 @@ public class ThreadListLayout
 
     public void onImageOptionsApplied(Reply modifiedReply, boolean filenameRemoved) {
         reply.onImageOptionsApplied(modifiedReply, filenameRemoved);
+    }
+
+    public void onPostUpdated(Post post) {
+        BackgroundUtils.ensureMainThread();
+
+        if (postAdapter != null) {
+            postAdapter.updatePost(post);
+        }
     }
 
     public interface ThreadListLayoutPresenterCallback {

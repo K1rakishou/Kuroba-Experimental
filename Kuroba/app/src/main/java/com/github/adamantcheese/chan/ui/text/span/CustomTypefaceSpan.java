@@ -1,9 +1,11 @@
-package com.github.adamantcheese.chan.ui.text;
+package com.github.adamantcheese.chan.ui.text.span;
 
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.text.TextPaint;
 import android.text.style.TypefaceSpan;
+
+import java.util.Objects;
 
 public class CustomTypefaceSpan
         extends TypefaceSpan {
@@ -44,5 +46,24 @@ public class CustomTypefaceSpan
         }
 
         paint.setTypeface(tf);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (!(o instanceof CustomTypefaceSpan)) {
+            return false;
+        }
+
+        CustomTypefaceSpan that = (CustomTypefaceSpan) o;
+        return Objects.equals(newType, that.newType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(newType);
     }
 }

@@ -1311,7 +1311,7 @@ public class WatchManager
             // Now get a list of posts that have a quote to a saved reply, but not self-replies
             for (Post post : thread.getPosts()) {
                 for (Post saved : savedReplies) {
-                    if (post.repliesTo.contains(saved.no) && !post.isSavedReply) {
+                    if (post.getRepliesTo().contains(saved.no) && !post.isSavedReply) {
                         quotes.add(post);
                     }
                 }

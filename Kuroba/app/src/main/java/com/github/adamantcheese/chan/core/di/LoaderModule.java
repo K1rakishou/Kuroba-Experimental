@@ -18,7 +18,9 @@ public class LoaderModule {
 
     @Provides
     @Singleton
-    public PostExtraContentLoader providePostExtraContentLoader(NetModule.ProxiedOkHttpClient okHttpClient) {
+    public PostExtraContentLoader providePostExtraContentLoader(
+            NetModule.ProxiedOkHttpClient okHttpClient
+    ) {
         return new PostExtraContentLoader(okHttpClient);
     }
 

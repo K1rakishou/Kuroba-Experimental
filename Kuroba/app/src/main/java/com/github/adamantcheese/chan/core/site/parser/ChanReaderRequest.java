@@ -245,7 +245,7 @@ public class ChanReaderRequest
             Map<Integer, List<Integer>> replies = new HashMap<>();
 
             for (Post sourcePost : allPosts) {
-                for (int replyTo : sourcePost.repliesTo) {
+                for (int replyTo : sourcePost.getRepliesTo()) {
                     List<Integer> value = replies.get(replyTo);
                     if (value == null) {
                         value = new ArrayList<>(3);
@@ -262,10 +262,7 @@ public class ChanReaderRequest
                 Post subject = postsByNo.get(key);
                 // Sometimes a post replies to a ghost, a post that doesn't exist.
                 if (subject != null) {
-                    synchronized (subject.repliesFrom) {
-                        subject.repliesFrom.clear();
-                        subject.repliesFrom.addAll(value);
-                    }
+                    subject.setRepliesFrom(value);
                 }
             }
         }

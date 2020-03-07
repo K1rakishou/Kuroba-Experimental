@@ -28,12 +28,12 @@ import androidx.annotation.AnyThread;
 
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
-import com.github.adamantcheese.chan.ui.text.AbsoluteSizeSpanHashed;
-import com.github.adamantcheese.chan.ui.text.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
 

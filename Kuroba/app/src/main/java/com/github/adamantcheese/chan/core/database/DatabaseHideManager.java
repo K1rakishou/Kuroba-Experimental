@@ -129,7 +129,7 @@ public class DatabaseHideManager {
                 continue;
             }
 
-            for (Integer replyNo : post.repliesTo) {
+            for (Integer replyNo : post.getRepliesTo()) {
                 if (hiddenPostsLookupMap.containsKey(replyNo)) {
                     PostHide parentHiddenPost = hiddenPostsLookupMap.get(replyNo);
                     Post parentPost = postsFastLookupMap.get(replyNo);
@@ -294,8 +294,8 @@ public class DatabaseHideManager {
                 )
                 .isSavedReply(childPost.isSavedReply)
                 .spans(childPost.subjectSpan, childPost.nameTripcodeIdCapcodeSpan)
-                .linkables(childPost.linkables)
-                .repliesTo(childPost.repliesTo)
+                .linkables(childPost.getLinkables())
+                .repliesTo(childPost.getRepliesTo())
                 .build();
     }
 

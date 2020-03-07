@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.LoaderBatchResult;
+import com.github.adamantcheese.chan.core.loader.LoaderResult;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
@@ -43,7 +44,6 @@ import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.History;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -69,6 +69,7 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
@@ -522,6 +523,8 @@ public class ThreadPresenter
 
     @Override
     public void onPostBind(Post post) {
+        BackgroundUtils.ensureMainThread();
+
         if (loadable != null) {
             onDemandContentLoaderManager.onPostBind(loadable, post);
         }
@@ -529,13 +532,29 @@ public class ThreadPresenter
 
     @Override
     public void onPostUnbind(Post post) {
+        BackgroundUtils.ensureMainThread();
+
         if (loadable != null) {
             onDemandContentLoaderManager.onPostUnbind(loadable, post);
         }
     }
 
     private void onPostUpdatedWithNewContent(LoaderBatchResult batchResult) {
-        // TODO: update post. ALARME! There is a possibility of an infinite loop
+        BackgroundUtils.ensureMainThread();
+
+        if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
+            threadPresenterCallback.onPostUpdated(batchResult.getPost());
+        }
+    }
+
+    private boolean needUpdatePost(LoaderBatchResult batchResult) {
+        for (LoaderResult loaderResult : batchResult.getResults()) {
+            if (loaderResult instanceof LoaderResult.Success) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /*
@@ -923,7 +942,7 @@ public class ThreadPresenter
                 showPostInfo(post);
                 break;
             case POST_OPTION_LINKS:
-                if (post.linkables.size() > 0) {
+                if (post.getLinkables().size() > 0) {
                     threadPresenterCallback.showPostLinkables(post);
                 }
                 break;
@@ -954,17 +973,13 @@ public class ThreadPresenter
                     databaseManager.runTask(databaseManager.getDatabaseSavedReplyManager().unsaveReply(savedReply));
                     Pin watchedPin = watchManager.getPinByLoadable(loadable);
                     if (watchedPin != null) {
-                        synchronized (this) {
-                            watchedPin.quoteLastCount -= post.repliesFrom.size();
-                        }
+                        watchedPin.quoteLastCount -= post.getRepliesFromCount();
                     }
                 } else {
                     databaseManager.runTask(databaseManager.getDatabaseSavedReplyManager().saveReply(savedReply));
                     Pin watchedPin = watchManager.getPinByLoadable(loadable);
                     if (watchedPin != null) {
-                        synchronized (this) {
-                            watchedPin.quoteLastCount += post.repliesFrom.size();
-                        }
+                        watchedPin.quoteLastCount += post.getRepliesFromCount();
                     }
                 }
                 //force reload for reply highlighting
@@ -997,12 +1012,7 @@ public class ThreadPresenter
                 if (chanLoader.getThread().getLoadable().mode == Loadable.Mode.CATALOG) {
                     threadPresenterCallback.hideThread(post, post.no, hide);
                 } else {
-                    boolean isEmpty = false;
-
-                    synchronized (post.repliesFrom) {
-                        isEmpty = post.repliesFrom.isEmpty();
-                    }
-
+                    boolean isEmpty = post.getRepliesFromCount() == 0;
                     if (isEmpty) {
                         // no replies to this post so no point in showing the dialog
                         hideOrRemovePosts(hide, false, post, chanLoader.getThread().getOp().no);
@@ -1079,16 +1089,16 @@ public class ThreadPresenter
     @Override
     public void onShowPostReplies(Post post) {
         List<Post> posts = new ArrayList<>();
-        synchronized (post.repliesFrom) {
-            for (int no : post.repliesFrom) {
-                if (isBound()) {
-                    Post replyPost = PostUtils.findPostById(no, chanLoader.getThread());
-                    if (replyPost != null) {
-                        posts.add(replyPost);
-                    }
+
+        for (int no : post.getRepliesFrom()) {
+            if (isBound()) {
+                Post replyPost = PostUtils.findPostById(no, chanLoader.getThread());
+                if (replyPost != null) {
+                    posts.add(replyPost);
                 }
             }
         }
+
         if (posts.size() > 0) {
             threadPresenterCallback.showPostsPopup(post, posts);
         }
@@ -1451,5 +1461,7 @@ public class ThreadPresenter
         void viewRemovedPostsForTheThread(List<Post> threadPosts, int threadNo);
 
         void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Integer> selectedPosts);
+
+        void onPostUpdated(Post post);
     }
 }

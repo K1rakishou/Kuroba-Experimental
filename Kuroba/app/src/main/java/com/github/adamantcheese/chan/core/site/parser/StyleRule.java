@@ -27,11 +27,11 @@ import android.text.style.TypefaceSpan;
 import android.text.style.UnderlineSpan;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.PostLinkable;
-import com.github.adamantcheese.chan.ui.text.AbsoluteSizeSpanHashed;
-import com.github.adamantcheese.chan.ui.text.BackgroundColorSpanHashed;
-import com.github.adamantcheese.chan.ui.text.CustomTypefaceSpan;
-import com.github.adamantcheese.chan.ui.text.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.BackgroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.CustomTypefaceSpan;
+import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
 import org.jsoup.nodes.Element;

@@ -15,12 +15,6 @@ public class PostMapper {
     private static final Comparator<Post> POST_COMPARATOR = (p1, p2) -> Integer.compare(p1.no, p2.no);
 
     public static SerializablePost toSerializablePost(Post post) {
-        List<Integer> repliesFrom;
-
-        synchronized (post.repliesFrom) {
-            repliesFrom = new ArrayList<>(post.repliesFrom);
-        }
-
         return new SerializablePost(
                 post.boardId,
                 BoardMapper.toSerializableBoard(post.board),
@@ -42,10 +36,10 @@ public class PostMapper {
                 post.filterReplies,
                 post.filterOnlyOP,
                 post.filterSaved,
-                post.repliesTo,
+                post.getRepliesTo(),
                 SpannableStringMapper.serializeSpannableString(post.nameTripcodeIdCapcodeSpan),
                 post.deleted.get(),
-                repliesFrom,
+                post.getRepliesFrom(),
                 post.isSticky(),
                 post.isClosed(),
                 post.isArchived(),
@@ -107,7 +101,7 @@ public class PostMapper {
 
         Post post = postBuilder.build();
         post.setTitle(serializablePost.getTitle());
-        post.repliesFrom.addAll(serializablePost.getRepliesFrom());
+        post.setRepliesFrom(serializablePost.getRepliesFrom());
 
         return post;
     }
