@@ -4,9 +4,9 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatCheckBox
+import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.base.ModularResult
 import com.github.adamantcheese.chan.core.manager.ReportManager
 import com.github.adamantcheese.chan.ui.controller.LogsController
 import com.github.adamantcheese.chan.ui.view.ReportProblemView

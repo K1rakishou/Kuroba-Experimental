@@ -2,6 +2,8 @@ package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import com.github.adamantcheese.base.ModularResult
+import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
@@ -9,18 +11,78 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.groupOrNull
+import com.github.adamantcheese.database.dto.YoutubeLinkExtraContent
+import com.github.adamantcheese.database.source.YoutubeLinkExtraContentLocalSource
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import io.reactivex.Flowable
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.rx2.rxFlowable
 import okhttp3.Response
+import org.joda.time.DateTime
 import org.joda.time.Period
 import java.util.regex.Pattern
 
-internal class YoutubeMediaServiceExtraInfoFetcher : ExternalMediaServiceExtraInfoFetcher {
+internal class YoutubeMediaServiceExtraInfoFetcher(
+        private val youtubeLinkExtraContentLocalSource: YoutubeLinkExtraContentLocalSource
+) : ExternalMediaServiceExtraInfoFetcher {
 
     override val fetcherType: FetcherType
         get() = FetcherType.YoutubeFetcher
 
+    override fun isEnabled(): Boolean {
+        if (!ChanSettings.parseYoutubeTitles.get() && !ChanSettings.parseYoutubeDuration.get()) {
+            return false
+        }
+
+        return true
+    }
+
     override fun getIconBitmap(): Bitmap = youtubeIcon
+
+    @ExperimentalCoroutinesApi
+    override fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>> {
+        return rxFlowable {
+            val result = safeRun {
+                youtubeLinkExtraContentLocalSource.getByPostUid(postUid, url)
+                        .map { youtubeLnkExtraContent ->
+                            if (youtubeLnkExtraContent == null) {
+                                return@map null
+                            }
+
+                            return@map ExtraLinkInfo(
+                                    youtubeLnkExtraContent.videoTitle,
+                                    youtubeLnkExtraContent.videoDuration
+                            )
+                        }.unwrap()
+            }
+
+            send(result)
+        }
+    }
+
+    @ExperimentalCoroutinesApi
+    override fun storeIntoCache(
+            postUid: String,
+            url: String,
+            extraLinkInfo: ExtraLinkInfo
+    ): Flowable<ModularResult<Unit>> {
+        return rxFlowable {
+            val result = safeRun {
+                val youtubeLinkExtraContent = YoutubeLinkExtraContent(
+                        postUid,
+                        url,
+                        extraLinkInfo.title,
+                        extraLinkInfo.duration,
+                        DateTime.now()
+                )
+
+                youtubeLinkExtraContentLocalSource.insert(youtubeLinkExtraContent).unwrap()!!
+            }
+
+            send(result)
+        }
+    }
 
     override fun linkMatchesToService(link: String): Boolean {
         return youtubeLinkPattern.matcher(link).matches()
@@ -128,7 +190,6 @@ internal class YoutubeMediaServiceExtraInfoFetcher : ExternalMediaServiceExtraIn
 
         private val youtubeLinkPattern =
                 Pattern.compile("\\b\\w+://(?:youtu\\.be/|[\\w.]*youtube[\\w.]*/.*?(?:v=|\\bembed/|\\bv/))([\\w\\-]{11})(.*)\\b")
-        private val youtubeIcon
-                = BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.youtube_icon)
+        private val youtubeIcon = BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.youtube_icon)
     }
 }

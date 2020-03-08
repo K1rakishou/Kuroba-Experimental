@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
+import com.github.adamantcheese.database.source.YoutubeLinkExtraContentLocalSource;
 
 import org.codejargon.feather.Provides;
 
@@ -27,12 +28,21 @@ public class LoaderModule {
 
     @Provides
     @Singleton
+    public YoutubeMediaServiceExtraInfoFetcher provideYoutubeMediaServiceExtraInfoFetcher(
+            YoutubeLinkExtraContentLocalSource youtubeLinkExtraContentLocalSource
+    ) {
+        return new YoutubeMediaServiceExtraInfoFetcher(youtubeLinkExtraContentLocalSource);
+    }
+
+    @Provides
+    @Singleton
     public PostExtraContentLoader providePostExtraContentLoader(
             NetModule.ProxiedOkHttpClient okHttpClient,
+            YoutubeMediaServiceExtraInfoFetcher youtubeMediaServiceExtraInfoFetcher,
             @Named(ExecutorsManager.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         List<ExternalMediaServiceExtraInfoFetcher> fetchers = new ArrayList<>();
-        fetchers.add(new YoutubeMediaServiceExtraInfoFetcher());
+        fetchers.add(youtubeMediaServiceExtraInfoFetcher);
 
         return new PostExtraContentLoader(
                 okHttpClient,

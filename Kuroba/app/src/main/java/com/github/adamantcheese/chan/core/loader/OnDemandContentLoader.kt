@@ -5,13 +5,12 @@ import io.reactivex.Single
 abstract class OnDemandContentLoader(
         val loaderType: LoaderType
 ) {
-    abstract fun isAlreadyCached(postLoaderData: PostLoaderData): Boolean
     abstract fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult>
     abstract fun cancelLoading(postLoaderData: PostLoaderData)
 
-    protected fun success(): Single<LoaderResult> = Single.just(LoaderResult.Success(loaderType))
-    protected fun error(): Single<LoaderResult> = Single.just(LoaderResult.Error(loaderType))
-    protected fun reject(): Single<LoaderResult> = Single.just(LoaderResult.Rejected(loaderType))
+    protected fun succeeded(): Single<LoaderResult> = Single.just(LoaderResult.Success(loaderType))
+    protected fun failed(): Single<LoaderResult> = Single.just(LoaderResult.Error(loaderType))
+    protected fun rejected(): Single<LoaderResult> = Single.just(LoaderResult.Rejected(loaderType))
 
     override fun equals(other: Any?): Boolean {
         if (this === other) {

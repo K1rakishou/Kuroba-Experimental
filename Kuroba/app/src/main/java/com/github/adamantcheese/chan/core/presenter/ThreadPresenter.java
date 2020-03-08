@@ -198,6 +198,8 @@ public class ThreadPresenter
             loadable.site.actions().archives(Chan.instance(ArchivesManager.class));
             threadPresenterCallback.showLoading();
 
+            onDemandContentLoaderManager.preloadForThread(loadable);
+
             Disposable disposable = onDemandContentLoaderManager.listenPostContentUpdates()
                     .subscribe(
                             this::onPostUpdatedWithNewContent,

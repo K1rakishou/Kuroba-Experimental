@@ -1,7 +1,9 @@
 package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
 import android.graphics.Bitmap
+import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
+import io.reactivex.Flowable
 import okhttp3.Response
 
 /**
@@ -14,10 +16,16 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
      * */
     val fetcherType: FetcherType
 
+    fun isEnabled(): Boolean
+
     /**
      * Icon to prepend the link with
      * */
     fun getIconBitmap(): Bitmap
+
+    fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>>
+
+    fun storeIntoCache(postUid: String, url: String, extraLinkInfo: ExtraLinkInfo): Flowable<ModularResult<Unit>>
 
     /**
      * Whether a link belongs to this fetcher

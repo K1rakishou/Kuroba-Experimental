@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.core.loader.impl
 
+import android.graphics.Bitmap
 import android.text.Spanned
+import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.LoaderType
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
@@ -10,7 +12,6 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.CommentPostLi
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.CommentSpanUpdater
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
-import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.putIfNotContains
@@ -26,46 +27,42 @@ internal class PostExtraContentLoader(
         private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
-    override fun isAlreadyCached(postLoaderData: PostLoaderData): Boolean {
-        // TODO(ODL): Add caching
-        return false
-    }
-
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
-        if (!ChanSettings.parseYoutubeTitles.get() && !ChanSettings.parseYoutubeDuration.get()) {
-            return reject()
-        }
-
         val comment = postLoaderData.post.comment
         if (comment.isEmpty() || comment !is Spanned) {
-            return reject()
+            return rejected()
         }
 
         val postLinkableSpans = parseSpans(comment)
         if (postLinkableSpans.isEmpty()) {
-            return reject()
+            return rejected()
         }
-
-        // TODO(ODL): cache video link titles and durations
 
         return Single.fromCallable { createNewRequests(postLinkableSpans) }
                 .flatMap { newSpans ->
                     if (newSpans.isEmpty()) {
-                        return@flatMap reject()
+                        return@flatMap rejected()
                     }
 
                     return@flatMap Flowable.fromIterable(newSpans.entries)
                             .subscribeOn(scheduler)
                             .flatMap({ (url, linkInfoRequest) ->
-                                return@flatMap fetchExtraLinkInfo(url, linkInfoRequest)
+                                return@flatMap fetchExtraLinkInfo(
+                                        postLoaderData.getPostUniqueId(),
+                                        url,
+                                        linkInfoRequest
+                                )
                             }, MAX_CONCURRENT_REQUESTS)
                             .toList()
-                            .flatMap { spanUpdateBatchList ->
+                            .flatMap { spanUpdateBatchResultList ->
+                                val spanUpdateBatchList = spanUpdateBatchResultList
+                                        .mapNotNull { it.valueOrNull() }
+
                                 return@flatMap updateSpans(spanUpdateBatchList, postLoaderData)
                             }
                 }
                 .doOnError { error -> Logger.e(TAG, "Unhandled error", error) }
-                .onErrorResumeNext { error() }
+                .onErrorResumeNext { failed() }
     }
 
     private fun updateSpans(
@@ -78,7 +75,7 @@ internal class PostExtraContentLoader(
 
         if (filteredBatches.isEmpty()) {
             // No new spans, reject!
-            return reject()
+            return rejected()
         }
 
         val updated = try {
@@ -88,23 +85,86 @@ internal class PostExtraContentLoader(
             )
         } catch (error: Throwable) {
             Logger.e(TAG, "Unknown error while trying to update spans for post comment", error)
-            return error()
+            return failed()
         }
 
         if (!updated) {
             // For some unknown reason nothing was updated, reject!
-            return reject()
+            return rejected()
         }
 
         // Something was updated we need to redraw the post, so return success
-        return success()
+        return succeeded()
     }
 
     private fun fetchExtraLinkInfo(
+            postUid: String,
             url: String,
             linkInfoRequest: LinkInfoRequest
-    ): Flowable<SpanUpdateBatch> {
-        val flowable = Flowable.create<SpanUpdateBatch>({ emitter ->
+    ): Flowable<ModularResult<SpanUpdateBatch>> {
+        val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
+            fetcher.fetcherType == linkInfoRequest.fetcherType
+        }
+
+        if (fetcher == null) {
+            val error = ModularResult.error<SpanUpdateBatch>(
+                    IllegalStateException("Couldn't find fetcher for link $url")
+            )
+
+            return Flowable.just(error)
+        }
+
+        val iconBitmap = fetcher.getIconBitmap()
+
+        return fetcher.getFromCache(postUid, url)
+                .flatMap { extraLinkInfoResult ->
+                    if (extraLinkInfoResult is ModularResult.Value) {
+                        val extraLinkInfo = extraLinkInfoResult.value
+                        if (extraLinkInfo != null) {
+                            val spanUpdateBatch = SpanUpdateBatch(
+                                    url,
+                                    extraLinkInfo,
+                                    linkInfoRequest.oldPostLinkableSpans,
+                                    iconBitmap
+                            )
+
+                            return@flatMap Flowable.just(
+                                    ModularResult.value(spanUpdateBatch)
+                            )
+                        }
+                    }
+
+                    return@flatMap fetchFromNetwork(url, linkInfoRequest, fetcher, iconBitmap)
+                }
+                .flatMap { spanUpdateBatchResult ->
+                    when (spanUpdateBatchResult) {
+                        is ModularResult.Error -> {
+                            val result = ModularResult.error<SpanUpdateBatch>(spanUpdateBatchResult.error)
+                            return@flatMap Flowable.just(result)
+                        }
+                        is ModularResult.Value -> {
+                            val spanUpdateBatch = spanUpdateBatchResult.value
+
+                            return@flatMap fetcher.storeIntoCache(postUid, url, spanUpdateBatch.extraLinkInfo)
+                                    .map { spanUpdateBatchResult }
+                        }
+                        else -> {
+                            throw IllegalStateException(
+                                    "Unknown result type: ${spanUpdateBatchResult::class.simpleName}"
+                            )
+                        }
+                    }
+                }
+                .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    }
+
+    private fun fetchFromNetwork(
+            url: String,
+            linkInfoRequest: LinkInfoRequest,
+            fetcher: ExternalMediaServiceExtraInfoFetcher,
+            iconBitmap: Bitmap
+    ): Flowable<ModularResult<SpanUpdateBatch>> {
+        return Flowable.create({ emitter ->
             try {
                 val httpRequest = Request.Builder()
                         .url(url)
@@ -119,37 +179,32 @@ internal class PostExtraContentLoader(
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                        processResponse(linkInfoRequest, url, response, emitter)
+                        processResponse(
+                                linkInfoRequest,
+                                url,
+                                fetcher,
+                                iconBitmap,
+                                response,
+                                emitter
+                        )
                     }
                 })
             } catch (error: Throwable) {
                 emitter.tryOnError(error)
             }
         }, BackpressureStrategy.BUFFER)
-
-        return flowable
-                .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
     private fun processResponse(
             linkInfoRequest: LinkInfoRequest,
             url: String,
+            fetcher: ExternalMediaServiceExtraInfoFetcher,
+            iconBitmap: Bitmap,
             response: Response,
-            emitter: FlowableEmitter<SpanUpdateBatch>
+            emitter: FlowableEmitter<ModularResult<SpanUpdateBatch>>
     ) {
         try {
-            val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
-                fetcher.fetcherType == linkInfoRequest.fetcherType
-            }
-
-            if (fetcher == null) {
-                emitter.tryOnError(IllegalStateException("Couldn't find fetcher for link $url"))
-                return
-            }
-
             val extraLinkInfo = fetcher.extractExtraLinkInfo(response)
-            val iconBitmap = fetcher.getIconBitmap()
-
             val spanUpdateBatch = SpanUpdateBatch(
                     url,
                     extraLinkInfo,
@@ -157,15 +212,18 @@ internal class PostExtraContentLoader(
                     iconBitmap
             )
 
-            emitter.onNext(spanUpdateBatch)
+            emitter.onNext(ModularResult.value(spanUpdateBatch))
             emitter.onComplete()
         } catch (error: Throwable) {
             Logger.e(TAG, "Error while processing response", error)
-            emitter.tryOnError(error)
+            emitter.onNext(ModularResult.error(error))
+            emitter.onComplete()
         }
     }
 
-    private fun createNewRequests(postLinkablePostLinkableSpans: List<CommentPostLinkableSpan>): Map<String, LinkInfoRequest> {
+    private fun createNewRequests(
+            postLinkablePostLinkableSpans: List<CommentPostLinkableSpan>
+    ): Map<String, LinkInfoRequest> {
         val newSpans = mutableMapOf<String, LinkInfoRequest>()
 
         postLinkablePostLinkableSpans.forEach { postLinkableSpan ->
@@ -179,6 +237,11 @@ internal class PostExtraContentLoader(
 
                 if (fetcher == null) {
                     // No fetcher found for this link type
+                    return@forEach
+                }
+
+                if (!fetcher.isEnabled()) {
+                    // Fetcher may be disabled by some settings or some other conditions
                     return@forEach
                 }
 

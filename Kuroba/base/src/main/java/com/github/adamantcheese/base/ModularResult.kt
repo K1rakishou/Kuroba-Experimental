@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.base
+package com.github.adamantcheese.base
 
 sealed class ModularResult<V> {
     data class Value<V>(val value: V) : ModularResult<V>()
@@ -23,12 +23,18 @@ sealed class ModularResult<V> {
         return null
     }
 
-    inline fun map(func: (value: V) -> V): ModularResult<V> {
-        if (isError()) {
-            return this
+    inline fun <T> map(func: (value: V) -> T): ModularResult<T?> {
+        return when (this) {
+            is Error -> error(error)
+            is Value -> safeRun { func(value) }
         }
+    }
 
-        return safeRun { func(valueOrNull()!!) }
+    fun unwrap(): V? {
+        return when (this) {
+            is Error -> throw error
+            is Value -> value
+        }
     }
 
     companion object {

@@ -1,0 +1,46 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 29
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+}
+
+dependencies {
+    implementation project(":base")
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin_version}"
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.core:core-ktx:1.2.0'
+    implementation 'joda-time:joda-time:2.10.5'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
+
+    implementation "androidx.room:room-runtime:${versions.room_version}"
+    implementation "androidx.room:room-ktx:${versions.room_version}"
+    kapt "androidx.room:room-compiler:${versions.room_version}"
+
+    implementation "com.google.dagger:dagger:${versions.dagger_version}"
+    kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
+
+    testImplementation 'junit:junit:4.12'
+}

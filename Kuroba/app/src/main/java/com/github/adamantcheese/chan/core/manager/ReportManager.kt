@@ -2,8 +2,8 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import android.os.Build
+import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.BuildConfig
-import com.github.adamantcheese.chan.core.base.ModularResult
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.LogsController
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -112,7 +112,9 @@ class ReportManager(
                         }
                         is ModularResult.Error -> {
                             if (result.error is HttpCodeError) {
-                                Logger.e(TAG, "Bad response code: ${result.error.code}")
+                                val httpCodeError = result.error as HttpCodeError
+
+                                Logger.e(TAG, "Bad response code: ${httpCodeError.code}")
                             } else {
                                 Logger.e(TAG, "Error while trying to send crash log", result.error)
                             }

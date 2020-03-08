@@ -26,7 +26,7 @@ internal object CommentSpanUpdater {
         val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
         // Since we are inserting new text, old spans will become incorrect right after the first
-        // insertion. To fix that we need to have a counter of extra charatchers added into the ssb
+        // insertion. To fix that we need to have a counter of extra characters added into the ssb
         var offset = 0
         var updated = false
 

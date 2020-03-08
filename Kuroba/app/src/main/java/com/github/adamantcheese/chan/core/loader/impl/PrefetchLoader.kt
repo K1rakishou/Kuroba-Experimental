@@ -17,26 +17,21 @@ class PrefetchLoader(
         private val fileCacheV2: FileCacheV2
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
-    override fun isAlreadyCached(postLoaderData: PostLoaderData): Boolean {
-        // Always false, fileCacheV2 will check it internally
-        return false
-    }
-
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
         val post = postLoaderData.post
         val loadable = postLoaderData.loadable
 
         if (post.images.isEmpty()) {
-            return reject()
+            return rejected()
         }
 
         if (!isLoadableSuitableForPrefetch(loadable)) {
-            return reject()
+            return rejected()
         }
 
         val prefetchList = getPrefetchBatch(post, loadable)
         if (prefetchList.isEmpty()) {
-            return reject()
+            return rejected()
         }
 
         prefetchList.forEach { prefetch ->
@@ -53,7 +48,7 @@ class PrefetchLoader(
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
 
-        return success()
+        return succeeded()
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {

@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.core.di.LoaderModule;
 import com.github.adamantcheese.chan.core.di.ManagerModule;
 import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.di.RepositoryModule;
+import com.github.adamantcheese.chan.core.di.RoomDatabaseModule;
 import com.github.adamantcheese.chan.core.di.SiteModule;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
@@ -44,6 +45,7 @@ import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.database.DatabaseModuleInjector;
 
 import org.codejargon.feather.Feather;
 import org.greenrobot.eventbus.EventBus;
@@ -106,6 +108,8 @@ public class Chan
                 new AppModule(this),
                 new ExecutorsManager(),
                 new DatabaseModule(),
+                // TODO: change to a normal dagger implementation when we get rid of Feather
+                new RoomDatabaseModule(DatabaseModuleInjector.build(this)),
                 new NetModule(),
                 new GsonModule(),
                 new RepositoryModule(),

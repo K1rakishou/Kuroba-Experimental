@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.base
+package com.github.adamantcheese.base
 
 interface VoidFunction {
     fun invoke()

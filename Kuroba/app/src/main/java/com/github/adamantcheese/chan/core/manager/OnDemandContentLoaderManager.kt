@@ -97,6 +97,10 @@ class OnDemandContentLoaderManager(
                 .toFlowable()
     }
 
+    fun preloadForThread(loadable: Loadable) {
+        // TODO(ODL)
+    }
+
     fun listenPostContentUpdates(): Flowable<LoaderBatchResult> {
         BackgroundUtils.ensureMainThread()
 
@@ -115,11 +119,7 @@ class OnDemandContentLoaderManager(
 
         val loadableUid = loadable.uniqueId
         val postUid = getPostUniqueId(loadable, post)
-
         val postLoaderData = PostLoaderData(loadable, post)
-        if (everythingIsAlreadyCached(postLoaderData)) {
-            return
-        }
 
         val alreadyAdded = rwLock.write {
             if (!activeLoaders.containsKey(loadableUid)) {
@@ -180,20 +180,6 @@ class OnDemandContentLoaderManager(
 
             activeLoaders.remove(loadableUid)
         }
-    }
-
-    private fun everythingIsAlreadyCached(postLoaderData: PostLoaderData): Boolean {
-        val allLoadersAlreadyCached = loaders.all { loader -> loader.isAlreadyCached(postLoaderData) }
-        if (allLoadersAlreadyCached) {
-            val results = loaders.map { loader -> LoaderResult.Success(loader.loaderType) }
-
-            postUpdateRxQueue.onNext(
-                    LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results)
-            )
-            return true
-        }
-
-        return false
     }
 
     private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
