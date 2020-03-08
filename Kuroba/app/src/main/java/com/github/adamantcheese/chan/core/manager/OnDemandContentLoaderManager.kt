@@ -81,6 +81,11 @@ class OnDemandContentLoaderManager(
         return Flowable.fromIterable(loaders)
                 .flatMapSingle { loader ->
                     return@flatMapSingle loader.startLoading(postLoaderData)
+                            .doOnError { error ->
+                                // All unhandled errors will come into here
+                                val loaderName = postLoaderData::class.java.simpleName
+                                Logger.e(TAG, "Loader: $loaderName unhandled error", error)
+                            }
                             .timeout(MAX_LOADER_LOADING_TIME_SECONDS, TimeUnit.SECONDS, workerScheduler)
                             .onErrorReturnItem(LoaderResult.Error(loader.loaderType))
                 }
@@ -104,10 +109,12 @@ class OnDemandContentLoaderManager(
         BackgroundUtils.ensureMainThread()
         check(loaders.isNotEmpty()) { "No loaders!" }
 
+        if (post.onDemandContentLoaded.get()) {
+            return
+        }
+
         val loadableUid = loadable.uniqueId
         val postUid = getPostUniqueId(loadable, post)
-
-        Logger.d(TAG, "onPostBind called for $postUid")
 
         val postLoaderData = PostLoaderData(loadable, post)
         if (everythingIsAlreadyCached(postLoaderData)) {
@@ -140,7 +147,6 @@ class OnDemandContentLoaderManager(
 
         val loadableUid = loadable.uniqueId
         val postUid = getPostUniqueId(loadable, post)
-        Logger.d(TAG, "onPostUnbind called for $postUid")
 
         val postLoaderData = rwLock.write {
             val postLoaderData = activeLoaders[loadableUid]?.remove(postUid)

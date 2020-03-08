@@ -366,7 +366,7 @@ public class PostCell
         bindIcons(theme, post);
 
         CharSequence commentText = getCommentText(post);
-        bindPost(theme, post, commentText);
+        bindPostComment(theme, post, commentText);
 
         if (threadMode) {
             bindThreadPost(post, commentText);
@@ -482,7 +482,7 @@ public class PostCell
         title.setText(TextUtils.concat(titleParts.toArray(new CharSequence[0])));
     }
 
-    private void bindPost(Theme theme, Post post, CharSequence commentText) {
+    private void bindPostComment(Theme theme, Post post, CharSequence commentText) {
         if (post.httpIcons != null) {
             comment.setPadding(paddingPx, paddingPx, paddingPx, 0);
         } else {

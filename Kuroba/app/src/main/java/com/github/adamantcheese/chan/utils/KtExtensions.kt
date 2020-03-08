@@ -19,3 +19,18 @@ fun Matcher.groupOrNull(group: Int): String? {
         null
     }
 }
+
+/**
+ * Not thread-safe!
+ * */
+fun <K, V> MutableMap<K, V>.putIfNotContains(key: K, value: V) {
+    if (!this.containsKey(key)) {
+        this[key] = value
+    }
+}
+
+fun <K, V> HashMap<K, V>.putIfNotContains(key: K, value: V) {
+    if (!this.containsKey(key)) {
+        this[key] = value
+    }
+}
