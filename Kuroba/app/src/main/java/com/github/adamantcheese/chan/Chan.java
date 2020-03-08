@@ -46,6 +46,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
 import org.codejargon.feather.Feather;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -92,6 +93,8 @@ public class Chan
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         AndroidUtils.init(this);
+        // remove this if you need to debug some sort of event bus issue
+        EventBus.builder().logNoSubscriberMessages(false).installDefaultEventBus();
     }
 
     @Override
@@ -142,6 +145,11 @@ public class Chan
             }
             if (e instanceof InterruptedException) {
                 // fine, some blocking code was interrupted by a dispose call
+                return;
+            }
+            if (e instanceof RuntimeException && e.getCause() instanceof InterruptedException) {
+                // fine, DB synchronous call (via runTask) was interrupted when a reactive stream
+                // was disposed of.
                 return;
             }
             if (e instanceof FileCacheException.CancellationException

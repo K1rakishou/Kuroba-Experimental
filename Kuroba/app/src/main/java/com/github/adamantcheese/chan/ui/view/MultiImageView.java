@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.MediaSourceCallback;
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload;
 import com.github.adamantcheese.chan.core.cache.downloader.DownloadRequestExtraInfo;
+import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingDataSource;
 import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingSource;
 import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
@@ -54,7 +55,6 @@ import com.github.adamantcheese.chan.ui.widget.CancellableToast;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.file.RawFile;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioListener;
@@ -70,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
 import javax.inject.Inject;
 
@@ -111,6 +112,8 @@ public class MultiImageView
 
     private PostImage postImage;
     private Callback callback;
+    private boolean op;
+
     private Mode mode = Mode.UNLOADED;
     private ImageContainer thumbnailRequest;
     private CancelableDownload bigImageRequest;
@@ -159,9 +162,10 @@ public class MultiImageView
         }
     }
 
-    public void bindPostImage(PostImage postImage, Callback callback) {
+    public void bindPostImage(PostImage postImage, Callback callback, boolean op) {
         this.postImage = postImage;
         this.callback = callback;
+        this.op = op;
     }
 
     public PostImage getPostImage() {
@@ -524,7 +528,7 @@ public class MultiImageView
 
                     if (!hasContent || mode == Mode.VIDEO) {
                         PlayerView exoVideoView = new PlayerView(getContext());
-                        exoPlayer = ExoPlayerFactory.newSimpleInstance(getContext());
+                        exoPlayer = new SimpleExoPlayer.Builder(getContext()).build();
                         exoVideoView.setPlayer(exoPlayer);
 
                         exoPlayer.setRepeatMode(ChanSettings.videoAutoLoop.get()
@@ -632,7 +636,7 @@ public class MultiImageView
             onModeLoaded(Mode.VIDEO, null);
         } else {
             PlayerView exoVideoView = new PlayerView(getContext());
-            exoPlayer = ExoPlayerFactory.newSimpleInstance(getContext());
+            exoPlayer = new SimpleExoPlayer.Builder(getContext()).build();
             exoVideoView.setPlayer(exoPlayer);
             String userAgent = Util.getUserAgent(getAppContext(), NetModule.USER_AGENT);
             DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), userAgent);
@@ -677,11 +681,18 @@ public class MultiImageView
 
     public void toggleTransparency() {
         transparentBackground = !transparentBackground;
-        final int BACKGROUND_COLOR = Color.argb(255, 211, 217, 241);
+        // these colors are specific to 4chan for the time being
+        final int BACKGROUND_COLOR_SFW = Color.argb(255, 214, 218, 240);
+        final int BACKGROUND_COLOR_SFW_OP = Color.argb(255, 238, 242, 255);
+        final int BACKGROUND_COLOR_NSFW = Color.argb(255, 240, 224, 214);
+        final int BACKGROUND_COLOR_NSFW_OP = Color.argb(255, 255, 255, 238);
+        int boardColor = callback.getLoadable().board.workSafe
+                ? (op ? BACKGROUND_COLOR_SFW_OP : BACKGROUND_COLOR_SFW)
+                : (op ? BACKGROUND_COLOR_NSFW_OP : BACKGROUND_COLOR_NSFW);
         View activeView = getActiveView();
         if (!(activeView instanceof CustomScaleImageView || activeView instanceof GifImageView)) return;
         boolean isImage = activeView instanceof CustomScaleImageView;
-        int backgroundColor = !transparentBackground ? Color.TRANSPARENT : BACKGROUND_COLOR;
+        int backgroundColor = !transparentBackground ? Color.TRANSPARENT : boardColor;
         if (isImage) {
             ((CustomScaleImageView) activeView).setTileBackgroundColor(backgroundColor);
         } else {
@@ -807,6 +818,7 @@ public class MultiImageView
 
         if (exoPlayer != null) {
             // ExoPlayer will keep loading resources if we don't release it here.
+            releaseStreamCallbacks();
             exoPlayer.release();
             exoPlayer = null;
         }
@@ -820,6 +832,7 @@ public class MultiImageView
                 View child = getChildAt(i);
                 if (child != view) {
                     if (child instanceof PlayerView) {
+                        releaseStreamCallbacks();
                         ((PlayerView) child).getPlayer().release();
                     }
                     removeViewAt(i);
@@ -838,6 +851,26 @@ public class MultiImageView
 
         hasContent = true;
         callback.onModeLoaded(this, mode);
+    }
+
+    private void releaseStreamCallbacks() {
+        if (ChanSettings.videoStream.get()) {
+            try {
+                Field mediaSource = exoPlayer.getClass().getDeclaredField("mediaSource");
+                mediaSource.setAccessible(true);
+                if (mediaSource.get(exoPlayer) != null) {
+                    ProgressiveMediaSource source = (ProgressiveMediaSource) mediaSource.get(exoPlayer);
+                    Field dataSource = source.getClass().getDeclaredField("dataSourceFactory");
+                    dataSource.setAccessible(true);
+                    DataSource.Factory factory = (DataSource.Factory) dataSource.get(source);
+                    ((WebmStreamingDataSource) factory.createDataSource()).clearListeners();
+                    dataSource.setAccessible(false);
+                }
+                mediaSource.setAccessible(false);
+            } catch (Exception ignored) {
+                // data source likely is from a file rather than a stream, ignore any exceptions
+            }
+        }
     }
 
     public interface Callback {
@@ -862,5 +895,7 @@ public class MultiImageView
         void onAudioLoaded(MultiImageView multiImageView);
 
         void hideProgress(MultiImageView multiImageView);
+
+        Loadable getLoadable();
     }
 }

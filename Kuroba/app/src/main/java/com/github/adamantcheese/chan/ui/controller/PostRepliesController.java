@@ -96,25 +96,22 @@ public class PostRepliesController
     }
 
     public ThumbnailView getThumbnail(PostImage postImage) {
-        if (repliesView == null) {
-            return null;
-        } else {
-            ThumbnailView thumbnail = null;
-            for (int i = 0; i < repliesView.getChildCount(); i++) {
-                View view = repliesView.getChildAt(i);
-                if (view instanceof PostCellInterface) {
-                    PostCellInterface postView = (PostCellInterface) view;
-                    Post post = postView.getPost();
+        if (repliesView == null) return null;
+        ThumbnailView thumbnail = null;
+        for (int i = 0; i < repliesView.getChildCount(); i++) {
+            View view = repliesView.getChildAt(i);
+            if (view instanceof PostCellInterface) {
+                PostCellInterface postView = (PostCellInterface) view;
+                Post post = postView.getPost();
 
-                    for (PostImage p : post.images) {
-                        if (p.equalUrl(postImage)) {
-                            thumbnail = postView.getThumbnailView(postImage);
-                        }
+                for (PostImage p : post.images) {
+                    if (p.equalUrl(postImage)) {
+                        thumbnail = postView.getThumbnailView(postImage);
                     }
                 }
             }
-            return thumbnail;
         }
+        return thumbnail;
     }
 
     public void setPostRepliesData(Loadable loadable, PostPopupHelper.RepliesData data) {

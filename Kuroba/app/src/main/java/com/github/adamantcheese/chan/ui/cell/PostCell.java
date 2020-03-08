@@ -301,6 +301,10 @@ public class PostCell
         this.showDivider = showDivider;
 
         bindPost(theme, post);
+        
+        if (inPopup) {
+            setOnTouchListener((v, ev) -> gestureDetector.onTouchEvent(ev));
+        }
     }
 
     public Post getPost() {

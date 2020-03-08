@@ -32,6 +32,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
@@ -41,6 +42,7 @@ import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -456,8 +458,21 @@ public class AndroidUtils {
     public static Point getDisplaySize() {
         Point displaySize = new Point();
         WindowManager windowManager = (WindowManager) application.getSystemService(Activity.WINDOW_SERVICE);
-        windowManager.getDefaultDisplay().getSize(displaySize);
+        windowManager.getDefaultDisplay().getRealSize(displaySize);
         return displaySize;
+    }
+
+    /**
+     * These two methods get the screen size ignoring the current screen orientation.
+     * */
+    public static int getMinScreenSize() {
+        Point displaySize = getDisplaySize();
+        return Math.min(displaySize.x, displaySize.y);
+    }
+
+    public static int getMaxScreenSize() {
+        Point displaySize = getDisplaySize();
+        return Math.max(displaySize.x, displaySize.y);
     }
 
     public static Window getWindow(Context context) {
@@ -469,7 +484,7 @@ public class AndroidUtils {
     }
 
     public static void showToast(Context context, String message, int duration) {
-        BackgroundUtils.runOnMainThread(() -> Toast.makeText(application, message, duration).show());
+        BackgroundUtils.runOnMainThread(() -> Toast.makeText(context, message, duration).show());
     }
 
     public static void showToast(Context context, String message) {
@@ -531,6 +546,23 @@ public class AndroidUtils {
 
     public static void postToEventBus(Object message) {
         EventBus.getDefault().post(message);
+    }
+
+    public static boolean isAndroid10() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+    }
+
+    public static int getScreenOrientation() {
+        int screenOrientation = getAppContext().getResources().getConfiguration().orientation;
+        if (
+                screenOrientation != Configuration.ORIENTATION_LANDSCAPE
+                        && screenOrientation != Configuration.ORIENTATION_PORTRAIT
+        ) {
+            throw new IllegalStateException("Illegal screen orientation value! value = "
+                    + screenOrientation);
+        }
+
+        return screenOrientation;
     }
 
     /**

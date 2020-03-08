@@ -119,6 +119,7 @@ public class BrowseController
         hint.wiggle();
     }
 
+    @Override
     public void setBoard(Board board) {
         presenter.setBoard(board);
     }
@@ -131,7 +132,10 @@ public class BrowseController
         // Navigation item
         navigation.hasDrawer = true;
 
-        setupMiddleNavigation();
+        navigation.setMiddleMenu(anchor -> {
+            BrowseBoardsFloatingMenu boardsFloatingMenu = new BrowseBoardsFloatingMenu(context);
+            boardsFloatingMenu.show(view, anchor, BrowseController.this, presenter.currentBoard());
+        });
 
         // Toolbar menu
         navigation.hasBack = false;
@@ -141,10 +145,14 @@ public class BrowseController
         navigation.title = "App Setup";
         navigation.subtitle = "Tap for site/board setup";
 
-        NavigationItem.MenuOverflowBuilder overflowBuilder = navigation.buildMenu()
-                .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
-                .withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked)
-                .withOverflow();
+        NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu();
+        if (ChanSettings.moveSortToToolbar.get()) {
+            menuBuilder.withItem(R.drawable.ic_sort_white_24dp, this::orderClicked);
+        }
+        menuBuilder.withItem(R.drawable.ic_search_white_24dp, this::searchClicked);
+        menuBuilder.withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked);
+
+        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow();
 
         if (!ChanSettings.enableReplyFab.get()) {
             overflowBuilder.withSubItem(R.string.action_reply, this::replyClicked);
@@ -157,8 +165,11 @@ public class BrowseController
                 this::viewModeClicked
         );
 
+        if (!ChanSettings.moveSortToToolbar.get()) {
+            overflowBuilder.withSubItem(R.string.action_sort, this::orderClicked);
+        }
+
         overflowBuilder.withSubItem(ARCHIVE_ID, R.string.thread_view_archive, this::archiveClicked)
-                .withSubItem(R.string.action_sort, this::orderClicked)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
                 .withSubItem(R.string.action_scroll_to_top, this::upClicked)
@@ -240,8 +251,12 @@ public class BrowseController
         openArchive();
     }
 
+    private void orderClicked(ToolbarMenuItem item) {
+        handleSorting(item);
+    }
+
     private void orderClicked(ToolbarMenuSubItem item) {
-        handleSorting();
+        handleSorting(null);
     }
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {
@@ -258,18 +273,6 @@ public class BrowseController
 
     private void downClicked(ToolbarMenuSubItem item) {
         threadLayout.getPresenter().scrollTo(-1, false);
-    }
-
-    private void setupMiddleNavigation() {
-        navigation.setMiddleMenu(anchor -> {
-            BrowseBoardsFloatingMenu boardsFloatingMenu = new BrowseBoardsFloatingMenu(context);
-            boardsFloatingMenu.show(view, anchor, BrowseController.this, presenter.currentBoard());
-        });
-    }
-
-    @Override
-    public void onBoardClicked(Board item) {
-        presenter.setBoard(item);
     }
 
     @Override
@@ -339,7 +342,7 @@ public class BrowseController
         threadLayout.setPostViewMode(postViewMode);
     }
 
-    private void handleSorting() {
+    private void handleSorting(ToolbarMenuItem item) {
         final ThreadPresenter presenter = threadLayout.getPresenter();
         List<FloatingMenuItem> items = new ArrayList<>();
         for (PostsFilter.Order order : PostsFilter.Order.values()) {
@@ -375,9 +378,13 @@ public class BrowseController
 
             items.add(new FloatingMenuItem(order, name));
         }
-
         ToolbarMenuItem overflow = navigation.findItem(ToolbarMenu.OVERFLOW_ID);
-        FloatingMenu menu = new FloatingMenu(context, overflow.getView(), items);
+        FloatingMenu menu;
+        if (item != null) {
+            menu = new FloatingMenu(context, item.getView(), items);
+        } else {
+            menu = new FloatingMenu(context, overflow.getView(), items);
+        }
         menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
             @Override
             public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
@@ -401,11 +408,12 @@ public class BrowseController
         navigation.subtitle = loadable.board.name;
 
         ThreadPresenter presenter = threadLayout.getPresenter();
-        presenter.unbindLoadable();
         presenter.bindLoadable(loadable);
         presenter.requestData();
 
         ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
+        ToolbarMenuSubItem archive = navigation.findSubItem(ARCHIVE_ID);
+        archive.enabled = loadable.board.site.boardFeature(Site.BoardFeature.ARCHIVE, loadable.board);
     }
 
     @Override
@@ -418,12 +426,6 @@ public class BrowseController
         } else {
             navigationController.pushController(siteSetupController);
         }
-    }
-
-    @Override
-    public void showArchiveOption(boolean show) {
-        ToolbarMenuSubItem archive = navigation.findSubItem(ARCHIVE_ID);
-        archive.enabled = show;
     }
 
     @Override
@@ -485,8 +487,7 @@ public class BrowseController
             } else {
                 StyledToolbarNavigationController navigationController = new StyledToolbarNavigationController(context);
                 splitNav.setRightController(navigationController);
-                ViewThreadController viewThreadController = new ViewThreadController(context);
-                viewThreadController.setLoadable(threadLoadable);
+                ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
                 navigationController.pushController(viewThreadController, false);
             }
             splitNav.switchToController(false);
@@ -495,16 +496,14 @@ public class BrowseController
             if (slideNav.getRightController() instanceof ViewThreadController) {
                 ((ViewThreadController) slideNav.getRightController()).loadThread(threadLoadable);
             } else {
-                ViewThreadController viewThreadController = new ViewThreadController(context);
-                viewThreadController.setLoadable(threadLoadable);
+                ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
                 slideNav.setRightController(viewThreadController);
             }
             slideNav.switchToController(false);
         } else {
             // the target ThreadNav must be pushed to the parent nav controller
             // (BrowseController -> ToolbarNavigationController)
-            ViewThreadController viewThreadController = new ViewThreadController(context);
-            viewThreadController.setLoadable(threadLoadable);
+            ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
             navigationController.pushController(viewThreadController, animated);
         }
     }

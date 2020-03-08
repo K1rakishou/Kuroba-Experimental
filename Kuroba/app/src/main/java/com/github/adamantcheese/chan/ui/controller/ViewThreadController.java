@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
@@ -66,6 +67,8 @@ import java.util.Deque;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
 import static com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu.OVERFLOW_ID;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
@@ -113,11 +116,8 @@ public class ViewThreadController
         }
     };
 
-    public ViewThreadController(Context context) {
+    public ViewThreadController(Context context, Loadable loadable) {
         super(context);
-    }
-
-    public void setLoadable(Loadable loadable) {
         this.loadable = loadable;
     }
 
@@ -167,7 +167,7 @@ public class ViewThreadController
 
         menuOverflowBuilder.withSubItem(R.string.action_search, this::searchClicked)
                 .withSubItem(R.string.action_reload, this::reloadClicked);
-        if (loadable.site.name().equals("4chan")) { //archives are 4chan only
+        if (loadable.site instanceof Chan4) { //archives are 4chan only
             menuOverflowBuilder.withSubItem(R.string.thread_show_archives, this::showArchivesInternal);
         }
         menuOverflowBuilder.withSubItem(R.string.view_removed_posts, this::showRemovedPostsDialog)
@@ -209,7 +209,7 @@ public class ViewThreadController
     }
 
     private void saveClicked(ToolbarMenuItem item) {
-        if (loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.DownloadingAndViewable) {
+        if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
             // Too many problems with this thing, just disable it while viewing downloading thread
             return;
         }
@@ -326,15 +326,15 @@ public class ViewThreadController
      * Replaces the current live thread with the local thread
      */
     private void handleClickViewLocalVersion(ToolbarMenuSubItem item) {
-        if (loadable.getLoadableDownloadingState() != Loadable.LoadableDownloadingState.DownloadingAndNotViewable) {
+        if (loadable.getLoadableDownloadingState() != DownloadingAndNotViewable) {
             populateLocalOrLiveVersionMenu();
             return;
         }
 
-        loadable.setLoadableState(Loadable.LoadableDownloadingState.DownloadingAndViewable);
+        loadable.setLoadableState(DownloadingAndViewable);
         Pin pin = watchManager.findPinByLoadableId(loadable.id);
         if (pin != null) {
-            pin.loadable.setLoadableState(Loadable.LoadableDownloadingState.DownloadingAndViewable);
+            pin.loadable.setLoadableState(DownloadingAndViewable);
             watchManager.updatePin(pin);
         }
 
@@ -345,15 +345,15 @@ public class ViewThreadController
      * Replaces the current local thread with the live thread
      */
     private void handleClickViewLiveVersion(ToolbarMenuSubItem item) {
-        if (loadable.getLoadableDownloadingState() != Loadable.LoadableDownloadingState.DownloadingAndViewable) {
+        if (loadable.getLoadableDownloadingState() != DownloadingAndViewable) {
             populateLocalOrLiveVersionMenu();
             return;
         }
 
-        loadable.setLoadableState(Loadable.LoadableDownloadingState.DownloadingAndNotViewable);
+        loadable.setLoadableState(DownloadingAndNotViewable);
         Pin pin = watchManager.findPinByLoadableId(loadable.id);
         if (pin != null) {
-            pin.loadable.setLoadableState(Loadable.LoadableDownloadingState.DownloadingAndNotViewable);
+            pin.loadable.setLoadableState(DownloadingAndNotViewable);
             watchManager.updatePin(pin);
         }
 
@@ -408,12 +408,6 @@ public class ViewThreadController
     public void onEvent(PinMessages.PinChangedMessage message) {
         setPinIconState(false);
         setSaveIconState(false);
-
-        // Does this ever happen?
-        // Update title
-        if (message.pin.loadable == loadable) {
-            onShowPosts();
-        }
     }
 
     @Subscribe
@@ -489,6 +483,10 @@ public class ViewThreadController
         }
     }
 
+    public void loadThread(Loadable loadable) {
+        loadThread(loadable, true);
+    }
+
     public void loadThread(Loadable loadable, boolean addToLocalBackHistory) {
         ThreadPresenter presenter = threadLayout.getPresenter();
         if (!loadable.equals(presenter.getLoadable())) {
@@ -504,7 +502,7 @@ public class ViewThreadController
         ThreadPresenter presenter = threadLayout.getPresenter();
 
         presenter.bindLoadable(loadable, addToLocalBackHistory);
-        this.loadable = presenter.getLoadable();
+        this.loadable = loadable;
 
         populateLocalOrLiveVersionMenu();
         navigation.title = loadable.title;
@@ -568,20 +566,16 @@ public class ViewThreadController
                 return;
             }
 
-            if (loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.DownloadingAndNotViewable) {
+            if (loadable.getLoadableDownloadingState() == DownloadingAndNotViewable) {
                 navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = true;
                 navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = false;
-            } else if (loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.DownloadingAndViewable) {
+            } else if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
                 navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = false;
                 navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = true;
             }
         } catch (NullPointerException ignored) {
             // Ignore NPE because the menu ID doesn't exist for the subitem
         }
-    }
-
-    public void loadThread(Loadable loadable) {
-        loadThread(loadable, true);
     }
 
     private void showHints() {

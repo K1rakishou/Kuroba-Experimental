@@ -174,13 +174,10 @@ public class ThreadPresenter
         threadPresenterCallback.showEmpty();
     }
 
-    public void bindLoadable(Loadable loadable, boolean addToLocalBackHistory) {
+    public synchronized void bindLoadable(Loadable loadable, boolean addToLocalBackHistory) {
         if (!loadable.equals(this.loadable)) {
-            if (this.loadable != null) {
+            if (isBound()) {
                 stopSavingThreadIfItIsBeingSaved(this.loadable);
-            }
-
-            if (chanLoader != null) {
                 unbindLoadable();
             }
 
@@ -197,7 +194,7 @@ public class ThreadPresenter
             this.addToLocalBackHistory = addToLocalBackHistory;
 
             startSavingThreadIfItIsNotBeingSaved(this.loadable);
-            chanLoader = chanLoaderManager.obtain(loadable, watchManager, this);
+            chanLoader = chanLoaderManager.obtain(loadable, this);
             loadable.site.actions().archives(Chan.instance(ArchivesManager.class));
             threadPresenterCallback.showLoading();
 
@@ -211,16 +208,15 @@ public class ThreadPresenter
         }
     }
 
-    public void bindLoadable(Loadable loadable) {
+    public synchronized void bindLoadable(Loadable loadable) {
         bindLoadable(loadable, true);
     }
 
-    public void unbindLoadable() {
-        if (chanLoader != null) {
+    public synchronized void unbindLoadable() {
+        if (isBound()) {
             if (loadable != null) {
                 onDemandContentLoaderManager.cancelAllForLoadable(loadable);
             }
-
             chanLoader.clearTimer();
             chanLoaderManager.release(chanLoader, this);
             chanLoader = null;
@@ -296,7 +292,7 @@ public class ThreadPresenter
     }
 
     public boolean isBound() {
-        return chanLoader != null;
+        return loadable != null && chanLoader != null;
     }
 
     public void requestInitialData() {
@@ -332,7 +328,7 @@ public class ThreadPresenter
         }
     }
 
-    public boolean pin() {
+    public synchronized boolean pin() {
         if (!isBound()) return false;
         Pin pin = watchManager.findPinByLoadableId(loadable.id);
         if (pin == null) {
@@ -361,7 +357,7 @@ public class ThreadPresenter
         return true;
     }
 
-    public boolean save() {
+    public synchronized boolean save() {
         if (!isBound()) return false;
         Pin pin = watchManager.findPinByLoadableId(loadable.id);
         if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
@@ -498,7 +494,7 @@ public class ThreadPresenter
         showPosts(true);
     }
 
-    public void showAlbum() {
+    public synchronized void showAlbum() {
         List<Post> posts = threadPresenterCallback.getDisplayingPosts();
         int[] pos = threadPresenterCallback.getCurrentPosition();
         int displayPosition = pos[0];
@@ -596,6 +592,9 @@ public class ThreadPresenter
             }
 
             loadable.setLastLoaded(result.getPosts().get(result.getPostsCount() - 1).no);
+            if (loadable.lastViewed == -1) {
+                loadable.setLastViewed(loadable.lastLoaded);
+            }
 
             if (more > 0 && loadable.no == result.getLoadable().no) {
                 threadPresenterCallback.showNewPostsNotification(true, more);
@@ -696,7 +695,7 @@ public class ThreadPresenter
      */
     @Override
     public void onListScrolledToBottom() {
-        if (!isBound()) return; //null loadable means no thread loaded, possibly unbinding?
+        if (!isBound()) return;
         if (chanLoader.getThread() != null && loadable.isThreadMode() && chanLoader.getThread().getPostsCount() > 0) {
             List<Post> posts = chanLoader.getThread().getPosts();
             loadable.setLastViewed(posts.get(posts.size() - 1).no);
@@ -968,7 +967,7 @@ public class ThreadPresenter
                 requestDeletePost(post);
                 break;
             case POST_OPTION_SAVE:
-                SavedReply savedReply = SavedReply.fromSiteBoardNoPassword(post.board.site, post.board, post.no, "");
+                SavedReply savedReply = SavedReply.fromBoardNoPassword(post.board, post.no, "");
                 if (databaseManager.getDatabaseSavedReplyManager().isSaved(post.board, post.no)) {
                     databaseManager.runTask(databaseManager.getDatabaseSavedReplyManager().unsaveReply(savedReply));
                     Pin watchedPin = watchManager.getPinByLoadable(loadable);
@@ -1119,10 +1118,10 @@ public class ThreadPresenter
     @Override
     public boolean isWatching() {
         //@formatter:off
-        return loadable.isThreadMode()
-            && ChanSettings.autoRefreshThread.get()
+        return ChanSettings.autoRefreshThread.get()
             && BackgroundUtils.isInForeground()
             && isBound()
+            && loadable.isThreadMode()
             && chanLoader.getThread() != null
             && !chanLoader.getThread().isClosed()
             && !chanLoader.getThread().isArchived();
@@ -1182,13 +1181,19 @@ public class ThreadPresenter
         threadPresenterCallback.unhideOrUnremovePost(post);
     }
 
+    private void requestDeletePost(Post post) {
+        SavedReply reply = databaseManager.getDatabaseSavedReplyManager().getSavedReply(post.board, post.no);
+        if (reply != null) {
+            threadPresenterCallback.confirmPostDelete(post);
+        }
+    }
+
     public void deletePostConfirmed(Post post, boolean onlyImageDelete) {
         threadPresenterCallback.showDeleting();
 
-        SavedReply reply = databaseManager.runTask(databaseManager.getDatabaseSavedReplyManager()
-                .findSavedReply(post.board, post.no));
+        SavedReply reply = databaseManager.getDatabaseSavedReplyManager().getSavedReply(post.board, post.no);
         if (reply != null) {
-            reply.site.actions()
+            post.board.site.actions()
                     .delete(new DeleteRequest(post, reply, onlyImageDelete), new SiteActions.DeleteListener() {
                         @Override
                         public void onDeleteComplete(HttpCall httpPost, DeleteResponse deleteResponse) {
@@ -1208,14 +1213,6 @@ public class ThreadPresenter
                             threadPresenterCallback.hideDeleting(getString(R.string.delete_error));
                         }
                     });
-        }
-    }
-
-    private void requestDeletePost(Post post) {
-        SavedReply reply = databaseManager.runTask(databaseManager.getDatabaseSavedReplyManager()
-                .findSavedReply(post.board, post.no));
-        if (reply != null) {
-            threadPresenterCallback.confirmPostDelete(post);
         }
     }
 
@@ -1244,7 +1241,7 @@ public class ThreadPresenter
 
         text.append("Posted: ").append(PostHelper.getLocalDate(post));
 
-        if (!TextUtils.isEmpty(post.id)) {
+        if (!TextUtils.isEmpty(post.id) && isBound() && chanLoader.getThread() != null) {
             text.append("\nId: ").append(post.id);
             int count = 0;
             try {
@@ -1331,7 +1328,7 @@ public class ThreadPresenter
     }
 
     public void showRemovedPostsDialog() {
-        if (chanLoader == null || chanLoader.getThread() == null || loadable.isCatalogMode()) {
+        if (!isBound() || chanLoader.getThread() == null || loadable.isCatalogMode()) {
             return;
         }
 

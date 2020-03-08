@@ -178,10 +178,15 @@ public abstract class ThreadController
     }
 
     @Override
-    public void showImages(List<PostImage> images, int index, Loadable loadable, final ThumbnailView thumbnail) {
+    public void showImages(
+            List<PostImage> images, int index, Loadable loadable, final ThumbnailView thumbnail
+    ) {
+        boolean isAlreadyPresenting =
+                isAlreadyPresenting((controller) -> controller instanceof ImageViewerNavigationController);
+
         // Just ignore the showImages request when the image is not loaded
-        if (thumbnail.getBitmap() != null && !isAlreadyPresenting()) {
-            final ImageViewerNavigationController imagerViewer = new ImageViewerNavigationController(context);
+        if (thumbnail.getBitmap() != null && !isAlreadyPresenting) {
+            ImageViewerNavigationController imagerViewer = new ImageViewerNavigationController(context);
             presentController(imagerViewer, false);
             imagerViewer.showImages(images, index, loadable, this);
         }

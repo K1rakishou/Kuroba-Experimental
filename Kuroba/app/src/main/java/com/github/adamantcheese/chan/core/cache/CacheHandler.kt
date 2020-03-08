@@ -16,13 +16,11 @@
  */
 package com.github.adamantcheese.chan.core.cache
 
+import android.os.Environment
 import android.text.TextUtils
-import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.ConversionUtils.charArrayToInt
 import com.github.adamantcheese.chan.utils.ConversionUtils.intToCharArray
-import com.github.adamantcheese.chan.utils.HashingUtil
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.StringUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
@@ -306,6 +304,7 @@ class CacheHandler(
     /**
      * For now only used in developer settings. Clears the cache completely.
      * */
+    @Synchronized
     fun clearCache() {
         Logger.d(TAG, "Clearing cache")
 
@@ -350,6 +349,7 @@ class CacheHandler(
         return deleteCacheFile(hashUrl(url))
     }
 
+    @Synchronized
     private fun deleteCacheFile(fileName: String): Boolean {
         val originalFileName = StringUtils.removeExtensionFromFileName(fileName)
 
@@ -458,27 +458,29 @@ class CacheHandler(
             }
         }
 
-        val outputStream = fileManager.getOutputStream(file)
-        if (outputStream == null) {
-            Logger.e(TAG, "Couldn't create OutputStream for file = ${file.getFullPath()}")
-            return false
-        }
+        return synchronized(this) {
+            val outputStream = fileManager.getOutputStream(file)
+            if (outputStream == null) {
+                Logger.e(TAG, "Couldn't create OutputStream for file = ${file.getFullPath()}")
+                return@synchronized false
+            }
 
-        return outputStream.use { stream ->
-            return@use PrintWriter(stream).use { pw ->
-                val toWrite = String.format(
-                        Locale.US,
-                        CACHE_FILE_META_CONTENT_FORMAT,
-                        prevCacheFileMeta.createdOn,
-                        prevCacheFileMeta.isDownloaded
-                )
+            return@synchronized outputStream.use { stream ->
+                return@use PrintWriter(stream).use { pw ->
+                    val toWrite = String.format(
+                            Locale.US,
+                            CACHE_FILE_META_CONTENT_FORMAT,
+                            prevCacheFileMeta.createdOn,
+                            prevCacheFileMeta.isDownloaded
+                    )
 
-                val lengthChars = intToCharArray(toWrite.length)
-                pw.write(lengthChars)
-                pw.write(toWrite)
-                pw.flush()
+                    val lengthChars = intToCharArray(toWrite.length)
+                    pw.write(lengthChars)
+                    pw.write(toWrite)
+                    pw.flush()
 
-                return@use true
+                    return@use true
+                }
             }
         }
     }
@@ -506,39 +508,46 @@ class CacheHandler(
             throw IOException("Not a cache file meta! file = ${cacheFileMate.getFullPath()}")
         }
 
-        return fileManager.withFileDescriptor(cacheFileMate, FileDescriptorMode.Read) { fd ->
-            return@withFileDescriptor FileReader(fd).use { reader ->
-                val lengthBuffer = CharArray(CACHE_FILE_META_HEADER_SIZE)
+        return synchronized(this) {
+            return@synchronized fileManager.withFileDescriptor(cacheFileMate, FileDescriptorMode.Read) { fd ->
+                return@withFileDescriptor FileReader(fd).use { reader ->
+                    val lengthBuffer = CharArray(CACHE_FILE_META_HEADER_SIZE)
 
-                var read = reader.read(lengthBuffer)
-                if (read != CACHE_FILE_META_HEADER_SIZE) {
-                    throw IOException(
-                            "Couldn't read content size of cache file meta, read $read"
+                    var read = reader.read(lengthBuffer)
+                    if (read != CACHE_FILE_META_HEADER_SIZE) {
+                        throw IOException(
+                                "Couldn't read content size of cache file meta, read $read"
+                        )
+                    }
+
+                    val length = charArrayToInt(lengthBuffer)
+                    if (length > MAX_CACHE_META_SIZE) {
+                        throw IOException("Cache file meta is too big (${length} bytes)." +
+                                " It was probably corrupted. Deleting it.")
+                    }
+
+                    val contentBuffer = CharArray(length)
+
+                    read = reader.read(contentBuffer)
+                    if (read != length) {
+                        throw IOException(
+                                "Couldn't read content cache file meta, read = $read, expected = $length"
+                        )
+                    }
+
+                    val content = String(contentBuffer)
+                    val split = content.split(",").toTypedArray()
+                    if (split.size != 2) {
+                        throw IOException(
+                                "Couldn't split meta content ($content), split.size = ${split.size}"
+                        )
+                    }
+
+                    return@use CacheFileMeta(
+                            split[0].toLong(),
+                            split[1].toBoolean()
                     )
                 }
-
-                val length = charArrayToInt(lengthBuffer)
-                val contentBuffer = CharArray(length)
-
-                read = reader.read(contentBuffer)
-                if (read != length) {
-                    throw IOException(
-                            "Couldn't read content cache file meta, read = $read, expected = $length"
-                    )
-                }
-
-                val content = String(contentBuffer)
-                val split = content.split(",").toTypedArray()
-                if (split.size != 2) {
-                    throw IOException(
-                            "Couldn't split meta content ($content), split.size = ${split.size}"
-                    )
-                }
-
-                return@use CacheFileMeta(
-                        split[0].toLong(),
-                        split[1].toBoolean()
-                )
             }
         }
     }
@@ -610,10 +619,11 @@ class CacheHandler(
             val rawFile = File(cacheDirFile.getFullPath())
             if (!rawFile.mkdirs()) {
                 throw RuntimeException(
-                        "Unable to create file cache dir ${cacheDirFile.getFullPath()}")
+                        "Unable to create file cache dir ${cacheDirFile.getFullPath()}, " +
+                                "additional info = ${getAdditionalDebugInfo(rawFile)}")
             } else {
-                Logger.e(TAG, "fileManager.create failed, " +
-                        "but rawFile.mkdirs() succeeded, cacheDirFile = ${cacheDirFile.getFullPath()}")
+                Logger.e(TAG, "fileManager.create failed, but rawFile.mkdirs() succeeded, " +
+                        "cacheDirFile = ${cacheDirFile.getFullPath()}")
             }
         }
 
@@ -621,12 +631,26 @@ class CacheHandler(
             val rawFile = File(chunksCacheDirFile.getFullPath())
             if (!rawFile.mkdirs()) {
                 throw RuntimeException(
-                        "Unable to create file chunks cache dir ${chunksCacheDirFile.getFullPath()}")
+                        "Unable to create file chunks cache dir ${chunksCacheDirFile.getFullPath()}, " +
+                                "additional info = ${getAdditionalDebugInfo(rawFile)}")
             } else {
-                Logger.e(TAG, "fileManager.create failed, " +
-                        "but rawFile.mkdirs() succeeded, chunksCacheDirFile = ${chunksCacheDirFile.getFullPath()}")
+                Logger.e(TAG, "fileManager.create failed, but rawFile.mkdirs() succeeded, " +
+                        "chunksCacheDirFile = ${chunksCacheDirFile.getFullPath()}")
             }
         }
+    }
+
+    private fun getAdditionalDebugInfo(file: File): String {
+        val state = Environment.getExternalStorageState(file)
+        val externalCacheDir = AndroidUtils.getAppContext().externalCacheDir?.absolutePath ?: "<null>"
+        val internalCacheDir = AndroidUtils.getAppContext().cacheDir ?: "<null>"
+
+        return "(exists = ${file.exists()}, " +
+                "canRead = ${file.canRead()}, " +
+                "canWrite = ${file.canWrite()}, " +
+                "state = ${state}, " +
+                "externalCacheDir = ${externalCacheDir}, " +
+                "internalCacheDir = ${internalCacheDir})"
     }
 
     private fun backgroundRecalculateSize() {
@@ -880,6 +904,10 @@ class CacheHandler(
         private const val DEFAULT_CACHE_SIZE = 512L * 1024L * 1024L
         private const val PREFETCH_CACHE_SIZE = 1024L * 1024L * 1024L
         private const val CACHE_FILE_META_HEADER_SIZE = 4
+        // I don't think it will ever get this big but just in case don't forget to update it if it
+        // ever gets
+        private const val MAX_CACHE_META_SIZE = 1024L
+
         private const val CACHE_FILE_NAME_FORMAT = "%s.%s"
         private const val CHUNK_CACHE_FILE_NAME_FORMAT = "%s_%d_%d.%s"
         private const val CACHE_FILE_META_CONTENT_FORMAT = "%d,%b"

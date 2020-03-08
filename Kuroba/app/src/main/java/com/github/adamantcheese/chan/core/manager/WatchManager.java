@@ -71,6 +71,9 @@ import javax.inject.Inject;
 import static com.github.adamantcheese.chan.core.manager.WatchManager.IntervalType.BACKGROUND;
 import static com.github.adamantcheese.chan.core.manager.WatchManager.IntervalType.FOREGROUND;
 import static com.github.adamantcheese.chan.core.manager.WatchManager.IntervalType.NONE;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.NotDownloading;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.NOTIFY_ALL_POSTS;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.NOTIFY_ONLY_QUOTES;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
@@ -284,7 +287,7 @@ public class WatchManager
             savedThread.isStopped = false;
         }
 
-        loadable.setLoadableState(Loadable.LoadableDownloadingState.DownloadingAndNotViewable);
+        loadable.setLoadableState(DownloadingAndNotViewable);
         createOrUpdateSavedThread(savedThread);
         databaseManager.runTask(databaseSavedThreadManager.startSavingThread(savedThread));
         return true;
@@ -303,7 +306,7 @@ public class WatchManager
         createOrUpdateSavedThread(savedThread);
         databaseManager.runTask(databaseSavedThreadManager.updateThreadStoppedFlagByLoadableId(loadable.id, true));
 
-        loadable.setLoadableState(Loadable.LoadableDownloadingState.NotDownloading);
+        loadable.setLoadableState(NotDownloading);
         threadSaveManager.stopDownloading(loadable);
     }
 
@@ -388,7 +391,7 @@ public class WatchManager
 
         destroyPinWatcher(pin);
         deleteSavedThread(pin.loadable.id);
-        pin.loadable.setLoadableState(Loadable.LoadableDownloadingState.NotDownloading);
+        pin.loadable.setLoadableState(NotDownloading);
 
         threadSaveManager.cancelDownloading(pin.loadable);
 
@@ -679,21 +682,17 @@ public class WatchManager
         return pinWatchers.get(pin);
     }
 
-    private boolean createPinWatcher(Pin pin) {
+    private void createPinWatcher(Pin pin) {
         if (!pinWatchers.containsKey(pin)) {
-            pinWatchers.put(pin, new PinWatcher(pin, this));
-            return true;
-        } else {
-            return false;
+            pinWatchers.put(pin, new PinWatcher(pin));
         }
     }
 
-    private boolean destroyPinWatcher(Pin pin) {
+    private void destroyPinWatcher(Pin pin) {
         PinWatcher pinWatcher = pinWatchers.remove(pin);
         if (pinWatcher != null) {
             pinWatcher.destroy();
         }
-        return pinWatcher != null;
     }
 
     private void updatePinsInDatabase() {
@@ -926,7 +925,7 @@ public class WatchManager
 
     private void updateDeletedOrArchivedPins() {
         for (Pin pin : pins) {
-            if (pin.loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.DownloadingAndViewable) {
+            if (pin.loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
                 continue;
             }
 
@@ -1146,11 +1145,11 @@ public class WatchManager
         public int lastReplyCount = -1;
         public int latestKnownPage = -1;
 
-        public PinWatcher(Pin pin, WatchManager watchManager) {
+        public PinWatcher(Pin pin) {
             this.pin = pin;
 
             Logger.d(TAG, "created for " + pin.loadable.toString());
-            chanLoader = chanLoaderManager.obtain(pin.loadable, watchManager, this);
+            chanLoader = chanLoaderManager.obtain(pin.loadable, this);
             pageRequestManager.addListener(this);
         }
 
@@ -1260,8 +1259,8 @@ public class WatchManager
             if (PinType.hasDownloadFlag(pin.pinType)
                     // Only check for this flag here, since we won't get here when loadableDownloadingState
                     // is AlreadyDownloaded
-                    && pin.loadable.getLoadableDownloadingState() != Loadable.LoadableDownloadingState.DownloadingAndViewable
-                    && (thread.isArchived() || thread.isClosed())) {
+                    && pin.loadable.getLoadableDownloadingState() != DownloadingAndViewable && (thread.isArchived()
+                    || thread.isClosed())) {
                 NetworkResponse networkResponse =
                         new NetworkResponse(503, EMPTY_BYTE_ARRAY, Collections.emptyMap(), true);
                 ServerError serverError = new ServerError(networkResponse);

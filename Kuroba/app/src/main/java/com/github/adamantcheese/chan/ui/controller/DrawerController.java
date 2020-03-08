@@ -51,6 +51,8 @@ import java.util.List;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
+import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
 import static com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.TYPE_PIN;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.fixSnackbarText;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
@@ -166,9 +168,9 @@ public class DrawerController
                             if (hasNoNetwork) {
                                 // No internet connection, but we have a local copy of this thread,
                                 // so show it instead of an empty screen.
-                                state = Loadable.LoadableDownloadingState.DownloadingAndViewable;
+                                state = DownloadingAndViewable;
                             } else {
-                                state = Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
+                                state = DownloadingAndNotViewable;
                             }
                         }
                     }
@@ -284,7 +286,7 @@ public class DrawerController
             drawerLayout.openDrawer(drawer);
             //max out at 5
             int curCount = ChanSettings.drawerAutoOpenCount.get();
-            ChanSettings.drawerAutoOpenCount.set(curCount + 1 > 5 ? 5 : curCount + 1);
+            ChanSettings.drawerAutoOpenCount.set(Math.min(curCount + 1, 5));
             if (ChanSettings.drawerAutoOpenCount.get() < 5 && !ChanSettings.alwaysOpenDrawer.get()) {
                 int countLeft = 5 - ChanSettings.drawerAutoOpenCount.get();
                 showToast(context,
