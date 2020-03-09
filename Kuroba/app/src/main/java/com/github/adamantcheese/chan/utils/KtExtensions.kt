@@ -1,5 +1,8 @@
 package com.github.adamantcheese.chan.utils
 
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+
 import java.util.regex.Matcher
 
 /**
@@ -7,6 +10,10 @@ import java.util.regex.Matcher
  * */
 val <T : Any?> T.exhaustive: T
     get() = this
+
+operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
+    this.add(disposable)
+}
 
 fun Matcher.groupOrNull(group: Int): String? {
     return try {

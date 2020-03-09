@@ -38,11 +38,13 @@ import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
+import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.service.WatchNotification;
+import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.database.DatabaseModuleInjector;
@@ -80,6 +82,9 @@ public class Chan
 
     @Inject
     ReportManager reportManager;
+
+    @Inject
+    SettingsNotificationManager settingsNotificationManager;
 
     private static Feather feather;
 
@@ -215,8 +220,10 @@ public class Chan
             System.exit(999);
         });
 
-        if (ChanSettings.autoCrashLogsUpload.get()) {
-            reportManager.sendCollectedCrashLogs();
+        if (ChanSettings.collectCrashLogs.get()) {
+            if (reportManager.hasCrashLogs()) {
+                settingsNotificationManager.notify(SettingNotificationType.CrashLog);
+            }
         }
     }
 
@@ -253,7 +260,7 @@ public class Chan
             return;
         }
 
-        if (ChanSettings.autoCrashLogsUpload.get()) {
+        if (ChanSettings.collectCrashLogs.get()) {
             reportManager.storeCrashLog(exception.getMessage(), error);
         }
     }
