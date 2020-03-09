@@ -25,7 +25,12 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
 
     fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>>
 
-    fun storeIntoCache(postUid: String, url: String, extraLinkInfo: ExtraLinkInfo): Flowable<ModularResult<Unit>>
+    fun storeIntoCache(
+            postUid: String,
+            loadableUid: String,
+            url: String,
+            extraLinkInfo: ExtraLinkInfo
+    ): Flowable<ModularResult<Unit>>
 
     /**
      * Whether a link belongs to this fetcher

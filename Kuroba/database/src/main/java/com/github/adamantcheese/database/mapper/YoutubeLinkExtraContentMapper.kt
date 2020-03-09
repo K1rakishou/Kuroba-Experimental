@@ -8,6 +8,7 @@ object YoutubeLinkExtraContentMapper {
     fun toEntity(youtubeLinkExtraContent: YoutubeLinkExtraContent): YoutubeLinkExtraContentEntity {
         return YoutubeLinkExtraContentEntity(
                 youtubeLinkExtraContent.postUid,
+                youtubeLinkExtraContent.parentLoadableUid,
                 youtubeLinkExtraContent.url,
                 youtubeLinkExtraContent.videoTitle,
                 youtubeLinkExtraContent.videoDuration,
@@ -22,6 +23,7 @@ object YoutubeLinkExtraContentMapper {
 
         return YoutubeLinkExtraContent(
                 youtubeLinkExtraContentEntity.postUid,
+                youtubeLinkExtraContentEntity.parentLoadableUid,
                 youtubeLinkExtraContentEntity.url,
                 youtubeLinkExtraContentEntity.videoTitle,
                 youtubeLinkExtraContentEntity.videoDuration,

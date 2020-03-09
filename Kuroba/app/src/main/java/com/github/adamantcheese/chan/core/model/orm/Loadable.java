@@ -19,6 +19,8 @@ package com.github.adamantcheese.chan.core.model.orm;
 import android.os.Parcel;
 import android.text.TextUtils;
 
+import com.github.adamantcheese.base.LoadableType;
+import com.github.adamantcheese.base.LoadableUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.j256.ormlite.field.DatabaseField;
@@ -258,17 +260,20 @@ public class Loadable
             return loadableUidCached;
         }
 
-        String loadableUid = null;
+        LoadableType loadableType = LoadableType.CatalogLoadable;
 
-        if (isThreadMode()) {
-            // Unique cross-site and cross-board id of a thread, e.g. "4chan_g_12345345"
-            loadableUid = String.format(Locale.US, "%s_%s_%d", site.name(), boardCode, no);
-        } else if (isCatalogMode()) {
-            // Unique cross-site id of a board, e.g. "4chan_g"
-            loadableUid = String.format(Locale.US, "%s_%s", site.name(), boardCode);
-        } else {
+        if (mode == Mode.THREAD) {
+            loadableType = LoadableType.ThreadLoadable;
+        } else if (mode == Mode.INVALID) {
             throw new IllegalStateException("Unsupported loadable mode: " + mode);
         }
+
+        String loadableUid = LoadableUtils.getUniqueId(
+                site.name(),
+                boardCode,
+                no,
+                loadableType
+        );
 
         loadableUidCached = loadableUid;
         return loadableUid;

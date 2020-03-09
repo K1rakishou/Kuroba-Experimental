@@ -30,10 +30,21 @@ sealed class ModularResult<V> {
         }
     }
 
-    fun unwrap(): V? {
+    fun unwrap(): V {
         return when (this) {
             is Error -> throw error
             is Value -> value
+        }
+    }
+
+    override fun toString(): String {
+        return when (this) {
+            is Value -> value?.toString() ?: "ModularResult.Value{null}"
+            is Error -> String.format(
+                    "ModularResult.Error{%s, message: %s}",
+                    error.javaClass.simpleName,
+                    error.message ?: "No error message"
+            )
         }
     }
 

@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.loader.impl.post_comment
 import android.graphics.Bitmap
 
 internal class SpanUpdateBatch(
-        val url: String,
+        val requestUrl: String,
         val extraLinkInfo: ExtraLinkInfo,
         val oldSpansForLink: List<CommentPostLinkableSpan>,
         val iconBitmap: Bitmap
@@ -13,7 +13,7 @@ internal class SpanUpdateBatch(
         if (this === other) return true
         if (other !is SpanUpdateBatch) return false
 
-        if (url != other.url) return false
+        if (requestUrl != other.requestUrl) return false
         if (extraLinkInfo != other.extraLinkInfo) return false
         if (oldSpansForLink != other.oldSpansForLink) return false
 
@@ -21,13 +21,13 @@ internal class SpanUpdateBatch(
     }
 
     override fun hashCode(): Int {
-        var result = url.hashCode()
+        var result = requestUrl.hashCode()
         result = 31 * result + extraLinkInfo.hashCode()
         result = 31 * result + oldSpansForLink.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "SpanUpdateBatch(url='$url', extraLinkInfo=$extraLinkInfo, oldSpansForLink=$oldSpansForLink)"
+        return "SpanUpdateBatch(url='$requestUrl', extraLinkInfo=$extraLinkInfo, oldSpansForLink=$oldSpansForLink)"
     }
 }

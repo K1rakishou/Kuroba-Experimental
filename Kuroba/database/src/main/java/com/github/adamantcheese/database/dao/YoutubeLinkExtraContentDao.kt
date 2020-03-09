@@ -21,7 +21,7 @@ abstract class YoutubeLinkExtraContentDao {
         AND 
             ${YoutubeLinkExtraContentEntity.URL_COLUMN_NAME} = :url
     """)
-    abstract suspend fun getByPostUid(postUid: String, url: String): YoutubeLinkExtraContentEntity?
+    abstract suspend fun selectByPostUid(postUid: String, url: String): YoutubeLinkExtraContentEntity?
 
     @Query("SELECT * FROM ${YoutubeLinkExtraContentEntity.TABLE_NAME}")
     abstract suspend fun getAll(): List<YoutubeLinkExtraContentEntity>
@@ -31,5 +31,5 @@ abstract class YoutubeLinkExtraContentDao {
         FROM ${YoutubeLinkExtraContentEntity.TABLE_NAME}
         WHERE ${YoutubeLinkExtraContentEntity.INSERTED_AT_COLUMN_NAME} < :dateTime
     """)
-    abstract suspend fun deleteOlderThan(dateTime: DateTime)
+    abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
 }

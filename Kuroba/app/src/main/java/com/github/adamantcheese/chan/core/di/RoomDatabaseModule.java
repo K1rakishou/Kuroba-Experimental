@@ -1,7 +1,7 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.database.di.DatabaseComponent;
-import com.github.adamantcheese.database.source.YoutubeLinkExtraContentLocalSource;
+import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository;
 
 import org.codejargon.feather.Provides;
 
@@ -16,7 +16,7 @@ public class RoomDatabaseModule {
 
     @Provides
     @Singleton
-    public YoutubeLinkExtraContentLocalSource provideYoutubeLinkExtraContentLocalSource() {
-        return new YoutubeLinkExtraContentLocalSource(databaseComponent.getKurobaDatabase());
+    public YoutubeLinkExtraContentRepository provideYoutubeLinkExtraContentRepository() {
+        return databaseComponent.getYoutubeLinkExtraContentRepository();
     }
 }

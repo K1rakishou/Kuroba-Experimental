@@ -49,6 +49,7 @@ internal class PostExtraContentLoader(
                             .flatMap({ (url, linkInfoRequest) ->
                                 return@flatMap fetchExtraLinkInfo(
                                         postLoaderData.getPostUniqueId(),
+                                        postLoaderData.getLoadableUniqueId(),
                                         url,
                                         linkInfoRequest
                                 )
@@ -99,7 +100,8 @@ internal class PostExtraContentLoader(
 
     private fun fetchExtraLinkInfo(
             postUid: String,
-            url: String,
+            loadableUid: String,
+            requestUrl: String,
             linkInfoRequest: LinkInfoRequest
     ): Flowable<ModularResult<SpanUpdateBatch>> {
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
@@ -108,7 +110,8 @@ internal class PostExtraContentLoader(
 
         if (fetcher == null) {
             val error = ModularResult.error<SpanUpdateBatch>(
-                    IllegalStateException("Couldn't find fetcher for link $url")
+                    IllegalStateException("Couldn't find fetcher for fetcher " +
+                            "type ${linkInfoRequest.fetcherType}")
             )
 
             return Flowable.just(error)
@@ -116,13 +119,15 @@ internal class PostExtraContentLoader(
 
         val iconBitmap = fetcher.getIconBitmap()
 
-        return fetcher.getFromCache(postUid, url)
+        // TODO(ODL): move this into the database module (and it should probably be renamed into
+        //  model module)
+        return fetcher.getFromCache(postUid, linkInfoRequest.originalUrl)
                 .flatMap { extraLinkInfoResult ->
                     if (extraLinkInfoResult is ModularResult.Value) {
                         val extraLinkInfo = extraLinkInfoResult.value
                         if (extraLinkInfo != null) {
                             val spanUpdateBatch = SpanUpdateBatch(
-                                    url,
+                                    requestUrl,
                                     extraLinkInfo,
                                     linkInfoRequest.oldPostLinkableSpans,
                                     iconBitmap
@@ -134,7 +139,7 @@ internal class PostExtraContentLoader(
                         }
                     }
 
-                    return@flatMap fetchFromNetwork(url, linkInfoRequest, fetcher, iconBitmap)
+                    return@flatMap fetchFromNetwork(requestUrl, linkInfoRequest, fetcher, iconBitmap)
                 }
                 .flatMap { spanUpdateBatchResult ->
                     when (spanUpdateBatchResult) {
@@ -145,7 +150,12 @@ internal class PostExtraContentLoader(
                         is ModularResult.Value -> {
                             val spanUpdateBatch = spanUpdateBatchResult.value
 
-                            return@flatMap fetcher.storeIntoCache(postUid, url, spanUpdateBatch.extraLinkInfo)
+                            return@flatMap fetcher.storeIntoCache(
+                                            postUid,
+                                            loadableUid,
+                                            linkInfoRequest.originalUrl,
+                                            spanUpdateBatch.extraLinkInfo
+                                    )
                                     .map { spanUpdateBatchResult }
                         }
                         else -> {
@@ -230,9 +240,9 @@ internal class PostExtraContentLoader(
             val postLinkable = postLinkableSpan.postLinkable
 
             if (postLinkable.type == PostLinkable.Type.LINK) {
-                val originalLink = postLinkable.key.toString()
+                val originalUrl = postLinkable.key.toString()
                 val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
-                    fetcher.linkMatchesToService(originalLink)
+                    fetcher.linkMatchesToService(originalUrl)
                 }
 
                 if (fetcher == null) {
@@ -245,8 +255,9 @@ internal class PostExtraContentLoader(
                     return@forEach
                 }
 
-                val requestUrl = fetcher.formatRequestUrl(originalLink)
+                val requestUrl = fetcher.formatRequestUrl(originalUrl)
                 val linkInfoRequest = LinkInfoRequest(
+                        originalUrl,
                         fetcher.fetcherType,
                         mutableListOf()
                 )

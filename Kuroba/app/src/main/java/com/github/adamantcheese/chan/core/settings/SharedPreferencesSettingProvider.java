@@ -64,6 +64,7 @@ public class SharedPreferencesSettingProvider
         prefs.edit().putBoolean(key, value).apply();
     }
 
+    @Override
     public void putBooleanSync(String key, boolean value) {
         prefs.edit().putBoolean(key, value).commit();
     }

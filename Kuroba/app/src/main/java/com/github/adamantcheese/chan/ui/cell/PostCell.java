@@ -123,7 +123,7 @@ public class PostCell
     private View repliesAdditionalArea;
     private ImageView options;
     private View divider;
-    private View filterMatchColor;
+    private View postAttentionLabel;
 
     private int detailsSizePx;
     private int iconSizePx;
@@ -169,7 +169,7 @@ public class PostCell
         repliesAdditionalArea = findViewById(R.id.replies_additional_area);
         options = findViewById(R.id.options);
         divider = findViewById(R.id.divider);
-        filterMatchColor = findViewById(R.id.filter_match_color);
+        postAttentionLabel = findViewById(R.id.post_attention_label);
 
         int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get());
         paddingPx = dp(textSizeSp - 6);
@@ -364,7 +364,7 @@ public class PostCell
         }
 
         bindBackgroundColor(theme, post);
-        bindFilterMatchColor(post);
+        bindPostAttentionLabel(post);
         bindThumbnails();
         bindTitle(theme, post);
         bindIcons(theme, post);
@@ -395,12 +395,12 @@ public class PostCell
         }
     }
 
-    private void bindFilterMatchColor(Post post) {
+    private void bindPostAttentionLabel(Post post) {
         if (post.filterHighlightedColor != 0) {
-            filterMatchColor.setVisibility(VISIBLE);
-            filterMatchColor.setBackgroundColor(post.filterHighlightedColor);
+            postAttentionLabel.setVisibility(VISIBLE);
+            postAttentionLabel.setBackgroundColor(post.filterHighlightedColor);
         } else {
-            filterMatchColor.setVisibility(GONE);
+            postAttentionLabel.setVisibility(GONE);
         }
     }
 

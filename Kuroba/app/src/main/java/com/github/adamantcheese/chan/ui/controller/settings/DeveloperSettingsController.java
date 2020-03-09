@@ -226,15 +226,8 @@ public class DeveloperSettingsController
         Button verboseLogsButton = new Button(context);
 
         verboseLogsButton.setOnClickListener(v -> {
-            ChanSettings.verboseLogs.set(!ChanSettings.verboseLogs.get());
-
-            if (ChanSettings.verboseLogs.get()) {
-                showToast(context, "Verbose logs enabled");
-                verboseLogsButton.setText(R.string.settings_disable_verbose_logs);
-            } else {
-                showToast(context, "Verbose logs disabled");
-                verboseLogsButton.setText(R.string.settings_enable_verbose_logs);
-            }
+            ChanSettings.verboseLogs.setSync(!ChanSettings.verboseLogs.get());
+            ((StartActivity) context).restartApp();
         });
 
         if (ChanSettings.verboseLogs.get()) {

@@ -46,6 +46,7 @@ import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.database.DatabaseModuleInjector;
+import com.github.adamantcheese.database.di.DatabaseComponent;
 
 import org.codejargon.feather.Feather;
 import org.greenrobot.eventbus.EventBus;
@@ -104,12 +105,18 @@ public class Chan
         super.onCreate();
         registerActivityLifecycleCallbacks(this);
 
+        DatabaseComponent databaseComponent = DatabaseModuleInjector.build(
+                this,
+                Logger.TAG_PREFIX,
+                ChanSettings.verboseLogs.get()
+        );
+
         feather = Feather.with(
                 new AppModule(this),
                 new ExecutorsManager(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
-                new RoomDatabaseModule(DatabaseModuleInjector.build(this)),
+                new RoomDatabaseModule(databaseComponent),
                 new NetModule(),
                 new GsonModule(),
                 new RepositoryModule(),

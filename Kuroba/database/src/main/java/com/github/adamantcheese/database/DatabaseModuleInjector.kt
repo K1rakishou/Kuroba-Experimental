@@ -7,9 +7,15 @@ import com.github.adamantcheese.database.di.DatabaseComponent
 object DatabaseModuleInjector {
 
     @JvmStatic
-    fun build(application: Application): DatabaseComponent {
+    fun build(
+            application: Application,
+            loggerTagPrefix: String,
+            verboseLogs: Boolean
+    ): DatabaseComponent {
         return DaggerDatabaseComponent.builder()
                 .application(application)
+                .loggerTagPrefix(loggerTagPrefix)
+                .verboseLogs(verboseLogs)
                 .build()
     }
 

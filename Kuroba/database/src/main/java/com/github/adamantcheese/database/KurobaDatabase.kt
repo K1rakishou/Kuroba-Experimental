@@ -6,17 +6,25 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.adamantcheese.database.converter.DateTimeTypeConverter
+import com.github.adamantcheese.database.converter.LoadableTypeConverter
+import com.github.adamantcheese.database.dao.LoadableEntityDao
 import com.github.adamantcheese.database.dao.YoutubeLinkExtraContentDao
+import com.github.adamantcheese.database.entity.LoadableEntity
 import com.github.adamantcheese.database.entity.YoutubeLinkExtraContentEntity
 
 @Database(
         entities = [
+            LoadableEntity::class,
             YoutubeLinkExtraContentEntity::class
         ],
         version = 1
 )
-@TypeConverters(DateTimeTypeConverter::class)
+@TypeConverters(value = [
+    DateTimeTypeConverter::class,
+    LoadableTypeConverter::class
+])
 abstract class KurobaDatabase : RoomDatabase() {
+    abstract fun loadableDao(): LoadableEntityDao
     abstract fun youtubeLinkExtraContentDao(): YoutubeLinkExtraContentDao
 
     companion object {

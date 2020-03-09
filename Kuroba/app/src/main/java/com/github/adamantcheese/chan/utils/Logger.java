@@ -23,7 +23,7 @@ import com.github.adamantcheese.chan.BuildConfig;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel;
 
 public class Logger {
-    private static final String TAG_PREFIX = getApplicationLabel() + " | ";
+    public static final String TAG_PREFIX = getApplicationLabel() + " | ";
 
     //region VERBOSE
     public static void v(String tag, String message) {

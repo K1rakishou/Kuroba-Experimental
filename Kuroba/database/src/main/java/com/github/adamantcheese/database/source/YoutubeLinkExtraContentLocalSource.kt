@@ -22,15 +22,15 @@ class YoutubeLinkExtraContentLocalSource(
         }
     }
 
-    suspend fun getByPostUid(postUid: String, url: String): ModularResult<YoutubeLinkExtraContent?> {
+    suspend fun selectByPostUid(postUid: String, url: String): ModularResult<YoutubeLinkExtraContent?> {
         return safeRun {
             return@safeRun YoutubeLinkExtraContentMapper.fromEntity(
-                    youtubeLinkExtraContentDao.getByPostUid(postUid, url)
+                    youtubeLinkExtraContentDao.selectByPostUid(postUid, url)
             )
         }
     }
 
-    suspend fun deleteOlderThanOneMonth(): ModularResult<Unit> {
+    suspend fun deleteOlderThanOneMonth(): ModularResult<Int> {
         return safeRun {
             return@safeRun youtubeLinkExtraContentDao.deleteOlderThan(ONE_MONTH_AGO)
         }

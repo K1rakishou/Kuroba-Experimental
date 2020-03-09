@@ -98,6 +98,11 @@ public class JsonSettingsProvider
     }
 
     @Override
+    public void putBooleanSync(String key, boolean value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public String getString(String key, String def) {
         JsonSetting setting = jsonSettings.settings.get(key);
         if (setting != null) {

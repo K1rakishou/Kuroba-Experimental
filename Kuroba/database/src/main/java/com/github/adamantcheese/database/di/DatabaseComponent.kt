@@ -1,7 +1,9 @@
 package com.github.adamantcheese.database.di
 
 import android.app.Application
-import com.github.adamantcheese.database.KurobaDatabase
+import com.github.adamantcheese.database.di.annotation.LoggerTagPrefix
+import com.github.adamantcheese.database.di.annotation.VerboseLogs
+import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
 import dagger.BindsInstance
 import dagger.Component
 import javax.inject.Singleton
@@ -15,12 +17,16 @@ import javax.inject.Singleton
 interface DatabaseComponent {
     fun inject(application: Application)
 
-    fun getKurobaDatabase(): KurobaDatabase
+    fun getYoutubeLinkExtraContentRepository(): YoutubeLinkExtraContentRepository
 
     @Component.Builder
     interface Builder {
         @BindsInstance
         fun application(application: Application): Builder
+        @BindsInstance
+        fun loggerTagPrefix(@LoggerTagPrefix loggerTagPrefix: String): Builder
+        @BindsInstance
+        fun verboseLogs(@VerboseLogs verboseLogs: Boolean): Builder
 
         fun build(): DatabaseComponent
     }
