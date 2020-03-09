@@ -380,9 +380,9 @@ public class PostCell
         }
 
         if ((!threadMode && post.getReplies() > 0) || (post.getRepliesFromCount() > 0)) {
-            bindThreadReplies(post, post.getRepliesFromCount());
+            bindRepliesWithImageCountText(post, post.getRepliesFromCount());
         } else {
-            bindCatalogReplies();
+            bindRepliesText();
         }
 
         divider.setVisibility(showDivider ? VISIBLE : GONE);
@@ -546,13 +546,13 @@ public class PostCell
         icons.apply();
     }
 
-    private void bindCatalogReplies() {
+    private void bindRepliesText() {
         replies.setVisibility(GONE);
-        comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), paddingPx);
-        replies.setPadding(replies.getPaddingLeft(), 0, replies.getPaddingRight(), replies.getPaddingBottom());
+        updatePaddings(comment, -1, -1, -1, paddingPx);
+        updatePaddings(replies, -1, -1, 0, -1);
     }
 
-    private void bindThreadReplies(Post post, int repliesFromSize) {
+    private void bindRepliesWithImageCountText(Post post, int repliesFromSize) {
         replies.setVisibility(VISIBLE);
 
         int replyCount = threadMode ? repliesFromSize : post.getReplies();
@@ -563,12 +563,8 @@ public class PostCell
         }
 
         replies.setText(text);
-        comment.setPadding(comment.getPaddingLeft(), comment.getPaddingTop(), comment.getPaddingRight(), 0);
-        replies.setPadding(replies.getPaddingLeft(),
-                paddingPx,
-                replies.getPaddingRight(),
-                replies.getPaddingBottom()
-        );
+        updatePaddings(comment, -1, -1, -1, 0);
+        updatePaddings(replies, -1, -1, paddingPx, -1);
     }
 
     @SuppressLint("ClickableViewAccessibility")

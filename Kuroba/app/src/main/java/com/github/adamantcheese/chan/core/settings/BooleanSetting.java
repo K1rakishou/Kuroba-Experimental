@@ -56,12 +56,4 @@ public class BooleanSetting
     public void toggle() {
         set(!get());
     }
-
-    public void setSync(Boolean value) {
-        if (!value.equals(get())) {
-            settingProvider.putBooleanSync(key, value);
-            cached = value;
-            onValueChanged();
-        }
-    }
 }
