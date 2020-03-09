@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
+import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
@@ -39,6 +40,7 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.database.repository.SeenPostRepository;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -202,6 +204,8 @@ public class ManagerModule {
             PostExtraContentLoader postExtraContentLoader,
             @Named(ExecutorsManager.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
+        Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
+
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
@@ -210,5 +214,13 @@ public class ManagerModule {
                 Schedulers.from(onDemandContentLoaderExecutor),
                 loaders
         );
+    }
+
+    @Provides
+    @Singleton
+    public SeenPostsManager provideSeenPostsManager(SeenPostRepository seenPostRepository) {
+        Logger.d(AppModule.DI_TAG, "SeenPostsManager");
+
+        return new SeenPostsManager(seenPostRepository);
     }
 }

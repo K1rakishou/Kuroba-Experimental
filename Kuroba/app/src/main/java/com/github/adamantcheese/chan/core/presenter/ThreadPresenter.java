@@ -38,6 +38,7 @@ import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
+import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
@@ -132,6 +133,7 @@ public class ThreadPresenter
     private final FileManager fileManager;
     private final MockReplyManager mockReplyManager;
     private final OnDemandContentLoaderManager onDemandContentLoaderManager;
+    private final SeenPostsManager seenPostsManager;
 
     private ThreadPresenterCallback threadPresenterCallback;
     private Loadable loadable;
@@ -154,7 +156,8 @@ public class ThreadPresenter
             ThreadSaveManager threadSaveManager,
             FileManager fileManager,
             MockReplyManager mockReplyManager,
-            OnDemandContentLoaderManager onDemandContentLoaderManager
+            OnDemandContentLoaderManager onDemandContentLoaderManager,
+            SeenPostsManager seenPostsManager
     ) {
         this.watchManager = watchManager;
         this.databaseManager = databaseManager;
@@ -164,6 +167,7 @@ public class ThreadPresenter
         this.fileManager = fileManager;
         this.mockReplyManager = mockReplyManager;
         this.onDemandContentLoaderManager = onDemandContentLoaderManager;
+        this.seenPostsManager = seenPostsManager;
     }
 
     public void create(ThreadPresenterCallback threadPresenterCallback) {
@@ -199,6 +203,7 @@ public class ThreadPresenter
             threadPresenterCallback.showLoading();
 
             onDemandContentLoaderManager.preloadForThread(loadable);
+            seenPostsManager.preloadForThread(loadable);
 
             Disposable disposable = onDemandContentLoaderManager.listenPostContentUpdates()
                     .subscribe(
@@ -525,6 +530,7 @@ public class ThreadPresenter
 
         if (loadable != null) {
             onDemandContentLoaderManager.onPostBind(loadable, post);
+            seenPostsManager.onPostBind(loadable, post);
         }
     }
 
@@ -534,6 +540,7 @@ public class ThreadPresenter
 
         if (loadable != null) {
             onDemandContentLoaderManager.onPostUnbind(loadable, post);
+            seenPostsManager.onPostUnbind(loadable, post);
         }
     }
 
@@ -1085,6 +1092,21 @@ public class ThreadPresenter
     @Override
     public void onPostSelectionQuoted(Post post, CharSequence quoted) {
         threadPresenterCallback.quote(post, quoted);
+    }
+
+    @Override
+    public boolean hasAlreadySeenPost(Post post) {
+        if (loadable == null) {
+            // Invalid loadable, hide the label
+            return true;
+        }
+
+        if (loadable.mode != Loadable.Mode.THREAD) {
+            // Not in a thread, hide the label
+            return true;
+        }
+
+        return seenPostsManager.hasAlreadySeenPost(loadable, post);
     }
 
     @Override

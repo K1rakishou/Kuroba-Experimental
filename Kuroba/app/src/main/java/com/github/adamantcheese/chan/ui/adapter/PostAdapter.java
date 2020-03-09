@@ -194,8 +194,9 @@ public class PostAdapter
         } else if (itemViewType == TYPE_LAST_SEEN) {
             return -2;
         } else {
-            // PostNo is already unique enough
-            return displayList.get(getPostPosition(position)).no;
+            Post post = displayList.get(getPostPosition(position));
+            int repliesFromSize = post.getRepliesFromCount();
+            return ((long) repliesFromSize << 32L) + (long) post.no + (compact ? 1L : 0L);
         }
     }
 

@@ -58,7 +58,7 @@ data class LoadableEntity(
         const val THREAD_UID_COLUMN_NAME = "thread_uid"
         const val LOADABLE_TYPE_COLUMN_NAME = "loadable_type"
 
-        const val SITE_BOARD_OPID_COMBO_INDEX_NAME = "site_board_opid_idx"
-        const val THREAD_UID_INDEX_NAME = "thread_uid_idx"
+        const val SITE_BOARD_OPID_COMBO_INDEX_NAME = "${TABLE_NAME}_site_board_opid_idx"
+        const val THREAD_UID_INDEX_NAME = "${TABLE_NAME}_thread_uid_idx"
     }
 }

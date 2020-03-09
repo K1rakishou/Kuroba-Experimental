@@ -1,4 +1,4 @@
 package com.github.adamantcheese.database.di.annotation
 
 @Retention(value = AnnotationRetention.SOURCE)
-annotation class VerboseLogs
+internal annotation class VerboseLogs

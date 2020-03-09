@@ -48,6 +48,6 @@ data class YoutubeLinkExtraContentEntity(
         const val VIDEO_DURATION_COLUMN_NAME = "video_duration"
         const val INSERTED_AT_COLUMN_NAME = "inserted_at"
 
-        const val INSERTED_AT_INDEX_NAME = "inserted_at_idx"
+        const val INSERTED_AT_INDEX_NAME = "${TABLE_NAME}_inserted_at_idx"
     }
 }

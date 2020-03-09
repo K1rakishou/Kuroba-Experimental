@@ -207,6 +207,13 @@ public class PostRepliesController
         }
 
         @Override
+        public long getItemId(int position) {
+            Post post = data.posts.get(position);
+            int repliesFromSize = post.getRepliesFromCount();
+            return ((long) repliesFromSize << 32L) + (long) post.no;
+        }
+
+        @Override
         public void onViewRecycled(@NonNull ReplyViewHolder holder) {
             if (holder.itemView instanceof PostCellInterface) {
                 ((PostCellInterface) holder.itemView).onPostRecycled();

@@ -74,5 +74,7 @@ public interface PostCellInterface {
         void onPostNoClicked(Post post);
 
         void onPostSelectionQuoted(Post post, CharSequence quoted);
+
+        boolean hasAlreadySeenPost(Post post);
     }
 }

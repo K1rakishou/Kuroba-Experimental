@@ -141,6 +141,11 @@ public class ThemeSettingsController
         @Override
         public void onPostSelectionQuoted(Post post, CharSequence quoted) {
         }
+
+        @Override
+        public boolean hasAlreadySeenPost(Post post) {
+            return false;
+        }
     };
 
     private PostParser.Callback parserCallback = new PostParser.Callback() {

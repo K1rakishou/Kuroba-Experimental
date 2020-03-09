@@ -23,9 +23,6 @@ abstract class YoutubeLinkExtraContentDao {
     """)
     abstract suspend fun selectByPostUid(postUid: String, url: String): YoutubeLinkExtraContentEntity?
 
-    @Query("SELECT * FROM ${YoutubeLinkExtraContentEntity.TABLE_NAME}")
-    abstract suspend fun getAll(): List<YoutubeLinkExtraContentEntity>
-
     @Query("""
         DELETE 
         FROM ${YoutubeLinkExtraContentEntity.TABLE_NAME}

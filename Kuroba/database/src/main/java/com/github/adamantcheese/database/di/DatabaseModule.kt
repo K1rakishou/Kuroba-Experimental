@@ -5,8 +5,10 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.database.di.annotation.VerboseLogs
+import com.github.adamantcheese.database.repository.SeenPostRepository
 import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
 import com.github.adamantcheese.database.source.Loadable2LocalSource
+import com.github.adamantcheese.database.source.SeenPostLocalSource
 import com.github.adamantcheese.database.source.YoutubeLinkExtraContentLocalSource
 import dagger.Module
 import dagger.Provides
@@ -43,6 +45,12 @@ class DatabaseModule {
         return YoutubeLinkExtraContentLocalSource(database)
     }
 
+    @Singleton
+    @Provides
+    fun provideSeenPostLocalSource(database: KurobaDatabase): SeenPostLocalSource {
+        return SeenPostLocalSource(database)
+    }
+
     /**
      * Repositories
      * */
@@ -62,6 +70,24 @@ class DatabaseModule {
                 logger,
                 loadable2LocalSource,
                 youtubeLinkExtraContentLocalSource
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideSeenPostRepository(
+            logger: Logger,
+            database: KurobaDatabase,
+            loadable2LocalSource: Loadable2LocalSource,
+            seenPostLocalSource: SeenPostLocalSource,
+            @LoggerTagPrefix loggerTag: String
+    ): SeenPostRepository {
+        return SeenPostRepository(
+                database,
+                loggerTag,
+                logger,
+                loadable2LocalSource,
+                seenPostLocalSource
         )
     }
 }

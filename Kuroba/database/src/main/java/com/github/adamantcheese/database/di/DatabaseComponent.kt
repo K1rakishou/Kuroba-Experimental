@@ -3,6 +3,7 @@ package com.github.adamantcheese.database.di
 import android.app.Application
 import com.github.adamantcheese.database.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.database.di.annotation.VerboseLogs
+import com.github.adamantcheese.database.repository.SeenPostRepository
 import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
 import dagger.BindsInstance
 import dagger.Component
@@ -18,6 +19,7 @@ interface DatabaseComponent {
     fun inject(application: Application)
 
     fun getYoutubeLinkExtraContentRepository(): YoutubeLinkExtraContentRepository
+    fun getSeenPostRepository(): SeenPostRepository
 
     @Component.Builder
     interface Builder {

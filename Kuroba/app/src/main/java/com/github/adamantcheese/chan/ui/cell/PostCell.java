@@ -301,7 +301,7 @@ public class PostCell
         this.showDivider = showDivider;
 
         bindPost(theme, post);
-        
+
         if (inPopup) {
             setOnTouchListener((v, ev) -> gestureDetector.onTouchEvent(ev));
         }
@@ -364,7 +364,7 @@ public class PostCell
         }
 
         bindBackgroundColor(theme, post);
-        bindPostAttentionLabel(post);
+        bindPostAttentionLabel(theme, post);
         bindThumbnails();
         bindTitle(theme, post);
         bindIcons(theme, post);
@@ -395,13 +395,22 @@ public class PostCell
         }
     }
 
-    private void bindPostAttentionLabel(Post post) {
+    private void bindPostAttentionLabel(Theme theme, Post post) {
+        // Filter label is more important than unseen post label
         if (post.filterHighlightedColor != 0) {
             postAttentionLabel.setVisibility(VISIBLE);
             postAttentionLabel.setBackgroundColor(post.filterHighlightedColor);
-        } else {
-            postAttentionLabel.setVisibility(GONE);
+            return;
         }
+
+        if (callback != null && !callback.hasAlreadySeenPost(post)) {
+            postAttentionLabel.setVisibility(VISIBLE);
+            postAttentionLabel.setBackgroundColor(theme.subjectColor);
+            return;
+        }
+
+        // No filters for this post and the user has already seen it
+        postAttentionLabel.setVisibility(GONE);
     }
 
     private void bindBackgroundColor(Theme theme, Post post) {
