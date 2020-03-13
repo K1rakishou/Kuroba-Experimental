@@ -25,8 +25,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <View
         android:id="@+id/post_attention_label"
-        android:layout_width="5dp"
+        android:layout_width="@dimen/post_attention_label_width"
         android:layout_height="match_parent"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
         android:visibility="gone" />
 
     <RelativeLayout

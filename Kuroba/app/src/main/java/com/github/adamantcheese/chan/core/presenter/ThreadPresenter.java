@@ -101,8 +101,8 @@ import static com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize;
 
 public class ThreadPresenter
         implements ChanThreadLoader.ChanLoaderCallback, PostAdapter.PostAdapterCallback,
-                   PostCellInterface.PostCellCallback, ThreadStatusCell.Callback,
-                   ThreadListLayout.ThreadListLayoutPresenterCallback, ArchivesLayout.Callback {
+        PostCellInterface.PostCellCallback, ThreadStatusCell.Callback,
+        ThreadListLayout.ThreadListLayoutPresenterCallback, ArchivesLayout.Callback {
     //region Private Variables
     private static final String TAG = "ThreadPresenter";
 
@@ -1117,11 +1117,9 @@ public class ThreadPresenter
         List<Post> posts = new ArrayList<>();
 
         for (int no : post.getRepliesFrom()) {
-
-                Post replyPost = PostUtils.findPostById(no, chanLoader.getThread());
-                if (replyPost != null) {
-                    posts.add(replyPost);
-                }
+            Post replyPost = PostUtils.findPostById(no, chanLoader.getThread());
+            if (replyPost != null) {
+                posts.add(replyPost);
             }
         }
 
@@ -1146,12 +1144,12 @@ public class ThreadPresenter
     public boolean isWatching() {
         //@formatter:off
         return ChanSettings.autoRefreshThread.get()
-            && BackgroundUtils.isInForeground()
-            && isBound()
-            && loadable.isThreadMode()
-            && chanLoader.getThread() != null
-            && !chanLoader.getThread().isClosed()
-            && !chanLoader.getThread().isArchived();
+                && BackgroundUtils.isInForeground()
+                && isBound()
+                && loadable.isThreadMode()
+                && chanLoader.getThread() != null
+                && !chanLoader.getThread().isClosed()
+                && !chanLoader.getThread().isArchived();
         //@formatter:on
     }
 
@@ -1172,8 +1170,7 @@ public class ThreadPresenter
         if (!chanLoader.getThread().isArchived()) {
             chanLoader.requestMoreDataAndResetTimer();
         } else {
-            @SuppressLint("InflateParams")
-            final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
+            @SuppressLint("InflateParams") final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
             boolean hasContents = dialogView.setBoard(loadable.board);
             dialogView.setCallback(this);
 

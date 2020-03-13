@@ -13,8 +13,8 @@ class PostCommentBuilder(
     }
 
     @Synchronized
-    fun getComment(): CharSequence {
-        return checkNotNull(this.comment) { "Comment is null!" }
+    fun getComment(): CharSequence? {
+        return comment
     }
 
     @Synchronized
