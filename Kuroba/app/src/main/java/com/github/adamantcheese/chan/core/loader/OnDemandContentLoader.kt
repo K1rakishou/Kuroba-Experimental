@@ -8,8 +8,8 @@ abstract class OnDemandContentLoader(
     abstract fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult>
     abstract fun cancelLoading(postLoaderData: PostLoaderData)
 
-    protected fun succeeded(): Single<LoaderResult> = Single.just(LoaderResult.Success(loaderType))
-    protected fun failed(): Single<LoaderResult> = Single.just(LoaderResult.Error(loaderType))
+    protected fun succeeded(): Single<LoaderResult> = Single.just(LoaderResult.Succeeded(loaderType))
+    protected fun failed(): Single<LoaderResult> = Single.just(LoaderResult.Failed(loaderType))
     protected fun rejected(): Single<LoaderResult> = Single.just(LoaderResult.Rejected(loaderType))
 
     override fun equals(other: Any?): Boolean {

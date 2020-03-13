@@ -20,7 +20,8 @@ import com.github.adamantcheese.database.entity.YoutubeLinkExtraContentEntity
             YoutubeLinkExtraContentEntity::class,
             SeenPostEntity::class
         ],
-        version = 1
+        version = 1,
+        exportSchema = true
 )
 @TypeConverters(value = [
     DateTimeTypeConverter::class,

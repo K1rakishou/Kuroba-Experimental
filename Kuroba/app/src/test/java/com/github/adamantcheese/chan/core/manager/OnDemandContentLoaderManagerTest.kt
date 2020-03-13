@@ -51,7 +51,7 @@ class OnDemandContentLoaderManagerTest {
         testSubscriber.assertNotComplete()
 
         val event = testSubscriber.values().first()
-        assertTrue(event.results.first() is LoaderResult.Success)
+        assertTrue(event.results.first() is LoaderResult.Succeeded)
     }
 
     @Test
@@ -75,7 +75,7 @@ class OnDemandContentLoaderManagerTest {
         testSubscriber.assertNotComplete()
 
         val event = testSubscriber.values().first()
-        assertTrue(event.results.first() is LoaderResult.Success)
+        assertTrue(event.results.first() is LoaderResult.Succeeded)
     }
 
     @Test
@@ -108,9 +108,7 @@ class OnDemandContentLoaderManagerTest {
                 workerScheduler,
                 setOf(
                         DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.YoutubeLinkDurationsLoader, failLoading = true),
-                        DummyLoader(LoaderType.YoutubeLinkTitlesLoader, failLoading = true),
-                        DummyLoader(LoaderType.InlinedFileSizeLoader)
+                        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true)
                 )
         )
 
@@ -123,23 +121,19 @@ class OnDemandContentLoaderManagerTest {
         testSubscriber.assertNotComplete()
 
         val events = testSubscriber.values().first()
-        assertEquals(4, events.results.size)
+        assertEquals(2, events.results.size)
 
         val eventMap = hashMapOf<LoaderType, Boolean>().apply {
             put(LoaderType.PrefetchLoader, false)
-            put(LoaderType.YoutubeLinkDurationsLoader, false)
-            put(LoaderType.YoutubeLinkTitlesLoader, false)
-            put(LoaderType.InlinedFileSizeLoader, false)
+            put(LoaderType.PostExtraContentLoader, false)
         }
 
         events.results.forEach { event ->
             eventMap[event.loaderType] = true
 
             when (event.loaderType) {
-                LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Success)
-                LoaderType.YoutubeLinkDurationsLoader -> assertTrue(event is LoaderResult.Error)
-                LoaderType.YoutubeLinkTitlesLoader -> assertTrue(event is LoaderResult.Error)
-                LoaderType.InlinedFileSizeLoader -> assertTrue(event is LoaderResult.Success)
+                LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Succeeded)
+                LoaderType.PostExtraContentLoader -> assertTrue(event is LoaderResult.Failed)
             }
         }
 
@@ -153,9 +147,7 @@ class OnDemandContentLoaderManagerTest {
                 workerScheduler,
                 setOf(
                         DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.YoutubeLinkDurationsLoader, failLoading = true),
-                        DummyLoader(LoaderType.YoutubeLinkTitlesLoader, failLoading = true),
-                        DummyLoader(LoaderType.InlinedFileSizeLoader)
+                        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true)
                 )
         )
 
@@ -178,14 +170,11 @@ class OnDemandContentLoaderManagerTest {
         val testSubscriber = TestSubscriber<LoaderBatchResult>()
         val loaders = setOf(
                 spy(DummyLoader(LoaderType.PrefetchLoader, isCache = true)),
-                spy(DummyLoader(LoaderType.YoutubeLinkDurationsLoader, isCache = true)),
-                spy(DummyLoader(LoaderType.YoutubeLinkTitlesLoader)),
-                spy(DummyLoader(LoaderType.InlinedFileSizeLoader))
+                spy(DummyLoader(LoaderType.PostExtraContentLoader, isCache = true))
         )
         val expectedToBeCalledLoaderTypes = listOf(
                 LoaderType.PrefetchLoader,
-                LoaderType.YoutubeLinkDurationsLoader,
-                LoaderType.YoutubeLinkTitlesLoader
+                LoaderType.PostExtraContentLoader
         )
         val loaderManager = OnDemandContentLoaderManager(
                 workerScheduler,
@@ -205,12 +194,6 @@ class OnDemandContentLoaderManagerTest {
         workerScheduler.advanceTimeBy(1500, TimeUnit.MILLISECONDS)
 
         loaders.forEach { loader ->
-            if (loader.loaderType in expectedToBeCalledLoaderTypes) {
-                verify(loader, times(10)).isAlreadyCached(any())
-            } else {
-                verify(loader, never()).isAlreadyCached(any())
-            }
-
             verify(loader, never()).startLoading(any())
             verify(loader, times(10)).cancelLoading(any())
         }
@@ -225,9 +208,7 @@ class OnDemandContentLoaderManagerTest {
         val testSubscriber = TestSubscriber<LoaderBatchResult>()
         val loaders = setOf(
                 spy(DummyLoader(LoaderType.PrefetchLoader)),
-                spy(DummyLoader(LoaderType.YoutubeLinkDurationsLoader)),
-                spy(DummyLoader(LoaderType.YoutubeLinkTitlesLoader)),
-                spy(DummyLoader(LoaderType.InlinedFileSizeLoader))
+                spy(DummyLoader(LoaderType.PostExtraContentLoader))
         )
         val expectedToBeCalledLoaderTypes = listOf(LoaderType.PrefetchLoader)
         val loaderManager = OnDemandContentLoaderManager(
@@ -248,12 +229,6 @@ class OnDemandContentLoaderManagerTest {
         loaderManager.cancelAllForLoadable(loadable)
 
         loaders.forEach { loader ->
-            if (loader.loaderType in expectedToBeCalledLoaderTypes) {
-                verify(loader, times(10)).isAlreadyCached(any())
-            } else {
-                verify(loader, never()).isAlreadyCached(any())
-            }
-
             verify(loader, times(10)).startLoading(any())
             verify(loader, times(10)).cancelLoading(any())
         }
@@ -294,15 +269,11 @@ class OnDemandContentLoaderManagerTest {
             private val failLoading: Boolean = false
     ) : OnDemandContentLoader(loaderType) {
 
-        override fun isAlreadyCached(postLoaderData: PostLoaderData): Boolean {
-            return isCache
-        }
-
         override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
             return if (failLoading) {
-                Single.just(LoaderResult.Error(loaderType))
+                Single.just(LoaderResult.Failed(loaderType))
             } else {
-                Single.just(LoaderResult.Success(loaderType))
+                Single.just(LoaderResult.Succeeded(loaderType))
             }
         }
 

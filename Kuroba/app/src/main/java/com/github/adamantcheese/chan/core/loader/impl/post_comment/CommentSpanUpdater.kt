@@ -41,10 +41,6 @@ internal object CommentSpanUpdater {
                         invertedSpanUpdateBatch.extraLinkInfo
                 )
 
-                if (originalLinkUrl == formattedLinkUrl) {
-                    return@forEach
-                }
-
                 // Delete the old link old with the text
                 ssb.delete(start, end)
 

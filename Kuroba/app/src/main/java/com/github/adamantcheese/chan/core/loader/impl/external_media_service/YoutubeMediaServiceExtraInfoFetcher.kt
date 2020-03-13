@@ -9,6 +9,7 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.groupOrNull
 import com.github.adamantcheese.database.dto.YoutubeLinkExtraContent
 import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
@@ -139,7 +140,8 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
             } else {
                 PostExtraContentLoader.formatterWithoutHours.print(time)
             }
-        } catch (ignored: Throwable) {
+        } catch (error: Throwable) {
+            Logger.e(TAG, "Error while trying to extract video duration: ${error.errorMessageOrClassName()}")
             null
         }
     }
@@ -155,7 +157,8 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                     .asJsonObject
                     .get("title")
                     .asString
-        } catch (ignored: Throwable) {
+        } catch (error: Throwable) {
+            Logger.e(TAG, "Error while trying to extract video title: ${error.errorMessageOrClassName()}")
             null
         }
     }

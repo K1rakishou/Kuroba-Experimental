@@ -210,7 +210,7 @@ public class ManagerModule {
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
-            @Named(ExecutorsManager.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
 

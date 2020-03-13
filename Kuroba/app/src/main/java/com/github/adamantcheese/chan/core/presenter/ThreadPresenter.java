@@ -554,7 +554,7 @@ public class ThreadPresenter
 
     private boolean needUpdatePost(LoaderBatchResult batchResult) {
         for (LoaderResult loaderResult : batchResult.getResults()) {
-            if (loaderResult instanceof LoaderResult.Success) {
+            if (loaderResult instanceof LoaderResult.Succeeded) {
                 return true;
             }
         }

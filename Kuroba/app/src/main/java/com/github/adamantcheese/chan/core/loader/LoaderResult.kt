@@ -5,12 +5,12 @@ sealed class LoaderResult(val loaderType: LoaderType) {
      * Loader has successfully loaded new content for current post and we now need to update the
      * post
      * */
-    class Success(loaderType: LoaderType) : LoaderResult(loaderType)
+    class Succeeded(loaderType: LoaderType) : LoaderResult(loaderType)
     /**
      * Loader failed to load new content for current post (no internet connection or something
      * similar)
      * */
-    class Error(loaderType: LoaderType) : LoaderResult(loaderType)
+    class Failed(loaderType: LoaderType) : LoaderResult(loaderType)
     /**
      * Loader rejected to load new content for current post (feature is turned off in settings
      * by the user or some other condition is not satisfied (like we are currently not on Wi-Fi

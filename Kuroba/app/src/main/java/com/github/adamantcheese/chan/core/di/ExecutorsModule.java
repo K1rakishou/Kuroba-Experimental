@@ -1,5 +1,7 @@
 package com.github.adamantcheese.chan.core.di;
 
+import com.github.adamantcheese.chan.utils.Logger;
+
 import org.codejargon.feather.Provides;
 
 import java.util.Locale;
@@ -10,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-public class ExecutorsManager {
+public class ExecutorsModule {
     public static final String onDemandContentLoaderExecutorName = "OnDemandContentLoaderExecutor";
     private static final AtomicInteger onDemandContentLoaderExecutorThreadIndex = new AtomicInteger(0);
 
@@ -18,6 +20,8 @@ public class ExecutorsManager {
     @Singleton
     @Named(onDemandContentLoaderExecutorName)
     public Executor provideOnDemandContentLoaderExecutor() {
+        Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderExecutor");
+
         return createExecutor(
                 onDemandContentLoaderExecutorName,
                 1,

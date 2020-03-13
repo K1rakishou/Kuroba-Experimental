@@ -33,7 +33,7 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
     ): Flowable<ModularResult<Unit>>
 
     /**
-     * Whether a link belongs to this fetcher
+     * Whether this fetcher can parse the link
      * */
     fun linkMatchesToService(link: String): Boolean
 

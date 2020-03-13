@@ -87,7 +87,7 @@ class OnDemandContentLoaderManager(
                                 Logger.e(TAG, "Loader: $loaderName unhandled error", error)
                             }
                             .timeout(MAX_LOADER_LOADING_TIME_SECONDS, TimeUnit.SECONDS, workerScheduler)
-                            .onErrorReturnItem(LoaderResult.Error(loader.loaderType))
+                            .onErrorReturnItem(LoaderResult.Failed(loader.loaderType))
                 }
                 .toList()
                 .map { results -> LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results) }
