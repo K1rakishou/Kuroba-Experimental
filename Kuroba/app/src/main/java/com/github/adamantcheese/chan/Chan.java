@@ -110,6 +110,10 @@ public class Chan
         super.onCreate();
         registerActivityLifecycleCallbacks(this);
 
+        WatchNotification.setupChannel();
+        SavingNotification.setupChannel();
+        LastPageNotification.setupChannel();
+
         DatabaseComponent databaseComponent = DatabaseModuleInjector.build(
                 this,
                 Logger.TAG_PREFIX,
@@ -141,10 +145,6 @@ public class Chan
         //create these classes here even if they aren't explicitly used, so they do their background startup tasks
         //and so that they're available for feather later on for archives/filter watch waking
         feather.instance(FilterWatchManager.class);
-
-        WatchNotification.setupChannel();
-        SavingNotification.setupChannel();
-        LastPageNotification.setupChannel();
 
         RxJavaPlugins.setErrorHandler(e -> {
             if (e instanceof UndeliverableException) {
