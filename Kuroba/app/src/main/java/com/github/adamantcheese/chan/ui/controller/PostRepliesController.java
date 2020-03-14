@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.ui.controller;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.util.LruCache;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -44,12 +45,13 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
         extends BaseFloatingController {
+    private static final LruCache<Integer, Integer> scrollPositionCache = new LruCache<>(128);
+
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
     private LoadView loadView;
     private RecyclerView repliesView;
     private PostPopupHelper.RepliesData displayingData;
-
     private boolean first = true;
 
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
@@ -127,6 +129,7 @@ public class PostRepliesController
     }
 
     private void displayData(Loadable loadable, final PostPopupHelper.RepliesData data) {
+        storeScrollPosition();
         displayingData = data;
 
         View dataView;
@@ -162,6 +165,50 @@ public class PostRepliesController
         loadView.setView(dataView);
 
         first = false;
+        restoreScrollPosition(data.forPost.no);
+    }
+
+    private void storeScrollPosition() {
+        if (displayingData == null) {
+            return;
+        }
+
+        RecyclerView.LayoutManager layoutManager = repliesView.getLayoutManager();
+        if (layoutManager == null) {
+            return;
+        }
+
+        if (!(layoutManager instanceof LinearLayoutManager)) {
+            return;
+        }
+
+        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+        int position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+
+        if (position == RecyclerView.NO_POSITION) {
+            return;
+        }
+
+        scrollPositionCache.put(displayingData.forPost.no, position);
+    }
+
+    private void restoreScrollPosition(int postNo) {
+        RecyclerView.LayoutManager layoutManager = repliesView.getLayoutManager();
+        if (layoutManager == null) {
+            return;
+        }
+
+        if (!(layoutManager instanceof LinearLayoutManager)) {
+            return;
+        }
+
+        Integer scrollPosition = scrollPositionCache.get(postNo);
+        if (scrollPosition == null) {
+            return;
+        }
+
+        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+        linearLayoutManager.scrollToPosition(scrollPosition);
     }
 
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
