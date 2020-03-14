@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.loader.impl.post_comment
 import android.graphics.Bitmap
 import android.text.SpannableStringBuilder
 import android.text.Spanned
+import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -34,12 +35,15 @@ internal object CommentSpanUpdater {
             invertedSpanUpdateBatchList.forEach { invertedSpanUpdateBatch ->
                 val start = postLinkableSpan.start + offset
                 val end = postLinkableSpan.end + offset
+                val oldSpans = ssb.getSpans(start, end, CharacterStyle::class.java).filter { oldSpan ->
+                    oldSpan !== postLinkableSpan.postLinkable
+                }
                 val originalLinkUrl = ssb.substring(start, end)
+                val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
 
-                val formattedLinkUrl = formatLinkUrl(
-                        originalLinkUrl,
-                        invertedSpanUpdateBatch.extraLinkInfo
-                )
+                // Update the offset with the difference between the new and old links (new link
+                // should be longer than the old one)
+                offset += abs(formattedLinkUrl.length - originalLinkUrl.length)
 
                 // Delete the old link old with the text
                 ssb.delete(start, end)
@@ -52,8 +56,22 @@ internal object CommentSpanUpdater {
                         postLinkableSpan.postLinkable,
                         start,
                         start + formattedLinkUrl.length,
-                        ssb.getSpanFlags(postLinkableSpan)
+                        ssb.getSpanFlags(postLinkableSpan.postLinkable)
                 )
+
+                // Insert back old spans (and don't forget to update their boundaries) that were
+                // on top of this PostLinkable that we are changing
+                oldSpans.forEach { oldSpan ->
+                    val oldSpanStart = ssb.getSpanStart(oldSpan)
+                    val oldSpanEnd = ssb.getSpanEnd(oldSpan)
+
+                    ssb.setSpan(
+                            oldSpan,
+                            oldSpanStart,
+                            oldSpanEnd + formattedLinkUrl.length,
+                            ssb.getSpanFlags(oldSpan)
+                    )
+                }
 
                 // Add the icon span
                 ssb.setSpan(
@@ -63,9 +81,6 @@ internal object CommentSpanUpdater {
                         (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
                 )
 
-                // Update the offset with the difference between the new and old links (new link
-                // should be longer than the old one)
-                offset += abs(formattedLinkUrl.length - originalLinkUrl.length)
                 updated = true
             }
         }
