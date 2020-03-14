@@ -25,6 +25,10 @@ internal class PostExtraContentLoader(
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+            return rejected()
+        }
+
         val comment = postLoaderData.post.comment
         if (comment.isEmpty() || comment !is Spanned) {
             return rejected()
@@ -90,6 +94,7 @@ internal class PostExtraContentLoader(
             return rejected()
         }
 
+        postLoaderData.post.setContentLoadedForLoader(loaderType)
         // Something was updated we need to redraw the post, so return success
         return succeeded(true)
     }

@@ -21,6 +21,7 @@ import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.chan.core.loader.LoaderType;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 
@@ -28,8 +29,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -74,11 +77,11 @@ public class Post
      */
     public final AtomicBoolean deleted = new AtomicBoolean(false);
     /**
-     * We use this flag to avoid infinite loops when binding posts since after all post content
+     * We use this map to avoid infinite loops when binding posts since after all post content
      * loaders have done it's job we update the post via notifyItemChange, which trigger onPostBind()
      * again.
      * */
-    public final AtomicBoolean onDemandContentLoaded = new AtomicBoolean(false);
+    private final Map<LoaderType, Boolean> onDemandContentLoadedMap = new HashMap<>();
     /**
      * This post replies to the these ids.
      */
@@ -205,6 +208,19 @@ public class Post
                 return;
             }
         }
+    }
+
+    public synchronized boolean isContentLoadedForLoader(LoaderType loaderType) {
+        @Nullable Boolean isLoaded = onDemandContentLoadedMap.get(loaderType);
+        if (isLoaded == null) {
+            return false;
+        }
+
+        return isLoaded;
+    }
+
+    public synchronized void setContentLoadedForLoader(LoaderType loaderType) {
+        onDemandContentLoadedMap.put(loaderType, true);
     }
 
     @AnyThread

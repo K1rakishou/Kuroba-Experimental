@@ -17,6 +17,10 @@ class InlinedFileInfoLoader(
 ) : OnDemandContentLoader(LoaderType.InlinedFileInfoLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+            return rejected()
+        }
+
         val inlinedImages = postLoaderData.post.postImages.filter { postImage ->
             return@filter postImage.isInlined && postImage.imageUrl != null
         }
@@ -63,6 +67,7 @@ class InlinedFileInfoLoader(
             postLoaderData.post.updatePostImageSize(fileUrl, fileSize)
         }
 
+        postLoaderData.post.setContentLoadedForLoader(loaderType)
         return LoaderResult.Succeeded(loaderType, true)
     }
 

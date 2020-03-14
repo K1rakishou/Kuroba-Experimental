@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.loader.impl
 
+import com.github.adamantcheese.chan.core.cache.FileCacheListener
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.LoaderType
@@ -11,6 +12,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType
 import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Single
 
 class PrefetchLoader(
@@ -18,6 +20,10 @@ class PrefetchLoader(
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+            return rejected()
+        }
+
         val post = postLoaderData.post
         val loadable = postLoaderData.loadable
 
@@ -45,6 +51,11 @@ class PrefetchLoader(
                 return@forEach
             }
 
+            cancelableDownload.addCallback(object : FileCacheListener() {
+                override fun onSuccess(file: RawFile?) {
+                    postLoaderData.post.setContentLoadedForLoader(loaderType)
+                }
+            })
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
 

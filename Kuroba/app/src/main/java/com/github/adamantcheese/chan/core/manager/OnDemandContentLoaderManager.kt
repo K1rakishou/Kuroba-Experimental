@@ -91,7 +91,6 @@ class OnDemandContentLoaderManager(
                 }
                 .toList()
                 .map { results -> LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results) }
-                .doOnSuccess { postLoaderData.post.onDemandContentLoaded.set(true) }
                 .doOnSuccess(postUpdateRxQueue::onNext)
                 .map { Unit }
                 .toFlowable()
@@ -108,10 +107,6 @@ class OnDemandContentLoaderManager(
     fun onPostBind(loadable: Loadable, post: Post) {
         BackgroundUtils.ensureMainThread()
         check(loaders.isNotEmpty()) { "No loaders!" }
-
-        if (post.onDemandContentLoaded.get()) {
-            return
-        }
 
         val loadableUid = loadable.uniqueId
         val postUid = getPostUniqueId(loadable, post)
