@@ -1,0 +1,193 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "8a39206c77e546a6b8e92abb498e5b72",
+    "entities": [
+      {
+        "tableName": "loadable",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_uid` TEXT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `op_id` INTEGER NOT NULL, `loadable_type` INTEGER NOT NULL, PRIMARY KEY(`thread_uid`))",
+        "fields": [
+          {
+            "fieldPath": "threadUid",
+            "columnName": "thread_uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boardCode",
+            "columnName": "board_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "opId",
+            "columnName": "op_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loadableType",
+            "columnName": "loadable_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "thread_uid"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "loadable_site_board_opid_idx",
+            "unique": true,
+            "columnNames": [
+              "site_name",
+              "board_code",
+              "op_id"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `loadable_site_board_opid_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`, `op_id`)"
+          },
+          {
+            "name": "loadable_thread_uid_idx",
+            "unique": true,
+            "columnNames": [
+              "thread_uid"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `loadable_thread_uid_idx` ON `${TABLE_NAME}` (`thread_uid`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "media_service_link_extra_content_entity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_url` TEXT NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `video_url`))",
+        "fields": [
+          {
+            "fieldPath": "postUid",
+            "columnName": "post_uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentLoadableUid",
+            "columnName": "parent_loadable_uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaServiceType",
+            "columnName": "media_service_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "videoUrl",
+            "columnName": "video_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "videoTitle",
+            "columnName": "video_title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "videoDuration",
+            "columnName": "video_duration",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "insertedAt",
+            "columnName": "inserted_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "post_uid",
+            "parent_loadable_uid",
+            "video_url"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "media_service_link_extra_content_entity_inserted_at_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `media_service_link_extra_content_entity_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "seen_post",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `post_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `post_id`))",
+        "fields": [
+          {
+            "fieldPath": "postUid",
+            "columnName": "post_uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentLoadableUid",
+            "columnName": "parent_loadable_uid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postId",
+            "columnName": "post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "insertedAt",
+            "columnName": "inserted_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "post_uid",
+            "parent_loadable_uid",
+            "post_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "seen_post_inserted_at_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `seen_post_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8a39206c77e546a6b8e92abb498e5b72')"
+    ]
+  }
+}

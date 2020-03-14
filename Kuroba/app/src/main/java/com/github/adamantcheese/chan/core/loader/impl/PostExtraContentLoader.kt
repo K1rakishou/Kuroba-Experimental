@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.loader.impl
 
-import android.graphics.Bitmap
 import android.text.Spanned
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult
@@ -15,10 +14,10 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBat
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.putIfNotContains
-import io.reactivex.*
-import okhttp3.*
-import org.joda.time.format.PeriodFormatterBuilder
-import java.io.IOException
+import io.reactivex.Flowable
+import io.reactivex.Scheduler
+import io.reactivex.Single
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 internal class PostExtraContentLoader(
@@ -105,130 +104,21 @@ internal class PostExtraContentLoader(
             linkInfoRequest: LinkInfoRequest
     ): Flowable<ModularResult<SpanUpdateBatch>> {
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
-            fetcher.fetcherType == linkInfoRequest.fetcherType
+            fetcher.mediaServiceType == linkInfoRequest.mediaServiceType
         }
 
         if (fetcher == null) {
             val error = ModularResult.error<SpanUpdateBatch>(
-                    IllegalStateException("Couldn't find fetcher for fetcher " +
-                            "type ${linkInfoRequest.fetcherType}")
+                    IllegalStateException("Couldn't find fetcher for " +
+                            "mediaServiceType ${linkInfoRequest.mediaServiceType}")
             )
 
             return Flowable.just(error)
         }
 
-        val iconBitmap = fetcher.getIconBitmap()
-
-        // TODO(ODL): move this into the database module (and it should probably be renamed into
-        //  model module)
-        return fetcher.getFromCache(postUid, linkInfoRequest.originalUrl)
-                .flatMap { extraLinkInfoResult ->
-                    if (extraLinkInfoResult is ModularResult.Value) {
-                        val extraLinkInfo = extraLinkInfoResult.value
-                        if (extraLinkInfo != null) {
-                            val spanUpdateBatch = SpanUpdateBatch(
-                                    requestUrl,
-                                    extraLinkInfo,
-                                    linkInfoRequest.oldPostLinkableSpans,
-                                    iconBitmap
-                            )
-
-                            return@flatMap Flowable.just(
-                                    ModularResult.value(spanUpdateBatch)
-                            )
-                        }
-                    }
-
-                    return@flatMap fetchFromNetwork(requestUrl, linkInfoRequest, fetcher, iconBitmap)
-                }
-                .flatMap { spanUpdateBatchResult ->
-                    when (spanUpdateBatchResult) {
-                        is ModularResult.Error -> {
-                            val result = ModularResult.error<SpanUpdateBatch>(spanUpdateBatchResult.error)
-                            return@flatMap Flowable.just(result)
-                        }
-                        is ModularResult.Value -> {
-                            val spanUpdateBatch = spanUpdateBatchResult.value
-
-                            return@flatMap fetcher.storeIntoCache(
-                                            postUid,
-                                            loadableUid,
-                                            linkInfoRequest.originalUrl,
-                                            spanUpdateBatch.extraLinkInfo
-                                    )
-                                    .map { spanUpdateBatchResult }
-                        }
-                        else -> {
-                            throw IllegalStateException(
-                                    "Unknown result type: ${spanUpdateBatchResult::class.simpleName}"
-                            )
-                        }
-                    }
-                }
+        return fetcher.fetch(loadableUid, postUid, requestUrl, linkInfoRequest)
                 .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-    }
 
-    private fun fetchFromNetwork(
-            url: String,
-            linkInfoRequest: LinkInfoRequest,
-            fetcher: ExternalMediaServiceExtraInfoFetcher,
-            iconBitmap: Bitmap
-    ): Flowable<ModularResult<SpanUpdateBatch>> {
-        return Flowable.create({ emitter ->
-            try {
-                val httpRequest = Request.Builder()
-                        .url(url)
-                        .get()
-                        .build()
-
-                val call = okHttpClient.newCall(httpRequest)
-
-                call.enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        emitter.tryOnError(e)
-                    }
-
-                    override fun onResponse(call: Call, response: Response) {
-                        processResponse(
-                                linkInfoRequest,
-                                url,
-                                fetcher,
-                                iconBitmap,
-                                response,
-                                emitter
-                        )
-                    }
-                })
-            } catch (error: Throwable) {
-                emitter.tryOnError(error)
-            }
-        }, BackpressureStrategy.BUFFER)
-    }
-
-    private fun processResponse(
-            linkInfoRequest: LinkInfoRequest,
-            url: String,
-            fetcher: ExternalMediaServiceExtraInfoFetcher,
-            iconBitmap: Bitmap,
-            response: Response,
-            emitter: FlowableEmitter<ModularResult<SpanUpdateBatch>>
-    ) {
-        try {
-            val extraLinkInfo = fetcher.extractExtraLinkInfo(response)
-            val spanUpdateBatch = SpanUpdateBatch(
-                    url,
-                    extraLinkInfo,
-                    linkInfoRequest.oldPostLinkableSpans,
-                    iconBitmap
-            )
-
-            emitter.onNext(ModularResult.value(spanUpdateBatch))
-            emitter.onComplete()
-        } catch (error: Throwable) {
-            Logger.e(TAG, "Error while processing response", error)
-            emitter.onNext(ModularResult.error(error))
-            emitter.onComplete()
-        }
     }
 
     private fun createNewRequests(
@@ -258,7 +148,7 @@ internal class PostExtraContentLoader(
                 val requestUrl = fetcher.formatRequestUrl(originalUrl)
                 val linkInfoRequest = LinkInfoRequest(
                         originalUrl,
-                        fetcher.fetcherType,
+                        fetcher.mediaServiceType,
                         mutableListOf()
                 )
 
@@ -311,33 +201,5 @@ internal class PostExtraContentLoader(
         private const val TAG = "PostExtraContentLoader"
         private const val MAX_CONCURRENT_REQUESTS = 4
         private const val MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS = 3L
-
-        internal val formatterWithoutHours = PeriodFormatterBuilder()
-                .appendLiteral("[")
-                .minimumPrintedDigits(0) //don't print hours if none
-                .appendHours()
-                .appendSuffix(":")
-                .minimumPrintedDigits(1) //one digit minutes if no hours
-                .printZeroAlways() //always print 0 for minutes, if seconds only
-                .appendMinutes()
-                .appendSuffix(":")
-                .minimumPrintedDigits(2) //always print two digit seconds
-                .appendSeconds()
-                .appendLiteral("]")
-                .toFormatter()
-
-        internal val formatterWithHours = PeriodFormatterBuilder()
-                .appendLiteral("[")
-                .minimumPrintedDigits(0) //don't print hours if none
-                .appendHours()
-                .appendSuffix(":")
-                .minimumPrintedDigits(2) //two digit minutes if hours
-                .printZeroAlways() //always print 0 for minutes, if seconds only
-                .appendMinutes()
-                .appendSuffix(":")
-                .minimumPrintedDigits(2) //always print two digit seconds
-                .appendSeconds()
-                .appendLiteral("]")
-                .toFormatter()
     }
 }

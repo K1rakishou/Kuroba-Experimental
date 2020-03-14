@@ -21,8 +21,8 @@ import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.database.dto.loadable.LoadableType;
-import com.github.adamantcheese.database.dto.loadable.LoadableUtils;
+import com.github.adamantcheese.database.data.loadable.LoadableType;
+import com.github.adamantcheese.database.data.loadable.LoadableUtils;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 

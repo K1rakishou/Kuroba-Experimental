@@ -4,32 +4,28 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader
+import com.github.adamantcheese.chan.core.loader.impl.post_comment.CommentPostLinkableSpan
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
+import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
+import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.groupOrNull
-import com.github.adamantcheese.database.dto.video_service.MediaServiceLinkExtraContent
-import com.github.adamantcheese.database.dto.video_service.MediaServiceType
+import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
+import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
-import com.google.gson.JsonElement
-import com.google.gson.JsonParser
 import io.reactivex.Flowable
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.rx2.rxFlowable
-import okhttp3.Response
-import org.joda.time.DateTime
-import org.joda.time.Period
 import java.util.regex.Pattern
 
 internal class YoutubeMediaServiceExtraInfoFetcher(
         private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
 ) : ExternalMediaServiceExtraInfoFetcher {
 
-    override val fetcherType: FetcherType
-        get() = FetcherType.YoutubeFetcher
+    override val mediaServiceType: MediaServiceType
+        get() = MediaServiceType.Youtube
 
     override fun isEnabled(): Boolean {
         if (!ChanSettings.parseYoutubeTitles.get() && !ChanSettings.parseYoutubeDuration.get()) {
@@ -39,47 +35,63 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         return true
     }
 
-    override fun getIconBitmap(): Bitmap = youtubeIcon
+    private fun getIconBitmap(): Bitmap = youtubeIcon
 
     @ExperimentalCoroutinesApi
-    override fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>> {
+    override fun fetch(
+            loadableUid: String,
+            postUid: String,
+            requestUrl: String,
+            linkInfoRequest: LinkInfoRequest
+    ): Flowable<ModularResult<SpanUpdateBatch>> {
         return rxFlowable {
-            val result = mediaServiceLinkExtraContentRepository.selectByPostUid(postUid, url)
-                    .map { youtubeLnkExtraContent ->
-                        if (youtubeLnkExtraContent == null) {
-                            return@map null
-                        }
+            val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
+                    loadableUid,
+                    postUid,
+                    mediaServiceType,
+                    requestUrl,
+                    linkInfoRequest.originalUrl
+            )
 
-                        return@map ExtraLinkInfo(
-                                youtubeLnkExtraContent.videoTitle,
-                                youtubeLnkExtraContent.videoDuration
-                        )
-                    }
-
-            send(result)
+            when (getLinkExtraContentResult) {
+                is ModularResult.Error -> {
+                    send(ModularResult.error(getLinkExtraContentResult.error))
+                }
+                is ModularResult.Value -> {
+                    send(
+                            processResponse(
+                                    requestUrl,
+                                    getLinkExtraContentResult.value,
+                                    linkInfoRequest.oldPostLinkableSpans
+                            )
+                    )
+                }
+            }
         }
     }
 
-    @ExperimentalCoroutinesApi
-    override fun storeIntoCache(
-            postUid: String,
-            loadableUid: String,
+    private fun processResponse(
             url: String,
-            extraLinkInfo: ExtraLinkInfo
-    ): Flowable<ModularResult<Unit>> {
-        return rxFlowable {
-            val mediaServiceLinkExtraContent = MediaServiceLinkExtraContent(
-                    postUid,
-                    loadableUid,
-                    MediaServiceType.Youtube,
-                    url,
-                    extraLinkInfo.title,
-                    extraLinkInfo.duration,
-                    DateTime.now()
+            mediaServiceLinkExtraContent: MediaServiceLinkExtraContent,
+            oldPostLinkableSpans: List<CommentPostLinkableSpan>
+    ): ModularResult<SpanUpdateBatch> {
+        try {
+            val extraLinkInfo = ExtraLinkInfo(
+                    mediaServiceLinkExtraContent.videoTitle,
+                    mediaServiceLinkExtraContent.videoDuration
             )
 
-            val result = mediaServiceLinkExtraContentRepository.insert(mediaServiceLinkExtraContent)
-            send(result)
+            val spanUpdateBatch = SpanUpdateBatch(
+                    url,
+                    extraLinkInfo,
+                    oldPostLinkableSpans,
+                    getIconBitmap()
+            )
+
+            return ModularResult.value(spanUpdateBatch)
+        } catch (error: Throwable) {
+            Logger.e(TAG, "Error while processing response", error)
+            return ModularResult.error(error)
         }
     }
 
@@ -100,69 +112,6 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         }
 
         return formatGetYoutubeLinkInfoUrl(videoId)
-    }
-
-    override fun extractExtraLinkInfo(response: Response): ExtraLinkInfo {
-        try {
-            return response.use { resp ->
-                return@use resp.body.use { body ->
-                    if (body == null) {
-                        return ExtraLinkInfo.empty()
-                    }
-
-                    val parser = JsonParser.parseString(body.string())
-
-                    val title = tryExtractTitleOrNull(parser)
-                    val duration = tryExtractDurationOrNull(parser)
-
-                    return@use ExtraLinkInfo(title, duration)
-                }
-            }
-        } catch (error: Throwable) {
-            Logger.e(TAG, "Error while trying to extract extra link info", error)
-            return ExtraLinkInfo.empty()
-        }
-    }
-
-    private fun tryExtractDurationOrNull(parser: JsonElement): String? {
-        return try {
-            val durationUnparsed = parser.asJsonObject
-                    .get("items")
-                    .asJsonArray
-                    .get(0)
-                    .asJsonObject
-                    .get("contentDetails")
-                    .asJsonObject
-                    .get("duration")
-                    .asString
-
-            val time = Period.parse(durationUnparsed)
-            if (time.hours > 0) {
-                PostExtraContentLoader.formatterWithHours.print(time)
-            } else {
-                PostExtraContentLoader.formatterWithoutHours.print(time)
-            }
-        } catch (error: Throwable) {
-            Logger.e(TAG, "Error while trying to extract video duration: ${error.errorMessageOrClassName()}")
-            null
-        }
-    }
-
-    private fun tryExtractTitleOrNull(parser: JsonElement): String? {
-        return try {
-            parser.asJsonObject
-                    .get("items")
-                    .asJsonArray
-                    .get(0)
-                    .asJsonObject
-                    .get("snippet")
-                    .asJsonObject
-                    .get("title")
-                    .asString
-        } catch (error: Throwable) {
-            Logger.e(TAG, "Error while trying to extract video title: ${error.errorMessageOrClassName()}")
-            null
-        }
     }
 
     private fun formatGetYoutubeLinkInfoUrl(videoId: String): String {

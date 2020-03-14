@@ -7,7 +7,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
 import com.github.adamantcheese.chan.utils.putIfNotContains
-import com.github.adamantcheese.database.dto.SeenPost
+import com.github.adamantcheese.database.data.SeenPost
 import com.github.adamantcheese.database.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

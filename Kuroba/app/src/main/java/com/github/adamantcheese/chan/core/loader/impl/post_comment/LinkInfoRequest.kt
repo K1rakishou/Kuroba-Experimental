@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.loader.impl.post_comment
 
-import com.github.adamantcheese.chan.core.loader.impl.external_media_service.FetcherType
+import com.github.adamantcheese.database.data.video_service.MediaServiceType
 
 internal class LinkInfoRequest(
         val originalUrl: String,
-        val fetcherType: FetcherType,
+        val mediaServiceType: MediaServiceType,
         val oldPostLinkableSpans: MutableList<CommentPostLinkableSpan>
 )

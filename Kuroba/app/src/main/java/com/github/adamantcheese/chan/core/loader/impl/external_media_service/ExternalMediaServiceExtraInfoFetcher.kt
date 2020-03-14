@@ -1,10 +1,10 @@
 package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
-import android.graphics.Bitmap
 import com.github.adamantcheese.base.ModularResult
-import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
+import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
+import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
+import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import io.reactivex.Flowable
-import okhttp3.Response
 
 /**
  * Base interface for link extra info fetcher. For now only [YoutubeMediaServiceExtraInfoFetcher] is
@@ -14,23 +14,16 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
     /**
      * Each fetcher must have it's own type
      * */
-    val fetcherType: FetcherType
+    val mediaServiceType: MediaServiceType
 
     fun isEnabled(): Boolean
 
-    /**
-     * Icon to prepend the link with
-     * */
-    fun getIconBitmap(): Bitmap
-
-    fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>>
-
-    fun storeIntoCache(
-            postUid: String,
+    fun fetch(
             loadableUid: String,
-            url: String,
-            extraLinkInfo: ExtraLinkInfo
-    ): Flowable<ModularResult<Unit>>
+            postUid: String,
+            requestUrl: String,
+            linkInfoRequest: LinkInfoRequest
+    ): Flowable<ModularResult<SpanUpdateBatch>>
 
     /**
      * Whether this fetcher can parse the link
@@ -42,9 +35,4 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
      * title video duration are supported)
      * */
     fun formatRequestUrl(link: String): String
-
-    /**
-     * Extract video title and duration from the response body
-     * */
-    fun extractExtraLinkInfo(response: Response): ExtraLinkInfo
 }

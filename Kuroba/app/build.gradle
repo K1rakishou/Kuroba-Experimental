@@ -222,7 +222,7 @@ android {
 
 dependencies {
     implementation project(":base")
-    implementation project(":database")
+    implementation project(':model')
 
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.browser:browser:1.2.0'

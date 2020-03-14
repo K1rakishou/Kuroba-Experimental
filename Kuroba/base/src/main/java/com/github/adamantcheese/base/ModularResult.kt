@@ -7,6 +7,26 @@ sealed class ModularResult<V> {
     fun isError() = this is Error
     fun isValue() = this is Value
 
+    fun peekError(func: (Throwable) -> Unit): ModularResult<V> {
+        when (this) {
+            is Value -> return this
+            is Error -> {
+                func(this.error)
+                return this
+            }
+        }
+    }
+
+    fun peekValue(func: (V) -> Unit): ModularResult<V> {
+        when (this) {
+            is Value -> {
+                func(this.value)
+                return this
+            }
+            is Error -> return this
+        }
+    }
+
     fun valueOrNull(): V? {
         if (this is Value) {
             return value
@@ -28,6 +48,10 @@ sealed class ModularResult<V> {
             is Error -> error(error)
             is Value -> safeRun { func(value) }
         }
+    }
+
+    fun ignore() {
+        // No-op. Just an indicator that we don't care about handling this result
     }
 
     fun unwrap(): V {
