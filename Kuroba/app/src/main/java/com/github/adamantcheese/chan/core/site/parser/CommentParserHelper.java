@@ -47,10 +47,6 @@ public class CommentParserHelper {
     private static final LinkExtractor LINK_EXTRACTOR =
             LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build();
 
-    // a cache for titles and durations to prevent extra api calls if not necessary
-    public static LruCache<String, String> youtubeTitleCache = new LruCache<>(500);
-    public static LruCache<String, String> youtubeDurCache = new LruCache<>(500);
-
     //@formatter:off
     private static Pattern imageUrlPattern = Pattern.compile(".*/(.+?)\\.(jpg|png|jpeg|gif|webm|mp4|pdf|bmp|webp|mp3|swf|m4a|ogg|flac)", Pattern.CASE_INSENSITIVE);
     private static String[] noThumbLinkSuffixes = {"webm", "pdf", "mp4", "mp3", "swf", "m4a", "ogg", "flac"};
