@@ -172,7 +172,7 @@ public class VichanApi
                     builder.replies(reader.nextInt());
                     break;
                 case "images":
-                    builder.images(reader.nextInt());
+                    builder.threadImagesCount(reader.nextInt());
                     break;
                 case "unique_ips":
                     builder.uniqueIps(reader.nextInt());
@@ -228,7 +228,7 @@ public class VichanApi
             files.add(0, image);
         }
 
-        builder.images(files);
+        builder.postImages(files);
 
         if (builder.op) {
             // Update OP fields later on the main thread
@@ -237,7 +237,7 @@ public class VichanApi
             op.archived(builder.archived);
             op.sticky(builder.sticky);
             op.replies(builder.replies);
-            op.images(builder.imagesCount);
+            op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);
             queue.setOp(op);

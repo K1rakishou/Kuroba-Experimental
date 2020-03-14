@@ -410,7 +410,7 @@ public class ImageViewerPresenter
             };
 
             if (loadChunked) {
-                DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.size, postImage.fileHash);
+                DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
 
                 preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(loadable,
                         postImage,

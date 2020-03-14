@@ -17,11 +17,9 @@ import com.github.adamantcheese.chan.utils.putIfNotContains
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.Single
-import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 internal class PostExtraContentLoader(
-        private val okHttpClient: OkHttpClient,
         private val scheduler: Scheduler,
         private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
@@ -63,6 +61,10 @@ internal class PostExtraContentLoader(
                 }
                 .doOnError { error -> Logger.e(TAG, "Unhandled error", error) }
                 .onErrorResumeNext { failed() }
+    }
+
+    override fun cancelLoading(postLoaderData: PostLoaderData) {
+        // I guess there is no real need to cancel these requests since they are lightweight
     }
 
     private fun updateSpans(
@@ -191,10 +193,6 @@ internal class PostExtraContentLoader(
                     end
             )
         }
-    }
-
-    override fun cancelLoading(postLoaderData: PostLoaderData) {
-        // I guess there is no real need to cancel these requests since they are lightweight
     }
 
     companion object {

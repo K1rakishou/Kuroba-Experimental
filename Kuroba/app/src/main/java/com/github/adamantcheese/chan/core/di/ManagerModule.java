@@ -20,6 +20,7 @@ import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
+import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
@@ -210,6 +211,7 @@ public class ManagerModule {
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
+            InlinedFileInfoLoader inlinedFileInfoLoader,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
@@ -217,6 +219,7 @@ public class ManagerModule {
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
+        loaders.add(inlinedFileInfoLoader);
 
         return new OnDemandContentLoaderManager(
                 Schedulers.from(onDemandContentLoaderExecutor),

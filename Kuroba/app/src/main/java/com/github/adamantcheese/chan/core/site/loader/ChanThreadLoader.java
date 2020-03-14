@@ -552,7 +552,7 @@ public class ChanThreadLoader
         fakeOp.archived(archived);
         fakeOp.sticky(savedOp.isSticky());
         fakeOp.replies(savedOp.getReplies());
-        fakeOp.images(savedOp.getImagesCount());
+        fakeOp.threadImagesCount(savedOp.getThreadImagesCount());
         fakeOp.uniqueIps(savedOp.getUniqueIps());
         fakeOp.lastModified(savedOp.getLastModified());
 
@@ -614,7 +614,7 @@ public class ChanThreadLoader
                 realOp.setArchived(fakeOp.archived);
                 realOp.setSticky(fakeOp.sticky);
                 realOp.setReplies(fakeOp.replies);
-                realOp.setImagesCount(fakeOp.imagesCount);
+                realOp.setThreadImagesCount(fakeOp.threadImagesCount);
                 realOp.setUniqueIps(fakeOp.uniqueIps);
                 realOp.setLastModified(fakeOp.lastModified);
 

@@ -28,7 +28,7 @@ public class PostImageMapper {
                 postImage.imageWidth,
                 postImage.imageHeight,
                 postImage.spoiler,
-                postImage.size,
+                postImage.getSize(),
                 postImage.fileHash
         );
     }

@@ -509,7 +509,7 @@ public class ThreadPresenter
         int index = 0;
         for (int i = 0; i < posts.size(); i++) {
             Post item = posts.get(i);
-            images.addAll(item.images);
+            images.addAll(item.getPostImages());
             if (i == displayPosition) {
                 index = images.size();
             }
@@ -753,8 +753,8 @@ public class ThreadPresenter
             out:
             for (int i = 0; i < posts.size(); i++) {
                 Post post = posts.get(i);
-                for (int j = 0; j < post.images.size(); j++) {
-                    if (post.images.get(j) == postImage) {
+                for (int j = 0; j < post.getPostImagesCount(); j++) {
+                    if (post.getPostImages().get(j) == postImage) {
                         position = i;
                         break out;
                     }
@@ -792,7 +792,7 @@ public class ThreadPresenter
     public void selectPostImage(PostImage postImage) {
         List<Post> posts = threadPresenterCallback.getDisplayingPosts();
         for (Post post : posts) {
-            for (PostImage image : post.images) {
+            for (PostImage image : post.getPostImages()) {
                 if (image == postImage) {
                     scrollToPost(post, false);
                     highlightPost(post);
@@ -805,7 +805,7 @@ public class ThreadPresenter
     public Post getPostFromPostImage(PostImage postImage) {
         List<Post> posts = threadPresenterCallback.getDisplayingPosts();
         for (Post post : posts) {
-            for (PostImage image : post.images) {
+            for (PostImage image : post.getPostImages()) {
                 if (image == postImage) {
                     return post;
                 }
@@ -852,7 +852,7 @@ public class ThreadPresenter
         int index = -1;
         List<Post> posts = threadPresenterCallback.getDisplayingPosts();
         for (Post item : posts) {
-            for (PostImage image : item.images) {
+            for (PostImage image : item.getPostImages()) {
                 if (image.imageUrl == null) {
                     Logger.e(TAG, "onThumbnailClicked() image.imageUrl == null");
                     continue;
@@ -1242,9 +1242,9 @@ public class ThreadPresenter
     private void showPostInfo(Post post) {
         StringBuilder text = new StringBuilder();
 
-        for (PostImage image : post.images) {
+        for (PostImage image : post.getPostImages()) {
             text.append("Filename: ").append(image.filename).append(".").append(image.extension);
-            if (image.size == -1) {
+            if (image.isInlined) {
                 text.append("\nLinked file");
             } else {
                 text.append(" \nDimensions: ")
@@ -1252,10 +1252,10 @@ public class ThreadPresenter
                         .append("x")
                         .append(image.imageHeight)
                         .append("\nSize: ")
-                        .append(getReadableFileSize(image.size));
+                        .append(getReadableFileSize(image.getSize()));
             }
 
-            if (image.spoiler && image.size != -1) { //all linked files are spoilered, don't say that
+            if (image.spoiler && (image.isInlined)) { //all linked files are spoilered, don't say that
                 text.append("\nSpoilered");
             }
 
@@ -1323,7 +1323,7 @@ public class ThreadPresenter
             historyAdded = true;
             History history = new History();
             history.loadable = loadable;
-            PostImage image = chanLoader.getThread().getOp().image();
+            PostImage image = chanLoader.getThread().getOp().firstImage();
             history.thumbnailUrl = image == null ? "" : image.getThumbnailUrl().toString();
             databaseManager.runTaskAsync(databaseManager.getDatabaseHistoryManager().addHistory(history));
         }

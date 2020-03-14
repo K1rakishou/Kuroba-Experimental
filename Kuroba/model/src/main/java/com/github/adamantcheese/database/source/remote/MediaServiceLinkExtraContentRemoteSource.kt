@@ -16,12 +16,14 @@ class MediaServiceLinkExtraContentRemoteSource(
         loggerTag: String,
         logger: Logger
 ) : AbstractRemoteSource(okHttpClient, logger) {
-    private val TAG = "$loggerTag MSLECRS"
+    private val TAG = "$loggerTag MediaServiceLinkExtraContentRemoteSource"
 
     suspend fun fetchFromNetwork(
             requestUrl: String,
             mediaServiceType: MediaServiceType
     ): ModularResult<MediaServiceLinkExtraInfo> {
+        logger.log(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
+
         return safeRun {
             val httpRequest = Request.Builder()
                     .url(requestUrl)
@@ -49,7 +51,7 @@ class MediaServiceLinkExtraContentRemoteSource(
                 val parser = JsonParser.parseString(body.string())
 
                 val title = MediaServiceLinkExtraContentRemoteSourceHelper
-                        .tryExtractVideoTitleOrNull(mediaServiceType, parser)
+                        .tryExtractVideoTitle(mediaServiceType, parser)
                         .peekError { error ->
                             logger.logError(TAG, "Error while trying to extract video " +
                                     "title for service ($mediaServiceType), " +
@@ -57,7 +59,7 @@ class MediaServiceLinkExtraContentRemoteSource(
                         }
                         .valueOrNull()
                 val duration = MediaServiceLinkExtraContentRemoteSourceHelper
-                        .tryExtractVideoDurationOrNull(mediaServiceType, parser)
+                        .tryExtractVideoDuration(mediaServiceType, parser)
                         .peekError { error ->
                             logger.logError(TAG, "Error while trying to extract video " +
                                     "duration for service ($mediaServiceType), " +

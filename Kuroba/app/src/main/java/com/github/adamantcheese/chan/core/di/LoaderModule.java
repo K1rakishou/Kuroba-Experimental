@@ -1,11 +1,13 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
+import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.database.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
 
 import org.codejargon.feather.Provides;
@@ -31,6 +33,18 @@ public class LoaderModule {
 
     @Provides
     @Singleton
+    public InlinedFileInfoLoader provideInlinedFileInfoLoader(
+            InlinedFileInfoRepository inlinedFileInfoRepository,
+            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+    ) {
+        return new InlinedFileInfoLoader(
+                Schedulers.from(onDemandContentLoaderExecutor),
+                inlinedFileInfoRepository
+        );
+    }
+
+    @Provides
+    @Singleton
     public YoutubeMediaServiceExtraInfoFetcher provideYoutubeMediaServiceExtraInfoFetcher(
             MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
     ) {
@@ -42,7 +56,6 @@ public class LoaderModule {
     @Provides
     @Singleton
     public PostExtraContentLoader providePostExtraContentLoader(
-            NetModule.ProxiedOkHttpClient okHttpClient,
             YoutubeMediaServiceExtraInfoFetcher youtubeMediaServiceExtraInfoFetcher,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
@@ -52,7 +65,6 @@ public class LoaderModule {
         fetchers.add(youtubeMediaServiceExtraInfoFetcher);
 
         return new PostExtraContentLoader(
-                okHttpClient,
                 Schedulers.from(onDemandContentLoaderExecutor),
                 fetchers
         );

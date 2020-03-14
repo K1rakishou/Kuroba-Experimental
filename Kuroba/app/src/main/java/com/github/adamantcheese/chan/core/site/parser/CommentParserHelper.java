@@ -96,7 +96,7 @@ public class CommentParserHelper {
     public static void addPostImages(Post.Builder post) {
         if (ChanSettings.parsePostImageLinks.get()) {
             for (PostLinkable linkable : post.getLinkables()) {
-                if (post.images != null && post.images.size() >= 5) return; //max 5 images hotlinked
+                if (post.postImages.size() >= 5) return; //max 5 images hotlinked
                 if (linkable.type == PostLinkable.Type.LINK) {
                     Matcher matcher = imageUrlPattern.matcher(((String) linkable.value));
                     if (matcher.matches()) {
@@ -110,7 +110,7 @@ public class CommentParserHelper {
                             continue;
                         }
 
-                        post.images(Collections.singletonList(new PostImage.Builder().serverFilename(matcher.group(1))
+                        post.postImages(Collections.singletonList(new PostImage.Builder().serverFilename(matcher.group(1))
                                 //spoiler thumb for some linked items, the image itself for the rest; probably not a great idea
                                 .thumbnailUrl(HttpUrl.parse(noThumbnail ? spoilerThumbnail : (String) linkable.value))
                                 .spoilerThumbnailUrl(HttpUrl.parse(spoilerThumbnail))

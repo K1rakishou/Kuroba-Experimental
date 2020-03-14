@@ -100,7 +100,7 @@ public class RemovedPostsController
 
         for (int i = 0, removedPostsSize = removedPosts.size(); i < removedPostsSize; i++) {
             Post post = removedPosts.get(i);
-            removedPostsArray[i] = new RemovedPost(post.images, post.no, post.getComment().toString(), false);
+            removedPostsArray[i] = new RemovedPost(post.getPostImages(), post.no, post.getComment().toString(), false);
         }
 
         if (adapter == null) {

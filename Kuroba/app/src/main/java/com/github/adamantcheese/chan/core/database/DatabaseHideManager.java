@@ -270,7 +270,7 @@ public class DatabaseHideManager {
                 .id(childPost.no)
                 .op(childPost.isOP)
                 .replies(childPost.getReplies())
-                .images(childPost.getImagesCount())
+                .threadImagesCount(childPost.getThreadImagesCount())
                 .uniqueIps(childPost.getUniqueIps())
                 .sticky(childPost.isSticky())
                 .archived(childPost.isArchived())
@@ -281,7 +281,7 @@ public class DatabaseHideManager {
                 .comment(childPost.getComment())
                 .tripcode(childPost.tripcode)
                 .setUnixTimestampSeconds(childPost.time)
-                .images(childPost.images)
+                .postImages(childPost.getPostImages())
                 .moderatorCapcode(childPost.capcode)
                 .setHttpIcons(childPost.httpIcons)
                 .filter(filterHighlightedColor,

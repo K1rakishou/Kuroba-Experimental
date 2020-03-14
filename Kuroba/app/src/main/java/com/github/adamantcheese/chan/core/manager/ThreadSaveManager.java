@@ -684,7 +684,7 @@ public class ThreadSaveManager {
         int count = 0;
 
         for (Post post : newPosts) {
-            for (PostImage postImage : post.images) {
+            for (PostImage postImage : post.getPostImages()) {
                 if (postImage.isInlined) {
                     // Skip inlined files
                     continue;
@@ -765,7 +765,7 @@ public class ThreadSaveManager {
     private boolean checkWhetherAllPostImagesAreAlreadySaved(
             BaseFileManager snapshotFileManager, AbstractFile threadSaveDirImages, Post post
     ) {
-        for (PostImage postImage : post.images) {
+        for (PostImage postImage : post.getPostImages()) {
             if (postImage.isInlined) {
                 // Skip inlined files
                 continue;
@@ -884,8 +884,8 @@ public class ThreadSaveManager {
     @Nullable
     private HttpUrl getSpoilerImageUrl(List<Post> posts) {
         for (Post post : posts) {
-            if (post.images.size() > 0) {
-                return post.images.get(0).spoilerThumbnailUrl;
+            if (post.getPostImagesCount() > 0) {
+                return post.getPostImages().get(0).spoilerThumbnailUrl;
             }
         }
 
@@ -902,7 +902,7 @@ public class ThreadSaveManager {
             AtomicInteger imageDownloadsWithIoError,
             int maxImageIoErrors
     ) {
-        if (post.images.isEmpty()) {
+        if (post.getPostImagesCount() == 0) {
             if (verboseLogsEnabled) {
                 Logger.d(TAG, "Post " + post.no + " contains no images");
             }
@@ -917,7 +917,7 @@ public class ThreadSaveManager {
             return Flowable.just(false);
         }
 
-        return Flowable.fromIterable(post.images)
+        return Flowable.fromIterable(post.getPostImages())
                 // We don't want to download inlined images/files
                 .filter((postImage) -> !postImage.isInlined).flatMapSingle(postImage -> {
                     // Download each image in parallel using executorService

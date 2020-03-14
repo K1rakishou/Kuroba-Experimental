@@ -322,8 +322,8 @@ public class PostCell
     }
 
     public ThumbnailView getThumbnailView(PostImage postImage) {
-        for (int i = 0; i < post.images.size(); i++) {
-            if (post.images.get(i).equalUrl(postImage)) {
+        for (int i = 0; i < post.getPostImagesCount(); i++) {
+            if (post.getPostImages().get(i).equalUrl(postImage)) {
                 return ChanSettings.textOnly.get() ? null : thumbnailViews.get(i);
             }
         }
@@ -398,7 +398,7 @@ public class PostCell
 
         divider.setVisibility(showDivider ? VISIBLE : GONE);
 
-        if (ChanSettings.shiftPostFormat.get() && post.images.size() == 1 && !ChanSettings.textOnly.get()) {
+        if (ChanSettings.shiftPostFormat.get() && post.getPostImagesCount() == 1 && !ChanSettings.textOnly.get()) {
             applyPostShiftFormat();
         }
 
@@ -493,7 +493,7 @@ public class PostCell
 
         titleParts.add(date);
 
-        for (PostImage image : post.images) {
+        for (PostImage image : post.getPostImages()) {
             boolean postFileName = ChanSettings.postFilename.get();
             if (postFileName) {
                 //that special character forces it to be left-to-right, as textDirection didn't want to be obeyed
@@ -512,8 +512,8 @@ public class PostCell
                 fileInfo.append(postFileName ? " " : "\n");
                 fileInfo.append(image.extension.toUpperCase());
                 //if -1, linked image, no info
-                fileInfo.append(image.size == -1 ? "" : " " + getReadableFileSize(image.size));
-                fileInfo.append(image.size == -1 ? "" : " " + image.imageWidth + "x" + image.imageHeight);
+                fileInfo.append(image.getSize() == -1 ? "" : " " + getReadableFileSize(image.getSize()));
+                fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
                 fileInfo.setSpan(new ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length(), 0);
                 fileInfo.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length(), 0);
                 titleParts.add(fileInfo);
@@ -544,7 +544,7 @@ public class PostCell
             comment.setVisibility(isEmpty(commentText) ? GONE : VISIBLE);
         } else {
             //noinspection ConstantConditions
-            comment.setVisibility(isEmpty(commentText) && post.images == null ? GONE : VISIBLE);
+            comment.setVisibility(isEmpty(commentText) && post.getPostImagesCount() == 0 ? GONE : VISIBLE);
         }
     }
 
@@ -585,8 +585,8 @@ public class PostCell
         int replyCount = threadMode ? repliesFromSize : post.getReplies();
         String text = getQuantityString(R.plurals.reply, replyCount, replyCount);
 
-        if (!threadMode && post.getImagesCount() > 0) {
-            text += ", " + getQuantityString(R.plurals.image, post.getImagesCount(), post.getImagesCount());
+        if (!threadMode && post.getThreadImagesCount() > 0) {
+            text += ", " + getQuantityString(R.plurals.image, post.getThreadImagesCount(), post.getThreadImagesCount());
         }
 
         if (callback != null && !ChanSettings.neverShowPages.get()) {
@@ -739,12 +739,12 @@ public class PostCell
 
         // Places the thumbnails below each other.
         // The placement is done using the RelativeLayout BELOW rule, with generated view ids.
-        if (!post.images.isEmpty() && !ChanSettings.textOnly.get()) {
+        if (post.getPostImagesCount() > 0 && !ChanSettings.textOnly.get()) {
             int lastId = 0;
             int generatedId = 1;
             boolean first = true;
-            for (int i = 0; i < post.images.size(); i++) {
-                PostImage image = post.images.get(i);
+            for (int i = 0; i < post.getPostImagesCount(); i++) {
+                PostImage image = post.getPostImages().get(i);
                 if (image.imageUrl == null) {
                     Logger.e(TAG, "buildThumbnails() image.imageUrl == null");
                     continue;
@@ -778,7 +778,7 @@ public class PostCell
                 v.setRounding(dp(2));
                 p.setMargins(dp(4), first ? dp(4) : 0, 0,
                         //1 extra for bottom divider
-                        i + 1 == post.images.size() ? dp(1) + dp(4) : 0
+                        i + 1 == post.getPostImagesCount() ? dp(1) + dp(4) : 0
                 );
 
                 relativeLayoutContainer.addView(v, p);

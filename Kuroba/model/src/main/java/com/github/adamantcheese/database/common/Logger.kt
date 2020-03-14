@@ -4,9 +4,11 @@ import android.util.Log
 
 class Logger(private val verboseLogs: Boolean) {
     internal fun log(tag: String, message: String) {
-        if (verboseLogs) {
-            Log.d(tag, String.format("[%s]: %s", Thread.currentThread().name, message))
+        if (!verboseLogs) {
+            return
         }
+
+        Log.d(tag, String.format("[%s]: %s", Thread.currentThread().name, message))
     }
 
     internal fun logError(tag: String, message: String, error: Throwable? = null) {

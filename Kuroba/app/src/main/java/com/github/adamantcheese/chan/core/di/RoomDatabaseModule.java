@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.database.di.DatabaseComponent;
+import com.github.adamantcheese.database.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.database.repository.SeenPostRepository;
 
@@ -25,5 +26,11 @@ public class RoomDatabaseModule {
     @Singleton
     public SeenPostRepository provideSeenPostRepository() {
         return databaseComponent.getSeenPostRepository();
+    }
+
+    @Provides
+    @Singleton
+    public InlinedFileInfoRepository provideInlinedFileInfoRepository() {
+        return databaseComponent.getInlinedFileInfoRepository();
     }
 }

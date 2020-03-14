@@ -3,6 +3,7 @@ package com.github.adamantcheese.database.di
 import android.app.Application
 import com.github.adamantcheese.database.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.database.di.annotation.VerboseLogs
+import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.database.repository.SeenPostRepository
 import dagger.BindsInstance
@@ -21,6 +22,7 @@ interface DatabaseComponent {
 
     fun getMediaServiceLinkExtraContentRepository(): MediaServiceLinkExtraContentRepository
     fun getSeenPostRepository(): SeenPostRepository
+    fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
 
     @Component.Builder
     interface Builder {

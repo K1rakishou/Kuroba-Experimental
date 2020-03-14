@@ -24,7 +24,7 @@ public class PostMapper {
                 SpannableStringMapper.serializeSpannableString(post.getComment()),
                 SpannableStringMapper.serializeSpannableString(post.subject),
                 post.time,
-                PostImageMapper.toSerializablePostImageList(post.images),
+                PostImageMapper.toSerializablePostImageList(post.getPostImages()),
                 post.tripcode,
                 post.id,
                 post.opId,
@@ -44,7 +44,7 @@ public class PostMapper {
                 post.isClosed(),
                 post.isArchived(),
                 post.getReplies(),
-                post.getImagesCount(),
+                post.getThreadImagesCount(),
                 post.getUniqueIps(),
                 post.getLastModified(),
                 post.getTitle()
@@ -72,7 +72,7 @@ public class PostMapper {
                 .comment(SpannableStringMapper.deserializeSpannableString(serializablePost.getComment()))
                 .subject(subject.toString())
                 .setUnixTimestampSeconds(serializablePost.getTime())
-                .images(PostImageMapper.fromSerializablePostImageList(serializablePost.getImages()))
+                .postImages(PostImageMapper.fromSerializablePostImageList(serializablePost.getImages()))
                 .tripcode(serializablePost.getTripcode())
                 .opId(serializablePost.getOpId())
                 .moderatorCapcode(serializablePost.getCapcode())
@@ -95,7 +95,7 @@ public class PostMapper {
                 .sticky(serializablePost.isSticky())
                 .archived(serializablePost.isArchived())
                 .replies(serializablePost.getReplies())
-                .images(serializablePost.getImagesCount())
+                .threadImagesCount(serializablePost.getThreadImagesCount())
                 .uniqueIps(serializablePost.getUniqueIps())
                 .lastModified(serializablePost.getLastModified());
 

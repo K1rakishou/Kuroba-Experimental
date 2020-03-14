@@ -142,7 +142,7 @@ public class ThreadStatusCell
             Board board = op.board;
             if (board != null) {
                 boolean hasReplies = op.getReplies() >= 0 || chanThread.getPostsCount() - 1 > 0;
-                boolean hasImages = op.getImagesCount() >= 0 || chanThread.getImagesCount() > 0;
+                boolean hasImages = op.getThreadImagesCount() >= 0 || chanThread.getImagesCount() > 0;
                 if (hasReplies && hasImages) {
                     boolean hasBumpLimit = board.bumpLimit > 0;
                     boolean hasImageLimit = board.imageLimit > 0;
@@ -154,8 +154,8 @@ public class ThreadStatusCell
                     }
 
                     SpannableString images = new SpannableString(
-                            (op.getImagesCount() >= 0 ? op.getImagesCount() : chanThread.getImagesCount()) + "I");
-                    if (hasImageLimit && op.getImagesCount() >= board.imageLimit) {
+                            (op.getThreadImagesCount() >= 0 ? op.getThreadImagesCount() : chanThread.getImagesCount()) + "I");
+                    if (hasImageLimit && op.getThreadImagesCount() >= board.imageLimit) {
                         images.setSpan(new StyleSpan(Typeface.ITALIC), 0, images.length(), 0);
                     }
 

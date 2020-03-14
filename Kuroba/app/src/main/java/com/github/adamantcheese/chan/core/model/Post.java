@@ -18,9 +18,13 @@ package com.github.adamantcheese.chan.core.model;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +50,6 @@ public class Post
      * Unix timestamp, in seconds.
      */
     public final long time;
-    public final List<PostImage> images;
     public final String tripcode;
     public final String id;
     public final int opId;
@@ -89,12 +92,15 @@ public class Post
     // TODO(ODL):
     private final List<Integer> repliesFrom = new ArrayList<>();
 
+    @NonNull
+    private final List<PostImage> postImages;
+
     // These members may only mutate on the main thread.
     private boolean sticky;
     private boolean closed;
     private boolean archived;
     private int replies;
-    private int imagesCount;
+    private int threadImagesCount;
     private int uniqueIps;
     private long lastModified;
     private String title = "";
@@ -110,7 +116,7 @@ public class Post
 
         isOP = builder.op;
         replies = builder.replies;
-        imagesCount = builder.imagesCount;
+        threadImagesCount = builder.threadImagesCount;
         uniqueIps = builder.uniqueIps;
         lastModified = builder.lastModified;
         sticky = builder.sticky;
@@ -123,10 +129,10 @@ public class Post
         tripcode = builder.tripcode;
 
         time = builder.unixTimestampSeconds;
-        if (builder.images == null) {
-            images = Collections.emptyList();
+        if (builder.postImages == null) {
+            postImages = new ArrayList<>();
         } else {
-            images = Collections.unmodifiableList(builder.images);
+            postImages = new ArrayList<>(builder.postImages);
         }
 
         if (builder.httpIcons != null) {
@@ -183,6 +189,24 @@ public class Post
         return repliesFrom;
     }
 
+    @NonNull
+    public synchronized List<PostImage> getPostImages() {
+        return postImages;
+    }
+
+    public synchronized int getPostImagesCount() {
+        return postImages.size();
+    }
+
+    public synchronized void updatePostImageSize(@NotNull String fileUrl, long fileSize) {
+        for (PostImage postImage : postImages) {
+            if (postImage.imageUrl != null && postImage.imageUrl.toString().equals(fileUrl)) {
+                postImage.setSize(fileSize);
+                return;
+            }
+        }
+    }
+
     @AnyThread
     public boolean isSticky() {
         return sticky;
@@ -224,13 +248,13 @@ public class Post
     }
 
     @MainThread
-    public int getImagesCount() {
-        return imagesCount;
+    public int getThreadImagesCount() {
+        return threadImagesCount;
     }
 
     @MainThread
-    public void setImagesCount(int imagesCount) {
-        this.imagesCount = imagesCount;
+    public void setThreadImagesCount(int imagesCount) {
+        this.threadImagesCount = imagesCount;
     }
 
     @MainThread
@@ -268,9 +292,10 @@ public class Post
      *
      * @return the first image, or {@code null}
      */
+    @Nullable
     @MainThread
-    public PostImage image() {
-        return images.isEmpty() ? null : images.get(0);
+    public PostImage firstImage() {
+        return postImages.isEmpty() ? null : postImages.get(0);
     }
 
     @MainThread
@@ -325,7 +350,7 @@ public class Post
         public int opId = -1;
         public boolean op;
         public int replies = -1;
-        public int imagesCount = -1;
+        public int threadImagesCount = -1;
         public int uniqueIps = -1;
         public boolean sticky;
         public boolean closed;
@@ -336,7 +361,7 @@ public class Post
         public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
         public String tripcode = "";
         public long unixTimestampSeconds = -1L;
-        public List<PostImage> images;
+        public List<PostImage> postImages;
         public List<PostHttpIcon> httpIcons;
         public String posterId = "";
         public String moderatorCapcode = "";
@@ -384,8 +409,8 @@ public class Post
             return this;
         }
 
-        public Builder images(int images) {
-            this.imagesCount = images;
+        public Builder threadImagesCount(int imagesCount) {
+            this.threadImagesCount = imagesCount;
             return this;
         }
 
@@ -439,13 +464,13 @@ public class Post
             return this;
         }
 
-        public Builder images(List<PostImage> images) {
+        public Builder postImages(List<PostImage> images) {
             synchronized (this) {
-                if (this.images == null) {
-                    this.images = new ArrayList<>(images.size());
+                if (this.postImages == null) {
+                    this.postImages = new ArrayList<>(images.size());
                 }
 
-                this.images.addAll(images);
+                this.postImages.addAll(images);
             }
 
             return this;

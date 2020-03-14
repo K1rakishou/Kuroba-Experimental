@@ -215,16 +215,13 @@ public class FilterEngine {
             return true;
         }
 
-        if (post.images != null) {
-            StringBuilder files = new StringBuilder();
-            for (PostImage image : post.images) {
-                files.append(image.filename).append(" ");
-            }
-            String fnames = files.toString();
-            return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
+        StringBuilder files = new StringBuilder();
+        for (PostImage image : post.postImages) {
+            files.append(image.filename).append(" ");
         }
 
-        return false;
+        String fnames = files.toString();
+        return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
     }
 
     @AnyThread
@@ -254,16 +251,13 @@ public class FilterEngine {
             return true;
         }
 
-        if (post.images != null) {
-            StringBuilder files = new StringBuilder();
-            for (PostImage image : post.images) {
-                files.append(image.filename).append(" ");
-            }
-            String fnames = files.toString();
-            return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
+        StringBuilder files = new StringBuilder();
+        for (PostImage image : post.getPostImages()) {
+            files.append(image.filename).append(" ");
         }
 
-        return false;
+        String fnames = files.toString();
+        return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
     }
 
     @AnyThread

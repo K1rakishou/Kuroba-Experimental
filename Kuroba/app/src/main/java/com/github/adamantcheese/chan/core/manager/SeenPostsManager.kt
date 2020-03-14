@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
+import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.database.data.SeenPost
 import com.github.adamantcheese.database.repository.SeenPostRepository
@@ -59,7 +60,8 @@ class SeenPostsManager(
                     }
                 }
                 is ModularResult.Error -> {
-                    Logger.e(TAG, "Error while trying to select all seen posts by loadableUid ($loadableUid)")
+                    Logger.e(TAG, "Error while trying to select all seen posts by " +
+                            "loadableUid ($loadableUid), error = ${result.error.errorMessageOrClassName()}")
                 }
             }
         }

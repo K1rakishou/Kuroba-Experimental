@@ -327,7 +327,7 @@ public class WatchNotification
                     prefix = postForExpandedLine.getTitle().subSequence(0, 6);
                 }
 
-                CharSequence comment = postForExpandedLine.image() != null ? "(img) " : "";
+                CharSequence comment = postForExpandedLine.firstImage() != null ? "(img) " : "";
                 if (postForExpandedLine.getComment().length() > 0) {
                     // FIXME: this thing is pretty slow sometimes (50-200ms).
                     //  Can we replace it with something faster?

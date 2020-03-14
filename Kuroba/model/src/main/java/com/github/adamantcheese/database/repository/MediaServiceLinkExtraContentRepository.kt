@@ -5,7 +5,6 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
-import com.github.adamantcheese.database.source.local.Loadable2LocalSource
 import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.remote.MediaServiceLinkExtraContentRemoteSource
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,11 +13,10 @@ class MediaServiceLinkExtraContentRepository(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger,
-        private val loadable2LocalSource: Loadable2LocalSource,
         private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
         private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
 ) : AbstractRepository(database) {
-    private val TAG = "$loggerTag MSLECR"
+    private val TAG = "$loggerTag MediaServiceLinkExtraContentRepository"
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun getLinkExtraContent(
@@ -84,7 +82,7 @@ class MediaServiceLinkExtraContentRepository(
             return ModularResult.value(0)
         }
 
-        val result = mediaServiceLinkExtraContentLocalSource.deleteOlderThanOneMonth()
+        val result = mediaServiceLinkExtraContentLocalSource.deleteOlderThanOneWeek()
         if (result is ModularResult.Value) {
             logger.log(TAG, "cleanup() -> $result")
         } else {

@@ -27,6 +27,11 @@ sealed class ModularResult<V> {
         }
     }
 
+    fun peek(func: (ModularResult<V>) -> Unit): ModularResult<V> {
+        func(this)
+        return this
+    }
+
     fun valueOrNull(): V? {
         if (this is Value) {
             return value

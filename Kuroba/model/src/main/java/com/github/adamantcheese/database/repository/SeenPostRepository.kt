@@ -16,12 +16,10 @@ class SeenPostRepository(
         private val loadable2LocalSource: Loadable2LocalSource,
         private val seenPostLocalSource: SeenPostLocalSource
 ) : AbstractRepository(database) {
-    private val TAG = "$loggerTag SPR"
+    private val TAG = "$loggerTag SeenPostRepository"
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun insert(loadable2: Loadable2?, seenPost: SeenPost): ModularResult<Unit> {
-        logger.log(TAG, "insert($loadable2, $seenPost)")
-
         return runInTransaction {
             seenPostLocalRepositoryCleanup().unwrap()
 
@@ -36,11 +34,7 @@ class SeenPostRepository(
     suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
         return runInTransaction {
             seenPostLocalRepositoryCleanup().unwrap()
-
-            val result = seenPostLocalSource.selectAllByLoadableUid(loadableUid)
-            logger.log(TAG, "selectAllByLoadableUid($loadableUid) -> $result")
-
-            return@runInTransaction result
+            return@runInTransaction seenPostLocalSource.selectAllByLoadableUid(loadableUid)
         }
     }
 
@@ -53,9 +47,9 @@ class SeenPostRepository(
 
         val result = seenPostLocalSource.deleteOlderThanOneMonth()
         if (result is ModularResult.Value) {
-            logger.log(TAG, "seenPostLocalRepositoryCleanup() -> $result")
+            logger.log(TAG, "cleanup() -> $result")
         } else {
-            logger.logError(TAG, "seenPostLocalRepositoryCleanup() -> $result")
+            logger.logError(TAG, "cleanup() -> $result")
         }
 
         return result

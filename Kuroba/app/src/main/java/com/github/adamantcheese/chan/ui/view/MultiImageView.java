@@ -356,7 +356,7 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.size, postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
 
         bigImageRequest =
                 fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {
@@ -415,7 +415,7 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.size, postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
 
         gifRequest =
                 fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {
@@ -569,7 +569,7 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.size, postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
 
         videoRequest =
                 fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {

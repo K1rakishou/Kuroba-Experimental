@@ -129,7 +129,7 @@ public class CardPostCell
     @Override
     public void onClick(View v) {
         if (v == thumbView) {
-            callback.onThumbnailClicked(post.image(), thumbView);
+            callback.onThumbnailClicked(post.firstImage(), thumbView);
         } else if (v == this) {
             callback.onPostClicked(post);
         }
@@ -201,11 +201,11 @@ public class CardPostCell
             throw new NullPointerException("Callback is null during bindPost()");
         }
 
-        if (post.image() != null && !ChanSettings.textOnly.get()) {
+        if (post.firstImage() != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
             thumbView.setPostImage(
                     loadable,
-                    post.image(),
+                    post.firstImage(),
                     true,
                     ChanSettings.autoLoadThreadImages.get()
                             ? Math.max(500, thumbView.getWidth())
@@ -244,7 +244,7 @@ public class CardPostCell
         comment.setText(commentText);
         comment.setTextColor(ThemeHelper.getTheme().textPrimary);
 
-        String status = getString(R.string.card_stats, post.getReplies(), post.getImagesCount());
+        String status = getString(R.string.card_stats, post.getReplies(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
             Chan4PagesRequest.Page p = callback.getPage(post);
             if (p != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {

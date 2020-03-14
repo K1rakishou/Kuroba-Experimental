@@ -124,7 +124,7 @@ public class DvachApi
                     builder.replies(reader.nextInt() - 1);
                     break;
                 case "files_count":
-                    builder.images(reader.nextInt());
+                    builder.threadImagesCount(reader.nextInt());
                     break;
                 case "lasthit":
                     builder.lastModified(reader.nextLong());
@@ -153,7 +153,7 @@ public class DvachApi
         }
         reader.endObject();
 
-        builder.images(files);
+        builder.postImages(files);
 
         if (builder.op) {
             // Update OP fields later on the main thread
@@ -162,7 +162,7 @@ public class DvachApi
             op.archived(builder.archived);
             op.sticky(builder.sticky);
             op.replies(builder.replies);
-            op.images(builder.imagesCount);
+            op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);
             queue.setOp(op);

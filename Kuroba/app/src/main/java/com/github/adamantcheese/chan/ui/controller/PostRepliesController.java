@@ -104,7 +104,7 @@ public class PostRepliesController
                 PostCellInterface postView = (PostCellInterface) view;
                 Post post = postView.getPost();
 
-                for (PostImage p : post.images) {
+                for (PostImage p : post.getPostImages()) {
                     if (p.equalUrl(postImage)) {
                         thumbnail = postView.getThumbnailView(postImage);
                     }

@@ -21,7 +21,7 @@ class PrefetchLoader(
         val post = postLoaderData.post
         val loadable = postLoaderData.loadable
 
-        if (post.images.isEmpty()) {
+        if (post.postImages.isEmpty()) {
             return rejected()
         }
 
@@ -56,7 +56,7 @@ class PrefetchLoader(
     }
 
     private fun getPrefetchBatch(post: Post, loadable: Loadable): List<Prefetch> {
-        return post.images.mapNotNull { postImage ->
+        return post.postImages.mapNotNull { postImage ->
             if (postImage.imageUrl == null || postImage.isInlined) {
                 // No url or image is inlined
                 return@mapNotNull null

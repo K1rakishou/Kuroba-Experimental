@@ -51,10 +51,10 @@ public class PostImage {
     public final int imageHeight;
     public final boolean spoiler;
     public final boolean isInlined;
-    public final long size;
     @Nullable
     public final String fileHash;
     public final Type type;
+    private long size;
 
     private PostImage(Builder builder) {
         this.serverFilename = builder.serverFilename;
@@ -108,6 +108,14 @@ public class PostImage {
         } else {
             return spoilerThumbnailUrl;
         }
+    }
+
+    public synchronized long getSize() {
+        return size;
+    }
+
+    public synchronized void setSize(long size) {
+        this.size = size;
     }
 
     public static final class Builder {

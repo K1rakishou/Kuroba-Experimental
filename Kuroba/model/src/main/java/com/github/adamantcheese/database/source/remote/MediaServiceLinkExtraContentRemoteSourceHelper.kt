@@ -36,29 +36,29 @@ internal object MediaServiceLinkExtraContentRemoteSourceHelper {
             .appendLiteral("]")
             .toFormatter()
 
-    fun tryExtractVideoDurationOrNull(
+    fun tryExtractVideoDuration(
             mediaServiceType: MediaServiceType,
             parser: JsonElement
-    ): ModularResult<String?> {
+    ): ModularResult<String> {
         return safeRun {
             return@safeRun when (mediaServiceType) {
-                MediaServiceType.Youtube -> tryExtractYoutubeVideoDurationOrNull(parser)
+                MediaServiceType.Youtube -> tryExtractYoutubeVideoDuration(parser)
             }
         }
     }
 
-    fun tryExtractVideoTitleOrNull(
+    fun tryExtractVideoTitle(
             mediaServiceType: MediaServiceType,
             parser: JsonElement
-    ): ModularResult<String?> {
+    ): ModularResult<String> {
         return safeRun {
             return@safeRun when (mediaServiceType) {
-                MediaServiceType.Youtube -> tryExtractYoutubeVideoTitleOrNull(parser)
+                MediaServiceType.Youtube -> tryExtractYoutubeVideoTitle(parser)
             }
         }
     }
 
-    private fun tryExtractYoutubeVideoTitleOrNull(parser: JsonElement): String? {
+    private fun tryExtractYoutubeVideoTitle(parser: JsonElement): String {
         return parser.asJsonObject
                 .get("items")
                 .asJsonArray
@@ -70,7 +70,7 @@ internal object MediaServiceLinkExtraContentRemoteSourceHelper {
                 .asString
     }
 
-    private fun tryExtractYoutubeVideoDurationOrNull(parser: JsonElement): String? {
+    private fun tryExtractYoutubeVideoDuration(parser: JsonElement): String {
         val durationUnparsed = parser.asJsonObject
                 .get("items")
                 .asJsonArray

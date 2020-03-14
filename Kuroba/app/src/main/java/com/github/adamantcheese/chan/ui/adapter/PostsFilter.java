@@ -34,7 +34,7 @@ import javax.inject.Inject;
 import static com.github.adamantcheese.chan.Chan.inject;
 
 public class PostsFilter {
-    private static final Comparator<Post> IMAGE_COMPARATOR = (lhs, rhs) -> rhs.getImagesCount() - lhs.getImagesCount();
+    private static final Comparator<Post> IMAGE_COMPARATOR = (lhs, rhs) -> rhs.getThreadImagesCount() - lhs.getThreadImagesCount();
 
     private static final Comparator<Post> REPLY_COMPARATOR = (lhs, rhs) -> rhs.getReplies() - lhs.getReplies();
 
@@ -121,8 +121,8 @@ public class PostsFilter {
                     add = true;
                 } else if (item.name.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                     add = true;
-                } else if (!item.images.isEmpty()) {
-                    for (PostImage image : item.images) {
+                } else if (item.getPostImagesCount() > 0) {
+                    for (PostImage image : item.getPostImages()) {
                         if (image.filename != null && image.filename.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                             add = true;
                         }

@@ -43,7 +43,6 @@ import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
@@ -218,8 +217,8 @@ public class WatchManager
         pin.pinType = pinType;
 
         if (opPost != null) {
-            PostImage image = opPost.image();
-            pin.thumbnailUrl = image == null ? "" : image.getThumbnailUrl().toString();
+            PostImage firstImage = opPost.firstImage();
+            pin.thumbnailUrl = firstImage == null ? "" : firstImage.getThumbnailUrl().toString();
         }
         return createPin(pin, sendBroadcast);
     }
@@ -1160,7 +1159,7 @@ public class WatchManager
                 List<Post> posts = chanLoader.getThread().getPosts();
                 if (posts == null) return 0;
                 for (Post p : posts) {
-                    if (!p.isOP) total += p.images.size();
+                    if (!p.isOP) total += p.getPostImagesCount();
                 }
                 return total;
             }
@@ -1286,10 +1285,12 @@ public class WatchManager
 
             //Forcibly update the thumbnail, if there is no thumbnail currently, or if it doesn't match the thread for some reason
             //@formatter:off
-            if (thread.getOp() != null && thread.getOp().image() != null
-                    && (pin.thumbnailUrl.isEmpty()
-                    || !pin.thumbnailUrl.equals(thread.getOp().image().getThumbnailUrl().toString()))) {
-                pin.thumbnailUrl = thread.getOp().image().getThumbnailUrl().toString();
+            if (thread.getOp() != null && pin.thumbnailUrl.isEmpty()) {
+                PostImage firstImage = thread.getOp().firstImage();
+
+                if (firstImage != null && !pin.thumbnailUrl.equals(firstImage.getThumbnailUrl().toString())) {
+                    pin.thumbnailUrl = firstImage.getThumbnailUrl().toString();
+                }
             }
             //@formatter:on
 

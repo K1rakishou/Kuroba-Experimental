@@ -250,7 +250,7 @@ public class SerializablePost {
         return replies;
     }
 
-    public int getImagesCount() {
+    public int getThreadImagesCount() {
         return imagesCount;
     }
 

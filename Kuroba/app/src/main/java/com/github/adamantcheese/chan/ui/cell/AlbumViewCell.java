@@ -71,8 +71,8 @@ public class AlbumViewCell
 
         String details =
                 postImage.extension.toUpperCase() + " " + postImage.imageWidth + "x" + postImage.imageHeight + " "
-                        + getReadableFileSize(postImage.size);
-        text.setText(postImage.size == -1 ? postImage.extension.toUpperCase() : details); //if -1, linked image, no info
+                        + getReadableFileSize(postImage.getSize());
+        text.setText(postImage.isInlined ? postImage.extension.toUpperCase() : details); //if -1, linked image, no info
     }
 
     public PostImage getPostImage() {
