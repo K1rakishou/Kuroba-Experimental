@@ -84,7 +84,7 @@ public class PostRepliesController
             for (int i = 0; i < repliesView.getChildCount(); ++i) {
                 View child = repliesView.getChildAt(i);
                 if (child instanceof PostCellInterface) {
-                    ((PostCellInterface) child).onPostRecycled();
+                    ((PostCellInterface) child).onPostRecycled(true);
                 }
             }
         }
@@ -216,7 +216,7 @@ public class PostRepliesController
         @Override
         public void onViewRecycled(@NonNull ReplyViewHolder holder) {
             if (holder.itemView instanceof PostCellInterface) {
-                ((PostCellInterface) holder.itemView).onPostRecycled();
+                ((PostCellInterface) holder.itemView).onPostRecycled(true);
             }
         }
 

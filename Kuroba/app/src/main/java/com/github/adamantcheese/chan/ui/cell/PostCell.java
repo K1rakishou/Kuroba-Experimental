@@ -271,9 +271,9 @@ public class PostCell
     }
 
     @Override
-    public void onPostRecycled() {
+    public void onPostRecycled(boolean isActuallyRecycling) {
         if (post != null) {
-            unbindPost(post);
+            unbindPost(post, isActuallyRecycling);
         }
     }
 
@@ -336,7 +336,7 @@ public class PostCell
         return false;
     }
 
-    private void unbindPost(Post post) {
+    private void unbindPost(Post post, boolean isActuallyRecycling) {
         icons.cancelRequests();
 
         for (PostImageThumbnailView view : thumbnailViews) {
@@ -350,7 +350,7 @@ public class PostCell
         unseenPostIndicatorFadeOutAnimation.end();
 
         if (callback != null) {
-            callback.onPostUnbind(post);
+            callback.onPostUnbind(post, isActuallyRecycling);
         }
 
         this.callback = null;
@@ -365,7 +365,6 @@ public class PostCell
         threadMode = callback.getLoadable() == null || callback.getLoadable().isThreadMode();
 
         setPostLinkableListener(post, true);
-
         options.setImageTintList(ColorStateList.valueOf(theme.textSecondary));
 
         replies.setClickable(threadMode);
@@ -543,7 +542,6 @@ public class PostCell
         if (ChanSettings.shiftPostFormat.get()) {
             comment.setVisibility(isEmpty(commentText) ? GONE : VISIBLE);
         } else {
-            //noinspection ConstantConditions
             comment.setVisibility(isEmpty(commentText) && post.getPostImagesCount() == 0 ? GONE : VISIBLE);
         }
     }

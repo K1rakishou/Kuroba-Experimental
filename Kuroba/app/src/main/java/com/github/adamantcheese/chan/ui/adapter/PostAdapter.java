@@ -34,7 +34,9 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
@@ -52,6 +54,10 @@ public class PostAdapter
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
+    /**
+     * A hack for OnDemandContentLoader
+     * */
+    private final Set<Integer> updatingPosts = new HashSet<>(64);
 
     private Loadable loadable = null;
     private String error = null;
@@ -224,7 +230,23 @@ public class PostAdapter
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder.itemView instanceof PostCellInterface) {
-            ((PostCellInterface) holder.itemView).onPostRecycled();
+            int postNo = ((PostCellInterface) holder.itemView).getPost().no;
+            boolean isActuallyRecycling = !updatingPosts.remove(postNo);
+
+            /**
+             * Hack! (kinda)
+             *
+             * We have some managers that we want to release all their resources once a post is
+             * recycled. But, onViewRecycled may not only get called when the view is offscreen, and
+             * RecyclerView decides to recycle it, but also when we call notifyItemChanged
+             * {@link #updatePost}. So the point of this hack is to check whether onViewRecycled was
+             * called because of us calling notifyItemChanged or it was the RecyclerView that
+             * actually decided to recycle it. For that we put a post id into a HashSet before
+             * calling notifyItemChanged and then checking, right here, whether the current post's
+             * id exists in the HashSet. If it exists in the HashSet that means that it was us calling
+             * notifyItemChanged that triggered onViewRecycled call.
+             * */
+            ((PostCellInterface) holder.itemView).onPostRecycled(isActuallyRecycling);
         }
     }
 
@@ -249,6 +271,7 @@ public class PostAdapter
             changed = true; //new posts or fewer posts, update
         }
 
+        updatingPosts.clear();
         displayList.clear();
         displayList.addAll(posts);
 
@@ -382,6 +405,7 @@ public class PostAdapter
             return;
         }
 
+        updatingPosts.add(post.no);
         notifyItemChanged(postIndex);
     }
 

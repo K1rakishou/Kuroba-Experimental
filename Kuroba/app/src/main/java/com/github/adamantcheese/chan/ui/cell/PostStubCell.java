@@ -134,13 +134,13 @@ public class PostStubCell
     }
 
     @Override
-    public void onPostRecycled() {
-        unbindPost();
+    public void onPostRecycled(boolean isActuallyRecycling) {
+        unbindPost(isActuallyRecycling);
     }
 
-    private void unbindPost() {
+    private void unbindPost(boolean isActuallyRecycling) {
         if (callback != null) {
-            callback.onPostUnbind(post);
+            callback.onPostUnbind(post, isActuallyRecycling);
         }
 
         callback = null;

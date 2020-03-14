@@ -63,7 +63,7 @@ class InlinedFileInfoLoader(
             postLoaderData.post.updatePostImageSize(fileUrl, fileSize)
         }
 
-        return LoaderResult.Succeeded(loaderType)
+        return LoaderResult.Succeeded(loaderType, true)
     }
 
 }

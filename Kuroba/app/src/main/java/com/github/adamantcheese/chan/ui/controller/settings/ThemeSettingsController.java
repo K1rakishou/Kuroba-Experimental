@@ -45,7 +45,6 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.common.DefaultPostParser;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.PostParser;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -102,7 +101,7 @@ public class ThemeSettingsController
         }
 
         @Override
-        public void onPostUnbind(Post post) {
+        public void onPostUnbind(Post post, boolean isActuallyRecycling) {
 
         }
 

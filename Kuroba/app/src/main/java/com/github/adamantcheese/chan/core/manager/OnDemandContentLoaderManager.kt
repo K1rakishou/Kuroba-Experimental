@@ -137,24 +137,25 @@ class OnDemandContentLoaderManager(
         postLoaderRxQueue.onNext(postLoaderData)
     }
 
-    fun onPostUnbind(loadable: Loadable, post: Post) {
+    fun onPostUnbind(loadable: Loadable, post: Post, isActuallyRecycling: Boolean) {
         BackgroundUtils.ensureMainThread()
         check(loaders.isNotEmpty()) { "No loaders!" }
+
+        if (!isActuallyRecycling) {
+            // onPostUnbind was called because we called notifyItemChanged. The view is still
+            // visible so we don't want to unbind anything.
+            return
+        }
 
         val loadableUid = loadable.uniqueId
         val postUid = getPostUniqueId(loadable, post)
 
-        val postLoaderData = rwLock.write {
+        rwLock.write {
             val postLoaderData = activeLoaders[loadableUid]?.remove(postUid)
                     ?: return@write null
 
             loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
-            postLoaderData.disposeAll()
-
-            return@write postLoaderData
-        } ?: return
-
-        postLoaderData.disposeAll()
+        }
     }
 
     fun cancelAllForLoadable(loadable: Loadable) {
@@ -173,7 +174,6 @@ class OnDemandContentLoaderManager(
             }
 
             postLoaderDataList.clear()
-
             activeLoaders.remove(loadableUid)
         }
     }

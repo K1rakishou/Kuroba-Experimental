@@ -20,19 +20,13 @@ class MediaServiceLinkExtraContentRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun getLinkExtraContent(
-            loadableUid: String,
-            postUid: String,
             mediaServiceType: MediaServiceType,
             requestUrl: String,
             originalUrl: String
     ): ModularResult<MediaServiceLinkExtraContent> {
         mediaServiceLinkExtraContentRepositoryCleanup().ignore()
 
-        val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByPostUid(
-                postUid,
-                originalUrl
-        )
-
+        val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByVideoUrl(originalUrl)
         when (localSourceResult) {
             is ModularResult.Error -> return ModularResult.error(localSourceResult.error)
             is ModularResult.Value -> {
@@ -55,10 +49,8 @@ class MediaServiceLinkExtraContentRepository(
                 val mediaServiceLinkExtraInfo = fetchFromNetworkResult.value
 
                 val mediaServiceLinkExtraContent = MediaServiceLinkExtraContent(
-                        postUid,
-                        loadableUid,
-                        mediaServiceType,
                         originalUrl,
+                        mediaServiceType,
                         mediaServiceLinkExtraInfo.videoTitle,
                         mediaServiceLinkExtraInfo.videoDuration
                 )

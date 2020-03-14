@@ -43,13 +43,8 @@ internal class PostExtraContentLoader(
 
                     return@flatMap Flowable.fromIterable(newSpans.entries)
                             .subscribeOn(scheduler)
-                            .flatMap({ (url, linkInfoRequest) ->
-                                return@flatMap fetchExtraLinkInfo(
-                                        postLoaderData.getPostUniqueId(),
-                                        postLoaderData.getLoadableUniqueId(),
-                                        url,
-                                        linkInfoRequest
-                                )
+                            .flatMap({ (requestUrl, linkInfoRequest) ->
+                                return@flatMap fetchExtraLinkInfo(requestUrl, linkInfoRequest)
                             }, MAX_CONCURRENT_REQUESTS)
                             .toList()
                             .flatMap { spanUpdateBatchResultList ->
@@ -96,12 +91,10 @@ internal class PostExtraContentLoader(
         }
 
         // Something was updated we need to redraw the post, so return success
-        return succeeded()
+        return succeeded(true)
     }
 
     private fun fetchExtraLinkInfo(
-            postUid: String,
-            loadableUid: String,
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
     ): Flowable<ModularResult<SpanUpdateBatch>> {
@@ -118,7 +111,7 @@ internal class PostExtraContentLoader(
             return Flowable.just(error)
         }
 
-        return fetcher.fetch(loadableUid, postUid, requestUrl, linkInfoRequest)
+        return fetcher.fetch(requestUrl, linkInfoRequest)
                 .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 
     }

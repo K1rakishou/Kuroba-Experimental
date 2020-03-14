@@ -4,8 +4,12 @@ sealed class LoaderResult(val loaderType: LoaderType) {
     /**
      * Loader has successfully loaded new content for current post and we now need to update the
      * post
+     *
+     * [needUpdateView] is whether we actually need to update the post via notifyItemChanged or not.
+     * Some loaders do not add any new visible information to a post (like PrefetchLoader) so it's
+     * reasonable to not update the view if it was the only executed loader.
      * */
-    class Succeeded(loaderType: LoaderType) : LoaderResult(loaderType)
+    class Succeeded(loaderType: LoaderType, val needUpdateView: Boolean) : LoaderResult(loaderType)
     /**
      * Loader failed to load new content for current post (no internet connection or something
      * similar)

@@ -1,4 +1,4 @@
-package com.github.adamantcheese.database.data.internal
+package com.github.adamantcheese.database.data
 
 data class MediaServiceLinkExtraInfo(
         val videoTitle: String?,

@@ -39,15 +39,11 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
 
     @ExperimentalCoroutinesApi
     override fun fetch(
-            loadableUid: String,
-            postUid: String,
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
     ): Flowable<ModularResult<SpanUpdateBatch>> {
         return rxFlowable {
             val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
-                    loadableUid,
-                    postUid,
                     mediaServiceType,
                     requestUrl,
                     linkInfoRequest.originalUrl

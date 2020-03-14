@@ -48,7 +48,8 @@ class PrefetchLoader(
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
 
-        return succeeded()
+        // Always false for prefetches because there is nothing on the view for us to update
+        return succeeded(false)
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {

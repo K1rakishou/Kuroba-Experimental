@@ -178,17 +178,17 @@ public class CardPostCell
     }
 
     @Override
-    public void onPostRecycled() {
-        unbindPost();
+    public void onPostRecycled(boolean isActuallyRecycling) {
+        unbindPost(isActuallyRecycling);
     }
 
-    private void unbindPost() {
+    private void unbindPost(boolean isActuallyRecycling) {
         if (post == null) {
             return;
         }
 
         if (callback != null) {
-            callback.onPostUnbind(post);
+            callback.onPostUnbind(post, isActuallyRecycling);
         }
 
         thumbView.setPostImage(loadable, null, false, 0, 0);

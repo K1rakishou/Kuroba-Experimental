@@ -8,7 +8,9 @@ abstract class OnDemandContentLoader(
     abstract fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult>
     abstract fun cancelLoading(postLoaderData: PostLoaderData)
 
-    protected fun succeeded(): Single<LoaderResult> = Single.just(LoaderResult.Succeeded(loaderType))
+    protected fun succeeded(needUpdateView: Boolean): Single<LoaderResult> {
+        return Single.just(LoaderResult.Succeeded(loaderType, needUpdateView))
+    }
     protected fun failed(): Single<LoaderResult> = Single.just(LoaderResult.Failed(loaderType))
     protected fun rejected(): Single<LoaderResult> = Single.just(LoaderResult.Rejected(loaderType))
 

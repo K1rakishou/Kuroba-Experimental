@@ -145,7 +145,6 @@ class DatabaseModule {
     fun provideSeenPostRepository(
             logger: Logger,
             database: KurobaDatabase,
-            loadable2LocalSource: Loadable2LocalSource,
             seenPostLocalSource: SeenPostLocalSource,
             @LoggerTagPrefix loggerTag: String
     ): SeenPostRepository {
@@ -153,7 +152,6 @@ class DatabaseModule {
                 database,
                 loggerTag,
                 logger,
-                loadable2LocalSource,
                 seenPostLocalSource
         )
     }

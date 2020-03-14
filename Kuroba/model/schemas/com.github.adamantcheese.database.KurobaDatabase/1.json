@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d0402e227750cf2b9304f04777b806c2",
+    "identityHash": "b80d66550e1db9c13bd503ef5670db54",
     "entities": [
       {
         "tableName": "loadable",
@@ -69,17 +69,11 @@
       },
       {
         "tableName": "media_service_link_extra_content_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_url` TEXT NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `video_url`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_url` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_url`))",
         "fields": [
           {
-            "fieldPath": "postUid",
-            "columnName": "post_uid",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "parentLoadableUid",
-            "columnName": "parent_loadable_uid",
+            "fieldPath": "videoUrl",
+            "columnName": "video_url",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -87,12 +81,6 @@
             "fieldPath": "mediaServiceType",
             "columnName": "media_service_type",
             "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "videoUrl",
-            "columnName": "video_url",
-            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -116,8 +104,6 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "post_uid",
-            "parent_loadable_uid",
             "video_url"
           ],
           "autoGenerate": false
@@ -228,7 +214,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd0402e227750cf2b9304f04777b806c2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b80d66550e1db9c13bd503ef5670db54')"
     ]
   }
 }

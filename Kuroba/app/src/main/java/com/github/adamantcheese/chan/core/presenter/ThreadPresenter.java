@@ -534,11 +534,11 @@ public class ThreadPresenter
     }
 
     @Override
-    public void onPostUnbind(Post post) {
+    public void onPostUnbind(Post post, boolean isActuallyRecycling) {
         BackgroundUtils.ensureMainThread();
 
         if (loadable != null) {
-            onDemandContentLoaderManager.onPostUnbind(loadable, post);
+            onDemandContentLoaderManager.onPostUnbind(loadable, post, isActuallyRecycling);
             seenPostsManager.onPostUnbind(loadable, post);
         }
     }
@@ -554,7 +554,9 @@ public class ThreadPresenter
     private boolean needUpdatePost(LoaderBatchResult batchResult) {
         for (LoaderResult loaderResult : batchResult.getResults()) {
             if (loaderResult instanceof LoaderResult.Succeeded) {
-                return true;
+                if (((LoaderResult.Succeeded) loaderResult).getNeedUpdateView()) {
+                    return true;
+                }
             }
         }
 

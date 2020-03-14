@@ -3,9 +3,7 @@ package com.github.adamantcheese.database.repository
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
-import com.github.adamantcheese.database.data.Loadable2
 import com.github.adamantcheese.database.data.SeenPost
-import com.github.adamantcheese.database.source.local.Loadable2LocalSource
 import com.github.adamantcheese.database.source.local.SeenPostLocalSource
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -13,19 +11,14 @@ class SeenPostRepository(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger,
-        private val loadable2LocalSource: Loadable2LocalSource,
         private val seenPostLocalSource: SeenPostLocalSource
 ) : AbstractRepository(database) {
     private val TAG = "$loggerTag SeenPostRepository"
     private val alreadyExecuted = AtomicBoolean(false)
 
-    suspend fun insert(loadable2: Loadable2?, seenPost: SeenPost): ModularResult<Unit> {
+    suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
         return runInTransaction {
             seenPostLocalRepositoryCleanup().unwrap()
-
-            if (loadable2 != null) {
-                loadable2LocalSource.insert(loadable2).unwrap()
-            }
 
             return@runInTransaction seenPostLocalSource.insert(seenPost)
         }

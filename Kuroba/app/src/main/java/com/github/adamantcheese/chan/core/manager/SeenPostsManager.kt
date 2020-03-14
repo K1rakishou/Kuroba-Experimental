@@ -84,7 +84,7 @@ class SeenPostsManager(
                     DateTime.now()
             )
 
-            when (seenPostsRepository.insert(null, seenPost)) {
+            when (val result = seenPostsRepository.insert(seenPost)) {
                 is ModularResult.Value -> {
                     rwLock.write {
                         seenPostsMap.putIfNotContains(loadableUid, mutableSetOf())
@@ -92,7 +92,8 @@ class SeenPostsManager(
                     }
                 }
                 is ModularResult.Error -> {
-                    Logger.e(TAG, "Error while trying to store new seen post with loadableUid ($loadableUid)")
+                    Logger.e(TAG, "Error while trying to store new seen post with loadableUid " +
+                            "($loadableUid), error = ${result.error.errorMessageOrClassName()}")
                 }
             }
         }

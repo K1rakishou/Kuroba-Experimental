@@ -9,8 +9,6 @@ import org.joda.time.DateTime
 @Entity(
         tableName = MediaServiceLinkExtraContentEntity.TABLE_NAME,
         primaryKeys = [
-            MediaServiceLinkExtraContentEntity.POST_UID_COLUMN_NAME,
-            MediaServiceLinkExtraContentEntity.PARENT_LOADABLE_UID_COLUMN_NAME,
             MediaServiceLinkExtraContentEntity.VIDEO_URL_COLUMN_NAME
         ],
         indices = [
@@ -23,14 +21,10 @@ import org.joda.time.DateTime
         ]
 )
 data class MediaServiceLinkExtraContentEntity(
-        @ColumnInfo(name = POST_UID_COLUMN_NAME)
-        val postUid: String,
-        @ColumnInfo(name = PARENT_LOADABLE_UID_COLUMN_NAME)
-        val parentLoadableUid: String,
-        @ColumnInfo(name = MEDIA_SERVICE_TYPE)
-        val mediaServiceType: MediaServiceType,
         @ColumnInfo(name = VIDEO_URL_COLUMN_NAME)
         val videoUrl: String,
+        @ColumnInfo(name = MEDIA_SERVICE_TYPE)
+        val mediaServiceType: MediaServiceType,
         @ColumnInfo(name = VIDEO_TITLE_COLUMN_NAME)
         val videoTitle: String?,
         @ColumnInfo(name = VIDEO_DURATION_COLUMN_NAME)
@@ -42,10 +36,8 @@ data class MediaServiceLinkExtraContentEntity(
     companion object {
         const val TABLE_NAME = "media_service_link_extra_content_entity"
 
-        const val POST_UID_COLUMN_NAME = "post_uid"
-        const val PARENT_LOADABLE_UID_COLUMN_NAME = "parent_loadable_uid"
-        const val MEDIA_SERVICE_TYPE = "media_service_type"
         const val VIDEO_URL_COLUMN_NAME = "video_url"
+        const val MEDIA_SERVICE_TYPE = "media_service_type"
         const val VIDEO_TITLE_COLUMN_NAME = "video_title"
         const val VIDEO_DURATION_COLUMN_NAME = "video_duration"
         const val INSERTED_AT_COLUMN_NAME = "inserted_at"

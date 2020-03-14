@@ -31,12 +31,12 @@ class MediaServiceLinkExtraContentLocalSource(
         }
     }
 
-    suspend fun selectByPostUid(postUid: String, originalUrl: String): ModularResult<MediaServiceLinkExtraContent?> {
-        logger.log(TAG, "selectByPostUid($postUid, $originalUrl)")
+    suspend fun selectByVideoUrl(originalUrl: String): ModularResult<MediaServiceLinkExtraContent?> {
+        logger.log(TAG, "selectByVideoUrl($originalUrl)")
 
         return safeRun {
             return@safeRun MediaServiceLinkExtraContentMapper.fromEntity(
-                    mediaServiceLinkExtraContentDao.selectByPostUidAndVideoUrl(postUid, originalUrl)
+                    mediaServiceLinkExtraContentDao.selectByVideoUrl(originalUrl)
             )
         }
     }

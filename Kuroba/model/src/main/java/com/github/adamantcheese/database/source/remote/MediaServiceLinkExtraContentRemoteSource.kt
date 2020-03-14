@@ -3,7 +3,7 @@ package com.github.adamantcheese.database.source.remote
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.database.common.Logger
-import com.github.adamantcheese.database.data.internal.MediaServiceLinkExtraInfo
+import com.github.adamantcheese.database.data.MediaServiceLinkExtraInfo
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.util.errorMessageOrClassName
 import com.google.gson.JsonParser

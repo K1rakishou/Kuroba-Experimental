@@ -16,12 +16,9 @@ abstract class MediaServiceLinkExtraContentDao {
     @Query("""
         SELECT * 
         FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME} 
-        WHERE 
-            ${MediaServiceLinkExtraContentEntity.POST_UID_COLUMN_NAME} = :postUid
-        AND 
-            ${MediaServiceLinkExtraContentEntity.VIDEO_URL_COLUMN_NAME} = :videoUrl
+        WHERE ${MediaServiceLinkExtraContentEntity.VIDEO_URL_COLUMN_NAME} = :videoUrl
     """)
-    abstract suspend fun selectByPostUidAndVideoUrl(postUid: String, videoUrl: String): MediaServiceLinkExtraContentEntity?
+    abstract suspend fun selectByVideoUrl(videoUrl: String): MediaServiceLinkExtraContentEntity?
 
     @Query("""
         DELETE 

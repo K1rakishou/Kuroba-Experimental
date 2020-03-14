@@ -43,7 +43,12 @@ public interface PostCellInterface {
             Theme theme
     );
 
-    void onPostRecycled();
+    /**
+     * @param isActuallyRecycling is only true when the view holder that is getting passed into the
+     *                            RecyclerView's onViewRecycled is being recycled because it's
+     *                            offscreen and not because we called notifyItemChanged.
+     * */
+    void onPostRecycled(boolean isActuallyRecycling);
 
     Post getPost();
 
@@ -56,7 +61,7 @@ public interface PostCellInterface {
         void onPostBind(Post post);
 
         // Only used in PostCell and CardPostCell, no need to use in stubs
-        void onPostUnbind(Post post);
+        void onPostUnbind(Post post, boolean isActuallyRecycling);
 
         void onPostClicked(Post post);
 

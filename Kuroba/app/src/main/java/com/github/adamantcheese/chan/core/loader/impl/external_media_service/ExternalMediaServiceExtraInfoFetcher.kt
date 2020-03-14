@@ -18,12 +18,7 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
 
     fun isEnabled(): Boolean
 
-    fun fetch(
-            loadableUid: String,
-            postUid: String,
-            requestUrl: String,
-            linkInfoRequest: LinkInfoRequest
-    ): Flowable<ModularResult<SpanUpdateBatch>>
+    fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): Flowable<ModularResult<SpanUpdateBatch>>
 
     /**
      * Whether this fetcher can parse the link
