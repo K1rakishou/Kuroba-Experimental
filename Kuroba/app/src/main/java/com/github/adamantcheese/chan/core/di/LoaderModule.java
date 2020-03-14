@@ -6,7 +6,7 @@ import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository;
+import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
 
 import org.codejargon.feather.Provides;
 
@@ -32,11 +32,11 @@ public class LoaderModule {
     @Provides
     @Singleton
     public YoutubeMediaServiceExtraInfoFetcher provideYoutubeMediaServiceExtraInfoFetcher(
-            YoutubeLinkExtraContentRepository youtubeLinkExtraContentRepository
+            MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
     ) {
         Logger.d(AppModule.DI_TAG, "YoutubeMediaServiceExtraInfoFetcher");
 
-        return new YoutubeMediaServiceExtraInfoFetcher(youtubeLinkExtraContentRepository);
+        return new YoutubeMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
     }
 
     @Provides

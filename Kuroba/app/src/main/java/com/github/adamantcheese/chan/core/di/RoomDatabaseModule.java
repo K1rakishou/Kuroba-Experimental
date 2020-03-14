@@ -1,8 +1,8 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.database.di.DatabaseComponent;
+import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.database.repository.SeenPostRepository;
-import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository;
 
 import org.codejargon.feather.Provides;
 
@@ -17,8 +17,8 @@ public class RoomDatabaseModule {
 
     @Provides
     @Singleton
-    public YoutubeLinkExtraContentRepository provideYoutubeLinkExtraContentRepository() {
-        return databaseComponent.getYoutubeLinkExtraContentRepository();
+    public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository() {
+        return databaseComponent.getMediaServiceLinkExtraContentRepository();
     }
 
     @Provides

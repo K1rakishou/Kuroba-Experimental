@@ -3,7 +3,7 @@ package com.github.adamantcheese.database.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
-import com.github.adamantcheese.base.LoadableType
+import com.github.adamantcheese.database.dto.loadable.LoadableType
 
 @Entity(
         tableName = LoadableEntity.TABLE_NAME,

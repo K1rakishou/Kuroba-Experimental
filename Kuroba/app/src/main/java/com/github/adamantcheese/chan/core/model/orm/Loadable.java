@@ -19,10 +19,10 @@ package com.github.adamantcheese.chan.core.model.orm;
 import android.os.Parcel;
 import android.text.TextUtils;
 
-import com.github.adamantcheese.base.LoadableType;
-import com.github.adamantcheese.base.LoadableUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.database.dto.loadable.LoadableType;
+import com.github.adamantcheese.database.dto.loadable.LoadableUtils;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 

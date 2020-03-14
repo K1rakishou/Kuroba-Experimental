@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ff9985289d6da8d3d750cdb3b374e288",
+    "identityHash": "440bb29f9eb021b0dce9475a8cc63b26",
     "entities": [
       {
         "tableName": "loadable",
@@ -68,8 +68,8 @@
         "foreignKeys": []
       },
       {
-        "tableName": "youtube_link_extra_content_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `url` TEXT NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `url`))",
+        "tableName": "media_service_link_extra_content_entity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `url` TEXT NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `url`))",
         "fields": [
           {
             "fieldPath": "postUid",
@@ -81,6 +81,12 @@
             "fieldPath": "parentLoadableUid",
             "columnName": "parent_loadable_uid",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaServiceType",
+            "columnName": "media_service_type",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -118,12 +124,12 @@
         },
         "indices": [
           {
-            "name": "youtube_link_extra_content_entity_inserted_at_idx",
+            "name": "media_service_link_extra_content_entity_inserted_at_idx",
             "unique": false,
             "columnNames": [
               "inserted_at"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `youtube_link_extra_content_entity_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `media_service_link_extra_content_entity_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
           }
         ],
         "foreignKeys": []
@@ -181,7 +187,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff9985289d6da8d3d750cdb3b374e288')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '440bb29f9eb021b0dce9475a8cc63b26')"
     ]
   }
 }

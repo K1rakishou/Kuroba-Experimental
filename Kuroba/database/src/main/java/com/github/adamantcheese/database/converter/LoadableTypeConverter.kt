@@ -1,7 +1,7 @@
 package com.github.adamantcheese.database.converter
 
 import androidx.room.TypeConverter
-import com.github.adamantcheese.base.LoadableType
+import com.github.adamantcheese.database.dto.loadable.LoadableType
 
 class LoadableTypeConverter {
 
@@ -10,4 +10,5 @@ class LoadableTypeConverter {
 
     @TypeConverter
     fun fromLoadableType(loadableType: LoadableType) = loadableType.typeValue
+
 }

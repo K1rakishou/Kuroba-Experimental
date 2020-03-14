@@ -11,8 +11,9 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.groupOrNull
-import com.github.adamantcheese.database.dto.YoutubeLinkExtraContent
-import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
+import com.github.adamantcheese.database.dto.video_service.MediaServiceLinkExtraContent
+import com.github.adamantcheese.database.dto.video_service.MediaServiceType
+import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import io.reactivex.Flowable
@@ -24,7 +25,7 @@ import org.joda.time.Period
 import java.util.regex.Pattern
 
 internal class YoutubeMediaServiceExtraInfoFetcher(
-        private val youtubeLinkExtraContentRepository: YoutubeLinkExtraContentRepository
+        private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
 ) : ExternalMediaServiceExtraInfoFetcher {
 
     override val fetcherType: FetcherType
@@ -43,7 +44,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     @ExperimentalCoroutinesApi
     override fun getFromCache(postUid: String, url: String): Flowable<ModularResult<ExtraLinkInfo?>> {
         return rxFlowable {
-            val result = youtubeLinkExtraContentRepository.selectByPostUid(postUid, url)
+            val result = mediaServiceLinkExtraContentRepository.selectByPostUid(postUid, url)
                     .map { youtubeLnkExtraContent ->
                         if (youtubeLnkExtraContent == null) {
                             return@map null
@@ -67,16 +68,17 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
             extraLinkInfo: ExtraLinkInfo
     ): Flowable<ModularResult<Unit>> {
         return rxFlowable {
-            val youtubeLinkExtraContent = YoutubeLinkExtraContent(
+            val mediaServiceLinkExtraContent = MediaServiceLinkExtraContent(
                     postUid,
                     loadableUid,
+                    MediaServiceType.Youtube,
                     url,
                     extraLinkInfo.title,
                     extraLinkInfo.duration,
                     DateTime.now()
             )
 
-            val result = youtubeLinkExtraContentRepository.insert(youtubeLinkExtraContent)
+            val result = mediaServiceLinkExtraContentRepository.insert(mediaServiceLinkExtraContent)
             send(result)
         }
     }

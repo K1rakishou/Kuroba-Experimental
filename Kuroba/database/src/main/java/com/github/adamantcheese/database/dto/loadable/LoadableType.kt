@@ -1,4 +1,4 @@
-package com.github.adamantcheese.base
+package com.github.adamantcheese.database.dto.loadable
 
 enum class LoadableType(val typeValue: Int) {
     CatalogLoadable(0),

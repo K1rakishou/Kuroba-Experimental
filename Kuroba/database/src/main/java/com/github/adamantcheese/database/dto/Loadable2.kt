@@ -1,6 +1,7 @@
 package com.github.adamantcheese.database.dto
 
-import com.github.adamantcheese.base.LoadableType
+import com.github.adamantcheese.database.dto.loadable.LoadableType
+
 
 /**
  * For now it's called Loadable2. Rename to normal loadable after refactoring the main Loadable

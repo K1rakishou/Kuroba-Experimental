@@ -7,17 +7,18 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.adamantcheese.database.converter.DateTimeTypeConverter
 import com.github.adamantcheese.database.converter.LoadableTypeConverter
+import com.github.adamantcheese.database.converter.VideoServiceTypeConverter
 import com.github.adamantcheese.database.dao.LoadableEntityDao
+import com.github.adamantcheese.database.dao.MediaServiceLinkExtraContentDao
 import com.github.adamantcheese.database.dao.SeenPostDao
-import com.github.adamantcheese.database.dao.YoutubeLinkExtraContentDao
 import com.github.adamantcheese.database.entity.LoadableEntity
+import com.github.adamantcheese.database.entity.MediaServiceLinkExtraContentEntity
 import com.github.adamantcheese.database.entity.SeenPostEntity
-import com.github.adamantcheese.database.entity.YoutubeLinkExtraContentEntity
 
 @Database(
         entities = [
             LoadableEntity::class,
-            YoutubeLinkExtraContentEntity::class,
+            MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class
         ],
         version = 1,
@@ -25,11 +26,12 @@ import com.github.adamantcheese.database.entity.YoutubeLinkExtraContentEntity
 )
 @TypeConverters(value = [
     DateTimeTypeConverter::class,
-    LoadableTypeConverter::class
+    LoadableTypeConverter::class,
+    VideoServiceTypeConverter::class
 ])
 abstract class KurobaDatabase : RoomDatabase() {
     abstract fun loadableDao(): LoadableEntityDao
-    abstract fun youtubeLinkExtraContentDao(): YoutubeLinkExtraContentDao
+    abstract fun mediaServiceLinkExtraContentDao(): MediaServiceLinkExtraContentDao
     abstract fun seenPostDao(): SeenPostDao
 
     companion object {

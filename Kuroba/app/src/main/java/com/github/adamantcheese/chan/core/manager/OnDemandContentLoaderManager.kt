@@ -97,10 +97,6 @@ class OnDemandContentLoaderManager(
                 .toFlowable()
     }
 
-    fun preloadForThread(loadable: Loadable) {
-        // TODO(ODL)
-    }
-
     fun listenPostContentUpdates(): Flowable<LoaderBatchResult> {
         BackgroundUtils.ensureMainThread()
 

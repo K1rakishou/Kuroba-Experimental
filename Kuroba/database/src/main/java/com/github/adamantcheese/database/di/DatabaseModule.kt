@@ -5,11 +5,11 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.database.di.annotation.VerboseLogs
+import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.database.repository.SeenPostRepository
-import com.github.adamantcheese.database.repository.YoutubeLinkExtraContentRepository
 import com.github.adamantcheese.database.source.Loadable2LocalSource
+import com.github.adamantcheese.database.source.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.SeenPostLocalSource
-import com.github.adamantcheese.database.source.YoutubeLinkExtraContentLocalSource
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -41,8 +41,8 @@ class DatabaseModule {
 
     @Singleton
     @Provides
-    fun provideYoutubeLinkExtraContentLocalSource(database: KurobaDatabase): YoutubeLinkExtraContentLocalSource {
-        return YoutubeLinkExtraContentLocalSource(database)
+    fun provideMediaServiceLinkExtraContentLocalSource(database: KurobaDatabase): MediaServiceLinkExtraContentLocalSource {
+        return MediaServiceLinkExtraContentLocalSource(database)
     }
 
     @Singleton
@@ -61,15 +61,15 @@ class DatabaseModule {
             logger: Logger,
             database: KurobaDatabase,
             loadable2LocalSource: Loadable2LocalSource,
-            youtubeLinkExtraContentLocalSource: YoutubeLinkExtraContentLocalSource,
+            mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
             @LoggerTagPrefix loggerTag: String
-    ): YoutubeLinkExtraContentRepository {
-        return YoutubeLinkExtraContentRepository(
+    ): MediaServiceLinkExtraContentRepository {
+        return MediaServiceLinkExtraContentRepository(
                 database,
                 loggerTag,
                 logger,
                 loadable2LocalSource,
-                youtubeLinkExtraContentLocalSource
+                mediaServiceLinkExtraContentLocalSource
         )
     }
 
