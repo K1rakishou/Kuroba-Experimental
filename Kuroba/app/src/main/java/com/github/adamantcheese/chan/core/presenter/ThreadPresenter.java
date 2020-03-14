@@ -62,6 +62,7 @@ import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
@@ -1159,7 +1160,7 @@ public class ThreadPresenter
         return isBound() ? chanLoader.getThread() : null;
     }
 
-    public Chan4PagesRequest.Page getPage(Post op) {
+    public Page getPage(Post op) {
         return pageRequestManager.getPage(op);
     }
 

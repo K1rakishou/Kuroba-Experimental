@@ -68,6 +68,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
@@ -98,6 +99,7 @@ import static android.view.View.MeasureSpec.UNSPECIFIED;
 import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.LayoutMode.AUTO;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.LayoutMode.SPLIT;
+import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDisplaySize;
@@ -585,6 +587,13 @@ public class PostCell
 
         if (!threadMode && post.getImagesCount() > 0) {
             text += ", " + getQuantityString(R.plurals.image, post.getImagesCount(), post.getImagesCount());
+        }
+
+        if (callback != null && !ChanSettings.neverShowPages.get()) {
+            Page p = callback.getPage(post);
+            if (p != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
+                text += ", page " + p.page;
+            }
         }
 
         replies.setText(text);

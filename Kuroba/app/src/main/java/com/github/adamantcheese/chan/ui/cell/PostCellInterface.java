@@ -20,6 +20,7 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
@@ -74,6 +75,8 @@ public interface PostCellInterface {
         void onPostNoClicked(Post post);
 
         void onPostSelectionQuoted(Post post, CharSequence quoted);
+
+        Page getPage(Post op);
 
         boolean hasAlreadySeenPost(Post post);
     }

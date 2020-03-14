@@ -54,7 +54,7 @@ class FileCacheV2(
                 return@newFixedThreadPool Thread(
                         runnable,
                         String.format(
-                                Locale.US,
+                                Locale.ENGLISH,
                                 NORMAL_THREAD_NAME_FORMAT,
                                 normalThreadIndex.getAndIncrement()
                         )

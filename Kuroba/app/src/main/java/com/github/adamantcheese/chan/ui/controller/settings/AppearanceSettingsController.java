@@ -108,6 +108,12 @@ public class AppearanceSettingsController
                     R.string.setting_move_sort_to_toolbar_description
             )));
 
+            layout.add(new BooleanSettingView(this,
+                    ChanSettings.neverShowPages,
+                    "Never show page number",
+                    "Never display the page number in the catalog"
+            ));
+
             groups.add(layout);
         }
 
@@ -117,16 +123,16 @@ public class AppearanceSettingsController
 
             setupFontSizeSetting(post);
 
-            requiresRestart.add(post.add(new BooleanSettingView(this,
-                    ChanSettings.shiftPostFormat,
-                    R.string.setting_shift_post,
-                    R.string.setting_shift_post_description
-            )));
-
             requiresUiRefresh.add(post.add(new BooleanSettingView(this,
                     ChanSettings.fontAlternate,
                     R.string.setting_font_alt,
                     R.string.setting_font_alt_description
+            )));
+
+            requiresRestart.add(post.add(new BooleanSettingView(this,
+                    ChanSettings.shiftPostFormat,
+                    R.string.setting_shift_post,
+                    R.string.setting_shift_post_description
             )));
 
             requiresUiRefresh.add(post.add(new BooleanSettingView(this,
