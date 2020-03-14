@@ -24,7 +24,6 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
-import android.util.LruCache;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 
@@ -46,11 +45,9 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteResolver;
 import com.github.adamantcheese.chan.core.site.SiteService;
-import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.ui.controller.BrowseController;
 import com.github.adamantcheese.chan.ui.controller.DoubleNavigationController;
 import com.github.adamantcheese.chan.ui.controller.DrawerController;
@@ -65,14 +62,10 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import javax.inject.Inject;
@@ -589,28 +582,12 @@ public class StartActivity
     @OnLifecycleEvent(Lifecycle.Event.ON_START)
     public void onStart() {
         super.onStart();
-        //restore parsed youtube stuff
-        Gson gson = instance(Gson.class);
-        Type lruType = new TypeToken<Map<String, Pair<String, String>>>() {}.getType();
-        //convert
-        Map<String, Pair<String, String>> titles = gson.fromJson(PersistableChanState.youtubeCache.get(), lruType);
-        //reconstruct
-        CommentParserHelper.youtubeCache = new LruCache<>(500);
-        for (String s : titles.keySet()) {
-            CommentParserHelper.youtubeCache.put(s, titles.get(s));
-        }
-
         Logger.d(TAG, "start");
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     public void onStop() {
         super.onStop();
-        //store parsed youtube stuff, extra prevention of unneeded API calls
-        Gson gson = instance(Gson.class);
-        Type lruType = new TypeToken<Map<String, Pair<String, String>>>() {}.getType();
-        //convert and set
-        PersistableChanState.youtubeCache.set(gson.toJson(CommentParserHelper.youtubeCache.snapshot(), lruType));
         Logger.d(TAG, "stop");
     }
 }

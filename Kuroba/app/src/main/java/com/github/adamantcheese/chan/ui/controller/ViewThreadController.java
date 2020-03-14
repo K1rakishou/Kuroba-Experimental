@@ -80,8 +80,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class ViewThreadController
         extends ThreadController
-        implements ThreadLayout.ThreadLayoutCallback, ArchivesLayout.Callback,
-                   ToolbarMenuItem.ToobarThreedotMenuCallback {
+        implements ThreadLayout.ThreadLayoutCallback, ArchivesLayout.Callback {
     private static final String TAG = "ViewThreadController";
 
     private static final int PIN_ID = 1;
