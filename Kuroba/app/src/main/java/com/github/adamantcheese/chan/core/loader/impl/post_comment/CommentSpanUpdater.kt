@@ -45,7 +45,7 @@ internal object CommentSpanUpdater {
                 // should be longer than the old one)
                 offset += abs(formattedLinkUrl.length - originalLinkUrl.length)
 
-                // Delete the old link old with the text
+                // Delete the old link with the text
                 ssb.delete(start, end)
 
                 // Insert new formatted link
