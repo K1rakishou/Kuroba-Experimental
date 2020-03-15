@@ -606,7 +606,7 @@ public class ImageViewerPresenter
     }
 
     private boolean imageAutoLoad(Loadable loadable, PostImage postImage) {
-        if (loadable.isLocal()) {
+        if (!postImage.isInlined && loadable.isLocal()) {
             // All images are stored locally when isSavedCopy is true
             return true;
         }
@@ -617,7 +617,7 @@ public class ImageViewerPresenter
     }
 
     private boolean videoAutoLoad(Loadable loadable, PostImage postImage) {
-        if (loadable.isLocal()) {
+        if (!postImage.isInlined && loadable.isLocal()) {
             // All videos are stored locally when isSavedCopy is true
             return true;
         }

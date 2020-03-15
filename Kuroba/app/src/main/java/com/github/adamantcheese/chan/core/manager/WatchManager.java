@@ -397,6 +397,9 @@ public class WatchManager
 
         databaseManager.runTask(() -> {
             databasePinManager.deletePin(pin).call();
+            // FIXME(ODL): this call may lag the UI for quite a while (like 0.5-1 seconds) because
+            //  we also delete all the files related to the local thread from the disk. Gotta move
+            //  this to a background thread.
             databaseSavedThreadManager.deleteSavedThread(pin.loadable).call();
 
             return null;

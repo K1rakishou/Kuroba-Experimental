@@ -45,7 +45,7 @@ class WebmStreamingSource(
             return
         }
 
-        if (loadable.isLocal || loadable.isDownloading) {
+        if (!postImage.isInlined && (loadable.isLocal || loadable.isDownloading)) {
             Logger.d(TAG, "Loaded from local thread")
 
             loadLocalThreadWebm(loadable, postImage, callback)

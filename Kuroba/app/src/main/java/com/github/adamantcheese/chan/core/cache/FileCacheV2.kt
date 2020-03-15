@@ -151,8 +151,11 @@ class FileCacheV2(
             throw IllegalArgumentException("Cannot use local thread loadable for prefetching!")
         }
 
-        val url = postImage.imageUrl.toString()
+        if (postImage.isInlined) {
+            throw IllegalAccessException("Cannot prefetch inlined files! url = ${postImage.imageUrl}")
+        }
 
+        val url = postImage.imageUrl.toString()
         val file = cacheHandler.getOrCreateCacheFile(url)
                 ?: return null
 
@@ -225,7 +228,7 @@ class FileCacheV2(
     ): CancelableDownload? {
         val url = postImage.imageUrl.toString()
 
-        if (loadable.isLocal || loadable.isDownloading) {
+        if (!postImage.isInlined && (loadable.isLocal || loadable.isDownloading)) {
             log(TAG, "Handling local thread file, url = ${maskImageUrl(url)}")
 
             if (callback == null) {

@@ -61,7 +61,7 @@ public class PostImageThumbnailView
             this.postImage = postImage;
 
             if (postImage != null) {
-                if (!loadable.isLocal()) {
+                if (!loadable.isLocal() || postImage.isInlined) {
                     String url = getUrl(postImage, useHiRes);
                     setUrl(url);
                 } else {

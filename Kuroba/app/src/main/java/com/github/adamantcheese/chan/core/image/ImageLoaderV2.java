@@ -57,7 +57,7 @@ public class ImageLoaderV2 {
     ) {
         BackgroundUtils.ensureMainThread();
 
-        if (loadable.isLocal() || loadable.isDownloading()) {
+        if (!postImage.isInlined && (loadable.isLocal() || loadable.isDownloading())) {
             String formattedName;
             Logger.d(TAG, "Loading image " + getImageUrlForLogs(postImage) + " from the disk");
 
