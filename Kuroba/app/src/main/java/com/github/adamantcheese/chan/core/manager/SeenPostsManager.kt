@@ -4,6 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
@@ -78,6 +79,10 @@ class SeenPostsManager(
             return true
         }
 
+        if (!isEnabled()) {
+            return true
+        }
+
         val loadableUid = loadable.uniqueId
         val postId = post.no.toLong()
 
@@ -96,6 +101,10 @@ class SeenPostsManager(
             return
         }
 
+        if (!isEnabled()) {
+            return
+        }
+
         actor.offer(ActorAction.Preload(loadable))
     }
 
@@ -105,12 +114,22 @@ class SeenPostsManager(
             return
         }
 
+        if (!isEnabled()) {
+            return
+        }
+
         actor.offer(ActorAction.PostBound(loadable, post))
     }
 
     fun onPostUnbind(loadable: Loadable, post: Post) {
+        if (!isEnabled()) {
+            return
+        }
+
         // No-op (maybe something will be added here in the future)
     }
+
+    private fun isEnabled() = ChanSettings.markUnseenPosts.get()
 
     private sealed class ActorAction {
         class Preload(val loadable: Loadable) : ActorAction()

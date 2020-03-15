@@ -210,8 +210,7 @@ public class ChanSettings {
     public static final BooleanSetting showAnonymousName;
     public static final BooleanSetting anonymizeIds;
     public static final BooleanSetting addDubs;
-    public static final BooleanSetting parseYoutubeTitles;
-    public static final BooleanSetting parseYoutubeDuration;
+    public static final BooleanSetting parseYoutubeTitlesAndDuration;
     public static final BooleanSetting enableEmoji;
 
     // Images
@@ -219,6 +218,7 @@ public class ChanSettings {
     public static final BooleanSetting revealimageSpoilers;
     public static final BooleanSetting highResCells;
     public static final BooleanSetting parsePostImageLinks;
+    public static final BooleanSetting fetchInlinedFileSizes;
     public static final BooleanSetting transparencyOn;
     public static final BooleanSetting neverShowWebmControls;
 
@@ -247,6 +247,7 @@ public class ChanSettings {
     public static final BooleanSetting tapNoReply;
     public static final BooleanSetting enableLongPressURLCopy;
     public static final BooleanSetting shareUrl;
+    public static final BooleanSetting markUnseenPosts;
 
     // Other options
     public static final StringSetting parseYoutubeAPIKey;
@@ -364,8 +365,7 @@ public class ChanSettings {
             showAnonymousName = new BooleanSetting(p, "preference_show_anonymous_name", false);
             anonymizeIds = new BooleanSetting(p, "preference_anonymize_ids", false);
             addDubs = new BooleanSetting(p, "add_dubs", false);
-            parseYoutubeTitles = new BooleanSetting(p, "parse_youtube_titles", true);
-            parseYoutubeDuration = new BooleanSetting(p, "parse_youtube_duration", false);
+            parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
             enableEmoji = new BooleanSetting(p, "enable_emoji", false);
 
             // Images
@@ -373,6 +373,7 @@ public class ChanSettings {
             revealimageSpoilers = new BooleanSetting(p, "preference_auto_unspoil_images", true);
             highResCells = new BooleanSetting(p, "high_res_cells", false);
             parsePostImageLinks = new BooleanSetting(p, "parse_post_image_links", true);
+            fetchInlinedFileSizes = new BooleanSetting(p, "fetch_inlined_file_size", false);
             transparencyOn = new BooleanSetting(p, "image_transparency_on", false);
             neverShowWebmControls = new BooleanSetting(p, "never_show_webm_controls", false);
 
@@ -402,6 +403,7 @@ public class ChanSettings {
             tapNoReply = new BooleanSetting(p, "preference_tap_no_reply", false);
             enableLongPressURLCopy = new BooleanSetting(p, "long_press_image_url_copy", true);
             shareUrl = new BooleanSetting(p, "preference_image_share_url", false);
+            markUnseenPosts = new BooleanSetting(p, "preference_mark_unseen_posts", true);
 
             // Other options
             // this is 4chanX's key, but it is recommended that you use your own

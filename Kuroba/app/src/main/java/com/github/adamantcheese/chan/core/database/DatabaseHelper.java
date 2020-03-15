@@ -59,6 +59,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppState;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getPreferences;
 
 public class DatabaseHelper
@@ -66,7 +67,7 @@ public class DatabaseHelper
     private static final String TAG = "DatabaseHelper";
 
     private static final String DATABASE_NAME = "ChanDB";
-    private static final int DATABASE_VERSION = 44;
+    private static final int DATABASE_VERSION = 45;
 
     public Dao<Pin, Integer> pinDao;
     public Dao<Loadable, Integer> loadableDao;
@@ -289,7 +290,8 @@ public class DatabaseHelper
         if (oldVersion < 40) {
             try {
                 //disable Youtube link parsing if it was enabled in a previous version to prevent issues
-                ChanSettings.parseYoutubeTitles.set(false);
+                SettingProvider p = new SharedPreferencesSettingProvider(getPreferences());
+                p.putBooleanSync("parse_youtube_titles", false);
 
                 //remove arisuchan boards that don't exist anymore
                 Where where = boardsDao.queryBuilder().where();
@@ -347,7 +349,9 @@ public class DatabaseHelper
         if (oldVersion < 41) {
             //enable the following as default for 4.10.2
             ChanSettings.parsePostImageLinks.set(true);
-            ChanSettings.parseYoutubeTitles.set(true);
+
+            SettingProvider p = new SharedPreferencesSettingProvider(getPreferences());
+            p.putBooleanSync("parse_youtube_titles", true);
         }
 
         if (oldVersion < 42) {
@@ -411,7 +415,23 @@ public class DatabaseHelper
                 BooleanSetting uploadCrashLogs = getSettingForKey(p, "auto_upload_crash_logs", BooleanSetting.class);
                 ChanSettings.collectCrashLogs.set(uploadCrashLogs.get());
             } catch (Exception e) {
-                Logger.e(TAG, "Error upgrading to version 43");
+                Logger.e(TAG, "Error upgrading to version 44");
+            }
+        }
+
+        if (oldVersion < 45) {
+            try {
+                SettingProvider prefs = new SharedPreferencesSettingProvider(getPreferences());
+                // These two settings were merged into one - parse_youtube_titles_and_duration
+                prefs.removeSync("parse_youtube_titles");
+                prefs.removeSync("parse_youtube_duration");
+
+                SettingProvider state = new SharedPreferencesSettingProvider(getAppState());
+                // Youtube titles and durations cache was removed from PersistableChanState and moved
+                // into the database
+                state.removeSync("yt_cache");
+            } catch (Throwable error) {
+                Logger.e(TAG, "Error upgrading to version 45");
             }
         }
     }

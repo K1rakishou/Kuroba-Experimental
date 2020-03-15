@@ -28,10 +28,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         get() = MediaServiceType.Youtube
 
     override fun isEnabled(): Boolean {
-        if (!ChanSettings.parseYoutubeTitles.get() && !ChanSettings.parseYoutubeDuration.get()) {
-            return false
-        }
-
+        // We can't disable it here because we want to always prepend Youtube links with it's icon
         return true
     }
 
@@ -43,6 +40,17 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
             linkInfoRequest: LinkInfoRequest
     ): Single<ModularResult<SpanUpdateBatch>> {
         return rxSingle {
+            if (!ChanSettings.parseYoutubeTitlesAndDuration.get()) {
+                return@rxSingle ModularResult.value(
+                        SpanUpdateBatch(
+                                requestUrl,
+                                ExtraLinkInfo.Success(null, null),
+                                linkInfoRequest.oldPostLinkableSpans,
+                                getIconBitmap()
+                        )
+                )
+            }
+
             val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
                     mediaServiceType,
                     requestUrl,
@@ -64,11 +72,18 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     ): ModularResult<SpanUpdateBatch> {
         try {
             val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
-                is ModularResult.Error -> ExtraLinkInfo.error()
-                is ModularResult.Value -> ExtraLinkInfo.value(
-                        mediaServiceLinkExtraContentResult.value.videoTitle,
-                        mediaServiceLinkExtraContentResult.value.videoDuration
-                )
+                is ModularResult.Error -> ExtraLinkInfo.Error
+                is ModularResult.Value -> {
+                    if (mediaServiceLinkExtraContentResult.value.videoDuration == null
+                            && mediaServiceLinkExtraContentResult.value.videoDuration == null) {
+                        ExtraLinkInfo.NotAvailable
+                    } else {
+                        ExtraLinkInfo.Success(
+                                mediaServiceLinkExtraContentResult.value.videoTitle,
+                                mediaServiceLinkExtraContentResult.value.videoDuration
+                        )
+                    }
+                }
             }
 
             val spanUpdateBatch = SpanUpdateBatch(
@@ -106,21 +121,11 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
 
     private fun formatGetYoutubeLinkInfoUrl(videoId: String): String {
         return buildString {
-            append("https://www.googleapis.com/youtube/v3/videos?part=snippet")
+            append("https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails&id=")
 
-            if (ChanSettings.parseYoutubeDuration.get()) {
-                append("%2CcontentDetails")
-            }
-
-            append("&id=")
             append(videoId)
-            append("&fields=items%28id%2Csnippet%28title%29")
+            append("&fields=items%28id%2Csnippet%28title%29%2CcontentDetails%28duration%29%29&key=")
 
-            if (ChanSettings.parseYoutubeDuration.get()) {
-                append("%2CcontentDetails%28duration%29")
-            }
-
-            append("%29&key=")
             append(ChanSettings.parseYoutubeAPIKey.get())
         }
     }

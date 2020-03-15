@@ -130,28 +130,30 @@ internal object CommentSpanUpdater {
             // Append the original url
             append(originalLinkUrl)
 
-            // Append the title (if we have it)
-            if (extraLinkInfo.title != null) {
-                append(" ")
-                append("(")
-                append(extraLinkInfo.title)
-                append(")")
-            }
+            when (extraLinkInfo) {
+                is ExtraLinkInfo.Success -> {
+                    // Append the title (if we have it)
+                    if (extraLinkInfo.title != null) {
+                        append(" ")
+                        append("(")
+                        append(extraLinkInfo.title)
+                        append(")")
+                    }
 
-            // Append the duration (if we have it)
-            if (extraLinkInfo.duration != null) {
-                append(" ")
-                append(extraLinkInfo.duration)
-            }
-
-            val videoPossiblyNotAvailable = extraLinkInfo.title == null && extraLinkInfo.duration == null
-
-            if (extraLinkInfo.error) {
-                append(" ")
-                append("[ERROR]")
-            } else if (videoPossiblyNotAvailable) {
-                append(" ")
-                append("[NOT AVAILABLE]")
+                    // Append the duration (if we have it)
+                    if (extraLinkInfo.duration != null) {
+                        append(" ")
+                        append(extraLinkInfo.duration)
+                    }
+                }
+                ExtraLinkInfo.Error -> {
+                    append(" ")
+                    append("[ERROR]")
+                }
+                ExtraLinkInfo.NotAvailable -> {
+                    append(" ")
+                    append("[NOT AVAILABLE]")
+                }
             }
         }
     }

@@ -191,15 +191,9 @@ public class AppearanceSettingsController
             )));
 
             addRequiresUiRefresh(post.add(new BooleanSettingView(this,
-                    ChanSettings.parseYoutubeTitles,
-                    R.string.setting_youtube_title,
-                    R.string.setting_youtube_title_description
-            )));
-
-            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
-                    ChanSettings.parseYoutubeDuration,
-                    R.string.setting_youtube_dur_title,
-                    R.string.setting_youtube_dur_description
+                    ChanSettings.parseYoutubeTitlesAndDuration,
+                    R.string.setting_youtube_title_and_durations,
+                    R.string.setting_youtube_title_and_durations_description
             )));
 
             //this is also in Behavior settings
@@ -238,6 +232,13 @@ public class AppearanceSettingsController
                     ChanSettings.parsePostImageLinks,
                     R.string.setting_image_link_loading_title,
                     R.string.setting_image_link_loading_description
+            )));
+
+            addRequiresUiRefresh(images.add(new BooleanSettingView(this,
+                    ChanSettings.fetchInlinedFileSizes,
+                    ChanSettings.parsePostImageLinks,
+                    R.string.setting_fetch_inlined_file_sizes_title,
+                    R.string.setting_fetch_inlined_file_sizes_description
             )));
 
             images.add(new BooleanSettingView(this,

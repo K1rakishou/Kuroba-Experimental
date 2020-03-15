@@ -697,8 +697,8 @@ Don't have a 4chan Pass?<br>
     <string name="settings_always_open_drawer">Always open the drawer when a thread is bookmarked</string>
     <string name="settings_image_long_url">Enable long-press image URL copy</string>
     <string name="settings_image_long_url_description">Makes long-pressing on post images copy the image URL to the clipboard</string>
-    <string name="setting_youtube_title">Enable Youtube titles</string>
-    <string name="setting_youtube_title_description">Replaces Youtube links with their titles</string>
+    <string name="setting_youtube_title_and_durations">Enable Youtube titles and durations</string>
+    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
     <string name="could_not_create_base_local_threads_dir">Could not create base local threads directory</string>
     <string-array name="setting_watch_notify_modes">
@@ -857,4 +857,8 @@ Don't have a 4chan Pass?<br>
     <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
+    <string name="setting_fetch_inlined_file_sizes_title">Fetch the file size for inlined files</string>
+    <string name="setting_fetch_inlined_file_sizes_description">A HEAD request will be sent for inlined files to try to get the Content-Length header which value will be used as the file size.\n\n⚠⚠⚠ WARNING ⚠⚠⚠\n\nBy enabling this setting you may accidentally leak your IP address to IP logger site. Only enable this if you don\'t care about leaking your IP address.</string>
+    <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
+    <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
 </resources>

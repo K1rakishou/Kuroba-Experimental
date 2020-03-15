@@ -413,6 +413,10 @@ public class PostCell
             return;
         }
 
+        if (!ChanSettings.markUnseenPosts.get()) {
+            return;
+        }
+
         if (callback != null && !callback.hasAlreadySeenPost(post)) {
             unseenPostIndicatorFadeOutAnimation.start(alpha -> {
                         postAttentionLabel.setAlpha(alpha);
@@ -430,10 +434,12 @@ public class PostCell
             return;
         }
 
-        if (callback != null && !callback.hasAlreadySeenPost(post)) {
-            postAttentionLabel.setVisibility(VISIBLE);
-            postAttentionLabel.setBackgroundColor(theme.subjectColor);
-            return;
+        if (ChanSettings.markUnseenPosts.get()) {
+            if (callback != null && !callback.hasAlreadySeenPost(post)) {
+                postAttentionLabel.setVisibility(VISIBLE);
+                postAttentionLabel.setBackgroundColor(theme.subjectColor);
+                return;
+            }
         }
 
         // No filters for this post and the user has already seen it

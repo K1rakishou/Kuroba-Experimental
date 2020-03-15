@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.loader.LoaderType
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -18,6 +19,10 @@ class InlinedFileInfoLoader(
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
         if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+            return rejected()
+        }
+
+        if (!ChanSettings.fetchInlinedFileSizes.get()) {
             return rejected()
         }
 

@@ -10,8 +10,6 @@ import com.github.adamantcheese.chan.core.settings.StringSetting;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
-import static com.github.adamantcheese.chan.core.settings.ChanSettings.EMPTY_JSON;
-
 /**
  * This state class acts in a similar manner to {@link ChanSettings}, but everything here is not exported; this data is
  * strictly for use internally to the application and acts as a helper to ensure that data is not lost.
@@ -28,7 +26,6 @@ public class PersistableChanState {
     public static StringSetting previousDevHash;
 
     public static StringSetting filterWatchIgnored;
-    public static StringSetting youtubeCache;
 
     static {
         try {
@@ -41,7 +38,6 @@ public class PersistableChanState {
             previousDevHash = new StringSetting(p, "previous_dev_hash", BuildConfig.COMMIT_HASH);
 
             filterWatchIgnored = new StringSetting(p, "filter_watch_last_ignored_set", "");
-            youtubeCache = new StringSetting(p, "yt_cache", EMPTY_JSON);
         } catch (Exception e) {
             Logger.e(TAG, "Error while initializing the state", e);
             throw e;

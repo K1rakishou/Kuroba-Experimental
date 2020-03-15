@@ -174,6 +174,17 @@ public class BehaviourSettingsController
                     R.string.setting_enable_emoji_description
             ));
 
+            addRequiresUiRefresh(
+                    post.add(
+                            new BooleanSettingView(
+                                    this,
+                                    ChanSettings.markUnseenPosts,
+                                    R.string.setting_mark_unseen_posts_title,
+                                    R.string.setting_mark_unseen_posts_duration
+                            )
+                    )
+            );
+
             addGroup(post);
         }
 

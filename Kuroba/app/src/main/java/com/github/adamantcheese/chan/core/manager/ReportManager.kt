@@ -298,8 +298,7 @@ class ReportManager(
             appendln("Thread downloading enabled: ${ChanSettings.incrementalThreadDownloadingEnabled.get()}, " +
                     "active downloads = ${threadSaveManager.countActiveDownloads()}")
             appendln("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
-            appendln("Youtube titles parsing enabled: ${ChanSettings.parseYoutubeTitles.get()}")
-            appendln("Youtube durations parsing enabled: ${ChanSettings.parseYoutubeDuration.get()}")
+            appendln("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
             appendln("Concurrent file loading chunks count: ${ChanSettings.concurrentDownloadChunkCount.get().toInt()}")
             appendln("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
             appendln("Saved files base dir info: ${getFilesLocationInfo()}")
