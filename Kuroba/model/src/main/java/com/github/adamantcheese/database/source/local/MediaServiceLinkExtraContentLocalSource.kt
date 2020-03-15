@@ -16,8 +16,6 @@ class MediaServiceLinkExtraContentLocalSource(
     private val TAG = "$loggerTag MediaServiceLinkExtraContentLocalSource"
     private val mediaServiceLinkExtraContentDao = database.mediaServiceLinkExtraContentDao()
 
-    // TODO(ODL): add in-memory cache?
-
     suspend fun insert(mediaServiceLinkExtraContent: MediaServiceLinkExtraContent): ModularResult<Unit> {
         logger.log(TAG, "insert($mediaServiceLinkExtraContent)")
 

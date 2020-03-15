@@ -16,8 +16,6 @@ class InlinedFileInfoLocalSource(
     private val TAG = "$loggerTag InlinedFileInfoLocalSource"
     private val inlinedFileInfoDao = database.inlinedFileDao()
 
-    // TODO(ODL): add in-memory cache?
-
     suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
         logger.log(TAG, "insert(${inlinedFileInfo})")
 

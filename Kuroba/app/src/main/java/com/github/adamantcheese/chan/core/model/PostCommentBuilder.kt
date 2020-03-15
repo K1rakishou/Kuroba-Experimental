@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.model
 
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 
+// Thread safe
 class PostCommentBuilder(
         private var comment: CharSequence? = null,
         private val postLinkables: MutableSet<PostLinkable> = mutableSetOf()

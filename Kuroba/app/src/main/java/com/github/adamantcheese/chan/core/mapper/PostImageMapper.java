@@ -28,6 +28,7 @@ public class PostImageMapper {
                 postImage.imageWidth,
                 postImage.imageHeight,
                 postImage.spoiler,
+                postImage.isInlined,
                 postImage.getSize(),
                 postImage.fileHash
         );
@@ -69,6 +70,7 @@ public class PostImageMapper {
                 .imageWidth(serializablePostImage.getImageWidth())
                 .imageHeight(serializablePostImage.getImageHeight())
                 .spoiler(serializablePostImage.isSpoiler())
+                .isInlined(serializablePostImage.isInlined())
                 .size(serializablePostImage.getSize())
                 .fileHash(serializablePostImage.getFileHash())
                 .build();

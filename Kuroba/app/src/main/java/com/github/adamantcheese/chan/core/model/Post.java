@@ -78,21 +78,17 @@ public class Post
     public final AtomicBoolean deleted = new AtomicBoolean(false);
     /**
      * We use this map to avoid infinite loops when binding posts since after all post content
-     * loaders have done it's job we update the post via notifyItemChange, which trigger onPostBind()
+     * loaders have done their jobs we update the post via notifyItemChange, which triggers onPostBind()
      * again.
      * */
     private final Map<LoaderType, Boolean> onDemandContentLoadedMap = new HashMap<>();
     /**
      * This post replies to the these ids.
      */
-    // TODO(ODL):
     private final Set<Integer> repliesTo;
     /**
      * These ids replied to this post.
-     * <p><b>Manual synchronization is needed, since this list can be modified from any thread.
-     * Wrap all accesses in a {@code synchronized} block.</b>
      */
-    // TODO(ODL):
     private final List<Integer> repliesFrom = new ArrayList<>();
 
     @NonNull

@@ -2,9 +2,7 @@ package com.github.adamantcheese.chan.core.model
 
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 
-// TODO(ODL): figure out whether it's possible to get rid of "linkables" list and just get them from
-//  the comment itself by using spannable.getSpans() since we don't really use other than in couple
-//  of places.
+// Thread safe
 data class PostComment(
         @get:Synchronized
         @set:Synchronized

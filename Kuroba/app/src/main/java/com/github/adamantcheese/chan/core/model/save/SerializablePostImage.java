@@ -23,6 +23,8 @@ public class SerializablePostImage {
     private int imageHeight;
     @SerializedName("spoiler")
     private boolean spoiler;
+    @SerializedName("is_inlined")
+    private boolean isInlined;
     @SerializedName("size")
     private long size;
     @SerializedName("file_hash")
@@ -38,6 +40,7 @@ public class SerializablePostImage {
             int imageWidth,
             int imageHeight,
             boolean spoiler,
+            boolean isInlined,
             long size,
             String fileHash
     ) {
@@ -50,6 +53,7 @@ public class SerializablePostImage {
         this.imageWidth = imageWidth;
         this.imageHeight = imageHeight;
         this.spoiler = spoiler;
+        this.isInlined = isInlined;
         this.size = size;
         this.fileHash = fileHash;
     }
@@ -89,6 +93,10 @@ public class SerializablePostImage {
 
     public boolean isSpoiler() {
         return spoiler;
+    }
+
+    public boolean isInlined() {
+        return isInlined;
     }
 
     public long getSize() {
