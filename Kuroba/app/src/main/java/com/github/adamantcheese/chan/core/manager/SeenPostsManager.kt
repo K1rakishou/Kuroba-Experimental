@@ -39,6 +39,14 @@ class SeenPostsManager(
 
                     when (val result = seenPostsRepository.selectAllByLoadableUid(loadableUid)) {
                         is ModularResult.Value -> {
+                            // FIXME: Using mutex inside of an actor is not a good idea (it defeats
+                            //  the whole point of using actors in the first place) but there is
+                            //  no other way since there is one place where we need to call
+                            //  hasAlreadySeenPost from Java code and we we need to either use mutex
+                            //  while blocking the thread or mark is suspend (which we can't because
+                            //  of Java code). Must be changed in the future when ThreadPresenter
+                            //  is converted into Kotlin (probably not only ThreadPresenter but also
+                            //  a ton of other classes)
                             mutex.withLock {
                                 seenPostsMap[loadableUid] = result.value.toMutableSet()
                             }
@@ -122,10 +130,6 @@ class SeenPostsManager(
     }
 
     fun onPostUnbind(loadable: Loadable, post: Post) {
-        if (!isEnabled()) {
-            return
-        }
-
         // No-op (maybe something will be added here in the future)
     }
 
