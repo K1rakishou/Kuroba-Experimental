@@ -409,7 +409,7 @@ public class PostCell
     }
 
     private void startAttentionLabelFadeOutAnimation() {
-        if (hasColoredFilter) {
+        if (hasColoredFilter || postAttentionLabel.getVisibility() != View.VISIBLE) {
             return;
         }
 

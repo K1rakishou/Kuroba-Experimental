@@ -47,9 +47,9 @@ internal class PostExtraContentLoader(
 
                     return@flatMap Flowable.fromIterable(newSpans.entries)
                             .subscribeOn(scheduler)
-                            .flatMap({ (requestUrl, linkInfoRequest) ->
-                                return@flatMap fetchExtraLinkInfo(requestUrl, linkInfoRequest)
-                            }, MAX_CONCURRENT_REQUESTS)
+                            .flatMapSingle({ (requestUrl, linkInfoRequest) ->
+                                return@flatMapSingle fetchExtraLinkInfo(requestUrl, linkInfoRequest)
+                            }, false, MAX_CONCURRENT_REQUESTS)
                             .toList()
                             .flatMap { spanUpdateBatchResultList ->
                                 val spanUpdateBatchList = spanUpdateBatchResultList
@@ -102,7 +102,7 @@ internal class PostExtraContentLoader(
     private fun fetchExtraLinkInfo(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
-    ): Flowable<ModularResult<SpanUpdateBatch>> {
+    ): Single<ModularResult<SpanUpdateBatch>> {
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
             fetcher.mediaServiceType == linkInfoRequest.mediaServiceType
         }
@@ -113,7 +113,7 @@ internal class PostExtraContentLoader(
                             "mediaServiceType ${linkInfoRequest.mediaServiceType}")
             )
 
-            return Flowable.just(error)
+            return Single.just(error)
         }
 
         return fetcher.fetch(requestUrl, linkInfoRequest)

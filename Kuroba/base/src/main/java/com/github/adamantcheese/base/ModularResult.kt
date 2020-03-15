@@ -56,7 +56,9 @@ sealed class ModularResult<V> {
     }
 
     fun ignore() {
-        // No-op. Just an indicator that we don't care about handling this result
+        // No-op. Just an indicator that we don't care about handling this result. This is just so
+        // it's obvious that the original intention was to ignore handling the result not that it
+        // was forgotten completely.
     }
 
     fun unwrap(): V {

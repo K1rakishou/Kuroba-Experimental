@@ -154,7 +154,7 @@ public class ThreadListLayout
         recyclerView.setAdapter(postAdapter);
         // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
         // back to it onViewRecycled() will be called TWICE for that view. Setting setMaxRecycledViews
-        // solves this problem. What a buggy piece of shit.
+        // for TYPE_POST to 0 solves this problem. What a buggy piece of shit.
         recyclerView.getRecycledViewPool().setMaxRecycledViews(TYPE_POST, 0);
         recyclerView.addOnScrollListener(scrollListener);
 

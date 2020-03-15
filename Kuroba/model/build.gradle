@@ -8,16 +8,11 @@ android {
     buildToolsVersion "29.0.3"
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 29
-
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
             }
         }
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -28,7 +23,6 @@ android {
             minifyEnabled false
         }
     }
-
 }
 
 dependencies {
@@ -36,13 +30,13 @@ dependencies {
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin_version}"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.core:core-ktx:1.2.0'
-    implementation 'joda-time:joda-time:2.10.5'
+    implementation "androidx.appcompat:appcompat:${versions.appcompat}"
+    implementation "androidx.core:core-ktx:${versions.core_ktx}"
+    implementation "joda-time:joda-time:${versions.joda_time}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
-    implementation 'com.squareup.okhttp3:okhttp:4.4.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'joda-time:joda-time:2.10.5'
+    implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
+    implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation "joda-time:joda-time:${versions.joda_time}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     implementation "androidx.room:room-ktx:${versions.room_version}"
@@ -51,5 +45,5 @@ dependencies {
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation "junit:junit:${versions.junit}"
 }

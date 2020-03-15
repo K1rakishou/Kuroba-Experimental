@@ -15,9 +15,9 @@ import com.github.adamantcheese.chan.utils.groupOrNull
 import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
-import io.reactivex.Flowable
+import io.reactivex.Single
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.rx2.rxFlowable
+import kotlinx.coroutines.rx2.rxSingle
 import java.util.regex.Pattern
 
 internal class YoutubeMediaServiceExtraInfoFetcher(
@@ -41,25 +41,21 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     override fun fetch(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
-    ): Flowable<ModularResult<SpanUpdateBatch>> {
-        return rxFlowable {
+    ): Single<ModularResult<SpanUpdateBatch>> {
+        return rxSingle {
             val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
                     mediaServiceType,
                     requestUrl,
                     linkInfoRequest.originalUrl
             )
 
-            when (getLinkExtraContentResult) {
-                is ModularResult.Error -> {
-                    send(ModularResult.error(getLinkExtraContentResult.error))
-                }
+            return@rxSingle when (getLinkExtraContentResult) {
+                is ModularResult.Error -> ModularResult.error(getLinkExtraContentResult.error)
                 is ModularResult.Value -> {
-                    send(
-                            processResponse(
-                                    requestUrl,
-                                    getLinkExtraContentResult.value,
-                                    linkInfoRequest.oldPostLinkableSpans
-                            )
+                    processResponse(
+                            requestUrl,
+                            getLinkExtraContentResult.value,
+                            linkInfoRequest.oldPostLinkableSpans
                     )
                 }
             }

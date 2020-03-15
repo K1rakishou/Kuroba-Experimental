@@ -1,7 +1,7 @@
 package com.github.adamantcheese.database.converter
 
 import androidx.room.TypeConverter
-import com.github.adamantcheese.database.data.loadable.LoadableType
+import com.github.adamantcheese.base.loadable.LoadableType
 
 class LoadableTypeConverter {
 

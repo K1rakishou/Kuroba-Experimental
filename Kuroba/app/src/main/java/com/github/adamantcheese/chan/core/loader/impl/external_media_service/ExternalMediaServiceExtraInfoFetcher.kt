@@ -4,7 +4,7 @@ import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
-import io.reactivex.Flowable
+import io.reactivex.Single
 
 /**
  * Base interface for link extra info fetcher. For now only [YoutubeMediaServiceExtraInfoFetcher] is
@@ -18,7 +18,7 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
 
     fun isEnabled(): Boolean
 
-    fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): Flowable<ModularResult<SpanUpdateBatch>>
+    fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): Single<ModularResult<SpanUpdateBatch>>
 
     /**
      * Whether this fetcher can parse the link

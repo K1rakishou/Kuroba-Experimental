@@ -18,7 +18,7 @@ class SeenPostRepository(
 
     suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
         return runInTransaction {
-            seenPostLocalRepositoryCleanup().unwrap()
+            seenPostLocalRepositoryCleanup().ignore()
 
             return@runInTransaction seenPostLocalSource.insert(seenPost)
         }
@@ -26,7 +26,7 @@ class SeenPostRepository(
 
     suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
         return runInTransaction {
-            seenPostLocalRepositoryCleanup().unwrap()
+            seenPostLocalRepositoryCleanup().ignore()
             return@runInTransaction seenPostLocalSource.selectAllByLoadableUid(loadableUid)
         }
     }

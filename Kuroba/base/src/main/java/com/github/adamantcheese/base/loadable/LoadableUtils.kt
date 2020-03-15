@@ -1,4 +1,4 @@
-package com.github.adamantcheese.database.data.loadable
+package com.github.adamantcheese.base.loadable
 
 import java.util.*
 

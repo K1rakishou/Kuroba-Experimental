@@ -81,7 +81,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class ViewThreadController
         extends ThreadController
-        implements ThreadLayout.ThreadLayoutCallback, ArchivesLayout.Callback {
+        implements ThreadLayout.ThreadLayoutCallback,
+        ArchivesLayout.Callback,
+        ToolbarMenuItem.ToobarThreedotMenuCallback {
     private static final String TAG = "ViewThreadController";
 
     private static final int PIN_ID = 1;
@@ -107,7 +109,6 @@ public class ViewThreadController
     private AnimatedVectorDrawableCompat downloadAnimation;
     @Nullable
     private HintPopup hintPopup = null;
-
     private FloatingMenu floatingMenu;
 
     private Animatable2Compat.AnimationCallback downloadAnimationCallback = new Animatable2Compat.AnimationCallback() {
@@ -284,8 +285,7 @@ public class ViewThreadController
     }
 
     private void showArchivesInternal(ToolbarMenuSubItem item) {
-        @SuppressLint("InflateParams")
-        final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
+        @SuppressLint("InflateParams") final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
         dialogView.setBoard(threadLayout.getPresenter().getLoadable().board);
         dialogView.setCallback(this);
 

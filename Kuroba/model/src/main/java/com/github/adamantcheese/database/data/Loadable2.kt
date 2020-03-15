@@ -1,6 +1,6 @@
 package com.github.adamantcheese.database.data
 
-import com.github.adamantcheese.database.data.loadable.LoadableType
+import com.github.adamantcheese.base.loadable.LoadableType
 
 
 /**
