@@ -184,6 +184,6 @@ public class WatchSettingsController
                 R.string.setting_watch_peek_description
         ));
 
-        groups.add(settings);
+        addGroup(settings);
     }
 }

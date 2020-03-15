@@ -85,7 +85,6 @@ public class ImportExportSettingsController
         super.onCreate();
 
         navigation.setTitle(R.string.settings_import_export);
-
         presenter = new ImportExportSettingsPresenter(this);
 
         setupLayout();
@@ -128,7 +127,7 @@ public class ImportExportSettingsController
                     v -> onImportClicked()
             ));
 
-            groups.add(group);
+            addGroup(group);
         }
     }
 

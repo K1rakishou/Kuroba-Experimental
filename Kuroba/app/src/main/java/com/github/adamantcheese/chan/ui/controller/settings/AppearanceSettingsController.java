@@ -44,9 +44,7 @@ public class AppearanceSettingsController
         navigation.setTitle(R.string.settings_screen_appearance);
 
         setupLayout();
-
         populatePreferences();
-
         buildPreferences();
     }
 
@@ -61,30 +59,28 @@ public class AppearanceSettingsController
                     v -> navigationController.pushController(new ThemeSettingsController(context))
             ));
 
-            groups.add(appearance);
+            addGroup(appearance);
         }
 
         // Layout group (over-arching UI changes)
         {
             SettingsGroup layout = new SettingsGroup(R.string.settings_group_layout);
-
             setupLayoutModeSetting(layout);
-
             setupGridColumnsSetting(layout);
 
-            requiresRestart.add(layout.add(new BooleanSettingView(this,
+            addRequiresRestart(layout.add(new BooleanSettingView(this,
                     ChanSettings.neverHideToolbar,
                     R.string.setting_never_hide_toolbar,
                     0
             )));
 
-            requiresRestart.add(layout.add(new BooleanSettingView(this,
+            addRequiresRestart(layout.add(new BooleanSettingView(this,
                     ChanSettings.enableReplyFab,
                     R.string.setting_enable_reply_fab,
                     R.string.setting_enable_reply_fab_description
             )));
 
-            requiresUiRefresh.add(layout.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(layout.add(new BooleanSettingView(this,
                     ChanSettings.moveInputToBottom,
                     "Bottom input",
                     "Makes the reply input float to the bottom of the screen"
@@ -96,13 +92,13 @@ public class AppearanceSettingsController
                     "Makes the JS captcha float to the bottom of the screen"
             ));
 
-            requiresUiRefresh.add(layout.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(layout.add(new BooleanSettingView(this,
                     ChanSettings.useImmersiveModeForGallery,
                     R.string.setting_images_immersive_mode_title,
                     R.string.setting_images_immersive_mode_description
             )));
 
-            requiresRestart.add(layout.add(new BooleanSettingView(this,
+            addRequiresRestart(layout.add(new BooleanSettingView(this,
                     ChanSettings.moveSortToToolbar,
                     R.string.setting_move_sort_to_toolbar,
                     R.string.setting_move_sort_to_toolbar_description
@@ -114,107 +110,106 @@ public class AppearanceSettingsController
                     "Never display the page number in the catalog"
             ));
 
-            groups.add(layout);
+            addGroup(layout);
         }
 
         // Post group (post-specific UI changes)
         {
             SettingsGroup post = new SettingsGroup(R.string.settings_group_post);
-
             setupFontSizeSetting(post);
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.fontAlternate,
                     R.string.setting_font_alt,
                     R.string.setting_font_alt_description
             )));
 
-            requiresRestart.add(post.add(new BooleanSettingView(this,
+            addRequiresRestart(post.add(new BooleanSettingView(this,
                     ChanSettings.shiftPostFormat,
                     R.string.setting_shift_post,
                     R.string.setting_shift_post_description
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.accessibleInfo,
                     "Enable accessible post info",
                     "Enabling places info in the first post option menu"
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.postFullDate,
                     R.string.setting_post_full_date,
                     0
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.postFileInfo,
                     R.string.setting_post_file_info,
                     0
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.postFilename,
                     R.string.setting_post_filename,
                     0
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.textOnly,
                     R.string.setting_text_only,
                     R.string.setting_text_only_description
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.revealTextSpoilers,
                     R.string.settings_reveal_text_spoilers,
                     R.string.settings_reveal_text_spoilers_description
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.anonymize,
                     R.string.setting_anonymize,
                     "Sets everyone's name field to be \"Anonymous\""
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.showAnonymousName,
                     R.string.setting_show_anonymous_name,
                     "Displays \"Anonymous\" rather than an empty field"
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.anonymizeIds,
                     R.string.setting_anonymize_ids,
                     0
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.addDubs,
                     R.string.add_dubs_title,
                     R.string.add_dubs_description
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.parseYoutubeTitles,
                     R.string.setting_youtube_title,
                     R.string.setting_youtube_title_description
             )));
 
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.parseYoutubeDuration,
                     R.string.setting_youtube_dur_title,
                     R.string.setting_youtube_dur_description
             )));
 
             //this is also in Behavior settings
-            requiresUiRefresh.add(post.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.enableEmoji,
                     R.string.setting_enable_emoji,
                     R.string.setting_enable_emoji_description
             )));
 
-            groups.add(post);
+            addGroup(post);
         }
 
         //Image group (image cell specific UI changes)
@@ -233,13 +228,13 @@ public class AppearanceSettingsController
                     R.string.settings_reveal_image_spoilers_description
             ));
 
-            requiresUiRefresh.add(images.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(images.add(new BooleanSettingView(this,
                     ChanSettings.highResCells,
                     R.string.setting_images_high_res,
                     R.string.setting_images_high_res_description
             )));
 
-            requiresUiRefresh.add(images.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(images.add(new BooleanSettingView(this,
                     ChanSettings.parsePostImageLinks,
                     R.string.setting_image_link_loading_title,
                     R.string.setting_image_link_loading_description
@@ -256,7 +251,7 @@ public class AppearanceSettingsController
                     "Never show WEBM controls",
                     "Treats WEBMs like GIFs; tap to close, double tap to play/pause, always automatically loops."));
 
-            groups.add(images);
+            addGroup(images);
         }
     }
 
@@ -281,7 +276,7 @@ public class AppearanceSettingsController
             layoutModes.add(new ListSettingView.Item<>(getString(name), mode));
         }
 
-        requiresRestart.add(layout.add(new ListSettingView<>(this,
+        addRequiresRestart(layout.add(new ListSettingView<>(this,
                 ChanSettings.layoutMode,
                 R.string.setting_layout_mode,
                 layoutModes
@@ -296,7 +291,8 @@ public class AppearanceSettingsController
                     columns
             ));
         }
-        requiresUiRefresh.add(layout.add(new ListSettingView<>(this,
+
+        addRequiresUiRefresh(layout.add(new ListSettingView<>(this,
                 ChanSettings.boardGridSpanCount,
                 R.string.setting_board_grid_span_count,
                 gridColumns
@@ -311,7 +307,7 @@ public class AppearanceSettingsController
             fontSizes.add(new ListSettingView.Item<>(name, String.valueOf(size)));
         }
 
-        requiresUiRefresh.add(post.add(new ListSettingView<>(this,
+        addRequiresUiRefresh(post.add(new ListSettingView<>(this,
                 ChanSettings.fontSize,
                 R.string.setting_font_size,
                 fontSizes.toArray(new ListSettingView.Item[0])

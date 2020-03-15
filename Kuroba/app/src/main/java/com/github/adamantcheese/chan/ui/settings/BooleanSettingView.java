@@ -19,36 +19,103 @@ package com.github.adamantcheese.chan.ui.settings;
 import android.view.View;
 import android.widget.CompoundButton;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.settings.BooleanSetting;
 import com.github.adamantcheese.chan.core.settings.Setting;
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController;
+import com.github.adamantcheese.chan.utils.Logger;
+
+import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class BooleanSettingView
         extends SettingView
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+    private static final String TAG = "BooleanSettingView";
+
     private SwitchCompat switcher;
     private Setting<Boolean> setting;
     private String description;
+    @Nullable
+    private Disposable disposable = null;
     private boolean building = true;
 
-    public BooleanSettingView(SettingsController controller, Setting<Boolean> setting, int name, int description) {
-        this(controller, setting, getString(name), getString(description));
-    }
-
-    public BooleanSettingView(SettingsController controller, Setting<Boolean> setting, int name, String description) {
-        this(controller, setting, getString(name), description);
+    public BooleanSettingView(
+            SettingsController controller,
+            Setting<Boolean> setting,
+            int name,
+            int description
+    ) {
+        this(controller, setting, null, getString(name), getString(description));
     }
 
     public BooleanSettingView(
-            SettingsController settingsController, Setting<Boolean> setting, String name, String description
+            SettingsController controller,
+            Setting<Boolean> setting,
+            @Nullable BooleanSetting dependsOnSetting,
+            int name,
+            int description
+    ) {
+        this(controller, setting, dependsOnSetting, getString(name), getString(description));
+    }
+
+    public BooleanSettingView(
+            SettingsController controller,
+            Setting<Boolean> setting,
+            int name,
+            String description
+    ) {
+        this(controller, setting, null, getString(name), description);
+    }
+
+    public BooleanSettingView(
+            SettingsController controller,
+            Setting<Boolean> setting,
+            @Nullable BooleanSetting dependsOnSetting,
+            int name,
+            String description
+    ) {
+        this(controller, setting, dependsOnSetting, getString(name), description);
+    }
+
+    public BooleanSettingView(
+            SettingsController settingsController,
+            Setting<Boolean> setting,
+            String name,
+            String description
+    ) {
+        this(settingsController, setting, null, name, description);
+    }
+
+    public BooleanSettingView(
+            SettingsController settingsController,
+            Setting<Boolean> setting,
+            @Nullable BooleanSetting dependsOnSetting,
+            String name,
+            String description
     ) {
         super(settingsController, name);
         this.setting = setting;
         this.description = description;
+
+        if (dependsOnSetting != null) {
+            disposable = dependsOnSetting.listenForChanges()
+                    .subscribe((enabled) -> {
+                                if (!enabled) {
+                                    switcher.setChecked(false);
+                                    setting.set(false);
+                                }
+
+                                setEnabled(enabled);
+                            }, (error) -> {
+                                Logger.e(TAG, "Unknown error while listening to parent setting", error);
+                            }
+                    );
+        }
     }
 
     @Override
@@ -59,7 +126,6 @@ public class BooleanSettingView
 
         switcher = view.findViewById(R.id.switcher);
         switcher.setOnCheckedChangeListener(this);
-
         switcher.setChecked(setting.get());
 
         building = false;
@@ -91,6 +157,16 @@ public class BooleanSettingView
         if (!building) {
             setting.set(isChecked);
             settingsController.onPreferenceChange(this);
+        }
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+
+        if (disposable != null) {
+            disposable.dispose();
+            disposable = null;
         }
     }
 }

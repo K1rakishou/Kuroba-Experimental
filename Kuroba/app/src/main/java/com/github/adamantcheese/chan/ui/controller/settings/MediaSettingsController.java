@@ -65,8 +65,6 @@ public class MediaSettingsController
     private static final String TAG = "MediaSettingsController";
 
     // Special setting views
-    private BooleanSettingView boardFolderSetting;
-    private BooleanSettingView threadFolderSetting;
     private BooleanSettingView videoDefaultMutedSetting;
     private BooleanSettingView headsetDefaultMutedSetting;
     private LinkSettingView saveLocation;
@@ -115,10 +113,8 @@ public class MediaSettingsController
         setupLayout();
         populatePreferences();
         buildPreferences();
-
         onPreferenceChange(imageAutoLoadView);
 
-        threadFolderSetting.setEnabled(ChanSettings.saveBoardFolder.get());
         headsetDefaultMutedSetting.setEnabled(ChanSettings.videoDefaultMuted.get());
     }
 
@@ -136,8 +132,6 @@ public class MediaSettingsController
 
         if (item == imageAutoLoadView) {
             updateVideoLoadModes();
-        } else if (item == boardFolderSetting) {
-            updateThreadFolderSetting();
         } else if (item == videoDefaultMutedSetting) {
             updateHeadsetDefaultMutedSetting();
         } else if (item == incrementalThreadDownloadingSetting
@@ -175,14 +169,15 @@ public class MediaSettingsController
             setupLocalThreadLocationSetting(media);
 
             //Save modifications
-            boardFolderSetting = (BooleanSettingView) media.add(new BooleanSettingView(this,
+            media.add(new BooleanSettingView(this,
                     ChanSettings.saveBoardFolder,
                     R.string.setting_save_board_folder,
                     R.string.setting_save_board_folder_description
             ));
 
-            threadFolderSetting = (BooleanSettingView) media.add(new BooleanSettingView(this,
+            media.add(new BooleanSettingView(this,
                     ChanSettings.saveThreadFolder,
+                    ChanSettings.saveBoardFolder,
                     R.string.setting_save_thread_folder,
                     R.string.setting_save_thread_folder_description
             ));
@@ -198,9 +193,9 @@ public class MediaSettingsController
                     R.string.incremental_thread_downloading_title,
                     R.string.incremental_thread_downloading_description
             );
-            requiresRestart.add(media.add(incrementalThreadDownloadingSetting));
+            addRequiresRestart(media.add(incrementalThreadDownloadingSetting));
 
-            groups.add(media);
+            addGroup(media);
         }
 
         {
@@ -236,7 +231,7 @@ public class MediaSettingsController
                     R.string.setting_video_stream_description
             ));
 
-            groups.add(video);
+            addGroup(video);
         }
 
         // Loading group (media specific loading behavior)
@@ -246,13 +241,13 @@ public class MediaSettingsController
             setupMediaLoadTypesSetting(loading);
             setupImagePreloadStrategySetting(loading);
 
-            requiresRestart.add(loading.add(new BooleanSettingView(this,
+            addRequiresRestart(loading.add(new BooleanSettingView(this,
                     ChanSettings.autoLoadThreadImages,
                     R.string.setting_auto_load_thread_images,
                     R.string.setting_auto_load_thread_images_description
             )));
 
-            groups.add(loading);
+            addGroup(loading);
         }
     }
 
@@ -420,18 +415,6 @@ public class MediaSettingsController
             if (!enabled && ChanSettings.videoAutoLoadNetwork.get().getKey().equals(modes[i].getKey())) {
                 resetVideoMode = true;
             }
-        }
-    }
-
-    private void updateThreadFolderSetting() {
-        if (ChanSettings.saveBoardFolder.get()) {
-            threadFolderSetting.setEnabled(true);
-        } else {
-            if (ChanSettings.saveThreadFolder.get()) {
-                threadFolderSetting.onClick(threadFolderSetting.view);
-            }
-            threadFolderSetting.setEnabled(false);
-            ChanSettings.saveThreadFolder.set(false);
         }
     }
 

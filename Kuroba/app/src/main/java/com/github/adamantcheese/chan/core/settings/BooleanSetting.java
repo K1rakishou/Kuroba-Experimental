@@ -16,10 +16,14 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.processors.BehaviorProcessor;
+
 public class BooleanSetting
         extends Setting<Boolean> {
     private boolean hasCached = false;
-    private boolean cached;
+    private BehaviorProcessor<Boolean> settingState = BehaviorProcessor.createDefault(false);
 
     public BooleanSetting(SettingProvider settingProvider, String key, Boolean def) {
         super(settingProvider, key, def);
@@ -28,11 +32,12 @@ public class BooleanSetting
     @Override
     public Boolean get() {
         if (hasCached) {
-            return cached;
+            return settingState.getValue();
         } else {
-            cached = settingProvider.getBoolean(key, def);
+            boolean value = settingProvider.getBoolean(key, def);
+            settingState.onNext(value);
             hasCached = true;
-            return cached;
+            return value;
         }
     }
 
@@ -40,7 +45,7 @@ public class BooleanSetting
     public void set(Boolean value) {
         if (!value.equals(get())) {
             settingProvider.putBoolean(key, value);
-            cached = value;
+            settingState.onNext(value);
             onValueChanged();
         }
     }
@@ -48,12 +53,18 @@ public class BooleanSetting
     public void setSync(Boolean value) {
         if (!value.equals(get())) {
             settingProvider.putBooleanSync(key, value);
-            cached = value;
+            settingState.onNext(value);
             onValueChanged();
         }
     }
 
     public void toggle() {
         set(!get());
+    }
+
+    public Flowable<Boolean> listenForChanges() {
+        return settingState
+                .hide()
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }

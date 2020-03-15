@@ -136,7 +136,7 @@ public class SiteSetupController
             }
         }
 
-        groups.add(group);
+        addGroup(group);
     }
 
     @SuppressWarnings("unchecked")
@@ -160,7 +160,7 @@ public class SiteSetupController
 
         login.add(loginLink);
 
-        groups.add(login);
+        addGroup(login);
     }
 
     private void populatePreferences() {
@@ -173,6 +173,6 @@ public class SiteSetupController
         });
         general.add(boardsLink);
 
-        groups.add(general);
+        addGroup(general);
     }
 }

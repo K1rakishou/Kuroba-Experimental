@@ -56,9 +56,7 @@ public class BehaviourSettingsController
     }
 
     private void populatePreferences() {
-        requiresUiRefresh.clear();
-        groups.clear();
-        requiresRestart.clear();
+        disposeAndClearSettings();
 
         // General group (general application behavior)
         {
@@ -70,7 +68,7 @@ public class BehaviourSettingsController
                     0
             ));
 
-            requiresRestart.add(general.add(new BooleanSettingView(this,
+            addRequiresRestart(general.add(new BooleanSettingView(this,
                     ChanSettings.controllerSwipeable,
                     R.string.setting_controller_swipeable,
                     0
@@ -121,7 +119,7 @@ public class BehaviourSettingsController
                 postToEventBus(new RefreshUIMessage("clearhides"));
             }));
 
-            groups.add(general);
+            addGroup(general);
         }
 
         // Reply group (reply input specific behavior)
@@ -136,7 +134,7 @@ public class BehaviourSettingsController
                     R.string.setting_post_default_name
             ));
 
-            groups.add(reply);
+            addGroup(reply);
         }
 
         // Post group (post/thread specific behavior)
@@ -176,7 +174,7 @@ public class BehaviourSettingsController
                     R.string.setting_enable_emoji_description
             ));
 
-            groups.add(post);
+            addGroup(post);
         }
 
         {
@@ -188,7 +186,7 @@ public class BehaviourSettingsController
                     "Youtube API Key"
             ));
 
-            requiresRestart.add(other.add(new BooleanSettingView(this,
+            addRequiresRestart(other.add(new BooleanSettingView(this,
                     ChanSettings.fullUserRotationEnable,
                     R.string.setting_full_screen_rotation,
                     0
@@ -212,32 +210,32 @@ public class BehaviourSettingsController
                     R.string.settings_show_copy_apk_dialog_message
             ));
 
-            groups.add(other);
+            addGroup(other);
         }
 
         // Proxy group (proxy settings)
         {
             SettingsGroup proxy = new SettingsGroup(R.string.settings_group_proxy);
 
-            requiresRestart.add(proxy.add(new BooleanSettingView(this,
+            addRequiresRestart(proxy.add(new BooleanSettingView(this,
                     ChanSettings.proxyEnabled,
                     R.string.setting_proxy_enabled,
                     0
             )));
 
-            requiresRestart.add(proxy.add(new StringSettingView(this,
+            addRequiresRestart(proxy.add(new StringSettingView(this,
                     ChanSettings.proxyAddress,
                     R.string.setting_proxy_address,
                     R.string.setting_proxy_address
             )));
 
-            requiresRestart.add(proxy.add(new IntegerSettingView(this,
+            addRequiresRestart(proxy.add(new IntegerSettingView(this,
                     ChanSettings.proxyPort,
                     R.string.setting_proxy_port,
                     R.string.setting_proxy_port
             )));
 
-            groups.add(proxy);
+            addGroup(proxy);
         }
     }
 }

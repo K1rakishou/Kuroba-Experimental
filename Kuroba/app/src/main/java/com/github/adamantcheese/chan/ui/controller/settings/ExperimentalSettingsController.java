@@ -98,21 +98,21 @@ public class ExperimentalSettingsController
         setupZonesEditor(group);
         setupZonesResetButton(group);
 
-        requiresRestart.add(group.add(new BooleanSettingView(
+        addRequiresRestart(group.add(new BooleanSettingView(
                 this,
                 ChanSettings.okHttpAllowHttp2,
                 R.string.setting_allow_okhttp_http2,
                 R.string.setting_allow_okhttp_http2_ipv6_description
         )));
 
-        requiresRestart.add(group.add(new BooleanSettingView(
+        addRequiresRestart(group.add(new BooleanSettingView(
                 this,
                 ChanSettings.okHttpAllowIpv6,
                 R.string.setting_allow_okhttp_ipv6,
                 R.string.setting_allow_okhttp_http2_ipv6_description
         )));
 
-        groups.add(group);
+        addGroup(group);
     }
 
     private void setupConcurrentFileDownloadingChunksSetting(SettingsGroup group) {
@@ -122,7 +122,7 @@ public class ExperimentalSettingsController
             items.add(new ListSettingView.Item<>(setting.getKey(), setting));
         }
 
-        requiresRestart.add(group.add(new ListSettingView<ConcurrentFileDownloadingChunks>(
+        addRequiresRestart(group.add(new ListSettingView<ConcurrentFileDownloadingChunks>(
                 this,
                 ChanSettings.concurrentDownloadChunkCount,
                 getString(R.string.settings_concurrent_file_downloading_name),
@@ -147,7 +147,7 @@ public class ExperimentalSettingsController
                 }
         );
 
-        requiresUiRefresh.add(group.add(resetExclusionZonesSetting));
+        addRequiresUiRefresh(group.add(resetExclusionZonesSetting));
     }
 
     private void setupZonesEditor(SettingsGroup group) {
@@ -158,7 +158,7 @@ public class ExperimentalSettingsController
                 (v) -> showZonesDialog()
         );
 
-        requiresUiRefresh.add(group.add(gestureExclusionZonesSetting));
+        addRequiresUiRefresh(group.add(gestureExclusionZonesSetting));
     }
 
     private void showZonesDialog() {

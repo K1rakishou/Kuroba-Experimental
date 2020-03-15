@@ -132,11 +132,7 @@ public class Post
         tripcode = builder.tripcode;
 
         time = builder.unixTimestampSeconds;
-        if (builder.postImages == null) {
-            postImages = new ArrayList<>();
-        } else {
-            postImages = new ArrayList<>(builder.postImages);
-        }
+        postImages = new ArrayList<>(builder.postImages);
 
         if (builder.httpIcons != null) {
             httpIcons = Collections.unmodifiableList(builder.httpIcons);
@@ -377,7 +373,8 @@ public class Post
         public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
         public String tripcode = "";
         public long unixTimestampSeconds = -1L;
-        public List<PostImage> postImages;
+        @NonNull
+        public List<PostImage> postImages = new ArrayList<>();
         public List<PostHttpIcon> httpIcons;
         public String posterId = "";
         public String moderatorCapcode = "";
@@ -482,10 +479,6 @@ public class Post
 
         public Builder postImages(List<PostImage> images) {
             synchronized (this) {
-                if (this.postImages == null) {
-                    this.postImages = new ArrayList<>(images.size());
-                }
-
                 this.postImages.addAll(images);
             }
 

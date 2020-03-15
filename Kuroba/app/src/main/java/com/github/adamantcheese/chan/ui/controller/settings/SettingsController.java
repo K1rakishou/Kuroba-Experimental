@@ -70,10 +70,10 @@ public class SettingsController
     protected SettingsNotificationManager settingsNotificationManager;
 
     protected LinearLayout content;
-    protected List<SettingsGroup> groups = new ArrayList<>();
-    protected List<SettingView> requiresUiRefresh = new ArrayList<>();
+    private List<SettingsGroup> groups = new ArrayList<>();
+    private List<SettingView> requiresUiRefresh = new ArrayList<>();
     // Very user unfriendly.
-    protected List<SettingView> requiresRestart = new ArrayList<>();
+    private List<SettingView> requiresRestart = new ArrayList<>();
     protected CompositeDisposable compositeDisposable = new CompositeDisposable();
     private boolean needRestart = false;
 
@@ -93,11 +93,33 @@ public class SettingsController
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        disposeAndClearSettings();
         compositeDisposable.clear();
 
         if (needRestart) {
             ((StartActivity) context).restartApp();
         }
+    }
+
+    protected void disposeAndClearSettings() {
+        for (SettingsGroup settingsGroup : groups) {
+            for (SettingView settingView : settingsGroup.settingViews) {
+                settingView.dispose();
+            }
+        }
+
+        for (SettingView settingView : requiresUiRefresh) {
+            settingView.dispose();
+        }
+
+        for (SettingView settingView : requiresRestart) {
+            settingView.dispose();
+        }
+
+        groups.clear();
+        requiresUiRefresh.clear();
+        requiresRestart.clear();
     }
 
     @Override
@@ -110,6 +132,18 @@ public class SettingsController
     public boolean onMeasured(View view) {
         setMargins();
         return false;
+    }
+
+    protected void addGroup(SettingsGroup settingsGroup) {
+        groups.add(settingsGroup);
+    }
+
+    protected void addRequiresRestart(SettingView settingView) {
+        requiresRestart.add(settingView);
+    }
+
+    protected void addRequiresUiRefresh(SettingView settingView) {
+        requiresUiRefresh.add(settingView);
     }
 
     public void onPreferenceChange(SettingView item) {

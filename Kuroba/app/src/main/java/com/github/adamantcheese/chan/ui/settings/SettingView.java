@@ -20,7 +20,7 @@ import android.view.View;
 
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController;
 
-public abstract class SettingView {
+public abstract class SettingView implements DisposableSetting {
     public SettingsController settingsController;
     public final String name;
     public View view;
@@ -57,5 +57,10 @@ public abstract class SettingView {
 
     public SettingNotificationType getSettingNotificationType() {
         return settingNotificationType;
+    }
+
+    @Override
+    public void dispose() {
+        // no-op
     }
 }

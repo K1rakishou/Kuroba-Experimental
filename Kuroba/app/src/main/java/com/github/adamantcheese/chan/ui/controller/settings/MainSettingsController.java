@@ -204,7 +204,7 @@ public class MainSettingsController
                     v -> navigationController.pushController(new ExperimentalSettingsController(context))
             ));
 
-            groups.add(general);
+            addGroup(general);
         }
 
         setupAboutGroup();
@@ -250,7 +250,7 @@ public class MainSettingsController
                 v -> navigationController.pushController(new DeveloperSettingsController(context))
         ));
 
-        groups.add(about);
+        addGroup(about);
     }
 
     private LinkSettingView createReportSettingView() {
