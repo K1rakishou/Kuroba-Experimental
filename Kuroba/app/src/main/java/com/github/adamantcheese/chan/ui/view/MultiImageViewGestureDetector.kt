@@ -20,17 +20,19 @@ class MultiImageViewGestureDetector(
 
     override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
         val activeView = callbacks.getActiveView()
-        if (activeView is PlayerView && activeView.player != null) {
-            if (activeView.isControllerVisible) {
-                activeView.useController = false
-                callbacks.setClickHandler(true)
-            } else {
-                activeView.useController = true
-                activeView.showController()
-                callbacks.setClickHandler(false)
-                callbacks.checkImmersive()
+        if (activeView is PlayerView && !ChanSettings.neverShowWebmControls.get()) {
+            if (activeView.player != null) {
+                if (activeView.isControllerVisible) {
+                    activeView.useController = false
+                    callbacks.setClickHandler(true)
+                } else {
+                    activeView.useController = true
+                    activeView.showController()
+                    callbacks.setClickHandler(false)
+                    callbacks.checkImmersive()
+                }
+                return true
             }
-            return true
         }
 
         callbacks.onTap()
@@ -105,7 +107,7 @@ class MultiImageViewGestureDetector(
             val imageViewportTouchSide = activeView.imageViewportTouchSide
 
             // Current image is big image
-            if (imageViewportTouchSide.isTouchingAllSides) {
+            if (activeView.scale == activeView.minScale) {
                 // We are not zoomed in. This is the default state when we open an image.
                 // We can use swipe-to-save image gesture.
                 swipeToSaveOrClose()
