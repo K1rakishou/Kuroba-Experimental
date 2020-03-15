@@ -49,29 +49,27 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                     linkInfoRequest.originalUrl
             )
 
-            return@rxSingle when (getLinkExtraContentResult) {
-                is ModularResult.Error -> ModularResult.error(getLinkExtraContentResult.error)
-                is ModularResult.Value -> {
-                    processResponse(
-                            requestUrl,
-                            getLinkExtraContentResult.value,
-                            linkInfoRequest.oldPostLinkableSpans
-                    )
-                }
-            }
+            return@rxSingle processResponse(
+                    requestUrl,
+                    getLinkExtraContentResult,
+                    linkInfoRequest.oldPostLinkableSpans
+            )
         }
     }
 
     private fun processResponse(
             url: String,
-            mediaServiceLinkExtraContent: MediaServiceLinkExtraContent,
+            mediaServiceLinkExtraContentResult: ModularResult<MediaServiceLinkExtraContent>,
             oldPostLinkableSpans: List<CommentPostLinkableSpan>
     ): ModularResult<SpanUpdateBatch> {
         try {
-            val extraLinkInfo = ExtraLinkInfo(
-                    mediaServiceLinkExtraContent.videoTitle,
-                    mediaServiceLinkExtraContent.videoDuration
-            )
+            val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
+                is ModularResult.Error -> ExtraLinkInfo.error()
+                is ModularResult.Value -> ExtraLinkInfo.value(
+                        mediaServiceLinkExtraContentResult.value.videoTitle,
+                        mediaServiceLinkExtraContentResult.value.videoDuration
+                )
+            }
 
             val spanUpdateBatch = SpanUpdateBatch(
                     url,

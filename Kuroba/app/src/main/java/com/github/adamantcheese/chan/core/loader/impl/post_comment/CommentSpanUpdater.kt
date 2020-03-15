@@ -143,6 +143,16 @@ internal object CommentSpanUpdater {
                 append(" ")
                 append(extraLinkInfo.duration)
             }
+
+            val videoPossiblyNotAvailable = extraLinkInfo.title == null && extraLinkInfo.duration == null
+
+            if (extraLinkInfo.error) {
+                append(" ")
+                append("[ERROR]")
+            } else if (videoPossiblyNotAvailable) {
+                append(" ")
+                append("[NOT AVAILABLE]")
+            }
         }
     }
 

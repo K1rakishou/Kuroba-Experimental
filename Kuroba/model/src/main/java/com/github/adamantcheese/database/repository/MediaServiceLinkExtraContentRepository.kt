@@ -7,6 +7,7 @@ import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtr
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.remote.MediaServiceLinkExtraContentRemoteSource
+import com.github.adamantcheese.database.util.errorMessageOrClassName
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
@@ -28,7 +29,12 @@ class MediaServiceLinkExtraContentRepository(
 
         val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByVideoUrl(originalUrl)
         when (localSourceResult) {
-            is ModularResult.Error -> return ModularResult.error(localSourceResult.error)
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to get MediaServiceLinkExtraContent from " +
+                        "local source: error = ${localSourceResult.error.errorMessageOrClassName()}, " +
+                        "originalUrl = ${originalUrl}")
+                return ModularResult.error(localSourceResult.error)
+            }
             is ModularResult.Value -> {
                 if (localSourceResult.value != null) {
                     return ModularResult.value(localSourceResult.value!!)
@@ -38,15 +44,20 @@ class MediaServiceLinkExtraContentRepository(
             }
         }
 
-        val fetchFromNetworkResult = mediaServiceLinkExtraContentRemoteSource.fetchFromNetwork(
+        val remoteSourceResult = mediaServiceLinkExtraContentRemoteSource.fetchFromNetwork(
                 requestUrl,
                 mediaServiceType
         )
 
-        when (fetchFromNetworkResult) {
-            is ModularResult.Error -> return ModularResult.error(fetchFromNetworkResult.error)
+        when (remoteSourceResult) {
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to fetch MediaServiceLinkExtraContent from " +
+                        "remote source: error = ${remoteSourceResult.error.errorMessageOrClassName()}, " +
+                        "requestUrl = ${requestUrl}, mediaServiceType = ${mediaServiceType}")
+                return ModularResult.error(remoteSourceResult.error)
+            }
             is ModularResult.Value -> {
-                val mediaServiceLinkExtraInfo = fetchFromNetworkResult.value
+                val mediaServiceLinkExtraInfo = remoteSourceResult.value
 
                 val mediaServiceLinkExtraContent = MediaServiceLinkExtraContent(
                         originalUrl,
@@ -60,7 +71,12 @@ class MediaServiceLinkExtraContentRepository(
                 )
 
                 when (storeResult) {
-                    is ModularResult.Error -> return ModularResult.error(storeResult.error)
+                    is ModularResult.Error -> {
+                        logger.logError(TAG, "Error while trying to store MediaServiceLinkExtraContent in the " +
+                                "local source: error = ${storeResult.error.errorMessageOrClassName()}, " +
+                                "mediaServiceLinkExtraContent = ${mediaServiceLinkExtraContent}")
+                        return ModularResult.error(storeResult.error)
+                    }
                     is ModularResult.Value -> {
                         return ModularResult.value(mediaServiceLinkExtraContent)
                     }

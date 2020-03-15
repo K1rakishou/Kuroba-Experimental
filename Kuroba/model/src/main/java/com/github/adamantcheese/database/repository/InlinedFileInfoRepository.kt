@@ -6,6 +6,7 @@ import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.database.source.remote.InlinedFileInfoRemoteSource
+import com.github.adamantcheese.database.util.errorMessageOrClassName
 import java.util.concurrent.atomic.AtomicBoolean
 
 class InlinedFileInfoRepository(
@@ -24,7 +25,12 @@ class InlinedFileInfoRepository(
 
         val localSourceResult = inlinedFileInfoLocalSource.selectByFileUrl(fileUrl)
         when (localSourceResult) {
-            is ModularResult.Error -> return ModularResult.error(localSourceResult.error)
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to get InlinedFileInfo from " +
+                        "local source: error = ${localSourceResult.error.errorMessageOrClassName()}, " +
+                        "fileUrl = ${fileUrl}")
+                return ModularResult.error(localSourceResult.error)
+            }
             is ModularResult.Value -> {
                 if (localSourceResult.value != null) {
                     return ModularResult.value(localSourceResult.value!!)
@@ -36,7 +42,12 @@ class InlinedFileInfoRepository(
 
         val remoteSourceResult = inlinedFileInfoRemoteSource.fetchFromNetwork(fileUrl)
         when (remoteSourceResult) {
-            is ModularResult.Error -> return ModularResult.error(remoteSourceResult.error)
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to fetch InlinedFileInfo from " +
+                        "remote source: error = ${remoteSourceResult.error.errorMessageOrClassName()}, " +
+                        "fileUrl = ${fileUrl}")
+                return ModularResult.error(remoteSourceResult.error)
+            }
             is ModularResult.Value -> {
                 val inlinedFileInfo = remoteSourceResult.value
 
@@ -45,7 +56,12 @@ class InlinedFileInfoRepository(
                 )
 
                 when (storeResult) {
-                    is ModularResult.Error -> return ModularResult.error(storeResult.error)
+                    is ModularResult.Error -> {
+                        logger.logError(TAG, "Error while trying to store InlinedFileInfo in the " +
+                                "local source: error = ${storeResult.error.errorMessageOrClassName()}, " +
+                                "inlinedFileInfo = ${inlinedFileInfo}")
+                        return ModularResult.error(storeResult.error)
+                    }
                     is ModularResult.Value -> {
                         return ModularResult.value(inlinedFileInfo)
                     }

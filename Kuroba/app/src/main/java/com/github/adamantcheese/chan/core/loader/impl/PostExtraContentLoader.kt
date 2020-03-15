@@ -70,19 +70,10 @@ internal class PostExtraContentLoader(
             spanUpdateBatchList: List<SpanUpdateBatch>,
             postLoaderData: PostLoaderData
     ): Single<LoaderResult> {
-        val filteredBatches = spanUpdateBatchList.filter { spanUpdate ->
-            !spanUpdate.extraLinkInfo.isEmpty()
-        }
-
-        if (filteredBatches.isEmpty()) {
-            // No new spans, reject!
-            return rejected()
-        }
-
         val updated = try {
             CommentSpanUpdater.updateSpansForPostComment(
                     postLoaderData.post,
-                    filteredBatches
+                    spanUpdateBatchList
             )
         } catch (error: Throwable) {
             Logger.e(TAG, "Unknown error while trying to update spans for post comment", error)
@@ -118,7 +109,6 @@ internal class PostExtraContentLoader(
 
         return fetcher.fetch(requestUrl, linkInfoRequest)
                 .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-
     }
 
     private fun createNewRequests(

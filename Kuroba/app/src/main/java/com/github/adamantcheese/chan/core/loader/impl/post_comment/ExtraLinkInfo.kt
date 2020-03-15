@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.loader.impl.post_comment
 
 internal data class ExtraLinkInfo(
+        val error: Boolean = false,
         val title: String? = null,
         val duration: String? = null
 ) {
@@ -8,5 +9,7 @@ internal data class ExtraLinkInfo(
 
     companion object {
         fun empty(): ExtraLinkInfo = ExtraLinkInfo()
+        fun error(): ExtraLinkInfo = ExtraLinkInfo(error = true)
+        fun value(title: String?, duration: String?) = ExtraLinkInfo(false, title, duration)
     }
 }
