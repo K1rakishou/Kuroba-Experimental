@@ -317,12 +317,7 @@ public class Post
 
     @Override
     public int hashCode() {
-        int commentTotal = 0;
-        for (char c : comment.toString().toCharArray()) {
-            commentTotal += c;
-        }
-        return 31 * no + 31 * board.code.hashCode() + 31 * board.siteId + 31 * (deleted.get() ? 1 : 0)
-                + 31 * commentTotal;
+        return 31 * no + 31 * board.code.hashCode() + 31 * board.siteId + 31 * (deleted.get() ? 1 : 0);
     }
 
     @Override
@@ -345,8 +340,7 @@ public class Post
         return this.no == otherPost.no
                 && this.board.code.equals(otherPost.board.code)
                 && this.board.siteId == otherPost.board.siteId
-                && this.deleted.get() == otherPost.deleted.get()
-                && this.comment.toString().equals(otherPost.comment.toString());
+                && this.deleted.get() == otherPost.deleted.get();
         //@formatter:on
     }
 

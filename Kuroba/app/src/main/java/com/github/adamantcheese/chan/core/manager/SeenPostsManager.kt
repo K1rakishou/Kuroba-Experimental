@@ -20,6 +20,8 @@ import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import kotlin.coroutines.CoroutineContext
 
+@ExperimentalCoroutinesApi
+@ObsoleteCoroutinesApi
 class SeenPostsManager(
         private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
@@ -30,7 +32,6 @@ class SeenPostsManager(
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default + SupervisorJob()
 
-    @ExperimentalCoroutinesApi
     private val actor = actor<ActorAction>(capacity = Channel.UNLIMITED) {
         consumeEach { action ->
             when (action) {
@@ -103,7 +104,6 @@ class SeenPostsManager(
         }
     }
 
-    @ExperimentalCoroutinesApi
     fun preloadForThread(loadable: Loadable) {
         if (loadable.mode != Loadable.Mode.THREAD) {
             return
@@ -116,7 +116,6 @@ class SeenPostsManager(
         actor.offer(ActorAction.Preload(loadable))
     }
 
-    @ExperimentalCoroutinesApi
     fun onPostBind(loadable: Loadable, post: Post) {
         if (loadable.mode != Loadable.Mode.THREAD) {
             return

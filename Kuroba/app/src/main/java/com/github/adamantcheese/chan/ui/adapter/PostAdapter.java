@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
+import com.github.adamantcheese.chan.utils.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,6 +43,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class PostAdapter
         extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    private static final String TAG = "PostAdapter";
+
     //we don't recycle POST cells because of layout changes between cell contents
     public static final int TYPE_POST = 0;
     private static final int TYPE_STATUS = 1;
@@ -123,6 +126,8 @@ public class PostAdapter
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         int itemViewType = getItemViewType(position);
+
+
         switch (itemViewType) {
             case TYPE_POST:
             case TYPE_POST_STUB:
@@ -402,6 +407,15 @@ public class PostAdapter
 
         int postIndex = displayList.indexOf(post);
         if (postIndex < 0) {
+            return;
+        }
+
+        if (lastSeenIndicatorPosition >= 0 && postIndex >= lastSeenIndicatorPosition) {
+            ++postIndex;
+        }
+
+        if (postIndex < 0 && postIndex > getItemCount()) {
+            Logger.e(TAG, "postIndex is out of bounds (0.." + postIndex + ".." + getItemCount() + ")");
             return;
         }
 
