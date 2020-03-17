@@ -18,12 +18,13 @@ internal object CommentSpanUpdater {
     private const val TAG = "CommentSpanUpdater"
     private val comparator = GroupedSpanUpdatesMapComparator()
 
+    @Synchronized
     fun updateSpansForPostComment(
             post: Post,
             spanUpdateBatchList: List<SpanUpdateBatch>
     ): Boolean {
         BackgroundUtils.ensureBackgroundThread()
-        val ssb = synchronized(this) { SpannableStringBuilder(post.comment) }
+        val ssb = SpannableStringBuilder(post.comment)
         val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
         // Since we are inserting new text, old spans will become incorrect right after the first
@@ -85,7 +86,7 @@ internal object CommentSpanUpdater {
             }
         }
 
-        synchronized(this) { post.comment = ssb }
+        post.comment = ssb
         return updated
     }
 

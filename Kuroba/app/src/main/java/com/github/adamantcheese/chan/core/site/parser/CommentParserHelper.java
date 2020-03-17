@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.site.parser;
 
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.util.LruCache;
 
 import androidx.annotation.AnyThread;
 

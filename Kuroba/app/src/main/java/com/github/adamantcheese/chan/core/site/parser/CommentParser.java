@@ -209,11 +209,31 @@ public class CommentParser {
         }
 
         SpannableString res = new SpannableString(handlerLink.key);
-        PostLinkable pl = new PostLinkable(theme, handlerLink.key, handlerLink.value, handlerLink.type);
-        res.setSpan(pl, 0, res.length(), (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY);
-        post.addLinkable(pl);
+
+        // Fix for some sites (like 2ch.hk) having the same youtube links spans encountered twice
+        // which break youtube links spans.
+        if (!isPostLinkableAlreadyAdded(res, handlerLink.key)) {
+            PostLinkable pl = new PostLinkable(theme, handlerLink.key, handlerLink.value, handlerLink.type);
+            res.setSpan(pl, 0, res.length(), (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY);
+            post.addLinkable(pl);
+        }
 
         spannableStringBuilder.append(res);
+    }
+
+    private boolean isPostLinkableAlreadyAdded(SpannableString res, CharSequence handlerLinkKey) {
+        PostLinkable[] alreadySetPostLinkables = res.getSpans(0, res.length(), PostLinkable.class);
+        if (alreadySetPostLinkables.length == 0) {
+            return false;
+        }
+
+        for (PostLinkable postLinkable : alreadySetPostLinkables) {
+            if (handlerLinkKey.toString().equals(postLinkable.key.toString())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void addMockReply(
