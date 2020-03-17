@@ -577,14 +577,9 @@ public class PostCell
         icons.apply();
     }
 
-    private void bindRepliesText() {
-        replies.setVisibility(GONE);
-        updatePaddings(comment, -1, -1, -1, paddingPx);
-        updatePaddings(replies, -1, -1, 0, -1);
-    }
-
     private void bindRepliesWithImageCountText(Post post, int repliesFromSize) {
         replies.setVisibility(VISIBLE);
+        repliesAdditionalArea.setVisibility(VISIBLE);
 
         int replyCount = threadMode ? repliesFromSize : post.getReplies();
         String text = getQuantityString(R.plurals.reply, replyCount, replyCount);
@@ -603,6 +598,14 @@ public class PostCell
         replies.setText(text);
         updatePaddings(comment, -1, -1, -1, 0);
         updatePaddings(replies, -1, -1, paddingPx, -1);
+    }
+
+    private void bindRepliesText() {
+        replies.setVisibility(GONE);
+        repliesAdditionalArea.setVisibility(GONE);
+
+        updatePaddings(comment, -1, -1, -1, paddingPx);
+        updatePaddings(replies, -1, -1, 0, -1);
     }
 
     @SuppressLint("ClickableViewAccessibility")

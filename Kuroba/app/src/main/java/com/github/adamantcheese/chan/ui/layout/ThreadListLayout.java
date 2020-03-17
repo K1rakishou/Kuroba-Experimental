@@ -839,6 +839,10 @@ public class ThreadListLayout
         reply.onImageOptionsApplied(modifiedReply, filenameRemoved);
     }
 
+    public void onImageOptionsComplete() {
+        reply.onImageOptionsComplete();
+    }
+
     public void onPostUpdated(Post post) {
         BackgroundUtils.ensureMainThread();
 
