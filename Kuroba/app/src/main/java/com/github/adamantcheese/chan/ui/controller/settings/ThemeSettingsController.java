@@ -310,7 +310,7 @@ public class ThemeSettingsController
                     .setUnixTimestampSeconds(MILLISECONDS.toSeconds(System.currentTimeMillis() - MINUTES.toMillis(15)))
                     .comment("<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
                             + "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>")
-                    .images(Collections.singletonList(new PostImage.Builder().imageUrl(HttpUrl.get(
+                    .postImages(Collections.singletonList(new PostImage.Builder().imageUrl(HttpUrl.get(
                             "https://raw.githubusercontent.com/Adamantcheese/Kuroba/multi-feature/docs/new_icon_512.png"))
                             .thumbnailUrl(HttpUrl.get(
                                     "https://raw.githubusercontent.com/Adamantcheese/Kuroba/multi-feature/docs/new_icon_512.png"))
