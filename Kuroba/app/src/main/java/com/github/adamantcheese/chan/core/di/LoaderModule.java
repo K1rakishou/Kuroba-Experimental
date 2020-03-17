@@ -37,6 +37,8 @@ public class LoaderModule {
             InlinedFileInfoRepository inlinedFileInfoRepository,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
+        Logger.d(AppModule.DI_TAG, "InlinedFileInfoLoader");
+
         return new InlinedFileInfoLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
                 inlinedFileInfoRepository

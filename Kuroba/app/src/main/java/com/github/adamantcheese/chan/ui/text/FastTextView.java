@@ -25,12 +25,14 @@ import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.style.CharacterStyle;
 import android.util.AttributeSet;
 import android.util.LruCache;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.ui.text.span.ClearableSpan;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
@@ -76,6 +78,14 @@ public class FastTextView
         } finally {
             a.recycle();
         }
+    }
+
+    public void clear() {
+        for (FastTextViewItem ftvi : textCache.snapshot().keySet()) {
+            ftvi.clear();
+        }
+
+        textCache.evictAll();
     }
 
     public void setText(CharSequence text) {
@@ -243,6 +253,22 @@ public class FastTextView
             color = textPaint.getColor();
             textSize = textPaint.getTextSize();
             this.layoutWidth = layoutWidth;
+        }
+
+        public void clear() {
+            if (text instanceof Spanned) {
+                CharacterStyle[] characterStyleArray = ((Spanned) text).getSpans(
+                        0,
+                        text.length() - 1,
+                        CharacterStyle.class
+                );
+
+                for (CharacterStyle characterStyle : characterStyleArray) {
+                    if (characterStyle instanceof ClearableSpan) {
+                        ((ClearableSpan) characterStyle).onClear();
+                    }
+                }
+            }
         }
 
         @Override

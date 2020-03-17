@@ -74,6 +74,7 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.adamantcheese.chan.ui.text.span.ClearableSpan;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
@@ -349,6 +350,9 @@ public class PostCell
 
         unseenPostIndicatorFadeOutAnimation.end();
 
+        title.clear();
+        replies.clear();
+
         if (callback != null) {
             callback.onPostUnbind(post, isActuallyRecycling);
         }
@@ -493,7 +497,7 @@ public class PostCell
         date.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length(), 0);
 
         if (ChanSettings.tapNoReply.get()) {
-            date.setSpan(new PostNumberClickableSpan(), 0, noText.length(), 0);
+            date.setSpan(new PostNumberClickableSpan(callback, post), 0, noText.length(), 0);
         }
 
         titleParts.add(date);
@@ -966,18 +970,33 @@ public class PostCell
         }
     }
 
-    private class PostNumberClickableSpan
-            extends ClickableSpan {
+    private static class PostNumberClickableSpan extends ClickableSpan implements ClearableSpan {
+        @Nullable
+        private PostCellCallback postCellCallback;
+        @Nullable
+        private Post post;
+
+        public PostNumberClickableSpan(@Nullable PostCellCallback postCellCallback, @Nullable Post post) {
+            this.postCellCallback = postCellCallback;
+            this.post = post;
+        }
+
         @Override
         public void onClick(@NonNull View widget) {
-            if (callback != null) {
-                callback.onPostNoClicked(post);
+            if (postCellCallback != null && post != null) {
+                postCellCallback.onPostNoClicked(post);
             }
         }
 
         @Override
         public void updateDrawState(TextPaint ds) {
             ds.setUnderlineText(false);
+        }
+
+        @Override
+        public void onClear() {
+            postCellCallback = null;
+            post = null;
         }
     }
 

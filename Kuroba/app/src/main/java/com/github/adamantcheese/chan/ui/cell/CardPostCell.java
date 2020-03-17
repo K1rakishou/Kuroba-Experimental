@@ -187,6 +187,8 @@ public class CardPostCell
             return;
         }
 
+        comment.clear();
+
         if (callback != null) {
             callback.onPostUnbind(post, isActuallyRecycling);
         }
