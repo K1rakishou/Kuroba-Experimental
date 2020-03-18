@@ -211,6 +211,7 @@ public class ChanSettings {
     public static final BooleanSetting anonymizeIds;
     public static final BooleanSetting addDubs;
     public static final BooleanSetting parseYoutubeTitlesAndDuration;
+    public static final BooleanSetting showYoutubeLinkAlongWithTitleAndDuration;
     public static final BooleanSetting enableEmoji;
 
     // Images
@@ -366,6 +367,7 @@ public class ChanSettings {
             anonymizeIds = new BooleanSetting(p, "preference_anonymize_ids", false);
             addDubs = new BooleanSetting(p, "add_dubs", false);
             parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
+            showYoutubeLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_youtube_link_along_with_title_and_duration", true);
             enableEmoji = new BooleanSetting(p, "enable_emoji", false);
 
             // Images

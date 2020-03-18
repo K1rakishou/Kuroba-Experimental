@@ -861,4 +861,6 @@ Don't have a 4chan Pass?<br>
     <string name="setting_fetch_inlined_file_sizes_description">A HEAD request will be sent for inlined files to try to get the Content-Length header which value will be used as the file size.\n\n⚠⚠⚠ WARNING ⚠⚠⚠\n\nBy enabling this setting you may accidentally leak your IP address to IP logger site. Only enable this if you don\'t care about leaking your IP address.</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
     <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
+    <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
+    <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
 </resources>

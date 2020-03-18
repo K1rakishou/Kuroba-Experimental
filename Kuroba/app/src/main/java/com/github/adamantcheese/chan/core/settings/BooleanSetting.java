@@ -23,10 +23,12 @@ import io.reactivex.processors.BehaviorProcessor;
 public class BooleanSetting
         extends Setting<Boolean> {
     private boolean hasCached = false;
-    private BehaviorProcessor<Boolean> settingState = BehaviorProcessor.createDefault(false);
+    private BehaviorProcessor<Boolean> settingState = BehaviorProcessor.create();
 
     public BooleanSetting(SettingProvider settingProvider, String key, Boolean def) {
         super(settingProvider, key, def);
+
+        settingState.onNext(settingProvider.getBoolean(key, def));
     }
 
     @Override

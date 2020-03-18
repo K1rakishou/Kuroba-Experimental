@@ -196,6 +196,13 @@ public class AppearanceSettingsController
                     R.string.setting_youtube_title_and_durations_description
             )));
 
+            addRequiresUiRefresh(post.add(new BooleanSettingView(this,
+                    ChanSettings.showYoutubeLinkAlongWithTitleAndDuration,
+                    ChanSettings.parseYoutubeTitlesAndDuration,
+                    R.string.setting_show_link_along_with_title_and_duration_title,
+                    R.string.setting_show_link_along_with_title_and_duration_description
+            )));
+
             //this is also in Behavior settings
             addRequiresUiRefresh(post.add(new BooleanSettingView(this,
                     ChanSettings.enableEmoji,

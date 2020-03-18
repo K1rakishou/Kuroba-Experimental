@@ -12,7 +12,6 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.sp
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.putIfNotContains
 import java.util.*
-import kotlin.math.abs
 
 internal object CommentSpanUpdater {
     private const val TAG = "CommentSpanUpdater"
@@ -42,9 +41,8 @@ internal object CommentSpanUpdater {
                 val originalLinkUrl = ssb.substring(start, end)
                 val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
 
-                // Update the offset with the difference between the new and old links (new link
-                // should be longer than the old one)
-                offset += abs(formattedLinkUrl.length - originalLinkUrl.length)
+                // Update the offset with the difference between the new and old links
+                offset += formattedLinkUrl.length - originalLinkUrl.length
 
                 // Delete the old link with the text
                 ssb.delete(start, end)
@@ -124,21 +122,32 @@ internal object CommentSpanUpdater {
     }
 
     private fun formatLinkUrl(originalLinkUrl: String, extraLinkInfo: ExtraLinkInfo): String {
+        val showLink = ChanSettings.showYoutubeLinkAlongWithTitleAndDuration.get()
+
         return buildString {
             // Two spaces for the icon
             append("  ")
 
-            // Append the original url
-            append(originalLinkUrl)
+            if (showLink || extraLinkInfo !is ExtraLinkInfo.Success) {
+                // Append the original url
+                append(originalLinkUrl)
+            }
 
             when (extraLinkInfo) {
                 is ExtraLinkInfo.Success -> {
                     // Append the title (if we have it)
                     if (extraLinkInfo.title != null) {
                         append(" ")
-                        append("(")
+
+                        if (showLink) {
+                            append("(")
+                        }
+
                         append(extraLinkInfo.title)
-                        append(")")
+
+                        if (showLink) {
+                            append(")")
+                        }
                     }
 
                     // Append the duration (if we have it)
