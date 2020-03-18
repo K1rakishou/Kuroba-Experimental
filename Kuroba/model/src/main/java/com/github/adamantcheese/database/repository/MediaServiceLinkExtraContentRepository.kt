@@ -25,21 +25,21 @@ class MediaServiceLinkExtraContentRepository(
     suspend fun getLinkExtraContent(
             mediaServiceType: MediaServiceType,
             requestUrl: String,
-            originalUrl: String
+            videoId: String
     ): ModularResult<MediaServiceLinkExtraContent> {
         mediaServiceLinkExtraContentRepositoryCleanup().ignore()
 
-        val cachedMediaServiceLinkExtraContent = cache.get(originalUrl)
+        val cachedMediaServiceLinkExtraContent = cache.get(videoId)
         if (cachedMediaServiceLinkExtraContent != null) {
             return ModularResult.value(cachedMediaServiceLinkExtraContent)
         }
 
-        val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByVideoUrl(originalUrl)
+        val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
         when (localSourceResult) {
             is ModularResult.Error -> {
                 logger.logError(TAG, "Error while trying to get MediaServiceLinkExtraContent from " +
                         "local source: error = ${localSourceResult.error.errorMessageOrClassName()}, " +
-                        "originalUrl = ${originalUrl}")
+                        "videoId = ${videoId}")
                 return ModularResult.error(localSourceResult.error)
             }
             is ModularResult.Value -> {
@@ -70,7 +70,7 @@ class MediaServiceLinkExtraContentRepository(
                 val mediaServiceLinkExtraInfo = remoteSourceResult.value
 
                 val mediaServiceLinkExtraContent = MediaServiceLinkExtraContent(
-                        originalUrl,
+                        videoId,
                         mediaServiceType,
                         mediaServiceLinkExtraInfo.videoTitle,
                         mediaServiceLinkExtraInfo.videoDuration
@@ -88,7 +88,7 @@ class MediaServiceLinkExtraContentRepository(
                         return ModularResult.error(storeResult.error)
                     }
                     is ModularResult.Value -> {
-                        cache.store(originalUrl, mediaServiceLinkExtraContent)
+                        cache.store(videoId, mediaServiceLinkExtraContent)
                         return ModularResult.value(mediaServiceLinkExtraContent)
                     }
                 }

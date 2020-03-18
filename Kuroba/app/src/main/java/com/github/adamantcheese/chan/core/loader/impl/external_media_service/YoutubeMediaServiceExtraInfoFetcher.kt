@@ -54,7 +54,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
             val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
                     mediaServiceType,
                     requestUrl,
-                    linkInfoRequest.originalUrl
+                    linkInfoRequest.videoId
             )
 
             return@rxSingle processResponse(
@@ -104,19 +104,24 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         return youtubeLinkPattern.matcher(link).matches()
     }
 
-    override fun formatRequestUrl(link: String): String {
-        val matcher = youtubeLinkPattern.matcher(link)
+    override fun extractLinkUniqueIdentifier(link: String): String {
+        return extractVideoId(link)
+    }
 
+    override fun formatRequestUrl(link: String): String {
+        return formatGetYoutubeLinkInfoUrl(extractVideoId(link))
+    }
+
+    private fun extractVideoId(link: String): String {
+        val matcher = youtubeLinkPattern.matcher(link)
         if (!matcher.find()) {
-            throw IllegalStateException("Couldn't match link ($link) even " +
-                    "though linkMatchesToService matched it earlier.")
+            throw IllegalStateException("Couldn't match link ($link) with the current service." +
+                    " Did you forget to call linkMatchesToService() first?")
         }
 
-        val videoId = checkNotNull(matcher.groupOrNull(1)) {
+        return checkNotNull(matcher.groupOrNull(1)) {
             "Couldn't extract videoId out of the input link ($link)"
         }
-
-        return formatGetYoutubeLinkInfoUrl(videoId)
     }
 
     private fun formatGetYoutubeLinkInfoUrl(videoId: String): String {

@@ -1,8 +1,10 @@
 package com.github.adamantcheese.chan.core.loader.impl.post_comment
 
+import org.joda.time.Period
+
 internal sealed class ExtraLinkInfo {
-    class Success(val title: String?, val duration: String?) : ExtraLinkInfo() {
-        fun isEmpty() = title.isNullOrEmpty() && duration.isNullOrEmpty()
+    class Success(val title: String?, val duration: Period?) : ExtraLinkInfo() {
+        fun isEmpty() = title.isNullOrEmpty() && duration == null
     }
 
     object Error : ExtraLinkInfo()

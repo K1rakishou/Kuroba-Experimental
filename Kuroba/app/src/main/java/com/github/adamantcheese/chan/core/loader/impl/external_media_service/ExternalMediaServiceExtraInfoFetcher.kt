@@ -7,8 +7,7 @@ import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import io.reactivex.Single
 
 /**
- * Base interface for link extra info fetcher. For now only [YoutubeMediaServiceExtraInfoFetcher] is
- * supported.
+ * Base interface for link extra info fetcher.
  * */
 internal interface ExternalMediaServiceExtraInfoFetcher {
     /**
@@ -26,8 +25,13 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
     fun linkMatchesToService(link: String): Boolean
 
     /**
-     * An url where the GET request will be sent to retrieve the url metadata (for now only video
-     * title video duration are supported)
+     * May be either a unique ID representing this extra info, or, if a media service links do not
+     * have a unique id, the whole link
+     * */
+    fun extractLinkUniqueIdentifier(link: String): String
+
+    /**
+     * An url where the GET request will be sent to retrieve the url metadata
      * */
     fun formatRequestUrl(link: String): String
 }

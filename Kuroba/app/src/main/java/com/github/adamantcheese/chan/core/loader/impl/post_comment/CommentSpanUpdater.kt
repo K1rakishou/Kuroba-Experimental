@@ -11,11 +11,40 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.sp
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.putIfNotContains
+import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 
 internal object CommentSpanUpdater {
     private const val TAG = "CommentSpanUpdater"
     private val comparator = GroupedSpanUpdatesMapComparator()
+
+    private val formatterWithoutHours = PeriodFormatterBuilder()
+            .appendLiteral("[")
+            .minimumPrintedDigits(0) //don't print hours if none
+            .appendHours()
+            .appendSuffix(":")
+            .minimumPrintedDigits(1) //one digit minutes if no hours
+            .printZeroAlways() //always print 0 for minutes, if seconds only
+            .appendMinutes()
+            .appendSuffix(":")
+            .minimumPrintedDigits(2) //always print two digit seconds
+            .appendSeconds()
+            .appendLiteral("]")
+            .toFormatter()
+
+    private val formatterWithHours = PeriodFormatterBuilder()
+            .appendLiteral("[")
+            .minimumPrintedDigits(0) //don't print hours if none
+            .appendHours()
+            .appendSuffix(":")
+            .minimumPrintedDigits(2) //two digit minutes if hours
+            .printZeroAlways() //always print 0 for minutes, if seconds only
+            .appendMinutes()
+            .appendSuffix(":")
+            .minimumPrintedDigits(2) //always print two digit seconds
+            .appendSeconds()
+            .appendLiteral("]")
+            .toFormatter()
 
     @Synchronized
     fun updateSpansForPostComment(
@@ -153,7 +182,14 @@ internal object CommentSpanUpdater {
                     // Append the duration (if we have it)
                     if (extraLinkInfo.duration != null) {
                         append(" ")
-                        append(extraLinkInfo.duration)
+
+                        val formattedDuration = if (extraLinkInfo.duration.hours > 0) {
+                            formatterWithHours.print(extraLinkInfo.duration)
+                        } else {
+                            formatterWithoutHours.print(extraLinkInfo.duration)
+                        }
+
+                        append(formattedDuration)
                     }
                 }
                 ExtraLinkInfo.Error -> {

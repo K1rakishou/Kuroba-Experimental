@@ -137,7 +137,7 @@ internal class PostExtraContentLoader(
 
                 val requestUrl = fetcher.formatRequestUrl(originalUrl)
                 val linkInfoRequest = LinkInfoRequest(
-                        originalUrl,
+                        fetcher.extractLinkUniqueIdentifier(originalUrl),
                         fetcher.mediaServiceType,
                         mutableListOf()
                 )

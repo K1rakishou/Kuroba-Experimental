@@ -1,5 +1,7 @@
 package com.github.adamantcheese.database.data.video_service
 
+import org.joda.time.Period
+
 /**
  * A base class for media service link extra content with content that should be common for every
  * media service (like youtube/soundcloud/etc). Inherit from this class to add new service-dependant
@@ -7,17 +9,19 @@ package com.github.adamantcheese.database.data.video_service
  * But maybe in the future?)
  * */
 open class MediaServiceLinkExtraContent(
-        val videoUrl: String,
+        // May be anything. For youtube it's the youtube's videoId but for different services it
+        // may as well be the whole URL if the service doesn't have a unique id
+        val videoId: String,
         val mediaServiceType: MediaServiceType,
         val videoTitle: String?,
-        val videoDuration: String?
+        val videoDuration: Period?
 ) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is MediaServiceLinkExtraContent) return false
 
-        if (videoUrl != other.videoUrl) return false
+        if (videoId != other.videoId) return false
         if (mediaServiceType != other.mediaServiceType) return false
         if (videoTitle != other.videoTitle) return false
         if (videoDuration != other.videoDuration) return false
@@ -26,7 +30,7 @@ open class MediaServiceLinkExtraContent(
     }
 
     override fun hashCode(): Int {
-        var result = videoUrl.hashCode()
+        var result = videoId.hashCode()
         result = 31 * result + mediaServiceType.hashCode()
         result = 31 * result + (videoTitle?.hashCode() ?: 0)
         result = 31 * result + (videoDuration?.hashCode() ?: 0)
@@ -34,7 +38,7 @@ open class MediaServiceLinkExtraContent(
     }
 
     override fun toString(): String {
-        return "MediaServiceLinkExtraContent(videoUrl='$videoUrl', mediaServiceType=$mediaServiceType, " +
+        return "MediaServiceLinkExtraContent(videoId='$videoId', mediaServiceType=$mediaServiceType, " +
                 "videoTitle=$videoTitle, videoDuration=$videoDuration)"
     }
 

@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.adamantcheese.database.converter.DateTimeTypeConverter
 import com.github.adamantcheese.database.converter.LoadableTypeConverter
+import com.github.adamantcheese.database.converter.PeriodTypeConverter
 import com.github.adamantcheese.database.converter.VideoServiceTypeConverter
 import com.github.adamantcheese.database.dao.InlinedFileInfoDao
 import com.github.adamantcheese.database.dao.LoadableEntityDao
@@ -30,7 +31,8 @@ import com.github.adamantcheese.database.entity.SeenPostEntity
 @TypeConverters(value = [
     DateTimeTypeConverter::class,
     LoadableTypeConverter::class,
-    VideoServiceTypeConverter::class
+    VideoServiceTypeConverter::class,
+    PeriodTypeConverter::class
 ])
 abstract class KurobaDatabase : RoomDatabase() {
     abstract fun loadableDao(): LoadableEntityDao
@@ -39,12 +41,15 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun inlinedFileDao(): InlinedFileInfoDao
 
     companion object {
+        const val DATABASE_NAME = "Kuroba.db"
+
         fun buildDatabase(application: Application): KurobaDatabase {
             return Room.databaseBuilder(
                             application.applicationContext,
-                            KurobaDatabase::class.java, "Kuroba.db"
+                            KurobaDatabase::class.java,
+                            DATABASE_NAME
                     )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
         }
     }

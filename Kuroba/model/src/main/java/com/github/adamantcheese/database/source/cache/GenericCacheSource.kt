@@ -1,13 +1,17 @@
 package com.github.adamantcheese.database.source.cache
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlin.coroutines.CoroutineContext
 
-@ExperimentalCoroutinesApi
-@ObsoleteCoroutinesApi
+/**
+ * Locks-free poor man's auto trimmable cache implementation
+ * */
+@Suppress("EXPERIMENTAL_API_USAGE")
 class GenericCacheSource<Key, Value>(
         private val capacity: Int = DEFAULT_CAPACITY,
         private val maxSize: Int = DEFAULT_MAX_SIZE
