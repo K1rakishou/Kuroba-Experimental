@@ -53,8 +53,8 @@ import com.github.adamantcheese.chan.core.site.parser.PostParser;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
-import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
@@ -312,7 +312,7 @@ public class ThemeSettingsController
                             + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
                             + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>");
             Post post1 = postParser.parse(theme, builder1, parserCallback);
-            post1.repliesFrom.add(234567890);
+            post1.getRepliesFrom().add(234567890);
 
             Post.Builder builder2 = new Post.Builder().board(dummyBoard)
                     .id(234567890)
