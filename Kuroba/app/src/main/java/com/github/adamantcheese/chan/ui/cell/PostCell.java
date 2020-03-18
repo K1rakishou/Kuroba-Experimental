@@ -69,7 +69,6 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
-import com.github.adamantcheese.chan.ui.animation.PostCellAnimator;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod;
@@ -90,7 +89,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 import static android.text.TextUtils.isEmpty;
@@ -151,9 +149,6 @@ public class PostCell
     private GestureDetector gestureDetector;
     private PostViewMovementMethod commentMovementMethod = new PostViewMovementMethod();
     private PostViewFastMovementMethod titleMovementMethod = new PostViewFastMovementMethod();
-    private PostCellAnimator.UnseenPostIndicatorFadeAnimation unseenPostIndicatorFadeOutAnimation =
-            PostCellAnimator.createUnseenPostIndicatorFadeAnimation();
-
 
     public PostCell(Context context) {
         super(context);
@@ -348,8 +343,6 @@ public class PostCell
             setPostLinkableListener(post, false);
         }
 
-        unseenPostIndicatorFadeOutAnimation.end();
-
         title.clear();
         replies.clear();
 
@@ -405,28 +398,8 @@ public class PostCell
             applyPostShiftFormat();
         }
 
-        startAttentionLabelFadeOutAnimation();
-
         if (callback != null) {
             callback.onPostBind(post);
-        }
-    }
-
-    private void startAttentionLabelFadeOutAnimation() {
-        if (hasColoredFilter || postAttentionLabel.getVisibility() != View.VISIBLE) {
-            return;
-        }
-
-        if (!ChanSettings.markUnseenPosts.get()) {
-            return;
-        }
-
-        if (callback != null && !callback.hasAlreadySeenPost(post)) {
-            unseenPostIndicatorFadeOutAnimation.start(alpha -> {
-                        postAttentionLabel.setAlpha(alpha);
-                        return Unit.INSTANCE;
-                    }
-            );
         }
     }
 
