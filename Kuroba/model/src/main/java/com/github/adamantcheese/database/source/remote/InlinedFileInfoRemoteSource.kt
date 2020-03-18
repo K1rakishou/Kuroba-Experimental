@@ -4,7 +4,6 @@ import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.InlinedFileInfo
-import com.github.adamantcheese.database.util.errorMessageOrClassName
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -36,12 +35,7 @@ class InlinedFileInfoRemoteSource(
 
             return@safeRun when (result) {
                 is ModularResult.Value -> result.value
-                is ModularResult.Error -> {
-                    logger.logError(TAG, "Error while trying to extract inlined file info " +
-                            "(${result.error.errorMessageOrClassName()})")
-
-                    result.unwrap()
-                }
+                is ModularResult.Error -> result.unwrap()
             }
         }
     }

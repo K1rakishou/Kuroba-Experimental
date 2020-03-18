@@ -5,6 +5,7 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
+import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.github.adamantcheese.database.util.errorMessageOrClassName
@@ -14,6 +15,7 @@ class MediaServiceLinkExtraContentRepository(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger,
+        private val cache: GenericCacheSource<String, MediaServiceLinkExtraContent>,
         private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
         private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
 ) : AbstractRepository(database) {
@@ -27,6 +29,11 @@ class MediaServiceLinkExtraContentRepository(
     ): ModularResult<MediaServiceLinkExtraContent> {
         mediaServiceLinkExtraContentRepositoryCleanup().ignore()
 
+        val cachedMediaServiceLinkExtraContent = cache.get(originalUrl)
+        if (cachedMediaServiceLinkExtraContent != null) {
+            return ModularResult.value(cachedMediaServiceLinkExtraContent)
+        }
+
         val localSourceResult = mediaServiceLinkExtraContentLocalSource.selectByVideoUrl(originalUrl)
         when (localSourceResult) {
             is ModularResult.Error -> {
@@ -37,7 +44,10 @@ class MediaServiceLinkExtraContentRepository(
             }
             is ModularResult.Value -> {
                 if (localSourceResult.value != null) {
-                    return ModularResult.value(localSourceResult.value!!)
+                    val mediaServiceLinkExtraContent = localSourceResult.value!!
+                    cache.store(requestUrl, mediaServiceLinkExtraContent)
+
+                    return ModularResult.value(mediaServiceLinkExtraContent)
                 }
 
                 // Fallthrough
@@ -78,6 +88,7 @@ class MediaServiceLinkExtraContentRepository(
                         return ModularResult.error(storeResult.error)
                     }
                     is ModularResult.Value -> {
+                        cache.store(originalUrl, mediaServiceLinkExtraContent)
                         return ModularResult.value(mediaServiceLinkExtraContent)
                     }
                 }

@@ -8,6 +8,7 @@ import com.github.adamantcheese.database.di.annotation.VerboseLogs
 import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.database.repository.SeenPostRepository
+import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.database.source.local.Loadable2LocalSource
 import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
@@ -135,6 +136,7 @@ class DatabaseModule {
                 database,
                 loggerTag,
                 logger,
+                GenericCacheSource(),
                 mediaServiceLinkExtraContentLocalSource,
                 mediaServiceLinkExtraContentRemoteSource
         )
@@ -169,6 +171,7 @@ class DatabaseModule {
                 database,
                 loggerTag,
                 logger,
+                GenericCacheSource(),
                 inlinedFileInfoLocalSource,
                 inlinedFileInfoRemoteSource
         )

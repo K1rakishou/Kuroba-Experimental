@@ -4,6 +4,7 @@ import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.InlinedFileInfo
+import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.database.source.remote.InlinedFileInfoRemoteSource
 import com.github.adamantcheese.database.util.errorMessageOrClassName
@@ -13,15 +14,20 @@ class InlinedFileInfoRepository(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger,
+        private val cache: GenericCacheSource<String, InlinedFileInfo>,
         private val inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
         private val inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource
 ) : AbstractRepository(database) {
     private val TAG = "$loggerTag InlinedFileInfoRepository"
     private val alreadyExecuted = AtomicBoolean(false)
 
-
     suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {
         inlinedFileInfoRepositoryCleanup().ignore()
+
+        val cacheInlinedFileInfo = cache.get(fileUrl)
+        if (cacheInlinedFileInfo != null) {
+            return ModularResult.value(cacheInlinedFileInfo)
+        }
 
         val localSourceResult = inlinedFileInfoLocalSource.selectByFileUrl(fileUrl)
         when (localSourceResult) {
@@ -33,7 +39,10 @@ class InlinedFileInfoRepository(
             }
             is ModularResult.Value -> {
                 if (localSourceResult.value != null) {
-                    return ModularResult.value(localSourceResult.value!!)
+                    val inlinedFileInfo = localSourceResult.value!!
+                    cache.store(fileUrl, inlinedFileInfo)
+
+                    return ModularResult.value(inlinedFileInfo)
                 }
 
                 // Fallthrough
@@ -51,10 +60,7 @@ class InlinedFileInfoRepository(
             is ModularResult.Value -> {
                 val inlinedFileInfo = remoteSourceResult.value
 
-                val storeResult = inlinedFileInfoLocalSource.insert(
-                        inlinedFileInfo
-                )
-
+                val storeResult = inlinedFileInfoLocalSource.insert(inlinedFileInfo)
                 when (storeResult) {
                     is ModularResult.Error -> {
                         logger.logError(TAG, "Error while trying to store InlinedFileInfo in the " +
@@ -63,6 +69,7 @@ class InlinedFileInfoRepository(
                         return ModularResult.error(storeResult.error)
                     }
                     is ModularResult.Value -> {
+                        cache.store(fileUrl, inlinedFileInfo)
                         return ModularResult.value(inlinedFileInfo)
                     }
                 }

@@ -7,10 +7,14 @@ import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.rx2.rxSingle
+import kotlinx.coroutines.supervisorScope
 
 class InlinedFileInfoLoader(
         private val scheduler: Scheduler,
@@ -46,11 +50,7 @@ class InlinedFileInfoLoader(
             inlinedImages: List<PostImage>,
             postLoaderData: PostLoaderData
     ): LoaderResult {
-        // TODO(ODL): batching?
-        val results = inlinedImages.map { inlinedImage ->
-            return@map inlinedFileInfoRepository.getInlinedFileInfo(inlinedImage.imageUrl!!.toString())
-        }
-
+        val results = getInlinedFilesBatched(inlinedImages)
         val successResults = results.filter { result ->
             return@filter result is ModularResult.Value && !result.value.isEmpty()
         }
@@ -76,4 +76,25 @@ class InlinedFileInfoLoader(
         return LoaderResult.Succeeded(loaderType, true)
     }
 
+    private suspend fun getInlinedFilesBatched(
+            inlinedImages: List<PostImage>
+    ): List<ModularResult<InlinedFileInfo>> {
+        return inlinedImages
+                .chunked(MAX_CONCURRENCY)
+                .flatMap { inlinedImagesChunk ->
+                    return@flatMap supervisorScope {
+                        return@supervisorScope inlinedImagesChunk.map { inlinedImage ->
+                            return@map async {
+                                return@async inlinedFileInfoRepository.getInlinedFileInfo(
+                                        inlinedImage.imageUrl!!.toString()
+                                )
+                            }
+                        }.awaitAll()
+                    }
+                }
+    }
+
+    companion object {
+        private const val MAX_CONCURRENCY = 4
+    }
 }
