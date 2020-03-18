@@ -150,7 +150,12 @@ public class ThreadListLayout
         this.callback = callback;
         this.threadListLayoutCallback = threadListLayoutCallback;
 
-        postAdapter = new PostAdapter(recyclerView, postAdapterCallback, postCellCallback, statusCellCallback);
+        postAdapter = new PostAdapter(recyclerView,
+                postAdapterCallback,
+                postCellCallback,
+                statusCellCallback,
+                ThemeHelper.getTheme()
+        );
         recyclerView.setAdapter(postAdapter);
         // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
         // back to it onViewRecycled() will be called TWICE for that view. Setting setMaxRecycledViews

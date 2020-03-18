@@ -688,6 +688,7 @@ public class WatchManager
     private void createPinWatcher(Pin pin) {
         if (!pinWatchers.containsKey(pin)) {
             pinWatchers.put(pin, new PinWatcher(pin));
+            postToEventBus(new PinMessages.PinChangedMessage(pin));
         }
     }
 
@@ -1039,7 +1040,7 @@ public class WatchManager
         if (fromBackground && !waitingForPinWatchersForBackgroundUpdate.isEmpty()) {
             Logger.i(TAG,
                     waitingForPinWatchersForBackgroundUpdate.size() + " pin watchers beginning updates, started at "
-                            + DateFormat.getTimeInstance().format(new Date())
+                            + DateFormat.getTimeInstance(DateFormat.DEFAULT, Locale.ENGLISH).format(new Date())
             );
             wakeManager.manageLock(true, WatchManager.this);
         }
@@ -1089,7 +1090,10 @@ public class WatchManager
 
                 if (waitingForPinWatchersForBackgroundUpdate.isEmpty()) {
                     Logger.i(TAG,
-                            "All watchers updated, finished at " + DateFormat.getTimeInstance().format(new Date())
+                            "All watchers updated, finished at " + DateFormat.getTimeInstance(
+                                    DateFormat.DEFAULT,
+                                    Locale.ENGLISH
+                            ).format(new Date())
                     );
                     waitingForPinWatchersForBackgroundUpdate = null;
                     wakeManager.manageLock(false, WatchManager.this);
