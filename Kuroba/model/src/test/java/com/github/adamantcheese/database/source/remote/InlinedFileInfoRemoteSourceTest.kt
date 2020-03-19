@@ -11,18 +11,20 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class InlinedFileInfoRemoteSourceTest {
     lateinit var okHttpClient: OkHttpClient
-    lateinit var inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource
+    lateinit var remoteSource: InlinedFileInfoRemoteSource
 
     @Before
     fun setUp() {
+        ShadowLog.stream = System.out
         val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
         okHttpClient = testDatabaseModuleComponent.provideOkHttpClient()
-        inlinedFileInfoRemoteSource = testDatabaseModuleComponent.provideInlinedFileInfoRemoteSource()
+        remoteSource = testDatabaseModuleComponent.provideInlinedFileInfoRemoteSource()
     }
 
     @After
@@ -50,7 +52,7 @@ class InlinedFileInfoRemoteSourceTest {
             kotlin.run {
                 val url = server.url(inlinedFileLink).toString()
 
-                val inlinedFileInfo = inlinedFileInfoRemoteSource.fetchFromNetwork(url).unwrap()
+                val inlinedFileInfo = remoteSource.fetchFromNetwork(url).unwrap()
                 assertEquals(url, inlinedFileInfo.fileUrl)
                 assertEquals(fileSize, inlinedFileInfo.fileSize)
             }
@@ -58,7 +60,7 @@ class InlinedFileInfoRemoteSourceTest {
             kotlin.run {
                 val url = server.url(inlinedFileLink).toString()
 
-                val result = inlinedFileInfoRemoteSource.fetchFromNetwork(url)
+                val result = remoteSource.fetchFromNetwork(url)
                 assertTrue(result is ModularResult.Error)
             }
         }

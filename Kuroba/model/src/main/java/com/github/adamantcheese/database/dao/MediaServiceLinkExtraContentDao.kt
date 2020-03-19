@@ -26,4 +26,10 @@ abstract class MediaServiceLinkExtraContentDao {
         WHERE ${MediaServiceLinkExtraContentEntity.INSERTED_AT_COLUMN_NAME} < :dateTime
     """)
     abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
+
+    /**
+     * For tests only!
+     * */
+    @Query("SELECT *FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
+    abstract suspend fun testGetAll(): List<MediaServiceLinkExtraContentEntity>
 }

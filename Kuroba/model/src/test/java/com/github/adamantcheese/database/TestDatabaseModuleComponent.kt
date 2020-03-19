@@ -4,7 +4,9 @@ import android.app.Application
 import androidx.room.Room
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
+import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.remote.InlinedFileInfoRemoteSource
+import com.github.adamantcheese.database.source.remote.MediaServiceLinkExtraContentRemoteSource
 import okhttp3.OkHttpClient
 import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
@@ -44,6 +46,10 @@ class TestDatabaseModuleComponent(
         return database!!
     }
 
+    /**
+     * Local source
+     * */
+
     fun provideInlinedFileInfoLocalSource(): InlinedFileInfoLocalSource {
         return InlinedFileInfoLocalSource(
                 provideKurobaDatabase(),
@@ -52,10 +58,30 @@ class TestDatabaseModuleComponent(
         )
     }
 
+    fun provideMediaServiceLinkExtraContentLocalSource(): MediaServiceLinkExtraContentLocalSource {
+        return MediaServiceLinkExtraContentLocalSource(
+                provideKurobaDatabase(),
+                "MediaServiceLinkExtraContentLocalSource",
+                provideLogger()
+        )
+    }
+
+    /**
+     * Remote source
+     * */
+
     fun provideInlinedFileInfoRemoteSource(): InlinedFileInfoRemoteSource {
         return InlinedFileInfoRemoteSource(
                 provideOkHttpClient(),
                 "InlinedFileInfoRemoteSource",
+                provideLogger()
+        )
+    }
+
+    fun provideMediaServiceLinkExtraContentRemoteSource(): MediaServiceLinkExtraContentRemoteSource {
+        return MediaServiceLinkExtraContentRemoteSource(
+                provideOkHttpClient(),
+                "MediaServiceLinkExtraContentRemoteSource",
                 provideLogger()
         )
     }

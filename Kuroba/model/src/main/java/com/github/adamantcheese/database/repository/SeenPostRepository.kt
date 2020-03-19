@@ -10,33 +10,26 @@ import java.util.concurrent.atomic.AtomicBoolean
 class SeenPostRepository(
         database: KurobaDatabase,
         loggerTag: String,
-        private val logger: Logger,
+        logger: Logger,
         private val seenPostLocalSource: SeenPostLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, logger) {
     private val TAG = "$loggerTag SeenPostRepository"
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
-        return runInTransaction {
-            seenPostLocalRepositoryCleanup().ignore()
+        seenPostLocalRepositoryCleanup().ignore()
 
-            return@runInTransaction seenPostLocalSource.insert(seenPost)
-        }
+        return seenPostLocalSource.insert(seenPost)
     }
 
     suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
-        return runInTransaction {
-            seenPostLocalRepositoryCleanup().ignore()
-            return@runInTransaction seenPostLocalSource.selectAllByLoadableUid(loadableUid)
-        }
+        return seenPostLocalSource.selectAllByLoadableUid(loadableUid)
     }
 
     private suspend fun seenPostLocalRepositoryCleanup(): ModularResult<Int> {
         if (!alreadyExecuted.compareAndSet(false, true)) {
             return ModularResult.value(0)
         }
-
-        check(isInTransaction()) { "Must be executed in a transaction!" }
 
         val result = seenPostLocalSource.deleteOlderThan(
                 SeenPostLocalSource.ONE_MONTH_AGO

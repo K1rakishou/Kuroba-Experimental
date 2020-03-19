@@ -48,7 +48,7 @@ sealed class ModularResult<V> {
         return null
     }
 
-    inline fun <T> map(func: (value: V) -> T): ModularResult<T?> {
+    inline fun <T> map(func: (value: V) -> T): ModularResult<T> {
         return when (this) {
             is Error -> error(error)
             is Value -> safeRun { func(value) }
