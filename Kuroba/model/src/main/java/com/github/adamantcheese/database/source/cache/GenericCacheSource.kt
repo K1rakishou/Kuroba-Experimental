@@ -12,13 +12,20 @@ import kotlin.coroutines.CoroutineContext
  * Locks-free poor man's auto trimmable cache implementation
  * */
 @Suppress("EXPERIMENTAL_API_USAGE")
-class GenericCacheSource<Key, Value>(
+open class GenericCacheSource<Key, Value>(
         private val capacity: Int = DEFAULT_CAPACITY,
-        private val maxSize: Int = DEFAULT_MAX_SIZE
+        private val maxSize: Int = DEFAULT_MAX_SIZE,
+        private val cacheEntriesToRemovePerTrim: Int = maxSize / 20
 ) : CoroutineScope, SuspendableCacheSource<Key, Value> {
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.Default
+
+    init {
+        check(maxSize >= cacheEntriesToRemovePerTrim)  {
+            "maxSize (${maxSize}) must be greater than cacheEntriesToRemovePerTrim (${cacheEntriesToRemovePerTrim})"
+        }
+    }
 
     private val actor = actor<CacheAction<Key, Value>>(capacity = Channel.UNLIMITED) {
         val cache = LinkedHashMap<Key, Value>(capacity)
@@ -35,6 +42,9 @@ class GenericCacheSource<Key, Value>(
                 is CacheAction.Contains -> {
                     action.deferred.complete(cache.containsKey(action.key))
                 }
+                is CacheAction.Size -> {
+                    action.deferred.complete(cache.size)
+                }
                 is CacheAction.Delete -> {
                     cache.remove(action.key)
                     action.deferred.complete(Unit)
@@ -49,11 +59,9 @@ class GenericCacheSource<Key, Value>(
 
     private fun trimCache(cache: LinkedHashMap<Key, Value>) {
         val iterator = cache.entries.iterator()
+        var entriesToRemoveCount = cacheEntriesToRemovePerTrim
 
-        // Empty 20% of the cache
-        var amountToRemove = maxSize / 20
-
-        while (iterator.hasNext() && (amountToRemove--) > 0) {
+        while (iterator.hasNext() && (entriesToRemoveCount--) > 0) {
             iterator.next()
             iterator.remove()
         }
@@ -76,6 +84,13 @@ class GenericCacheSource<Key, Value>(
     override suspend fun contains(key: Key): Boolean {
         val deferred = CompletableDeferred<Boolean>()
         actor.send(CacheAction.Contains(key, deferred))
+
+        return deferred.await()
+    }
+
+    override suspend fun size(): Int {
+        val deferred = CompletableDeferred<Int>()
+        actor.send(CacheAction.Size(deferred))
 
         return deferred.await()
     }
@@ -103,6 +118,10 @@ class GenericCacheSource<Key, Value>(
         class Contains<out K, out V>(
                 val key: K,
                 val deferred: CompletableDeferred<Boolean>
+        ) : CacheAction<K, V>()
+
+        class Size<out K, out V>(
+                val deferred: CompletableDeferred<Int>
         ) : CacheAction<K, V>()
 
         class Delete<out K, out V>(

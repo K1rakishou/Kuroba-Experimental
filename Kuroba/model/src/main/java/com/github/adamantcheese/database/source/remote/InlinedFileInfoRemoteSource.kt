@@ -7,14 +7,14 @@ import com.github.adamantcheese.database.data.InlinedFileInfo
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class InlinedFileInfoRemoteSource(
+open class InlinedFileInfoRemoteSource(
         okHttpClient: OkHttpClient,
         loggerTag: String,
         logger: Logger
 ) : AbstractRemoteSource(okHttpClient, logger) {
     private val TAG = "$loggerTag InlinedFileInfoRemoteSource"
 
-    suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
+    open suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
         logger.log(TAG, "fetchFromNetwork($fileUrl)")
 
         return safeRun {
@@ -33,10 +33,7 @@ class InlinedFileInfoRemoteSource(
                     response.headers
             )
 
-            return@safeRun when (result) {
-                is ModularResult.Value -> result.value
-                is ModularResult.Error -> result.unwrap()
-            }
+            return@safeRun result.unwrap()
         }
     }
 }

@@ -38,7 +38,10 @@ class SeenPostRepository(
 
         check(isInTransaction()) { "Must be executed in a transaction!" }
 
-        val result = seenPostLocalSource.deleteOlderThanOneMonth()
+        val result = seenPostLocalSource.deleteOlderThan(
+                SeenPostLocalSource.ONE_MONTH_AGO
+        )
+
         if (result is ModularResult.Value) {
             logger.log(TAG, "cleanup() -> $result")
         } else {

@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.exhaustive
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Single
 import io.reactivex.schedulers.TestScheduler
@@ -92,7 +93,7 @@ class OnDemandContentLoaderManagerTest {
 
         workerScheduler.advanceTimeBy(900, TimeUnit.MILLISECONDS)
         testSubscriber.assertNoValues()
-        loaderManager.onPostUnbind(loadable, post)
+        loaderManager.onPostUnbind(loadable, post, true)
         workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertNoValues()
@@ -134,7 +135,8 @@ class OnDemandContentLoaderManagerTest {
             when (event.loaderType) {
                 LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Succeeded)
                 LoaderType.PostExtraContentLoader -> assertTrue(event is LoaderResult.Failed)
-            }
+                LoaderType.InlinedFileInfoLoader -> throw RuntimeException("Shouldn't happen")
+            }.exhaustive
         }
 
         assertTrue(eventMap.values.all { eventPresent -> eventPresent })
@@ -169,12 +171,8 @@ class OnDemandContentLoaderManagerTest {
     fun `test startLoading is never called when canceling before delay passed`() {
         val testSubscriber = TestSubscriber<LoaderBatchResult>()
         val loaders = setOf(
-                spy(DummyLoader(LoaderType.PrefetchLoader, isCache = true)),
-                spy(DummyLoader(LoaderType.PostExtraContentLoader, isCache = true))
-        )
-        val expectedToBeCalledLoaderTypes = listOf(
-                LoaderType.PrefetchLoader,
-                LoaderType.PostExtraContentLoader
+                spy(DummyLoader(LoaderType.PrefetchLoader)),
+                spy(DummyLoader(LoaderType.PostExtraContentLoader))
         )
         val loaderManager = OnDemandContentLoaderManager(
                 workerScheduler,
@@ -210,7 +208,6 @@ class OnDemandContentLoaderManagerTest {
                 spy(DummyLoader(LoaderType.PrefetchLoader)),
                 spy(DummyLoader(LoaderType.PostExtraContentLoader))
         )
-        val expectedToBeCalledLoaderTypes = listOf(LoaderType.PrefetchLoader)
         val loaderManager = OnDemandContentLoaderManager(
                 workerScheduler,
                 loaders
@@ -265,7 +262,6 @@ class OnDemandContentLoaderManagerTest {
 
     open class DummyLoader(
             loaderType: LoaderType,
-            private val isCache: Boolean = false,
             private val failLoading: Boolean = false
     ) : OnDemandContentLoader(loaderType) {
 
@@ -273,7 +269,7 @@ class OnDemandContentLoaderManagerTest {
             return if (failLoading) {
                 Single.just(LoaderResult.Failed(loaderType))
             } else {
-                Single.just(LoaderResult.Succeeded(loaderType))
+                Single.just(LoaderResult.Succeeded(loaderType, true))
             }
         }
 

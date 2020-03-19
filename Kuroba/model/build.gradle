@@ -46,4 +46,8 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
     testImplementation "junit:junit:${versions.junit}"
+    testImplementation "org.robolectric:robolectric:${versions.robolectric}"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}"
+    testImplementation "org.mockito:mockito-core:${versions.mockito_core}"
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
 }

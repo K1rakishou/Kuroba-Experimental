@@ -101,7 +101,10 @@ class MediaServiceLinkExtraContentRepository(
             return ModularResult.value(0)
         }
 
-        val result = mediaServiceLinkExtraContentLocalSource.deleteOlderThanOneWeek()
+        val result = mediaServiceLinkExtraContentLocalSource.deleteOlderThan(
+                MediaServiceLinkExtraContentLocalSource.ONE_WEEK_AGO
+        )
+
         if (result is ModularResult.Value) {
             logger.log(TAG, "cleanup() -> $result")
         } else {

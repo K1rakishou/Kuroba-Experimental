@@ -82,7 +82,10 @@ class InlinedFileInfoRepository(
             return ModularResult.value(0)
         }
 
-        val result = inlinedFileInfoLocalSource.deleteOlderThanOneWeek()
+        val result = inlinedFileInfoLocalSource.deleteOlderThan(
+                InlinedFileInfoLocalSource.ONE_WEEK_AGO
+        )
+
         if (result is ModularResult.Value) {
             logger.log(TAG, "cleanup() -> $result")
         } else {

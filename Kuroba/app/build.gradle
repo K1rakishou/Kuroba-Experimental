@@ -260,10 +260,10 @@ dependencies {
     kapt "com.google.dagger:dagger-android-processor:${versions.dagger_version}"
 
     testImplementation "junit:junit:${versions.junit}"
-    testImplementation "org.robolectric:robolectric:4.3.1"
-    testImplementation 'com.squareup.okhttp3:mockwebserver:4.4.0'
-    testImplementation "org.mockito:mockito-core:3.3.0"
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
+    testImplementation "org.robolectric:robolectric:${versions.robolectric}"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}"
+    testImplementation "org.mockito:mockito-core:${versions.mockito_core}"
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
 
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.2'
 }

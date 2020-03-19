@@ -8,7 +8,7 @@ import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.mapper.InlinedFileInfoMapper
 import org.joda.time.DateTime
 
-class InlinedFileInfoLocalSource(
+open class InlinedFileInfoLocalSource(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger
@@ -16,7 +16,7 @@ class InlinedFileInfoLocalSource(
     private val TAG = "$loggerTag InlinedFileInfoLocalSource"
     private val inlinedFileInfoDao = database.inlinedFileDao()
 
-    suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
+    open suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
         logger.log(TAG, "insert(${inlinedFileInfo})")
 
         return safeRun {
@@ -29,7 +29,7 @@ class InlinedFileInfoLocalSource(
         }
     }
 
-    suspend fun selectByFileUrl(fileUrl: String): ModularResult<InlinedFileInfo?> {
+    open suspend fun selectByFileUrl(fileUrl: String): ModularResult<InlinedFileInfo?> {
         logger.log(TAG, "selectByFileUrl(${fileUrl})")
 
         return safeRun {
@@ -39,15 +39,15 @@ class InlinedFileInfoLocalSource(
         }
     }
 
-    suspend fun deleteOlderThanOneWeek(): ModularResult<Int> {
-        logger.log(TAG, "deleteOlderThanOneWeek()")
+    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): ModularResult<Int> {
+        logger.log(TAG, "deleteOlderThan($dateTime)")
 
         return safeRun {
-            return@safeRun inlinedFileInfoDao.deleteOlderThan(ONE_WEEK_AGO)
+            return@safeRun inlinedFileInfoDao.deleteOlderThan(dateTime)
         }
     }
 
     companion object {
-        private val ONE_WEEK_AGO = DateTime.now().minusWeeks(1)
+        val ONE_WEEK_AGO = DateTime.now().minusWeeks(1)
     }
 }

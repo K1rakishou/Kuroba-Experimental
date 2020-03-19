@@ -8,7 +8,7 @@ import com.github.adamantcheese.database.data.SeenPost
 import com.github.adamantcheese.database.mapper.SeenPostMapper
 import org.joda.time.DateTime
 
-class SeenPostLocalSource(
+open class SeenPostLocalSource(
         database: KurobaDatabase,
         loggerTag: String,
         private val logger: Logger
@@ -16,7 +16,7 @@ class SeenPostLocalSource(
     private val TAG = "$loggerTag MediaServiceLinkExtraContentLocalSource"
     private val seenPostDao = database.seenPostDao()
 
-    suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
+    open suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
         logger.log(TAG, "insert($seenPost)")
 
         return safeRun {
@@ -26,7 +26,7 @@ class SeenPostLocalSource(
         }
     }
 
-    suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
+    open suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
         logger.log(TAG, "selectAllByLoadableUid($loadableUid)")
 
         return safeRun {
@@ -35,15 +35,15 @@ class SeenPostLocalSource(
         }
     }
 
-    suspend fun deleteOlderThanOneMonth(): ModularResult<Int> {
-        logger.log(TAG, "deleteOlderThanOneMonth()")
+    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_MONTH_AGO): ModularResult<Int> {
+        logger.log(TAG, "deleteOlderThan($dateTime)")
 
         return safeRun {
-            return@safeRun seenPostDao.deleteOlderThan(ONE_MONTH_AGO)
+            return@safeRun seenPostDao.deleteOlderThan(dateTime)
         }
     }
 
     companion object {
-        private val ONE_MONTH_AGO = DateTime.now().minusMonths(1)
+        val ONE_MONTH_AGO = DateTime.now().minusMonths(1)
     }
 }

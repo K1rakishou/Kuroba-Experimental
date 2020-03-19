@@ -6,7 +6,7 @@ import com.github.adamantcheese.database.data.InlinedFileInfo
 import okhttp3.Headers
 
 object InlinedFileInfoRemoteSourceHelper {
-    private const val CONTENT_LENGTH_HEADER = "Content-Length"
+    const val CONTENT_LENGTH_HEADER = "Content-Length"
 
     fun extractInlinedFileInfo(fileUrl: String, headers: Headers): ModularResult<InlinedFileInfo> {
         return safeRun {

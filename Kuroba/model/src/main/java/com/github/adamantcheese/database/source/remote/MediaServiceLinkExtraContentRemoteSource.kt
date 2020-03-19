@@ -11,14 +11,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 
-class MediaServiceLinkExtraContentRemoteSource(
+open class MediaServiceLinkExtraContentRemoteSource(
         okHttpClient: OkHttpClient,
         loggerTag: String,
         logger: Logger
 ) : AbstractRemoteSource(okHttpClient, logger) {
     private val TAG = "$loggerTag MediaServiceLinkExtraContentRemoteSource"
 
-    suspend fun fetchFromNetwork(
+    open suspend fun fetchFromNetwork(
             requestUrl: String,
             mediaServiceType: MediaServiceType
     ): ModularResult<MediaServiceLinkExtraInfo> {
