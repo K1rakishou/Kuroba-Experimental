@@ -1,8 +1,12 @@
 package com.github.adamantcheese.database.di
 
+import com.github.adamantcheese.database.di.annotation.OkHttpDns
+import com.github.adamantcheese.database.di.annotation.OkHttpProtocols
 import dagger.Module
 import dagger.Provides
+import okhttp3.Dns
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -11,15 +15,18 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(
+            @OkHttpDns dns: Dns,
+            @OkHttpProtocols okHttpProtocols: OkHttpProtocolList
+    ): OkHttpClient {
         return OkHttpClient().newBuilder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
-                // TODO(ODL): provide protocols and DNSSelector
-//                .protocols(getOkHttpProtocols())
-//                .dns(getOkHttpDnsSelector())
+                .protocols(okHttpProtocols.protocols)
+                .dns(dns)
                 .build()
     }
 
+    class OkHttpProtocolList(val protocols: List<Protocol>)
 }

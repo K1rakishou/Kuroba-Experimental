@@ -21,5 +21,5 @@ data class PostFilter(
     fun hasFilterParameters(): Boolean {
         return filterRemove || filterHighlightedColor != 0 || filterReplies || filterStub
     }
-    
+
 }

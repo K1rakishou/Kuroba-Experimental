@@ -22,6 +22,7 @@ import android.net.ConnectivityManager;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.ImageLoader;
 import com.github.adamantcheese.chan.BuildConfig;
+import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.net.BitmapLruImageCache;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
@@ -43,6 +44,8 @@ import java.io.File;
 
 import javax.inject.Singleton;
 
+import okhttp3.Dns;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMaxScreenSize;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMinScreenSize;
@@ -51,10 +54,15 @@ import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAn
 
 public class AppModule {
     private Context applicationContext;
+    private Dns okHttpDns;
+    private Chan.OkHttpProtocols okHttpProtocols;
+
     public static final String DI_TAG = "Dependency Injection";
 
-    public AppModule(Context applicationContext) {
+    public AppModule(Context applicationContext, Dns dns, Chan.OkHttpProtocols protocols) {
         this.applicationContext = applicationContext;
+        this.okHttpDns = dns;
+        this.okHttpProtocols = protocols;
     }
 
     @Provides
@@ -62,6 +70,18 @@ public class AppModule {
     public Context provideApplicationContext() {
         Logger.d(DI_TAG, "App Context");
         return applicationContext;
+    }
+
+    @Provides
+    @Singleton
+    public Dns provideOkHttpDns() {
+        return okHttpDns;
+    }
+
+    @Provides
+    @Singleton
+    public Chan.OkHttpProtocols provideOkHttpProtocols() {
+        return okHttpProtocols;
     }
 
     @Provides

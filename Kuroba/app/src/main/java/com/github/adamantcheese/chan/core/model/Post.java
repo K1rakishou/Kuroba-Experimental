@@ -376,7 +376,6 @@ public class Post
         public CharSequence nameTripcodeIdCapcodeSpan;
         private Set<Integer> repliesToIds = new HashSet<>();
 
-        // TODO(ODL): extract everything related to filters into PostFilter object
         public int filterHighlightedColor;
         public boolean filterStub;
         public boolean filterRemove;

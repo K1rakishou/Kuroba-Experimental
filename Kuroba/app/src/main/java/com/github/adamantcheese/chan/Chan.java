@@ -22,6 +22,8 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+
 import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.di.AppModule;
@@ -39,6 +41,7 @@ import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
+import com.github.adamantcheese.chan.core.net.DnsSelector;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
@@ -56,11 +59,16 @@ import org.greenrobot.eventbus.EventBus;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 
 import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
+import okhttp3.Dns;
+import okhttp3.Protocol;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getIsOfficial;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
@@ -114,14 +122,20 @@ public class Chan
         SavingNotification.setupChannel();
         LastPageNotification.setupChannel();
 
+        Dns okHttpDns = getOkHttpDns();
+        OkHttpProtocols okHttpProtocols = getOkHttpProtocols();
+
         DatabaseComponent databaseComponent = DatabaseModuleInjector.build(
                 this,
+                okHttpDns,
+                okHttpProtocols.protocols,
                 Logger.TAG_PREFIX,
                 ChanSettings.verboseLogs.get()
         );
 
+
         feather = Feather.with(
-                new AppModule(this),
+                new AppModule(this, okHttpDns, okHttpProtocols),
                 new ExecutorsModule(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
@@ -225,6 +239,31 @@ public class Chan
                 settingsNotificationManager.notify(SettingNotificationType.CrashLog);
             }
         }
+    }
+
+    private Dns getOkHttpDns() {
+        if (ChanSettings.okHttpAllowIpv6.get()) {
+            Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.SYSTEM");
+            return new DnsSelector(DnsSelector.Mode.SYSTEM);
+        }
+
+        Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.IPV4_ONLY");
+        return new DnsSelector(DnsSelector.Mode.IPV4_ONLY);
+    }
+
+    @NonNull
+    private OkHttpProtocols getOkHttpProtocols() {
+        if (ChanSettings.okHttpAllowHttp2.get()) {
+            Logger.d(AppModule.DI_TAG, "Using HTTP_2 and HTTP_1_1");
+            return new OkHttpProtocols(
+                    Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
+            );
+        }
+
+        Logger.d(AppModule.DI_TAG, "Using HTTP_1_1");
+        return new OkHttpProtocols(
+                Collections.singletonList(Protocol.HTTP_1_1)
+        );
     }
 
     private boolean isEmulator() {
@@ -336,4 +375,12 @@ public class Chan
     public void onActivityDestroyed(Activity activity) {
     }
     //endregion Empty Methods
+
+    public static class OkHttpProtocols {
+        public final List<Protocol> protocols;
+
+        public OkHttpProtocols(List<Protocol> okHttpProtocols) {
+            this.protocols = okHttpProtocols;
+        }
+    }
 }
