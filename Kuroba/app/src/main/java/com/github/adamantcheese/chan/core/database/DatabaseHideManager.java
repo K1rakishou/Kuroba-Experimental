@@ -79,7 +79,7 @@ public class DatabaseHideManager {
 
             // filter out hidden posts
             for (Post post : postsFastLookupMap.values()) {
-                if (post.filterRemove) {
+                if (post.getPostFilter().getFilterRemove()) {
                     // this post is already filtered by some custom filter
                     continue;
                 }
@@ -134,14 +134,17 @@ public class DatabaseHideManager {
                     PostHide parentHiddenPost = hiddenPostsLookupMap.get(replyNo);
                     Post parentPost = postsFastLookupMap.get(replyNo);
 
-                    if (!parentPost.filterReplies || !parentHiddenPost.hideRepliesToThisPost) {
+                    if (
+                            (parentPost == null || !parentPost.getPostFilter().getFilterRemove())
+                                    || (parentHiddenPost == null  || !parentHiddenPost.hideRepliesToThisPost)
+                    ) {
                         continue;
                     }
 
                     PostHide newHiddenPost = PostHide.hidePost(post,
                             false,
                             parentHiddenPost.hide,
-                            parentHiddenPost.hideRepliesToThisPost
+                            true
                     );
                     hiddenPostsLookupMap.put(newHiddenPost.no, newHiddenPost);
                     newHiddenPosts.add(newHiddenPost);
@@ -166,7 +169,7 @@ public class DatabaseHideManager {
             if (post.isOP) continue; //skip the OP
 
             if (post.hasFilterParameters()) {
-                if (post.filterRemove && post.filterStub) {
+                if (post.getPostFilter().getFilterRemove() && post.getPostFilter().getFilterStub()) {
                     // wtf?
                     Logger.w(TAG, "Post has both filterRemove and filterStub flags");
                     continue;
@@ -205,7 +208,7 @@ public class DatabaseHideManager {
      * Returns a chain of hidden posts.
      */
     private void applyPostFilterActionToChildPosts(Post parentPost, Map<Integer, Post> postsFastLookupMap) {
-        if (postsFastLookupMap.isEmpty() || !parentPost.filterReplies) {
+        if (postsFastLookupMap.isEmpty() || !parentPost.getPostFilter().getFilterReplies()) {
             // do nothing with replies if filtering is disabled for replies
             return;
         }
@@ -235,12 +238,12 @@ public class DatabaseHideManager {
             // do not overwrite filter parameters from another filter
             if (!childPost.hasFilterParameters()) {
                 Post newPost = rebuildPostWithCustomFilter(childPost,
-                        parentPost.filterHighlightedColor,
-                        parentPost.filterStub,
-                        parentPost.filterRemove,
-                        parentPost.filterWatch,
+                        parentPost.getPostFilter().getFilterHighlightedColor(),
+                        parentPost.getPostFilter().getFilterStub(),
+                        parentPost.getPostFilter().getFilterRemove(),
+                        parentPost.getPostFilter().getFilterWatch(),
                         true,
-                        parentPost.filterSaved
+                        parentPost.getPostFilter().getFilterSaved()
                 );
 
                 // assign the filter parameters to the child post

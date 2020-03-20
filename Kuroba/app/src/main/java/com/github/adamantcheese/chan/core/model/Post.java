@@ -61,15 +61,7 @@ public class Post
     public final boolean isSavedReply;
     public final CharSequence subjectSpan;
     public final CharSequence nameTripcodeIdCapcodeSpan;
-
-    // TODO(ODL): extract everything related to filters into PostFilter object
-    public final int filterHighlightedColor;
-    public final boolean filterStub;
-    public final boolean filterRemove;
-    public final boolean filterWatch;
-    public final boolean filterReplies;
-    public final boolean filterOnlyOP;
-    public final boolean filterSaved;
+    private final PostFilter postFilter;
 
     /**
      * This post has been deleted (the server isn't sending it anymore).
@@ -140,13 +132,15 @@ public class Post
         opId = builder.opId;
         capcode = builder.moderatorCapcode;
 
-        filterHighlightedColor = builder.filterHighlightedColor;
-        filterStub = builder.filterStub;
-        filterRemove = builder.filterRemove;
-        filterWatch = builder.filterWatch;
-        filterReplies = builder.filterReplies;
-        filterOnlyOP = builder.filterOnlyOP;
-        filterSaved = builder.filterSaved;
+        postFilter = new PostFilter(
+                builder.filterHighlightedColor,
+                builder.filterStub,
+                builder.filterRemove,
+                builder.filterWatch,
+                builder.filterReplies,
+                builder.filterOnlyOP,
+                builder.filterSaved
+        );
 
         isSavedReply = builder.isSavedReply;
         subjectSpan = builder.subjectSpan;
@@ -213,6 +207,10 @@ public class Post
 
     public synchronized void setContentLoadedForLoader(LoaderType loaderType) {
         onDemandContentLoadedMap.put(loaderType, true);
+    }
+
+    public PostFilter getPostFilter() {
+        return postFilter;
     }
 
     @AnyThread
@@ -308,7 +306,7 @@ public class Post
 
     @MainThread
     public boolean hasFilterParameters() {
-        return filterRemove || filterHighlightedColor != 0 || filterReplies || filterStub;
+        return postFilter.hasFilterParameters();
     }
 
     @Override

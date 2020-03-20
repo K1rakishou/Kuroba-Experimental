@@ -161,7 +161,7 @@ public class FilterWatchManager
         List<Filter> filters = filterEngine.getEnabledWatchFilters();
         for (Filter f : filters) {
             for (Post p : catalog.getPosts()) {
-                if (filterEngine.matches(f, p) && p.filterWatch && !ignoredPosts.contains(p.no)) {
+                if (filterEngine.matches(f, p) && p.getPostFilter().getFilterWatch() && !ignoredPosts.contains(p.no)) {
                     Loadable pinLoadable = Loadable.forThread(catalog.getLoadable().site,
                             p.board,
                             p.no,
@@ -188,7 +188,7 @@ public class FilterWatchManager
             //Match filters and ignores
             for (Filter f : filters) {
                 for (Post p : result.getPosts()) {
-                    if (filterEngine.matches(f, p) && p.filterWatch && !ignoredPosts.contains(p.no)) {
+                    if (filterEngine.matches(f, p) && p.getPostFilter().getFilterWatch() && !ignoredPosts.contains(p.no)) {
                         Loadable pinLoadable = Loadable.forThread(result.getLoadable().site,
                                 p.board,
                                 p.no,

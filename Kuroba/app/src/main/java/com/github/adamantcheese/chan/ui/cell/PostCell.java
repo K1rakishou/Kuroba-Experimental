@@ -304,7 +304,7 @@ public class PostCell
         this.selected = selected;
         this.markedNo = markedNo;
         this.showDivider = showDivider;
-        this.hasColoredFilter = post.filterHighlightedColor != 0;
+        this.hasColoredFilter = post.getPostFilter().getFilterHighlightedColor() != 0;
 
         bindPost(theme, post);
 
@@ -407,7 +407,7 @@ public class PostCell
         // Filter label is more important than unseen post label
         if (hasColoredFilter) {
             postAttentionLabel.setVisibility(VISIBLE);
-            postAttentionLabel.setBackgroundColor(post.filterHighlightedColor);
+            postAttentionLabel.setBackgroundColor(post.getPostFilter().getFilterHighlightedColor());
             return;
         }
 

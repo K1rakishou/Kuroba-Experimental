@@ -221,9 +221,9 @@ public class CardPostCell
             thumbView.setPostImage(loadable, null, false, 0, 0);
         }
 
-        if (post.filterHighlightedColor != 0) {
+        if (post.getPostFilter().getFilterHighlightedColor() != 0) {
             filterMatchColor.setVisibility(VISIBLE);
-            filterMatchColor.setBackgroundColor(post.filterHighlightedColor);
+            filterMatchColor.setBackgroundColor(post.getPostFilter().getFilterHighlightedColor());
         } else {
             filterMatchColor.setVisibility(GONE);
         }

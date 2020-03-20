@@ -31,7 +31,6 @@ import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
@@ -193,7 +192,7 @@ public class PostAdapter
             return TYPE_STATUS;
         } else {
             Post post = displayList.get(getPostPosition(position));
-            if (post.filterStub) {
+            if (post.getPostFilter().getFilterStub()) {
                 return TYPE_POST_STUB;
             } else {
                 return TYPE_POST;

@@ -890,7 +890,7 @@ public class ThreadPresenter
         }
 
         if ((loadable.isCatalogMode() || (loadable.isThreadMode() && !post.isOP)) && !loadable.isLocal()) {
-            if (!post.filterStub) {
+            if (!post.getPostFilter().getFilterStub()) {
                 menu.add(new FloatingMenuItem(POST_OPTION_HIDE, R.string.post_hide));
             }
             menu.add(new FloatingMenuItem(POST_OPTION_REMOVE, R.string.post_remove));
