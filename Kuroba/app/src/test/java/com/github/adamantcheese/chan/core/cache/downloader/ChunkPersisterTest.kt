@@ -163,7 +163,7 @@ class ChunkPersisterTest {
                 .groupBy { event -> event.chunkIndex }
 
         assertEquals(2, successEventsGrouped.values.count())
-        successEventsGrouped.forEach { (chunkIndex, chunkSuccessEvents) ->
+        successEventsGrouped.forEach { (_, chunkSuccessEvents) ->
             assertEquals(1, chunkSuccessEvents.size)
             val chunkSuccessEvent = chunkSuccessEvents.first()
 
