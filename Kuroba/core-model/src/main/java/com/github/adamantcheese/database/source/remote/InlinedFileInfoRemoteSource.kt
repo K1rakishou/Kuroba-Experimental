@@ -4,6 +4,7 @@ import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.InlinedFileInfo
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
@@ -16,6 +17,7 @@ open class InlinedFileInfoRemoteSource(
 
     open suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
         logger.log(TAG, "fetchFromNetwork($fileUrl)")
+        ensureBackgroundThread()
 
         return safeRun {
             val httpRequest = Request.Builder()

@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import com.github.adamantcheese.database.util.errorMessageOrClassName
 
 abstract class AbstractRepository(
@@ -31,6 +32,7 @@ abstract class AbstractRepository(
             storeIntoCacheFunc: (T) -> Unit,
             storeIntoLocalSourceFunc: (T) -> ModularResult<Unit>
     ): ModularResult<T> {
+        ensureBackgroundThread()
         cleanupFunc()
 
         val fromCache = getFromCacheFunc()

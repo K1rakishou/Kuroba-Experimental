@@ -12,6 +12,7 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.CommentSpanUp
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.putIfNotContains
 import io.reactivex.Flowable
@@ -25,6 +26,8 @@ internal class PostExtraContentLoader(
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
             return rejected()
         }
@@ -63,6 +66,8 @@ internal class PostExtraContentLoader(
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {
+        BackgroundUtils.ensureMainThread()
+
         // I guess there is no real need to cancel these requests since they are lightweight
     }
 
@@ -70,6 +75,8 @@ internal class PostExtraContentLoader(
             spanUpdateBatchList: List<SpanUpdateBatch>,
             postLoaderData: PostLoaderData
     ): Single<LoaderResult> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val updated = try {
             CommentSpanUpdater.updateSpansForPostComment(
                     postLoaderData.post,
@@ -94,6 +101,8 @@ internal class PostExtraContentLoader(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
     ): Single<ModularResult<SpanUpdateBatch>> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
             fetcher.mediaServiceType == linkInfoRequest.mediaServiceType
         }
@@ -114,6 +123,8 @@ internal class PostExtraContentLoader(
     private fun createNewRequests(
             postLinkablePostLinkableSpans: List<CommentPostLinkableSpan>
     ): Map<String, LinkInfoRequest> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val newSpans = mutableMapOf<String, LinkInfoRequest>()
 
         postLinkablePostLinkableSpans.forEach { postLinkableSpan ->
@@ -151,6 +162,8 @@ internal class PostExtraContentLoader(
     }
 
     private fun parseSpans(comment: Spanned): List<CommentPostLinkableSpan> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val postLinkableSpans = comment.getSpans(0, comment.length, PostLinkable::class.java)
         if (postLinkableSpans.isEmpty()) {
             return emptyList()

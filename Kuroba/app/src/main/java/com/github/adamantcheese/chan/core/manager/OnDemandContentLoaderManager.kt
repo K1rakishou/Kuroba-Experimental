@@ -100,8 +100,9 @@ class OnDemandContentLoaderManager(
         BackgroundUtils.ensureMainThread()
 
         return postUpdateRxQueue
-                .hide()
+                .onBackpressureBuffer()
                 .observeOn(AndroidSchedulers.mainThread())
+                .hide()
     }
 
     fun onPostBind(loadable: Loadable, post: Post) {

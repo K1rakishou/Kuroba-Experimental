@@ -7,6 +7,7 @@ import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.database.source.remote.InlinedFileInfoRemoteSource
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import java.util.concurrent.atomic.AtomicBoolean
 
 class InlinedFileInfoRepository(
@@ -21,6 +22,8 @@ class InlinedFileInfoRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {
+        ensureBackgroundThread()
+
         return repoGenericGetAction(
                 cleanupFunc = { inlinedFileInfoRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(fileUrl) },
@@ -35,6 +38,8 @@ class InlinedFileInfoRepository(
     }
 
     private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {
+        ensureBackgroundThread()
+
         if (!alreadyExecuted.compareAndSet(false, true)) {
             return ModularResult.value(0)
         }

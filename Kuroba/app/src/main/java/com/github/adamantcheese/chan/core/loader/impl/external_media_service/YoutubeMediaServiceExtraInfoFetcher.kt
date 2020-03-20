@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.R
@@ -10,6 +9,7 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoReque
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.groupOrNull
 import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
@@ -32,13 +32,13 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         return true
     }
 
-    private fun getIconBitmap(): Bitmap = youtubeIcon
-
     @ExperimentalCoroutinesApi
     override fun fetch(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
     ): Single<ModularResult<SpanUpdateBatch>> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return rxSingle {
             if (!ChanSettings.parseYoutubeTitlesAndDuration.get()) {
                 return@rxSingle ModularResult.value(
@@ -46,7 +46,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                                 requestUrl,
                                 ExtraLinkInfo.Success(null, null),
                                 linkInfoRequest.oldPostLinkableSpans,
-                                getIconBitmap()
+                                youtubeIcon
                         )
                 )
             }
@@ -70,6 +70,8 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
             mediaServiceLinkExtraContentResult: ModularResult<MediaServiceLinkExtraContent>,
             oldPostLinkableSpans: List<CommentPostLinkableSpan>
     ): ModularResult<SpanUpdateBatch> {
+        BackgroundUtils.ensureBackgroundThread()
+
         try {
             val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
                 is ModularResult.Error -> ExtraLinkInfo.Error
@@ -90,7 +92,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                     url,
                     extraLinkInfo,
                     oldPostLinkableSpans,
-                    getIconBitmap()
+                    youtubeIcon
             )
 
             return ModularResult.value(spanUpdateBatch)

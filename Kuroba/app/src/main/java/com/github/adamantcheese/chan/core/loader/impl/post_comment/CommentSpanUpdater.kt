@@ -52,6 +52,7 @@ internal object CommentSpanUpdater {
             spanUpdateBatchList: List<SpanUpdateBatch>
     ): Boolean {
         BackgroundUtils.ensureBackgroundThread()
+
         val ssb = SpannableStringBuilder(post.comment)
         val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
@@ -120,6 +121,8 @@ internal object CommentSpanUpdater {
     private fun groupSpanUpdatesByOldSpans(
             spanUpdateBatchList: List<SpanUpdateBatch>
     ): NavigableMap<CommentPostLinkableSpan, MutableList<InvertedSpanUpdateBatch>> {
+        BackgroundUtils.ensureBackgroundThread()
+
         // Spans must be sorted by their position in the text in ascending order. This is important
         // because otherwise the spans will break
         val map = TreeMap<CommentPostLinkableSpan, MutableList<InvertedSpanUpdateBatch>>(comparator)
@@ -141,6 +144,8 @@ internal object CommentSpanUpdater {
     }
 
     private fun getIconSpan(icon: Bitmap): ImageSpan {
+        BackgroundUtils.ensureBackgroundThread()
+
         // Create the icon span for the linkable
         val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
         val height = ChanSettings.fontSize.get().toInt()
@@ -151,6 +156,7 @@ internal object CommentSpanUpdater {
     }
 
     private fun formatLinkUrl(originalLinkUrl: String, extraLinkInfo: ExtraLinkInfo): String {
+        BackgroundUtils.ensureBackgroundThread()
         val showLink = ChanSettings.showYoutubeLinkAlongWithTitleAndDuration.get()
 
         return buildString {

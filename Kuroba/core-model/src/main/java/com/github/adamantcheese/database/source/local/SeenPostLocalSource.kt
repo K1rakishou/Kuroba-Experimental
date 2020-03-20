@@ -6,6 +6,7 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.SeenPost
 import com.github.adamantcheese.database.mapper.SeenPostMapper
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import org.joda.time.DateTime
 
 open class SeenPostLocalSource(
@@ -18,6 +19,7 @@ open class SeenPostLocalSource(
 
     open suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
         logger.log(TAG, "insert($seenPost)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun seenPostDao.insert(
@@ -28,6 +30,7 @@ open class SeenPostLocalSource(
 
     open suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
         logger.log(TAG, "selectAllByLoadableUid($loadableUid)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun seenPostDao.selectAllByLoadableUid(loadableUid)
@@ -37,6 +40,7 @@ open class SeenPostLocalSource(
 
     open suspend fun deleteOlderThan(dateTime: DateTime = ONE_MONTH_AGO): ModularResult<Int> {
         logger.log(TAG, "deleteOlderThan($dateTime)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun seenPostDao.deleteOlderThan(dateTime)

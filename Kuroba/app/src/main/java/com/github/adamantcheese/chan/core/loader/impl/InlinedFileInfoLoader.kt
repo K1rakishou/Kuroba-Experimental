@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
 import io.reactivex.Scheduler
@@ -22,6 +23,8 @@ class InlinedFileInfoLoader(
 ) : OnDemandContentLoader(LoaderType.InlinedFileInfoLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
             return rejected()
         }
@@ -43,6 +46,8 @@ class InlinedFileInfoLoader(
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {
+        BackgroundUtils.ensureMainThread()
+
         // I guess there is no real need to cancel these requests since they are lightweight
     }
 
@@ -50,6 +55,8 @@ class InlinedFileInfoLoader(
             inlinedImages: List<PostImage>,
             postLoaderData: PostLoaderData
     ): LoaderResult {
+        BackgroundUtils.ensureBackgroundThread()
+
         val results = getInlinedFilesBatched(inlinedImages)
         val successResults = results.filter { result ->
             return@filter result is ModularResult.Value && !result.value.isEmpty()
@@ -79,6 +86,8 @@ class InlinedFileInfoLoader(
     private suspend fun getInlinedFilesBatched(
             inlinedImages: List<PostImage>
     ): List<ModularResult<InlinedFileInfo>> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return inlinedImages
                 .chunked(MAX_CONCURRENCY)
                 .flatMap { inlinedImagesChunk ->

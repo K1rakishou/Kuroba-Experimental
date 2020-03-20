@@ -2,6 +2,7 @@ package com.github.adamantcheese.database.source.remote
 
 import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.database.common.Logger
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import java.io.IOException
@@ -15,6 +16,7 @@ abstract class AbstractRemoteSource(
 
     protected suspend fun OkHttpClient.suspendCall(request: Request): Response {
         return suspendCancellableCoroutine { continuation ->
+            ensureBackgroundThread()
             val call = newCall(request)
 
             continuation.invokeOnCancellation {

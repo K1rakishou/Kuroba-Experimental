@@ -6,6 +6,7 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.Loadable2
 import com.github.adamantcheese.database.mapper.Loadable2Mapper
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 
 class Loadable2LocalSource(
         database: KurobaDatabase,
@@ -17,6 +18,7 @@ class Loadable2LocalSource(
 
     suspend fun insert(loadable2: Loadable2): ModularResult<Unit> {
         logger.log(TAG, "insert($loadable2)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun loadableDao.insert(
@@ -27,6 +29,7 @@ class Loadable2LocalSource(
 
     suspend fun selectByThreadUid(threadUid: String): ModularResult<Loadable2?> {
         logger.log(TAG, "selectByThreadUid($threadUid)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun Loadable2Mapper.fromEntity(
@@ -41,6 +44,7 @@ class Loadable2LocalSource(
             opId: Long
     ): ModularResult<Loadable2?> {
         logger.log(TAG, "selectBySiteBoardOpId($siteName, $boardCode, $opId)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun Loadable2Mapper.fromEntity(

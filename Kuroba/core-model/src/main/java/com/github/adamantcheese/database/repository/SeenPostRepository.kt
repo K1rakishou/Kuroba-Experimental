@@ -5,6 +5,7 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.SeenPost
 import com.github.adamantcheese.database.source.local.SeenPostLocalSource
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SeenPostRepository(
@@ -17,16 +18,20 @@ class SeenPostRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
+        ensureBackgroundThread()
         seenPostLocalRepositoryCleanup().ignore()
 
         return seenPostLocalSource.insert(seenPost)
     }
 
     suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
+        ensureBackgroundThread()
         return seenPostLocalSource.selectAllByLoadableUid(loadableUid)
     }
 
     private suspend fun seenPostLocalRepositoryCleanup(): ModularResult<Int> {
+        ensureBackgroundThread()
+
         if (!alreadyExecuted.compareAndSet(false, true)) {
             return ModularResult.value(0)
         }

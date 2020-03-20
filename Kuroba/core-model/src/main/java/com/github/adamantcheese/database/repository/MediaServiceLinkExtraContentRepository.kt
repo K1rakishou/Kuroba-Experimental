@@ -8,6 +8,7 @@ import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.database.source.remote.MediaServiceLinkExtraContentRemoteSource
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
@@ -26,6 +27,8 @@ class MediaServiceLinkExtraContentRepository(
             requestUrl: String,
             videoId: String
     ): ModularResult<MediaServiceLinkExtraContent> {
+        ensureBackgroundThread()
+
         return repoGenericGetAction(
                 cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(videoId) },
@@ -56,6 +59,8 @@ class MediaServiceLinkExtraContentRepository(
     }
 
     private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
+        ensureBackgroundThread()
+
         if (!alreadyExecuted.compareAndSet(false, true)) {
             return ModularResult.value(0)
         }

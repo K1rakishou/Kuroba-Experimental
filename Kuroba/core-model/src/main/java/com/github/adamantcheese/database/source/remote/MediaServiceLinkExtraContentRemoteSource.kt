@@ -5,6 +5,7 @@ import com.github.adamantcheese.base.ModularResult.Companion.safeRun
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.MediaServiceLinkExtraInfo
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import com.github.adamantcheese.database.util.errorMessageOrClassName
 import com.google.gson.JsonParser
 import okhttp3.OkHttpClient
@@ -23,6 +24,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
             mediaServiceType: MediaServiceType
     ): ModularResult<MediaServiceLinkExtraInfo> {
         logger.log(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
+        ensureBackgroundThread()
 
         return safeRun {
             val httpRequest = Request.Builder()
@@ -42,6 +44,8 @@ open class MediaServiceLinkExtraContentRemoteSource(
             mediaServiceType: MediaServiceType,
             response: Response
     ): MediaServiceLinkExtraInfo {
+        ensureBackgroundThread()
+
         return response.use { resp ->
             return@use resp.body.use { body ->
                 if (body == null) {

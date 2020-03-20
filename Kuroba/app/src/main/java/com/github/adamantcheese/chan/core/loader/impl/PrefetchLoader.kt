@@ -11,6 +11,7 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Single
@@ -20,6 +21,8 @@ class PrefetchLoader(
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
             return rejected()
         }
@@ -64,10 +67,14 @@ class PrefetchLoader(
     }
 
     override fun cancelLoading(postLoaderData: PostLoaderData) {
+        BackgroundUtils.ensureMainThread()
+
         return postLoaderData.disposeAll()
     }
 
     private fun getPrefetchBatch(post: Post, loadable: Loadable): List<Prefetch> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return post.postImages.mapNotNull { postImage ->
             if (postImage.imageUrl == null || postImage.isInlined) {
                 // No url or image is inlined
@@ -84,6 +91,8 @@ class PrefetchLoader(
     }
 
     private fun canPrefetchImageType(type: PostImage.Type?): Boolean {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (type == null) {
             return false
         }
@@ -98,6 +107,8 @@ class PrefetchLoader(
     }
 
     private fun isLoadableSuitableForPrefetch(loadable: Loadable?): Boolean {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (loadable == null) {
             return false
         }

@@ -6,6 +6,7 @@ import com.github.adamantcheese.database.KurobaDatabase
 import com.github.adamantcheese.database.common.Logger
 import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.mapper.InlinedFileInfoMapper
+import com.github.adamantcheese.database.util.ensureBackgroundThread
 import org.joda.time.DateTime
 
 open class InlinedFileInfoLocalSource(
@@ -18,6 +19,7 @@ open class InlinedFileInfoLocalSource(
 
     open suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
         logger.log(TAG, "insert(${inlinedFileInfo})")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.insert(
@@ -31,6 +33,7 @@ open class InlinedFileInfoLocalSource(
 
     open suspend fun selectByFileUrl(fileUrl: String): ModularResult<InlinedFileInfo?> {
         logger.log(TAG, "selectByFileUrl(${fileUrl})")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun InlinedFileInfoMapper.fromEntity(
@@ -41,6 +44,7 @@ open class InlinedFileInfoLocalSource(
 
     open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): ModularResult<Int> {
         logger.log(TAG, "deleteOlderThan($dateTime)")
+        ensureBackgroundThread()
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.deleteOlderThan(dateTime)
