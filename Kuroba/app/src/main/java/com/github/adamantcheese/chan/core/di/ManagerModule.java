@@ -42,7 +42,7 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.database.repository.SeenPostRepository;
+import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 

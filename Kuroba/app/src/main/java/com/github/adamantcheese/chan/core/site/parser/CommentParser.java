@@ -210,8 +210,9 @@ public class CommentParser {
 
         SpannableString res = new SpannableString(handlerLink.key);
 
-        // Fix for some sites (like 2ch.hk) having the same youtube links spans encountered twice
-        // which break youtube links spans.
+        // Fix for some sites (like 2ch.hk) having the same link spans encountered twice (This
+        // breaks video title and duration spans for youtube links since we process the same spans
+        // twice)
         if (!isPostLinkableAlreadyAdded(res, handlerLink.key)) {
             PostLinkable pl = new PostLinkable(theme, handlerLink.key, handlerLink.value, handlerLink.type);
             res.setSpan(pl, 0, res.length(), (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY);

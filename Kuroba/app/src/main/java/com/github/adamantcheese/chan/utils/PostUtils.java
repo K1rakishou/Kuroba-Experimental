@@ -139,6 +139,6 @@ public class PostUtils {
     }
 
     public static String getPostUniqueId(Loadable loadable, Post post) {
-        return String.format(Locale.US, "%s_%d", loadable.getUniqueId(), post.no);
+        return String.format(Locale.ENGLISH, "%s_%d", loadable.getUniqueId(), post.no);
     }
 }

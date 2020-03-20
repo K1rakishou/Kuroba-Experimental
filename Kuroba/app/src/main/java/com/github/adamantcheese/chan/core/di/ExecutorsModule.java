@@ -38,7 +38,7 @@ public class ExecutorsModule {
             return new Thread(
                     runnable,
                     String.format(
-                            Locale.US,
+                            Locale.ENGLISH,
                             name,
                             threadIndex.getAndIncrement()
                     )

@@ -48,10 +48,10 @@ class OnDemandContentLoaderManager(
                             // Add LOADING_DELAY_TIME_SECONDS seconds delay to every emitted event.
                             // We do that so that we don't download everything when user quickly
                             // scrolls through posts. In other words, we only start running the
-                            // loader after LOADING_DELAY_TIME_SECONDS seconds has passed since
+                            // loader after LOADING_DELAY_TIME_SECONDS seconds have passed since
                             // onPostBind() was called. If onPostUnbind() was called during that
                             // time frame we cancel the loader if it has already started loading or
-                            // just do nothing if it has yet started loading.
+                            // just do nothing if it hasn't started loading yet.
                             .zipWith(
                                     Flowable.timer(
                                             LOADING_DELAY_TIME_SECONDS,
@@ -82,7 +82,7 @@ class OnDemandContentLoaderManager(
                 .flatMapSingle { loader ->
                     return@flatMapSingle loader.startLoading(postLoaderData)
                             .doOnError { error ->
-                                // All unhandled errors will come into here
+                                // All loaders' unhandled errors come here
                                 val loaderName = postLoaderData::class.java.simpleName
                                 Logger.e(TAG, "Loader: $loaderName unhandled error", error)
                             }

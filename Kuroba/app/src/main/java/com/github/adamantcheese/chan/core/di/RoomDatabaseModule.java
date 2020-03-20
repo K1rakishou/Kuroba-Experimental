@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.database.di.DatabaseComponent;
-import com.github.adamantcheese.database.repository.InlinedFileInfoRepository;
-import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
-import com.github.adamantcheese.database.repository.SeenPostRepository;
+import com.github.adamantcheese.model.di.DatabaseComponent;
+import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
+import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
+import com.github.adamantcheese.model.repository.SeenPostRepository;
 
 import org.codejargon.feather.Provides;
 

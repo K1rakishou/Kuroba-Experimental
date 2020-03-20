@@ -4,9 +4,9 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.view.animation.LinearInterpolator
-import com.github.adamantcheese.base.ModularFunction
-import com.github.adamantcheese.base.VoidFunction
 import com.github.adamantcheese.chan.ui.widget.SimpleAnimatorListener
+import com.github.adamantcheese.common.ModularFunction
+import com.github.adamantcheese.common.VoidFunction
 
 object PostCellAnimator {
 

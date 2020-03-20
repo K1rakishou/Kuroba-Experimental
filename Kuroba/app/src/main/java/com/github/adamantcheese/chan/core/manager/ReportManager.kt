@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import android.os.Build
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.LogsController
@@ -11,6 +10,7 @@ import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
+import com.github.adamantcheese.common.ModularResult
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import io.reactivex.Completable

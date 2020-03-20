@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBatch
-import com.github.adamantcheese.database.data.video_service.MediaServiceType
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import io.reactivex.Single
 
 /**

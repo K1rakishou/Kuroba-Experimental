@@ -7,8 +7,8 @@ import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.database.repository.InlinedFileInfoRepository;
-import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository;
+import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
+import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 
 import org.codejargon.feather.Provides;
 

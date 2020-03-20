@@ -1,7 +1,6 @@
 package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -9,8 +8,9 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.putIfNotContains
-import com.github.adamantcheese.database.data.SeenPost
-import com.github.adamantcheese.database.repository.SeenPostRepository
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.SeenPost
+import com.github.adamantcheese.model.repository.SeenPostRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
@@ -40,14 +40,14 @@ class SeenPostsManager(
 
                     when (val result = seenPostsRepository.selectAllByLoadableUid(loadableUid)) {
                         is ModularResult.Value -> {
-                            // FIXME: Using mutex inside of an actor is not a good idea (it defeats
+                            // FIXME: Using a mutex inside of an actor is not a good idea (it defeats
                             //  the whole point of using actors in the first place) but there is
                             //  no other way since there is one place where we need to call
-                            //  hasAlreadySeenPost from Java code and we we need to either use mutex
-                            //  while blocking the thread or mark is suspend (which we can't because
-                            //  of Java code). Must be changed in the future when ThreadPresenter
-                            //  is converted into Kotlin (probably not only ThreadPresenter but also
-                            //  a ton of other classes)
+                            //  hasAlreadySeenPost from Java code and we need to either use a mutex
+                            //  while blocking the thread (via runBlocking) or mark is suspend
+                            //  (which we can't because of the Java code). Must be changed in
+                            //  the future when ThreadPresenter is converted into Kotlin
+                            //  (probably not only ThreadPresenter but also a ton of other classes)
                             mutex.withLock {
                                 seenPostsMap[loadableUid] = result.value.toMutableSet()
                             }
@@ -58,7 +58,7 @@ class SeenPostsManager(
                         }
                     }
                 }
-                is ActorAction.PostBound -> {
+                is ActorAction.MarkPostAsSeen -> {
                     val loadable = action.loadable
                     val post = action.post
 
@@ -130,7 +130,7 @@ class SeenPostsManager(
             return
         }
 
-        actor.offer(ActorAction.PostBound(loadable, post))
+        actor.offer(ActorAction.MarkPostAsSeen(loadable, post))
     }
 
     fun onPostUnbind(loadable: Loadable, post: Post) {
@@ -141,7 +141,7 @@ class SeenPostsManager(
 
     private sealed class ActorAction {
         class Preload(val loadable: Loadable) : ActorAction()
-        class PostBound(val loadable: Loadable, val post: Post) : ActorAction()
+        class MarkPostAsSeen(val loadable: Loadable, val post: Post) : ActorAction()
     }
 
     companion object {

@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.loader.impl
 
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.LoaderType
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
@@ -8,8 +7,9 @@ import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.database.data.InlinedFileInfo
-import com.github.adamantcheese.database.repository.InlinedFileInfoRepository
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.InlinedFileInfo
+import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import kotlinx.coroutines.async

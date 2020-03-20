@@ -4,7 +4,6 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatCheckBox
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.manager.ReportManager
@@ -13,6 +12,7 @@ import com.github.adamantcheese.chan.ui.view.ReportProblemView
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.google.android.material.textfield.TextInputEditText
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable

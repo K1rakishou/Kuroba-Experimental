@@ -29,7 +29,6 @@ import com.android.volley.Response;
 import com.android.volley.ServerError;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
-import com.github.adamantcheese.base.ModularResult;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
@@ -46,6 +45,7 @@ import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequest;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.ModularResult;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 

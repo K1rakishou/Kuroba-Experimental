@@ -62,7 +62,8 @@ class PrefetchLoader(
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
 
-        // Always false for prefetches because there is nothing on the view for us to update
+        // Always false for prefetches because there is nothing in the view that we need to update
+        // after doing a prefetch
         return succeeded(false)
     }
 

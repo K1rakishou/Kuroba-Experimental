@@ -1,7 +1,6 @@
 package com.github.adamantcheese.chan.core.loader.impl.external_media_service
 
 import android.graphics.BitmapFactory
-import com.github.adamantcheese.base.ModularResult
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.CommentPostLinkableSpan
 import com.github.adamantcheese.chan.core.loader.impl.post_comment.ExtraLinkInfo
@@ -12,9 +11,10 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.groupOrNull
-import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
-import com.github.adamantcheese.database.data.video_service.MediaServiceType
-import com.github.adamantcheese.database.repository.MediaServiceLinkExtraContentRepository
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.video_service.MediaServiceLinkExtraContent
+import com.github.adamantcheese.model.data.video_service.MediaServiceType
+import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import io.reactivex.Single
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.rx2.rxSingle
@@ -72,7 +72,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     ): ModularResult<SpanUpdateBatch> {
         BackgroundUtils.ensureBackgroundThread()
 
-        try {
+        return ModularResult.safeRun {
             val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
                 is ModularResult.Error -> ExtraLinkInfo.Error
                 is ModularResult.Value -> {
@@ -88,17 +88,14 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                 }
             }
 
-            val spanUpdateBatch = SpanUpdateBatch(
+            return@safeRun SpanUpdateBatch(
                     url,
                     extraLinkInfo,
                     oldPostLinkableSpans,
                     youtubeIcon
             )
-
-            return ModularResult.value(spanUpdateBatch)
-        } catch (error: Throwable) {
+        }.peekError { error ->
             Logger.e(TAG, "Error while processing response", error)
-            return ModularResult.error(error)
         }
     }
 

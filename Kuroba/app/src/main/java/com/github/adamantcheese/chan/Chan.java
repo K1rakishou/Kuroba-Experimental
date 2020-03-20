@@ -50,8 +50,8 @@ import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.database.DatabaseModuleInjector;
-import com.github.adamantcheese.database.di.DatabaseComponent;
+import com.github.adamantcheese.model.DatabaseModuleInjector;
+import com.github.adamantcheese.model.di.DatabaseComponent;
 
 import org.codejargon.feather.Feather;
 import org.greenrobot.eventbus.EventBus;

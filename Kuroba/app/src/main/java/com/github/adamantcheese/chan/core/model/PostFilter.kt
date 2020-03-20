@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.model
 
+// Thread safe
 data class PostFilter(
         @get:Synchronized
         val filterHighlightedColor: Int = 0,
