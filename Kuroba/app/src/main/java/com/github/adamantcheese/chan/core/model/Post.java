@@ -101,6 +101,12 @@ public class Post
     }
 
     private Post(Builder builder) {
+        onDemandContentLoadedMap.clear();
+
+        for (LoaderType loaderType : LoaderType.values()) {
+            onDemandContentLoadedMap.put(loaderType, false);
+        }
+
         board = builder.board;
         boardId = builder.board.code;
         no = builder.id;
@@ -207,6 +213,16 @@ public class Post
 
     public synchronized void setContentLoadedForLoader(LoaderType loaderType) {
         onDemandContentLoadedMap.put(loaderType, true);
+    }
+
+    public synchronized boolean allLoadersCompletedLoading() {
+        for (boolean loaderCompletedLoading : onDemandContentLoadedMap.values()) {
+            if (!loaderCompletedLoading) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public PostFilter getPostFilter() {

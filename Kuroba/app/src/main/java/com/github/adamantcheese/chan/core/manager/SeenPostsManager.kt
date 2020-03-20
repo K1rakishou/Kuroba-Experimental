@@ -97,9 +97,14 @@ class SeenPostsManager(
 
         return runBlocking {
             return@runBlocking mutex.withLock {
-                return@withLock seenPostsMap[loadableUid]
-                        ?.any { seenPost -> seenPost.postId == postId }
-                        ?: false
+                val seenPost = seenPostsMap[loadableUid]
+                        ?.firstOrNull { seenPost -> seenPost.postId == postId }
+                        ?: return@withLock false
+
+                // We need this time check so that we don't remove the unseen post label right after
+                // all loaders have completed loading and updated the post.
+                val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
+                return@withLock deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_SECONDS
             }
         }
     }

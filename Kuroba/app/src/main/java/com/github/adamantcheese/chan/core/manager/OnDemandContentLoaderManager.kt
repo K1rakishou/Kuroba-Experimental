@@ -188,7 +188,7 @@ class OnDemandContentLoaderManager(
         private const val TAG = "OnDemandContentLoaderManager"
         private const val MIN_QUEUE_CAPACITY = 32
         private const val LOADING_DELAY_TIME_SECONDS = 1L
-        private const val MAX_LOADER_LOADING_TIME_SECONDS = 10L
+        const val MAX_LOADER_LOADING_TIME_SECONDS = 10L
 
         private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
             Pair(postLoaderData, timer)
