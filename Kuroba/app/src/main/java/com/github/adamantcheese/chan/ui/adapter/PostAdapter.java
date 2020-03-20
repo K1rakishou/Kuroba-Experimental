@@ -317,6 +317,9 @@ public class PostAdapter
         selectedPost = -1;
         lastSeenIndicatorPosition = -1;
         error = null;
+        updatingPosts.clear();
+        displayList.clear();
+        notifyDataSetChanged();
     }
 
     public void showError(String error) {

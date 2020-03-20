@@ -36,6 +36,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
+import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -94,6 +95,7 @@ public abstract class ThreadController
     public void onDestroy() {
         super.onDestroy();
         threadLayout.destroy();
+        FastTextView.cleanup();
 
         EventBus.getDefault().unregister(this);
     }

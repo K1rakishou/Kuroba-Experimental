@@ -175,6 +175,7 @@ public class ThreadLayout
 
     public void destroy() {
         presenter.unbindLoadable();
+        threadListLayout.onDestroy();
     }
 
     @Override

@@ -74,21 +74,15 @@ public class PostRepliesController
     public void onDestroy() {
         super.onDestroy();
 
-        hackyRecycleAllReplyViews();
+        forceRecycleAllReplyViews();
+        repliesView.setAdapter(null);
     }
 
-    private void hackyRecycleAllReplyViews() {
+    private void forceRecycleAllReplyViews() {
         RecyclerView.Adapter adapter = repliesView.getAdapter();
         if (adapter instanceof RepliesAdapter) {
-            ((RepliesAdapter) adapter).clear();
             repliesView.getRecycledViewPool().clear();
-
-            for (int i = 0; i < repliesView.getChildCount(); ++i) {
-                View child = repliesView.getChildAt(i);
-                if (child instanceof PostCellInterface) {
-                    ((PostCellInterface) child).onPostRecycled(true);
-                }
-            }
+            ((RepliesAdapter) adapter).clear();
         }
     }
 
@@ -183,7 +177,7 @@ public class PostRepliesController
         }
 
         LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-        int position = linearLayoutManager.findFirstCompletelyVisibleItemPosition();
+        int position = linearLayoutManager.findFirstVisibleItemPosition();
 
         if (position == RecyclerView.NO_POSITION) {
             return;
@@ -273,8 +267,8 @@ public class PostRepliesController
         }
 
         public void clear() {
-            int size = this.data.posts.size();
-            notifyItemRangeRemoved(0, size);
+            data.posts.clear();
+            notifyDataSetChanged();
         }
     }
 

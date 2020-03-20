@@ -34,6 +34,9 @@ import android.view.View;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.text.span.ClearableSpan;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 /**
@@ -43,7 +46,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 public class FastTextView
         extends View {
     private static final String TAG = "FastTextView";
-    private static LruCache<FastTextViewItem, StaticLayout> textCache = new LruCache<>(75);
+    private static LruCache<FastTextViewItem, StaticLayout> textCache = new LruCache<>(250);
+    private Set<FastTextViewItem> currentlyAllocatedItems = new HashSet<>();
 
     private TextPaint paint;
     private boolean singleLine = false;
@@ -81,11 +85,19 @@ public class FastTextView
     }
 
     public void clear() {
-        for (FastTextViewItem ftvi : textCache.snapshot().keySet()) {
+        for (FastTextViewItem ftvi : currentlyAllocatedItems) {
             ftvi.clear();
+            textCache.remove(ftvi);
         }
 
-        textCache.evictAll();
+        currentlyAllocatedItems.clear();
+    }
+
+    public static void cleanup() {
+        for (FastTextViewItem ftvi : textCache.snapshot().keySet()) {
+            ftvi.clear();
+            textCache.remove(ftvi);
+        }
     }
 
     public void setText(CharSequence text) {
@@ -227,6 +239,7 @@ public class FastTextView
                         textCache.put(item, cached);
                     }
 
+                    currentlyAllocatedItems.add(item);
                     layout = cached;
                 } else {
                     layout = null;

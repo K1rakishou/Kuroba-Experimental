@@ -120,6 +120,19 @@ public class ThreadListLayout
         super(context, attrs);
     }
 
+    public void onDestroy() {
+        forceRecycleAllPostViews();
+        recyclerView.setAdapter(null);
+    }
+
+    private void forceRecycleAllPostViews() {
+        RecyclerView.Adapter adapter = recyclerView.getAdapter();
+        if (adapter instanceof PostAdapter) {
+            recyclerView.getRecycledViewPool().clear();
+            ((PostAdapter) adapter).cleanup();
+        }
+    }
+
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
@@ -855,8 +868,8 @@ public class ThreadListLayout
             postAdapter.updatePost(post);
         }
     }
-
     public interface ThreadListLayoutPresenterCallback {
+
         void showThread(Loadable loadable);
 
         void requestNewPostLoad();

@@ -223,6 +223,7 @@ public class ThreadPresenter
             if (loadable != null) {
                 onDemandContentLoaderManager.cancelAllForLoadable(loadable);
             }
+
             chanLoader.clearTimer();
             chanLoaderManager.release(chanLoader, this);
             chanLoader = null;
