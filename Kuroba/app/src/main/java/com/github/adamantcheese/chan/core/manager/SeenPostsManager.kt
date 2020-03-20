@@ -11,17 +11,19 @@ import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import kotlin.coroutines.CoroutineContext
 
-@ExperimentalCoroutinesApi
-@ObsoleteCoroutinesApi
+@Suppress("EXPERIMENTAL_API_USAGE")
 class SeenPostsManager(
         private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {

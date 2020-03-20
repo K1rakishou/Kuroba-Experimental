@@ -17,7 +17,6 @@ object LoadableUtils {
                 // Unique cross-site id of a board, e.g. "4chan_g"
                 String.format(Locale.ENGLISH, "%s_%s", siteName, boardCode)
             }
-            else -> throw IllegalStateException("Unsupported loadableType: ${loadableType.name}")
         }
     }
 

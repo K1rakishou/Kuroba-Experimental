@@ -1,6 +1,8 @@
 package com.github.adamantcheese.model.source.cache
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
@@ -9,8 +11,7 @@ import kotlin.coroutines.CoroutineContext
 /**
  * Locks-free auto trimmable poor man's cache implementation
  * */
-@ExperimentalCoroutinesApi
-@ObsoleteCoroutinesApi
+@Suppress("EXPERIMENTAL_API_USAGE")
 open class GenericCacheSource<Key, Value>(
         private val capacity: Int = DEFAULT_CAPACITY,
         private val maxSize: Int = DEFAULT_MAX_SIZE,

@@ -85,8 +85,6 @@ constructor(
 
                 dos.write(bytes)
                 dos.flush()
-
-                return@use
             }
         } ?: throw IOException("threadFile.getOutputStream() returned null, threadFile = "
                 + createdThreadFile.getFullPath())

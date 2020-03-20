@@ -2,11 +2,11 @@ package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.TestDatabaseModuleComponent
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertTrue
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -16,7 +16,6 @@ import com.github.adamantcheese.model.data.video_service.MediaServiceLinkExtraCo
 import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import io.reactivex.Single
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.rx2.rxSingle
 import java.util.regex.Pattern
 
@@ -32,7 +31,6 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         return true
     }
 
-    @ExperimentalCoroutinesApi
     override fun fetch(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest
