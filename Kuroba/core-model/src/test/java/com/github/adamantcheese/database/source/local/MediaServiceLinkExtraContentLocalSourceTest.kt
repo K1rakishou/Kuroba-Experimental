@@ -5,6 +5,7 @@ import com.github.adamantcheese.database.dao.MediaServiceLinkExtraContentDao
 import com.github.adamantcheese.database.data.video_service.MediaServiceLinkExtraContent
 import com.github.adamantcheese.database.data.video_service.MediaServiceType
 import com.github.adamantcheese.database.entity.MediaServiceLinkExtraContentEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import org.joda.time.Period
@@ -31,7 +32,7 @@ class MediaServiceLinkExtraContentLocalSourceTest {
 
     @Test
     fun `test shouldn't update old entity with the new one if they are the same`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val linkExtraContent = MediaServiceLinkExtraContent(
                     "test.com/123",
                     MediaServiceType.Youtube,
@@ -50,7 +51,7 @@ class MediaServiceLinkExtraContentLocalSourceTest {
 
     @Test
     fun `test delete old entries`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val oneSecondAgo = DateTime.now().minus(Period.seconds(1))
             val oneMinuteAgo = DateTime.now().minus(Period.minutes(1))
 

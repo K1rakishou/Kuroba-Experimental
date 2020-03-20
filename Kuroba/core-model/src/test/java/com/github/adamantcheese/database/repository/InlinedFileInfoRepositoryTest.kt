@@ -7,6 +7,7 @@ import com.github.adamantcheese.database.source.cache.GenericCacheSource
 import com.github.adamantcheese.database.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.database.source.remote.InlinedFileInfoRemoteSource
 import com.nhaarman.mockitokotlin2.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -41,7 +42,7 @@ class InlinedFileInfoRepositoryTest {
 
     @Test
     fun `test repository when cache hit should not get data from neither local source nor remote source`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val url = "test.com/123.jpg"
             val fileSize = 10000L
 
@@ -59,7 +60,7 @@ class InlinedFileInfoRepositoryTest {
 
     @Test
     fun `test repository when cache miss but local source hit should not get data from remote source`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val url = "test.com/123.jpg"
             val fileSize = 10000L
 
@@ -79,7 +80,7 @@ class InlinedFileInfoRepositoryTest {
 
     @Test
     fun `test when both are empty get data from the remote source`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val url = "test.com/123.jpg"
             val fileSize = 10000L
             val inlinedFileInfo = InlinedFileInfo(url, fileSize)

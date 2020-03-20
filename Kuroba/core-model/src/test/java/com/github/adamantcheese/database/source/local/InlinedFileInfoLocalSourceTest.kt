@@ -4,6 +4,7 @@ import com.github.adamantcheese.database.TestDatabaseModuleComponent
 import com.github.adamantcheese.database.dao.InlinedFileInfoDao
 import com.github.adamantcheese.database.data.InlinedFileInfo
 import com.github.adamantcheese.database.entity.InlinedFileInfoEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import org.joda.time.Period
@@ -30,7 +31,7 @@ class InlinedFileInfoLocalSourceTest {
 
     @Test
     fun `test shouldn't update old entity with the new one if they are the same`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val inlinedFileInfo = InlinedFileInfo("test.com/123", 1000L)
 
             localSource.insert(inlinedFileInfo).unwrap()
@@ -44,7 +45,7 @@ class InlinedFileInfoLocalSourceTest {
 
     @Test
     fun `test delete old entries`() {
-        runBlocking {
+        runBlocking(Dispatchers.Default) {
             val oneSecondAgo = DateTime.now().minus(Period.seconds(1))
             val oneMinuteAgo = DateTime.now().minus(Period.minutes(1))
 

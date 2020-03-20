@@ -1,5 +1,6 @@
 package com.github.adamantcheese.database.source.remote
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockWebServer
 
@@ -8,7 +9,7 @@ internal fun withServer(func: suspend (MockWebServer) -> Unit) {
     val server = MockWebServer()
 
     try {
-        runBlocking { func(server) }
+        runBlocking(Dispatchers.Default) { func(server) }
     } finally {
         server.shutdown()
     }

@@ -102,7 +102,6 @@ open class GenericCacheSource<Key, Value>(
         deferred.await()
     }
 
-    // TODO(ODL): add batching operations
     private sealed class CacheAction<out K, out V> {
         class Get<out K, V>(
                 val key: K,
