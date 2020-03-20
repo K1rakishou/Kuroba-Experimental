@@ -1,8 +1,12 @@
 package com.github.adamantcheese.chan.ui.animation
 
+import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.view.animation.LinearInterpolator
+import com.github.adamantcheese.base.ModularFunction
+import com.github.adamantcheese.base.VoidFunction
+import com.github.adamantcheese.chan.ui.widget.SimpleAnimatorListener
 
 object PostCellAnimator {
 
@@ -11,14 +15,19 @@ object PostCellAnimator {
 
     class UnseenPostIndicatorFadeAnimation : BaseAnimation() {
 
-        fun start(alphaFunc: (Float) -> Unit) {
+        fun start(alphaFunc: ModularFunction<Float>, onAnimationEndFunc: VoidFunction) {
             end()
 
             animatorSet = AnimatorSet().apply {
                 val alphaAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
                     addUpdateListener { valueAnimator ->
-                        alphaFunc(valueAnimator.animatedValue as Float)
+                        alphaFunc.invoke(valueAnimator.animatedValue as Float)
                     }
+                    addListener(object : SimpleAnimatorListener() {
+                        override fun onAnimationEnd(animation: Animator?) {
+                            onAnimationEndFunc.invoke()
+                        }
+                    })
 
                     startDelay = ALPHA_ANIMATION_DELAY_MS
                     duration = ALPHA_ANIMATION_DURATION

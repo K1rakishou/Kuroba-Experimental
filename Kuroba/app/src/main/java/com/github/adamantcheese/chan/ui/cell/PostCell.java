@@ -90,7 +90,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 import static android.text.TextUtils.isEmpty;
@@ -422,10 +421,9 @@ public class PostCell
         }
 
         if (callback != null && !callback.hasAlreadySeenPost(post)) {
-            unseenPostIndicatorFadeOutAnimation.start(alpha -> {
-                        postAttentionLabel.setAlpha(alpha);
-                        return Unit.INSTANCE;
-                    }
+            unseenPostIndicatorFadeOutAnimation.start(
+                    alpha -> postAttentionLabel.setAlpha(alpha),
+                    () -> postAttentionLabel.setVisibility(View.GONE)
             );
         }
     }
