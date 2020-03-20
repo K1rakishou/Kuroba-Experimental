@@ -221,8 +221,8 @@ android {
 }
 
 dependencies {
-    implementation project(":base")
-    implementation project(':model')
+    implementation project(':core-common')
+    implementation project(':core-model')
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation 'androidx.browser:browser:1.2.0'

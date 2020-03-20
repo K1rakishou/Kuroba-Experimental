@@ -12,7 +12,7 @@ abstract class AbstractRepository(
 ) {
 
     suspend fun <T> runInTransaction(func: suspend () -> ModularResult<T>): ModularResult<T> {
-        return ModularResult.safeRun { database.withTransaction(func).unwrap() }
+        return database.withTransaction(func)
     }
 
     protected fun isInTransaction() = database.inTransaction()

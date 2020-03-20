@@ -1,5 +1,7 @@
 package com.github.adamantcheese.base
 
+import java.util.*
+
 sealed class ModularResult<V> {
     data class Value<V>(val value: V) : ModularResult<V>()
     data class Error<V>(val error: Throwable) : ModularResult<V>()
@@ -72,6 +74,7 @@ sealed class ModularResult<V> {
         return when (this) {
             is Value -> value?.toString() ?: "ModularResult.Value{null}"
             is Error -> String.format(
+                    Locale.ENGLISH,
                     "ModularResult.Error{%s, message: %s}",
                     error.javaClass.simpleName,
                     error.message ?: "No error message"
