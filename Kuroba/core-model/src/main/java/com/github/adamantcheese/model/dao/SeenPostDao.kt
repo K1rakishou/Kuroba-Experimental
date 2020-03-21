@@ -26,4 +26,7 @@ abstract class SeenPostDao {
         WHERE ${SeenPostEntity.INSERTED_AT_COLUMN_NAME} < :dateTime
     """)
     abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
+
+    @Query("DELETE FROM ${SeenPostEntity.TABLE_NAME}")
+    abstract suspend fun deleteAll(): Int
 }

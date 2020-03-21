@@ -8,6 +8,8 @@ import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.adamantcheese.model.util.ensureBackgroundThread
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
 
 class InlinedFileInfoRepository(
@@ -52,6 +54,16 @@ class InlinedFileInfoRepository(
                 false
             }
         }
+    }
+
+    fun deleteAllSync(): Int {
+        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+    }
+
+    suspend fun deleteAll(): ModularResult<Int> {
+        ensureBackgroundThread()
+
+        return inlinedFileInfoLocalSource.deleteAll()
     }
 
     private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {

@@ -4,10 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.PostUtils
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
-import com.github.adamantcheese.chan.utils.putIfNotContains
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
@@ -59,6 +56,8 @@ class SeenPostsManager(
                                     "($loadableUid), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
+
+                    Unit
                 }
                 is ActorAction.MarkPostAsSeen -> {
                     val loadable = action.loadable
@@ -80,8 +79,15 @@ class SeenPostsManager(
                                     "($loadableUid), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
+
+                    Unit
                 }
-            }
+                ActorAction.Clear -> {
+                    mutex.withLock { seenPostsMap.clear() }
+
+                    Unit
+                }
+            }.exhaustive
         }
     }
 
@@ -106,7 +112,7 @@ class SeenPostsManager(
                 // We need this time check so that we don't remove the unseen post label right after
                 // all loaders have completed loading and updated the post.
                 val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-                return@withLock deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_SECONDS
+                return@withLock deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
             }
         }
     }
@@ -144,6 +150,7 @@ class SeenPostsManager(
     private sealed class ActorAction {
         class Preload(val loadable: Loadable) : ActorAction()
         class MarkPostAsSeen(val loadable: Loadable, val post: Post) : ActorAction()
+        object Clear : ActorAction()
     }
 
     companion object {

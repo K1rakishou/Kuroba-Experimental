@@ -27,6 +27,9 @@ abstract class MediaServiceLinkExtraContentDao {
     """)
     abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
 
+    @Query("DELETE FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
+    abstract suspend fun deleteAll(): Int
+
     /**
      * For tests only!
      * */

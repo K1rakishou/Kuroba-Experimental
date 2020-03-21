@@ -28,6 +28,9 @@ abstract class InlinedFileInfoDao {
     """)
     abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
 
+    @Query("DELETE FROM ${InlinedFileInfoEntity.TABLE_NAME}")
+    abstract suspend fun deleteAll(): Int
+
     /**
      * For tests only!
      * */

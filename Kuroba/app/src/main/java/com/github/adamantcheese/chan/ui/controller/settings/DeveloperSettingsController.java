@@ -36,6 +36,9 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.ui.controller.LogsController;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
+import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
+import com.github.adamantcheese.model.repository.SeenPostRepository;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -60,6 +63,12 @@ public class DeveloperSettingsController
     FileCacheV2 fileCacheV2;
     @Inject
     CacheHandler cacheHandler;
+    @Inject
+    SeenPostRepository seenPostRepository;
+    @Inject
+    MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository;
+    @Inject
+    InlinedFileInfoRepository inlinedFileInfoRepository;
 
     public DeveloperSettingsController(Context context) {
         super(context);
@@ -119,6 +128,15 @@ public class DeveloperSettingsController
         });
         resetDbButton.setText("Delete database & restart");
         wrapper.addView(resetDbButton);
+
+        // Clear seen posts table
+        addClearSeenPostsButton(wrapper);
+
+        // Clear external link extra info table
+        addClearExternalLinkExtraInfoTable(wrapper);
+
+        // Clear inlined files info table
+        addClearInlinedFilesInfoTable(wrapper);
 
         //FILTER WATCH IGNORE RESET
         Button clearFilterWatchIgnores = new Button(context);
@@ -223,6 +241,39 @@ public class DeveloperSettingsController
         scrollView.addView(wrapper);
         view = scrollView;
         view.setBackgroundColor(getAttrColor(context, R.attr.backcolor));
+    }
+
+    private void addClearInlinedFilesInfoTable(LinearLayout wrapper) {
+        Button clearInlinedFilesInfoTable = new Button(context);
+        clearInlinedFilesInfoTable.setOnClickListener(v -> {
+            int deleted = inlinedFileInfoRepository.deleteAllSync();
+            showToast(context, "Done, deleted " + deleted + " inlined file infos");
+        });
+
+        clearInlinedFilesInfoTable.setText("Clear inlined files info table");
+        wrapper.addView(clearInlinedFilesInfoTable);
+    }
+
+    private void addClearExternalLinkExtraInfoTable(LinearLayout wrapper) {
+        Button clearExternalLinkExtraInfoTable = new Button(context);
+        clearExternalLinkExtraInfoTable.setOnClickListener(v -> {
+            int deleted = mediaServiceLinkExtraContentRepository.deleteAllSync();
+            showToast(context, "Done, deleted " + deleted + " seen posts");
+        });
+
+        clearExternalLinkExtraInfoTable.setText("Clear external link extra info table");
+        wrapper.addView(clearExternalLinkExtraInfoTable);
+    }
+
+    private void addClearSeenPostsButton(LinearLayout wrapper) {
+        Button clearSeenPostsTableButton = new Button(context);
+        clearSeenPostsTableButton.setOnClickListener(v -> {
+            int deleted = seenPostRepository.deleteAllSync();
+            showToast(context, "Done, deleted " + deleted + " seen posts");
+        });
+
+        clearSeenPostsTableButton.setText("Clear seen posts table");
+        wrapper.addView(clearSeenPostsTableButton);
     }
 
     @SuppressLint("SetTextI18n")

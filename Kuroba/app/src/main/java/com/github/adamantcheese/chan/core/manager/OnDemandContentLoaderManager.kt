@@ -115,7 +115,7 @@ class OnDemandContentLoaderManager(
                                 val loaderName = postLoaderData::class.java.simpleName
                                 Logger.e(TAG, "Loader: $loaderName unhandled error", error)
                             }
-                            .timeout(MAX_LOADER_LOADING_TIME_SECONDS, TimeUnit.SECONDS, workerScheduler)
+                            .timeout(MAX_LOADER_LOADING_TIME_MS, TimeUnit.MILLISECONDS, workerScheduler)
                             .onErrorReturnItem(LoaderResult.Failed(loader.loaderType))
                 }
                 .toList()
@@ -217,7 +217,7 @@ class OnDemandContentLoaderManager(
         private const val TAG = "OnDemandContentLoaderManager"
         private const val MIN_QUEUE_CAPACITY = 32
         private const val LOADING_DELAY_TIME_MS = 1500L
-        const val MAX_LOADER_LOADING_TIME_SECONDS = 10L
+        const val MAX_LOADER_LOADING_TIME_MS = 10_000L
 
         private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
             Pair(postLoaderData, timer)

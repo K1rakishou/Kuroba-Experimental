@@ -9,6 +9,8 @@ import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.github.adamantcheese.model.util.ensureBackgroundThread
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
@@ -73,6 +75,16 @@ class MediaServiceLinkExtraContentRepository(
                 false
             }
         }
+    }
+
+    fun deleteAllSync(): Int {
+        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+    }
+
+    suspend fun deleteAll(): ModularResult<Int> {
+        ensureBackgroundThread()
+
+        return mediaServiceLinkExtraContentLocalSource.deleteAll()
     }
 
     private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {

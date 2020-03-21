@@ -6,6 +6,8 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
 import com.github.adamantcheese.model.util.ensureBackgroundThread
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
 
 class SeenPostRepository(
@@ -47,5 +49,15 @@ class SeenPostRepository(
         }
 
         return result
+    }
+
+    fun deleteAllSync(): Int {
+        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+    }
+
+    suspend fun deleteAll(): ModularResult<Int> {
+        ensureBackgroundThread()
+
+        return seenPostLocalSource.deleteAll()
     }
 }

@@ -51,6 +51,15 @@ open class MediaServiceLinkExtraContentLocalSource(
         }
     }
 
+    open suspend fun deleteAll(): ModularResult<Int> {
+        logger.log(TAG, "deleteAll()")
+        ensureBackgroundThread()
+
+        return safeRun {
+            return@safeRun mediaServiceLinkExtraContentDao.deleteAll()
+        }
+    }
+
     companion object {
         val ONE_WEEK_AGO = DateTime.now().minusWeeks(1)
     }
