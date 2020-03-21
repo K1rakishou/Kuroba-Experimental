@@ -32,7 +32,7 @@ class OnDemandContentLoaderManagerTest {
     }
 
     @Test
-    fun `test simple post event should return one update in one second`() {
+    fun `test simple post event should return one update in two seconds`() {
         val (loadable, post) = createTestData()
         val testSubscriber = TestSubscriber<LoaderBatchResult>()
         val loaderManager = OnDemandContentLoaderManager(
@@ -43,8 +43,33 @@ class OnDemandContentLoaderManagerTest {
         loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
         loaderManager.onPostBind(loadable, post)
 
-        workerScheduler.advanceTimeBy(900, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
         testSubscriber.assertNoValues()
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS, TimeUnit.MILLISECONDS)
+
+        testSubscriber.assertValueCount(1)
+        testSubscriber.assertNoErrors()
+        testSubscriber.assertNotComplete()
+
+        val event = testSubscriber.values().first()
+        assertTrue(event.results.first() is LoaderResult.Succeeded)
+    }
+
+    @Test
+    fun `test should return update right away when every loader has cached data`() {
+        val (loadable, post) = createTestData()
+        val testSubscriber = TestSubscriber<LoaderBatchResult>()
+        val loaderManager = OnDemandContentLoaderManager(
+                workerScheduler,
+                setOf(
+                        DummyLoader(LoaderType.PrefetchLoader, cached = true),
+                        DummyLoader(LoaderType.PostExtraContentLoader, cached = true),
+                        DummyLoader(LoaderType.InlinedFileInfoLoader, cached = true)
+                )
+        )
+
+        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+        loaderManager.onPostBind(loadable, post)
         workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertValueCount(1)
@@ -69,7 +94,7 @@ class OnDemandContentLoaderManagerTest {
         loaderManager.onPostBind(loadable, post)
         loaderManager.onPostBind(loadable, post)
         loaderManager.onPostBind(loadable, post)
-        workerScheduler.advanceTimeBy(1200, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 500, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertValueCount(1)
         testSubscriber.assertNoErrors()
@@ -94,7 +119,7 @@ class OnDemandContentLoaderManagerTest {
         workerScheduler.advanceTimeBy(900, TimeUnit.MILLISECONDS)
         testSubscriber.assertNoValues()
         loaderManager.onPostUnbind(loadable, post, true)
-        workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertNoValues()
         testSubscriber.assertNoErrors()
@@ -115,7 +140,7 @@ class OnDemandContentLoaderManagerTest {
 
         loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
         loaderManager.onPostBind(loadable, post)
-        workerScheduler.advanceTimeBy(1200, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertValueCount(1)
         testSubscriber.assertNoErrors()
@@ -160,7 +185,7 @@ class OnDemandContentLoaderManagerTest {
             loaderManager.onPostBind(loadable, post)
         }
 
-        workerScheduler.advanceTimeBy(10000, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(15000, TimeUnit.MILLISECONDS)
 
         testSubscriber.assertValueCount(1000)
         testSubscriber.assertNoErrors()
@@ -189,7 +214,7 @@ class OnDemandContentLoaderManagerTest {
         val (_, loadable) = createTestLoadable()
         loaderManager.cancelAllForLoadable(loadable)
 
-        workerScheduler.advanceTimeBy(1500, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300, TimeUnit.MILLISECONDS)
 
         loaders.forEach { loader ->
             verify(loader, never()).startLoading(any())
@@ -222,7 +247,7 @@ class OnDemandContentLoaderManagerTest {
 
         val (_, loadable) = createTestLoadable()
 
-        workerScheduler.advanceTimeBy(1500, TimeUnit.MILLISECONDS)
+        workerScheduler.advanceTimeBy(OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300, TimeUnit.MILLISECONDS)
         loaderManager.cancelAllForLoadable(loadable)
 
         loaders.forEach { loader ->
@@ -262,11 +287,12 @@ class OnDemandContentLoaderManagerTest {
 
     open class DummyLoader(
             loaderType: LoaderType,
-            private val failLoading: Boolean = false
+            private val failLoading: Boolean = false,
+            private val cached: Boolean = false
     ) : OnDemandContentLoader(loaderType) {
 
         override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-            return Single.just(false)
+            return Single.just(cached)
         }
 
         override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {

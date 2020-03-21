@@ -43,7 +43,7 @@ class OnDemandContentLoaderManager(
     private fun initPostLoaderRxQueue() {
         postLoaderRxQueue
                 .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
-                .subscribeOn(workerScheduler)
+                .observeOn(workerScheduler)
                 .flatMap { value -> addDelayIfSomethingIsNotCachedYet(value) }
                 .flatMap { postLoaderData -> processLoaders(postLoaderData) }
                 .subscribe({
@@ -216,7 +216,7 @@ class OnDemandContentLoaderManager(
     companion object {
         private const val TAG = "OnDemandContentLoaderManager"
         private const val MIN_QUEUE_CAPACITY = 32
-        private const val LOADING_DELAY_TIME_MS = 1500L
+        const val LOADING_DELAY_TIME_MS = 1500L
         const val MAX_LOADER_LOADING_TIME_MS = 10_000L
 
         private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
