@@ -5,6 +5,7 @@ import io.reactivex.Single
 abstract class OnDemandContentLoader(
         val loaderType: LoaderType
 ) {
+    abstract fun isCached(postLoaderData: PostLoaderData): Single<Boolean>
     abstract fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult>
     abstract fun cancelLoading(postLoaderData: PostLoaderData)
 

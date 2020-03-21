@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
+import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
@@ -233,5 +234,13 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "SeenPostsManager");
 
         return new SeenPostsManager(seenPostRepository);
+    }
+
+    @Provides
+    @Singleton
+    public PrefetchIndicatorAnimationManager providePrefetchIndicatorAnimationManager() {
+        Logger.d(AppModule.DI_TAG, "PrefetchIndicatorAnimationManager");
+
+        return new PrefetchIndicatorAnimationManager();
     }
 }

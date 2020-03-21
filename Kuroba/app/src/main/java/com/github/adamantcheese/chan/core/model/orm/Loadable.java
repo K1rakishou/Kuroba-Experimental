@@ -20,6 +20,7 @@ import android.os.Parcel;
 import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.common.loadable.LoadableType;
 import com.github.adamantcheese.common.loadable.LoadableUtils;
@@ -316,6 +317,20 @@ public class Loadable
 
     public String desktopUrl() {
         return site.resolvable().desktopUrl(this, no);
+    }
+
+    public boolean isSuitableForPrefetch() {
+        if (!ChanSettings.autoLoadThreadImages.get()) {
+            // Prefetching disabled
+            return false;
+        }
+
+        if (isLocal() || isDownloading()) {
+            // Cannot prefetch local threads
+            return false;
+        }
+
+        return true;
     }
 
     public static Loadable readFromParcel(Parcel parcel) {

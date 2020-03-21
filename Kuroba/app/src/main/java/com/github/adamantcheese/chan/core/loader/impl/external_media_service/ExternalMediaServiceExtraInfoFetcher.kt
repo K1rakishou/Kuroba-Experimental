@@ -17,6 +17,8 @@ internal interface ExternalMediaServiceExtraInfoFetcher {
 
     fun isEnabled(): Boolean
 
+    fun isCached(videoId: String): Single<Boolean>
+
     fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): Single<ModularResult<SpanUpdateBatch>>
 
     /**

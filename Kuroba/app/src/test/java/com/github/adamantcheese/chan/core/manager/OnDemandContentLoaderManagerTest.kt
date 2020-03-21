@@ -265,6 +265,10 @@ class OnDemandContentLoaderManagerTest {
             private val failLoading: Boolean = false
     ) : OnDemandContentLoader(loaderType) {
 
+        override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
+            return Single.just(false)
+        }
+
         override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
             return if (failLoading) {
                 Single.just(LoaderResult.Failed(loaderType))

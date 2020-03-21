@@ -25,6 +25,43 @@ internal class PostExtraContentLoader(
         private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
+    override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
+        return Single.defer {
+            val videoIds = extractVideoIds(postLoaderData)
+            if (videoIds.isEmpty()) {
+                return@defer Single.just(true)
+            }
+
+            return@defer Flowable.fromIterable(linkExtraInfoFetchers)
+                    .flatMapSingle { fetcher ->
+                        return@flatMapSingle Flowable.fromIterable(videoIds)
+                                .flatMapSingle { videoId ->
+                                    return@flatMapSingle fetcher.isCached(videoId)
+                                            .onErrorReturnItem(false)
+                                }
+                                .toList()
+                                .map { results -> results.all { result -> result } }
+                    }
+                    .toList()
+                    .map { results -> results.all { result -> result } }
+        }.subscribeOn(scheduler)
+    }
+
+    private fun extractVideoIds(postLoaderData: PostLoaderData): List<String> {
+        val comment = postLoaderData.post.comment
+        if (comment.isEmpty() || comment !is Spanned) {
+            return emptyList()
+        }
+
+        val postLinkableSpans = parseSpans(comment)
+        if (postLinkableSpans.isEmpty()) {
+            return emptyList()
+        }
+
+        return createNewRequests(postLinkableSpans)
+                .map { (_, linkInfoRequest) -> linkInfoRequest.videoId }
+    }
+
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
         BackgroundUtils.ensureBackgroundThread()
 

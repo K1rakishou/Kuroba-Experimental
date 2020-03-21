@@ -58,6 +58,23 @@ class MediaServiceLinkExtraContentRepository(
         )
     }
 
+    suspend fun isCached(videoId: String): Boolean {
+        ensureBackgroundThread()
+
+        val hasInCache = cache.contains(videoId)
+        if (hasInCache) {
+            return true
+        }
+
+        return when (val result = mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)) {
+            is ModularResult.Value -> result.value != null
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to selectByVideoId($videoId)", result.error)
+                false
+            }
+        }
+    }
+
     private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
         ensureBackgroundThread()
 
@@ -77,4 +94,5 @@ class MediaServiceLinkExtraContentRepository(
 
         return result
     }
+
 }

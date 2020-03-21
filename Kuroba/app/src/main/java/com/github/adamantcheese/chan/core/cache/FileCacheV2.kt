@@ -516,7 +516,7 @@ class FileCacheV2(
             }
 
             val networkClass = getNetworkClassOrDefaultText(result)
-            val activeDownloadsCount = activeDownloads.count()
+            val activeDownloadsCount = activeDownloads.count() - 1
 
             when (result) {
                 is FileDownloadResult.Start -> {

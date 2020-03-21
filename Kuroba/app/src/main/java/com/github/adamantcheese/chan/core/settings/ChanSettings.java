@@ -285,6 +285,7 @@ public class ChanSettings {
     public static final OptionsSetting<MediaAutoLoadMode> videoAutoLoadNetwork;
     public static final OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static final BooleanSetting autoLoadThreadImages;
+    public static final BooleanSetting showPrefetchLoadingIndicator;
     //endregion
 
     //region EXPERIMENTAL
@@ -462,6 +463,7 @@ public class ChanSettings {
                     ImageClickPreloadStrategy.PreloadNext
             );
             autoLoadThreadImages = new BooleanSetting(p, "preference_auto_load_thread", false);
+            showPrefetchLoadingIndicator = new BooleanSetting(p, "show_prefetch_loading_indicator", false);
             //endregion
 
             //region EXPERIMENTAL

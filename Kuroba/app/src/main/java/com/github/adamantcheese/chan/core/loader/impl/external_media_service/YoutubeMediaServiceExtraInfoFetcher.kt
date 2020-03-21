@@ -31,6 +31,12 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         return true
     }
 
+    override fun isCached(videoId: String): Single<Boolean> {
+        return rxSingle {
+            return@rxSingle mediaServiceLinkExtraContentRepository.isCached(videoId)
+        }
+    }
+
     override fun fetch(
             requestUrl: String,
             linkInfoRequest: LinkInfoRequest

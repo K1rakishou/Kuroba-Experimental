@@ -214,6 +214,7 @@ public class DvachApi
                     break;
                 case "md5":
                     fileHash = reader.nextString();
+                    break;
                 default:
                     reader.skipValue();
                     break;

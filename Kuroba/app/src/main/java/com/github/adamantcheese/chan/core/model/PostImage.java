@@ -31,8 +31,12 @@ import static com.github.adamantcheese.chan.core.model.PostImage.Type.GIF;
 import static com.github.adamantcheese.chan.core.model.PostImage.Type.MOVIE;
 import static com.github.adamantcheese.chan.core.model.PostImage.Type.PDF;
 import static com.github.adamantcheese.chan.core.model.PostImage.Type.STATIC;
+import static com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 
 public class PostImage {
+    private static final long MAX_PREFETCH_FILE_SIZE =  25 * (1024 * 1024); // 25 MB
+
+
     public enum Type {
         STATIC,
         GIF,
@@ -54,10 +58,19 @@ public class PostImage {
     public final int imageHeight;
     private final boolean spoiler;
     public final boolean isInlined;
+    private boolean isPrefetched = false;
     @Nullable
     public final String fileHash;
     public final Type type;
     private long size;
+
+    public synchronized boolean isPrefetched() {
+        return isPrefetched;
+    }
+
+    public synchronized void setPrefetched() {
+        isPrefetched = true;
+    }
 
     private PostImage(Builder builder) {
         this.serverFilename = builder.serverFilename;
@@ -127,6 +140,34 @@ public class PostImage {
 
     public synchronized void setSize(long size) {
         this.size = size;
+    }
+
+    public boolean canBeUsedForPrefetch() {
+        if (isInlined) {
+            return false;
+        }
+
+        if (imageUrl == null) {
+            return false;
+        }
+
+        if (size > MAX_PREFETCH_FILE_SIZE) {
+            // The file is too big
+            return false;
+        }
+
+        switch (type) {
+            case STATIC:
+            case GIF:
+                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
+            case MOVIE:
+                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+            case PDF:
+            case SWF:
+                return false;
+            default:
+                throw new IllegalStateException("Unexpected value: " + type);
+        }
     }
 
     public static final class Builder {

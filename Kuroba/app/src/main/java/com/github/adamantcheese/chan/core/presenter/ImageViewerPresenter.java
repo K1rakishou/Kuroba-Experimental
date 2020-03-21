@@ -612,7 +612,7 @@ public class ImageViewerPresenter
         }
 
         // Auto load the image when it is cached
-        return cacheHandler.exists(postImage.imageUrl.toString())
+        return cacheHandler.cacheFileExists(postImage.imageUrl.toString())
                 || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
     }
 

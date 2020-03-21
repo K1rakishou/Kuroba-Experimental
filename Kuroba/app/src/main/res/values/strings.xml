@@ -868,4 +868,5 @@ Don't have a 4chan Pass?<br>
     <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
+    <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
 </resources>

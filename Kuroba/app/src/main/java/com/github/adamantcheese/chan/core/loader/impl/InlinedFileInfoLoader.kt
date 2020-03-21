@@ -22,6 +22,20 @@ class InlinedFileInfoLoader(
         private val inlinedFileInfoRepository: InlinedFileInfoRepository
 ) : OnDemandContentLoader(LoaderType.InlinedFileInfoLoader) {
 
+    override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
+        val inlinedFiles = postLoaderData.post.postImages.filter { postImage ->
+            return@filter postImage.isInlined && postImage.imageUrl != null
+        }
+
+        return rxSingle {
+            return@rxSingle inlinedFiles.all { inlinedFile ->
+                inlinedFileInfoRepository.isCached(inlinedFile.imageUrl.toString())
+            }
+        }
+                .subscribeOn(scheduler)
+                .onErrorReturnItem(false)
+    }
+
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
         BackgroundUtils.ensureBackgroundThread()
 
@@ -36,6 +50,7 @@ class InlinedFileInfoLoader(
         val inlinedImages = postLoaderData.post.postImages.filter { postImage ->
             return@filter postImage.isInlined && postImage.imageUrl != null
         }
+
         if (inlinedImages.isEmpty()) {
             return rejected()
         }

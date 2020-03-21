@@ -99,10 +99,6 @@ class CacheHandler(
         }
     }
 
-    fun exists(key: String): Boolean {
-        return fileManager.exists(getCacheFileInternal(key))
-    }
-
     /**
      * Either returns already downloaded file or creates an empty new one on the disk (also creates
      * cache file meta with default parameters)
@@ -166,6 +162,14 @@ class CacheHandler(
         }
 
         return fileManager.create(chunkCacheFile) as RawFile?
+    }
+
+    fun cacheFileExists(fileUrl: String): Boolean {
+        return fileManager.exists(getCacheFileInternal(fileUrl))
+    }
+
+    fun isAlreadyDownloaded(fileUrl: String): Boolean {
+        return isAlreadyDownloaded(getCacheFileInternal(fileUrl))
     }
 
     /**

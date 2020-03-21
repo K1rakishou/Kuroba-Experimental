@@ -16,6 +16,10 @@ abstract class BaseAnimation {
         animatorSet = null
     }
 
+    fun isRunning(): Boolean {
+        return animatorSet?.isRunning ?: false
+    }
+
     // Yes we need to remove all of those listeners. Otherwise stuff will leak.
     private fun recursivelyClearCallbacks(childAnimations: ArrayList<Animator>) {
         childAnimations.forEach { childAnimation ->

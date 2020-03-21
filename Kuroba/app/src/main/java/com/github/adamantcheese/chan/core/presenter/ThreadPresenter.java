@@ -862,7 +862,7 @@ public class ThreadPresenter
                     continue;
                 }
 
-                if (!item.deleted.get() || instance(CacheHandler.class).exists(image.imageUrl.toString())) {
+                if (!item.deleted.get() || instance(CacheHandler.class).cacheFileExists(image.imageUrl.toString())) {
                     //deleted posts always have 404'd images, but let it through if the file exists in cache
                     images.add(image);
                     if (image.equalUrl(postImage)) {

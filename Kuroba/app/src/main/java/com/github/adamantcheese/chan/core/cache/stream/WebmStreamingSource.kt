@@ -29,7 +29,7 @@ class WebmStreamingSource(
     fun createMediaSource(loadable: Loadable, postImage: PostImage, callback: MediaSourceCallback) {
         val videoUrl = postImage.imageUrl.toString()
         val uri = Uri.parse(videoUrl)
-        val alreadyExists = cacheHandler.exists(videoUrl)
+        val alreadyExists = cacheHandler.cacheFileExists(videoUrl)
         val rawFile = cacheHandler.getOrCreateCacheFile(videoUrl)
         val fileCacheSource = WebmStreamingDataSource(uri, rawFile, fileManager)
 

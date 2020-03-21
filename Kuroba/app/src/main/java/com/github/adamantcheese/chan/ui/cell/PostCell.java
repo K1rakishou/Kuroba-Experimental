@@ -775,7 +775,7 @@ public class PostCell
                 v.setPostImage(loadable, image, false, size, size);
                 v.setClickable(true);
                 //don't set a callback if the post is deleted, but if the file already exists in cache let it through
-                if (!post.deleted.get() || instance(CacheHandler.class).exists(image.imageUrl.toString())) {
+                if (!post.deleted.get() || instance(CacheHandler.class).cacheFileExists(image.imageUrl.toString())) {
                     v.setOnClickListener(v2 -> {
                         if (callback != null) {
                             callback.onThumbnailClicked(image, v);

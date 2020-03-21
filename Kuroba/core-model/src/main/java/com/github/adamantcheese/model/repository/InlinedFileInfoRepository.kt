@@ -37,6 +37,23 @@ class InlinedFileInfoRepository(
         )
     }
 
+    suspend fun isCached(fileUrl: String): Boolean {
+        ensureBackgroundThread()
+
+        val hasInCache = cache.contains(fileUrl)
+        if (hasInCache) {
+            return true
+        }
+
+        return when (val result = inlinedFileInfoLocalSource.selectByFileUrl(fileUrl)) {
+            is ModularResult.Value -> result.value != null
+            is ModularResult.Error -> {
+                logger.logError(TAG, "Error while trying to selectByFileUrl($fileUrl)", result.error)
+                false
+            }
+        }
+    }
+
     private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {
         ensureBackgroundThread()
 

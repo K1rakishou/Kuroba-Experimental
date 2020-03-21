@@ -2,10 +2,7 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import androidx.annotation.GuardedBy
-import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
-import com.github.adamantcheese.chan.core.loader.LoaderResult
-import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
-import com.github.adamantcheese.chan.core.loader.PostLoaderData
+import com.github.adamantcheese.chan.core.loader.*
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -43,26 +40,8 @@ class OnDemandContentLoaderManager(
     private fun initPostLoaderRxQueue() {
         postLoaderRxQueue
                 .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
-                .flatMap { value ->
-                    return@flatMap Flowable.just(value)
-                            // Add LOADING_DELAY_TIME_SECONDS seconds delay to every emitted event.
-                            // We do that so that we don't download everything when user quickly
-                            // scrolls through posts. In other words, we only start running the
-                            // loader after LOADING_DELAY_TIME_SECONDS seconds have passed since
-                            // onPostBind() was called. If onPostUnbind() was called during that
-                            // time frame we cancel the loader if it has already started loading or
-                            // just do nothing if it hasn't started loading yet.
-                            .zipWith(
-                                    Flowable.timer(
-                                            LOADING_DELAY_TIME_SECONDS,
-                                            TimeUnit.SECONDS,
-                                            workerScheduler
-                                    ),
-                                    ZIP_FUNC
-                            )
-                }
-                .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
-                .map { (postLoaderData, _) -> postLoaderData }
+                .subscribeOn(workerScheduler)
+                .flatMap { value -> addDelayIfSomethingIsNotCachedYet(value) }
                 .flatMap { postLoaderData -> processLoaders(postLoaderData) }
                 .subscribe({
                     // Do nothing
@@ -77,8 +56,64 @@ class OnDemandContentLoaderManager(
                 })
     }
 
+    /**
+     * Checks whether all info for the [postLoaderData] is cached by all loaders (except
+     * PrefetchLoader). If any loader has no cached info for [postLoaderData] then adds a delay
+     * (so that we can have time to be able to cancel it). If everything is cached then the delay
+     * is not added. Also, updates [Post.onDemandContentLoadedMap] for the current post.
+     * */
+    private fun addDelayIfSomethingIsNotCachedYet(postLoaderData: PostLoaderData): Flowable<PostLoaderData> {
+        val loadable = postLoaderData.loadable
+        val post = postLoaderData.post
+
+        if (post.allLoadersCompletedLoading()) {
+            return Flowable.just(postLoaderData)
+        }
+
+        val loadersCachedResultFlowable = Flowable.fromIterable(loaders)
+                // Skip prefetch loader because we don't care about it (since prefetch loader
+                // DOES NOT update the PostCell UI)
+                .filter { loader -> loader.loaderType != LoaderType.PrefetchLoader }
+                .flatMapSingle { loader ->
+                    return@flatMapSingle loader.isCached(PostLoaderData(loadable, post))
+                            .onErrorReturnItem(false)
+                }
+                .toList()
+                .map { cacheResults -> cacheResults.all { cacheResult -> cacheResult } }
+                .toFlowable()
+                .share()
+
+        val allCachedStream = loadersCachedResultFlowable
+                .filter { allCached -> allCached }
+                .map { postLoaderData }
+
+        val notAllCachedStream = loadersCachedResultFlowable
+                .filter { allCached -> !allCached }
+                // Add LOADING_DELAY_TIME_SECONDS seconds delay to every emitted event.
+                // We do that so that we don't download everything when user quickly
+                // scrolls through posts. In other words, we only start running the
+                // loader after LOADING_DELAY_TIME_SECONDS seconds have passed since
+                // onPostBind() was called. If onPostUnbind() was called during that
+                // time frame we cancel the loader if it has already started loading or
+                // just do nothing if it hasn't started loading yet.
+                .map { postLoaderData }
+                .zipWith(
+                        Flowable.timer(
+                                LOADING_DELAY_TIME_SECONDS,
+                                TimeUnit.SECONDS,
+                                workerScheduler
+                        ),
+                        ZIP_FUNC
+                )
+                .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
+                .map { (postLoaderData, _) -> postLoaderData }
+
+        return Flowable.merge(allCachedStream, notAllCachedStream)
+    }
+
     private fun processLoaders(postLoaderData: PostLoaderData): Flowable<Unit>? {
         return Flowable.fromIterable(loaders)
+                .subscribeOn(workerScheduler)
                 .flatMapSingle { loader ->
                     return@flatMapSingle loader.startLoading(postLoaderData)
                             .doOnError { error ->

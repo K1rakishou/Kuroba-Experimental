@@ -19,6 +19,11 @@ package com.github.adamantcheese.chan.core.cache;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.RawFile;
 
+/**
+ * Callback call order:
+ *
+ * onStart -> onProgress (?) -> (onSuccess | onFail | onNotFound | onStop | onCancel) -> onEnd
+ * */
 public abstract class FileCacheListener {
 
     /**

@@ -1,45 +1,53 @@
 package com.github.adamantcheese.chan.core.loader.impl
 
+import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheListener
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.LoaderType
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
+import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
+import io.reactivex.Scheduler
 import io.reactivex.Single
 
 class PrefetchLoader(
-        private val fileCacheV2: FileCacheV2
+        private val scheduler: Scheduler,
+        private val fileCacheV2: FileCacheV2,
+        private val cacheHandler: CacheHandler,
+        private val prefetchIndicatorAnimationManager: PrefetchIndicatorAnimationManager
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
+
+    override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
+        return Single.fromCallable {
+            return@fromCallable postLoaderData.post.postImages
+                    .filter { postImage -> postImage.canBeUsedForPrefetch()}
+                    .all { postImage ->
+                        val fileUrl = postImage.imageUrl?.toString()
+                                ?: return@all true
+
+                        return@all cacheHandler.isAlreadyDownloaded(fileUrl)
+                    }
+        }
+                .subscribeOn(scheduler)
+                .onErrorReturnItem(false)
+    }
 
     override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
         BackgroundUtils.ensureBackgroundThread()
 
-        if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
-            return rejected()
-        }
-
         val post = postLoaderData.post
         val loadable = postLoaderData.loadable
 
-        if (post.postImages.isEmpty()) {
-            return rejected()
-        }
-
-        if (!isLoadableSuitableForPrefetch(loadable)) {
-            return rejected()
-        }
-
-        val prefetchList = getPrefetchBatch(post, loadable)
+        val prefetchList = tryGetPrefetchBatch(loadable, post)
         if (prefetchList.isEmpty()) {
+            postLoaderData.post.postImages.forEach { postImage -> onPrefetchEnded(postImage, true) }
             return rejected()
         }
 
@@ -51,13 +59,20 @@ class PrefetchLoader(
 
             if (cancelableDownload == null) {
                 // Already cached or something like that
+                onPrefetchEnded(prefetch.postImage)
                 return@forEach
             }
 
             cancelableDownload.addCallback(object : FileCacheListener() {
                 override fun onSuccess(file: RawFile?) {
                     postLoaderData.post.setContentLoadedForLoader(loaderType)
+                    onPrefetchEnded(prefetch.postImage)
                 }
+
+                override fun onFail(exception: Exception?) = onPrefetchEnded(prefetch.postImage)
+                override fun onNotFound() = onPrefetchEnded(prefetch.postImage)
+                override fun onStop(file: AbstractFile?) = onPrefetchEnded(prefetch.postImage)
+                override fun onCancel() = onPrefetchEnded(prefetch.postImage, false)
             })
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
@@ -73,17 +88,26 @@ class PrefetchLoader(
         return postLoaderData.disposeAll()
     }
 
+    private fun tryGetPrefetchBatch(
+            loadable: Loadable,
+            post: Post
+    ): List<Prefetch> {
+        if (post.isContentLoadedForLoader(loaderType)) {
+            return emptyList()
+        }
+
+        if (!loadable.isSuitableForPrefetch) {
+            return emptyList()
+        }
+
+        return getPrefetchBatch(post, loadable)
+    }
+
     private fun getPrefetchBatch(post: Post, loadable: Loadable): List<Prefetch> {
         BackgroundUtils.ensureBackgroundThread()
 
         return post.postImages.mapNotNull { postImage ->
-            if (postImage.imageUrl == null || postImage.isInlined) {
-                // No url or image is inlined
-                return@mapNotNull null
-            }
-
-            if (!canPrefetchImageType(postImage.type)) {
-                // Bad type or not good enough network
+            if (!postImage.canBeUsedForPrefetch()) {
                 return@mapNotNull null
             }
 
@@ -91,40 +115,12 @@ class PrefetchLoader(
         }
     }
 
-    private fun canPrefetchImageType(type: PostImage.Type?): Boolean {
-        BackgroundUtils.ensureBackgroundThread()
-
-        if (type == null) {
-            return false
+    private fun onPrefetchEnded(postImage: PostImage, success: Boolean = true) {
+        if (success) {
+            postImage.setPrefetched()
         }
 
-        return when (type) {
-            PostImage.Type.STATIC,
-            PostImage.Type.GIF -> shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get())
-            PostImage.Type.MOVIE -> shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get())
-            PostImage.Type.PDF,
-            PostImage.Type.SWF -> false
-        }.exhaustive
-    }
-
-    private fun isLoadableSuitableForPrefetch(loadable: Loadable?): Boolean {
-        BackgroundUtils.ensureBackgroundThread()
-
-        if (loadable == null) {
-            return false
-        }
-
-        if (!ChanSettings.autoLoadThreadImages.get()) {
-            // Prefetching disabled
-            return false
-        }
-
-        if (loadable.isLocal || loadable.isDownloading) {
-            // Cannot prefetch local threads
-            return false
-        }
-
-        return true
+        prefetchIndicatorAnimationManager.onPrefetchDone(postImage)
     }
 
     private data class Prefetch(

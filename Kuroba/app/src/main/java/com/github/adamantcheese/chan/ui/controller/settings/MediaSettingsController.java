@@ -246,6 +246,12 @@ public class MediaSettingsController
                     R.string.setting_auto_load_thread_images,
                     R.string.setting_auto_load_thread_images_description
             )));
+            addRequiresUiRefresh(loading.add(new BooleanSettingView(this,
+                    ChanSettings.showPrefetchLoadingIndicator,
+                    ChanSettings.autoLoadThreadImages,
+                    R.string.setting_show_prefetch_loading_indicator_title,
+                    ""
+            )));
 
             addGroup(loading);
         }
