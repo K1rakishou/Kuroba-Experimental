@@ -26,15 +26,15 @@ class PrefetchLoader(
 
     override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
         return Single.fromCallable {
-            return@fromCallable postLoaderData.post.postImages
-                    .filter { postImage -> postImage.canBeUsedForPrefetch()}
-                    .all { postImage ->
-                        val fileUrl = postImage.imageUrl?.toString()
-                                ?: return@all true
+                    return@fromCallable postLoaderData.post.postImages
+                            .filter { postImage -> postImage.canBeUsedForPrefetch() }
+                            .all { postImage ->
+                                val fileUrl = postImage.imageUrl?.toString()
+                                        ?: return@all true
 
-                        return@all cacheHandler.isAlreadyDownloaded(fileUrl)
-                    }
-        }
+                                return@all cacheHandler.isAlreadyDownloaded(fileUrl)
+                            }
+                }
                 .subscribeOn(scheduler)
                 .onErrorReturnItem(false)
     }

@@ -2,7 +2,10 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.annotation.SuppressLint
 import androidx.annotation.GuardedBy
-import com.github.adamantcheese.chan.core.loader.*
+import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
+import com.github.adamantcheese.chan.core.loader.LoaderResult
+import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
+import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -71,9 +74,6 @@ class OnDemandContentLoaderManager(
         }
 
         val loadersCachedResultFlowable = Flowable.fromIterable(loaders)
-                // Skip prefetch loader because we don't care about it (since prefetch loader
-                // DOES NOT update the PostCell UI)
-                .filter { loader -> loader.loaderType != LoaderType.PrefetchLoader }
                 .flatMapSingle { loader ->
                     return@flatMapSingle loader.isCached(PostLoaderData(loadable, post))
                             .onErrorReturnItem(false)
@@ -89,22 +89,16 @@ class OnDemandContentLoaderManager(
 
         val notAllCachedStream = loadersCachedResultFlowable
                 .filter { allCached -> !allCached }
-                // Add LOADING_DELAY_TIME_SECONDS seconds delay to every emitted event.
+                .map { postLoaderData }
+                // Add LOADING_DELAY_TIME_MS seconds delay to every emitted event.
                 // We do that so that we don't download everything when user quickly
                 // scrolls through posts. In other words, we only start running the
-                // loader after LOADING_DELAY_TIME_SECONDS seconds have passed since
+                // loader after LOADING_DELAY_TIME_MS seconds have passed since
                 // onPostBind() was called. If onPostUnbind() was called during that
                 // time frame we cancel the loader if it has already started loading or
                 // just do nothing if it hasn't started loading yet.
-                .map { postLoaderData }
-                .zipWith(
-                        Flowable.timer(
-                                LOADING_DELAY_TIME_SECONDS,
-                                TimeUnit.SECONDS,
-                                workerScheduler
-                        ),
-                        ZIP_FUNC
-                )
+                .zipWith(Flowable.timer(LOADING_DELAY_TIME_MS, TimeUnit.MILLISECONDS, workerScheduler), ZIP_FUNC)
+                .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
                 .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
                 .map { (postLoaderData, _) -> postLoaderData }
 
@@ -222,7 +216,7 @@ class OnDemandContentLoaderManager(
     companion object {
         private const val TAG = "OnDemandContentLoaderManager"
         private const val MIN_QUEUE_CAPACITY = 32
-        private const val LOADING_DELAY_TIME_SECONDS = 1L
+        private const val LOADING_DELAY_TIME_MS = 1500L
         const val MAX_LOADER_LOADING_TIME_SECONDS = 10L
 
         private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
