@@ -78,7 +78,8 @@ class PrefetchLoader(
         }
 
         // Always false for prefetches because there is nothing in the view that we need to update
-        // after doing a prefetch
+        // after doing a prefetch (Actually there is but we don't need to do notifyItemChanged for
+        // PostAdapter).
         return succeeded(false)
     }
 

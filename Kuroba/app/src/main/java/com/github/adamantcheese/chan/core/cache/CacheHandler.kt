@@ -527,7 +527,7 @@ class CacheHandler(
 
                     val length = charArrayToInt(lengthBuffer)
                     if (length < 0 || length > MAX_CACHE_META_SIZE) {
-                        throw IOException("Cache file meta is too big or too small (${length} bytes)." +
+                        throw IOException("Cache file meta is too big or negative (${length} bytes)." +
                                 " It was probably corrupted. Deleting it.")
                     }
 

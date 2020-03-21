@@ -38,7 +38,7 @@ class PrefetchIndicatorAnimationManager {
         }
 
         override fun toString(): String {
-            return "PrefetchStateData(postImage=$postImage"
+            return "PrefetchStateData(postImage=$postImage)"
         }
 
     }

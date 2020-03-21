@@ -60,10 +60,10 @@ class OnDemandContentLoaderManager(
     }
 
     /**
-     * Checks whether all info for the [postLoaderData] is cached by all loaders (except
-     * PrefetchLoader). If any loader has no cached info for [postLoaderData] then adds a delay
-     * (so that we can have time to be able to cancel it). If everything is cached then the delay
-     * is not added. Also, updates [Post.onDemandContentLoadedMap] for the current post.
+     * Checks whether all info for the [postLoaderData] is cached by all loaders. If any loader has
+     * no cached data for [postLoaderData] then adds a delay (so that we can have time to be
+     * able to cancel it). If everything is cached then the delay is not added.
+     * Also, updates [Post.onDemandContentLoadedMap] for the current post.
      * */
     private fun addDelayIfSomethingIsNotCachedYet(postLoaderData: PostLoaderData): Flowable<PostLoaderData> {
         val loadable = postLoaderData.loadable

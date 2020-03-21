@@ -70,8 +70,8 @@ public class Post
     public final AtomicBoolean deleted = new AtomicBoolean(false);
     /**
      * We use this map to avoid infinite loops when binding posts since after all post content
-     * loaders have done their jobs we update the post via notifyItemChange, which triggers onPostBind()
-     * again.
+     * loaders have done their jobs we update the post via notifyItemChange, which triggers
+     * onPostBind() again.
      * */
     private final Map<LoaderType, Boolean> onDemandContentLoadedMap = new HashMap<>();
     /**
