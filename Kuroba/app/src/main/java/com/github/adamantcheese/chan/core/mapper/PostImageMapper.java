@@ -27,7 +27,7 @@ public class PostImageMapper {
                 postImage.spoilerThumbnailUrl.toString(),
                 postImage.imageWidth,
                 postImage.imageHeight,
-                postImage.spoiler,
+                postImage.spoiler(),
                 postImage.isInlined,
                 postImage.getSize(),
                 postImage.fileHash

@@ -83,7 +83,6 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
-import com.github.adamantcheese.chan.utils.Logger;
 
 import java.text.BreakIterator;
 import java.util.ArrayList;
@@ -504,9 +503,9 @@ public class PostCell
             boolean postFileName = ChanSettings.postFilename.get();
             if (postFileName) {
                 //that special character forces it to be left-to-right, as textDirection didn't want to be obeyed
-                String filename = '\u200E' + (image.spoiler
-                        ? getString(R.string.image_spoiler_filename)
-                        : image.filename + "." + image.extension);
+                String filename = '\u200E' + (image.spoiler() ? (image.hidden
+                        ? getString(R.string.image_hidden_filename)
+                        : getString(R.string.image_spoiler_filename)) : image.filename + "." + image.extension);
                 SpannableString fileInfo = new SpannableString("\n" + filename);
                 fileInfo.setSpan(new ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length(), 0);
                 fileInfo.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length(), 0);
@@ -755,7 +754,6 @@ public class PostCell
             for (int i = 0; i < post.getPostImagesCount(); i++) {
                 PostImage image = post.getPostImages().get(i);
                 if (image.imageUrl == null) {
-                    Logger.e(TAG, "buildThumbnails() image.imageUrl == null");
                     continue;
                 }
 

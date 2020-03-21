@@ -121,9 +121,10 @@ public class ThreadPresenter
     private static final int POST_OPTION_HIDE = 12;
     private static final int POST_OPTION_OPEN_BROWSER = 13;
     private static final int POST_OPTION_FILTER_TRIPCODE = 14;
-    private static final int POST_OPTION_EXTRA = 15;
-    private static final int POST_OPTION_REMOVE = 16;
-    private static final int POST_OPTION_MOCK_REPLY = 17;
+    private static final int POST_OPTION_FILTER_IMAGE_HASH = 15;
+    private static final int POST_OPTION_EXTRA = 16;
+    private static final int POST_OPTION_REMOVE = 17;
+    private static final int POST_OPTION_MOCK_REPLY = 18;
 
     private final WatchManager watchManager;
     private final DatabaseManager databaseManager;
@@ -886,7 +887,7 @@ public class ThreadPresenter
             menu.add(new FloatingMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text));
         }
 
-        if (loadable.getSite().feature(Site.Feature.POST_REPORT) && !loadable.isLocal()) {
+        if (loadable.getSite().siteFeature(Site.SiteFeature.POST_REPORT) && !loadable.isLocal()) {
             menu.add(new FloatingMenuItem(POST_OPTION_REPORT, R.string.post_report));
         }
 
@@ -906,9 +907,13 @@ public class ThreadPresenter
                 menu.add(new FloatingMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode));
                 menu.add(new FloatingMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode));
             }
+
+            if(loadable.site.siteFeature(Site.SiteFeature.IMAGE_FILE_HASH)) {
+                menu.add(new FloatingMenuItem(POST_OPTION_FILTER_IMAGE_HASH, R.string.post_filter_image_hash));
+            }
         }
 
-        if (loadable.site.feature(Site.Feature.POST_DELETE) && databaseManager.getDatabaseSavedReplyManager()
+        if (loadable.site.siteFeature(Site.SiteFeature.POST_DELETE) && databaseManager.getDatabaseSavedReplyManager()
                 .isSaved(post.board, post.no) && !loadable.isLocal()) {
             menu.add(new FloatingMenuItem(POST_OPTION_DELETE, R.string.post_delete));
         }
@@ -975,6 +980,9 @@ public class ThreadPresenter
                 break;
             case POST_OPTION_FILTER_TRIPCODE:
                 threadPresenterCallback.filterPostTripcode(post.tripcode);
+                break;
+            case POST_OPTION_FILTER_IMAGE_HASH:
+                threadPresenterCallback.filterPostImageHash(post);
                 break;
             case POST_OPTION_DELETE:
                 requestDeletePost(post);
@@ -1258,7 +1266,7 @@ public class ThreadPresenter
                         .append(getReadableFileSize(image.getSize()));
             }
 
-            if (image.spoiler && (image.isInlined)) { //all linked files are spoilered, don't say that
+            if (image.spoiler() && (image.isInlined)) { //all linked files are spoilered, don't say that
                 text.append("\nSpoilered");
             }
 
@@ -1452,6 +1460,8 @@ public class ThreadPresenter
         void highlightPostTripcode(String tripcode);
 
         void filterPostTripcode(String tripcode);
+
+        void filterPostImageHash(Post post);
 
         void selectPost(int post);
 
