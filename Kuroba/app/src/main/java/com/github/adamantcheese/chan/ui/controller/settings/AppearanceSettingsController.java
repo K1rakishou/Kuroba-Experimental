@@ -217,7 +217,7 @@ public class AppearanceSettingsController
         {
             SettingsGroup images = new SettingsGroup(R.string.settings_group_images);
 
-            requiresUiRefresh.add(images.add(new BooleanSettingView(this,
+            addRequiresUiRefresh(images.add(new BooleanSettingView(this,
                     ChanSettings.hideImages,
                     R.string.setting_hide_images,
                     R.string.setting_hide_images_description

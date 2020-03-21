@@ -21,6 +21,7 @@ import android.text.Spanned;
 
 import androidx.annotation.AnyThread;
 
+import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -96,10 +97,9 @@ public class CommentParserHelper {
                     Matcher matcher = imageUrlPattern.matcher(((String) linkable.value));
                     if (matcher.matches()) {
                         boolean noThumbnail = StringUtils.endsWithAny((String) linkable.value, noThumbLinkSuffixes);
-                        String spoilerThumbnail =
-                                "https://raw.githubusercontent.com/Adamantcheese/Kuroba/multi-feature/docs/internal_spoiler.png";
-
+                        String spoilerThumbnail = BuildConfig.RESOURCES_ENDPOINT + "internal_spoiler.png";
                         HttpUrl imageUrl = HttpUrl.parse((String) linkable.value);
+
                         if (imageUrl == null) {
                             Logger.e(TAG, "addPostImages() couldn't parse linkable.value (" + linkable.value + ")");
                             continue;

@@ -205,7 +205,7 @@ public class FilterEngine {
         }
         if (typeMatches(filter, ID) && matches(filter, post.posterId, false)) return true;
         if (typeMatches(filter, SUBJECT) && matches(filter, post.subject, false)) return true;
-        for (PostImage image : post.images) {
+        for (PostImage image : post.postImages) {
             if (typeMatches(filter, IMAGE) && matches(filter, image.fileHash, false)) {
                 //for filtering image hashes, we don't want to apply the post-level filter (thus return false)
                 //this takes care of it at an image level, either flagging it to be hidden, which applies a
@@ -213,7 +213,7 @@ public class FilterEngine {
                 if (filter.action == FilterAction.HIDE.id) {
                     image.hidden = true;
                 } else if (filter.action == FilterAction.REMOVE.id) {
-                    post.images.remove(image);
+                    post.postImages.remove(image);
                 }
                 return false;
             }

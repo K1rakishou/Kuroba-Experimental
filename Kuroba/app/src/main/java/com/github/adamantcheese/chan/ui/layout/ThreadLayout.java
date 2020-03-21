@@ -449,9 +449,9 @@ public class ThreadLayout
 
     @Override
     public void filterPostImageHash(Post post) {
-        if (post.images.isEmpty()) return;
-        if (post.images.size() == 1) {
-            callback.openFilterForType(FilterType.IMAGE, post.image().fileHash);
+        if (post.getPostImages().isEmpty()) return;
+        if (post.getPostImages().size() == 1) {
+            callback.openFilterForType(FilterType.IMAGE, post.firstImage().fileHash);
         } else {
             ListView hashList = new ListView(getContext());
             AlertDialog dialog = new AlertDialog.Builder(getContext()).setTitle("Select an image to filter.")
@@ -459,7 +459,7 @@ public class ThreadLayout
                     .create();
             dialog.setCanceledOnTouchOutside(true);
             List<String> hashes = new ArrayList<>();
-            for (PostImage image : post.images) {
+            for (PostImage image : post.getPostImages()) {
                 hashes.add(image.fileHash);
             }
             hashList.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, hashes));
