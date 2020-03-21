@@ -17,24 +17,20 @@ class Loadable2LocalSource(
     private val loadableDao = database.loadableDao()
 
     suspend fun insert(loadable2: Loadable2): ModularResult<Unit> {
-        logger.log(TAG, "insert($loadable2)")
         ensureBackgroundThread()
 
         return safeRun {
-            return@safeRun loadableDao.insert(
-                    Loadable2Mapper.toEntity(loadable2)
-            )
+            return@safeRun loadableDao.insert(Loadable2Mapper.toEntity(loadable2))
+                    .also { result -> logger.log(TAG, "insert($loadable2) -> $result") }
         }
     }
 
     suspend fun selectByThreadUid(threadUid: String): ModularResult<Loadable2?> {
-        logger.log(TAG, "selectByThreadUid($threadUid)")
         ensureBackgroundThread()
 
         return safeRun {
-            return@safeRun Loadable2Mapper.fromEntity(
-                    loadableDao.selectByThreadUid(threadUid)
-            )
+            return@safeRun Loadable2Mapper.fromEntity(loadableDao.selectByThreadUid(threadUid))
+                    .also { result -> logger.log(TAG, "selectByThreadUid($threadUid) -> $result") }
         }
     }
 
@@ -43,13 +39,14 @@ class Loadable2LocalSource(
             boardCode: String,
             opId: Long
     ): ModularResult<Loadable2?> {
-        logger.log(TAG, "selectBySiteBoardOpId($siteName, $boardCode, $opId)")
         ensureBackgroundThread()
 
         return safeRun {
             return@safeRun Loadable2Mapper.fromEntity(
                     loadableDao.selectBySiteBoardOpId(siteName, boardCode, opId)
-            )
+            ).also { result ->
+                logger.log(TAG, "selectBySiteBoardOpId($siteName, $boardCode, $opId) -> $result")
+            }
         }
     }
 

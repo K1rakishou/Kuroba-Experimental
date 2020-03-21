@@ -106,35 +106,42 @@ public class PostImageThumbnailView
     }
 
     public void setPostImage(Loadable loadable, PostImage postImage, boolean useHiRes, int width, int height) {
-        if (this.postImage != postImage) {
-            this.postImage = postImage;
+        if (this.postImage == postImage) {
+            return;
+        }
 
-            if (postImage != null) {
-                startPrefetchProgressIndicatorAnimation(loadable, postImage);
+        this.postImage = postImage;
 
-                if (!loadable.isLocal() || postImage.isInlined) {
-                    String url = getUrl(postImage, useHiRes);
-                    setUrl(url);
-                } else {
-                    String fileName;
+        if (postImage != null) {
+            // Bind
+            startPrefetchProgressIndicatorAnimation(loadable, postImage);
 
-                    if (postImage.spoiler()) {
-                        String extension =
-                                StringUtils.extractFileNameExtension(postImage.spoilerThumbnailUrl.toString());
-
-                        fileName = ThreadSaveManager.formatSpoilerImageName(extension);
-                    } else {
-                        String extension = StringUtils.extractFileNameExtension(postImage.thumbnailUrl.toString());
-
-                        fileName = ThreadSaveManager.formatThumbnailImageName(postImage.serverFilename, extension);
-                    }
-
-                    setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
-                }
+            if (!loadable.isLocal() || postImage.isInlined) {
+                String url = getUrl(postImage, useHiRes);
+                setUrl(url);
             } else {
-                compositeDisposable.clear();
-                setUrl(null);
+                String fileName;
+
+                if (postImage.spoiler()) {
+                    String extension =
+                            StringUtils.extractFileNameExtension(postImage.spoilerThumbnailUrl.toString());
+
+                    fileName = ThreadSaveManager.formatSpoilerImageName(extension);
+                } else {
+                    String extension = StringUtils.extractFileNameExtension(postImage.thumbnailUrl.toString());
+
+                    fileName = ThreadSaveManager.formatThumbnailImageName(postImage.serverFilename, extension);
+                }
+
+                setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
             }
+
+        } else {
+            // Unbind
+            setUrl(null);
+
+            compositeDisposable.clear();
+            endPrefetchProgressIndicatorAnimation();
         }
     }
 

@@ -18,7 +18,6 @@ open class InlinedFileInfoLocalSource(
     private val inlinedFileInfoDao = database.inlinedFileDao()
 
     open suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
-        logger.log(TAG, "insert(${inlinedFileInfo})")
         ensureBackgroundThread()
 
         return safeRun {
@@ -27,36 +26,36 @@ open class InlinedFileInfoLocalSource(
                             inlinedFileInfo,
                             DateTime.now()
                     )
-            )
+            ).also { result ->
+                logger.log(TAG, "insert(${inlinedFileInfo}) -> $result")
+            }
         }
     }
 
     open suspend fun selectByFileUrl(fileUrl: String): ModularResult<InlinedFileInfo?> {
-        logger.log(TAG, "selectByFileUrl(${fileUrl})")
         ensureBackgroundThread()
 
         return safeRun {
-            return@safeRun InlinedFileInfoMapper.fromEntity(
-                    inlinedFileInfoDao.selectByFileUrl(fileUrl)
-            )
+            return@safeRun InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
+                    .also { result -> logger.log(TAG, "selectByFileUrl(${fileUrl}) -> $result") }
         }
     }
 
     open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): ModularResult<Int> {
-        logger.log(TAG, "deleteOlderThan($dateTime)")
         ensureBackgroundThread()
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.deleteOlderThan(dateTime)
+                    .also { result -> logger.log(TAG, "deleteOlderThan($dateTime) -> $result") }
         }
     }
 
     open suspend fun deleteAll(): ModularResult<Int> {
-        logger.log(TAG, "deleteAll()")
         ensureBackgroundThread()
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.deleteAll()
+                    .also { result -> logger.log(TAG, "deleteAll() -> $result") }
         }
     }
 

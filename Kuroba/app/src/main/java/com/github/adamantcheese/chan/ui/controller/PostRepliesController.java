@@ -39,6 +39,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.LoadView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
@@ -262,7 +263,7 @@ public class PostRepliesController
         }
 
         public void setData(PostPopupHelper.RepliesData data) {
-            this.data = data;
+            this.data = new PostPopupHelper.RepliesData(data.forPost, new ArrayList<>(data.posts));
             notifyDataSetChanged();
         }
 
