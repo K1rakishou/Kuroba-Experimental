@@ -32,7 +32,7 @@ object PostImageThumbnailViewAnimator {
         }
 
         companion object {
-            private const val ALPHA_ANIMATION_DURATION = 1_000L
+            private const val ALPHA_ANIMATION_DURATION = 2_500L
         }
     }
 

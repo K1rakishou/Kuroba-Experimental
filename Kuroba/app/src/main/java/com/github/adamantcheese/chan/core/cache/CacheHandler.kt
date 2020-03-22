@@ -387,12 +387,16 @@ class CacheHandler(
                 cacheFileSize
             }
 
-            size.getAndAdd(-fileSize)
-            if (size.get() < 0L) {
-                size.set(0L)
+            if (fileSize > 0) {
+                size.getAndAdd(-fileSize)
+                if (size.get() < 0L) {
+                    size.set(0L)
+                }
+
+                Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
+                        "fileSize = $fileSize, cache size = ${size.get()}")
             }
 
-            Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName")
             return true
         }
 

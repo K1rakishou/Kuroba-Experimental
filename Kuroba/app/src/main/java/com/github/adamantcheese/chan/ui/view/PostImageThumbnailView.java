@@ -40,6 +40,7 @@ import com.github.adamantcheese.chan.utils.StringUtils;
 import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
@@ -90,16 +91,15 @@ public class PostImageThumbnailView
         circularProgressDrawable.setStrokeWidth(5f);
         circularProgressDrawable.setColorSchemeColors(ThemeHelper.getTheme().accentColor.color);
 
-        compositeDisposable.add(
-                prefetchIndicatorAnimationManager.listenForPrefetchStateUpdates()
-                        .filter((prefetchStateData) -> showPrefetchLoadingIndicator && postImage != null)
-                        .filter((prefetchStateData) -> prefetchStateData.getPostImage().equalUrl(postImage))
-                        .subscribe(
-                                (prefetchStateData) -> endPrefetchProgressIndicatorAnimation(),
-                                (error) -> {
-                                    Logger.e(TAG, "Error while listening for prefetch state updates", error);
-                                })
-        );
+        Disposable disposable = prefetchIndicatorAnimationManager.listenForPrefetchStateUpdates()
+                .filter((prefetchStateData) -> showPrefetchLoadingIndicator && postImage != null)
+                .filter((prefetchStateData) -> prefetchStateData.getPostImage().equalUrl(postImage))
+                .subscribe(
+                        (prefetchStateData) -> endPrefetchProgressIndicatorAnimation(),
+                        (e) -> Logger.e(TAG, "Error while listening for prefetch state updates", e)
+                );
+
+        compositeDisposable.add(disposable);
     }
 
     public void overrideShowPrefetchLoadingIndicator(boolean value) {
@@ -136,8 +136,9 @@ public class PostImageThumbnailView
     }
 
     public void unbindPostImage() {
-        setUrl(null);
+        this.postImage = null;
 
+        setUrl(null);
         compositeDisposable.clear();
         endPrefetchProgressIndicatorAnimation();
     }
@@ -167,6 +168,8 @@ public class PostImageThumbnailView
             animation.end();
             invalidate();
         }
+
+        compositeDisposable.clear();
     }
 
     private String getUrl(PostImage postImage, boolean useHiRes) {

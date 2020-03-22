@@ -27,8 +27,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
         get() = MediaServiceType.Youtube
 
     override fun isEnabled(): Boolean {
-        // We can't disable it here because we want to always prepend Youtube links with it's icon
-        return true
+        return ChanSettings.parseYoutubeTitlesAndDuration.get()
     }
 
     override fun isCached(videoId: String): Single<Boolean> {
