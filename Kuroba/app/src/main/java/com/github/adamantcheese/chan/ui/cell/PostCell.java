@@ -339,7 +339,7 @@ public class PostCell
         icons.cancelRequests();
 
         for (PostImageThumbnailView view : thumbnailViews) {
-            view.setPostImage(loadable, null, false, 0, 0);
+            view.unbindPostImage();
         }
 
         if (post != null) {
@@ -753,7 +753,7 @@ public class PostCell
             boolean first = true;
             for (int i = 0; i < post.getPostImagesCount(); i++) {
                 PostImage image = post.getPostImages().get(i);
-                if (image.imageUrl == null) {
+                if (image == null || image.imageUrl == null) {
                     continue;
                 }
 
@@ -772,7 +772,7 @@ public class PostCell
                     p.addRule(RelativeLayout.BELOW, lastId);
                 }
 
-                v.setPostImage(loadable, image, false, size, size);
+                v.bindPostImage(loadable, image, false, size, size);
                 v.setClickable(true);
                 //don't set a callback if the post is deleted, but if the file already exists in cache let it through
                 if (!post.deleted.get() || instance(CacheHandler.class).cacheFileExists(image.imageUrl.toString())) {

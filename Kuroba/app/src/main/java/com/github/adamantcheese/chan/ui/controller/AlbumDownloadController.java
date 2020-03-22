@@ -269,7 +269,7 @@ public class AlbumDownloadController
         this.loadable = loadable;
         for (int i = 0, postImagesSize = postImages.size(); i < postImagesSize; i++) {
             PostImage postImage = postImages.get(i);
-            if (postImage.isInlined || postImage.hidden) {
+            if (postImage == null || postImage.isInlined || postImage.hidden) {
                 // Do not allow downloading inlined files via the Album downloads (because they often
                 // fail with SSL exceptions) and we can't really trust those files.
                 // Also don't allow filter hidden items
@@ -316,11 +316,12 @@ public class AlbumDownloadController
     }
 
     private static class AlbumDownloadItem {
+        @NonNull
         public PostImage postImage;
         public boolean checked;
         public int id;
 
-        public AlbumDownloadItem(PostImage postImage, boolean checked, int id) {
+        public AlbumDownloadItem(@NonNull PostImage postImage, boolean checked, int id) {
             this.postImage = postImage;
             this.checked = checked;
             this.id = id;
@@ -344,7 +345,7 @@ public class AlbumDownloadController
         public void onBindViewHolder(AlbumDownloadCell holder, int position) {
             AlbumDownloadItem item = items.get(position);
 
-            holder.thumbnailView.setPostImage(loadable, item.postImage, true, dp(100), dp(100));
+            holder.thumbnailView.bindPostImage(loadable, item.postImage, true, dp(100), dp(100));
             setItemChecked(holder, item.checked, false);
         }
 

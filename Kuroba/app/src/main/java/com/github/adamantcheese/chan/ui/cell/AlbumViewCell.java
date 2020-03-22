@@ -21,6 +21,8 @@ import android.util.AttributeSet;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -57,11 +59,11 @@ public class AlbumViewCell
         text = findViewById(R.id.text);
     }
 
-    public void setPostImage(Loadable loadable, PostImage postImage) {
+    public void setPostImage(Loadable loadable, @NonNull PostImage postImage) {
         this.postImage = postImage;
 
         int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
-        thumbnailView.setPostImage(
+        thumbnailView.bindPostImage(
                 loadable,
                 postImage,
                 true,

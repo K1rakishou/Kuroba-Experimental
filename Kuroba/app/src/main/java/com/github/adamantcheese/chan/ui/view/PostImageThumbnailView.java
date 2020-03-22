@@ -23,6 +23,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.github.adamantcheese.chan.R;
@@ -94,55 +95,47 @@ public class PostImageThumbnailView
                         .filter((prefetchStateData) -> showPrefetchLoadingIndicator && postImage != null)
                         .filter((prefetchStateData) -> prefetchStateData.getPostImage().equalUrl(postImage))
                         .subscribe(
-                                this::onPrefetchStateChanged,
+                                (prefetchStateData) -> endPrefetchProgressIndicatorAnimation(),
                                 (error) -> {
                                     Logger.e(TAG, "Error while listening for prefetch state updates", error);
                                 })
         );
     }
 
-    private void onPrefetchStateChanged(PrefetchIndicatorAnimationManager.PrefetchStateData prefetchStateData) {
-        endPrefetchProgressIndicatorAnimation();
-    }
-
-    public void setPostImage(Loadable loadable, PostImage postImage, boolean useHiRes, int width, int height) {
+    public void bindPostImage(Loadable loadable, @NonNull PostImage postImage, boolean useHiRes, int width, int height) {
         if (this.postImage == postImage) {
             return;
         }
 
         this.postImage = postImage;
+        startPrefetchProgressIndicatorAnimation(loadable, postImage);
 
-        if (postImage != null) {
-            // Bind
-            startPrefetchProgressIndicatorAnimation(loadable, postImage);
+        if (!loadable.isLocal() || postImage.isInlined) {
+            String url = getUrl(postImage, useHiRes);
+            setUrl(url, width, height);
+        } else {
+            String fileName;
 
-            if (!loadable.isLocal() || postImage.isInlined) {
-                String url = getUrl(postImage, useHiRes);
-                setUrl(url);
+            if (postImage.spoiler()) {
+                String extension =
+                        StringUtils.extractFileNameExtension(postImage.spoilerThumbnailUrl.toString());
+
+                fileName = ThreadSaveManager.formatSpoilerImageName(extension);
             } else {
-                String fileName;
+                String extension = StringUtils.extractFileNameExtension(postImage.thumbnailUrl.toString());
 
-                if (postImage.spoiler()) {
-                    String extension =
-                            StringUtils.extractFileNameExtension(postImage.spoilerThumbnailUrl.toString());
-
-                    fileName = ThreadSaveManager.formatSpoilerImageName(extension);
-                } else {
-                    String extension = StringUtils.extractFileNameExtension(postImage.thumbnailUrl.toString());
-
-                    fileName = ThreadSaveManager.formatThumbnailImageName(postImage.serverFilename, extension);
-                }
-
-                setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
+                fileName = ThreadSaveManager.formatThumbnailImageName(postImage.serverFilename, extension);
             }
 
-        } else {
-            // Unbind
-            setUrl(null);
-
-            compositeDisposable.clear();
-            endPrefetchProgressIndicatorAnimation();
+            setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
         }
+    }
+
+    public void unbindPostImage() {
+        setUrl(null);
+
+        compositeDisposable.clear();
+        endPrefetchProgressIndicatorAnimation();
     }
 
     private void startPrefetchProgressIndicatorAnimation(Loadable loadable, PostImage postImage) {

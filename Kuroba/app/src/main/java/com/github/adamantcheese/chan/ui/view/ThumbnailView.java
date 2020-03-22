@@ -332,8 +332,8 @@ public class ThumbnailView
             setAlpha(0f);
             animate().alpha(1f).setDuration(200);
         } else {
-            setAlpha(1f);
             animate().cancel();
+            setAlpha(1f);
         }
     }
 

@@ -188,12 +188,12 @@ public class CardPostCell
         }
 
         comment.clear();
+        thumbView.unbindPostImage();
 
         if (callback != null) {
             callback.onPostUnbind(post, isActuallyRecycling);
         }
 
-        thumbView.setPostImage(loadable, null, false, 0, 0);
         this.post = null;
         this.callback = null;
     }
@@ -203,11 +203,12 @@ public class CardPostCell
             throw new NullPointerException("Callback is null during bindPost()");
         }
 
-        if (post.firstImage() != null && !ChanSettings.textOnly.get()) {
+        PostImage firstPostImage = post.firstImage();
+        if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
-            thumbView.setPostImage(
+            thumbView.bindPostImage(
                     loadable,
-                    post.firstImage(),
+                    firstPostImage,
                     true,
                     ChanSettings.autoLoadThreadImages.get()
                             ? Math.max(500, thumbView.getWidth())
@@ -218,7 +219,7 @@ public class CardPostCell
             );
         } else {
             thumbView.setVisibility(GONE);
-            thumbView.setPostImage(loadable, null, false, 0, 0);
+            thumbView.unbindPostImage();
         }
 
         if (post.getPostFilter().getFilterHighlightedColor() != 0) {
