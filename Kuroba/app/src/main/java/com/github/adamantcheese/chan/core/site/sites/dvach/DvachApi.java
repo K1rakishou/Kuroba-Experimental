@@ -239,7 +239,7 @@ public class DvachApi
                     .imageWidth(fileWidth)
                     .imageHeight(fileHeight)
                     .size(fileSize)
-                    .fileHash(fileHash)
+                    .fileHash(fileHash, false)
                     .build();
         }
         return null;

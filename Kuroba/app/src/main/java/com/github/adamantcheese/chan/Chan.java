@@ -70,7 +70,7 @@ import io.reactivex.plugins.RxJavaPlugins;
 import okhttp3.Dns;
 import okhttp3.Protocol;
 
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getIsOfficial;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getBuildType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 import static java.lang.Thread.currentThread;
 
@@ -109,6 +109,7 @@ public class Chan
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
         AndroidUtils.init(this);
+        AndroidUtils.getBuildType(); //spit out the build hash to the log
         // remove this if you need to debug some sort of event bus issue
         EventBus.builder().logNoSubscriberMessages(false).installDefaultEventBus();
     }
@@ -216,7 +217,7 @@ public class Chan
             Logger.e("UNCAUGHT", "------------------------------");
             Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT);
             Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME);
-            Logger.e("UNCAUGHT", "Development Build: " + (getIsOfficial() ? "No" : "Yes"));
+            Logger.e("UNCAUGHT", "Development Build: " + getBuildType().name());
             Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL);
 
             /*

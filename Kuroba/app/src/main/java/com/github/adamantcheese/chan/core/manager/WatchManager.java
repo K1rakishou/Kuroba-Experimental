@@ -294,6 +294,7 @@ public class WatchManager
     }
 
     public void stopSavingThread(Loadable loadable) {
+        if (loadable == null) return;
         SavedThread savedThread = findSavedThreadByLoadableId(loadable.id);
         if (savedThread == null || (savedThread.isFullyDownloaded)) {
             // If a thread is already fully downloaded or already stopped do nothing, if it is being
@@ -1090,8 +1091,7 @@ public class WatchManager
 
                 if (waitingForPinWatchersForBackgroundUpdate.isEmpty()) {
                     Logger.i(TAG,
-                            "All watchers updated, finished at " + DateFormat.getTimeInstance(
-                                    DateFormat.DEFAULT,
+                            "All watchers updated, finished at " + DateFormat.getTimeInstance(DateFormat.DEFAULT,
                                     Locale.ENGLISH
                             ).format(new Date())
                     );
