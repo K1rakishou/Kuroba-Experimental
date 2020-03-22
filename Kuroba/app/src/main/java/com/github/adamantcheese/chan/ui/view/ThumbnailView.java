@@ -178,9 +178,15 @@ public class ThumbnailView
     @Override
     public void onResponse(ImageContainer response, boolean isImmediate) {
         if (response.getBitmap() != null) {
-            setImageBitmap(response.getBitmap());
+            setImageBitmap(cloneBitmap(response));
             onImageSet(isImmediate);
         }
+    }
+
+    private Bitmap cloneBitmap(ImageContainer response) {
+        Bitmap originalBitmap = response.getBitmap();
+
+        return originalBitmap.copy(originalBitmap.getConfig(), false);
     }
 
     @Override
@@ -242,7 +248,7 @@ public class ThumbnailView
 
             canvas.restore();
         } else {
-            if (bitmap == null) {
+            if (bitmap == null || bitmap.isRecycled()) {
                 return;
             }
 
@@ -341,11 +347,18 @@ public class ThumbnailView
         bitmapShader = null;
         paint.setShader(null);
 
-        this.bitmap = bitmap;
+        if (this.bitmap != null && !this.bitmap.isRecycled()) {
+            this.bitmap.recycle();
+        }
+
         if (bitmap != null) {
             calculate = true;
             bitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        } else {
+            calculate = false;
         }
+
+        this.bitmap = bitmap;
         invalidate();
     }
 }

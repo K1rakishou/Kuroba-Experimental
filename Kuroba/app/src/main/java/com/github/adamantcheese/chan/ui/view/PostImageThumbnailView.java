@@ -102,6 +102,10 @@ public class PostImageThumbnailView
         );
     }
 
+    public void overrideShowPrefetchLoadingIndicator(boolean value) {
+        this.showPrefetchLoadingIndicator = value;
+    }
+
     public void bindPostImage(Loadable loadable, @NonNull PostImage postImage, boolean useHiRes, int width, int height) {
         if (this.postImage == postImage) {
             return;

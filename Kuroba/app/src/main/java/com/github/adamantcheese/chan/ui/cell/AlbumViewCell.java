@@ -63,6 +63,10 @@ public class AlbumViewCell
         this.postImage = postImage;
 
         int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
+
+        // We don't want to show the prefetch loading indicator in album thumbnails (at least for
+        // now)
+        thumbnailView.overrideShowPrefetchLoadingIndicator(false);
         thumbnailView.bindPostImage(
                 loadable,
                 postImage,
