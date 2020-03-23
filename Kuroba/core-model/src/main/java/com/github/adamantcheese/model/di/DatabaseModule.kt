@@ -10,7 +10,6 @@ import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRep
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
-import com.github.adamantcheese.model.source.local.Loadable2LocalSource
 import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
@@ -38,20 +37,6 @@ class DatabaseModule {
     /**
      * Local sources
      * */
-
-    @Singleton
-    @Provides
-    fun provideLoadable2LocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger
-    ): Loadable2LocalSource {
-        return Loadable2LocalSource(
-                database,
-                loggerTag,
-                logger
-        )
-    }
 
     @Singleton
     @Provides

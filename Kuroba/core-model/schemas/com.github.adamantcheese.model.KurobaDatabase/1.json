@@ -2,71 +2,8 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "12007cca67157bcb50d2f05adedde834",
+    "identityHash": "e6ad23f979063e37d14188f0f8ea204e",
     "entities": [
-      {
-        "tableName": "loadable",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_uid` TEXT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `op_id` INTEGER NOT NULL, `loadable_type` INTEGER NOT NULL, PRIMARY KEY(`thread_uid`))",
-        "fields": [
-          {
-            "fieldPath": "threadUid",
-            "columnName": "thread_uid",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "siteName",
-            "columnName": "site_name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "boardCode",
-            "columnName": "board_code",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "opId",
-            "columnName": "op_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "loadableType",
-            "columnName": "loadable_type",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "columnNames": [
-            "thread_uid"
-          ],
-          "autoGenerate": false
-        },
-        "indices": [
-          {
-            "name": "loadable_site_board_opid_idx",
-            "unique": true,
-            "columnNames": [
-              "site_name",
-              "board_code",
-              "op_id"
-            ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `loadable_site_board_opid_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`, `op_id`)"
-          },
-          {
-            "name": "loadable_thread_uid_idx",
-            "unique": true,
-            "columnNames": [
-              "thread_uid"
-            ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `loadable_thread_uid_idx` ON `${TABLE_NAME}` (`thread_uid`)"
-          }
-        ],
-        "foreignKeys": []
-      },
       {
         "tableName": "media_service_link_extra_content_entity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_id` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_id`))",
@@ -214,7 +151,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '12007cca67157bcb50d2f05adedde834')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6ad23f979063e37d14188f0f8ea204e')"
     ]
   }
 }
