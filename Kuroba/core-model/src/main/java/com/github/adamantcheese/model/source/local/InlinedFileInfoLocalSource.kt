@@ -26,9 +26,7 @@ open class InlinedFileInfoLocalSource(
                             inlinedFileInfo,
                             DateTime.now()
                     )
-            ).also { result ->
-                logger.log(TAG, "insert(${inlinedFileInfo}) -> $result")
-            }
+            )
         }
     }
 
@@ -37,7 +35,6 @@ open class InlinedFileInfoLocalSource(
 
         return safeRun {
             return@safeRun InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
-                    .also { result -> logger.log(TAG, "selectByFileUrl(${fileUrl}) -> $result") }
         }
     }
 
@@ -46,7 +43,6 @@ open class InlinedFileInfoLocalSource(
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.deleteOlderThan(dateTime)
-                    .also { result -> logger.log(TAG, "deleteOlderThan($dateTime) -> $result") }
         }
     }
 
@@ -55,7 +51,6 @@ open class InlinedFileInfoLocalSource(
 
         return safeRun {
             return@safeRun inlinedFileInfoDao.deleteAll()
-                    .also { result -> logger.log(TAG, "deleteAll() -> $result") }
         }
     }
 

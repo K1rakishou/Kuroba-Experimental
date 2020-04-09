@@ -26,7 +26,7 @@ open class MediaServiceLinkExtraContentLocalSource(
                             mediaServiceLinkExtraContent,
                             DateTime.now()
                     )
-            ).also { result -> logger.log(TAG, "insert($mediaServiceLinkExtraContent) -> $result") }
+            )
         }
     }
 
@@ -36,7 +36,7 @@ open class MediaServiceLinkExtraContentLocalSource(
         return safeRun {
             return@safeRun MediaServiceLinkExtraContentMapper.fromEntity(
                     mediaServiceLinkExtraContentDao.selectByVideoId(videoId)
-            ).also { result -> logger.log(TAG, "selectByVideoId($videoId) -> $result") }
+            )
         }
     }
 
@@ -45,7 +45,6 @@ open class MediaServiceLinkExtraContentLocalSource(
 
         return safeRun {
             return@safeRun mediaServiceLinkExtraContentDao.deleteOlderThan(dateTime)
-                    .also { result -> logger.log(TAG, "deleteOlderThan($dateTime) -> $result") }
         }
     }
 
@@ -54,7 +53,6 @@ open class MediaServiceLinkExtraContentLocalSource(
 
         return safeRun {
             return@safeRun mediaServiceLinkExtraContentDao.deleteAll()
-                    .also { result -> logger.log(TAG, "deleteAll() -> $result") }
         }
     }
 

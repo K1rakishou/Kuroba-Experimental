@@ -22,7 +22,6 @@ open class SeenPostLocalSource(
 
         return safeRun {
             return@safeRun seenPostDao.insert(SeenPostMapper.toEntity(seenPost))
-                    .also { result -> logger.log(TAG, "insert($seenPost) -> $result") }
         }
     }
 
@@ -32,7 +31,6 @@ open class SeenPostLocalSource(
         return safeRun {
             return@safeRun seenPostDao.selectAllByLoadableUid(loadableUid)
                     .mapNotNull { seenPostEntity -> SeenPostMapper.fromEntity(seenPostEntity) }
-                    .also { result -> logger.log(TAG, "selectAllByLoadableUid($loadableUid) -> $result") }
         }
     }
 
@@ -41,7 +39,6 @@ open class SeenPostLocalSource(
 
         return safeRun {
             return@safeRun seenPostDao.deleteOlderThan(dateTime)
-                    .also { result -> logger.log(TAG, "deleteOlderThan($dateTime) -> $result") }
         }
     }
 
@@ -50,7 +47,6 @@ open class SeenPostLocalSource(
 
         return safeRun {
             return@safeRun seenPostDao.deleteAll()
-                    .also { result -> logger.log(TAG, "deleteAll() -> $result") }
         }
     }
 
