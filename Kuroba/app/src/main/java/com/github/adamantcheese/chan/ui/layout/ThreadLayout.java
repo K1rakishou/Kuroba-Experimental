@@ -460,7 +460,7 @@ public class ThreadLayout
             dialog.setCanceledOnTouchOutside(true);
             List<String> hashes = new ArrayList<>();
             for (PostImage image : post.getPostImages()) {
-                hashes.add(image.fileHash);
+                if (!image.isInlined && image.fileHash != null) hashes.add(image.fileHash);
             }
             hashList.setAdapter(new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, hashes));
             hashList.setOnItemClickListener((parent, view, position, id) -> {

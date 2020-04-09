@@ -32,7 +32,6 @@ import androidx.core.app.NotificationCompat;
 
 import com.github.adamantcheese.chan.R;
 
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 
@@ -50,6 +49,7 @@ public class SavingNotification
 
     public static void setupChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (getNotificationManager().getNotificationChannel(NOTIFICATION_ID_STR) != null) return;
             getNotificationManager().createNotificationChannel(new NotificationChannel(NOTIFICATION_ID_STR,
                     "Save notification",
                     NotificationManager.IMPORTANCE_LOW
@@ -61,6 +61,12 @@ public class SavingNotification
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        setupChannel();
     }
 
     @Override

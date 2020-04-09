@@ -20,6 +20,8 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.widget.Toast;
 
+import androidx.exifinterface.media.ExifInterface;
+
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
@@ -48,7 +50,6 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.BitmapUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
-import com.vdurmont.emoji.EmojiParser;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -217,7 +218,7 @@ public class ReplyPresenter
                 if (moreOpen) {
                     callback.openFileName(false);
                     if (board.spoilers) {
-                        callback.openSpoiler(false, false);
+                        callback.openSpoiler(false, true);
                     }
                 }
                 previewOpen = false;
@@ -252,7 +253,7 @@ public class ReplyPresenter
                 } else {
                     String errorMessage = getString(R.string.reply_error_message_timer_reply, timeLeft);
                     switchPage(Page.INPUT);
-                    callback.openMessage(true, false, errorMessage, true);
+                    callback.openMessage(errorMessage);
                 }
             } else {
                 long timeLeft = lastReplyRepository.getTimeUntilThread(draft.loadable.board);
@@ -261,7 +262,7 @@ public class ReplyPresenter
                 } else {
                     String errorMessage = getString(R.string.reply_error_message_timer_thread, timeLeft);
                     switchPage(Page.INPUT);
-                    callback.openMessage(true, false, errorMessage, true);
+                    callback.openMessage(errorMessage);
                 }
             }
         } else {
@@ -281,20 +282,13 @@ public class ReplyPresenter
         callback.loadViewsIntoDraft(draft);
 
         if (!isAuthenticateOnly && (draft.comment.trim().isEmpty() && draft.file == null)) {
-            callback.openMessage(true, false, getString(R.string.reply_comment_empty), true);
+            callback.openMessage(getString(R.string.reply_comment_empty));
             return false;
         }
 
         draft.loadable = loadable;
         draft.spoilerImage = draft.spoilerImage && board.spoilers;
         draft.captchaResponse = null;
-        if (ChanSettings.enableEmoji.get()) {
-            draft.comment = EmojiParser.parseFromUnicode(draft.comment,
-                    e -> ":" + e.getEmoji().getAliases().get(0) + (e.hasFitzpatrick()
-                            ? "|" + e.getFitzpatrickType()
-                            : "") + ": "
-            );
-        }
 
         return true;
     }
@@ -330,7 +324,7 @@ public class ReplyPresenter
                     }
                 } else {
                     //new thread
-                    watchManager.createPin(localLoadable);
+                    watchManager.createPin(localLoadable, draft);
                 }
             }
 
@@ -362,7 +356,7 @@ public class ReplyPresenter
 
             Logger.e(TAG, "onPostComplete error", errorMessage);
             switchPage(Page.INPUT);
-            callback.openMessage(true, false, errorMessage, true);
+            callback.openMessage(errorMessage);
         }
     }
 
@@ -386,7 +380,7 @@ public class ReplyPresenter
             }
         }
 
-        callback.openMessage(true, false, errorMessage, true);
+        callback.openMessage(errorMessage);
     }
 
     @Override
@@ -447,38 +441,33 @@ public class ReplyPresenter
     private void handleQuote(Post post, String textQuote) {
         callback.loadViewsIntoDraft(draft);
 
-        String extraNewline = "";
-        if (draft.selectionStart - 1 >= 0 && draft.selectionStart - 1 < draft.comment.length()
-                && draft.comment.charAt(draft.selectionStart - 1) != '\n') {
-            extraNewline = "\n";
+        StringBuilder insert = new StringBuilder();
+        int selectStart = callback.getSelectionStart();
+        if (selectStart - 1 >= 0 && selectStart - 1 < draft.comment.length()
+                && draft.comment.charAt(selectStart - 1) != '\n') {
+            insert.append('\n');
         }
 
-        String postQuote = "";
-        if (post != null) {
-            if (!draft.comment.contains(">>" + post.no)) {
-                postQuote = ">>" + post.no + "\n";
-            }
+        if (post != null && !draft.comment.contains(">>" + post.no)) {
+            insert.append(">>").append(post.no).append("\n");
         }
 
-        StringBuilder textQuoteResult = new StringBuilder();
         if (textQuote != null) {
             String[] lines = textQuote.split("\n+");
-            // matches for >>123, >>123 (OP), >>123 (You), >>>/fit/123
+            // matches for >>123, >>123 (text), >>>/fit/123
             final Pattern quotePattern = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$");
             for (String line : lines) {
                 // do not include post no from quoted post
                 if (!quotePattern.matcher(line).matches()) {
-                    textQuoteResult.append(">").append(line).append("\n");
+                    insert.append(">").append(line).append("\n");
                 }
             }
         }
 
-        String insert = extraNewline + postQuote + textQuoteResult.toString();
-        draft.comment = new StringBuilder(draft.comment).insert(draft.selectionStart, insert).toString();
-        // Set the selection start to the new end
-        draft.selectionEnd += insert.length();
-        draft.selectionStart = draft.selectionEnd;
+        draft.comment = new StringBuilder(draft.comment).insert(selectStart, insert).toString();
+
         callback.loadDraftIntoViews(draft);
+        callback.adjustSelection(selectStart, insert.length());
 
         highlightQuotes();
     }
@@ -488,6 +477,13 @@ public class ReplyPresenter
         pickingFile = false;
         draft.file = file;
         draft.fileName = name;
+        try {
+            ExifInterface exif = new ExifInterface(file.getAbsolutePath());
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
+            if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
+                callback.openMessage(getString(R.string.file_has_exif_data));
+            }
+        } catch (Exception ignored) {}
         showPreview(name, file);
     }
 
@@ -503,7 +499,7 @@ public class ReplyPresenter
         moreOpen = false;
         previewOpen = false;
         selectedQuote = -1;
-        callback.openMessage(false, true, "", false);
+        callback.openMessage(null);
         callback.setExpanded(false);
         callback.openSubject(false);
         callback.openFlag(false);
@@ -515,7 +511,7 @@ public class ReplyPresenter
         callback.openCommentSJISButton(false);
         callback.openNameOptions(false);
         callback.openFileName(false);
-        callback.openSpoiler(false, false);
+        callback.openSpoiler(false, true);
         callback.openPreview(false, null);
         callback.openPreviewMessage(false, null);
         callback.destroyCurrentAuthentication();
@@ -568,7 +564,8 @@ public class ReplyPresenter
         // Find all occurrences of >>\d+ with start and end between selectionStart
         int no = -1;
         while (matcher.find()) {
-            if (matcher.start() <= draft.selectionStart && matcher.end() >= draft.selectionStart - 1) {
+            int selectStart = callback.getSelectionStart();
+            if (matcher.start() <= selectStart && matcher.end() >= selectStart - 1) {
                 String quote = matcher.group().substring(2);
                 try {
                     no = Integer.parseInt(quote);
@@ -631,6 +628,10 @@ public class ReplyPresenter
 
         void loadDraftIntoViews(Reply draft);
 
+        int getSelectionStart();
+
+        void adjustSelection(int start, int amount);
+
         void setPage(Page page);
 
         void initializeAuthentication(
@@ -643,7 +644,7 @@ public class ReplyPresenter
 
         void resetAuthentication();
 
-        void openMessage(boolean open, boolean animate, String message, boolean autoHide);
+        void openMessage(String message);
 
         void onPosted();
 
@@ -681,7 +682,7 @@ public class ReplyPresenter
 
         void openPreviewMessage(boolean show, String message);
 
-        void openSpoiler(boolean show, boolean checked);
+        void openSpoiler(boolean show, boolean setUnchecked);
 
         void highlightPostNo(int no);
 

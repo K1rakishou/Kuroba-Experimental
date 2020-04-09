@@ -869,4 +869,6 @@ Don't have a 4chan Pass?<br>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
+
+    <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
 </resources>

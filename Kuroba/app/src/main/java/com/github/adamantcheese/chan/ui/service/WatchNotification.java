@@ -67,7 +67,6 @@ import javax.inject.Inject;
 import static android.provider.Settings.System.DEFAULT_NOTIFICATION_URI;
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.NOTIFY_ONLY_QUOTES;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 
@@ -96,8 +95,11 @@ public class WatchNotification
 
     public static void setupChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = getNotificationManager();
+            if (notificationManager.getNotificationChannel(NOTIFICATION_ID_STR) != null
+                    && notificationManager.getNotificationChannel(NOTIFICATION_ID_ALERT_STR) != null) return;
             //notification channel for non-alerts
-            getNotificationManager().createNotificationChannel(new NotificationChannel(NOTIFICATION_ID_STR,
+            notificationManager.createNotificationChannel(new NotificationChannel(NOTIFICATION_ID_STR,
                     NOTIFICATION_NAME,
                     NotificationManager.IMPORTANCE_MIN
             ));
@@ -114,7 +116,7 @@ public class WatchNotification
             );
             alert.enableLights(true);
             alert.setLightColor(0xff91e466);
-            getNotificationManager().createNotificationChannel(alert);
+            notificationManager.createNotificationChannel(alert);
         }
     }
 
@@ -140,6 +142,7 @@ public class WatchNotification
     @SuppressLint("NewApi")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        setupChannel();
         //start with a blank notification, to ensure it is made within 5 seconds
         startForeground(NOTIFICATION_ID, new NotificationCompat.Builder(this, NOTIFICATION_ID_STR).build());
 
@@ -501,7 +504,10 @@ public class WatchNotification
                 pauseWatching.putExtra(PAUSE_PINS_KEY, true);
                 PendingIntent pauseWatchIntent =
                         PendingIntent.getService(this, 0, pauseWatching, PendingIntent.FLAG_UPDATE_CURRENT);
-                builder.addAction(R.drawable.ic_action_pause, getString(R.string.watch_pause_pins), pauseWatchIntent);
+                builder.addAction(R.drawable.ic_pause_white_24dp,
+                        getString(R.string.watch_pause_pins),
+                        pauseWatchIntent
+                );
             }
 
             //setup the display in the notification

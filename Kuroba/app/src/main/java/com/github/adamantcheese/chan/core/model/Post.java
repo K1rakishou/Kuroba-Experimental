@@ -23,6 +23,8 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
 import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.vdurmont.emoji.EmojiParser;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 
 import org.jetbrains.annotations.NotNull;
@@ -464,7 +466,11 @@ public class Post
         }
 
         public Builder name(String name) {
-            this.name = name;
+            if (ChanSettings.enableEmoji.get()) {
+                this.name = EmojiParser.parseToUnicode(name);
+            } else {
+                this.name = name;
+            }
             return this;
         }
 
