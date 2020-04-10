@@ -2,6 +2,8 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import java.util.*
 
 /**
@@ -22,9 +24,9 @@ class MockReplyManager {
     @GuardedBy("this")
     private val mockReplyMultiMap = mutableMapOf<ThreadDescriptor, LinkedList<Int>>()
 
-    fun addMockReply(siteId: Int, boardCode: String, opNo: Int, postNo: Int) {
+    fun addMockReply(siteName: String, boardCode: String, opNo: Int, postNo: Int) {
         synchronized(this) {
-            val threadDescriptor = ThreadDescriptor(siteId, boardCode, opNo)
+            val threadDescriptor = ThreadDescriptor(BoardDescriptor(siteName, boardCode), opNo.toLong())
 
             if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
                 mockReplyMultiMap[threadDescriptor] = LinkedList()
@@ -35,9 +37,9 @@ class MockReplyManager {
         }
     }
 
-    fun getLastMockReply(siteId: Int, boardCode: String, opNo: Int): Int {
+    fun getLastMockReply(siteName: String, boardCode: String, opNo: Int): Int {
         return synchronized(this) {
-            val threadDescriptor = ThreadDescriptor(siteId, boardCode, opNo)
+            val threadDescriptor = ThreadDescriptor(BoardDescriptor(siteName, boardCode), opNo.toLong())
 
             val repliesQueue = mockReplyMultiMap[threadDescriptor]
                     ?: return@synchronized -1
@@ -56,33 +58,6 @@ class MockReplyManager {
             }
 
             return@synchronized lastReply
-        }
-    }
-
-    data class ThreadDescriptor(
-            val siteId: Int,
-            val boardCode: String,
-            val opNo: Int
-    ) {
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as ThreadDescriptor
-
-            if (siteId != other.siteId) return false
-            if (boardCode != other.boardCode) return false
-            if (opNo != other.opNo) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = siteId
-            result = 31 * result + boardCode.hashCode()
-            result = 31 * result + opNo
-            return result
         }
     }
 

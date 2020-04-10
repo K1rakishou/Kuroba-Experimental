@@ -163,7 +163,11 @@ public class CommentParser {
     ) {
         CommentParser.Link handlerLink = matchAnchor(post, text, anchor, callback);
 
-        int mockReplyPostNo = mockReplyManager.getLastMockReply(post.board.siteId, post.board.code, post.opId);
+        int mockReplyPostNo = mockReplyManager.getLastMockReply(
+                post.board.site.name(),
+                post.board.code,
+                post.opId
+        );
 
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 

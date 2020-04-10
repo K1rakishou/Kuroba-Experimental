@@ -1046,8 +1046,13 @@ public class ThreadPresenter
                 }
                 break;
             case POST_OPTION_MOCK_REPLY:
-                if (isBound()) {
-                    mockReplyManager.addMockReply(post.board.siteId, loadable.boardCode, loadable.no, post.no);
+                if (isBound() && loadable.isThreadMode()) {
+                    mockReplyManager.addMockReply(
+                            post.board.site.name(),
+                            loadable.boardCode,
+                            loadable.no,
+                            post.no
+                    );
                     showToast(context, "Refresh to add mock replies");
                 }
                 break;
