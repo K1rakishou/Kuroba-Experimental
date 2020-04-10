@@ -1,26 +1,26 @@
 package com.github.adamantcheese.model.mapper
 
-import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import com.github.adamantcheese.model.entity.SeenPostEntity
 
 object SeenPostMapper {
 
-    fun toEntity(ownerBoardId: Long, seenPost: SeenPost): SeenPostEntity {
+    fun toEntity(ownerThreadId: Long, seenPost: SeenPost): SeenPostEntity {
         return SeenPostEntity(
-                seenPost.postId,
-                ownerBoardId,
-                seenPost.insertedAt
+                postId = seenPost.postId,
+                ownerThreadId = ownerThreadId,
+                insertedAt = seenPost.insertedAt
         )
     }
 
-    fun fromEntity(catalogDescriptor: CatalogDescriptor, seenPostEntity: SeenPostEntity?): SeenPost? {
+    fun fromEntity(threadDescriptor: ThreadDescriptor, seenPostEntity: SeenPostEntity?): SeenPost? {
         if (seenPostEntity == null) {
             return null
         }
 
         return SeenPost(
-                catalogDescriptor,
+                threadDescriptor,
                 seenPostEntity.postId,
                 seenPostEntity.insertedAt
         )

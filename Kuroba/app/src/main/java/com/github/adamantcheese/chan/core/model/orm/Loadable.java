@@ -22,7 +22,7 @@ import android.text.TextUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.model.data.CatalogDescriptor;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -307,8 +307,8 @@ public class Loadable
         return true;
     }
 
-    public CatalogDescriptor getCatalogDescriptor() {
-        return new CatalogDescriptor(site.name(), boardCode);
+    public BoardDescriptor getBoardDescriptor() {
+        return new BoardDescriptor(site.name(), boardCode);
     }
 
     public static Loadable readFromParcel(Parcel parcel) {

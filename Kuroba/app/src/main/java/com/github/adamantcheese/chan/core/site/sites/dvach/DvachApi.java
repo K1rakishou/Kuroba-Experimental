@@ -83,8 +83,9 @@ public class DvachApi
         builder.board(queue.getLoadable().board);
 
         SiteEndpoints endpoints = queue.getLoadable().getSite().endpoints();
-
         List<PostImage> files = new ArrayList<>();
+
+        int parentPostId = 0;
 
         reader.beginObject();
         while (reader.hasNext()) {
@@ -106,10 +107,13 @@ public class DvachApi
                 case "trip":
                     builder.tripcode(reader.nextString());
                     break;
-                case "op":
-                    int opId = reader.nextInt();
-                    builder.op(opId == 0 && queue.getLoadable().no == builder.id);
-                    builder.opId(opId);
+                case "parent":
+                    parentPostId = reader.nextInt();
+                    builder.op(parentPostId == 0);
+
+                    if (parentPostId != 0) {
+                        builder.opId(parentPostId);
+                    }
                     break;
                 case "sticky":
                     builder.sticky(reader.nextInt() == 1 && builder.op);
@@ -152,6 +156,10 @@ public class DvachApi
             }
         }
         reader.endObject();
+
+        if (parentPostId == 0) {
+            builder.opId(builder.id);
+        }
 
         builder.postImages(files);
 

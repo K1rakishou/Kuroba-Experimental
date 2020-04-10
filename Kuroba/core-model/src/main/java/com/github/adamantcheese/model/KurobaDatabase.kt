@@ -9,18 +9,13 @@ import com.github.adamantcheese.model.converter.DateTimeTypeConverter
 import com.github.adamantcheese.model.converter.LoadableTypeConverter
 import com.github.adamantcheese.model.converter.PeriodTypeConverter
 import com.github.adamantcheese.model.converter.VideoServiceTypeConverter
-import com.github.adamantcheese.model.dao.ChanCatalogDao
-import com.github.adamantcheese.model.dao.InlinedFileInfoDao
-import com.github.adamantcheese.model.dao.MediaServiceLinkExtraContentDao
-import com.github.adamantcheese.model.dao.SeenPostDao
-import com.github.adamantcheese.model.entity.ChanCatalogEntity
-import com.github.adamantcheese.model.entity.InlinedFileInfoEntity
-import com.github.adamantcheese.model.entity.MediaServiceLinkExtraContentEntity
-import com.github.adamantcheese.model.entity.SeenPostEntity
+import com.github.adamantcheese.model.dao.*
+import com.github.adamantcheese.model.entity.*
 
 @Database(
         entities = [
-            ChanCatalogEntity::class,
+            ChanBoardEntity::class,
+            ChanThreadEntity::class,
             MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class,
             InlinedFileInfoEntity::class
@@ -38,7 +33,8 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun mediaServiceLinkExtraContentDao(): MediaServiceLinkExtraContentDao
     abstract fun seenPostDao(): SeenPostDao
     abstract fun inlinedFileDao(): InlinedFileInfoDao
-    abstract fun chanCatalogDao(): ChanCatalogDao
+    abstract fun chanBoardDao(): ChanBoardDao
+    abstract fun chanThreadDao(): ChanThreadDao
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"

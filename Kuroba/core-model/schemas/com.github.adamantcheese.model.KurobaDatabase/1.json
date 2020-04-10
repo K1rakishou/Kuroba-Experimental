@@ -2,10 +2,10 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8cc98aaabf2c2df60f71e376e34a5f1d",
+    "identityHash": "1c2e1cd8486aa9347e3b8752dbbdfe62",
     "entities": [
       {
-        "tableName": "chan_catalog",
+        "tableName": "chan_board",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`board_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL)",
         "fields": [
           {
@@ -35,16 +35,54 @@
         },
         "indices": [
           {
-            "name": "chan_catalog_catalog_descriptor_idx",
+            "name": "chan_board_board_descriptor_idx",
             "unique": true,
             "columnNames": [
               "site_name",
               "board_code"
             ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_catalog_catalog_descriptor_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_board_board_descriptor_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
           }
         ],
         "foreignKeys": []
+      },
+      {
+        "tableName": "chan_thread",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, PRIMARY KEY(`thread_id`), FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "threadId",
+            "columnName": "thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerBoardId",
+            "columnName": "owner_board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "thread_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "chan_board",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_board_id"
+            ],
+            "referencedColumns": [
+              "board_id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "media_service_link_extra_content_entity",
@@ -101,7 +139,7 @@
       },
       {
         "tableName": "seen_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_board_id`) REFERENCES `chan_catalog`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postId",
@@ -110,8 +148,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "ownerBoardId",
-            "columnName": "owner_board_id",
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -140,14 +178,14 @@
         ],
         "foreignKeys": [
           {
-            "table": "chan_catalog",
+            "table": "chan_thread",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
-              "owner_board_id"
+              "owner_thread_id"
             ],
             "referencedColumns": [
-              "board_id"
+              "thread_id"
             ]
           }
         ]
@@ -197,7 +235,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8cc98aaabf2c2df60f71e376e34a5f1d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1c2e1cd8486aa9347e3b8752dbbdfe62')"
     ]
   }
 }

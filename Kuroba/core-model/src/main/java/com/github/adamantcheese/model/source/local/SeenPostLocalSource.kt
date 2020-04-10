@@ -2,8 +2,8 @@ package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import com.github.adamantcheese.model.mapper.SeenPostMapper
 import org.joda.time.DateTime
 
@@ -14,34 +14,37 @@ open class SeenPostLocalSource(
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag SeenPostLocalSource"
     private val seenPostDao = database.seenPostDao()
-    private val chanCatalogDao = database.chanCatalogDao()
+    private val chanBoardDao = database.chanBoardDao()
+    private val chanThreadDao = database.chanThreadDao()
 
     open suspend fun insert(seenPost: SeenPost) {
         ensureInTransaction()
 
-        val chanCatalogEntity = chanCatalogDao.insert(
-                seenPost.catalogDescriptor.siteName,
-                seenPost.catalogDescriptor.boardCode
+        val chanBoardEntity = chanBoardDao.insert(
+                seenPost.threadDescriptor.siteName(),
+                seenPost.threadDescriptor.boardCode()
         )
 
-        seenPostDao.insert(SeenPostMapper.toEntity(chanCatalogEntity.boardId, seenPost))
+        val chanThreadEntity = chanThreadDao.insert(
+                seenPost.threadDescriptor.opId,
+                chanBoardEntity.boardId
+        )
+
+        seenPostDao.insert(
+                SeenPostMapper.toEntity(chanThreadEntity.threadId, seenPost)
+        )
+
     }
 
-    open suspend fun selectAllByCatalogDescriptor(catalogDescriptor: CatalogDescriptor): List<SeenPost> {
+    open suspend fun selectAllByThreadDescriptor(threadDescriptor: ThreadDescriptor): List<SeenPost> {
         ensureInTransaction()
 
-        val chanCatalogEntity = chanCatalogDao.select(
-                catalogDescriptor.siteName,
-                catalogDescriptor.boardCode
-        )
+        val chanBoardEntity = chanThreadDao.select(threadDescriptor.opId)
+                ?: return emptyList()
 
-        if (chanCatalogEntity == null) {
-            return emptyList()
-        }
-
-        return seenPostDao.selectAllByBoardId(chanCatalogEntity.boardId)
+        return seenPostDao.selectAllByThreadId(chanBoardEntity.threadId)
                 .mapNotNull { seenPostEntity ->
-                    return@mapNotNull SeenPostMapper.fromEntity(catalogDescriptor, seenPostEntity)
+                    return@mapNotNull SeenPostMapper.fromEntity(threadDescriptor, seenPostEntity)
                 }
     }
 

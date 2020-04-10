@@ -4,13 +4,11 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
-import com.github.adamantcheese.chan.utils.exhaustive
-import com.github.adamantcheese.chan.utils.putIfNotContains
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +27,7 @@ class SeenPostsManager(
         private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
     @GuardedBy("mutex")
-    private val seenPostsMap = mutableMapOf<CatalogDescriptor, MutableSet<SeenPost>>()
+    private val seenPostsMap = mutableMapOf<ThreadDescriptor, MutableSet<SeenPost>>()
     private val mutex = Mutex()
 
     override val coroutineContext: CoroutineContext
@@ -39,9 +37,9 @@ class SeenPostsManager(
         consumeEach { action ->
             when (action) {
                 is ActorAction.Preload -> {
-                    val catalogDescriptor = action.loadable.catalogDescriptor
+                    val threadDescriptor = action.threadDescriptor
 
-                    when (val result = seenPostsRepository.selectAllByCatalogDescriptor(catalogDescriptor)) {
+                    when (val result = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)) {
                         is ModularResult.Value -> {
                             // FIXME: Using a mutex inside of an actor is not a good idea (it defeats
                             //  the whole point of using actors in the first place) but there is
@@ -52,32 +50,36 @@ class SeenPostsManager(
                             //  the future when ThreadPresenter is converted into Kotlin
                             //  (probably not only ThreadPresenter but also a ton of other classes)
                             mutex.withLock {
-                                seenPostsMap[catalogDescriptor] = result.value.toMutableSet()
+                                seenPostsMap[threadDescriptor] = result.value.toMutableSet()
                             }
                         }
                         is ModularResult.Error -> {
-                            Logger.e(TAG, "Error while trying to select all seen posts by catalogDescriptor " +
-                                    "($catalogDescriptor), error = ${result.error.errorMessageOrClassName()}")
+                            Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
+                                    "($threadDescriptor), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
 
                     Unit
                 }
                 is ActorAction.MarkPostAsSeen -> {
-                    val post = action.post
-                    val catalogDescriptor = action.loadable.catalogDescriptor
-                    val seenPost = SeenPost(catalogDescriptor, post.no.toLong(), DateTime.now())
+                    val threadDescriptor = action.postDescriptor.threadDescriptor
+
+                    val seenPost = SeenPost(
+                            threadDescriptor,
+                            action.postDescriptor.postId,
+                            DateTime.now()
+                    )
 
                     when (val result = seenPostsRepository.insert(seenPost)) {
                         is ModularResult.Value -> {
                             mutex.withLock {
-                                seenPostsMap.putIfNotContains(catalogDescriptor, mutableSetOf())
-                                seenPostsMap[catalogDescriptor]!!.add(seenPost)
+                                seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
+                                seenPostsMap[threadDescriptor]!!.add(seenPost)
                             }
                         }
                         is ModularResult.Error -> {
-                            Logger.e(TAG, "Error while trying to store new seen post with catalogDescriptor " +
-                                    "($catalogDescriptor), error = ${result.error.errorMessageOrClassName()}")
+                            Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
+                                    "($threadDescriptor), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
 
@@ -101,12 +103,12 @@ class SeenPostsManager(
             return true
         }
 
-        val catalogDescriptor = loadable.catalogDescriptor
+        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable, post)
         val postId = post.no.toLong()
 
         return runBlocking {
             return@runBlocking mutex.withLock {
-                val seenPost = seenPostsMap[catalogDescriptor]
+                val seenPost = seenPostsMap[threadDescriptor]
                         ?.firstOrNull { seenPost -> seenPost.postId == postId }
                         ?: return@withLock false
 
@@ -127,7 +129,8 @@ class SeenPostsManager(
             return
         }
 
-        actor.offer(ActorAction.Preload(loadable))
+        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable)
+        actor.offer(ActorAction.Preload(threadDescriptor))
     }
 
     fun onPostBind(loadable: Loadable, post: Post) {
@@ -139,7 +142,8 @@ class SeenPostsManager(
             return
         }
 
-        actor.offer(ActorAction.MarkPostAsSeen(loadable, post))
+        val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
+        actor.offer(ActorAction.MarkPostAsSeen(postDescriptor))
     }
 
     fun onPostUnbind(loadable: Loadable, post: Post) {
@@ -149,8 +153,8 @@ class SeenPostsManager(
     private fun isEnabled() = ChanSettings.markUnseenPosts.get()
 
     private sealed class ActorAction {
-        class Preload(val loadable: Loadable) : ActorAction()
-        class MarkPostAsSeen(val loadable: Loadable, val post: Post) : ActorAction()
+        class Preload(val threadDescriptor: ThreadDescriptor) : ActorAction()
+        class MarkPostAsSeen(val postDescriptor: PostDescriptor) : ActorAction()
         object Clear : ActorAction()
     }
 

@@ -9,9 +9,10 @@ import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.model.data.CatalogDescriptor
-import com.github.adamantcheese.model.data.PostDescriptor
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -29,7 +30,7 @@ class OnDemandContentLoaderManager(
     private val rwLock = ReentrantReadWriteLock()
 
     @GuardedBy("rwLock")
-    private val activeLoaders = HashMap<CatalogDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
+    private val activeLoaders = HashMap<ThreadDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
 
     private val postLoaderRxQueue = PublishProcessor.create<PostLoaderData>()
     private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
@@ -138,20 +139,20 @@ class OnDemandContentLoaderManager(
         BackgroundUtils.ensureMainThread()
         check(loaders.isNotEmpty()) { "No loaders!" }
 
-        val catalogDescriptor = loadable.catalogDescriptor
-        val postDescriptor = post.postDescriptor
+        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable, post)
+        val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
         val postLoaderData = PostLoaderData(loadable, post)
 
         val alreadyAdded = rwLock.write {
-            if (!activeLoaders.containsKey(catalogDescriptor)) {
-                activeLoaders[catalogDescriptor] = hashMapOf()
+            if (!activeLoaders.containsKey(threadDescriptor)) {
+                activeLoaders[threadDescriptor] = hashMapOf()
             }
 
-            if (activeLoaders[catalogDescriptor]!!.containsKey(postDescriptor)) {
+            if (activeLoaders[threadDescriptor]!!.containsKey(postDescriptor)) {
                 return@write true
             }
 
-            activeLoaders[catalogDescriptor]!![postDescriptor] = postLoaderData
+            activeLoaders[threadDescriptor]!![postDescriptor] = postLoaderData
             return@write false
         }
 
@@ -172,11 +173,11 @@ class OnDemandContentLoaderManager(
             return
         }
 
-        val catalogDescriptor = loadable.catalogDescriptor
-        val postDescriptor = post.postDescriptor
+        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable, post)
+        val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
 
         rwLock.write {
-            val postLoaderData = activeLoaders[catalogDescriptor]?.remove(postDescriptor)
+            val postLoaderData = activeLoaders[threadDescriptor]?.remove(postDescriptor)
                     ?: return@write null
 
             loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
@@ -184,13 +185,17 @@ class OnDemandContentLoaderManager(
     }
 
     fun cancelAllForLoadable(loadable: Loadable) {
-        BackgroundUtils.ensureMainThread()
-        val catalogDescriptor = loadable.catalogDescriptor
+        if (!loadable.isThreadMode) {
+            return
+        }
 
-        Logger.d(TAG, "cancelAllForLoadable called for $catalogDescriptor")
+        BackgroundUtils.ensureMainThread()
+        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable)
+
+        Logger.d(TAG, "cancelAllForLoadable called for $threadDescriptor")
 
         rwLock.write {
-            val postLoaderDataList = activeLoaders[catalogDescriptor]
+            val postLoaderDataList = activeLoaders[threadDescriptor]
                     ?: return@write
 
             postLoaderDataList.values.forEach { postLoaderData ->
@@ -199,16 +204,22 @@ class OnDemandContentLoaderManager(
             }
 
             postLoaderDataList.clear()
-            activeLoaders.remove(catalogDescriptor)
+            activeLoaders.remove(threadDescriptor)
         }
     }
 
     private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
         return rwLock.read {
-            val catalogDescriptor = postLoaderData.loadable.catalogDescriptor
-            val postDescriptor = postLoaderData.post.postDescriptor
+            val threadDescriptor = DescriptorUtils.getThreadDescriptor(
+                    postLoaderData.loadable,
+                    postLoaderData.post
+            )
+            val postDescriptor = DescriptorUtils.getPostDescriptor(
+                    postLoaderData.loadable,
+                    postLoaderData.post
+            )
 
-            return@read activeLoaders[catalogDescriptor]?.containsKey(postDescriptor)
+            return@read activeLoaders[threadDescriptor]?.containsKey(postDescriptor)
                     ?: false
         }
     }
