@@ -1,5 +1,7 @@
 package com.github.adamantcheese.model.source.local
 
+import androidx.room.withTransaction
+import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.TestDatabaseModuleComponent
 import com.github.adamantcheese.model.dao.MediaServiceLinkExtraContentDao
 import com.github.adamantcheese.model.data.video_service.MediaServiceLinkExtraContent
@@ -18,6 +20,7 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class MediaServiceLinkExtraContentLocalSourceTest {
+    lateinit var database: KurobaDatabase
     lateinit var localSource: MediaServiceLinkExtraContentLocalSource
     lateinit var dao: MediaServiceLinkExtraContentDao
 
@@ -26,6 +29,7 @@ class MediaServiceLinkExtraContentLocalSourceTest {
         ShadowLog.stream = System.out
         val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
+        database = testDatabaseModuleComponent.provideKurobaDatabase()
         dao = testDatabaseModuleComponent.provideKurobaDatabase().mediaServiceLinkExtraContentDao()
         localSource = testDatabaseModuleComponent.provideMediaServiceLinkExtraContentLocalSource()
     }
@@ -40,9 +44,11 @@ class MediaServiceLinkExtraContentLocalSourceTest {
                     Period.seconds(90)
             )
 
-            localSource.insert(linkExtraContent).unwrap()
-            localSource.insert(linkExtraContent).unwrap()
-            localSource.insert(linkExtraContent).unwrap()
+            database.withTransaction {
+                localSource.insert(linkExtraContent)
+                localSource.insert(linkExtraContent)
+                localSource.insert(linkExtraContent)
+            }
 
             val allEntities = dao.testGetAll()
             assertEquals(1, allEntities.size)
@@ -55,41 +61,43 @@ class MediaServiceLinkExtraContentLocalSourceTest {
             val oneSecondAgo = DateTime.now().minus(Period.seconds(1))
             val oneMinuteAgo = DateTime.now().minus(Period.minutes(1))
 
-            dao.insert(
-                    MediaServiceLinkExtraContentEntity(
-                            "id123",
-                            MediaServiceType.Youtube,
-                            null,
-                            Period.seconds(90),
-                            oneSecondAgo
-                    )
-            )
-            dao.insert(
-                    MediaServiceLinkExtraContentEntity(
-                            "id124",
-                            MediaServiceType.Youtube,
-                            "title1",
-                            Period.seconds(33),
-                            oneMinuteAgo)
-            )
-            dao.insert(
-                    MediaServiceLinkExtraContentEntity(
-                            "id125",
-                            MediaServiceType.Youtube,
-                            "title2",
-                            Period.seconds(44),
-                            oneSecondAgo
-                    )
-            )
-            dao.insert(
-                    MediaServiceLinkExtraContentEntity(
-                            "id126",
-                            MediaServiceType.Youtube,
-                            "title3",
-                            Period.seconds(52),
-                            oneMinuteAgo)
-            )
-            localSource.deleteOlderThan(oneSecondAgo).unwrap()
+            database.withTransaction {
+                dao.insert(
+                        MediaServiceLinkExtraContentEntity(
+                                "id123",
+                                MediaServiceType.Youtube,
+                                null,
+                                Period.seconds(90),
+                                oneSecondAgo
+                        )
+                )
+                dao.insert(
+                        MediaServiceLinkExtraContentEntity(
+                                "id124",
+                                MediaServiceType.Youtube,
+                                "title1",
+                                Period.seconds(33),
+                                oneMinuteAgo)
+                )
+                dao.insert(
+                        MediaServiceLinkExtraContentEntity(
+                                "id125",
+                                MediaServiceType.Youtube,
+                                "title2",
+                                Period.seconds(44),
+                                oneSecondAgo
+                        )
+                )
+                dao.insert(
+                        MediaServiceLinkExtraContentEntity(
+                                "id126",
+                                MediaServiceType.Youtube,
+                                "title3",
+                                Period.seconds(52),
+                                oneMinuteAgo)
+                )
+                localSource.deleteOlderThan(oneSecondAgo)
+            }
 
             val allEntities = dao.testGetAll()
             assertEquals(2, allEntities.size)

@@ -54,7 +54,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
             val content = MediaServiceLinkExtraContent(videoId, serviceType, title, duration)
             
             whenever(cache.get(anyString())).thenReturn(content)
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
 
             val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
             assertEquals(videoId, linkExtraContent.videoId)
@@ -78,8 +78,8 @@ class MediaServiceLinkExtraContentRepositoryTest {
             val content = MediaServiceLinkExtraContent(videoId, serviceType, title, duration)
 
             whenever(cache.get(anyString())).thenReturn(null)
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
-            whenever(localSource.selectByVideoId(videoId)).thenReturn(ModularResult.value(content))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
+            whenever(localSource.selectByVideoId(videoId)).thenReturn(content)
 
             val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
             assertEquals(videoId, linkExtraContent.videoId)
@@ -105,10 +105,10 @@ class MediaServiceLinkExtraContentRepositoryTest {
             val info = MediaServiceLinkExtraInfo(title, duration)
 
             whenever(cache.get(anyString())).thenReturn(null)
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
-            whenever(localSource.selectByVideoId(videoId)).thenReturn(ModularResult.value(null))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
+            whenever(localSource.selectByVideoId(videoId)).thenReturn(null)
             whenever(remoteSource.fetchFromNetwork(requestUrl, serviceType)).thenReturn(ModularResult.value(info))
-            whenever(localSource.insert(content)).thenReturn(ModularResult.value(Unit))
+            whenever(localSource.insert(content)).thenReturn(Unit)
 
             val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
             assertEquals(videoId, linkExtraContent.videoId)

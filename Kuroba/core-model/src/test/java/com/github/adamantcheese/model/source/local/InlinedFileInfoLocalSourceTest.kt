@@ -1,5 +1,7 @@
 package com.github.adamantcheese.model.source.local
 
+import androidx.room.withTransaction
+import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.TestDatabaseModuleComponent
 import com.github.adamantcheese.model.dao.InlinedFileInfoDao
 import com.github.adamantcheese.model.data.InlinedFileInfo
@@ -17,6 +19,7 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class InlinedFileInfoLocalSourceTest {
+    lateinit var database: KurobaDatabase
     lateinit var localSource: InlinedFileInfoLocalSource
     lateinit var dao: InlinedFileInfoDao
 
@@ -25,6 +28,7 @@ class InlinedFileInfoLocalSourceTest {
         ShadowLog.stream = System.out
         val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
+        database = testDatabaseModuleComponent.provideKurobaDatabase()
         dao = testDatabaseModuleComponent.provideKurobaDatabase().inlinedFileDao()
         localSource = testDatabaseModuleComponent.provideInlinedFileInfoLocalSource()
     }
@@ -34,9 +38,11 @@ class InlinedFileInfoLocalSourceTest {
         runBlocking(Dispatchers.Default) {
             val inlinedFileInfo = InlinedFileInfo("test.com/123", 1000L)
 
-            localSource.insert(inlinedFileInfo).unwrap()
-            localSource.insert(inlinedFileInfo).unwrap()
-            localSource.insert(inlinedFileInfo).unwrap()
+            database.withTransaction {
+                localSource.insert(inlinedFileInfo)
+                localSource.insert(inlinedFileInfo)
+                localSource.insert(inlinedFileInfo)
+            }
 
             val allEntities = dao.testGetAll()
             assertEquals(1, allEntities.size)
@@ -49,11 +55,13 @@ class InlinedFileInfoLocalSourceTest {
             val oneSecondAgo = DateTime.now().minus(Period.seconds(1))
             val oneMinuteAgo = DateTime.now().minus(Period.minutes(1))
 
-            dao.insert(InlinedFileInfoEntity("test.com/123", null, oneSecondAgo))
-            dao.insert(InlinedFileInfoEntity("test.com/124", 234234, oneMinuteAgo))
-            dao.insert(InlinedFileInfoEntity("test.com/125", 6677, oneSecondAgo))
-            dao.insert(InlinedFileInfoEntity("test.com/126", 90000, oneMinuteAgo))
-            localSource.deleteOlderThan(oneSecondAgo).unwrap()
+            database.withTransaction {
+                dao.insert(InlinedFileInfoEntity("test.com/123", null, oneSecondAgo))
+                dao.insert(InlinedFileInfoEntity("test.com/124", 234234, oneMinuteAgo))
+                dao.insert(InlinedFileInfoEntity("test.com/125", 6677, oneSecondAgo))
+                dao.insert(InlinedFileInfoEntity("test.com/126", 90000, oneMinuteAgo))
+                localSource.deleteOlderThan(oneSecondAgo)
+            }
 
             val allEntities = dao.testGetAll()
             assertEquals(2, allEntities.size)

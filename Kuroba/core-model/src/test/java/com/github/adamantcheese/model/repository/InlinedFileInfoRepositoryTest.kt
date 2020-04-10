@@ -47,7 +47,7 @@ class InlinedFileInfoRepositoryTest {
             val fileSize = 10000L
 
             whenever(cache.get(anyString())).thenReturn(InlinedFileInfo(url, fileSize))
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
 
             val inlinedFileInfo = repository.getInlinedFileInfo(url).unwrap()
             assertEquals(url, inlinedFileInfo.fileUrl)
@@ -65,8 +65,8 @@ class InlinedFileInfoRepositoryTest {
             val fileSize = 10000L
 
             whenever(cache.get(anyString())).thenReturn(null)
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
-            whenever(localSource.selectByFileUrl(url)).thenReturn(ModularResult.value(InlinedFileInfo(url, fileSize)))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
+            whenever(localSource.selectByFileUrl(url)).thenReturn(InlinedFileInfo(url, fileSize))
 
             val inlinedFileInfo = repository.getInlinedFileInfo(url).unwrap()
             assertEquals(url, inlinedFileInfo.fileUrl)
@@ -86,10 +86,10 @@ class InlinedFileInfoRepositoryTest {
             val inlinedFileInfo = InlinedFileInfo(url, fileSize)
 
             whenever(cache.get(anyString())).thenReturn(null)
-            whenever(localSource.deleteOlderThan(any())).thenReturn(ModularResult.value(1))
-            whenever(localSource.selectByFileUrl(url)).thenReturn(ModularResult.value(null))
+            whenever(localSource.deleteOlderThan(any())).thenReturn(1)
+            whenever(localSource.selectByFileUrl(url)).thenReturn(null)
             whenever(remoteSource.fetchFromNetwork(url)).thenReturn(ModularResult.value(inlinedFileInfo))
-            whenever(localSource.insert(inlinedFileInfo)).thenReturn(ModularResult.value(Unit))
+            whenever(localSource.insert(inlinedFileInfo)).thenReturn(Unit)
 
             val resultInlinedFileInfo = repository.getInlinedFileInfo(url).unwrap()
             assertEquals(url, resultInlinedFileInfo.fileUrl)
