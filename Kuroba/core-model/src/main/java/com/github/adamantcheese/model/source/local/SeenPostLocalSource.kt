@@ -1,12 +1,10 @@
 package com.github.adamantcheese.model.source.local
 
-import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.mapper.SeenPostMapper
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import org.joda.time.DateTime
 
 open class SeenPostLocalSource(
@@ -16,38 +14,48 @@ open class SeenPostLocalSource(
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag SeenPostLocalSource"
     private val seenPostDao = database.seenPostDao()
+    private val chanCatalogDao = database.chanCatalogDao()
 
-    open suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
-        ensureBackgroundThread()
+    open suspend fun insert(seenPost: SeenPost) {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun seenPostDao.insert(SeenPostMapper.toEntity(seenPost))
-        }
+        val chanCatalogEntity = chanCatalogDao.insert(
+                seenPost.catalogDescriptor.siteName,
+                seenPost.catalogDescriptor.boardCode
+        )
+
+        seenPostDao.insert(SeenPostMapper.toEntity(chanCatalogEntity.boardId, seenPost))
     }
 
-    open suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
-        ensureBackgroundThread()
+    open suspend fun selectAllByCatalogDescriptor(catalogDescriptor: CatalogDescriptor): List<SeenPost> {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun seenPostDao.selectAllByLoadableUid(loadableUid)
-                    .mapNotNull { seenPostEntity -> SeenPostMapper.fromEntity(seenPostEntity) }
+        val chanCatalogEntity = chanCatalogDao.select(
+                catalogDescriptor.siteName,
+                catalogDescriptor.boardCode
+        )
+
+        if (chanCatalogEntity == null) {
+            return emptyList()
         }
+
+        return seenPostDao.selectAllByBoardId(chanCatalogEntity.boardId)
+                .mapNotNull { seenPostEntity ->
+                    return@mapNotNull SeenPostMapper.fromEntity(catalogDescriptor, seenPostEntity)
+                }
     }
 
-    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_MONTH_AGO): ModularResult<Int> {
-        ensureBackgroundThread()
+    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_MONTH_AGO): Int {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun seenPostDao.deleteOlderThan(dateTime)
-        }
+        return seenPostDao.deleteOlderThan(dateTime)
+
     }
 
-    open suspend fun deleteAll(): ModularResult<Int> {
-        ensureBackgroundThread()
+    open suspend fun deleteAll(): Int {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun seenPostDao.deleteAll()
-        }
+        return seenPostDao.deleteAll()
     }
 
     companion object {

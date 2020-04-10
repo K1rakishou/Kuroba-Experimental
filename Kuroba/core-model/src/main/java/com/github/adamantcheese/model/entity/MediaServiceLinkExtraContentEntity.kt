@@ -3,15 +3,13 @@ package com.github.adamantcheese.model.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import org.joda.time.DateTime
 import org.joda.time.Period
 
 @Entity(
         tableName = MediaServiceLinkExtraContentEntity.TABLE_NAME,
-        primaryKeys = [
-            MediaServiceLinkExtraContentEntity.VIDEO_ID_COLUMN_NAME
-        ],
         indices = [
             Index(
                     name = MediaServiceLinkExtraContentEntity.INSERTED_AT_INDEX_NAME,
@@ -22,6 +20,7 @@ import org.joda.time.Period
         ]
 )
 data class MediaServiceLinkExtraContentEntity(
+        @PrimaryKey(autoGenerate = false)
         @ColumnInfo(name = VIDEO_ID_COLUMN_NAME)
         val videoId: String,
         @ColumnInfo(name = MEDIA_SERVICE_TYPE)

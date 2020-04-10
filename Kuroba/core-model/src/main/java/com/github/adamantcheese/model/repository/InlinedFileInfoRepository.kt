@@ -7,7 +7,6 @@ import com.github.adamantcheese.model.data.InlinedFileInfo
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
@@ -24,66 +23,52 @@ class InlinedFileInfoRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {
-        ensureBackgroundThread()
-
         return repoGenericGetAction(
                 cleanupFunc = { inlinedFileInfoRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(fileUrl) },
-                getFromLocalSourceFunc = { inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) },
+                getFromLocalSourceFunc = {
+                    withTransactionSafe { inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) }
+                },
                 getFromRemoteSourceFunc = { inlinedFileInfoRemoteSource.fetchFromNetwork(fileUrl) },
                 storeIntoCacheFunc = { inlinedFileInfo -> cache.store(fileUrl, inlinedFileInfo) },
                 storeIntoLocalSourceFunc = { inlinedFileInfo ->
-                    inlinedFileInfoLocalSource.insert(inlinedFileInfo)
+                    withTransactionSafe { inlinedFileInfoLocalSource.insert(inlinedFileInfo) }
                 },
                 tag = TAG
         )
     }
 
-    suspend fun isCached(fileUrl: String): Boolean {
-        ensureBackgroundThread()
-
-        val hasInCache = cache.contains(fileUrl)
-        if (hasInCache) {
-            return true
-        }
-
-        return when (val result = inlinedFileInfoLocalSource.selectByFileUrl(fileUrl)) {
-            is ModularResult.Value -> result.value != null
-            is ModularResult.Error -> {
-                logger.logError(TAG, "Error while trying to selectByFileUrl($fileUrl)", result.error)
-                false
+    suspend fun isCached(fileUrl: String): ModularResult<Boolean> {
+        return withTransactionSafe {
+            val hasInCache = cache.contains(fileUrl)
+            if (hasInCache) {
+                return@withTransactionSafe true
             }
+
+            return@withTransactionSafe inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) != null
         }
     }
 
-    fun deleteAllSync(): Int {
-        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+    fun deleteAllSync(): ModularResult<Int> {
+        return runBlocking(Dispatchers.Default) { deleteAll() }
     }
 
     suspend fun deleteAll(): ModularResult<Int> {
-        ensureBackgroundThread()
-
-        return inlinedFileInfoLocalSource.deleteAll()
+        return withTransactionSafe {
+            return@withTransactionSafe inlinedFileInfoLocalSource.deleteAll()
+        }
     }
 
     private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {
-        ensureBackgroundThread()
+        return withTransactionSafe {
+            if (!alreadyExecuted.compareAndSet(false, true)) {
+                return@withTransactionSafe 0
+            }
 
-        if (!alreadyExecuted.compareAndSet(false, true)) {
-            return ModularResult.value(0)
+            return@withTransactionSafe inlinedFileInfoLocalSource.deleteOlderThan(
+                    InlinedFileInfoLocalSource.ONE_WEEK_AGO
+            )
         }
-
-        val result = inlinedFileInfoLocalSource.deleteOlderThan(
-                InlinedFileInfoLocalSource.ONE_WEEK_AGO
-        )
-
-        if (result is ModularResult.Value) {
-            logger.log(TAG, "cleanup() -> $result")
-        } else {
-            logger.logError(TAG, "cleanup() -> $result")
-        }
-
-        return result
     }
 
 }

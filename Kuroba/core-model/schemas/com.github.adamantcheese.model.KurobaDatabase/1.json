@@ -2,8 +2,50 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e6ad23f979063e37d14188f0f8ea204e",
+    "identityHash": "8cc98aaabf2c2df60f71e376e34a5f1d",
     "entities": [
+      {
+        "tableName": "chan_catalog",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`board_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "boardId",
+            "columnName": "board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boardCode",
+            "columnName": "board_code",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "board_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "chan_catalog_catalog_descriptor_idx",
+            "unique": true,
+            "columnNames": [
+              "site_name",
+              "board_code"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_catalog_catalog_descriptor_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
       {
         "tableName": "media_service_link_extra_content_entity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_id` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_id`))",
@@ -59,23 +101,17 @@
       },
       {
         "tableName": "seen_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_uid` TEXT NOT NULL, `parent_loadable_uid` TEXT NOT NULL, `post_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_uid`, `parent_loadable_uid`, `post_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_board_id`) REFERENCES `chan_catalog`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
-          {
-            "fieldPath": "postUid",
-            "columnName": "post_uid",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "parentLoadableUid",
-            "columnName": "parent_loadable_uid",
-            "affinity": "TEXT",
-            "notNull": true
-          },
           {
             "fieldPath": "postId",
             "columnName": "post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerBoardId",
+            "columnName": "owner_board_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -88,8 +124,6 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "post_uid",
-            "parent_loadable_uid",
             "post_id"
           ],
           "autoGenerate": false
@@ -104,7 +138,19 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `seen_post_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
           }
         ],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "chan_catalog",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_board_id"
+            ],
+            "referencedColumns": [
+              "board_id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "inlined_file_info_entity",
@@ -151,7 +197,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6ad23f979063e37d14188f0f8ea204e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8cc98aaabf2c2df60f71e376e34a5f1d')"
     ]
   }
 }

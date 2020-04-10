@@ -16,9 +16,9 @@ abstract class SeenPostDao {
     @Query("""
         SELECT *
         FROM ${SeenPostEntity.TABLE_NAME}
-        WHERE ${SeenPostEntity.PARENT_LOADABLE_UID_COLUMN_NAME} = :loadableUid
+        WHERE ${SeenPostEntity.OWNER_BOARD_ID_COLUMN_NAME} = :boardId
     """)
-    abstract suspend fun selectAllByLoadableUid(loadableUid: String): List<SeenPostEntity>
+    abstract suspend fun selectAllByBoardId(boardId: Long): List<SeenPostEntity>
 
     @Query("""
         DELETE 

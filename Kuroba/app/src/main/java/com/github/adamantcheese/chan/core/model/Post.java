@@ -24,8 +24,10 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.core.loader.LoaderType;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.vdurmont.emoji.EmojiParser;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
+import com.github.adamantcheese.model.data.CatalogDescriptor;
+import com.github.adamantcheese.model.data.PostDescriptor;
+import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -225,6 +227,16 @@ public class Post
         }
 
         return true;
+    }
+
+    public PostDescriptor getPostDescriptor() {
+        return new PostDescriptor(
+                new CatalogDescriptor(
+                        board.site.name(),
+                        board.code
+                ),
+                no
+        );
     }
 
     public PostFilter getPostFilter() {

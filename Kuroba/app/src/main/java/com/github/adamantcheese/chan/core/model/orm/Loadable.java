@@ -22,8 +22,7 @@ import android.text.TextUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.common.loadable.LoadableType;
-import com.github.adamantcheese.common.loadable.LoadableUtils;
+import com.github.adamantcheese.model.data.CatalogDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -96,7 +95,6 @@ public class Loadable
      * a live thread or the local saved copy of a thread (which may be already deleted from the server)
      */
     private transient LoadableDownloadingState loadableDownloadingState = LoadableDownloadingState.NotDownloading;
-    private transient String loadableUidCached = null;
 
     public synchronized void setLoadableState(LoadableDownloadingState state) {
         this.loadableDownloadingState = state;
@@ -256,30 +254,6 @@ public class Loadable
                 + ", dirty=" + dirty + ", loadableDownloadingState=" + loadableDownloadingState.name() + '}';
     }
 
-    public synchronized String getUniqueId() {
-        if (loadableUidCached != null) {
-            return loadableUidCached;
-        }
-
-        LoadableType loadableType = LoadableType.CatalogLoadable;
-
-        if (mode == Mode.THREAD) {
-            loadableType = LoadableType.ThreadLoadable;
-        } else if (mode == Mode.INVALID) {
-            throw new IllegalStateException("Unsupported loadable mode: " + mode);
-        }
-
-        String loadableUid = LoadableUtils.getUniqueId(
-                site.name(),
-                boardCode,
-                no,
-                loadableType
-        );
-
-        loadableUidCached = loadableUid;
-        return loadableUid;
-    }
-
     public boolean isThreadMode() {
         return mode == Mode.THREAD;
     }
@@ -331,6 +305,10 @@ public class Loadable
         }
 
         return true;
+    }
+
+    public CatalogDescriptor getCatalogDescriptor() {
+        return new CatalogDescriptor(site.name(), boardCode);
     }
 
     public static Loadable readFromParcel(Parcel parcel) {

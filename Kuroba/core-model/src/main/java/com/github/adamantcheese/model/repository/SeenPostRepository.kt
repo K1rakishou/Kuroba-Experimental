@@ -3,9 +3,9 @@ package com.github.adamantcheese.model.repository
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
@@ -20,44 +20,32 @@ class SeenPostRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
-        ensureBackgroundThread()
-        seenPostLocalRepositoryCleanup().ignore()
+        return withTransactionSafe {
+            seenPostLocalRepositoryCleanup()
 
-        return seenPostLocalSource.insert(seenPost)
+            return@withTransactionSafe seenPostLocalSource.insert(seenPost)
+        }
     }
 
-    suspend fun selectAllByLoadableUid(loadableUid: String): ModularResult<List<SeenPost>> {
-        ensureBackgroundThread()
-        return seenPostLocalSource.selectAllByLoadableUid(loadableUid)
+    suspend fun selectAllByCatalogDescriptor(catalogDescriptor: CatalogDescriptor): ModularResult<List<SeenPost>> {
+        return withTransactionSafe {
+            return@withTransactionSafe seenPostLocalSource.selectAllByCatalogDescriptor(catalogDescriptor)
+        }
     }
 
-    private suspend fun seenPostLocalRepositoryCleanup(): ModularResult<Int> {
-        ensureBackgroundThread()
-
+    private suspend fun seenPostLocalRepositoryCleanup() {
         if (!alreadyExecuted.compareAndSet(false, true)) {
-            return ModularResult.value(0)
+            return
         }
 
-        val result = seenPostLocalSource.deleteOlderThan(
-                SeenPostLocalSource.ONE_MONTH_AGO
-        )
-
-        if (result is ModularResult.Value) {
-            logger.log(TAG, "cleanup() -> $result")
-        } else {
-            logger.logError(TAG, "cleanup() -> $result")
-        }
-
-        return result
+        seenPostLocalSource.deleteOlderThan(SeenPostLocalSource.ONE_MONTH_AGO)
     }
 
     fun deleteAllSync(): Int {
-        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+        return runBlocking(Dispatchers.Default) { deleteAll() }
     }
 
-    suspend fun deleteAll(): ModularResult<Int> {
-        ensureBackgroundThread()
-
+    suspend fun deleteAll(): Int {
         return seenPostLocalSource.deleteAll()
     }
 }

@@ -1,12 +1,9 @@
 package com.github.adamantcheese.model.source.local
 
-import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.InlinedFileInfo
 import com.github.adamantcheese.model.mapper.InlinedFileInfoMapper
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import org.joda.time.DateTime
 
 open class InlinedFileInfoLocalSource(
@@ -17,41 +14,33 @@ open class InlinedFileInfoLocalSource(
     private val TAG = "$loggerTag InlinedFileInfoLocalSource"
     private val inlinedFileInfoDao = database.inlinedFileDao()
 
-    open suspend fun insert(inlinedFileInfo: InlinedFileInfo): ModularResult<Unit> {
-        ensureBackgroundThread()
+    open suspend fun insert(inlinedFileInfo: InlinedFileInfo) {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun inlinedFileInfoDao.insert(
-                    InlinedFileInfoMapper.toEntity(
-                            inlinedFileInfo,
-                            DateTime.now()
-                    )
-            )
-        }
+        return inlinedFileInfoDao.insert(
+                InlinedFileInfoMapper.toEntity(
+                        inlinedFileInfo,
+                        DateTime.now()
+                )
+        )
     }
 
-    open suspend fun selectByFileUrl(fileUrl: String): ModularResult<InlinedFileInfo?> {
-        ensureBackgroundThread()
+    open suspend fun selectByFileUrl(fileUrl: String): InlinedFileInfo? {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
-        }
+        return InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
     }
 
-    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): ModularResult<Int> {
-        ensureBackgroundThread()
+    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): Int {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun inlinedFileInfoDao.deleteOlderThan(dateTime)
-        }
+        return inlinedFileInfoDao.deleteOlderThan(dateTime)
     }
 
-    open suspend fun deleteAll(): ModularResult<Int> {
-        ensureBackgroundThread()
+    open suspend fun deleteAll(): Int {
+        ensureInTransaction()
 
-        return safeRun {
-            return@safeRun inlinedFileInfoDao.deleteAll()
-        }
+        return inlinedFileInfoDao.deleteAll()
     }
 
     companion object {

@@ -4,7 +4,6 @@ import androidx.room.withTransaction
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import com.github.adamantcheese.model.util.errorMessageOrClassName
 
 abstract class AbstractRepository(
@@ -12,8 +11,8 @@ abstract class AbstractRepository(
         protected val logger: Logger
 ) {
 
-    suspend fun <T> runInTransaction(func: suspend () -> ModularResult<T>): ModularResult<T> {
-        return database.withTransaction(func)
+    suspend fun <T> withTransactionSafe(func: suspend () -> T): ModularResult<T> {
+        return ModularResult.safeRun { database.withTransaction(func) }
     }
 
     protected fun isInTransaction() = database.inTransaction()
@@ -32,7 +31,6 @@ abstract class AbstractRepository(
             storeIntoCacheFunc: (T) -> Unit,
             storeIntoLocalSourceFunc: (T) -> ModularResult<Unit>
     ): ModularResult<T> {
-        ensureBackgroundThread()
         cleanupFunc()
 
         val fromCache = getFromCacheFunc()

@@ -3,13 +3,11 @@ package com.github.adamantcheese.model.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
+import androidx.room.PrimaryKey
 import org.joda.time.DateTime
 
 @Entity(
         tableName = InlinedFileInfoEntity.TABLE_NAME,
-        primaryKeys = [
-            InlinedFileInfoEntity.FILE_URL_COLUMN_NAME
-        ],
         indices = [
             Index(
                     name = InlinedFileInfoEntity.INSERTED_AT_INDEX_NAME,
@@ -20,6 +18,7 @@ import org.joda.time.DateTime
         ]
 )
 data class InlinedFileInfoEntity(
+        @PrimaryKey(autoGenerate = false)
         @ColumnInfo(name = FILE_URL_COLUMN_NAME)
         val fileUrl: String,
         @ColumnInfo(name = FILE_SIZE_COLUMN_NAME)

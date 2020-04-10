@@ -8,7 +8,6 @@ import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContentRemoteSource
-import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,13 +28,13 @@ class MediaServiceLinkExtraContentRepository(
             requestUrl: String,
             videoId: String
     ): ModularResult<MediaServiceLinkExtraContent> {
-        ensureBackgroundThread()
-
         return repoGenericGetAction(
                 cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(videoId) },
                 getFromLocalSourceFunc = {
-                    mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
+                    withTransactionSafe {
+                        mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
+                    }
                 },
                 getFromRemoteSourceFunc = {
                     mediaServiceLinkExtraContentRemoteSource.fetchFromNetwork(
@@ -54,57 +53,45 @@ class MediaServiceLinkExtraContentRepository(
                         cache.store(requestUrl, mediaServiceLinkExtraContent)
                 },
                 storeIntoLocalSourceFunc = { mediaServiceLinkExtraContent ->
-                    mediaServiceLinkExtraContentLocalSource.insert(mediaServiceLinkExtraContent)
+                    withTransactionSafe {
+                        mediaServiceLinkExtraContentLocalSource.insert(mediaServiceLinkExtraContent)
+                    }
                 },
                 tag = TAG
         )
     }
 
-    suspend fun isCached(videoId: String): Boolean {
-        ensureBackgroundThread()
-
-        val hasInCache = cache.contains(videoId)
-        if (hasInCache) {
-            return true
-        }
-
-        return when (val result = mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)) {
-            is ModularResult.Value -> result.value != null
-            is ModularResult.Error -> {
-                logger.logError(TAG, "Error while trying to selectByVideoId($videoId)", result.error)
-                false
+    suspend fun isCached(videoId: String): ModularResult<Boolean> {
+        return withTransactionSafe {
+            val hasInCache = cache.contains(videoId)
+            if (hasInCache) {
+                return@withTransactionSafe true
             }
+
+            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId) != null
         }
     }
 
-    fun deleteAllSync(): Int {
-        return runBlocking(Dispatchers.Default) { deleteAll().unwrap() }
+    fun deleteAllSync(): ModularResult<Int> {
+        return runBlocking(Dispatchers.Default) { deleteAll() }
     }
 
     suspend fun deleteAll(): ModularResult<Int> {
-        ensureBackgroundThread()
-
-        return mediaServiceLinkExtraContentLocalSource.deleteAll()
+        return withTransactionSafe {
+            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.deleteAll()
+        }
     }
 
     private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
-        ensureBackgroundThread()
+        return withTransactionSafe {
+            if (!alreadyExecuted.compareAndSet(false, true)) {
+                return@withTransactionSafe 0
+            }
 
-        if (!alreadyExecuted.compareAndSet(false, true)) {
-            return ModularResult.value(0)
+            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.deleteOlderThan(
+                    MediaServiceLinkExtraContentLocalSource.ONE_WEEK_AGO
+            )
         }
-
-        val result = mediaServiceLinkExtraContentLocalSource.deleteOlderThan(
-                MediaServiceLinkExtraContentLocalSource.ONE_WEEK_AGO
-        )
-
-        if (result is ModularResult.Value) {
-            logger.log(TAG, "cleanup() -> $result")
-        } else {
-            logger.logError(TAG, "cleanup() -> $result")
-        }
-
-        return result
     }
 
 }

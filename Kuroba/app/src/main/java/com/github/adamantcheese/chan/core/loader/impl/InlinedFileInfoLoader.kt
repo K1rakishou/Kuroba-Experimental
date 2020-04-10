@@ -30,6 +30,7 @@ class InlinedFileInfoLoader(
         return rxSingle {
             return@rxSingle inlinedFiles.all { inlinedFile ->
                 inlinedFileInfoRepository.isCached(inlinedFile.imageUrl.toString())
+                        .unwrap()
             }
         }
                 .subscribeOn(scheduler)

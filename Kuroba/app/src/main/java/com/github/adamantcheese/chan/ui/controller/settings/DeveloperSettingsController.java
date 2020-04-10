@@ -246,7 +246,7 @@ public class DeveloperSettingsController
     private void addClearInlinedFilesInfoTable(LinearLayout wrapper) {
         Button clearInlinedFilesInfoTable = new Button(context);
         clearInlinedFilesInfoTable.setOnClickListener(v -> {
-            int deleted = inlinedFileInfoRepository.deleteAllSync();
+            int deleted = inlinedFileInfoRepository.deleteAllSync().unwrap();
             showToast(context, "Done, deleted " + deleted + " inlined file infos");
         });
 
@@ -257,7 +257,7 @@ public class DeveloperSettingsController
     private void addClearExternalLinkExtraInfoTable(LinearLayout wrapper) {
         Button clearExternalLinkExtraInfoTable = new Button(context);
         clearExternalLinkExtraInfoTable.setOnClickListener(v -> {
-            int deleted = mediaServiceLinkExtraContentRepository.deleteAllSync();
+            int deleted = mediaServiceLinkExtraContentRepository.deleteAllSync().unwrap();
             showToast(context, "Done, deleted " + deleted + " seen posts");
         });
 

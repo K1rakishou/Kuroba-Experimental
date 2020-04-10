@@ -4,8 +4,12 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.errorMessageOrClassName
+import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.CatalogDescriptor
 import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +29,7 @@ class SeenPostsManager(
         private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
     @GuardedBy("mutex")
-    private val seenPostsMap = mutableMapOf<String, MutableSet<SeenPost>>()
+    private val seenPostsMap = mutableMapOf<CatalogDescriptor, MutableSet<SeenPost>>()
     private val mutex = Mutex()
 
     override val coroutineContext: CoroutineContext
@@ -35,9 +39,9 @@ class SeenPostsManager(
         consumeEach { action ->
             when (action) {
                 is ActorAction.Preload -> {
-                    val loadableUid = action.loadable.uniqueId
+                    val catalogDescriptor = action.loadable.catalogDescriptor
 
-                    when (val result = seenPostsRepository.selectAllByLoadableUid(loadableUid)) {
+                    when (val result = seenPostsRepository.selectAllByCatalogDescriptor(catalogDescriptor)) {
                         is ModularResult.Value -> {
                             // FIXME: Using a mutex inside of an actor is not a good idea (it defeats
                             //  the whole point of using actors in the first place) but there is
@@ -48,35 +52,32 @@ class SeenPostsManager(
                             //  the future when ThreadPresenter is converted into Kotlin
                             //  (probably not only ThreadPresenter but also a ton of other classes)
                             mutex.withLock {
-                                seenPostsMap[loadableUid] = result.value.toMutableSet()
+                                seenPostsMap[catalogDescriptor] = result.value.toMutableSet()
                             }
                         }
                         is ModularResult.Error -> {
-                            Logger.e(TAG, "Error while trying to select all seen posts by loadableUid " +
-                                    "($loadableUid), error = ${result.error.errorMessageOrClassName()}")
+                            Logger.e(TAG, "Error while trying to select all seen posts by catalogDescriptor " +
+                                    "($catalogDescriptor), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
 
                     Unit
                 }
                 is ActorAction.MarkPostAsSeen -> {
-                    val loadable = action.loadable
                     val post = action.post
-
-                    val loadableUid = loadable.uniqueId
-                    val postUid = PostUtils.getPostUniqueId(loadable, post)
-                    val seenPost = SeenPost(postUid, loadableUid, post.no.toLong(), DateTime.now())
+                    val catalogDescriptor = action.loadable.catalogDescriptor
+                    val seenPost = SeenPost(catalogDescriptor, post.no.toLong(), DateTime.now())
 
                     when (val result = seenPostsRepository.insert(seenPost)) {
                         is ModularResult.Value -> {
                             mutex.withLock {
-                                seenPostsMap.putIfNotContains(loadableUid, mutableSetOf())
-                                seenPostsMap[loadableUid]!!.add(seenPost)
+                                seenPostsMap.putIfNotContains(catalogDescriptor, mutableSetOf())
+                                seenPostsMap[catalogDescriptor]!!.add(seenPost)
                             }
                         }
                         is ModularResult.Error -> {
-                            Logger.e(TAG, "Error while trying to store new seen post with loadableUid " +
-                                    "($loadableUid), error = ${result.error.errorMessageOrClassName()}")
+                            Logger.e(TAG, "Error while trying to store new seen post with catalogDescriptor " +
+                                    "($catalogDescriptor), error = ${result.error.errorMessageOrClassName()}")
                         }
                     }
 
@@ -100,12 +101,12 @@ class SeenPostsManager(
             return true
         }
 
-        val loadableUid = loadable.uniqueId
+        val catalogDescriptor = loadable.catalogDescriptor
         val postId = post.no.toLong()
 
         return runBlocking {
             return@runBlocking mutex.withLock {
-                val seenPost = seenPostsMap[loadableUid]
+                val seenPost = seenPostsMap[catalogDescriptor]
                         ?.firstOrNull { seenPost -> seenPost.postId == postId }
                         ?: return@withLock false
 
