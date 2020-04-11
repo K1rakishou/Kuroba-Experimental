@@ -8,4 +8,11 @@ data class ThreadDescriptor(
     fun siteName() = boardDescriptor.siteDescriptor.siteName
     fun boardCode() = boardDescriptor.boardCode
 
+    companion object {
+        @JvmStatic
+        fun create(siteName: String, boardCode: String, threadId: Long): ThreadDescriptor {
+            return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadId)
+        }
+    }
+
 }

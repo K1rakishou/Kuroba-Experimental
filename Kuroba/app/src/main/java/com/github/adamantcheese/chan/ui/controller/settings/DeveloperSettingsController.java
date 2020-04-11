@@ -36,6 +36,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.ui.controller.LogsController;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
@@ -65,6 +66,8 @@ public class DeveloperSettingsController
     CacheHandler cacheHandler;
     @Inject
     SeenPostRepository seenPostRepository;
+    @Inject
+    ChanPostRepository chanPostRepository;
     @Inject
     MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository;
     @Inject
@@ -131,6 +134,9 @@ public class DeveloperSettingsController
 
         // Clear seen posts table
         addClearSeenPostsButton(wrapper);
+
+        // Clear posts table
+        addClearPostsButton(wrapper);
 
         // Clear external link extra info table
         addClearExternalLinkExtraInfoTable(wrapper);
@@ -263,6 +269,17 @@ public class DeveloperSettingsController
 
         clearExternalLinkExtraInfoTable.setText("Clear external link extra info table");
         wrapper.addView(clearExternalLinkExtraInfoTable);
+    }
+
+    private void addClearPostsButton(LinearLayout wrapper) {
+        Button clearPostsTableButton = new Button(context);
+        clearPostsTableButton.setOnClickListener(v -> {
+            int deleted = chanPostRepository.deleteAllSync().unwrap();
+            showToast(context, "Done, deleted " + deleted + " posts");
+        });
+
+        clearPostsTableButton.setText("Clear posts table");
+        wrapper.addView(clearPostsTableButton);
     }
 
     private void addClearSeenPostsButton(LinearLayout wrapper) {

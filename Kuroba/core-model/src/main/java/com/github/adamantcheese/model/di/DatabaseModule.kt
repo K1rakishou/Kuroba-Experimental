@@ -5,10 +5,12 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
+import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
+import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
@@ -74,6 +76,20 @@ class DatabaseModule {
             logger: Logger
     ): InlinedFileInfoLocalSource {
         return InlinedFileInfoLocalSource(
+                database,
+                loggerTag,
+                logger
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideChanPostLocalSource(
+            database: KurobaDatabase,
+            @LoggerTagPrefix loggerTag: String,
+            logger: Logger
+    ): ChanPostLocalSource {
+        return ChanPostLocalSource(
                 database,
                 loggerTag,
                 logger
@@ -159,6 +175,22 @@ class DatabaseModule {
                 GenericCacheSource(),
                 inlinedFileInfoLocalSource,
                 inlinedFileInfoRemoteSource
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideChanPostRepository(
+            logger: Logger,
+            database: KurobaDatabase,
+            chanPostLocalSource: ChanPostLocalSource,
+            @LoggerTagPrefix loggerTag: String
+    ): ChanPostRepository {
+        return ChanPostRepository(
+                database,
+                loggerTag,
+                logger,
+                chanPostLocalSource
         )
     }
 }

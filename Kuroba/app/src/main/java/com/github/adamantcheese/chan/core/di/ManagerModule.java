@@ -156,13 +156,6 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ArchivesManager provideArchivesManager2(Gson gson) {
-        Logger.d(AppModule.DI_TAG, "ArchivesManager2");
-        return new ArchivesManager(gson);
-    }
-
-    @Provides
-    @Singleton
     public ThreadSaveManager provideSaveThreadManager(
             DatabaseManager databaseManager,
             @Named(THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME) OkHttpClient okHttpClient,

@@ -11,7 +11,7 @@ abstract class AbstractRepository(
         protected val logger: Logger
 ) {
 
-    suspend fun <T> withTransactionSafe(func: suspend () -> T): ModularResult<T> {
+    protected suspend fun <T> withTransactionSafe(func: suspend () -> T): ModularResult<T> {
         return ModularResult.safeRun { database.withTransaction(func) }
     }
 

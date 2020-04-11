@@ -28,6 +28,9 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.ChanPostUnparsed;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,6 +80,9 @@ public class ChanReaderRequest
 
     @Inject
     FilterEngine filterEngine;
+
+    @Inject
+    ChanPostRepository chanPostRepository;
 
     private Loadable loadable;
     private List<Post> cached;
@@ -139,6 +145,7 @@ public class ChanReaderRequest
 
         if (loadable.isThreadMode()) {
             this.reader.loadThread(reader, processing);
+            storePostsInDatabase(processing.getToParse());
         } else if (loadable.isCatalogMode()) {
             this.reader.loadCatalog(reader, processing);
         } else {
@@ -147,6 +154,54 @@ public class ChanReaderRequest
 
         List<Post> list = parsePosts(processing);
         return processPosts(processing.getOp(), list);
+    }
+
+    private void storePostsInDatabase(List<Post.Builder> toParse) {
+        List<ChanPostUnparsed> unparsedPosts = new ArrayList<>(toParse.size());
+
+        for (Post.Builder postBuilder : toParse) {
+            PostDescriptor postDescriptor = PostDescriptor.create(
+                    postBuilder.board.site.name(),
+                    postBuilder.board.code,
+                    postBuilder.opId,
+                    postBuilder.id
+            );
+
+            unparsedPosts.add(
+                    new ChanPostUnparsed(
+                            postDescriptor,
+                            postBuilder.replies,
+                            postBuilder.threadImagesCount,
+                            postBuilder.uniqueIps,
+                            postBuilder.lastModified,
+                            postBuilder.unixTimestampSeconds,
+                            postBuilder.idColor,
+                            postBuilder.filterHighlightedColor,
+                            postBuilder.postCommentBuilder.getComment(),
+                            postBuilder.subject,
+                            postBuilder.name,
+                            postBuilder.tripcode,
+                            postBuilder.posterId,
+                            postBuilder.moderatorCapcode,
+                            postBuilder.subjectSpan,
+                            postBuilder.nameTripcodeIdCapcodeSpan,
+                            postBuilder.op,
+                            postBuilder.sticky,
+                            postBuilder.closed,
+                            postBuilder.archived,
+                            postBuilder.isLightColor,
+                            postBuilder.isSavedReply,
+                            postBuilder.filterStub,
+                            postBuilder.filterRemove,
+                            postBuilder.filterWatch,
+                            postBuilder.filterReplies,
+                            postBuilder.filterOnlyOP,
+                            postBuilder.filterSaved
+                    )
+            );
+        }
+
+        chanPostRepository.insertManyBlocking(unparsedPosts).unwrap();
     }
 
     // Concurrently parses the new posts with an executor

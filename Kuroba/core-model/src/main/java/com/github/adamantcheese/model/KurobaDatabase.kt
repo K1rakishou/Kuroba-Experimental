@@ -11,16 +11,18 @@ import com.github.adamantcheese.model.converter.PeriodTypeConverter
 import com.github.adamantcheese.model.converter.VideoServiceTypeConverter
 import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.*
+import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
 
 @Database(
         entities = [
             ChanBoardEntity::class,
             ChanThreadEntity::class,
+            ChanPostEntity::class,
             MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class,
             InlinedFileInfoEntity::class
         ],
-        version = 1,
+        version = 2,
         exportSchema = true
 )
 @TypeConverters(value = [
@@ -35,6 +37,7 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun inlinedFileDao(): InlinedFileInfoDao
     abstract fun chanBoardDao(): ChanBoardDao
     abstract fun chanThreadDao(): ChanThreadDao
+    abstract fun chanPostDao(): ChanPostDao
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"
@@ -46,6 +49,9 @@ abstract class KurobaDatabase : RoomDatabase() {
                             DATABASE_NAME
                     )
                     .fallbackToDestructiveMigrationOnDowngrade()
+                    .addMigrations(
+                            Migration_from_v1_to_v2()
+                    )
                     .build()
         }
     }

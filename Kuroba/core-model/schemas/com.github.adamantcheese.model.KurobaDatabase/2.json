@@ -1,0 +1,459 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "3d83ad4f1c7460bf9b593bb7be9307fa",
+    "entities": [
+      {
+        "tableName": "chan_board",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`board_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "boardId",
+            "columnName": "board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boardCode",
+            "columnName": "board_code",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "board_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "chan_board_board_descriptor_idx",
+            "unique": true,
+            "columnNames": [
+              "site_name",
+              "board_code"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_board_board_descriptor_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "chan_thread",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, PRIMARY KEY(`thread_id`), FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "threadId",
+            "columnName": "thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerBoardId",
+            "columnName": "owner_board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "thread_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "chan_thread_owner_board_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_board_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_thread_owner_board_id_idx` ON `${TABLE_NAME}` (`owner_board_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chan_board",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_board_id"
+            ],
+            "referencedColumns": [
+              "board_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "chan_post",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `replies` INTEGER NOT NULL, `thread_images_count` INTEGER NOT NULL, `unique_ips` INTEGER NOT NULL, `last_modified` INTEGER NOT NULL, `unix_timestamp_seconds` INTEGER NOT NULL, `id_color` INTEGER NOT NULL, `filter_highlighted_color` INTEGER NOT NULL, `post_comment` TEXT NOT NULL, `subject` TEXT, `name` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `subject_span` TEXT, `name_tripcode_id_capcode_span` TEXT, `is_op` INTEGER NOT NULL, `sticky` INTEGER NOT NULL, `closed` INTEGER NOT NULL, `archived` INTEGER NOT NULL, `is_light_color` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, `filter_stub` INTEGER NOT NULL, `filter_remove` INTEGER NOT NULL, `filter_watch` INTEGER NOT NULL, `filter_replies` INTEGER NOT NULL, `filter_only_op` INTEGER NOT NULL, `filter_saved` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replies",
+            "columnName": "replies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadImagesCount",
+            "columnName": "thread_images_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uniqueIps",
+            "columnName": "unique_ips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastModified",
+            "columnName": "last_modified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unixTimestampSeconds",
+            "columnName": "unix_timestamp_seconds",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idColor",
+            "columnName": "id_color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterHighlightedColor",
+            "columnName": "filter_highlighted_color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postComment",
+            "columnName": "post_comment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subject",
+            "columnName": "subject",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "tripcode",
+            "columnName": "tripcode",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "posterId",
+            "columnName": "poster_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "moderatorCapcode",
+            "columnName": "moderator_capcode",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "subjectSpan",
+            "columnName": "subject_span",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "nameTripcodeIdCapcodeSpan",
+            "columnName": "name_tripcode_id_capcode_span",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isOp",
+            "columnName": "is_op",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sticky",
+            "columnName": "sticky",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "closed",
+            "columnName": "closed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archived",
+            "columnName": "archived",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isLightColor",
+            "columnName": "is_light_color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSavedReply",
+            "columnName": "is_saved_reply",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterStub",
+            "columnName": "filter_stub",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterRemove",
+            "columnName": "filter_remove",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterWatch",
+            "columnName": "filter_watch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterReplies",
+            "columnName": "filter_replies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterOnlyOP",
+            "columnName": "filter_only_op",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filterSaved",
+            "columnName": "filter_saved",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "post_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "chan_post_owner_thread_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_owner_thread_id_idx` ON `${TABLE_NAME}` (`owner_thread_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chan_thread",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "media_service_link_extra_content_entity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_id` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_id`))",
+        "fields": [
+          {
+            "fieldPath": "videoId",
+            "columnName": "video_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mediaServiceType",
+            "columnName": "media_service_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "videoTitle",
+            "columnName": "video_title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "videoDuration",
+            "columnName": "video_duration",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "insertedAt",
+            "columnName": "inserted_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "video_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "media_service_link_extra_content_entity_inserted_at_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `media_service_link_extra_content_entity_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "seen_post",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "postId",
+            "columnName": "post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "insertedAt",
+            "columnName": "inserted_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "post_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "seen_post_inserted_at_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `seen_post_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chan_thread",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "inlined_file_info_entity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`file_url` TEXT NOT NULL, `file_size` INTEGER, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`file_url`))",
+        "fields": [
+          {
+            "fieldPath": "fileUrl",
+            "columnName": "file_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "file_size",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "insertedAt",
+            "columnName": "inserted_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "file_url"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "inlined_file_info_entity_inserted_at_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_at"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `inlined_file_info_entity_inserted_at_idx` ON `${TABLE_NAME}` (`inserted_at`)"
+          }
+        ],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d83ad4f1c7460bf9b593bb7be9307fa')"
+    ]
+  }
+}

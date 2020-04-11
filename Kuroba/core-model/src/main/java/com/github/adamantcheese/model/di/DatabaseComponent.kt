@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.OkHttpDns
 import com.github.adamantcheese.model.di.annotation.OkHttpProtocols
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
+import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
@@ -26,6 +27,7 @@ interface DatabaseComponent {
     fun getMediaServiceLinkExtraContentRepository(): MediaServiceLinkExtraContentRepository
     fun getSeenPostRepository(): SeenPostRepository
     fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
+    fun getChanPostRepository(): ChanPostRepository
 
     @Component.Builder
     interface Builder {
