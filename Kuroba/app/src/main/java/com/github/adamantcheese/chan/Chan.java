@@ -36,7 +36,6 @@ import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.di.RepositoryModule;
 import com.github.adamantcheese.chan.core.di.RoomDatabaseModule;
 import com.github.adamantcheese.chan.core.di.SiteModule;
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
@@ -149,9 +148,6 @@ public class Chan
                 new ManagerModule()
         );
         feather.injectFields(this);
-
-        //Needs to happen before any sites are processed, in case they request archives
-        feather.instance(ArchivesManager.class);
 
         siteService.initialize();
         boardManager.initialize();

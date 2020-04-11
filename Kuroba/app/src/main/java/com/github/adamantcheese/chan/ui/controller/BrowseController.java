@@ -169,7 +169,8 @@ public class BrowseController
             overflowBuilder.withSubItem(R.string.action_sort, this::orderClicked);
         }
 
-        overflowBuilder.withSubItem(ARCHIVE_ID, R.string.thread_view_archive, this::archiveClicked)
+        overflowBuilder
+                .withSubItem(ARCHIVE_ID, R.string.thread_view_archive, this::archiveClicked)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
                 .withSubItem(R.string.action_scroll_to_top, this::upClicked)
@@ -451,9 +452,6 @@ public class BrowseController
         //set the board just in case?
         setBoard(catalogLoadable.board);
     }
-
-    @Override
-    public void showArchives() { }
 
     // Creates or updates the target ThreadViewController
     // This controller can be in various places depending on the layout

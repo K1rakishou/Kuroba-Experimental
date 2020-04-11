@@ -308,7 +308,7 @@ public class Loadable
     }
 
     public BoardDescriptor getBoardDescriptor() {
-        return new BoardDescriptor(site.name(), boardCode);
+        return BoardDescriptor.create(site.name(), boardCode);
     }
 
     public static Loadable readFromParcel(Parcel parcel) {

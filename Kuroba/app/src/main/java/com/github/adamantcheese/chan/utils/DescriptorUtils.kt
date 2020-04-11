@@ -7,6 +7,7 @@ import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 
 object DescriptorUtils {
 
+    @JvmStatic
     fun getThreadDescriptor(loadable: Loadable): ThreadDescriptor {
         require(loadable.isThreadMode) { "Loadable must be in thread mode" }
         require(loadable.no > 0) { "Loadable is in thread mode but it has no threadId" }
@@ -18,6 +19,7 @@ object DescriptorUtils {
      * When you have access to both [Loadable] and [Post] prefer this method. It won't crash if the
      * loadable ends up being a catalog loadable
      * */
+    @JvmStatic
     fun getThreadDescriptor(loadable: Loadable, post: Post): ThreadDescriptor {
         if (loadable.isThreadMode) {
             val threadId = loadable.no.toLong()

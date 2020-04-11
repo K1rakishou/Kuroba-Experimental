@@ -17,7 +17,6 @@
 package com.github.adamantcheese.chan.ui.controller;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -44,10 +43,8 @@ import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
-import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
@@ -74,7 +71,6 @@ import static com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu.OVERFLOW_ID;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLinkInBrowser;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.shareLink;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
@@ -82,7 +78,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 public class ViewThreadController
         extends ThreadController
         implements ThreadLayout.ThreadLayoutCallback,
-        ArchivesLayout.Callback,
         ToolbarMenuItem.ToobarThreedotMenuCallback {
     private static final String TAG = "ViewThreadController";
 
@@ -173,9 +168,6 @@ public class ViewThreadController
 
         menuOverflowBuilder.withSubItem(R.string.action_search, this::searchClicked)
                 .withSubItem(R.string.action_reload, this::reloadClicked);
-        if (loadable.site instanceof Chan4) { //archives are 4chan only
-            menuOverflowBuilder.withSubItem(R.string.thread_show_archives, this::showArchivesInternal);
-        }
         menuOverflowBuilder.withSubItem(R.string.view_removed_posts, this::showRemovedPostsDialog)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
@@ -280,21 +272,6 @@ public class ViewThreadController
 
     private void reloadClicked(ToolbarMenuSubItem item) {
         threadLayout.getPresenter().requestData();
-    }
-
-    public void showArchives() {
-        showArchivesInternal(null);
-    }
-
-    private void showArchivesInternal(ToolbarMenuSubItem item) {
-        @SuppressLint("InflateParams") final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
-        dialogView.setBoard(threadLayout.getPresenter().getLoadable().board);
-        dialogView.setCallback(this);
-
-        AlertDialog dialog =
-                new AlertDialog.Builder(context).setView(dialogView).setTitle(R.string.thread_show_archives).create();
-        dialog.setCanceledOnTouchOutside(true);
-        dialog.show();
     }
 
     public void showRemovedPostsDialog(ToolbarMenuSubItem item) {
@@ -764,14 +741,6 @@ public class ViewThreadController
 
         Drawable drawable = pinned ? white : outline;
         menuItem.setImage(drawable, animated);
-    }
-
-    @Override
-    public void openArchive(Pair<String, String> domainNamePair) {
-        Loadable loadable = threadLayout.getPresenter().getLoadable();
-        String link = loadable.desktopUrl();
-        link = link.replace("https://boards.4chan.org/", "https://" + domainNamePair.second + "/");
-        openLinkInBrowser(context, link);
     }
 
     @Override

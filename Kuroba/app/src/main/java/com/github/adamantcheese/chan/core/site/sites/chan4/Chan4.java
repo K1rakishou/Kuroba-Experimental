@@ -16,19 +16,15 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.chan4;
 
-import android.util.JsonReader;
 import android.webkit.CookieManager;
 import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.BuildConfig;
-import com.github.adamantcheese.chan.Chan;
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.net.JsonReaderRequest;
 import com.github.adamantcheese.chan.core.settings.OptionSettingItem;
 import com.github.adamantcheese.chan.core.settings.OptionsSetting;
 import com.github.adamantcheese.chan.core.settings.SettingProvider;
@@ -331,23 +327,6 @@ public class Chan4
                         listener.onPagesReceived(board, new Pages(new ArrayList<>()));
                     }
             ));
-        }
-
-        @Override
-        public void archives(ArchiveRequestListener archivesListener) {
-            //currently only used for 4chan, so if there are archives, don't send another request
-            if (Chan.instance(ArchivesManager.class).hasArchives()) return;
-            requestQueue.add(new JsonReaderRequest<List<ArchivesManager.Archives>>(
-                    "https://nstepien.github.io/archives.json/archives.json",
-                    archivesListener::onArchivesReceived,
-                    error -> Logger.e(TAG, "Failed to get archives for 4Chan, using builtins")
-            ) {
-                @Override
-                public List<ArchivesManager.Archives> readJson(JsonReader reader)
-                        throws Exception {
-                    return ArchivesManager.parseArchives(reader);
-                }
-            });
         }
 
         @Override

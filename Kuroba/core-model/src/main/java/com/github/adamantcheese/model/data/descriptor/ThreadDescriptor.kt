@@ -5,7 +5,7 @@ data class ThreadDescriptor(
         val opNo: Long
 ) {
 
-    fun siteName() = boardDescriptor.siteName
+    fun siteName() = boardDescriptor.siteDescriptor.siteName
     fun boardCode() = boardDescriptor.boardCode
 
 }

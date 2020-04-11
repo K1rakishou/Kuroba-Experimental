@@ -108,7 +108,6 @@ public class ThreadLayout
     private HidingFloatingActionButton replyButton;
     private ThreadListLayout threadListLayout;
     private LinearLayout errorLayout;
-    private boolean archiveButton;
 
     private TextView errorText;
     private Button errorRetryButton;
@@ -184,11 +183,7 @@ public class ThreadLayout
     @Override
     public void onClick(View v) {
         if (v == errorRetryButton) {
-            if (!archiveButton) {
-                presenter.requestData();
-            } else {
-                callback.showArchives();
-            }
+            presenter.requestData();
         } else if (v == replyButton) {
             threadListLayout.openReply(true);
         }
@@ -287,9 +282,6 @@ public class ThreadLayout
             switchVisible(Visible.ERROR);
             errorText.setText(errorMessage);
             if (error.getErrorMessage() == R.string.thread_load_failed_not_found) {
-                errorRetryButton.setText(R.string.thread_show_archives);
-                archiveButton = true;
-
                 presenter.markAllPostsAsSeen();
             }
         }
@@ -822,8 +814,6 @@ public class ThreadLayout
         void showBoard(Loadable catalogLoadable);
 
         void showBoardAndSearch(Loadable catalogLoadable, String searchQuery);
-
-        void showArchives();
 
         void showImages(List<PostImage> images, int index, Loadable loadable, ThumbnailView thumbnail);
 

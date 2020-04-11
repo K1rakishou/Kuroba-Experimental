@@ -26,12 +26,7 @@ import android.text.style.UnderlineSpan;
 
 import androidx.annotation.AnyThread;
 
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4;
-import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -53,7 +48,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.core.site.parser.StyleRule.tagRule;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
@@ -94,8 +88,7 @@ public class CommentParser {
 
         rule(tagRule("span").cssClass("deadlink")
                 .foregroundColor(StyleRule.ForegroundColor.QUOTE)
-                .strikeThrough()
-                .action(this::handleDead));
+                .strikeThrough());
         rule(tagRule("span").cssClass("spoiler").link(PostLinkable.Type.SPOILER));
         rule(tagRule("span").cssClass("fortune").action(this::handleFortune));
         rule(tagRule("span").cssClass("abbr").nullify());
@@ -311,31 +304,6 @@ public class CommentParser {
                 new ForegroundColorSpanHashed(theme.inlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
-    }
-
-    public CharSequence handleDead(
-            Theme theme, PostParser.Callback callback, Post.Builder builder, CharSequence text, Element deadlink
-    ) {
-        //crossboard thread links in the OP are likely not thread links, so just let them error out on the parseInt
-        try {
-            if (!(builder.board.site instanceof Chan4)) return text; //4chan only
-            int postNo = Integer.parseInt(deadlink.text().substring(2));
-            List<ArchivesLayout.PairForAdapter> boards = instance(ArchivesManager.class).domainsForBoard(builder.board);
-            if (!boards.isEmpty() && builder.op) {
-                //only allow same board deadlinks to be parsed in the OP, as they are likely previous thread links
-                //if a deadlink appears in a regular post that is likely to be a dead post link, we are unable to link to an archive
-                //as there are no URLs that directly will allow you to link to a post and be redirected to the right thread
-                Site site = builder.board.site;
-                String link =
-                        site.resolvable().desktopUrl(Loadable.forThread(site, builder.board, postNo, ""), builder.id);
-                link = link.replace("https://boards.4chan.org/", "https://" + boards.get(0).second + "/");
-                PostLinkable newLinkable = new PostLinkable(theme, link, link, PostLinkable.Type.LINK);
-                text = span(text, newLinkable);
-                builder.addLinkable(newLinkable);
-            }
-        } catch (Exception ignored) {
-        }
-        return text;
     }
 
     public Link matchAnchor(Post.Builder post, CharSequence text, Element anchor, PostParser.Callback callback) {

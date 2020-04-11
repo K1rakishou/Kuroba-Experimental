@@ -16,17 +16,13 @@
  */
 package com.github.adamantcheese.chan.core.presenter;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.BuildConfig;
-import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
@@ -67,7 +63,6 @@ import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
-import com.github.adamantcheese.chan.ui.layout.ArchivesLayout;
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -91,9 +86,7 @@ import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.openLinkInBrowser;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.shareLink;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
@@ -102,7 +95,7 @@ import static com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize;
 public class ThreadPresenter
         implements ChanThreadLoader.ChanLoaderCallback, PostAdapter.PostAdapterCallback,
         PostCellInterface.PostCellCallback, ThreadStatusCell.Callback,
-        ThreadListLayout.ThreadListLayoutPresenterCallback, ArchivesLayout.Callback {
+        ThreadListLayout.ThreadListLayoutPresenterCallback {
     //region Private Variables
     private static final String TAG = "ThreadPresenter";
 
@@ -135,6 +128,7 @@ public class ThreadPresenter
     private final MockReplyManager mockReplyManager;
     private final OnDemandContentLoaderManager onDemandContentLoaderManager;
     private final SeenPostsManager seenPostsManager;
+    private final ArchivesManager archivesManager;
 
     private ThreadPresenterCallback threadPresenterCallback;
     private Loadable loadable;
@@ -158,7 +152,8 @@ public class ThreadPresenter
             FileManager fileManager,
             MockReplyManager mockReplyManager,
             OnDemandContentLoaderManager onDemandContentLoaderManager,
-            SeenPostsManager seenPostsManager
+            SeenPostsManager seenPostsManager,
+            ArchivesManager archivesManager
     ) {
         this.watchManager = watchManager;
         this.databaseManager = databaseManager;
@@ -169,6 +164,7 @@ public class ThreadPresenter
         this.mockReplyManager = mockReplyManager;
         this.onDemandContentLoaderManager = onDemandContentLoaderManager;
         this.seenPostsManager = seenPostsManager;
+        this.archivesManager = archivesManager;
     }
 
     public void create(ThreadPresenterCallback threadPresenterCallback) {
@@ -200,7 +196,6 @@ public class ThreadPresenter
 
             startSavingThreadIfItIsNotBeingSaved(this.loadable);
             chanLoader = chanLoaderManager.obtain(loadable, this);
-            loadable.site.actions().archives(Chan.instance(ArchivesManager.class));
             threadPresenterCallback.showLoading();
 
             seenPostsManager.preloadForThread(loadable);
@@ -1184,20 +1179,6 @@ public class ThreadPresenter
         //noinspection ConstantConditions
         if (!chanLoader.getThread().isArchived()) {
             chanLoader.requestMoreDataAndResetTimer();
-        } else {
-            @SuppressLint("InflateParams") final ArchivesLayout dialogView = (ArchivesLayout) inflate(context, R.layout.layout_archives, null);
-            boolean hasContents = dialogView.setBoard(loadable.board);
-            dialogView.setCallback(this);
-
-            if (hasContents) {
-                AlertDialog dialog = new AlertDialog.Builder(context).setView(dialogView)
-                        .setTitle(R.string.thread_show_archives)
-                        .create();
-                dialog.setCanceledOnTouchOutside(true);
-                dialog.show();
-            } else {
-                showToast(context, "No archives for this board or site.");
-            }
         }
     }
 
@@ -1378,15 +1359,6 @@ public class ThreadPresenter
         if (!isBound()) return;
 
         threadPresenterCallback.onRestoreRemovedPostsClicked(loadable, selectedPosts);
-    }
-
-    @Override
-    public void openArchive(Pair<String, String> domainNamePair) {
-        if (isBound()) {
-            String link = loadable.desktopUrl();
-            link = link.replace("https://boards.4chan.org/", "https://" + domainNamePair.second + "/");
-            openLinkInBrowser(context, link);
-        }
     }
 
     public void setContext(Context context) {
