@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
+import kotlin.Unit;
+import kotlin.system.TimingKt;
 import okhttp3.HttpUrl;
 
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -157,13 +159,17 @@ public class ChanReaderRequest
     }
 
     private void storePostsInDatabase(List<Post.Builder> toParse) {
+        if (toParse.isEmpty()) {
+            return;
+        }
+
         List<ChanPostUnparsed> unparsedPosts = new ArrayList<>(toParse.size());
 
         for (Post.Builder postBuilder : toParse) {
             PostDescriptor postDescriptor = PostDescriptor.create(
                     postBuilder.board.site.name(),
                     postBuilder.board.code,
-                    postBuilder.opId,
+                    postBuilder.getOpId(),
                     postBuilder.id
             );
 
@@ -201,7 +207,13 @@ public class ChanReaderRequest
             );
         }
 
-        chanPostRepository.insertManyBlocking(unparsedPosts).unwrap();
+        long timeMs = TimingKt.measureTimeMillis(() -> {
+            chanPostRepository.insertManyBlocking(unparsedPosts).unwrap();
+            return Unit.INSTANCE;
+        });
+
+        Logger.d(TAG, "Successfully inserted " + unparsedPosts.size() +
+                " posts into the database, took " + timeMs + "ms");
     }
 
     // Concurrently parses the new posts with an executor

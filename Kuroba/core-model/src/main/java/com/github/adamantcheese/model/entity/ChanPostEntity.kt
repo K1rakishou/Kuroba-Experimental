@@ -1,9 +1,16 @@
 package com.github.adamantcheese.model.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 
 @Entity(
         tableName = ChanPostEntity.TABLE_NAME,
+        primaryKeys = [
+            ChanPostEntity.POST_ID_COLUMN_NAME,
+            ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME
+        ],
         foreignKeys = [
             ForeignKey(
                     entity = ChanThreadEntity::class,
@@ -21,7 +28,6 @@ import androidx.room.*
         ]
 )
 data class ChanPostEntity(
-        @PrimaryKey(autoGenerate = false)
         @ColumnInfo(name = POST_ID_COLUMN_NAME)
         val postId: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)

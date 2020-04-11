@@ -532,6 +532,14 @@ public class Post
             return this;
         }
 
+        public int getOpId() {
+            if (!op) {
+                return opId;
+            }
+
+            return id;
+        }
+
         public Builder filter(
                 int highlightedColor,
                 boolean stub,

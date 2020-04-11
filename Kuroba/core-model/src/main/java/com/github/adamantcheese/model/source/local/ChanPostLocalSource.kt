@@ -16,7 +16,6 @@ class ChanPostLocalSource(
     private val chanPostDao = database.chanPostDao()
 
     suspend fun insert(chanPostUnparsed: ChanPostUnparsed) {
-        require(chanPostUnparsed.postDescriptor.threadDescriptor.opId >= 0)
         ensureInTransaction()
 
         val chanBoardEntity = chanBoardDao.insert(
