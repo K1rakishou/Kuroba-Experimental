@@ -8,9 +8,9 @@ object InlinedFileInfoMapper {
 
     fun toEntity(inlinedFileInfo: InlinedFileInfo, insertedAt: DateTime): InlinedFileInfoEntity {
         return InlinedFileInfoEntity(
-                inlinedFileInfo.fileUrl,
-                inlinedFileInfo.fileSize,
-                insertedAt
+                fileUrl = inlinedFileInfo.fileUrl,
+                fileSize = inlinedFileInfo.fileSize,
+                insertedAt = insertedAt
         )
     }
 
@@ -20,8 +20,8 @@ object InlinedFileInfoMapper {
         }
 
         return InlinedFileInfo(
-                inlinedFileInfoEntity.fileUrl,
-                inlinedFileInfoEntity.fileSize
+                fileUrl = inlinedFileInfoEntity.fileUrl,
+                fileSize = inlinedFileInfoEntity.fileSize
         )
     }
 

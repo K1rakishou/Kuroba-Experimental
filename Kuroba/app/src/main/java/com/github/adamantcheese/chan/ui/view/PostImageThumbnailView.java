@@ -36,6 +36,7 @@ import com.github.adamantcheese.chan.ui.animation.PostImageThumbnailViewAnimator
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
 import javax.inject.Inject;
 
@@ -176,7 +177,7 @@ public class PostImageThumbnailView
         String url = postImage.getThumbnailUrl().toString();
         if ((ChanSettings.autoLoadThreadImages.get() || ChanSettings.highResCells.get()) && useHiRes) {
             if (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get()) {
-                url = postImage.type == PostImage.Type.STATIC
+                url = postImage.type == ChanPostImageType.STATIC
                         ? postImage.imageUrl.toString()
                         : postImage.getThumbnailUrl().toString();
             }
@@ -193,7 +194,7 @@ public class PostImageThumbnailView
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        if (postImage != null && postImage.type == PostImage.Type.MOVIE && !error) {
+        if (postImage != null && postImage.type == ChanPostImageType.MOVIE && !error) {
             int iconScale = 1;
             double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);

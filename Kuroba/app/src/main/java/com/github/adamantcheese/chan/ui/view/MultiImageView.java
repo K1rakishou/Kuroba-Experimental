@@ -56,6 +56,7 @@ import com.github.adamantcheese.chan.ui.widget.CancellableToast;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.PostUtils;
+import com.github.adamantcheese.model.data.post.ChanPostImageType;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -675,11 +676,11 @@ public class MultiImageView
     }
 
     private void setOther(Loadable loadable, PostImage image) {
-        if (image.type == PostImage.Type.PDF) {
+        if (image.type == ChanPostImageType.PDF) {
             cancellableToast.showToast(R.string.pdf_not_viewable);
             //this lets the user download the PDF, even though we haven't actually downloaded anything
             callback.onDownloaded(image);
-        } else if (image.type == PostImage.Type.SWF) {
+        } else if (image.type == ChanPostImageType.SWF) {
             cancellableToast.showToast(R.string.swf_not_viewable);
             callback.onDownloaded(image);
         }

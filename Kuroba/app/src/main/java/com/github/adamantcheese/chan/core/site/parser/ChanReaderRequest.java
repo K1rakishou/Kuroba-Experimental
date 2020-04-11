@@ -21,6 +21,7 @@ import android.util.JsonReader;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
+import com.github.adamantcheese.chan.core.mapper.ChanPostUnparsedMapper;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -28,8 +29,8 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.model.data.ChanPostUnparsed;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
+import com.github.adamantcheese.model.data.post.ChanPostUnparsed;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 
 import java.util.ArrayList;
@@ -174,36 +175,7 @@ public class ChanReaderRequest
             );
 
             unparsedPosts.add(
-                    new ChanPostUnparsed(
-                            postDescriptor,
-                            postBuilder.replies,
-                            postBuilder.threadImagesCount,
-                            postBuilder.uniqueIps,
-                            postBuilder.lastModified,
-                            postBuilder.unixTimestampSeconds,
-                            postBuilder.idColor,
-                            postBuilder.filterHighlightedColor,
-                            postBuilder.postCommentBuilder.getComment(),
-                            postBuilder.subject,
-                            postBuilder.name,
-                            postBuilder.tripcode,
-                            postBuilder.posterId,
-                            postBuilder.moderatorCapcode,
-                            postBuilder.subjectSpan,
-                            postBuilder.nameTripcodeIdCapcodeSpan,
-                            postBuilder.op,
-                            postBuilder.sticky,
-                            postBuilder.closed,
-                            postBuilder.archived,
-                            postBuilder.isLightColor,
-                            postBuilder.isSavedReply,
-                            postBuilder.filterStub,
-                            postBuilder.filterRemove,
-                            postBuilder.filterWatch,
-                            postBuilder.filterReplies,
-                            postBuilder.filterOnlyOP,
-                            postBuilder.filterSaved
-                    )
+                    ChanPostUnparsedMapper.fromPostBuilder(postDescriptor, postBuilder)
             );
         }
 

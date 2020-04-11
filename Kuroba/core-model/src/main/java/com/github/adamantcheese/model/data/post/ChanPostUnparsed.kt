@@ -1,9 +1,11 @@
-package com.github.adamantcheese.model.data
+package com.github.adamantcheese.model.data.post
 
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 
 data class ChanPostUnparsed(
         val postDescriptor: PostDescriptor,
+        val postImages: MutableList<ChanPostImageUnparsed> = mutableListOf(),
+        val postIcons: MutableList<ChanPostHttpIconUnparsed> = mutableListOf(),
         var replies: Int = -1,
         var threadImagesCount: Int = -1,
         var uniqueIps: Int = -1,

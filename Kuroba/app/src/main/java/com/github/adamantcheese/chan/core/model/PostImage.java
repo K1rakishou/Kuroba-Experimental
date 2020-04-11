@@ -24,26 +24,14 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
 import okhttp3.HttpUrl;
 
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.GIF;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.MOVIE;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.PDF;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.STATIC;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 
 public class PostImage {
     private static final long MAX_PREFETCH_FILE_SIZE =  25 * (1024 * 1024); // 25 MB
-
-
-    public enum Type {
-        STATIC,
-        GIF,
-        MOVIE,
-        PDF,
-        SWF
-    }
 
     public boolean hidden = ChanSettings.hideImages.get();
 
@@ -61,7 +49,7 @@ public class PostImage {
     private boolean isPrefetched = false;
     @Nullable
     public final String fileHash;
-    public final Type type;
+    public final ChanPostImageType type;
     private long size;
 
     public synchronized boolean isPrefetched() {
@@ -88,7 +76,7 @@ public class PostImage {
 
         switch (extension) {
             case "gif":
-                type = GIF;
+                type = ChanPostImageType.GIF;
                 break;
             case "webm":
             case "mp4":
@@ -96,16 +84,16 @@ public class PostImage {
             case "m4a":
             case "ogg":
             case "flac":
-                type = MOVIE;
+                type = ChanPostImageType.MOVIE;
                 break;
             case "pdf":
-                type = PDF;
+                type = ChanPostImageType.PDF;
                 break;
             case "swf":
-                type = Type.SWF;
+                type = ChanPostImageType.SWF;
                 break;
             default:
-                type = STATIC;
+                type = ChanPostImageType.STATIC;
                 break;
         }
     }

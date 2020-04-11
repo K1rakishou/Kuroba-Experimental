@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.data
+package com.github.adamantcheese.model.data.post
 
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import org.joda.time.DateTime

@@ -39,6 +39,7 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,11 +54,6 @@ import javax.inject.Inject;
 import okhttp3.HttpUrl;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.GIF;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.MOVIE;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.PDF;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.STATIC;
-import static com.github.adamantcheese.chan.core.model.PostImage.Type.SWF;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 import static com.github.adamantcheese.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
 import static com.github.adamantcheese.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
@@ -161,7 +157,7 @@ public class ImageViewerPresenter
         exiting = true;
 
         PostImage postImage = images.get(selectedPosition);
-        if (postImage.type == MOVIE) {
+        if (postImage.type == ChanPostImageType.MOVIE) {
             callback.setImageMode(postImage, LOWRES, true);
         }
 
@@ -296,13 +292,13 @@ public class ImageViewerPresenter
         PostImage postImage = images.get(selectedPosition);
 
         if (imageAutoLoad(loadable, postImage) && (!postImage.spoiler() || ChanSettings.revealimageSpoilers.get())) {
-            if (postImage.type == STATIC) {
+            if (postImage.type == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.type == GIF) {
+            } else if (postImage.type == ChanPostImageType.GIF) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.type == MOVIE && videoAutoLoad(loadable, postImage)) {
+            } else if (postImage.type == ChanPostImageType.MOVIE && videoAutoLoad(loadable, postImage)) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else if (postImage.type == PDF || postImage.type == SWF) {
+            } else if (postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF) {
                 callback.setImageMode(postImage, OTHER, true);
             }
         }
@@ -377,9 +373,9 @@ public class ImageViewerPresenter
         boolean load = false;
         boolean loadChunked = true;
 
-        if (postImage.type == STATIC || postImage.type == GIF) {
+        if (postImage.type == ChanPostImageType.STATIC || postImage.type == ChanPostImageType.GIF) {
             load = imageAutoLoad(loadable, postImage);
-        } else if (postImage.type == MOVIE) {
+        } else if (postImage.type == ChanPostImageType.MOVIE) {
             load = videoAutoLoad(loadable, postImage);
         }
 
@@ -388,7 +384,7 @@ public class ImageViewerPresenter
          * webm chunked because it will most likely corrupt the file since we will forcefully stop
          * it.
          * */
-        if (postImage.type == MOVIE && ChanSettings.videoStream.get()) {
+        if (postImage.type == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
             loadChunked = false;
         }
 
@@ -472,7 +468,7 @@ public class ImageViewerPresenter
         if (viewPagerVisible) {
             PostImage postImage = images.get(selectedPosition);
             if (imageAutoLoad(loadable, postImage) && !postImage.spoiler()) {
-                if (postImage.type == MOVIE && callback.getImageMode(postImage) != VIDEO) {
+                if (postImage.type == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                     callback.setImageMode(postImage, VIDEO, true);
                 } else {
                     if (callback.isImmersive()) {
@@ -483,13 +479,14 @@ public class ImageViewerPresenter
                 }
             } else {
                 MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-                if (postImage.type == STATIC && currentMode != BIGIMAGE) {
+                if (postImage.type == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
                     callback.setImageMode(postImage, BIGIMAGE, true);
-                } else if (postImage.type == GIF && currentMode != GIFIMAGE) {
+                } else if (postImage.type == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
                     callback.setImageMode(postImage, GIFIMAGE, true);
-                } else if (postImage.type == MOVIE && currentMode != VIDEO) {
+                } else if (postImage.type == ChanPostImageType.MOVIE && currentMode != VIDEO) {
                     callback.setImageMode(postImage, VIDEO, true);
-                } else if ((postImage.type == PDF || postImage.type == SWF) && currentMode != OTHER) {
+                } else if ((postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF)
+                        && currentMode != OTHER) {
                     callback.setImageMode(postImage, OTHER, true);
                 } else {
                     if (callback.isImmersive()) {
@@ -700,7 +697,7 @@ public class ImageViewerPresenter
      */
     @Nullable
     private HttpUrl getSearchImageUrl(final PostImage postImage) {
-        return postImage.type == PostImage.Type.MOVIE ? postImage.thumbnailUrl : postImage.imageUrl;
+        return postImage.type == ChanPostImageType.MOVIE ? postImage.thumbnailUrl : postImage.imageUrl;
     }
 
     private enum SwipeDirection {

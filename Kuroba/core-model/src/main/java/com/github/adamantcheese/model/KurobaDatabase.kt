@@ -5,10 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.github.adamantcheese.model.converter.DateTimeTypeConverter
-import com.github.adamantcheese.model.converter.LoadableTypeConverter
-import com.github.adamantcheese.model.converter.PeriodTypeConverter
-import com.github.adamantcheese.model.converter.VideoServiceTypeConverter
+import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.*
 import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
@@ -18,6 +15,8 @@ import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
             ChanBoardEntity::class,
             ChanThreadEntity::class,
             ChanPostEntity::class,
+            ChanPostImageEntity::class,
+            ChanPostHttpIconEntity::class,
             MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class,
             InlinedFileInfoEntity::class
@@ -29,7 +28,9 @@ import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
     DateTimeTypeConverter::class,
     LoadableTypeConverter::class,
     VideoServiceTypeConverter::class,
-    PeriodTypeConverter::class
+    PeriodTypeConverter::class,
+    HttpUrlTypeConverter::class,
+    ChanPostImageTypeTypeConverter::class
 ])
 abstract class KurobaDatabase : RoomDatabase() {
     abstract fun mediaServiceLinkExtraContentDao(): MediaServiceLinkExtraContentDao
@@ -38,6 +39,8 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun chanBoardDao(): ChanBoardDao
     abstract fun chanThreadDao(): ChanThreadDao
     abstract fun chanPostDao(): ChanPostDao
+    abstract fun chanPostImageDao(): ChanPostImageDao
+    abstract fun chanPostHttpIconDao(): ChanPostHttpIconDao
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"

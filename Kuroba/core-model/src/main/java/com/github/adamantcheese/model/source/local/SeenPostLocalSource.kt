@@ -2,8 +2,8 @@ package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.mapper.SeenPostMapper
 import org.joda.time.DateTime
 

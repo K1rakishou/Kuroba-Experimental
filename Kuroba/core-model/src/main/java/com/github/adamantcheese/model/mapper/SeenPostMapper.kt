@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.mapper
 
-import com.github.adamantcheese.model.data.SeenPost
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.entity.SeenPostEntity
 
 object SeenPostMapper {

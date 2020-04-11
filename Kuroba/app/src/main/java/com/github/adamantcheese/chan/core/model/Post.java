@@ -384,6 +384,7 @@ public class Post
         public long unixTimestampSeconds = -1L;
         @NonNull
         public List<PostImage> postImages = new ArrayList<>();
+        @Nullable
         public List<PostHttpIcon> httpIcons;
         public String posterId = "";
         public String moderatorCapcode = "";

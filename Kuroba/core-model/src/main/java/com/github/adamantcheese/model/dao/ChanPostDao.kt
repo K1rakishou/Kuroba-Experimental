@@ -7,7 +7,7 @@ import com.github.adamantcheese.model.entity.ChanPostEntity
 abstract class ChanPostDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(chanPostEntity: ChanPostEntity)
+    abstract suspend fun insert(chanPostEntity: ChanPostEntity): Long
 
     @Update(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun update(chanPostEntity: ChanPostEntity)
@@ -22,14 +22,14 @@ abstract class ChanPostDao {
     """)
     abstract suspend fun select(ownerThreadId: Long, postId: Long): ChanPostEntity?
 
-    suspend fun insertOrUpdate(ownerThreadId: Long, postId: Long, chanPostEntity: ChanPostEntity) {
+    suspend fun insertOrUpdate(ownerThreadId: Long, postId: Long, chanPostEntity: ChanPostEntity): Long {
         val prev = select(ownerThreadId, postId)
         if (prev != null) {
             update(chanPostEntity)
-            return
+            return prev.postId
         }
 
-        insert(chanPostEntity)
+        return insert(chanPostEntity)
     }
 
     @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")

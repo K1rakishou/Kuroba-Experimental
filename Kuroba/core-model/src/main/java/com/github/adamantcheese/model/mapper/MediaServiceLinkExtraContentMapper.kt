@@ -8,11 +8,11 @@ object MediaServiceLinkExtraContentMapper {
 
     fun toEntity(mediaServiceLinkExtraContent: MediaServiceLinkExtraContent, insertedAt: DateTime): MediaServiceLinkExtraContentEntity {
         return MediaServiceLinkExtraContentEntity(
-                mediaServiceLinkExtraContent.videoId,
-                mediaServiceLinkExtraContent.mediaServiceType,
-                mediaServiceLinkExtraContent.videoTitle,
-                mediaServiceLinkExtraContent.videoDuration,
-                insertedAt
+                videoId = mediaServiceLinkExtraContent.videoId,
+                mediaServiceType = mediaServiceLinkExtraContent.mediaServiceType,
+                videoTitle = mediaServiceLinkExtraContent.videoTitle,
+                videoDuration = mediaServiceLinkExtraContent.videoDuration,
+                insertedAt = insertedAt
         )
     }
 
@@ -22,10 +22,10 @@ object MediaServiceLinkExtraContentMapper {
         }
 
         return MediaServiceLinkExtraContent(
-                mediaServiceLinkExtraContentEntity.videoId,
-                mediaServiceLinkExtraContentEntity.mediaServiceType,
-                mediaServiceLinkExtraContentEntity.videoTitle,
-                mediaServiceLinkExtraContentEntity.videoDuration
+                videoId = mediaServiceLinkExtraContentEntity.videoId,
+                mediaServiceType = mediaServiceLinkExtraContentEntity.mediaServiceType,
+                videoTitle = mediaServiceLinkExtraContentEntity.videoTitle,
+                videoDuration = mediaServiceLinkExtraContentEntity.videoDuration
         )
     }
 

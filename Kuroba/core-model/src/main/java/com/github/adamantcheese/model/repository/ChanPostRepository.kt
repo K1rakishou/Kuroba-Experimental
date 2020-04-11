@@ -3,7 +3,7 @@ package com.github.adamantcheese.model.repository
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.data.ChanPostUnparsed
+import com.github.adamantcheese.model.data.post.ChanPostUnparsed
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

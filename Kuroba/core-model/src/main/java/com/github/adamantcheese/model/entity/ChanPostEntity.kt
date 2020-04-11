@@ -1,16 +1,9 @@
 package com.github.adamantcheese.model.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
+import androidx.room.*
 
 @Entity(
         tableName = ChanPostEntity.TABLE_NAME,
-        primaryKeys = [
-            ChanPostEntity.POST_ID_COLUMN_NAME,
-            ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME
-        ],
         foreignKeys = [
             ForeignKey(
                     entity = ChanThreadEntity::class,
@@ -22,14 +15,21 @@ import androidx.room.Index
         ],
         indices = [
             Index(
-                    name = ChanPostEntity.OWNER_THREAD_ID_INDEX_NAME,
-                    value = [ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME]
+                    name = ChanPostEntity.POST_NO_OWNER_THREAD_ID_INDEX_NAME,
+                    value = [
+                        ChanPostEntity.POST_NO_COLUMN_NAME,
+                        ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME
+                    ],
+                    unique = true
             )
         ]
 )
 data class ChanPostEntity(
+        @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = POST_ID_COLUMN_NAME)
-        val postId: Long,
+        val postId: Long = 0,
+        @ColumnInfo(name = POST_NO_COLUMN_NAME)
+        val postNo: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
         val ownerThreadId: Long,
         @ColumnInfo(name = REPLIES_COLUMN_NAME)
@@ -91,6 +91,7 @@ data class ChanPostEntity(
         const val TABLE_NAME = "chan_post"
 
         const val POST_ID_COLUMN_NAME = "post_id"
+        const val POST_NO_COLUMN_NAME = "post_no"
         const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
         const val REPLIES_COLUMN_NAME = "replies"
         const val THREAD_IMAGES_COUNT_COLUMN_NAME = "thread_images_count"
@@ -120,6 +121,6 @@ data class ChanPostEntity(
         const val FILTER_ONLY_OP_COLUMN_NAME = "filter_only_op"
         const val FILTER_SAVED_COLUMN_NAME = "filter_saved"
 
-        const val OWNER_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_owner_thread_id_idx"
+        const val POST_NO_OWNER_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_post_no_owner_thread_id_idx"
     }
 }
