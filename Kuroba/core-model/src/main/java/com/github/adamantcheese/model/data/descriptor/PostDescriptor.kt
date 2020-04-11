@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.data.descriptor
 
 data class PostDescriptor(
-        val threadDescriptor: ThreadDescriptor,
+        val threadDescriptor: ChanDescriptor.ThreadDescriptor,
         val postNo: Long
 ) {
 
@@ -11,7 +11,10 @@ data class PostDescriptor(
             require(threadNo > 0) { "Bad threadNo: $threadNo" }
             require(postNo > 0) { "Bad postNo: $postNo" }
 
-            return PostDescriptor(ThreadDescriptor.create(siteName, boardCode, threadNo), postNo)
+            return PostDescriptor(
+                    ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo),
+                    postNo
+            )
         }
     }
 

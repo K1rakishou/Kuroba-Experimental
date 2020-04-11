@@ -167,7 +167,7 @@ public class ThemeSettingsController
         }
 
         @Override
-        public boolean isInternal(int postNo) {
+        public boolean isInternal(long postNo) {
             return true;
         }
     };

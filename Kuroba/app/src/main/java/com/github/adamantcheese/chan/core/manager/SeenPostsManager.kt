@@ -6,8 +6,8 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +27,7 @@ class SeenPostsManager(
         private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
     @GuardedBy("mutex")
-    private val seenPostsMap = mutableMapOf<ThreadDescriptor, MutableSet<SeenPost>>()
+    private val seenPostsMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>()
     private val mutex = Mutex()
 
     override val coroutineContext: CoroutineContext
@@ -121,7 +121,7 @@ class SeenPostsManager(
     }
 
     fun preloadForThread(loadable: Loadable) {
-        if (loadable.mode != Loadable.Mode.THREAD) {
+        if (!loadable.isThreadMode) {
             return
         }
 
@@ -129,7 +129,7 @@ class SeenPostsManager(
             return
         }
 
-        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable)
+        val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
         actor.offer(ActorAction.Preload(threadDescriptor))
     }
 
@@ -153,7 +153,7 @@ class SeenPostsManager(
     private fun isEnabled() = ChanSettings.markUnseenPosts.get()
 
     private sealed class ActorAction {
-        class Preload(val threadDescriptor: ThreadDescriptor) : ActorAction()
+        class Preload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : ActorAction()
         class MarkPostAsSeen(val postDescriptor: PostDescriptor) : ActorAction()
         object Clear : ActorAction()
     }

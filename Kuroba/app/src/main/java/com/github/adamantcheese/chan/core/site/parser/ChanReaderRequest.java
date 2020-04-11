@@ -28,19 +28,18 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse;
+import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -80,10 +79,8 @@ public class ChanReaderRequest
 
     @Inject
     DatabaseManager databaseManager;
-
     @Inject
     FilterEngine filterEngine;
-
     @Inject
     ChanPostRepository chanPostRepository;
 
@@ -193,31 +190,18 @@ public class ChanReaderRequest
             throws InterruptedException, ExecutionException {
         List<Post> cached = queue.getToReuse();
         List<Post> total = new ArrayList<>(cached);
-
         List<Post.Builder> toParse = queue.getToParse();
-
-        // A list of all ids in the thread. Used for checking if a quote if for the current
-        // thread or externally.
-        Set<Integer> internalIds = new HashSet<>();
-        // All ids of cached posts.
-        for (Post post : cached) {
-            internalIds.add(post.no);
-        }
-        // And ids for posts to parse, from the builder.
-        for (Post.Builder builder : toParse) {
-            internalIds.add(builder.id);
-        }
-        // Do not modify internalIds after this point.
-        internalIds = Collections.unmodifiableSet(internalIds);
+        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(queue.getLoadable());
 
         List<Callable<Post>> tasks = new ArrayList<>(toParse.size());
         for (Post.Builder post : toParse) {
             tasks.add(new PostParseCallable(filterEngine,
                     filters,
                     databaseSavedReplyManager,
+                    chanPostRepository,
                     post,
                     reader,
-                    internalIds
+                    descriptor
             ));
         }
 

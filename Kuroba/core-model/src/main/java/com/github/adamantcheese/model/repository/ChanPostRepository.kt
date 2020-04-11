@@ -3,6 +3,7 @@ package com.github.adamantcheese.model.repository
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.Dispatchers
@@ -21,9 +22,31 @@ class ChanPostRepository(
 
     fun insertManyBlocking(unparsedPosts: MutableList<ChanPostUnparsed>): ModularResult<Unit> {
         return runBlocking {
-            withTransactionSafe {
+            return@runBlocking withTransactionSafe {
                 // TODO: insert all in one big batch
                 unparsedPosts.forEach { localSource.insert(it) }
+            }
+        }
+    }
+
+    fun containsPostBlocking(
+            descriptor: ChanDescriptor,
+            postNo: Long
+    ): ModularResult<Boolean> {
+        return runBlocking {
+            return@runBlocking withTransactionSafe {
+                return@withTransactionSafe localSource.containsPostBlocking(descriptor, postNo)
+            }
+        }
+    }
+
+    fun threadContainsPostBlocking(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            postNo: Long
+    ): ModularResult<Boolean> {
+        return runBlocking {
+            return@runBlocking withTransactionSafe {
+                return@withTransactionSafe localSource.threadContainsPost(threadDescriptor, postNo)
             }
         }
     }
@@ -37,4 +60,5 @@ class ChanPostRepository(
             return@withTransactionSafe localSource.deleteAll()
         }
     }
+
 }

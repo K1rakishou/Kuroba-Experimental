@@ -1,6 +1,6 @@
 package com.github.adamantcheese.model.mapper
 
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.entity.SeenPostEntity
 
@@ -14,7 +14,10 @@ object SeenPostMapper {
         )
     }
 
-    fun fromEntity(threadDescriptor: ThreadDescriptor, seenPostEntity: SeenPostEntity?): SeenPost? {
+    fun fromEntity(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            seenPostEntity: SeenPostEntity?
+    ): SeenPost? {
         if (seenPostEntity == null) {
             return null
         }

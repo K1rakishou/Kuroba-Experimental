@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.mapper.SeenPostMapper
 import org.joda.time.DateTime
@@ -36,7 +36,9 @@ open class SeenPostLocalSource(
 
     }
 
-    open suspend fun selectAllByThreadDescriptor(threadDescriptor: ThreadDescriptor): List<SeenPost> {
+    open suspend fun selectAllByThreadDescriptor(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor
+    ): List<SeenPost> {
         ensureInTransaction()
 
         val chanBoardEntity = chanBoardDao.select(

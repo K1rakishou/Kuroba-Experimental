@@ -2,7 +2,9 @@ package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.github.adamantcheese.model.mapper.ChanPostHttpIconMapper
 import com.github.adamantcheese.model.mapper.ChanPostImageMapper
 import com.github.adamantcheese.model.mapper.ChanPostMapper
@@ -51,9 +53,66 @@ class ChanPostLocalSource(
         }
     }
 
+    suspend fun containsPostBlocking(descriptor: ChanDescriptor, postNo: Long): Boolean {
+        ensureInTransaction()
+
+        return when (descriptor) {
+            is ChanDescriptor.ThreadDescriptor -> threadContainsPost(descriptor, postNo)
+            is ChanDescriptor.CatalogDescriptor -> catalogContainsThread(descriptor, postNo)
+        }
+    }
+
+    suspend fun catalogContainsThread(
+            catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+            threadNo: Long
+    ): Boolean {
+        ensureInTransaction()
+
+        val chanBoardEntity = chanBoardDao.select(
+                catalogDescriptor.siteName(),
+                catalogDescriptor.boardCode()
+        )
+
+        if (chanBoardEntity == null) {
+            return false
+        }
+
+        return chanThreadDao.select(chanBoardEntity.boardId, threadNo) != null
+    }
+
+    suspend fun threadContainsPost(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            postNo: Long
+    ): Boolean {
+        ensureInTransaction()
+
+        val chanThreadEntity = getThreadByThreadDescriptor(threadDescriptor)
+                ?: return false
+
+        return chanPostDao.select(chanThreadEntity.threadId, postNo) != null
+    }
+
+    private suspend fun getThreadByThreadDescriptor(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor
+    ): ChanThreadEntity? {
+        ensureInTransaction()
+
+        val chanBoardEntity = chanBoardDao.select(
+                threadDescriptor.siteName(),
+                threadDescriptor.boardCode()
+        )
+
+        if (chanBoardEntity == null) {
+            return null
+        }
+
+        return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.opNo)
+    }
+
     open suspend fun deleteAll(): Int {
         ensureInTransaction()
 
         return chanPostDao.deleteAll()
     }
+
 }

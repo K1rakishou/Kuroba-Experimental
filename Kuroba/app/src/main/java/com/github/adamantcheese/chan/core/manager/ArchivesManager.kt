@@ -2,8 +2,8 @@ package com.github.adamantcheese.chan.core.manager
 
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
@@ -17,7 +17,7 @@ class ArchivesManager(
     private val random = Random(System.currentTimeMillis())
     private val archives by lazy { loadArchives() }
 
-    fun getRequestLinkForThread(threadDescriptor: ThreadDescriptor): String? {
+    fun getRequestLinkForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): String? {
         require(threadDescriptor.boardDescriptor.siteDescriptor.is4chan())
 
         val archiveData = getArchiveDataForThreadDescriptor(threadDescriptor)
@@ -48,7 +48,7 @@ class ArchivesManager(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun getArchiveDataForThreadDescriptor(threadDescriptor: ThreadDescriptor): ArchiveData? {
+    private fun getArchiveDataForThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchiveData? {
         val archiveData = archives.filter { archiveData ->
             archiveData.supportedBoards.contains(threadDescriptor.boardCode())
         }.randomOrNull(random)

@@ -31,6 +31,6 @@ public interface PostParser {
          * @param postNo the post id
          * @return {@code true} if referring to a post in the thread, {@code false} otherwise.
          */
-        boolean isInternal(int postNo);
+        boolean isInternal(long postNo);
     }
 }

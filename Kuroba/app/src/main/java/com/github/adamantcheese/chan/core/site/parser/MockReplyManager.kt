@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.site.parser
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.*
 
 /**
@@ -22,11 +22,11 @@ import java.util.*
  * */
 class MockReplyManager {
     @GuardedBy("this")
-    private val mockReplyMultiMap = mutableMapOf<ThreadDescriptor, LinkedList<Int>>()
+    private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Int>>()
 
     fun addMockReply(siteName: String, boardCode: String, opNo: Int, postNo: Int) {
         synchronized(this) {
-            val threadDescriptor = ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
+            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
 
             if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
                 mockReplyMultiMap[threadDescriptor] = LinkedList()
@@ -39,7 +39,7 @@ class MockReplyManager {
 
     fun getLastMockReply(siteName: String, boardCode: String, opNo: Int): Int {
         return synchronized(this) {
-            val threadDescriptor = ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
+            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
 
             val repliesQueue = mockReplyMultiMap[threadDescriptor]
                     ?: return@synchronized -1

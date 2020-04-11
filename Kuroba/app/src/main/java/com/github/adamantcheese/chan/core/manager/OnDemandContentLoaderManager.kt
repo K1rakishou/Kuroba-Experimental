@@ -11,8 +11,8 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -30,7 +30,7 @@ class OnDemandContentLoaderManager(
     private val rwLock = ReentrantReadWriteLock()
 
     @GuardedBy("rwLock")
-    private val activeLoaders = HashMap<ThreadDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
+    private val activeLoaders = HashMap<ChanDescriptor.ThreadDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
 
     private val postLoaderRxQueue = PublishProcessor.create<PostLoaderData>()
     private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
@@ -190,7 +190,7 @@ class OnDemandContentLoaderManager(
         }
 
         BackgroundUtils.ensureMainThread()
-        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable)
+        val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
 
         Logger.d(TAG, "cancelAllForLoadable called for $threadDescriptor")
 

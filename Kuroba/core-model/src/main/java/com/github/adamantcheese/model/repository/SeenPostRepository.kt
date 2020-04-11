@@ -3,7 +3,7 @@ package com.github.adamantcheese.model.repository
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,7 @@ class SeenPostRepository(
     }
 
     suspend fun selectAllByThreadDescriptor(
-            threadDescriptor: ThreadDescriptor
+            threadDescriptor: ChanDescriptor.ThreadDescriptor
     ): ModularResult<List<SeenPost>> {
         return withTransactionSafe {
             return@withTransactionSafe seenPostLocalSource.selectAllByThreadDescriptor(threadDescriptor)

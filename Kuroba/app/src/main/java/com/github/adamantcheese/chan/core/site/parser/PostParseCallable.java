@@ -20,9 +20,10 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 // Called concurrently to parse the post html and the filters on it
@@ -34,24 +35,27 @@ class PostParseCallable
     private FilterEngine filterEngine;
     private List<Filter> filters;
     private DatabaseSavedReplyManager savedReplyManager;
+    private ChanPostRepository chanPostRepository;
     private Post.Builder post;
     private ChanReader reader;
-    private final Set<Integer> internalIds;
+    private final ChanDescriptor descriptor;
 
     public PostParseCallable(
             FilterEngine filterEngine,
             List<Filter> filters,
             DatabaseSavedReplyManager savedReplyManager,
+            ChanPostRepository chanPostRepository,
             Post.Builder post,
             ChanReader reader,
-            Set<Integer> internalIds
+            ChanDescriptor descriptor
     ) {
         this.filterEngine = filterEngine;
         this.filters = filters;
         this.savedReplyManager = savedReplyManager;
+        this.chanPostRepository = chanPostRepository;
         this.post = post;
         this.reader = reader;
-        this.internalIds = internalIds;
+        this.descriptor = descriptor;
     }
 
     @Override
@@ -69,8 +73,9 @@ class PostParseCallable
             }
 
             @Override
-            public boolean isInternal(int postNo) {
-                return internalIds.contains(postNo);
+            public boolean isInternal(long postNo) {
+                return chanPostRepository.containsPostBlocking(descriptor, postNo)
+                        .unwrap();
             }
         });
     }
