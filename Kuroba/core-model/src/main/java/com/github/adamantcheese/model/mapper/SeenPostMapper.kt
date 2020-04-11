@@ -8,7 +8,7 @@ object SeenPostMapper {
 
     fun toEntity(ownerThreadId: Long, seenPost: SeenPost): SeenPostEntity {
         return SeenPostEntity(
-                postId = seenPost.postId,
+                postNo = seenPost.postNo,
                 ownerThreadId = ownerThreadId,
                 insertedAt = seenPost.insertedAt
         )
@@ -20,9 +20,9 @@ object SeenPostMapper {
         }
 
         return SeenPost(
-                threadDescriptor,
-                seenPostEntity.postId,
-                seenPostEntity.insertedAt
+                threadDescriptor = threadDescriptor,
+                postNo = seenPostEntity.postNo,
+                insertedAt = seenPostEntity.insertedAt
         )
     }
 

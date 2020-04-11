@@ -16,23 +16,27 @@ abstract class ChanThreadDao {
     @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
-        WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+        WHERE 
+            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        AND
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
     """)
-    abstract suspend fun select(threadId: Long): ChanThreadEntity?
+    abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
 
-    suspend fun insert(threadId: Long, ownerBoardId: Long): ChanThreadEntity {
-        val prev = select(threadId)
+    suspend fun insert(ownerBoardId: Long, threadNo: Long): ChanThreadEntity {
+        val prev = select(ownerBoardId, threadNo)
         if (prev != null) {
             return prev
         }
 
         val chanThreadEntity = ChanThreadEntity(
-                threadId,
-                ownerBoardId
+                threadId = 0L,
+                threadNo = threadNo,
+                ownerBoardId = ownerBoardId
         )
 
-        insert(chanThreadEntity)
-        return chanThreadEntity
+        val insertedThreadId = insert(chanThreadEntity)
+        return chanThreadEntity.copy(threadId = insertedThreadId)
     }
 
 }

@@ -26,8 +26,8 @@ open class SeenPostLocalSource(
         )
 
         val chanThreadEntity = chanThreadDao.insert(
-                seenPost.threadDescriptor.opId,
-                chanBoardEntity.boardId
+                chanBoardEntity.boardId,
+                seenPost.threadDescriptor.opNo
         )
 
         seenPostDao.insert(
@@ -39,10 +39,17 @@ open class SeenPostLocalSource(
     open suspend fun selectAllByThreadDescriptor(threadDescriptor: ThreadDescriptor): List<SeenPost> {
         ensureInTransaction()
 
-        val chanBoardEntity = chanThreadDao.select(threadDescriptor.opId)
-                ?: return emptyList()
+        val chanBoardEntity = chanBoardDao.select(
+                threadDescriptor.siteName(),
+                threadDescriptor.boardCode()
+        ) ?: return emptyList()
 
-        return seenPostDao.selectAllByThreadId(chanBoardEntity.threadId)
+        val chanThreadEntity = chanThreadDao.select(
+                chanBoardEntity.boardId,
+                threadDescriptor.opNo
+        ) ?: return emptyList()
+
+        return seenPostDao.selectAllByThreadId(chanThreadEntity.threadId)
                 .mapNotNull { seenPostEntity ->
                     return@mapNotNull SeenPostMapper.fromEntity(threadDescriptor, seenPostEntity)
                 }

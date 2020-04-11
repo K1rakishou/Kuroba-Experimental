@@ -25,8 +25,8 @@ import org.joda.time.DateTime
 )
 class SeenPostEntity(
         @PrimaryKey(autoGenerate = false)
-        @ColumnInfo(name = POST_ID_COLUMN_NAME)
-        val postId: Long,
+        @ColumnInfo(name = POST_NO_COLUMN_NAME)
+        val postNo: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
         val ownerThreadId: Long,
         @ColumnInfo(name = INSERTED_AT_COLUMN_NAME)
@@ -36,7 +36,7 @@ class SeenPostEntity(
     companion object {
         const val TABLE_NAME = "seen_post"
 
-        const val POST_ID_COLUMN_NAME = "post_id"
+        const val POST_NO_COLUMN_NAME = "post_no"
         const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
         const val INSERTED_AT_COLUMN_NAME = "inserted_at"
 

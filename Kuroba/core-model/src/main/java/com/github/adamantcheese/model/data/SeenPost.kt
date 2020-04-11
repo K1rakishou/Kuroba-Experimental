@@ -5,6 +5,6 @@ import org.joda.time.DateTime
 
 data class SeenPost(
         val threadDescriptor: ThreadDescriptor,
-        val postId: Long,
+        val postNo: Long,
         val insertedAt: DateTime
 )

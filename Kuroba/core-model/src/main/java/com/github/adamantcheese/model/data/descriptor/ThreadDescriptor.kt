@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.data.descriptor
 
 data class ThreadDescriptor(
         val boardDescriptor: BoardDescriptor,
-        val opId: Long
+        val opNo: Long
 ) {
 
     fun siteName() = boardDescriptor.siteName

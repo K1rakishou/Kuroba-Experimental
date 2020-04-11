@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1c2e1cd8486aa9347e3b8752dbbdfe62",
+    "identityHash": "e8fa2ca32906f6855811e4fc8c20eaeb",
     "entities": [
       {
         "tableName": "chan_board",
@@ -48,11 +48,17 @@
       },
       {
         "tableName": "chan_thread",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, PRIMARY KEY(`thread_id`), FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `thread_no` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "threadId",
             "columnName": "thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadNo",
+            "columnName": "thread_no",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -67,9 +73,19 @@
           "columnNames": [
             "thread_id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "chan_thread_thread_no_owner_board_id_idx",
+            "unique": true,
+            "columnNames": [
+              "thread_no",
+              "owner_board_id"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_thread_thread_no_owner_board_id_idx` ON `${TABLE_NAME}` (`thread_no`, `owner_board_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "chan_board",
@@ -139,11 +155,11 @@
       },
       {
         "tableName": "seen_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`post_no`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
-            "fieldPath": "postId",
-            "columnName": "post_id",
+            "fieldPath": "postNo",
+            "columnName": "post_no",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -162,7 +178,7 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "post_id"
+            "post_no"
           ],
           "autoGenerate": false
         },
@@ -235,7 +251,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1c2e1cd8486aa9347e3b8752dbbdfe62')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e8fa2ca32906f6855811e4fc8c20eaeb')"
     ]
   }
 }

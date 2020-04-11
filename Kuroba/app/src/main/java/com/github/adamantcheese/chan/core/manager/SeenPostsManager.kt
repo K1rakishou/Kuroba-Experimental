@@ -104,12 +104,12 @@ class SeenPostsManager(
         }
 
         val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable, post)
-        val postId = post.no.toLong()
+        val postNo = post.no.toLong()
 
         return runBlocking {
             return@runBlocking mutex.withLock {
                 val seenPost = seenPostsMap[threadDescriptor]
-                        ?.firstOrNull { seenPost -> seenPost.postId == postId }
+                        ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
                         ?: return@withLock false
 
                 // We need this time check so that we don't remove the unseen post label right after
