@@ -10,10 +10,10 @@ data class ThreadDescriptor(
 
     companion object {
         @JvmStatic
-        fun create(siteName: String, boardCode: String, threadId: Long): ThreadDescriptor {
-            require(threadId > 0) { "Bad threadId: $threadId" }
+        fun create(siteName: String, boardCode: String, threadNo: Long): ThreadDescriptor {
+            require(threadNo > 0) { "Bad threadId: $threadNo" }
 
-            return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadId)
+            return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadNo)
         }
     }
 

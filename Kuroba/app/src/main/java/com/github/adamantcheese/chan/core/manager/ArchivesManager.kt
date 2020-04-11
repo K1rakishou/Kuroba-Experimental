@@ -28,7 +28,7 @@ class ArchivesManager(
                 FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
                 archiveData.domain,
                 threadDescriptor.boardCode(),
-                threadDescriptor.opId
+                threadDescriptor.opNo
         )
     }
 
@@ -43,7 +43,7 @@ class ArchivesManager(
                 FOOLFUUKA_POST_ENDPOINT_FORMAT,
                 archiveData.domain,
                 postDescriptor.threadDescriptor.boardCode(),
-                postDescriptor.postId
+                postDescriptor.postNo
         )
     }
 

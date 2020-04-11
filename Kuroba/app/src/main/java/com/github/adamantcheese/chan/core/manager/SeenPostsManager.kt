@@ -66,7 +66,7 @@ class SeenPostsManager(
 
                     val seenPost = SeenPost(
                             threadDescriptor,
-                            action.postDescriptor.postId,
+                            action.postDescriptor.postNo,
                             DateTime.now()
                     )
 

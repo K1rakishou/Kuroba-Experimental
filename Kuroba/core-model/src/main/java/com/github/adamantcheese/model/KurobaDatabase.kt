@@ -8,7 +8,6 @@ import androidx.room.TypeConverters
 import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.*
-import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
 
 @Database(
         entities = [
@@ -21,7 +20,7 @@ import com.github.adamantcheese.model.migration.Migration_from_v1_to_v2
             SeenPostEntity::class,
             InlinedFileInfoEntity::class
         ],
-        version = 2,
+        version = 1,
         exportSchema = true
 )
 @TypeConverters(value = [
@@ -52,9 +51,6 @@ abstract class KurobaDatabase : RoomDatabase() {
                             DATABASE_NAME
                     )
                     .fallbackToDestructiveMigrationOnDowngrade()
-                    .addMigrations(
-                            Migration_from_v1_to_v2()
-                    )
                     .build()
         }
     }

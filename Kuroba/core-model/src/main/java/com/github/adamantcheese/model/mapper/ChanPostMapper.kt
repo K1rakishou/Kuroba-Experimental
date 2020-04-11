@@ -5,11 +5,11 @@ import com.github.adamantcheese.model.entity.ChanPostEntity
 
 object ChanPostMapper {
 
-    fun toEntity(chanPostUnparsed: ChanPostUnparsed): ChanPostEntity {
+    fun toEntity(ownerThreadId: Long, chanPostUnparsed: ChanPostUnparsed): ChanPostEntity {
         return ChanPostEntity(
                 postId = 0L,
-                postNo = chanPostUnparsed.postDescriptor.postId,
-                ownerThreadId = chanPostUnparsed.postDescriptor.threadDescriptor.opId,
+                postNo = chanPostUnparsed.postDescriptor.postNo,
+                ownerThreadId = ownerThreadId,
                 replies = chanPostUnparsed.replies,
                 threadImagesCount = chanPostUnparsed.threadImagesCount,
                 uniqueIps = chanPostUnparsed.uniqueIps,

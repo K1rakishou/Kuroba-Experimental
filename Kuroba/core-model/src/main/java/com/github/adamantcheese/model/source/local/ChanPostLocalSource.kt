@@ -28,14 +28,14 @@ class ChanPostLocalSource(
         )
 
         val chanThreadEntity = chanThreadDao.insert(
-                chanPostUnparsed.postDescriptor.threadDescriptor.opId,
-                chanBoardEntity.boardId
+                chanBoardEntity.boardId,
+                chanPostUnparsed.postDescriptor.threadDescriptor.opNo
         )
 
         val chanPostEntityId = chanPostDao.insertOrUpdate(
                 chanThreadEntity.threadId,
-                chanPostUnparsed.postDescriptor.postId,
-                ChanPostMapper.toEntity(chanPostUnparsed)
+                chanPostUnparsed.postDescriptor.postNo,
+                ChanPostMapper.toEntity(chanThreadEntity.threadId, chanPostUnparsed)
         )
 
         chanPostUnparsed.postImages.forEach { postImage ->

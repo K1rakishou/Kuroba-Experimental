@@ -2,16 +2,16 @@ package com.github.adamantcheese.model.data.descriptor
 
 data class PostDescriptor(
         val threadDescriptor: ThreadDescriptor,
-        val postId: Long
+        val postNo: Long
 ) {
 
     companion object {
         @JvmStatic
-        fun create(siteName: String, boardCode: String, threadId: Long, postId: Long): PostDescriptor {
-            require(threadId > 0) { "Bad threadId: $threadId" }
-            require(postId > 0) { "Bad postId: $postId" }
+        fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long): PostDescriptor {
+            require(threadNo > 0) { "Bad threadNo: $threadNo" }
+            require(postNo > 0) { "Bad postNo: $postNo" }
 
-            return PostDescriptor(ThreadDescriptor.create(siteName, boardCode, threadId), postId)
+            return PostDescriptor(ThreadDescriptor.create(siteName, boardCode, threadNo), postNo)
         }
     }
 

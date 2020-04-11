@@ -19,8 +19,7 @@ import androidx.room.*
                     value = [
                         ChanPostEntity.POST_NO_COLUMN_NAME,
                         ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME
-                    ],
-                    unique = true
+                    ]
             )
         ]
 )

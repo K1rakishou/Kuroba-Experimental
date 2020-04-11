@@ -18,12 +18,12 @@ abstract class ChanPostDao {
         WHERE 
             ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND
-            ${ChanPostEntity.POST_ID_COLUMN_NAME} = :postId
+            ${ChanPostEntity.POST_NO_COLUMN_NAME} = :postNo
     """)
-    abstract suspend fun select(ownerThreadId: Long, postId: Long): ChanPostEntity?
+    abstract suspend fun select(ownerThreadId: Long, postNo: Long): ChanPostEntity?
 
-    suspend fun insertOrUpdate(ownerThreadId: Long, postId: Long, chanPostEntity: ChanPostEntity): Long {
-        val prev = select(ownerThreadId, postId)
+    suspend fun insertOrUpdate(ownerThreadId: Long, postNo: Long, chanPostEntity: ChanPostEntity): Long {
+        val prev = select(ownerThreadId, postNo)
         if (prev != null) {
             update(chanPostEntity)
             return prev.postId
