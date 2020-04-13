@@ -1,10 +1,17 @@
 package com.github.adamantcheese.model.entity
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import okhttp3.HttpUrl
 
 @Entity(
         tableName = ChanPostHttpIconEntity.TABLE_NAME,
+        primaryKeys = [
+            ChanPostHttpIconEntity.ICON_URL_COLUMN_NAME,
+            ChanPostHttpIconEntity.OWNER_POST_ID_COLUMN_NAME
+        ],
         foreignKeys = [
             ForeignKey(
                     entity = ChanPostEntity::class,
@@ -21,10 +28,7 @@ import okhttp3.HttpUrl
             )
         ]
 )
-
-// FIXME: this shit doesn't work, we should use something different for the PK
 data class ChanPostHttpIconEntity(
-        @PrimaryKey(autoGenerate = false)
         @ColumnInfo(name = ICON_URL_COLUMN_NAME)
         val iconUrl: HttpUrl,
         @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)

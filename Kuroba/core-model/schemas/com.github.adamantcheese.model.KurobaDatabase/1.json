@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "0912ab87c676ea7cdc4550bc3d986b4a",
+    "identityHash": "ae354a3f4dede92713e38dfd0f58b019",
     "entities": [
       {
         "tableName": "chan_board",
@@ -475,7 +475,7 @@
       },
       {
         "tableName": "chan_post_http_icon",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`icon_url` TEXT NOT NULL, `owner_post_id` INTEGER NOT NULL, `icon_name` TEXT NOT NULL, PRIMARY KEY(`icon_url`), FOREIGN KEY(`owner_post_id`) REFERENCES `chan_post`(`post_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`icon_url` TEXT NOT NULL, `owner_post_id` INTEGER NOT NULL, `icon_name` TEXT NOT NULL, PRIMARY KEY(`icon_url`, `owner_post_id`), FOREIGN KEY(`owner_post_id`) REFERENCES `chan_post`(`post_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "iconUrl",
@@ -498,7 +498,8 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "icon_url"
+            "icon_url",
+            "owner_post_id"
           ],
           "autoGenerate": false
         },
@@ -677,7 +678,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0912ab87c676ea7cdc4550bc3d986b4a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ae354a3f4dede92713e38dfd0f58b019')"
     ]
   }
 }

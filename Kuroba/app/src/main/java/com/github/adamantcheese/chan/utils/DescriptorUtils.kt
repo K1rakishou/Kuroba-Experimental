@@ -29,10 +29,10 @@ object DescriptorUtils {
     }
 
     fun getPostDescriptor(loadable: Loadable, post: Post): PostDescriptor? {
-        val threadDescriptor = getDescriptor(loadable) as? ChanDescriptor.ThreadDescriptor
-                ?: return null
-
-        return PostDescriptor(threadDescriptor, post.no)
+        return PostDescriptor(
+                getDescriptor(loadable),
+                post.no
+        )
     }
 
 }
