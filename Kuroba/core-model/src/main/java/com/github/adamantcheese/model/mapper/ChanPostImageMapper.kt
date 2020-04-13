@@ -19,6 +19,7 @@ object ChanPostImageMapper {
                 imageHeight = chanPostImageUnparsed.imageHeight,
                 spoiler = chanPostImageUnparsed.spoiler,
                 isInlined = chanPostImageUnparsed.isInlined,
+                fileSize = chanPostImageUnparsed.size,
                 fileHash = chanPostImageUnparsed.fileHash,
                 type = chanPostImageUnparsed.type
         )
@@ -26,19 +27,19 @@ object ChanPostImageMapper {
 
     fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImageUnparsed {
         return ChanPostImageUnparsed(
-                chanPostImageEntity.serverFilename,
-                chanPostImageEntity.thumbnailUrl,
-                chanPostImageEntity.spoilerThumbnailUrl,
-                chanPostImageEntity.imageUrl,
-                chanPostImageEntity.filename,
-                chanPostImageEntity.extension,
-                chanPostImageEntity.imageWidth,
-                chanPostImageEntity.imageHeight,
-                chanPostImageEntity.spoiler,
-                chanPostImageEntity.isInlined,
-                chanPostImageEntity.fileSize,
-                chanPostImageEntity.fileHash,
-                chanPostImageEntity.type
+                serverFilename = chanPostImageEntity.serverFilename,
+                thumbnailUrl = chanPostImageEntity.thumbnailUrl,
+                spoilerThumbnailUrl = chanPostImageEntity.spoilerThumbnailUrl,
+                imageUrl = chanPostImageEntity.imageUrl,
+                filename = chanPostImageEntity.filename,
+                extension = chanPostImageEntity.extension,
+                imageWidth = chanPostImageEntity.imageWidth,
+                imageHeight = chanPostImageEntity.imageHeight,
+                spoiler = chanPostImageEntity.spoiler,
+                isInlined = chanPostImageEntity.isInlined,
+                size = chanPostImageEntity.fileSize,
+                fileHash = chanPostImageEntity.fileHash,
+                type = chanPostImageEntity.type
         )
     }
 

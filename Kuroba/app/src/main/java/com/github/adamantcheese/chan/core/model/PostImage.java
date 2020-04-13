@@ -252,6 +252,16 @@ public class PostImage {
                 spoiler = false;
             }
 
+            if (serverFilename == null || serverFilename.isEmpty()) {
+                throw new IllegalStateException("Bad serverFilename, null or empty");
+            }
+
+            // Server can actually send us empty file name, so we should just use serverFilename in
+            // such case
+            if (filename == null || filename.isEmpty()) {
+                filename = serverFilename;
+            }
+
             return new PostImage(this);
         }
     }

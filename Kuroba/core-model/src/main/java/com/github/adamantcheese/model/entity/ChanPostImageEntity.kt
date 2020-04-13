@@ -43,7 +43,7 @@ import okhttp3.HttpUrl
 data class ChanPostImageEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = POST_IMAGE_ID_COLUMN_NAME)
-        val postImageId: Long = 0L,
+        var postImageId: Long = 0L,
         @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
         val ownerPostId: Long,
         @ColumnInfo(name = SERVER_FILENAME_COLUMN_NAME)

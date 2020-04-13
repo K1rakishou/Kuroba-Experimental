@@ -50,7 +50,8 @@ abstract class ChanPostDao {
     suspend fun insertOrUpdate(ownerThreadId: Long, postNo: Long, chanPostEntity: ChanPostEntity): Long {
         val prev = select(ownerThreadId, postNo)
         if (prev != null) {
-            update(chanPostEntity.copy(postId = prev.postId))
+            chanPostEntity.postId = prev.postId
+            update(chanPostEntity)
             return prev.postId
         }
 

@@ -44,6 +44,7 @@ abstract class ChanBoardDao {
         val insertedId = insert(chanBoardEntity)
         check(insertedId >= 0L) { "Couldn't insert entity, insert() returned ${insertedId}" }
 
-        return chanBoardEntity.copy(boardId = insertedId)
+        chanBoardEntity.boardId = insertedId
+        return chanBoardEntity
     }
 }

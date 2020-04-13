@@ -26,7 +26,7 @@ import androidx.room.*
 data class ChanPostEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = POST_ID_COLUMN_NAME)
-        val postId: Long = 0,
+        var postId: Long = 0,
         @ColumnInfo(name = POST_NO_COLUMN_NAME)
         val postNo: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)

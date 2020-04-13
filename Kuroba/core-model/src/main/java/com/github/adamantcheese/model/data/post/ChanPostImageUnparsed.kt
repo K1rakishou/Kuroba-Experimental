@@ -37,7 +37,7 @@ class ChanPostImageUnparsed(
     override fun toString(): String {
         return "ChanPostImageUnparsed(serverFilename='$serverFilename', " +
                 "imageUrl=$imageUrl," +
-                " imageWidth=$imageWidth, " +
+                "imageWidth=$imageWidth, " +
                 "imageHeight=$imageHeight, " +
                 "size=$size, " +
                 "fileHash=$fileHash)"

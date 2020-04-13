@@ -21,6 +21,8 @@ import okhttp3.HttpUrl
             )
         ]
 )
+
+// FIXME: this shit doesn't work, we should use something different for the PK
 data class ChanPostHttpIconEntity(
         @PrimaryKey(autoGenerate = false)
         @ColumnInfo(name = ICON_URL_COLUMN_NAME)

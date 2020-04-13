@@ -37,13 +37,15 @@ abstract class ChanPostImageDao {
     suspend fun insertOrUpdate(chanPostImageEntity: ChanPostImageEntity) {
         var prev = selectByImageUrl(chanPostImageEntity.imageUrl)
         if (prev != null) {
-            update(chanPostImageEntity.copy(postImageId = prev.postImageId))
+            chanPostImageEntity.postImageId = prev.postImageId
+            update(chanPostImageEntity)
             return
         }
 
         prev = selectByServerFileName(chanPostImageEntity.serverFilename)
         if (prev != null) {
-            update(chanPostImageEntity.copy(postImageId = prev.postImageId))
+            chanPostImageEntity.postImageId = prev.postImageId
+            update(chanPostImageEntity)
             return
         }
 

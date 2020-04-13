@@ -36,7 +36,9 @@ abstract class ChanThreadDao {
         )
 
         val insertedThreadId = insert(chanThreadEntity)
-        return chanThreadEntity.copy(threadId = insertedThreadId)
+
+        chanThreadEntity.threadId = insertedThreadId
+        return chanThreadEntity
     }
 
     @Query("""

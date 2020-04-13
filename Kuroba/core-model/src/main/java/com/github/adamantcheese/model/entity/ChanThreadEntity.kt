@@ -27,7 +27,7 @@ import androidx.room.*
 data class ChanThreadEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = THREAD_ID_COLUMN_NAME)
-        val threadId: Long,
+        var threadId: Long,
         @ColumnInfo(name = THREAD_NO_COLUMN_NAME)
         val threadNo: Long,
         @ColumnInfo(name = OWNER_BOARD_ID_COLUMN_NAME)

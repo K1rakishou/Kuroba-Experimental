@@ -109,10 +109,15 @@ class ChanReaderRequest(
         storeNewPostsInRepository(chanReaderProcessor.getToParse())
         updateOldPostsInRepository(chanReaderProcessor.getToUpdateInRepository())
 
-        val list = reloadPostsFromDatabase(
-                chanReaderProcessor,
-                getDescriptor(chanReaderProcessor.loadable)
-        )
+        val (list, duration) = measureTimedValue {
+            reloadPostsFromDatabase(
+                    chanReaderProcessor,
+                    getDescriptor(chanReaderProcessor.loadable)
+            )
+        }
+
+        Logger.d(TAG, "reloadPostsFromDatabase took ${duration.inMilliseconds}ms, " +
+                "posts count = ${list.size}")
 
         val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
         return processPosts(op, list)

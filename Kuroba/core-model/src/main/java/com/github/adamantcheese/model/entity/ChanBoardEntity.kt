@@ -21,7 +21,7 @@ import androidx.room.PrimaryKey
 data class ChanBoardEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = BOARD_ID_COLUMN_NAME)
-        val boardId: Long = 0L,
+        var boardId: Long = 0L,
         @ColumnInfo(name = SITE_NAME_COLUMN_NAME)
         val siteName: String,
         @ColumnInfo(name = BOARD_CODE_COLUMN_NAME)
