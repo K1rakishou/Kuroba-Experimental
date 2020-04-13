@@ -14,8 +14,8 @@ class PostCommentBuilder(
     }
 
     @Synchronized
-    fun getComment(): CharSequence? {
-        return comment
+    fun getComment(): CharSequence {
+        return comment ?: ""
     }
 
     @Synchronized
@@ -42,6 +42,10 @@ class PostCommentBuilder(
         val c = checkNotNull(comment) { "Comment is null!" }
 
         return PostComment(c, postLinkables.toList())
+    }
+
+    override fun toString(): String {
+        return "PostCommentBuilder(comment=${comment?.take(64)})"
     }
 
     companion object {

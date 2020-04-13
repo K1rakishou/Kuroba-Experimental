@@ -34,7 +34,7 @@ public class PostUtils {
         //@formatter:on
     }
 
-    public static Post findPostById(int id, @Nullable ChanThread thread) {
+    public static Post findPostById(long id, @Nullable ChanThread thread) {
         if (thread != null) {
             for (Post post : thread.getPosts()) {
                 if (post.no == id) {
@@ -45,7 +45,7 @@ public class PostUtils {
         return null;
     }
 
-    public static Set<Post> findPostWithReplies(int id, List<Post> posts) {
+    public static Set<Post> findPostWithReplies(long id, List<Post> posts) {
         Set<Post> postsSet = new HashSet<>();
         findPostWithRepliesRecursive(id, posts, postsSet);
         return postsSet;
@@ -54,12 +54,12 @@ public class PostUtils {
     /**
      * Finds a post by it's id and then finds all posts that has replied to this post recursively
      */
-    private static void findPostWithRepliesRecursive(int id, List<Post> posts, Set<Post> postsSet) {
+    private static void findPostWithRepliesRecursive(long id, List<Post> posts, Set<Post> postsSet) {
         for (Post post : posts) {
             if (post.no == id && !postsSet.contains(post)) {
                 postsSet.add(post);
 
-                for (Integer replyId : post.getRepliesFrom()) {
+                for (Long replyId : post.getRepliesFrom()) {
                     findPostWithRepliesRecursive(replyId, posts, postsSet);
                 }
             }
@@ -72,13 +72,14 @@ public class PostUtils {
      * This function is slow so it must be executed on the background thread
      */
     public static List<PostHide> findHiddenPostsWithReplies(
-            List<PostHide> hiddenPostsFirstIteration, Map<Integer, Post> postsFastLookupMap
+            List<PostHide> hiddenPostsFirstIteration,
+            Map<Long, Post> postsFastLookupMap
     ) {
         @SuppressLint("UseSparseArrays")
-        Map<Integer, PostHide> hiddenPostsFastLookupMap = new HashMap<>();
+        Map<Long, PostHide> hiddenPostsFastLookupMap = new HashMap<>();
 
         for (PostHide postHide : hiddenPostsFirstIteration) {
-            hiddenPostsFastLookupMap.put(postHide.no, postHide);
+            hiddenPostsFastLookupMap.put((long) postHide.no, postHide);
         }
 
         List<PostHide> newHiddenPosts = search(hiddenPostsFastLookupMap, postsFastLookupMap);
@@ -99,7 +100,8 @@ public class PostUtils {
      * hidden posts list if it has. Checks for some flags to decide whether that post should be hidden or not.
      */
     private static List<PostHide> search(
-            Map<Integer, PostHide> hiddenPostsFastLookupMap, Map<Integer, Post> postsFastLookupMap
+            Map<Long, PostHide> hiddenPostsFastLookupMap,
+            Map<Long, Post> postsFastLookupMap
     ) {
         Set<PostHide> newHiddenPosts = new HashSet<>();
 
@@ -110,7 +112,7 @@ public class PostUtils {
             }
 
             // enumerate all replies for every post
-            for (Integer replyTo : post.getRepliesTo()) {
+            for (Long replyTo : post.getRepliesTo()) {
                 Post repliedToPost = postsFastLookupMap.get(replyTo);
                 if (repliedToPost == null) {
                     // probably a cross-thread post

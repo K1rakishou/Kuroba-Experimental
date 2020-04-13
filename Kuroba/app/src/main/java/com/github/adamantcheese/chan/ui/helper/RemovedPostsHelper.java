@@ -46,7 +46,7 @@ public class RemovedPostsHelper {
         inject(this);
     }
 
-    public void showPosts(List<Post> threadPosts, int threadNo) {
+    public void showPosts(List<Post> threadPosts, long threadNo) {
         databaseManager.runTask(() -> {
             List<Post> removedPosts = getRemovedPosts(threadPosts, threadNo);
 
@@ -55,7 +55,7 @@ public class RemovedPostsHelper {
                 return null;
             }
 
-            Collections.sort(removedPosts, (o1, o2) -> Integer.compare(o1.no, o2.no));
+            Collections.sort(removedPosts, (o1, o2) -> Long.compare(o1.no, o2.no));
 
             BackgroundUtils.runOnMainThread(() -> {
                 present();
@@ -68,7 +68,7 @@ public class RemovedPostsHelper {
         });
     }
 
-    private List<Post> getRemovedPosts(List<Post> threadPosts, int threadNo)
+    private List<Post> getRemovedPosts(List<Post> threadPosts, long threadNo)
             throws SQLException {
         List<PostHide> hiddenPosts = databaseManager.getDatabaseHideManager().getRemovedPostsWithThreadNo(threadNo);
         List<Post> removedPosts = new ArrayList<>();
@@ -107,7 +107,7 @@ public class RemovedPostsHelper {
         }
     }
 
-    public void onRestoreClicked(List<Integer> selectedPosts) {
+    public void onRestoreClicked(List<Long> selectedPosts) {
         presenter.onRestoreRemovedPostsClicked(selectedPosts);
 
         dismiss();

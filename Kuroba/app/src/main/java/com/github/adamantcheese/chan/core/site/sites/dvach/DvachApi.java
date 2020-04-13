@@ -6,7 +6,7 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.site.SiteEndpoints;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
-import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessingQueue;
+import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor;
 
 import org.jsoup.parser.Parser;
 
@@ -24,7 +24,7 @@ public class DvachApi
     }
 
     @Override
-    public void loadThread(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void loadThread(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         reader.beginObject(); // Main object
 
@@ -38,7 +38,7 @@ public class DvachApi
                     if (reader.nextName().equals("posts")) {
                         reader.beginArray(); // Posts array
                         while (reader.hasNext()) {
-                            readPostObject(reader, queue);
+                            readPostObject(reader, chanReaderProcessor);
                         }
                         reader.endArray();
                     }
@@ -55,7 +55,7 @@ public class DvachApi
     }
 
     @Override
-    public void loadCatalog(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void loadCatalog(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         reader.beginObject(); // Main object
 
@@ -64,7 +64,7 @@ public class DvachApi
                 reader.beginArray(); // Threads array
 
                 while (reader.hasNext()) {
-                    readPostObject(reader, queue);
+                    readPostObject(reader, chanReaderProcessor);
                 }
 
                 reader.endArray();
@@ -77,12 +77,12 @@ public class DvachApi
     }
 
     @Override
-    public void readPostObject(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void readPostObject(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         Post.Builder builder = new Post.Builder();
-        builder.board(queue.getLoadable().board);
+        builder.board(chanReaderProcessor.getLoadable().board);
 
-        SiteEndpoints endpoints = queue.getLoadable().getSite().endpoints();
+        SiteEndpoints endpoints = chanReaderProcessor.getLoadable().getSite().endpoints();
         List<PostImage> files = new ArrayList<>();
 
         int parentPostId = 0;
@@ -173,17 +173,14 @@ public class DvachApi
             op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);
-            queue.setOp(op);
+            chanReaderProcessor.setOp(op);
         }
 
-        Post cached = queue.getCachedPost(builder.id);
-        if (cached != null) {
-            // Id is known, use the cached post object.
-            queue.addForReuse(cached);
-            return;
+        if (chanReaderProcessor.containsPostNo(builder.id).unwrap()) {
+            chanReaderProcessor.addForUpdateInDatabase(builder);
+        } else {
+            chanReaderProcessor.addForParse(builder);
         }
-
-        queue.addForParse(builder);
     }
 
     private PostImage readPostImage(JsonReader reader, Post.Builder builder, SiteEndpoints endpoints)

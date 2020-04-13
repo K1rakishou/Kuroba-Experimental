@@ -20,8 +20,15 @@ abstract class ChanPostHttpIconDao {
     """)
     abstract suspend fun selectByIconUrl(iconUrl: HttpUrl): ChanPostHttpIconEntity?
 
+    @Query("""
+        SELECT *
+        FROM ${ChanPostHttpIconEntity.TABLE_NAME}
+        WHERE ${ChanPostHttpIconEntity.OWNER_POST_ID_COLUMN_NAME} IN (:ownerPostIdList)
+    """)
+    abstract fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostHttpIconEntity>
+
     suspend fun insertOrUpdate(chanPostHttpIconEntity: ChanPostHttpIconEntity) {
-        var prev = selectByIconUrl(chanPostHttpIconEntity.iconUrl)
+        val prev = selectByIconUrl(chanPostHttpIconEntity.iconUrl)
         if (prev != null) {
             update(chanPostHttpIconEntity)
             return
@@ -29,4 +36,5 @@ abstract class ChanPostHttpIconDao {
 
         insert(chanPostHttpIconEntity)
     }
+
 }

@@ -50,5 +50,5 @@ public class SerializableThread {
 
     // Must be static
     private static final Comparator<SerializablePost> postComparator =
-            (o1, o2) -> Integer.compare(o1.getNo(), o2.getNo());
+            (o1, o2) -> Long.compare(o1.getNo(), o2.getNo());
 }

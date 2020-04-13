@@ -156,7 +156,7 @@ public class CommentParser {
     ) {
         CommentParser.Link handlerLink = matchAnchor(post, text, anchor, callback);
 
-        int mockReplyPostNo = mockReplyManager.getLastMockReply(
+        long mockReplyPostNo = mockReplyManager.getLastMockReply(
                 post.board.site.name(),
                 post.board.code,
                 post.opId
@@ -235,7 +235,7 @@ public class CommentParser {
     }
 
     private void addMockReply(
-            Theme theme, Post.Builder post, SpannableStringBuilder spannableStringBuilder, int mockReplyPostNo
+            Theme theme, Post.Builder post, SpannableStringBuilder spannableStringBuilder, long mockReplyPostNo
     ) {
         Logger.d(TAG, "Adding a new mock reply (replyTo: " + mockReplyPostNo + ", replyFrom: " + post.id + ")");
         post.addReplyTo(mockReplyPostNo);

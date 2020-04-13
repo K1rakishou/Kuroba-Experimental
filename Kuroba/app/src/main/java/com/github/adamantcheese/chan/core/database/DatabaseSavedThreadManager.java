@@ -81,7 +81,7 @@ public class DatabaseSavedThreadManager {
         );
     }
 
-    public Callable<Void> updateLastSavedPostNo(int loadableId, int lastPostNo) {
+    public Callable<Void> updateLastSavedPostNo(int loadableId, long lastPostNo) {
         return () -> {
             SavedThread savedThread = helper.savedThreadDao.queryBuilder()
                     .where()
@@ -91,7 +91,7 @@ public class DatabaseSavedThreadManager {
                 return null;
             }
 
-            savedThread.lastSavedPostNo = lastPostNo;
+            savedThread.lastSavedPostNo = (int) lastPostNo;
             helper.savedThreadDao.update(savedThread);
 
             return null;

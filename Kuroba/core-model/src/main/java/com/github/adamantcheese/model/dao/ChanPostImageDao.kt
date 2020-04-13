@@ -23,20 +23,27 @@ abstract class ChanPostImageDao {
     @Query("""
         SELECT *
         FROM ${ChanPostImageEntity.TABLE_NAME}
+        WHERE ${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} IN (:ownerPostIdList)
+    """)
+    abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostImageEntity>
+
+    @Query("""
+        SELECT *
+        FROM ${ChanPostImageEntity.TABLE_NAME}
         WHERE ${ChanPostImageEntity.SERVER_FILENAME_COLUMN_NAME} = :serverFileName
     """)
     abstract suspend fun selectByServerFileName(serverFileName: String): ChanPostImageEntity?
 
     suspend fun insertOrUpdate(chanPostImageEntity: ChanPostImageEntity) {
-        var prev = chanPostImageEntity.imageUrl?.let { imageUrl -> selectByImageUrl(imageUrl) }
+        var prev = selectByImageUrl(chanPostImageEntity.imageUrl)
         if (prev != null) {
-            update(chanPostImageEntity)
+            update(chanPostImageEntity.copy(postImageId = prev.postImageId))
             return
         }
 
         prev = selectByServerFileName(chanPostImageEntity.serverFilename)
         if (prev != null) {
-            update(chanPostImageEntity)
+            update(chanPostImageEntity.copy(postImageId = prev.postImageId))
             return
         }
 

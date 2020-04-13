@@ -24,4 +24,22 @@ object ChanPostImageMapper {
         )
     }
 
+    fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImageUnparsed {
+        return ChanPostImageUnparsed(
+                chanPostImageEntity.serverFilename,
+                chanPostImageEntity.thumbnailUrl,
+                chanPostImageEntity.spoilerThumbnailUrl,
+                chanPostImageEntity.imageUrl,
+                chanPostImageEntity.filename,
+                chanPostImageEntity.extension,
+                chanPostImageEntity.imageWidth,
+                chanPostImageEntity.imageHeight,
+                chanPostImageEntity.spoiler,
+                chanPostImageEntity.isInlined,
+                chanPostImageEntity.fileSize,
+                chanPostImageEntity.fileHash,
+                chanPostImageEntity.type
+        )
+    }
+
 }

@@ -345,7 +345,7 @@ public class ImageViewerController
 
         String siteName = presenter.getLoadable().site.name();
 
-        int postNoString = presenter.getLoadable().no == 0
+        long postNoString = presenter.getLoadable().no == 0
                 ? imageViewerCallback.getPostForPostImage(postImage).no
                 : presenter.getLoadable().no;
 

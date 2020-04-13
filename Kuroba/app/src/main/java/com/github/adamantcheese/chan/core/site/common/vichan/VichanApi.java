@@ -7,7 +7,7 @@ import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.site.SiteEndpoints;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
-import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessingQueue;
+import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor;
 
 import org.jsoup.parser.Parser;
 
@@ -27,7 +27,7 @@ public class VichanApi
     }
 
     @Override
-    public void loadThread(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void loadThread(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         reader.beginObject();
         // Page object
@@ -38,7 +38,7 @@ public class VichanApi
                 // Thread array
                 while (reader.hasNext()) {
                     // Thread object
-                    readPostObject(reader, queue);
+                    readPostObject(reader, chanReaderProcessor);
                 }
                 reader.endArray();
             } else {
@@ -49,7 +49,7 @@ public class VichanApi
     }
 
     @Override
-    public void loadCatalog(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void loadCatalog(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         reader.beginArray(); // Array of pages
 
@@ -61,7 +61,7 @@ public class VichanApi
                     reader.beginArray(); // Threads array
 
                     while (reader.hasNext()) {
-                        readPostObject(reader, queue);
+                        readPostObject(reader, chanReaderProcessor);
                     }
 
                     reader.endArray();
@@ -77,12 +77,12 @@ public class VichanApi
     }
 
     @Override
-    public void readPostObject(JsonReader reader, ChanReaderProcessingQueue queue)
+    public void readPostObject(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception {
         Post.Builder builder = new Post.Builder();
-        builder.board(queue.getLoadable().board);
+        builder.board(chanReaderProcessor.getLoadable().board);
 
-        SiteEndpoints endpoints = queue.getLoadable().getSite().endpoints();
+        SiteEndpoints endpoints = chanReaderProcessor.getLoadable().getSite().endpoints();
 
         // File
         String fileId = null;
@@ -240,14 +240,7 @@ public class VichanApi
             op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);
-            queue.setOp(op);
-        }
-
-        Post cached = queue.getCachedPost(builder.id);
-        if (cached != null) {
-            // Id is known, use the cached post object.
-            queue.addForReuse(cached);
-            return;
+            chanReaderProcessor.setOp(op);
         }
 
         if (countryCode != null && countryName != null) {
@@ -260,7 +253,11 @@ public class VichanApi
             builder.addHttpIcon(new PostHttpIcon(countryUrl, countryName + "/t_" + trollCountryCode));
         }
 
-        queue.addForParse(builder);
+        if (chanReaderProcessor.containsPostNo(builder.id).unwrap()) {
+            chanReaderProcessor.addForUpdateInDatabase(builder);
+        } else {
+            chanReaderProcessor.addForParse(builder);
+        }
     }
 
     private PostImage readPostImage(JsonReader reader, Post.Builder builder, SiteEndpoints endpoints)

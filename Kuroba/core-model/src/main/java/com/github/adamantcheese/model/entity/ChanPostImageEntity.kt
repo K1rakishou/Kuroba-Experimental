@@ -53,7 +53,7 @@ data class ChanPostImageEntity(
         @ColumnInfo(name = SPOILER_THUMBNAIL_URL_COLUMN_NAME)
         val spoilerThumbnailUrl: HttpUrl? = null,
         @ColumnInfo(name = IMAGE_URL_COLUMN_NAME)
-        val imageUrl: HttpUrl? = null,
+        val imageUrl: HttpUrl,
         @ColumnInfo(name = FILENAME_COLUMN_NAME)
         val filename: String? = null,
         @ColumnInfo(name = EXTENSION_COLUMN_NAME)
@@ -66,6 +66,8 @@ data class ChanPostImageEntity(
         val spoiler: Boolean = false,
         @ColumnInfo(name = IS_INLINED_COLUMN_NAME)
         val isInlined: Boolean = false,
+        @ColumnInfo(name = FILE_SIZE_COLUMN_NAME)
+        val fileSize: Long = 0L,
         @ColumnInfo(name = FILE_HASH_COLUMN_NAME)
         val fileHash: String? = null,
         @ColumnInfo(name = TYPE_COLUMN_NAME)
@@ -87,6 +89,7 @@ data class ChanPostImageEntity(
         const val IMAGE_HEIGHT_COLUMN_NAME = "image_height"
         const val SPOILER_COLUMN_NAME = "spoiler"
         const val IS_INLINED_COLUMN_NAME = "is_inlined"
+        const val FILE_SIZE_COLUMN_NAME = "file_size"
         const val FILE_HASH_COLUMN_NAME = "file_hash"
         const val TYPE_COLUMN_NAME = "type"
 

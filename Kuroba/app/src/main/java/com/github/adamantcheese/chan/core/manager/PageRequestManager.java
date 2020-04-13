@@ -65,7 +65,7 @@ public class PageRequestManager
         requestBoard(b);
     }
 
-    private Page findPage(Board board, int opNo) {
+    private Page findPage(Board board, long opNo) {
         Pages pages = getPages(board);
         if (pages == null) return null;
         for (Page page : pages.pages) {

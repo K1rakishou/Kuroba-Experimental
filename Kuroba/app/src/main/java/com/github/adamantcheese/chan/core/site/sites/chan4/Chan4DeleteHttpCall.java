@@ -50,7 +50,7 @@ public class Chan4DeleteHttpCall
             Request.Builder requestBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
         FormBody.Builder formBuilder = new FormBody.Builder();
-        formBuilder.add(Integer.toString(deleteRequest.post.no), "delete");
+        formBuilder.add(Long.toString(deleteRequest.post.no), "delete");
         if (deleteRequest.imageOnly) {
             formBuilder.add("onlyimgdel", "on");
         }

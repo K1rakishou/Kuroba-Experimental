@@ -62,7 +62,7 @@ class SeenPostsManager(
                     Unit
                 }
                 is ActorAction.MarkPostAsSeen -> {
-                    val threadDescriptor = action.postDescriptor.threadDescriptor
+                    val threadDescriptor = action.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
                     val seenPost = SeenPost(
                             threadDescriptor,
@@ -95,7 +95,7 @@ class SeenPostsManager(
     }
 
     fun hasAlreadySeenPost(loadable: Loadable, post: Post): Boolean {
-        if (loadable.mode != Loadable.Mode.THREAD) {
+        if (!loadable.isThreadMode) {
             return true
         }
 
@@ -103,8 +103,8 @@ class SeenPostsManager(
             return true
         }
 
-        val threadDescriptor = DescriptorUtils.getThreadDescriptor(loadable, post)
-        val postNo = post.no.toLong()
+        val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+        val postNo = post.no
 
         return runBlocking {
             return@runBlocking mutex.withLock {
@@ -134,7 +134,7 @@ class SeenPostsManager(
     }
 
     fun onPostBind(loadable: Loadable, post: Post) {
-        if (loadable.mode != Loadable.Mode.THREAD) {
+        if (!loadable.isThreadMode) {
             return
         }
 
@@ -143,6 +143,8 @@ class SeenPostsManager(
         }
 
         val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
+                ?: return
+
         actor.offer(ActorAction.MarkPostAsSeen(postDescriptor))
     }
 

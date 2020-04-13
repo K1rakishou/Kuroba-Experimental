@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.entity.ChanPostEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.github.adamantcheese.model.mapper.ChanPostHttpIconMapper
 import com.github.adamantcheese.model.mapper.ChanPostImageMapper
@@ -25,13 +26,13 @@ class ChanPostLocalSource(
         ensureInTransaction()
 
         val chanBoardEntity = chanBoardDao.insert(
-                chanPostUnparsed.postDescriptor.threadDescriptor.siteName(),
-                chanPostUnparsed.postDescriptor.threadDescriptor.boardCode()
+                chanPostUnparsed.postDescriptor.descriptor.siteName(),
+                chanPostUnparsed.postDescriptor.descriptor.boardCode()
         )
 
         val chanThreadEntity = chanThreadDao.insert(
                 chanBoardEntity.boardId,
-                chanPostUnparsed.postDescriptor.threadDescriptor.opNo
+                chanPostUnparsed.postDescriptor.getThreadNo()
         )
 
         val chanPostEntityId = chanPostDao.insertOrUpdate(
@@ -53,43 +54,98 @@ class ChanPostLocalSource(
         }
     }
 
+    suspend fun getCatalogOriginalPosts(
+            descriptor: ChanDescriptor.CatalogDescriptor,
+            threadIds: List<Long>
+    ): List<ChanPostUnparsed> {
+        if (threadIds.isEmpty()) {
+            return emptyList()
+        }
+
+        val chanPostEntityList = threadIds
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanPostDao.selectManyByPostNoList(chunk) }
+
+        if (chanPostEntityList.isEmpty()) {
+            return emptyList()
+        }
+
+        return loadChanPostEntitiesFully(chanPostEntityList, descriptor)
+    }
+
+    suspend fun getThreadPosts(
+            descriptor: ChanDescriptor.ThreadDescriptor
+    ): List<ChanPostUnparsed> {
+        val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
+                ?: return emptyList()
+
+        val chanPostEntityList = chanPostDao.selectAllPostsByThreadId(chanThreadEntity.threadId)
+        if (chanPostEntityList.isEmpty()) {
+            return emptyList()
+        }
+
+        return loadChanPostEntitiesFully(chanPostEntityList, descriptor)
+    }
+
+    private suspend fun loadChanPostEntitiesFully(
+            chanPostEntityList: List<ChanPostEntity>,
+            descriptor: ChanDescriptor
+    ): List<ChanPostUnparsed> {
+        val postIdList = chanPostEntityList.map { it.postId }
+
+        val postImageByPostIdMap = postIdList.chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanPostImageDao.selectByOwnerPostIdList(chunk) }
+                .groupBy { chanPostImageEntity -> chanPostImageEntity.ownerPostId }
+
+        val postIconsByPostIdMap = postIdList.chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanPostHttpIconDao.selectByOwnerPostIdList(chunk) }
+                .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
+
+        val unparsedPosts = chanPostEntityList
+                .mapNotNull { chanPostEntity -> ChanPostMapper.fromEntity(descriptor, chanPostEntity) }
+
+        unparsedPosts.forEach { unparsedPost ->
+            val postImages = postImageByPostIdMap[unparsedPost.databasePostId]
+            if (postImages != null && postImages.isNotEmpty()) {
+                postImages.forEach { postImage ->
+                    unparsedPost.postImages.add(ChanPostImageMapper.fromEntity(postImage))
+                }
+            }
+
+            val postIcons = postIconsByPostIdMap[unparsedPost.databasePostId]
+            if (postIcons != null && postIcons.isNotEmpty()) {
+                postIcons.forEach { postIcon ->
+                    unparsedPost.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
+                }
+            }
+        }
+
+        return unparsedPosts
+    }
+
     suspend fun containsPostBlocking(descriptor: ChanDescriptor, postNo: Long): Boolean {
         ensureInTransaction()
 
-        return when (descriptor) {
-            is ChanDescriptor.ThreadDescriptor -> threadContainsPost(descriptor, postNo)
-            is ChanDescriptor.CatalogDescriptor -> catalogContainsThread(descriptor, postNo)
+        when (descriptor) {
+            is ChanDescriptor.ThreadDescriptor -> {
+                val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
+                        ?: return false
+
+                return chanPostDao.select(chanThreadEntity.threadId, postNo) != null
+            }
+            is ChanDescriptor.CatalogDescriptor -> {
+                val chanBoardEntity = chanBoardDao.select(
+                        descriptor.siteName(),
+                        descriptor.boardCode()
+                )
+
+                if (chanBoardEntity == null) {
+                    return false
+                }
+
+                return chanThreadDao.select(chanBoardEntity.boardId, postNo) != null
+            }
         }
-    }
-
-    suspend fun catalogContainsThread(
-            catalogDescriptor: ChanDescriptor.CatalogDescriptor,
-            threadNo: Long
-    ): Boolean {
-        ensureInTransaction()
-
-        val chanBoardEntity = chanBoardDao.select(
-                catalogDescriptor.siteName(),
-                catalogDescriptor.boardCode()
-        )
-
-        if (chanBoardEntity == null) {
-            return false
-        }
-
-        return chanThreadDao.select(chanBoardEntity.boardId, threadNo) != null
-    }
-
-    suspend fun threadContainsPost(
-            threadDescriptor: ChanDescriptor.ThreadDescriptor,
-            postNo: Long
-    ): Boolean {
-        ensureInTransaction()
-
-        val chanThreadEntity = getThreadByThreadDescriptor(threadDescriptor)
-                ?: return false
-
-        return chanPostDao.select(chanThreadEntity.threadId, postNo) != null
     }
 
     private suspend fun getThreadByThreadDescriptor(

@@ -36,7 +36,7 @@ public interface PostCellInterface {
             boolean inPopup,
             boolean highlighted,
             boolean selected,
-            int markedNo,
+            long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
             boolean compact,

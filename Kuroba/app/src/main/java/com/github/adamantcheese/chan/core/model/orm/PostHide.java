@@ -73,8 +73,8 @@ public class PostHide {
     ) {
         PostHide postHide = new PostHide();
         postHide.board = post.board.code;
-        postHide.no = post.no;
-        postHide.threadNo = post.opId;
+        postHide.no = (int) post.no;
+        postHide.threadNo = (int) post.opId;
         postHide.site = post.board.siteId;
         postHide.wholeThread = wholeThread;
         postHide.hide = hide;
@@ -86,18 +86,18 @@ public class PostHide {
         PostHide postHide = new PostHide();
 
         postHide.board = post.board.code;
-        postHide.no = post.no;
+        postHide.no = (int) post.no;
         postHide.site = post.board.siteId;
 
         return postHide;
     }
 
-    public static PostHide unhidePost(int siteId, String boardCode, int postNo) {
+    public static PostHide unhidePost(int siteId, String boardCode, long postNo) {
         PostHide postHide = new PostHide();
 
         postHide.site = siteId;
         postHide.board = boardCode;
-        postHide.no = postNo;
+        postHide.no = (int) postNo;
 
         return postHide;
     }

@@ -39,4 +39,11 @@ abstract class ChanThreadDao {
         return chanThreadEntity.copy(threadId = insertedThreadId)
     }
 
+    @Query("""
+        SELECT *
+        FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :boardId
+    """)
+    abstract fun selectAllThreadsByBoardId(boardId: Long): List<ChanThreadEntity>
+
 }

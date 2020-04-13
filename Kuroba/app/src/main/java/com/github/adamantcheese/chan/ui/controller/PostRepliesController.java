@@ -46,7 +46,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
         extends BaseFloatingController {
-    private static final LruCache<Integer, Integer> scrollPositionCache = new LruCache<>(128);
+    private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
 
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
@@ -187,7 +187,7 @@ public class PostRepliesController
         scrollPositionCache.put(displayingData.forPost.no, position);
     }
 
-    private void restoreScrollPosition(int postNo) {
+    private void restoreScrollPosition(long postNo) {
         RecyclerView.LayoutManager layoutManager = repliesView.getLayoutManager();
         if (layoutManager == null) {
             return;
@@ -286,7 +286,7 @@ public class PostRepliesController
                 ThreadPresenter presenter,
                 Loadable loadable,
                 Post post,
-                int markedNo,
+                long markedNo,
                 int position,
                 int itemCount
         ) {

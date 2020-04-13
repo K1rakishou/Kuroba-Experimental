@@ -43,6 +43,9 @@ abstract class KurobaDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"
+        const val SQLITE_IN_OPERATOR_MAX_BATCH_SIZE = 950
+        const val SQLITE_TRUE = 1
+        const val SQLITE_FALSE = 0
 
         fun buildDatabase(application: Application): KurobaDatabase {
             return Room.databaseBuilder(

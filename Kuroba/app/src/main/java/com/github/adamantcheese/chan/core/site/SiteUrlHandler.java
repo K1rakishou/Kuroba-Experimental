@@ -31,7 +31,7 @@ public interface SiteUrlHandler {
 
     boolean matchesMediaHost(@NonNull HttpUrl url);
 
-    String desktopUrl(Loadable loadable, int postNo);
+    String desktopUrl(Loadable loadable, long postNo);
 
     Loadable resolveLoadable(Site site, HttpUrl url);
 }

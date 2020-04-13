@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,7 +47,7 @@ public class Post
         implements Comparable<Post> {
     public final String boardId;
     public final Board board;
-    public final int no;
+    public final long no;
     public final boolean isOP;
     public final String name;
     private PostComment comment;
@@ -57,7 +58,7 @@ public class Post
     public final long time;
     public final String tripcode;
     public final String id;
-    public final int opId;
+    public final long opId;
     public final String capcode;
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
@@ -79,11 +80,11 @@ public class Post
     /**
      * This post replies to the these ids.
      */
-    private final Set<Integer> repliesTo;
+    private final Set<Long> repliesTo;
     /**
      * These ids replied to this post.
      */
-    private final List<Integer> repliesFrom = new ArrayList<>();
+    private final List<Long> repliesFrom = new ArrayList<>();
 
     @NonNull
     private final List<PostImage> postImages;
@@ -173,16 +174,16 @@ public class Post
         return repliesFrom.size();
     }
 
-    public synchronized Set<Integer> getRepliesTo() {
+    public synchronized Set<Long> getRepliesTo() {
         return repliesTo;
     }
 
-    public synchronized void setRepliesFrom(List<Integer> repliesFrom) {
+    public synchronized void setRepliesFrom(List<Long> repliesFrom) {
         this.repliesFrom.clear();
         this.repliesFrom.addAll(repliesFrom);
     }
 
-    public synchronized List<Integer> getRepliesFrom() {
+    public synchronized List<Long> getRepliesFrom() {
         return repliesFrom;
     }
 
@@ -330,7 +331,7 @@ public class Post
     @Override
     public int hashCode() {
         // Post.comment can now be mutated so it's not safe to use it to calculate hash code
-        return 31 * no + 31 * board.code.hashCode() + 31 * board.siteId + 31 * (deleted.get() ? 1 : 0);
+        return 31 * Objects.hashCode(no) + 31 * board.code.hashCode() + 31 * board.siteId + 31 * (deleted.get() ? 1 : 0);
     }
 
     @Override
@@ -367,8 +368,8 @@ public class Post
 
     public static final class Builder {
         public Board board;
-        public int id = -1;
-        public int opId = -1;
+        public long id = -1;
+        public long opId = -1;
         public boolean op;
         public int replies = -1;
         public int threadImagesCount = -1;
@@ -393,7 +394,7 @@ public class Post
         public boolean isSavedReply;
         public CharSequence subjectSpan;
         public CharSequence nameTripcodeIdCapcodeSpan;
-        private Set<Integer> repliesToIds = new HashSet<>();
+        private Set<Long> repliesToIds = new HashSet<>();
 
         public int filterHighlightedColor;
         public boolean filterStub;
@@ -411,12 +412,12 @@ public class Post
             return this;
         }
 
-        public Builder id(int id) {
+        public Builder id(long id) {
             this.id = id;
             return this;
         }
 
-        public Builder opId(int opId) {
+        public Builder opId(long opId) {
             this.opId = opId;
             return this;
         }
@@ -533,7 +534,7 @@ public class Post
             return this;
         }
 
-        public int getOpId() {
+        public long getOpId() {
             if (!op) {
                 return opId;
             }
@@ -591,12 +592,12 @@ public class Post
             }
         }
 
-        public Builder addReplyTo(int postId) {
-            repliesToIds.add(postId);
+        public Builder addReplyTo(long postId) {
+            repliesToIds.add((long) postId);
             return this;
         }
 
-        public Builder repliesTo(Set<Integer> repliesToIds) {
+        public Builder repliesTo(Set<Long> repliesToIds) {
             this.repliesToIds = repliesToIds;
             return this;
         }
@@ -607,6 +608,17 @@ public class Post
             }
 
             return new Post(this);
+        }
+
+        @Override
+        public String toString() {
+            return "Builder{" +
+                    "id=" + id +
+                    ", opId=" + opId +
+                    ", op=" + op +
+                    ", subject='" + subject + '\'' +
+                    ", postCommentBuilder=" + postCommentBuilder +
+                    '}';
         }
     }
 }

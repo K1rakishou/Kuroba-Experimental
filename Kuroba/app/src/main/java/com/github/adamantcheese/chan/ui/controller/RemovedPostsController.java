@@ -130,7 +130,7 @@ public class RemovedPostsController
             return;
         }
 
-        List<Integer> selectedPosts = adapter.getSelectedPostNoList();
+        List<Long> selectedPosts = adapter.getSelectedPostNoList();
         if (selectedPosts.isEmpty()) {
             return;
         }
@@ -140,11 +140,11 @@ public class RemovedPostsController
 
     public static class RemovedPost {
         private List<PostImage> images;
-        private int postNo;
+        private long postNo;
         private String comment;
         private boolean checked;
 
-        public RemovedPost(List<PostImage> images, int postNo, String comment, boolean checked) {
+        public RemovedPost(List<PostImage> images, long postNo, String comment, boolean checked) {
             this.images = images;
             this.postNo = postNo;
             this.comment = comment;
@@ -159,7 +159,7 @@ public class RemovedPostsController
             return images;
         }
 
-        public int getPostNo() {
+        public long getPostNo() {
             return postNo;
         }
 
@@ -256,8 +256,8 @@ public class RemovedPostsController
             notifyDataSetChanged();
         }
 
-        public List<Integer> getSelectedPostNoList() {
-            List<Integer> selectedPosts = new ArrayList<>();
+        public List<Long> getSelectedPostNoList() {
+            List<Long> selectedPosts = new ArrayList<>();
 
             for (RemovedPost removedPost : removedPostsCopy) {
                 if (removedPost == null) continue;

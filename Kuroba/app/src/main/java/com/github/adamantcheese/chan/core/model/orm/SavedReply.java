@@ -24,11 +24,11 @@ public class SavedReply {
     public SavedReply() {
     }
 
-    public static SavedReply fromBoardNoPassword(Board board, int no, String password) {
+    public static SavedReply fromBoardNoPassword(Board board, long no, String password) {
         SavedReply savedReply = new SavedReply();
         savedReply.siteId = board.site.id();
         savedReply.board = board.code;
-        savedReply.no = no;
+        savedReply.no = (int) no;
         savedReply.password = password;
         return savedReply;
     }

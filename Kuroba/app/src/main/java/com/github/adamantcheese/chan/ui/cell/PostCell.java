@@ -77,7 +77,6 @@ import com.github.adamantcheese.chan.ui.text.span.ClearableSpan;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
@@ -142,7 +141,7 @@ public class PostCell
     private boolean inPopup;
     private boolean highlighted;
     private boolean selected;
-    private int markedNo;
+    private long markedNo;
     private boolean showDivider;
 
     private GestureDetector gestureDetector;
@@ -277,7 +276,7 @@ public class PostCell
             boolean inPopup,
             boolean highlighted,
             boolean selected,
-            int markedNo,
+            long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
             boolean compact,
@@ -564,9 +563,9 @@ public class PostCell
         icons.set(PostIcons.CLOSED, post.isClosed());
         icons.set(PostIcons.DELETED, post.deleted.get());
         icons.set(PostIcons.ARCHIVED, post.isArchived());
-        icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null);
+        icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null && post.httpIcons.size() > 0);
 
-        if (post.httpIcons != null) {
+        if (post.httpIcons != null && post.httpIcons.size() > 0) {
             icons.setHttpIcons(post.httpIcons, theme, iconSizePx);
         }
 
@@ -1017,6 +1016,7 @@ public class PostCell
         private int httpIconTextColor;
         private int httpIconTextSize;
 
+        @Nullable
         private List<PostIconsHttpIcon> httpIcons;
 
         public PostIcons(Context context) {
@@ -1063,6 +1063,7 @@ public class PostCell
             httpIconTextColor = theme.detailsColor;
             httpIconTextSize = size;
             httpIcons = new ArrayList<>(icons.size());
+
             for (PostHttpIcon icon : icons) {
                 int codeIndex = icon.name.indexOf('/'); //this is for country codes
                 String name = icon.name.substring(0, codeIndex != -1 ? codeIndex : icon.name.length());
@@ -1123,7 +1124,7 @@ public class PostCell
                     offset += drawBitmap(canvas, archivedIcon, offset);
                 }
 
-                if (get(HTTP_ICONS)) {
+                if (get(HTTP_ICONS) && httpIcons != null) {
                     for (PostIconsHttpIcon httpIcon : httpIcons) {
                         if (httpIcon.bitmap != null) {
                             offset += drawBitmap(canvas, httpIcon.bitmap, offset);

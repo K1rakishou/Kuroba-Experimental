@@ -63,7 +63,7 @@ public class FilterWatchManager
     //this lets you unpin threads that are pinned by the filter pin manager and not have them come back
     //note that ignoredPosts is currently only saved while the application is running and not in the database
     private final Map<ChanThreadLoader, BackgroundLoader> filterLoaders = new HashMap<>();
-    private final Set<Integer> ignoredPosts = Collections.synchronizedSet(new HashSet<>());
+    private final Set<Long> ignoredPosts = Collections.synchronizedSet(new HashSet<>());
     //keep track of how many boards we've checked and their posts so we can cut out things from the ignored posts
     private int numBoardsChecked = 0;
     private Set<Post> lastCheckedPosts = Collections.synchronizedSet(new HashSet<>());
@@ -88,8 +88,8 @@ public class FilterWatchManager
 
         wakeManager.registerWakeable(this);
 
-        Set<Integer> previousIgnore = instance(Gson.class).fromJson(PersistableChanState.filterWatchIgnored.get(),
-                new TypeToken<Set<Integer>>() {}.getType()
+        Set<Long> previousIgnore = instance(Gson.class).fromJson(PersistableChanState.filterWatchIgnored.get(),
+                new TypeToken<Set<Long>>() {}.getType()
         );
         if (previousIgnore != null) ignoredPosts.addAll(previousIgnore);
     }
@@ -160,7 +160,7 @@ public class FilterWatchManager
         if (catalog.getLoadable().isThreadMode()) return; //not a catalog
         if (processing) return; //filter watch manager is currently processing, ignore
 
-        Set<Integer> toAdd = new HashSet<>();
+        Set<Long> toAdd = new HashSet<>();
         //Match filters and ignores
         List<Filter> filters = filterEngine.getEnabledWatchFilters();
         for (Filter f : filters) {
@@ -188,7 +188,7 @@ public class FilterWatchManager
         @Override
         public void onChanLoaderData(ChanThread result) {
             Logger.d(TAG, "onChanLoaderData() for /" + result.getLoadable().boardCode + "/");
-            Set<Integer> toAdd = new HashSet<>();
+            Set<Long> toAdd = new HashSet<>();
             //Match filters and ignores
             for (Filter f : filters) {
                 for (Post p : result.getPosts()) {
@@ -226,7 +226,7 @@ public class FilterWatchManager
         private void checkComplete() {
             if (numBoardsChecked <= 0) {
                 numBoardsChecked = 0;
-                Set<Integer> lastCheckedPostNumbers = new HashSet<>();
+                Set<Long> lastCheckedPostNumbers = new HashSet<>();
                 for (Post post : lastCheckedPosts) {
                     lastCheckedPostNumbers.add(post.no);
                 }

@@ -70,7 +70,7 @@ public class Wired7
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, int postNo) {
+        public String desktopUrl(Loadable loadable, long postNo) {
             if (loadable.isCatalogMode()) {
                 return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
             } else if (loadable.isThreadMode()) {

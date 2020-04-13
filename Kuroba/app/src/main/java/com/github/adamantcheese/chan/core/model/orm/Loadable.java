@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -149,14 +150,14 @@ public class Loadable
         return loadable;
     }
 
-    public static Loadable forThread(Site site, Board board, int no, String title) {
+    public static Loadable forThread(Site site, Board board, long no, String title) {
         Loadable loadable = new Loadable();
         loadable.siteId = site.id();
         loadable.site = site;
         loadable.mode = Mode.THREAD;
         loadable.board = board;
         loadable.boardCode = board.code;
-        loadable.no = no;
+        loadable.no = (int) no;
         loadable.title = title;
         return loadable;
     }
@@ -176,16 +177,16 @@ public class Loadable
         }
     }
 
-    public void setLastViewed(int lastViewed) {
+    public void setLastViewed(long lastViewed) {
         if (this.lastViewed != lastViewed) {
-            this.lastViewed = lastViewed;
+            this.lastViewed = (int) lastViewed;
             dirty = true;
         }
     }
 
-    public void setLastLoaded(int lastLoaded) {
+    public void setLastLoaded(long lastLoaded) {
         if (this.lastLoaded != lastLoaded) {
-            this.lastLoaded = lastLoaded;
+            this.lastLoaded = (int) lastLoaded;
             dirty = true;
         }
     }
@@ -309,6 +310,28 @@ public class Loadable
 
     public BoardDescriptor getBoardDescriptor() {
         return BoardDescriptor.create(site.name(), boardCode);
+    }
+
+    /**
+     * @param threadOrPostNo may be either a threadNo (in case of a catalog loadable) or a postNo
+     *                       (in case of a thread loadable)
+     * */
+    public PostDescriptor getPostDescriptor(long threadOrPostNo) {
+        if (isThreadMode()) {
+            if (no <= 0) {
+                throw new IllegalStateException("Loadable is a thread loadable but it has no id, no = " + no);
+            }
+
+            return PostDescriptor.create(board.site.name(), board.code, no, threadOrPostNo);
+        } else if (isCatalogMode()) {
+            if (no > 0) {
+                throw new IllegalStateException("Loadable is a catalog loadable but it has id, no = " + no);
+            }
+
+            return PostDescriptor.create(board.site.name(), board.code, threadOrPostNo);
+        }
+
+        throw new IllegalArgumentException("Unsupported loadable mode = " + mode);
     }
 
     public static Loadable readFromParcel(Parcel parcel) {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5d84a537fc9d8bf8688e201a069a8684",
+    "identityHash": "0912ab87c676ea7cdc4550bc3d986b4a",
     "entities": [
       {
         "tableName": "chan_board",
@@ -318,7 +318,7 @@
       },
       {
         "tableName": "chan_post_image",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_image_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_post_id` INTEGER NOT NULL, `server_filename` TEXT NOT NULL, `thumbnail_url` TEXT, `spoiler_thumbnail_url` TEXT, `image_url` TEXT, `filename` TEXT, `extension` TEXT, `image_width` INTEGER NOT NULL, `image_height` INTEGER NOT NULL, `spoiler` INTEGER NOT NULL, `is_inlined` INTEGER NOT NULL, `file_hash` TEXT, `type` INTEGER, FOREIGN KEY(`owner_post_id`) REFERENCES `chan_post`(`post_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_image_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_post_id` INTEGER NOT NULL, `server_filename` TEXT NOT NULL, `thumbnail_url` TEXT, `spoiler_thumbnail_url` TEXT, `image_url` TEXT NOT NULL, `filename` TEXT, `extension` TEXT, `image_width` INTEGER NOT NULL, `image_height` INTEGER NOT NULL, `spoiler` INTEGER NOT NULL, `is_inlined` INTEGER NOT NULL, `file_size` INTEGER NOT NULL, `file_hash` TEXT, `type` INTEGER, FOREIGN KEY(`owner_post_id`) REFERENCES `chan_post`(`post_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postImageId",
@@ -354,7 +354,7 @@
             "fieldPath": "imageUrl",
             "columnName": "image_url",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "filename",
@@ -389,6 +389,12 @@
           {
             "fieldPath": "isInlined",
             "columnName": "is_inlined",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "file_size",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -671,7 +677,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5d84a537fc9d8bf8688e201a069a8684')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0912ab87c676ea7cdc4550bc3d986b4a')"
     ]
   }
 }

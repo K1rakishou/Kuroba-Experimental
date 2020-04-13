@@ -673,7 +673,7 @@ public class ThreadSaveManager {
      */
     private void updateLastSavedPostNo(Loadable loadable, List<Post> newPosts) {
         // Update the latests saved post id in the database
-        int lastPostNo = newPosts.get(newPosts.size() - 1).no;
+        long lastPostNo = newPosts.get(newPosts.size() - 1).no;
         databaseManager.runTask(databaseSavedThreadManager.updateLastSavedPostNo(loadable.id, lastPostNo));
     }
 
@@ -1443,5 +1443,5 @@ public class ThreadSaveManager {
         }
     }
 
-    private static final Comparator<Post> postComparator = (o1, o2) -> Integer.compare(o1.no, o2.no);
+    private static final Comparator<Post> postComparator = (o1, o2) -> Long.compare(o1.no, o2.no);
 }

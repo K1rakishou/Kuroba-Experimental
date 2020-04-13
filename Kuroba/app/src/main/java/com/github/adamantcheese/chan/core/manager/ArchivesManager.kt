@@ -33,16 +33,22 @@ class ArchivesManager(
     }
 
     fun getRequestLinkForPost(postDescriptor: PostDescriptor): String? {
-        require(postDescriptor.threadDescriptor.boardDescriptor.siteDescriptor.is4chan())
+        val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+        if (threadDescriptor == null) {
+            // Not a thread, catalogs are not supported
+            return null
+        }
 
-        val archiveData = getArchiveDataForThreadDescriptor(postDescriptor.threadDescriptor)
+        require(threadDescriptor.boardDescriptor.siteDescriptor.is4chan())
+
+        val archiveData = getArchiveDataForThreadDescriptor(threadDescriptor)
                 ?: return null
 
         return String.format(
                 Locale.ENGLISH,
                 FOOLFUUKA_POST_ENDPOINT_FORMAT,
                 archiveData.domain,
-                postDescriptor.threadDescriptor.boardCode(),
+                threadDescriptor.boardCode(),
                 postDescriptor.postNo
         )
     }

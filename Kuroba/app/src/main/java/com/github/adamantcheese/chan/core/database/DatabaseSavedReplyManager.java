@@ -49,7 +49,7 @@ public class DatabaseSavedReplyManager {
     DatabaseHelper helper;
 
     // map of post number to saved replies
-    private final Map<Integer, List<SavedReply>> savedRepliesByNo = new HashMap<>();
+    private final Map<Long, List<SavedReply>> savedRepliesByNo = new HashMap<>();
 
     public DatabaseSavedReplyManager() {
         inject(this);
@@ -65,7 +65,7 @@ public class DatabaseSavedReplyManager {
      * @return {@code true} if the post is in the saved reply database, {@code false} otherwise.
      */
     @AnyThread
-    public boolean isSaved(Board board, int postNo) {
+    public boolean isSaved(Board board, long postNo) {
         return getSavedReply(board, postNo) != null;
     }
 
@@ -81,10 +81,10 @@ public class DatabaseSavedReplyManager {
             synchronized (savedRepliesByNo) {
                 savedRepliesByNo.clear();
                 for (SavedReply savedReply : all) {
-                    List<SavedReply> list = savedRepliesByNo.get(savedReply.no);
+                    List<SavedReply> list = savedRepliesByNo.get((long) savedReply.no);
                     if (list == null) {
                         list = new ArrayList<>(1);
-                        savedRepliesByNo.put(savedReply.no, list);
+                        savedRepliesByNo.put((long) savedReply.no, list);
                     }
 
                     list.add(savedReply);
@@ -108,10 +108,10 @@ public class DatabaseSavedReplyManager {
         return () -> {
             helper.savedDao.create(savedReply);
             synchronized (savedRepliesByNo) {
-                List<SavedReply> list = savedRepliesByNo.get(savedReply.no);
+                List<SavedReply> list = savedRepliesByNo.get((long) savedReply.no);
                 if (list == null) {
                     list = new ArrayList<>(1);
-                    savedRepliesByNo.put(savedReply.no, list);
+                    savedRepliesByNo.put((long) savedReply.no, list);
                 }
 
                 list.add(savedReply);
@@ -125,10 +125,10 @@ public class DatabaseSavedReplyManager {
             helper.savedDao.create(savedReply);
             helper.savedDao.delete(savedReply);
             synchronized (savedRepliesByNo) {
-                List<SavedReply> list = savedRepliesByNo.get(savedReply.no);
+                List<SavedReply> list = savedRepliesByNo.get((long) savedReply.no);
                 if (list == null) {
                     list = new ArrayList<>(1);
-                    savedRepliesByNo.put(savedReply.no, list);
+                    savedRepliesByNo.put((long) savedReply.no, list);
                 }
 
                 list.remove(savedReply);
@@ -137,7 +137,7 @@ public class DatabaseSavedReplyManager {
         };
     }
 
-    public SavedReply getSavedReply(Board board, int postNo) {
+    public SavedReply getSavedReply(Board board, long postNo) {
         synchronized (savedRepliesByNo) {
             if (savedRepliesByNo.containsKey(postNo)) {
                 List<SavedReply> items = savedRepliesByNo.get(postNo);

@@ -60,7 +60,7 @@ public class PostAdapter
     /**
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
      * */
-    private final Set<Integer> updatingPosts = new HashSet<>(64);
+    private final Set<Long> updatingPosts = new HashSet<>(64);
 
     private Loadable loadable = null;
     private String error = null;
@@ -239,7 +239,7 @@ public class PostAdapter
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder.itemView instanceof PostCellInterface) {
-            int postNo = ((PostCellInterface) holder.itemView).getPost().no;
+            long postNo = ((PostCellInterface) holder.itemView).getPost().no;
             boolean isActuallyRecycling = !updatingPosts.remove(postNo);
 
             /**

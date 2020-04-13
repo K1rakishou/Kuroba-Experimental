@@ -524,7 +524,7 @@ public class ThreadLayout
     }
 
     @Override
-    public void hideThread(Post post, int threadNo, boolean hide) {
+    public void hideThread(Post post, long threadNo, boolean hide) {
         // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
         // is no point in hiding replies to a thread
         final PostHide postHide = PostHide.hidePost(post, true, hide, false);
@@ -545,7 +545,7 @@ public class ThreadLayout
     }
 
     @Override
-    public void hideOrRemovePosts(boolean hide, boolean wholeChain, Set<Post> posts, int threadNo) {
+    public void hideOrRemovePosts(boolean hide, boolean wholeChain, Set<Post> posts, long threadNo) {
         final List<PostHide> hideList = new ArrayList<>();
 
         for (Post post : posts) {
@@ -584,16 +584,16 @@ public class ThreadLayout
     }
 
     @Override
-    public void viewRemovedPostsForTheThread(List<Post> threadPosts, int threadNo) {
+    public void viewRemovedPostsForTheThread(List<Post> threadPosts, long threadNo) {
         removedPostsHelper.showPosts(threadPosts, threadNo);
     }
 
     @Override
-    public void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Integer> selectedPosts) {
+    public void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Long> selectedPosts) {
 
         List<PostHide> postsToRestore = new ArrayList<>();
 
-        for (Integer postNo : selectedPosts) {
+        for (Long postNo : selectedPosts) {
             postsToRestore.add(PostHide.unhidePost(threadLoadable.site.id(), threadLoadable.boardCode, postNo));
         }
 
@@ -786,7 +786,7 @@ public class ThreadLayout
     }
 
     @Override
-    public void showHideOrRemoveWholeChainDialog(boolean hide, Post post, int threadNo) {
+    public void showHideOrRemoveWholeChainDialog(boolean hide, Post post, long threadNo) {
         String positiveButtonText = hide
                 ? getString(R.string.thread_layout_hide_whole_chain)
                 : getString(R.string.thread_layout_remove_whole_chain);

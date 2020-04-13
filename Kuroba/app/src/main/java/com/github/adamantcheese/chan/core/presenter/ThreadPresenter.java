@@ -1126,7 +1126,7 @@ public class ThreadPresenter
         if (!isBound()) return;
         List<Post> posts = new ArrayList<>();
 
-        for (int no : post.getRepliesFrom()) {
+        for (long no : post.getRepliesFrom()) {
             Post replyPost = PostUtils.findPostById(no, chanLoader.getThread());
             if (replyPost != null) {
                 posts.add(replyPost);
@@ -1330,7 +1330,7 @@ public class ThreadPresenter
         threadPresenterCallback.showImageReencodingWindow(loadable, supportsReencode);
     }
 
-    public void hideOrRemovePosts(boolean hide, boolean wholeChain, Post post, int threadNo) {
+    public void hideOrRemovePosts(boolean hide, boolean wholeChain, Post post, long threadNo) {
         Set<Post> posts = new HashSet<>();
 
         if (isBound()) {
@@ -1355,7 +1355,7 @@ public class ThreadPresenter
         threadPresenterCallback.viewRemovedPostsForTheThread(chanLoader.getThread().getPosts(), loadable.no);
     }
 
-    public void onRestoreRemovedPostsClicked(List<Integer> selectedPosts) {
+    public void onRestoreRemovedPostsClicked(List<Long> selectedPosts) {
         if (!isBound()) return;
 
         threadPresenterCallback.onRestoreRemovedPostsClicked(loadable, selectedPosts);
@@ -1456,21 +1456,21 @@ public class ThreadPresenter
 
         void hideDeleting(String message);
 
-        void hideThread(Post post, int threadNo, boolean hide);
+        void hideThread(Post post, long threadNo, boolean hide);
 
         void showNewPostsNotification(boolean show, int more);
 
         void showImageReencodingWindow(Loadable loadable, boolean supportsReencode);
 
-        void showHideOrRemoveWholeChainDialog(boolean hide, Post post, int threadNo);
+        void showHideOrRemoveWholeChainDialog(boolean hide, Post post, long threadNo);
 
-        void hideOrRemovePosts(boolean hide, boolean wholeChain, Set<Post> posts, int threadNo);
+        void hideOrRemovePosts(boolean hide, boolean wholeChain, Set<Post> posts, long threadNo);
 
         void unhideOrUnremovePost(Post post);
 
-        void viewRemovedPostsForTheThread(List<Post> threadPosts, int threadNo);
+        void viewRemovedPostsForTheThread(List<Post> threadPosts, long threadNo);
 
-        void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Integer> selectedPosts);
+        void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Long> selectedPosts);
 
         void onPostUpdated(Post post);
     }

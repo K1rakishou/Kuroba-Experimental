@@ -55,7 +55,7 @@ public class PostLinkable
     public final Type type;
 
     private boolean spoilerVisible = ChanSettings.revealTextSpoilers.get();
-    private int markedNo = -1;
+    private long markedNo = -1;
 
     public PostLinkable(Theme theme, CharSequence key, Object value, Type type) {
         this.theme = theme;
@@ -69,7 +69,7 @@ public class PostLinkable
         spoilerVisible = !spoilerVisible;
     }
 
-    public void setMarkedNo(int markedNo) {
+    public void setMarkedNo(long markedNo) {
         this.markedNo = markedNo;
     }
 

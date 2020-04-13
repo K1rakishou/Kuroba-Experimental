@@ -122,7 +122,7 @@ public class CommentParserHelper {
         }
     }
 
-    public static String getRepeatDigits(int no) {
+    public static String getRepeatDigits(long no) {
         String number = String.valueOf(no);
         //inverted order to match largest to smallest, otherwise will always match smallest
         if (decsPattern.matcher(number).find()) return "Decs";

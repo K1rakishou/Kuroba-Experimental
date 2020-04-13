@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.model.save.spans.SerializableSpannable
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class SerializablePost {
@@ -14,7 +15,7 @@ public class SerializablePost {
     @SerializedName("serializable_board")
     private SerializableBoard board;
     @SerializedName("no")
-    private int no;
+    private Long no;
     @SerializedName("is_op")
     private boolean isOP;
     @SerializedName("name")
@@ -32,7 +33,7 @@ public class SerializablePost {
     @SerializedName("id")
     private String id;
     @SerializedName("op_id")
-    private int opId;
+    private Long opId;
     @SerializedName("capcode")
     private String capcode;
     @SerializedName("is_saved_reply")
@@ -50,13 +51,13 @@ public class SerializablePost {
     @SerializedName("filter_saved")
     private boolean filterSaved;
     @SerializedName("replies_to")
-    private Set<Integer> repliesTo;
+    private Set<Long> repliesTo;
     @SerializedName("name_tripcode_id_capcode_span")
     private SerializableSpannableString nameTripcodeIdCapcodeSpan;
     @SerializedName("deleted")
     private Boolean deleted;
     @SerializedName("replies_from")
-    private List<Integer> repliesFrom;
+    private List<Long> repliesFrom;
     @SerializedName("sticky")
     private boolean sticky;
     @SerializedName("closed")
@@ -77,7 +78,7 @@ public class SerializablePost {
     public SerializablePost(
             String boardId,
             SerializableBoard board,
-            int no,
+            long no,
             boolean isOP,
             String name,
             SerializableSpannableString comment,
@@ -86,7 +87,7 @@ public class SerializablePost {
             List<SerializablePostImage> images,
             String tripcode,
             String id,
-            int opId,
+            long opId,
             String capcode,
             boolean isSavedReply,
             int filterHighlightedColor,
@@ -95,10 +96,10 @@ public class SerializablePost {
             boolean filterReplies,
             boolean filterOnlyOP,
             boolean filterSaved,
-            Set<Integer> repliesTo,
+            Set<Long> repliesTo,
             SerializableSpannableString nameTripcodeIdCapcodeSpan,
             Boolean deleted,
-            List<Integer> repliesFrom,
+            List<Long> repliesFrom,
             boolean sticky,
             boolean closed,
             boolean archived,
@@ -146,7 +147,7 @@ public class SerializablePost {
         return boardId;
     }
 
-    public int getNo() {
+    public long getNo() {
         return no;
     }
 
@@ -182,7 +183,7 @@ public class SerializablePost {
         return id;
     }
 
-    public int getOpId() {
+    public long getOpId() {
         return opId;
     }
 
@@ -218,7 +219,7 @@ public class SerializablePost {
         return filterSaved;
     }
 
-    public Set<Integer> getRepliesTo() {
+    public Set<Long> getRepliesTo() {
         return repliesTo;
     }
 
@@ -230,7 +231,7 @@ public class SerializablePost {
         return deleted;
     }
 
-    public List<Integer> getRepliesFrom() {
+    public List<Long> getRepliesFrom() {
         return repliesFrom;
     }
 
@@ -268,7 +269,7 @@ public class SerializablePost {
 
     @Override
     public int hashCode() {
-        return 31 * no + 31 * board.code.hashCode() + 31 * board.siteId;
+        return 31 * Objects.hashCode(no) + 31 * board.code.hashCode() + 31 * board.siteId;
     }
 
     @Override

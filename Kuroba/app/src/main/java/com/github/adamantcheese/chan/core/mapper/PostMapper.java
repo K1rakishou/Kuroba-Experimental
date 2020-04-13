@@ -12,7 +12,7 @@ import java.util.List;
 
 public class PostMapper {
     private static final String TAG = "PostMapper";
-    private static final Comparator<Post> POST_COMPARATOR = (p1, p2) -> Integer.compare(p1.no, p2.no);
+    private static final Comparator<Post> POST_COMPARATOR = (p1, p2) -> Long.compare(p1.no, p2.no);
 
     public static SerializablePost toSerializablePost(Post post) {
         return new SerializablePost(

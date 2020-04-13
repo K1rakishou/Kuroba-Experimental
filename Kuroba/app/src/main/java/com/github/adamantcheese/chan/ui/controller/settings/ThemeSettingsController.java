@@ -313,7 +313,7 @@ public class ThemeSettingsController
                             + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
                             + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>");
             Post post1 = postParser.parse(theme, builder1, parserCallback);
-            post1.getRepliesFrom().add(234567890);
+            post1.getRepliesFrom().add(234567890L);
 
             Post.Builder builder2 = new Post.Builder().board(dummyBoard)
                     .id(234567890)

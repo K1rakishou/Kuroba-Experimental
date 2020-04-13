@@ -21,12 +21,12 @@ import android.util.JsonReader;
 public interface ChanReader {
     PostParser getParser();
 
-    void loadThread(JsonReader reader, ChanReaderProcessingQueue queue)
+    void loadThread(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception;
 
-    void loadCatalog(JsonReader reader, ChanReaderProcessingQueue queue)
+    void loadCatalog(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception;
 
-    void readPostObject(JsonReader reader, ChanReaderProcessingQueue queue)
+    void readPostObject(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
             throws Exception;
 }

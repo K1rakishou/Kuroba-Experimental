@@ -13,4 +13,11 @@ object ChanPostHttpIconMapper {
         )
     }
 
+    fun fromEntity(postIcon: ChanPostHttpIconEntity): ChanPostHttpIconUnparsed {
+        return ChanPostHttpIconUnparsed(
+                postIcon.iconUrl,
+                postIcon.iconName
+        )
+    }
+
 }

@@ -22,11 +22,11 @@ import java.util.*
  * */
 class MockReplyManager {
     @GuardedBy("this")
-    private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Int>>()
+    private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
 
-    fun addMockReply(siteName: String, boardCode: String, opNo: Int, postNo: Int) {
+    fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
         synchronized(this) {
-            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
+            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo)
 
             if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
                 mockReplyMultiMap[threadDescriptor] = LinkedList()
@@ -37,9 +37,9 @@ class MockReplyManager {
         }
     }
 
-    fun getLastMockReply(siteName: String, boardCode: String, opNo: Int): Int {
+    fun getLastMockReply(siteName: String, boardCode: String, opNo: Long): Long {
         return synchronized(this) {
-            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo.toLong())
+            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo)
 
             val repliesQueue = mockReplyMultiMap[threadDescriptor]
                     ?: return@synchronized -1
