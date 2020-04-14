@@ -15,11 +15,20 @@ import androidx.room.*
         ],
         indices = [
             Index(
+                    name = ChanPostEntity.POST_NO_INDEX_NAME,
+                    value = [ChanPostEntity.POST_NO_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanPostEntity.THREAD_ID_INDEX_NAME,
+                    value = [ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME]
+            ),
+            Index(
                     name = ChanPostEntity.POST_NO_OWNER_THREAD_ID_INDEX_NAME,
                     value = [
                         ChanPostEntity.POST_NO_COLUMN_NAME,
                         ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME
-                    ]
+                    ],
+                    unique = true
             )
         ]
 )
@@ -120,6 +129,8 @@ data class ChanPostEntity(
         const val FILTER_ONLY_OP_COLUMN_NAME = "filter_only_op"
         const val FILTER_SAVED_COLUMN_NAME = "filter_saved"
 
+        const val POST_NO_INDEX_NAME = "${TABLE_NAME}_post_no_idx"
+        const val THREAD_ID_INDEX_NAME = "${TABLE_NAME}_thread_id_idx"
         const val POST_NO_OWNER_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_post_no_owner_thread_id_idx"
     }
 }

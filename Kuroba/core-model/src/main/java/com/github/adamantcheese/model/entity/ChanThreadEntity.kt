@@ -15,7 +15,15 @@ import androidx.room.*
         ],
         indices = [
             Index(
-                    name = ChanThreadEntity.THREAD_ID_OWNER_BOARD_ID_INDEX_NAME,
+                    name = ChanThreadEntity.THREAD_NO_INDEX_NAME,
+                    value = [ChanThreadEntity.THREAD_NO_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanThreadEntity.OWNER_BOARD_ID_INDEX_NAME,
+                    value = [ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanThreadEntity.THREAD_NO_OWNER_BOARD_ID_INDEX_NAME,
                     value = [
                         ChanThreadEntity.THREAD_NO_COLUMN_NAME,
                         ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME
@@ -41,6 +49,8 @@ data class ChanThreadEntity(
         const val THREAD_NO_COLUMN_NAME = "thread_no"
         const val OWNER_BOARD_ID_COLUMN_NAME = "owner_board_id"
 
-        const val THREAD_ID_OWNER_BOARD_ID_INDEX_NAME = "${TABLE_NAME}_thread_no_owner_board_id_idx"
+        const val THREAD_NO_OWNER_BOARD_ID_INDEX_NAME = "${TABLE_NAME}_thread_no_owner_board_id_idx"
+        const val THREAD_NO_INDEX_NAME = "${TABLE_NAME}_thread_no_idx"
+        const val OWNER_BOARD_ID_INDEX_NAME = "${TABLE_NAME}_owner_board_id_idx"
     }
 }

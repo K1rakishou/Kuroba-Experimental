@@ -9,6 +9,14 @@ import androidx.room.PrimaryKey
         tableName = ChanBoardEntity.TABLE_NAME,
         indices = [
             Index(
+                    name = ChanBoardEntity.SITE_NAME_INDEX_NAME,
+                    value = [ChanBoardEntity.SITE_NAME_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanBoardEntity.BOARD_CODE_INDEX_NAME,
+                    value = [ChanBoardEntity.BOARD_CODE_COLUMN_NAME]
+            ),
+            Index(
                     name = ChanBoardEntity.BOARD_DESCRIPTOR_INDEX_NAME,
                     value = [
                         ChanBoardEntity.SITE_NAME_COLUMN_NAME,
@@ -36,5 +44,7 @@ data class ChanBoardEntity(
         const val BOARD_CODE_COLUMN_NAME = "board_code"
 
         const val BOARD_DESCRIPTOR_INDEX_NAME = "${TABLE_NAME}_board_descriptor_idx"
+        const val SITE_NAME_INDEX_NAME = "${TABLE_NAME}_site_name_idx"
+        const val BOARD_CODE_INDEX_NAME = "${TABLE_NAME}_board_code_idx"
     }
 }

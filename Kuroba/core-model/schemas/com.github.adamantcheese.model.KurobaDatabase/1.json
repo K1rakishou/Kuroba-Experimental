@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ae354a3f4dede92713e38dfd0f58b019",
+    "identityHash": "3e4b7a64168fc8fbb1c96eb9cc15cb80",
     "entities": [
       {
         "tableName": "chan_board",
@@ -34,6 +34,22 @@
           "autoGenerate": true
         },
         "indices": [
+          {
+            "name": "chan_board_site_name_idx",
+            "unique": false,
+            "columnNames": [
+              "site_name"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_site_name_idx` ON `${TABLE_NAME}` (`site_name`)"
+          },
+          {
+            "name": "chan_board_board_code_idx",
+            "unique": false,
+            "columnNames": [
+              "board_code"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_board_code_idx` ON `${TABLE_NAME}` (`board_code`)"
+          },
           {
             "name": "chan_board_board_descriptor_idx",
             "unique": true,
@@ -76,6 +92,22 @@
           "autoGenerate": true
         },
         "indices": [
+          {
+            "name": "chan_thread_thread_no_idx",
+            "unique": false,
+            "columnNames": [
+              "thread_no"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_thread_thread_no_idx` ON `${TABLE_NAME}` (`thread_no`)"
+          },
+          {
+            "name": "chan_thread_owner_board_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_board_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_thread_owner_board_id_idx` ON `${TABLE_NAME}` (`owner_board_id`)"
+          },
           {
             "name": "chan_thread_thread_no_owner_board_id_idx",
             "unique": true,
@@ -293,13 +325,29 @@
         },
         "indices": [
           {
-            "name": "chan_post_post_no_owner_thread_id_idx",
+            "name": "chan_post_post_no_idx",
             "unique": false,
+            "columnNames": [
+              "post_no"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_post_no_idx` ON `${TABLE_NAME}` (`post_no`)"
+          },
+          {
+            "name": "chan_post_thread_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_thread_id_idx` ON `${TABLE_NAME}` (`owner_thread_id`)"
+          },
+          {
+            "name": "chan_post_post_no_owner_thread_id_idx",
+            "unique": true,
             "columnNames": [
               "post_no",
               "owner_thread_id"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_post_no_owner_thread_id_idx` ON `${TABLE_NAME}` (`post_no`, `owner_thread_id`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_post_post_no_owner_thread_id_idx` ON `${TABLE_NAME}` (`post_no`, `owner_thread_id`)"
           }
         ],
         "foreignKeys": [
@@ -427,36 +475,12 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_image_owner_post_id_idx` ON `${TABLE_NAME}` (`owner_post_id`)"
           },
           {
-            "name": "chan_post_image_file_hash_idx",
-            "unique": false,
-            "columnNames": [
-              "file_hash"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_image_file_hash_idx` ON `${TABLE_NAME}` (`file_hash`)"
-          },
-          {
             "name": "chan_post_image_image_url_idx",
             "unique": true,
             "columnNames": [
               "image_url"
             ],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_post_image_image_url_idx` ON `${TABLE_NAME}` (`image_url`)"
-          },
-          {
-            "name": "chan_post_image_thumbnail_url_idx",
-            "unique": true,
-            "columnNames": [
-              "thumbnail_url"
-            ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_post_image_thumbnail_url_idx` ON `${TABLE_NAME}` (`thumbnail_url`)"
-          },
-          {
-            "name": "chan_post_image_server_filename_idx",
-            "unique": false,
-            "columnNames": [
-              "server_filename"
-            ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `chan_post_image_server_filename_idx` ON `${TABLE_NAME}` (`server_filename`)"
           }
         ],
         "foreignKeys": [
@@ -611,6 +635,14 @@
         },
         "indices": [
           {
+            "name": "seen_post_owner_thread_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `seen_post_owner_thread_id_idx` ON `${TABLE_NAME}` (`owner_thread_id`)"
+          },
+          {
             "name": "seen_post_inserted_at_idx",
             "unique": false,
             "columnNames": [
@@ -678,7 +710,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ae354a3f4dede92713e38dfd0f58b019')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3e4b7a64168fc8fbb1c96eb9cc15cb80')"
     ]
   }
 }

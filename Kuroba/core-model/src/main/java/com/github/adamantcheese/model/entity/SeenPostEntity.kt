@@ -16,6 +16,10 @@ import org.joda.time.DateTime
         ],
         indices = [
             Index(
+                    name = SeenPostEntity.OWNER_THREAD_ID_INDEX_NAME,
+                    value = [SeenPostEntity.OWNER_THREAD_ID_COLUMN_NAME]
+            ),
+            Index(
                     name = SeenPostEntity.INSERTED_AT_INDEX_NAME,
                     value = [
                         SeenPostEntity.INSERTED_AT_COLUMN_NAME
@@ -41,5 +45,6 @@ class SeenPostEntity(
         const val INSERTED_AT_COLUMN_NAME = "inserted_at"
 
         const val INSERTED_AT_INDEX_NAME = "${TABLE_NAME}_inserted_at_idx"
+        const val OWNER_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_owner_thread_id_idx"
     }
 }

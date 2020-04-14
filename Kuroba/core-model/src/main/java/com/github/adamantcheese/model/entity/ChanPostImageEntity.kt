@@ -21,22 +21,9 @@ import okhttp3.HttpUrl
                     value = [ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME]
             ),
             Index(
-                    name = ChanPostImageEntity.FILE_HASH_INDEX_NAME,
-                    value = [ChanPostImageEntity.FILE_HASH_COLUMN_NAME]
-            ),
-            Index(
                     name = ChanPostImageEntity.IMAGE_URL_INDEX_NAME,
                     value = [ChanPostImageEntity.IMAGE_URL_COLUMN_NAME],
                     unique = true
-            ),
-            Index(
-                    name = ChanPostImageEntity.THUMBNAIL_URL_INDEX_NAME,
-                    value = [ChanPostImageEntity.THUMBNAIL_URL_COLUMN_NAME],
-                    unique = true
-            ),
-            Index(
-                    name = ChanPostImageEntity.SERVER_FILENAME_INDEX_NAME,
-                    value = [ChanPostImageEntity.SERVER_FILENAME_COLUMN_NAME]
             )
         ]
 )
@@ -94,9 +81,6 @@ data class ChanPostImageEntity(
         const val TYPE_COLUMN_NAME = "type"
 
         const val OWNER_POST_ID_INDEX_NAME = "${TABLE_NAME}_owner_post_id_idx"
-        const val FILE_HASH_INDEX_NAME = "${TABLE_NAME}_file_hash_idx"
         const val IMAGE_URL_INDEX_NAME = "${TABLE_NAME}_image_url_idx"
-        const val THUMBNAIL_URL_INDEX_NAME = "${TABLE_NAME}_thumbnail_url_idx"
-        const val SERVER_FILENAME_INDEX_NAME = "${TABLE_NAME}_server_filename_idx"
     }
 }
