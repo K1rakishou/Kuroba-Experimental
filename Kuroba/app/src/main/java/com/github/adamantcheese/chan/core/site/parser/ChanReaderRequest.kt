@@ -31,6 +31,7 @@ import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
@@ -42,7 +43,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import kotlin.collections.ArrayList
-import kotlin.system.measureTimeMillis
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -52,6 +53,7 @@ import kotlin.time.measureTimedValue
  * changed on the main thread.
  */
 class ChanReaderRequest(
+        private val appConstants: AppConstants,
         request: ChanLoaderRequestParams
 ) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
 
@@ -66,7 +68,7 @@ class ChanReaderRequest(
 
     val loadable: Loadable
 
-    private val cached: MutableList<Post>
+    private val cachedPostsMap: MutableMap<Long, Post>
     private val reader: ChanReader
     private val databaseSavedReplyManager: DatabaseSavedReplyManager
     private val filters: MutableList<Filter>
@@ -78,9 +80,8 @@ class ChanReaderRequest(
     init {
         Chan.inject(this)
 
-        // Copy the loadable and cached list. The cached array may changed/cleared by other threads.
         loadable = request.loadable.clone()
-        cached = request.cached
+        cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
         reader = request.chanReader
         filters = ArrayList()
 
@@ -106,27 +107,56 @@ class ChanReaderRequest(
             else -> throw IllegalArgumentException("Unknown mode")
         }
 
-        storeNewPostsInRepository(chanReaderProcessor.getToParse())
-        updateOldPostsInRepository(chanReaderProcessor.getToUpdateInRepository())
+        val isCatalog = when {
+            loadable.isThreadMode -> false
+            loadable.isCatalogMode -> true
+            else -> throw IllegalArgumentException("Unknown mode")
+        }
 
-        val (list, duration) = measureTimedValue {
-            reloadPostsFromDatabase(
-                    chanReaderProcessor,
-                    getDescriptor(chanReaderProcessor.loadable)
+        val (storedPostNoList, storeDuration) = measureTimedValue {
+            storeNewPostsInRepository(
+                    chanReaderProcessor.getToParse(),
+                    isCatalog
             )
         }
 
-        Logger.d(TAG, "reloadPostsFromDatabase took ${duration.inMilliseconds}ms, " +
-                "posts count = ${list.size}")
+        val (updatedPostNoList, updateDuration) = measureTimedValue {
+            updateOldPostsInRepository(
+                    chanReaderProcessor.getToUpdateInRepository(),
+                    isCatalog
+            )
+        }
+
+        val updatedPosts = hashSetOf<Long>().apply {
+            addAll(storedPostNoList)
+            addAll(updatedPostNoList)
+        }
+
+        val (reloadedPosts, reloadingDuration, parsingDuration) = reloadPostsFromRepository(
+                updatedPosts,
+                chanReaderProcessor,
+                getDescriptor(chanReaderProcessor.loadable)
+        )
+
+        val cachedPostsCount = chanPostRepository.getCachedValuesCount()
+
+        Logger.d(TAG, "store new posts took $storeDuration (stored ${storedPostNoList.size} posts), " +
+                "update posts took $updateDuration (updated ${updatedPostNoList.size} posts), " +
+                "reload posts took $reloadingDuration, parse posts took = $parsingDuration " +
+                "(reloaded ${reloadedPosts.size} posts), " +
+                "cachedPostsCount = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache})")
 
         val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
-        return processPosts(op, list)
+        return processPosts(op, reloadedPosts)
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun updateOldPostsInRepository(toUpdate: List<Post.Builder>) {
+    private fun updateOldPostsInRepository(
+            toUpdate: List<Post.Builder>,
+            isCatalog: Boolean
+    ): List<Long> {
         if (toUpdate.isEmpty()) {
-            return
+            return emptyList()
         }
 
         val unparsedPosts: MutableList<ChanPostUnparsed> = ArrayList(toUpdate.size)
@@ -138,25 +168,19 @@ class ChanReaderRequest(
                     postBuilder.id
             )
 
-            unparsedPosts.add(
-                    fromPostBuilder(postDescriptor, postBuilder)
-            )
+            unparsedPosts.add(fromPostBuilder(postDescriptor, postBuilder))
         }
 
-        val timedValue = measureTimedValue {
-            chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts).unwrap()
-        }
-
-        val timeMs = timedValue.duration.inMilliseconds
-        val updatedPostsCount = timedValue.value
-
-        Logger.d(TAG, "updateOldPostsInRepository took ${timeMs}ms, " +
-                "updated ${updatedPostsCount} posts")
+        return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
     }
 
-    private fun storeNewPostsInRepository(toParse: List<Post.Builder>) {
+    @OptIn(ExperimentalTime::class)
+    private fun storeNewPostsInRepository(
+            toParse: List<Post.Builder>,
+            isCatalog: Boolean
+    ): List<Long> {
         if (toParse.isEmpty()) {
-            return
+            return emptyList()
         }
 
         val unparsedPosts: MutableList<ChanPostUnparsed> = ArrayList(toParse.size)
@@ -168,45 +192,73 @@ class ChanReaderRequest(
                     postBuilder.id
             )
 
-            unparsedPosts.add(
-                    fromPostBuilder(postDescriptor, postBuilder)
-            )
+            unparsedPosts.add(fromPostBuilder(postDescriptor, postBuilder))
         }
 
-        val timeMs = measureTimeMillis {
-            chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts).unwrap()
-        }
-
-        Logger.d(TAG, "storeNewPostsInRepository took ${timeMs}ms, " +
-                "inserted ${unparsedPosts.size} new posts")
+        return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
     }
 
-    private fun reloadPostsFromDatabase(
+    @OptIn(ExperimentalTime::class)
+    private fun reloadPostsFromRepository(
+            updatedPosts: Set<Long>,
             chanReaderProcessor: ChanReaderProcessor,
             chanDescriptor: ChanDescriptor
-    ): List<Post> {
-        val toParse = when (chanDescriptor) {
-            is ChanDescriptor.ThreadDescriptor -> {
-                chanPostRepository.getThreadPostsBlocking(chanDescriptor).unwrap()
+    ): Triple<List<Post>, Duration, Duration> {
+        val (toParse, reloadingDuration) = measureTimedValue {
+            return@measureTimedValue when (chanDescriptor) {
+                is ChanDescriptor.ThreadDescriptor -> {
+                    chanPostRepository.getThreadPostsBlocking(
+                            chanDescriptor,
+                            chanReaderProcessor.getPostNoListOrdered()
+                    ).unwrap()
+                }
+                is ChanDescriptor.CatalogDescriptor -> {
+                    chanPostRepository.getCatalogOriginalPostsBlocking(
+                            chanDescriptor,
+                            chanReaderProcessor.getPostNoListOrdered()
+                    ).unwrap()
+                }
+            }.map { unparsedPost ->
+                return@map ChanPostUnparsedMapper.toPostBuilder(
+                        loadable.board,
+                        unparsedPost
+                )
             }
-            is ChanDescriptor.CatalogDescriptor -> {
-                chanPostRepository.getCatalogOriginalPostsBlocking(
-                        chanDescriptor,
-                        chanReaderProcessor.getThreadIdsOrdered()
-                ).unwrap()
-            }
-        }.map { unparsedPost -> ChanPostUnparsedMapper.toPostBuilder(loadable.board, unparsedPost) }
-
-        val parsedPosts = parsePosts(toParse, chanDescriptor)
-        if (parsedPosts.isEmpty()) {
-            return emptyList()
         }
 
-        return chanReaderProcessor.getPostsSortedByIndexes(parsedPosts)
+        val (parsedPosts, parsingDuration) = measureTimedValue {
+            return@measureTimedValue parsePosts(updatedPosts, toParse, chanDescriptor)
+        }
+
+        if (parsedPosts.isEmpty()) {
+            return Triple(emptyList(), reloadingDuration, parsingDuration)
+        }
+
+        val sortedPosts = chanReaderProcessor.getPostsSortedByIndexes(parsedPosts)
+        return Triple(sortedPosts, reloadingDuration, parsingDuration)
     }
 
-    private fun parsePosts(toParse: List<Post.Builder>, chanDescriptor: ChanDescriptor): List<Post> {
-        return toParse
+    private fun parsePosts(
+            updatedPosts: Set<Long>,
+            toParse: List<Post.Builder>,
+            chanDescriptor: ChanDescriptor
+    ): List<Post> {
+        val cachedPosts = toParse.mapNotNull { postBuilder ->
+            val fromCache = cachedPostsMap[postBuilder.id]
+                    ?: return@mapNotNull null
+
+            if (updatedPosts.contains(postBuilder.id)) {
+                // Post has new info since we last cached it so we need to parse it again
+                return@mapNotNull null
+            }
+
+            // Post didn't change since we last cached it and we have it in the cache - we don't
+            // need to parse it again
+            return@mapNotNull fromCache
+        }
+
+        val parsedPosts = toParse
+                .filter { postBuilder -> !cachedPostsMap.containsKey(postBuilder.id) }
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,
@@ -221,6 +273,8 @@ class ChanReaderRequest(
                 .chunked(Int.MAX_VALUE)
                 .map { postParseCallableList -> EXECUTOR.invokeAll(postParseCallableList) }
                 .flatMap { futureList -> futureList.mapNotNull { future -> future.get() } }
+
+        return cachedPosts + parsedPosts
     }
 
     private fun processPosts(op: Post.Builder, allPosts: List<Post>): ChanLoaderResponse {
@@ -228,9 +282,9 @@ class ChanReaderRequest(
         val cachedPosts = ArrayList<Post>()
         val newPosts = ArrayList<Post>()
 
-        if (cached.size > 0) {
+        if (cachedPostsMap.isNotEmpty()) {
             // Add all posts that were parsed before
-            cachedPosts.addAll(cached)
+            cachedPosts.addAll(cachedPostsMap.values)
             val cachedPostsByNo: MutableMap<Long, Post> = HashMap()
 
             for (post in cachedPosts) {
@@ -293,6 +347,9 @@ class ChanReaderRequest(
         }
 
         response.posts.addAll(totalPosts)
+        cachedPostsMap.clear()
+        cachedPostsMap.putAll(totalPosts.associateBy { post -> post.no })
+
         return response
     }
 
@@ -307,6 +364,7 @@ class ChanReaderRequest(
         init {
             THREAD_COUNT = Runtime.getRuntime().availableProcessors()
             Logger.d(TAG, "Thread count: $THREAD_COUNT")
+
             EXECUTOR = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
                 val threadName = String.format(
                         Locale.ENGLISH,

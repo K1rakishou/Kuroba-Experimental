@@ -65,9 +65,7 @@ class ChanReaderProcessor(
         }
     }
 
-    fun getThreadIdsOrdered(): List<Long> {
-        check(loadable.isCatalogMode) { "Cannot load threads in thread mode!" }
-
+    fun getPostNoListOrdered(): List<Long> {
         return postNoOrderedList
     }
 }

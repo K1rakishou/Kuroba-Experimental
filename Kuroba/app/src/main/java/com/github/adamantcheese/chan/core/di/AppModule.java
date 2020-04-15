@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBase
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.AppConstants;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -56,13 +57,20 @@ public class AppModule {
     private Context applicationContext;
     private Dns okHttpDns;
     private Chan.OkHttpProtocols okHttpProtocols;
+    private AppConstants appConstants;
 
     public static final String DI_TAG = "Dependency Injection";
 
-    public AppModule(Context applicationContext, Dns dns, Chan.OkHttpProtocols protocols) {
+    public AppModule(
+            Context applicationContext,
+            Dns dns,
+            Chan.OkHttpProtocols protocols,
+            AppConstants appConstants
+    ) {
         this.applicationContext = applicationContext;
         this.okHttpDns = dns;
         this.okHttpProtocols = protocols;
+        this.appConstants = appConstants;
     }
 
     @Provides
@@ -82,6 +90,12 @@ public class AppModule {
     @Singleton
     public Chan.OkHttpProtocols provideOkHttpProtocols() {
         return okHttpProtocols;
+    }
+
+    @Provides
+    @Singleton
+    public AppConstants provideAppConstants() {
+        return appConstants;
     }
 
     @Provides

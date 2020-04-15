@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.di
 
 import android.app.Application
+import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.OkHttpDns
 import com.github.adamantcheese.model.di.annotation.OkHttpProtocols
@@ -41,6 +42,8 @@ interface DatabaseComponent {
         fun okHttpDns(@OkHttpDns dns: Dns): Builder
         @BindsInstance
         fun okHttpProtocols(@OkHttpProtocols okHttpProtocols: NetworkModule.OkHttpProtocolList): Builder
+        @BindsInstance
+        fun appConstants(appConstants: AppConstants): Builder
 
         fun build(): DatabaseComponent
     }

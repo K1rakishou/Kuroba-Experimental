@@ -25,13 +25,13 @@ open class SeenPostLocalSource(
                 seenPost.threadDescriptor.boardCode()
         )
 
-        val chanThreadEntity = chanThreadDao.insert(
+        val chanThreadEntityId = chanThreadDao.insertDefaultOrIgnore(
                 chanBoardEntity.boardId,
                 seenPost.threadDescriptor.opNo
         )
 
         seenPostDao.insert(
-                SeenPostMapper.toEntity(chanThreadEntity.threadId, seenPost)
+                SeenPostMapper.toEntity(chanThreadEntityId, seenPost)
         )
 
     }

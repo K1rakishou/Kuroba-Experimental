@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.mapper
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
 
@@ -39,22 +38,13 @@ object ChanPostUnparsedMapper {
                 closed = postBuilder.closed,
                 archived = postBuilder.archived,
                 isLightColor = postBuilder.isLightColor,
-                isSavedReply = postBuilder.isSavedReply,
-                filterStub = postBuilder.filterStub,
-                filterRemove = postBuilder.filterRemove,
-                filterWatch = postBuilder.filterWatch,
-                filterReplies = postBuilder.filterReplies,
-                filterOnlyOP = postBuilder.filterOnlyOP,
-                filterSaved = postBuilder.filterSaved
+                isSavedReply = postBuilder.isSavedReply
         )
     }
 
     @JvmStatic
     fun toPostBuilder(board: Board, chanPostUnparsed: ChanPostUnparsed): Post.Builder {
-        val opId = when (val descriptor = chanPostUnparsed.postDescriptor.descriptor) {
-            is ChanDescriptor.ThreadDescriptor -> descriptor.opNo
-            is ChanDescriptor.CatalogDescriptor -> chanPostUnparsed.postDescriptor.postNo
-        }
+        val opId = chanPostUnparsed.postDescriptor.getThreadNo()
 
         val postBuilder = Post.Builder()
                 .board(board)
@@ -82,18 +72,8 @@ object ChanPostUnparsedMapper {
                 .moderatorCapcode(chanPostUnparsed.moderatorCapcode)
                 .isSavedReply(chanPostUnparsed.isSavedReply)
                 .spans(chanPostUnparsed.subjectSpan, chanPostUnparsed.nameTripcodeIdCapcodeSpan)
-                .filter(
-                        chanPostUnparsed.filterHighlightedColor,
-                        chanPostUnparsed.filterStub,
-                        chanPostUnparsed.filterRemove,
-                        chanPostUnparsed.filterWatch,
-                        chanPostUnparsed.filterReplies,
-                        chanPostUnparsed.filterOnlyOP,
-                        chanPostUnparsed.filterSaved
-                )
 
         postBuilder.postCommentBuilder.setComment(chanPostUnparsed.postComment)
-
         return postBuilder
     }
 

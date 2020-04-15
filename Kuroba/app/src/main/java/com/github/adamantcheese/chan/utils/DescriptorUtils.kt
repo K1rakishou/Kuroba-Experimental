@@ -28,7 +28,7 @@ object DescriptorUtils {
         throw IllegalStateException("Unsupported loadable mode: ${loadable.mode}")
     }
 
-    fun getPostDescriptor(loadable: Loadable, post: Post): PostDescriptor? {
+    fun getPostDescriptor(loadable: Loadable, post: Post): PostDescriptor {
         return PostDescriptor(
                 getDescriptor(loadable),
                 post.no

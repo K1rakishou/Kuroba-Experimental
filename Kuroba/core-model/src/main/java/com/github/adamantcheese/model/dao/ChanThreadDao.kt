@@ -1,9 +1,6 @@
 package com.github.adamantcheese.model.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 
 @Dao
@@ -12,6 +9,8 @@ abstract class ChanThreadDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insert(chanThreadEntity: ChanThreadEntity): Long
 
+    @Update(onConflict = OnConflictStrategy.ABORT)
+    abstract suspend fun update(chanThreadEntity: ChanThreadEntity)
 
     @Query("""
         SELECT *
@@ -23,29 +22,34 @@ abstract class ChanThreadDao {
     """)
     abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
 
-    suspend fun insert(ownerBoardId: Long, threadNo: Long): ChanThreadEntity {
+    suspend fun insertDefaultOrIgnore(ownerBoardId: Long, threadNo: Long): Long {
         val prev = select(ownerBoardId, threadNo)
         if (prev != null) {
-            return prev
+            return prev.threadId
         }
 
-        val chanThreadEntity = ChanThreadEntity(
-                threadId = 0L,
-                threadNo = threadNo,
-                ownerBoardId = ownerBoardId
-        )
+        return insert(ChanThreadEntity(0L, threadNo, ownerBoardId))
+    }
 
-        val insertedThreadId = insert(chanThreadEntity)
+    suspend fun insertOrUpdate(ownerBoardId: Long, threadNo: Long, chanThreadEntity: ChanThreadEntity): Long {
+        val prev = select(ownerBoardId, threadNo)
+        if (prev != null) {
+            chanThreadEntity.threadId = prev.threadId
+            update(chanThreadEntity)
+            return prev.threadId
+        }
 
-        chanThreadEntity.threadId = insertedThreadId
-        return chanThreadEntity
+        return insert(chanThreadEntity)
     }
 
     @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
-        WHERE ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :boardId
+        WHERE 
+            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        AND
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNoList)
     """)
-    abstract fun selectAllThreadsByBoardId(boardId: Long): List<ChanThreadEntity>
+    abstract suspend fun selectManyByThreadNoList(ownerBoardId: Long, threadNoList: List<Long>): List<ChanThreadEntity>
 
 }

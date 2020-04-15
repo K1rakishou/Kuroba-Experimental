@@ -40,11 +40,11 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
-import com.github.adamantcheese.chan.core.site.parser.ChanReader;
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequest;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.common.ModularResult;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
@@ -94,6 +94,9 @@ public class ChanThreadLoader
 
     @Inject
     SavedThreadLoaderManager savedThreadLoaderManager;
+
+    @Inject
+    AppConstants appConstants;
 
     private final WatchManager watchManager;
     private final List<ChanLoaderCallback> listeners = new CopyOnWriteArrayList<>();
@@ -384,10 +387,16 @@ public class ChanThreadLoader
             cached = thread == null ? new ArrayList<>() : thread.getPosts();
         }
 
-        ChanReader chanReader = loadable.getSite().chanReader();
 
-        ChanLoaderRequestParams requestParams = new ChanLoaderRequestParams(loadable, chanReader, cached, this, this);
-        ChanReaderRequest readerRequest = new ChanReaderRequest(requestParams);
+        ChanLoaderRequestParams requestParams = new ChanLoaderRequestParams(
+                loadable,
+                loadable.getSite().chanReader(),
+                cached,
+                this,
+                this
+        );
+
+        ChanReaderRequest readerRequest = new ChanReaderRequest(appConstants, requestParams);
 
         request = new ChanLoaderRequest(readerRequest);
         volleyRequestQueue.add(request.getVolleyRequest());

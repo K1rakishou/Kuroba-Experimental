@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.di
 
 import android.app.Application
+import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
@@ -184,13 +185,15 @@ class DatabaseModule {
             logger: Logger,
             database: KurobaDatabase,
             chanPostLocalSource: ChanPostLocalSource,
-            @LoggerTagPrefix loggerTag: String
+            @LoggerTagPrefix loggerTag: String,
+            appConstants: AppConstants
     ): ChanPostRepository {
         return ChanPostRepository(
                 database,
                 loggerTag,
                 logger,
-                chanPostLocalSource
+                chanPostLocalSource,
+                appConstants
         )
     }
 }

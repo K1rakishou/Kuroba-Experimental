@@ -22,6 +22,10 @@ abstract class ChanBoardDao {
     """)
     abstract suspend fun select(siteName: String, boardCode: String): ChanBoardEntity?
 
+    suspend fun contains(siteName: String, boardCode: String): Boolean {
+        return select(siteName, boardCode) != null
+    }
+
     @Query("""
         SELECT *
         FROM ${ChanBoardEntity.TABLE_NAME}

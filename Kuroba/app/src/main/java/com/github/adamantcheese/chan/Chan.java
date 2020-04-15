@@ -49,6 +49,7 @@ import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.DatabaseModuleInjector;
 import com.github.adamantcheese.model.di.DatabaseComponent;
 
@@ -118,6 +119,9 @@ public class Chan
         super.onCreate();
         registerActivityLifecycleCallbacks(this);
 
+        AppConstants appConstants = new AppConstants(getApplicationContext());
+        logAppConstants(appConstants);
+
         WatchNotification.setupChannel();
         SavingNotification.setupChannel();
         LastPageNotification.setupChannel();
@@ -130,12 +134,12 @@ public class Chan
                 okHttpDns,
                 okHttpProtocols.protocols,
                 Logger.TAG_PREFIX,
-                ChanSettings.verboseLogs.get()
+                ChanSettings.verboseLogs.get(),
+                appConstants
         );
 
-
         feather = Feather.with(
-                new AppModule(this, okHttpDns, okHttpProtocols),
+                new AppModule(this, okHttpDns, okHttpProtocols, appConstants),
                 new ExecutorsModule(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
@@ -236,6 +240,10 @@ public class Chan
                 settingsNotificationManager.notify(SettingNotificationType.CrashLog);
             }
         }
+    }
+
+    private void logAppConstants(AppConstants appConstants) {
+        Logger.d("APP", "maxPostsCountInPostsCache = " + appConstants.getMaxPostsCountInPostsCache());
     }
 
     private Dns getOkHttpDns() {

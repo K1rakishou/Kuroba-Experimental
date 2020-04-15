@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3e4b7a64168fc8fbb1c96eb9cc15cb80",
+    "identityHash": "a3288f42fd05eb6d410148635243e135",
     "entities": [
       {
         "tableName": "chan_board",
@@ -64,7 +64,7 @@
       },
       {
         "tableName": "chan_thread",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `thread_no` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `thread_no` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, `last_modified` INTEGER NOT NULL, `replies` INTEGER NOT NULL, `thread_images_count` INTEGER NOT NULL, `unique_ips` INTEGER NOT NULL, `sticky` INTEGER NOT NULL, `closed` INTEGER NOT NULL, `archived` INTEGER NOT NULL, FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "threadId",
@@ -81,6 +81,48 @@
           {
             "fieldPath": "ownerBoardId",
             "columnName": "owner_board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastModified",
+            "columnName": "last_modified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replies",
+            "columnName": "replies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadImagesCount",
+            "columnName": "thread_images_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uniqueIps",
+            "columnName": "unique_ips",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sticky",
+            "columnName": "sticky",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "closed",
+            "columnName": "closed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archived",
+            "columnName": "archived",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -134,7 +176,7 @@
       },
       {
         "tableName": "chan_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `replies` INTEGER NOT NULL, `thread_images_count` INTEGER NOT NULL, `unique_ips` INTEGER NOT NULL, `last_modified` INTEGER NOT NULL, `unix_timestamp_seconds` INTEGER NOT NULL, `id_color` INTEGER NOT NULL, `filter_highlighted_color` INTEGER NOT NULL, `post_comment` TEXT NOT NULL, `subject` TEXT, `name` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `subject_span` TEXT, `name_tripcode_id_capcode_span` TEXT, `is_op` INTEGER NOT NULL, `sticky` INTEGER NOT NULL, `closed` INTEGER NOT NULL, `archived` INTEGER NOT NULL, `is_light_color` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, `filter_stub` INTEGER NOT NULL, `filter_remove` INTEGER NOT NULL, `filter_watch` INTEGER NOT NULL, `filter_replies` INTEGER NOT NULL, `filter_only_op` INTEGER NOT NULL, `filter_saved` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `unix_timestamp_seconds` INTEGER NOT NULL, `id_color` INTEGER NOT NULL, `filter_highlighted_color` INTEGER NOT NULL, `post_comment` TEXT NOT NULL, `subject` TEXT, `name` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `subject_span` TEXT, `name_tripcode_id_capcode_span` TEXT, `is_op` INTEGER NOT NULL, `is_light_color` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postId",
@@ -151,30 +193,6 @@
           {
             "fieldPath": "ownerThreadId",
             "columnName": "owner_thread_id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "replies",
-            "columnName": "replies",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "threadImagesCount",
-            "columnName": "thread_images_count",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "uniqueIps",
-            "columnName": "unique_ips",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "lastModified",
-            "columnName": "last_modified",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -251,24 +269,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "sticky",
-            "columnName": "sticky",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "closed",
-            "columnName": "closed",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "archived",
-            "columnName": "archived",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "isLightColor",
             "columnName": "is_light_color",
             "affinity": "INTEGER",
@@ -277,42 +277,6 @@
           {
             "fieldPath": "isSavedReply",
             "columnName": "is_saved_reply",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterStub",
-            "columnName": "filter_stub",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterRemove",
-            "columnName": "filter_remove",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterWatch",
-            "columnName": "filter_watch",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterReplies",
-            "columnName": "filter_replies",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterOnlyOP",
-            "columnName": "filter_only_op",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterSaved",
-            "columnName": "filter_saved",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -710,7 +674,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3e4b7a64168fc8fbb1c96eb9cc15cb80')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a3288f42fd05eb6d410148635243e135')"
     ]
   }
 }

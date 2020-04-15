@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
 import com.github.adamantcheese.model.entity.ChanPostEntity
+import com.github.adamantcheese.model.entity.ChanThreadEntity
 
 object ChanPostMapper {
 
@@ -12,10 +13,6 @@ object ChanPostMapper {
                 postId = 0L,
                 postNo = chanPostUnparsed.postDescriptor.postNo,
                 ownerThreadId = ownerThreadId,
-                replies = chanPostUnparsed.replies,
-                threadImagesCount = chanPostUnparsed.threadImagesCount,
-                uniqueIps = chanPostUnparsed.uniqueIps,
-                lastModified = chanPostUnparsed.lastModified,
                 unixTimestampSeconds = chanPostUnparsed.unixTimestampSeconds,
                 idColor = chanPostUnparsed.idColor,
                 filterHighlightedColor = chanPostUnparsed.filterHighlightedColor,
@@ -28,58 +25,70 @@ object ChanPostMapper {
                 subjectSpan = chanPostUnparsed.subjectSpan.toString(),
                 nameTripcodeIdCapcodeSpan = chanPostUnparsed.nameTripcodeIdCapcodeSpan.toString(),
                 isOp = chanPostUnparsed.isOp,
-                sticky = chanPostUnparsed.sticky,
-                closed = chanPostUnparsed.closed,
-                archived = chanPostUnparsed.archived,
                 isLightColor = chanPostUnparsed.isLightColor,
-                isSavedReply = chanPostUnparsed.isSavedReply,
-                filterStub = chanPostUnparsed.filterStub,
-                filterRemove = chanPostUnparsed.filterRemove,
-                filterWatch = chanPostUnparsed.filterWatch,
-                filterReplies = chanPostUnparsed.filterReplies,
-                filterOnlyOP = chanPostUnparsed.filterOnlyOP,
-                filterSaved = chanPostUnparsed.filterSaved
+                isSavedReply = chanPostUnparsed.isSavedReply
         )
     }
 
-    fun fromEntity(chanDescriptor: ChanDescriptor, chanPostEntity: ChanPostEntity?): ChanPostUnparsed? {
+    fun fromEntity(
+            chanDescriptor: ChanDescriptor,
+            chanThreadEntity: ChanThreadEntity?,
+            chanPostEntity: ChanPostEntity?
+    ): ChanPostUnparsed? {
         if (chanPostEntity == null) {
             return null
         }
 
-        return ChanPostUnparsed(
-                databasePostId = chanPostEntity.postId,
-                postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
-                postImages = mutableListOf(),
-                postIcons = mutableListOf(),
-                replies = chanPostEntity.replies,
-                threadImagesCount = chanPostEntity.threadImagesCount,
-                uniqueIps = chanPostEntity.uniqueIps,
-                lastModified = chanPostEntity.lastModified,
-                unixTimestampSeconds = chanPostEntity.unixTimestampSeconds,
-                idColor = chanPostEntity.idColor,
-                filterHighlightedColor = chanPostEntity.filterHighlightedColor,
-                postComment = chanPostEntity.postComment,
-                subject = chanPostEntity.subject,
-                name = chanPostEntity.name,
-                tripcode = chanPostEntity.tripcode,
-                posterId = chanPostEntity.posterId,
-                moderatorCapcode = chanPostEntity.moderatorCapcode,
-                subjectSpan = chanPostEntity.subjectSpan,
-                nameTripcodeIdCapcodeSpan = chanPostEntity.nameTripcodeIdCapcodeSpan,
-                isOp = chanPostEntity.isOp,
-                sticky = chanPostEntity.sticky,
-                closed = chanPostEntity.closed,
-                archived = chanPostEntity.archived,
-                isLightColor = chanPostEntity.isLightColor,
-                isSavedReply = chanPostEntity.isSavedReply,
-                filterStub = chanPostEntity.filterStub,
-                filterRemove = chanPostEntity.filterRemove,
-                filterWatch = chanPostEntity.filterWatch,
-                filterReplies = chanPostEntity.filterReplies,
-                filterOnlyOP = chanPostEntity.filterOnlyOP,
-                filterSaved = chanPostEntity.filterSaved
-        )
+        if (chanThreadEntity != null) {
+            return ChanPostUnparsed(
+                    databasePostId = chanPostEntity.postId,
+                    postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
+                    postImages = mutableListOf(),
+                    postIcons = mutableListOf(),
+                    replies = chanThreadEntity.replies,
+                    threadImagesCount = chanThreadEntity.threadImagesCount,
+                    uniqueIps = chanThreadEntity.uniqueIps,
+                    lastModified = chanThreadEntity.lastModified,
+                    sticky = chanThreadEntity.sticky,
+                    closed = chanThreadEntity.closed,
+                    archived = chanThreadEntity.archived,
+                    unixTimestampSeconds = chanPostEntity.unixTimestampSeconds,
+                    idColor = chanPostEntity.idColor,
+                    filterHighlightedColor = chanPostEntity.filterHighlightedColor,
+                    postComment = chanPostEntity.postComment,
+                    subject = chanPostEntity.subject,
+                    name = chanPostEntity.name,
+                    tripcode = chanPostEntity.tripcode,
+                    posterId = chanPostEntity.posterId,
+                    moderatorCapcode = chanPostEntity.moderatorCapcode,
+                    subjectSpan = chanPostEntity.subjectSpan,
+                    nameTripcodeIdCapcodeSpan = chanPostEntity.nameTripcodeIdCapcodeSpan,
+                    isOp = chanPostEntity.isOp,
+                    isLightColor = chanPostEntity.isLightColor,
+                    isSavedReply = chanPostEntity.isSavedReply
+            )
+        } else {
+            return ChanPostUnparsed(
+                    databasePostId = chanPostEntity.postId,
+                    postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
+                    postImages = mutableListOf(),
+                    postIcons = mutableListOf(),
+                    unixTimestampSeconds = chanPostEntity.unixTimestampSeconds,
+                    idColor = chanPostEntity.idColor,
+                    filterHighlightedColor = chanPostEntity.filterHighlightedColor,
+                    postComment = chanPostEntity.postComment,
+                    subject = chanPostEntity.subject,
+                    name = chanPostEntity.name,
+                    tripcode = chanPostEntity.tripcode,
+                    posterId = chanPostEntity.posterId,
+                    moderatorCapcode = chanPostEntity.moderatorCapcode,
+                    subjectSpan = chanPostEntity.subjectSpan,
+                    nameTripcodeIdCapcodeSpan = chanPostEntity.nameTripcodeIdCapcodeSpan,
+                    isOp = chanPostEntity.isOp,
+                    isLightColor = chanPostEntity.isLightColor,
+                    isSavedReply = chanPostEntity.isSavedReply
+            )
+        }
     }
 
 }

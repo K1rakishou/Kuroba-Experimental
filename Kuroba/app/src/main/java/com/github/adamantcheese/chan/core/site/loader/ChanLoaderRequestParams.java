@@ -56,7 +56,6 @@ public class ChanLoaderRequestParams {
             Response.Listener<ChanLoaderResponse> listener,
             Response.ErrorListener errorListener
     ) {
-
         this.loadable = loadable;
         this.chanReader = chanReader;
         this.cached = cached;

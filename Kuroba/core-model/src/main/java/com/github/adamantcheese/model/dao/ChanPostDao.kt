@@ -32,9 +32,12 @@ abstract class ChanPostDao {
     @Query("""
         SELECT *
         FROM ${ChanPostEntity.TABLE_NAME}
-        WHERE ${ChanPostEntity.POST_NO_COLUMN_NAME} IN (:postNoList)
+        WHERE 
+            ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND
+            ${ChanPostEntity.POST_NO_COLUMN_NAME} = :postNo
     """)
-    abstract suspend fun selectManyByPostNoList(postNoList: List<Long>): List<ChanPostEntity>
+    abstract suspend fun selectByThreadIdAndPostNo(ownerThreadId: Long, postNo: Long): ChanPostEntity?
 
     suspend fun insertOrUpdate(ownerThreadId: Long, postNo: Long, chanPostEntity: ChanPostEntity): Long {
         val prev = select(ownerThreadId, postNo)
@@ -48,5 +51,5 @@ abstract class ChanPostDao {
     }
 
     @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
-    abstract fun deleteAll(): Int
+    abstract suspend fun deleteAll(): Int
 }
