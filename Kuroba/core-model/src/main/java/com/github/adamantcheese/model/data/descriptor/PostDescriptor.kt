@@ -39,7 +39,7 @@ class PostDescriptor(
         val opNo = if (descriptor is ChanDescriptor.ThreadDescriptor) {
             descriptor.opNo.toString()
         } else {
-            "<null>"
+            postNo.toString()
         }
 
         return "PostDescriptor(siteName='${descriptor.siteName()}', " +

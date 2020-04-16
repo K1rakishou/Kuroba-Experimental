@@ -25,7 +25,7 @@ object ChanThreadMapper {
 
     fun fromEntity(chanDescriptor: ChanDescriptor, chanThreadEntity: ChanThreadEntity, chanPostEntity: ChanPostEntity): ChanPostUnparsed {
         return ChanPostUnparsed(
-                databasePostId = chanThreadEntity.threadId,
+                databasePostId = chanPostEntity.postId,
                 postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
                 postImages = mutableListOf(),
                 postIcons = mutableListOf(),

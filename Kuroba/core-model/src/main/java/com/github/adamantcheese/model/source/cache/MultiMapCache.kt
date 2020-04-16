@@ -85,7 +85,7 @@ class MultiMapCache<K1, K2, V>(
 
     private fun evictOld(amountToEvictParam: Int) {
         require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
-        require(mutex.isLocked) { "Synchronization issue!" }
+        require(mutex.isLocked) { "mutex must be locked!" }
 
         val keysSorted = accessTimes.entries
                 // We will get the latest accessed key in the beginning of the list
