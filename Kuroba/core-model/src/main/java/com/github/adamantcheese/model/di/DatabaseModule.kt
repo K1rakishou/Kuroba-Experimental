@@ -6,15 +6,13 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
-import com.github.adamantcheese.model.repository.ChanPostRepository
-import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
-import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
-import com.github.adamantcheese.model.repository.SeenPostRepository
+import com.github.adamantcheese.model.repository.*
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
 import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.adamantcheese.model.source.local.SeenPostLocalSource
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import dagger.Module
@@ -121,6 +119,16 @@ class DatabaseModule {
         return InlinedFileInfoRemoteSource(okHttpClient, loggerTag, logger)
     }
 
+    @Singleton
+    @Provides
+    fun provideArchivesRemoteSource(
+            logger: Logger,
+            okHttpClient: OkHttpClient,
+            @LoggerTagPrefix loggerTag: String
+    ): ArchivesRemoteSource {
+        return ArchivesRemoteSource(okHttpClient, loggerTag, logger)
+    }
+
     /**
      * Repositories
      * */
@@ -195,5 +203,16 @@ class DatabaseModule {
                 chanPostLocalSource,
                 appConstants
         )
+    }
+
+    @Singleton
+    @Provides
+    fun provideArchivesRepository(
+            logger: Logger,
+            database: KurobaDatabase,
+            archivesRemoteSource: ArchivesRemoteSource,
+            @LoggerTagPrefix loggerTag: String
+    ): ArchivesRepository {
+        return ArchivesRepository(database, loggerTag, logger, archivesRemoteSource)
     }
 }

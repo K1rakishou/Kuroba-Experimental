@@ -149,9 +149,9 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ArchivesManager provideArchivesManager(Gson gson) {
+    public ArchivesManager provideArchivesManager(Context appContext, Gson gson) {
         Logger.d(AppModule.DI_TAG, "Archives manager (4chan only)");
-        return new ArchivesManager(gson);
+        return new ArchivesManager(appContext, gson);
     }
 
     @Provides

@@ -17,9 +17,9 @@
 package com.github.adamantcheese.chan.core.site.parser
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.mapper.ChanPostUnparsedMapper
 import com.github.adamantcheese.chan.core.mapper.ChanPostUnparsedMapper.fromPostBuilder
@@ -29,19 +29,20 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
+import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import okhttp3.HttpUrl
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
-import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -53,20 +54,15 @@ import kotlin.time.measureTimedValue
  * changed on the main thread.
  */
 class ChanReaderRequest(
+        private val databaseManager: DatabaseManager,
+        private val filterEngine: FilterEngine,
+        private val chanPostRepository: ChanPostRepository,
         private val appConstants: AppConstants,
+        private val archivesManager: ArchivesManager,
+        private val archivesRepository: ArchivesRepository,
         request: ChanLoaderRequestParams
 ) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
-
-    @Inject
-    lateinit var databaseManager: DatabaseManager
-
-    @Inject
-    lateinit var filterEngine: FilterEngine
-
-    @Inject
-    lateinit var chanPostRepository: ChanPostRepository
-
-    val loadable: Loadable
+    val loadable = request.loadable.clone()
 
     private val cachedPostsMap: MutableMap<Long, Post>
     private val reader: ChanReader
@@ -78,9 +74,6 @@ class ChanReaderRequest(
     }
 
     init {
-        Chan.inject(this)
-
-        loadable = request.loadable.clone()
         cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
         reader = request.chanReader
         filters = ArrayList()
@@ -111,6 +104,33 @@ class ChanReaderRequest(
             loadable.isThreadMode -> false
             loadable.isCatalogMode -> true
             else -> throw IllegalArgumentException("Unknown mode")
+        }
+
+        if (!isCatalog) {
+            // TODO(archives):
+
+            val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+            val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor)
+
+            if (archiveDescriptor != null) {
+                val threadArchiveRequestLink = archivesManager.getRequestLinkForThread(
+                        threadDescriptor,
+                        archiveDescriptor
+                )
+
+                if (threadArchiveRequestLink != null) {
+                    val supportsFiles = archivesManager.doesArchiveSupportsFilesForBoard(
+                            archiveDescriptor,
+                            loadable.boardDescriptor
+                    )
+
+                    val archivePosts = archivesRepository.fetchThreadFromNetworkBlocking(
+                            threadArchiveRequestLink,
+                            threadDescriptor.opNo,
+                            supportsFiles
+                    ).unwrap()
+                }
+            }
         }
 
         val (storedPostNoList, storeDuration) = measureTimedValue {

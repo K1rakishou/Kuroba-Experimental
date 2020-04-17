@@ -6,10 +6,7 @@ import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.OkHttpDns
 import com.github.adamantcheese.model.di.annotation.OkHttpProtocols
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
-import com.github.adamantcheese.model.repository.ChanPostRepository
-import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
-import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
-import com.github.adamantcheese.model.repository.SeenPostRepository
+import com.github.adamantcheese.model.repository.*
 import dagger.BindsInstance
 import dagger.Component
 import okhttp3.Dns
@@ -29,6 +26,7 @@ interface DatabaseComponent {
     fun getSeenPostRepository(): SeenPostRepository
     fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
     fun getChanPostRepository(): ChanPostRepository
+    fun getArchivesRepository(): ArchivesRepository
 
     @Component.Builder
     interface Builder {

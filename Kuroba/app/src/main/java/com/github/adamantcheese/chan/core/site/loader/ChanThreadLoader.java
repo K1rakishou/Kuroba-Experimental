@@ -31,7 +31,9 @@ import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
+import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
@@ -46,6 +48,8 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.common.ModularResult;
+import com.github.adamantcheese.model.repository.ArchivesRepository;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
@@ -88,15 +92,20 @@ public class ChanThreadLoader
 
     @Inject
     RequestQueue volleyRequestQueue;
-
     @Inject
     DatabaseManager databaseManager;
-
     @Inject
     SavedThreadLoaderManager savedThreadLoaderManager;
-
     @Inject
     AppConstants appConstants;
+    @Inject
+    FilterEngine filterEngine;
+    @Inject
+    ChanPostRepository chanPostRepository;
+    @Inject
+    ArchivesManager archivesManager;
+    @Inject
+    ArchivesRepository archivesRepository;
 
     private final WatchManager watchManager;
     private final List<ChanLoaderCallback> listeners = new CopyOnWriteArrayList<>();
@@ -387,7 +396,6 @@ public class ChanThreadLoader
             cached = thread == null ? new ArrayList<>() : thread.getPosts();
         }
 
-
         ChanLoaderRequestParams requestParams = new ChanLoaderRequestParams(
                 loadable,
                 loadable.getSite().chanReader(),
@@ -396,7 +404,15 @@ public class ChanThreadLoader
                 this
         );
 
-        ChanReaderRequest readerRequest = new ChanReaderRequest(appConstants, requestParams);
+        ChanReaderRequest readerRequest = new ChanReaderRequest(
+                databaseManager,
+                filterEngine,
+                chanPostRepository,
+                appConstants,
+                archivesManager,
+                archivesRepository,
+                requestParams
+        );
 
         request = new ChanLoaderRequest(readerRequest);
         volleyRequestQueue.add(request.getVolleyRequest());
@@ -410,7 +426,8 @@ public class ChanThreadLoader
 
         Disposable disposable = Single.fromCallable(() -> onResponseInternal(response))
                 .subscribeOn(backgroundScheduler)
-                .subscribe(result -> { }, error -> {
+                .subscribe(result -> {
+                }, error -> {
                     Logger.e(TAG, "onResponse error", error);
 
                     notifyAboutError(new VolleyError(error));
