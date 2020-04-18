@@ -267,8 +267,8 @@ public class DatabaseHideManager {
             boolean filterSaved
     ) {
         return new Post.Builder().board(childPost.board)
-                .posterId(childPost.id)
-                .opId(childPost.opId)
+                .posterId(childPost.posterId)
+                .opId(childPost.opNo)
                 .id(childPost.no)
                 .op(childPost.isOP)
                 .replies(childPost.getReplies())

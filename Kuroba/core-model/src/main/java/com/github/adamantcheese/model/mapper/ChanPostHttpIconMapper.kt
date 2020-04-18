@@ -1,20 +1,20 @@
 package com.github.adamantcheese.model.mapper
 
-import com.github.adamantcheese.model.data.post.ChanPostHttpIconUnparsed
+import com.github.adamantcheese.model.data.post.ChanPostHttpIcon
 import com.github.adamantcheese.model.entity.ChanPostHttpIconEntity
 
 object ChanPostHttpIconMapper {
 
-    fun toEntity(ownerPostId: Long, chanPostHttpIconUnparsed: ChanPostHttpIconUnparsed): ChanPostHttpIconEntity {
+    fun toEntity(ownerPostId: Long, chanPostHttpIcon: ChanPostHttpIcon): ChanPostHttpIconEntity {
         return ChanPostHttpIconEntity(
-                iconUrl = chanPostHttpIconUnparsed.iconUrl,
+                iconUrl = chanPostHttpIcon.iconUrl,
                 ownerPostId = ownerPostId,
-                iconName = chanPostHttpIconUnparsed.iconName
+                iconName = chanPostHttpIcon.iconName
         )
     }
 
-    fun fromEntity(postIcon: ChanPostHttpIconEntity): ChanPostHttpIconUnparsed {
-        return ChanPostHttpIconUnparsed(
+    fun fromEntity(postIcon: ChanPostHttpIconEntity): ChanPostHttpIcon {
+        return ChanPostHttpIcon(
                 postIcon.iconUrl,
                 postIcon.iconName
         )

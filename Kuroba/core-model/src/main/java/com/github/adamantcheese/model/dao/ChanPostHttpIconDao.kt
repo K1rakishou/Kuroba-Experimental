@@ -25,7 +25,7 @@ abstract class ChanPostHttpIconDao {
         FROM ${ChanPostHttpIconEntity.TABLE_NAME}
         WHERE ${ChanPostHttpIconEntity.OWNER_POST_ID_COLUMN_NAME} IN (:ownerPostIdList)
     """)
-    abstract fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostHttpIconEntity>
+    abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostHttpIconEntity>
 
     suspend fun insertOrUpdate(chanPostHttpIconEntity: ChanPostHttpIconEntity) {
         val prev = selectByIconUrl(chanPostHttpIconEntity.iconUrl)

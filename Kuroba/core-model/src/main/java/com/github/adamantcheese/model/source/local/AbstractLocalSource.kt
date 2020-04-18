@@ -4,7 +4,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 
 abstract class AbstractLocalSource(protected val database: KurobaDatabase) {
 
-    protected fun ensureInTransaction() {
+    protected suspend fun ensureInTransaction() {
         require(database.inTransaction()) { "Must be executed in a transaction!" }
     }
 

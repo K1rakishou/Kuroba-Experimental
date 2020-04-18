@@ -57,10 +57,29 @@ sealed class ModularResult<V> {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    inline fun <T> marError(mapper: (error: Throwable) -> T): T {
+        return when (this) {
+            is Error -> mapper(error)
+            is Value -> value as T
+        }
+    }
+
     fun ignore() {
         // No-op. Just an indicator that we don't care about handling this result. This is just so
         // it's obvious that the original intention was to ignore handling the result not that it
         // was forgotten completely.
+    }
+
+    /**
+     * This is a handy function for cases when you want to only log the error and the return from
+     * the function. In case of a value we won't log anything and will just return the value.
+     * */
+    inline fun safeUnwrap(handler: (Throwable) -> Nothing): V {
+        return when (this) {
+            is Error -> handler(error)
+            is Value -> value
+        }
     }
 
     fun unwrap(): V {

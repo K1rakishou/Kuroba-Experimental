@@ -463,7 +463,9 @@ public class PostCell
             titleParts.add("\n");
         }
 
-        titleParts.add(post.tripcode);
+        if (post.tripcode != null) {
+            titleParts.add(post.tripcode);
+        }
 
         CharSequence time;
         if (ChanSettings.postFullDate.get()) {

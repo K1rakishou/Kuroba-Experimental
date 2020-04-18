@@ -74,6 +74,9 @@ class PostParseCallable
 
             @Override
             public boolean isInternal(long postNo) {
+                // FIXME(archives): I think it's a better idea to load all postNo for a thread at
+                //  once and then do the in-memory search rather than checking every singe post in
+                //  the DB
                 return chanPostRepository.containsPostBlocking(descriptor, postNo)
                         .unwrap();
             }

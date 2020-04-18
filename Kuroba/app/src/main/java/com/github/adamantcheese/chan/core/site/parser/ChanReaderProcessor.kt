@@ -26,7 +26,7 @@ class ChanReaderProcessor(
         val loadable: Loadable
 ) {
     private val toParse = ArrayList<Post.Builder>()
-    private val toUpdateInRepository = ArrayList<Post.Builder>()
+    private val toUpdateInRepository = ArrayList<Long>()
     private val postNoOrderedList = mutableListOf<Long>()
 
     var op: Post.Builder? = null
@@ -43,7 +43,7 @@ class ChanReaderProcessor(
     }
 
     fun addForUpdateInDatabase(postBuilder: Post.Builder) {
-        toUpdateInRepository.add(postBuilder)
+        toUpdateInRepository.add(postBuilder.id)
         addPostNoOrdered(postBuilder.id)
     }
 
@@ -55,7 +55,7 @@ class ChanReaderProcessor(
         return toParse
     }
 
-    fun getToUpdateInRepository(): List<Post.Builder> {
+    fun getToUpdateInRepository(): List<Long> {
         return toUpdateInRepository
     }
 

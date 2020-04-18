@@ -56,8 +56,8 @@ public class Post
      * Unix timestamp, in seconds.
      */
     public final long time;
-    public final String id;
-    public final long opId;
+    public final String posterId;
+    public final long opNo;
     public final String capcode;
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
@@ -139,8 +139,18 @@ public class Post
             httpIcons = null;
         }
 
-        id = builder.posterId;
-        opId = builder.opId;
+        posterId = builder.posterId;
+
+        if (builder.opId == 0) {
+            if (builder.op) {
+                opNo = builder.id;
+            } else {
+                throw new IllegalStateException("Bad post, opId == null and isOP == false");
+            }
+        } else {
+            opNo = builder.opId;
+        }
+
         capcode = builder.moderatorCapcode;
 
         postFilter = new PostFilter(
@@ -374,6 +384,7 @@ public class Post
         public int replies = -1;
         public int threadImagesCount = -1;
         public int uniqueIps = -1;
+        public int stickyCap = -1;
         public boolean sticky;
         public boolean closed;
         public boolean archived;
@@ -443,6 +454,11 @@ public class Post
             return this;
         }
 
+        public Builder stickyCap(int cap) {
+            this.stickyCap = cap;
+            return this;
+        }
+
         public Builder sticky(boolean sticky) {
             this.sticky = sticky;
             return this;
@@ -482,7 +498,7 @@ public class Post
             return this;
         }
 
-        public Builder tripcode(CharSequence tripcode) {
+        public Builder tripcode(@Nullable CharSequence tripcode) {
             this.tripcode = tripcode;
             return this;
         }

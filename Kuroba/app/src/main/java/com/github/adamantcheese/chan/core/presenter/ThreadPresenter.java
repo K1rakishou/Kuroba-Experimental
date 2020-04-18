@@ -894,7 +894,7 @@ public class ThreadPresenter
         }
 
         if (loadable.isThreadMode()) {
-            if (!TextUtils.isEmpty(post.id)) {
+            if (!TextUtils.isEmpty(post.posterId)) {
                 menu.add(new FloatingMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id));
             }
 
@@ -968,7 +968,7 @@ public class ThreadPresenter
                 threadPresenterCallback.openReportView(post);
                 break;
             case POST_OPTION_HIGHLIGHT_ID:
-                threadPresenterCallback.highlightPostId(post.id);
+                threadPresenterCallback.highlightPostId(post.posterId);
                 break;
             case POST_OPTION_HIGHLIGHT_TRIPCODE:
                 threadPresenterCallback.highlightPostTripcode(post.tripcode);
@@ -1261,12 +1261,12 @@ public class ThreadPresenter
 
         text.append("Posted: ").append(PostHelper.getLocalDate(post));
 
-        if (!TextUtils.isEmpty(post.id) && isBound() && chanLoader.getThread() != null) {
-            text.append("\nId: ").append(post.id);
+        if (!TextUtils.isEmpty(post.posterId) && isBound() && chanLoader.getThread() != null) {
+            text.append("\nId: ").append(post.posterId);
             int count = 0;
             try {
                 for (Post p : chanLoader.getThread().getPosts()) {
-                    if (p.id.equals(post.id)) count++;
+                    if (p.posterId.equals(post.posterId)) count++;
                 }
             } catch (Exception ignored) {
             }

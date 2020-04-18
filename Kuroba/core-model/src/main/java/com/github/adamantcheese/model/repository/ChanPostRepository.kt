@@ -6,7 +6,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.source.cache.MultiMapCache
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ class ChanPostRepository(
 ) : AbstractRepository(database, logger) {
     private val TAG = "$loggerTag ChanPostRepository"
     private val postCache =
-            MultiMapCache<ChanDescriptor, PostDescriptor, ChanPostUnparsed>(appConstants.maxPostsCountInPostsCache)
+            MultiMapCache<ChanDescriptor, PostDescriptor, ChanPost>(appConstants.maxPostsCountInPostsCache)
 
     fun getCachedValuesCount(): Int {
         return runBlocking { postCache.getCachedValuesCount() }
@@ -33,53 +33,53 @@ class ChanPostRepository(
      * show the user (otherwise show cached posts)
      * */
     fun insertOrUpdateManyBlocking(
-            unparsedPosts: MutableList<ChanPostUnparsed>,
+            posts: MutableList<ChanPost>,
             isCatalog: Boolean
     ): ModularResult<List<Long>> {
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 if (isCatalog) {
-                    return@withTransactionSafe insertOrUpdateCatalogOriginalPostsBlocking(unparsedPosts)
+                    return@withTransactionSafe insertOrUpdateCatalogOriginalPostsBlocking(posts)
                 } else {
-                    return@withTransactionSafe insertOrUpdateThreadPostsBlocking(unparsedPosts)
+                    return@withTransactionSafe insertOrUpdateThreadPostsBlocking(posts)
                 }
             }
         }
     }
 
     private suspend fun insertOrUpdateCatalogOriginalPostsBlocking(
-            unparsedPosts: MutableList<ChanPostUnparsed>
+            posts: MutableList<ChanPost>
     ): List<Long> {
-        if (unparsedPosts.isEmpty()) {
+        if (posts.isEmpty()) {
             return emptyList()
         }
 
-        require(unparsedPosts.all { post -> post.isOp }) { "Not all posts are original posts" }
-        localSource.insertManyOriginalPosts(unparsedPosts)
+        require(posts.all { post -> post.isOp }) { "Not all posts are original posts" }
+        localSource.insertManyOriginalPosts(posts)
 
-        if (unparsedPosts.isNotEmpty()) {
-            unparsedPosts.forEach { post ->
+        if (posts.isNotEmpty()) {
+            posts.forEach { post ->
                 postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
             }
         }
 
-        return unparsedPosts.map { it.postDescriptor.postNo }
+        return posts.map { it.postDescriptor.postNo }
     }
 
     private suspend fun insertOrUpdateThreadPostsBlocking(
-            unparsedPosts: MutableList<ChanPostUnparsed>
+            posts: MutableList<ChanPost>
     ): List<Long> {
-        val listCapacity = min(unparsedPosts.size / 2, 10)
-        var originalPost: ChanPostUnparsed? = null
-        val postsThatDifferWithCache = ArrayList<ChanPostUnparsed>(listCapacity)
+        val listCapacity = min(posts.size / 2, 10)
+        var originalPost: ChanPost? = null
+        val postsThatDifferWithCache = ArrayList<ChanPost>(listCapacity)
 
         // Figure out what posts differ from the cache that we want to update in the
         // database
-        unparsedPosts.forEach { chanPostUnparsed ->
+        posts.forEach { chanPost ->
             val differsFromCached = kotlin.run {
                 val fromCache = postCache.getFromCache(
-                        chanPostUnparsed.postDescriptor.descriptor,
-                        chanPostUnparsed.postDescriptor
+                        chanPost.postDescriptor.descriptor,
+                        chanPost.postDescriptor
                 )
 
                 if (fromCache == null) {
@@ -92,7 +92,7 @@ class ChanPostRepository(
                     return@run true
                 }
 
-                if (fromCache != chanPostUnparsed) {
+                if (fromCache != chanPost) {
                     // Cached post is not the same as the fresh post - update
                     return@run true
                 }
@@ -101,14 +101,14 @@ class ChanPostRepository(
             }
 
             if (differsFromCached) {
-                if (chanPostUnparsed.isOp) {
+                if (chanPost.isOp) {
                     if (originalPost != null) {
                         throw IllegalStateException("More than one OP found!")
                     }
 
-                    originalPost = chanPostUnparsed
+                    originalPost = chanPost
                 } else {
-                    postsThatDifferWithCache += chanPostUnparsed
+                    postsThatDifferWithCache += chanPost
                 }
             }
         }
@@ -147,7 +147,7 @@ class ChanPostRepository(
     fun getCatalogOriginalPostsBlocking(
             descriptor: ChanDescriptor.CatalogDescriptor,
             threadNoList: List<Long>
-    ): ModularResult<List<ChanPostUnparsed>> {
+    ): ModularResult<List<ChanPost>> {
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 val originalPostsFromCache = postCache.getAll(descriptor)
@@ -188,7 +188,7 @@ class ChanPostRepository(
     fun getThreadPostsBlocking(
             descriptor: ChanDescriptor.ThreadDescriptor,
             postNoList: List<Long>
-    ): ModularResult<List<ChanPostUnparsed>> {
+    ): ModularResult<List<ChanPost>> {
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 val postsFromCache = postCache.getAll(descriptor)
@@ -248,6 +248,33 @@ class ChanPostRepository(
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 return@withTransactionSafe localSource.containsPostBlocking(descriptor, postNo)
+            }
+        }
+    }
+
+    fun filterAlreadyCachedPostNo(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            archivePostsNoList: List<Long>
+    ): ModularResult<List<Long>> {
+        return runBlocking {
+            return@runBlocking withTransactionSafe {
+                val cachedInMemorySet = postCache.getAll(threadDescriptor)
+                        .map { post -> post.postDescriptor.postNo }.toSet()
+
+                val notInMemoryCached = archivePostsNoList.filter { archivePostNo ->
+                    archivePostNo !in cachedInMemorySet
+                }
+
+                if (notInMemoryCached.isEmpty()) {
+                    return@withTransactionSafe emptyList<Long>()
+                }
+
+                val cachedInDatabase = localSource.getThreadPostNoList(threadDescriptor)
+                        .toSet()
+
+                return@withTransactionSafe notInMemoryCached.filter { archivePostNo ->
+                    archivePostNo !in cachedInDatabase
+                }
             }
         }
     }

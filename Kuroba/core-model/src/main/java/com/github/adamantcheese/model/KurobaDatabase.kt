@@ -16,6 +16,7 @@ import com.github.adamantcheese.model.entity.*
             ChanPostEntity::class,
             ChanPostImageEntity::class,
             ChanPostHttpIconEntity::class,
+            ChanTextSpanEntity::class,
             MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class,
             InlinedFileInfoEntity::class
@@ -29,7 +30,8 @@ import com.github.adamantcheese.model.entity.*
     VideoServiceTypeConverter::class,
     PeriodTypeConverter::class,
     HttpUrlTypeConverter::class,
-    ChanPostImageTypeTypeConverter::class
+    ChanPostImageTypeTypeConverter::class,
+    TextTypeTypeConverter::class
 ])
 abstract class KurobaDatabase : RoomDatabase() {
     abstract fun mediaServiceLinkExtraContentDao(): MediaServiceLinkExtraContentDao
@@ -40,6 +42,7 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun chanPostDao(): ChanPostDao
     abstract fun chanPostImageDao(): ChanPostImageDao
     abstract fun chanPostHttpIconDao(): ChanPostHttpIconDao
+    abstract fun chanTextSpanDao(): ChanTextSpanDao
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"

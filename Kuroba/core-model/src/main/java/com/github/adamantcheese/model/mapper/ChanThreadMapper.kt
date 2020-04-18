@@ -2,26 +2,27 @@ package com.github.adamantcheese.model.mapper
 
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 import com.github.adamantcheese.model.entity.ChanPostEntity
+import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.google.gson.Gson
 
 object ChanThreadMapper {
 
-    fun toEntity(threadNo: Long, ownerBoardId: Long, chanPostUnparsed: ChanPostUnparsed): ChanThreadEntity {
+    fun toEntity(threadNo: Long, ownerBoardId: Long, chanPost: ChanPost): ChanThreadEntity {
         return ChanThreadEntity(
                 threadId = 0L,
                 threadNo = threadNo,
                 ownerBoardId = ownerBoardId,
-                lastModified = chanPostUnparsed.lastModified,
-                replies = chanPostUnparsed.replies,
-                threadImagesCount = chanPostUnparsed.threadImagesCount,
-                uniqueIps = chanPostUnparsed.uniqueIps,
-                sticky = chanPostUnparsed.sticky,
-                closed = chanPostUnparsed.closed,
-                archived = chanPostUnparsed.archived
+                lastModified = chanPost.lastModified,
+                replies = chanPost.replies,
+                threadImagesCount = chanPost.threadImagesCount,
+                uniqueIps = chanPost.uniqueIps,
+                sticky = chanPost.sticky,
+                closed = chanPost.closed,
+                archived = chanPost.archived
         )
     }
 
@@ -29,24 +30,28 @@ object ChanThreadMapper {
             gson: Gson,
             chanDescriptor: ChanDescriptor,
             chanThreadEntity: ChanThreadEntity,
-            chanPostEntity: ChanPostEntity
-    ): ChanPostUnparsed {
-        val postComment = gson.fromJson(
-                chanPostEntity.postComment,
-                SerializableSpannableString::class.java
-        )
+            chanPostEntity: ChanPostEntity,
+            chanTextSpanEntityList: List<ChanTextSpanEntity>?
+    ): ChanPost {
+        val postComment = TextSpanMapper.fromEntity(
+                gson,
+                chanTextSpanEntityList,
+                ChanTextSpanEntity.TextType.PostComment
+        ) ?: SerializableSpannableString()
 
-        val subject = gson.fromJson(
-                chanPostEntity.subject,
-                SerializableSpannableString::class.java
-        )
+        val subject = TextSpanMapper.fromEntity(
+                gson,
+                chanTextSpanEntityList,
+                ChanTextSpanEntity.TextType.Subject
+        ) ?: SerializableSpannableString()
 
-        val tripcode = gson.fromJson(
-                chanPostEntity.tripcode,
-                SerializableSpannableString::class.java
-        )
+        val tripcode = TextSpanMapper.fromEntity(
+                gson,
+                chanTextSpanEntityList,
+                ChanTextSpanEntity.TextType.Tripcode
+        ) ?: SerializableSpannableString()
 
-        return ChanPostUnparsed(
+        return ChanPost(
                 databasePostId = chanPostEntity.postId,
                 postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
                 postImages = mutableListOf(),

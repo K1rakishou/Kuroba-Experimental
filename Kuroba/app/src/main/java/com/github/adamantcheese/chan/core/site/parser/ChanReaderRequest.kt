@@ -21,8 +21,8 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.mapper.ChanPostUnparsedMapper
-import com.github.adamantcheese.chan.core.mapper.ChanPostUnparsedMapper.fromPostBuilder
+import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
+import com.github.adamantcheese.chan.core.mapper.ChanPostMapper.fromPost
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.model.orm.Loadable
@@ -33,9 +33,11 @@ import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
-import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.google.gson.Gson
@@ -62,13 +64,14 @@ class ChanReaderRequest(
         private val appConstants: AppConstants,
         private val archivesManager: ArchivesManager,
         private val archivesRepository: ArchivesRepository,
-        request: ChanLoaderRequestParams
+        private val request: ChanLoaderRequestParams
 ) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
     val loadable = request.loadable.clone()
 
-    private val cachedPostsMap: MutableMap<Long, Post>
     private val reader: ChanReader
     private val databaseSavedReplyManager: DatabaseSavedReplyManager
+
+    private val cachedPostsMap: MutableMap<Long, Post>
     private val filters: MutableList<Filter>
 
     override fun getPriority(): Priority {
@@ -102,131 +105,182 @@ class ChanReaderRequest(
             else -> throw IllegalArgumentException("Unknown mode")
         }
 
-        val isCatalog = when {
-            loadable.isThreadMode -> false
-            loadable.isCatalogMode -> true
-            else -> throw IllegalArgumentException("Unknown mode")
+        val (archivePosts, archiveFetchDuration) = measureTimedValue {
+            return@measureTimedValue getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
+                    .peekError { error -> Logger.e(TAG, "Failed get posts from archive", error) }
+                    .marError { emptyList<Post.Builder>() }
         }
 
-        if (!isCatalog) {
-            // TODO(archives):
+        val chanDescriptor = getDescriptor(chanReaderProcessor.loadable)
 
-            val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
-            val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor)
-
-            if (archiveDescriptor != null) {
-                val threadArchiveRequestLink = archivesManager.getRequestLinkForThread(
-                        threadDescriptor,
-                        archiveDescriptor
-                )
-
-                if (threadArchiveRequestLink != null) {
-                    val supportsFiles = archivesManager.doesArchiveSupportsFilesForBoard(
-                            archiveDescriptor,
-                            loadable.boardDescriptor
-                    )
-
-                    val archivePosts = archivesRepository.fetchThreadFromNetworkBlocking(
-                            threadArchiveRequestLink,
-                            threadDescriptor.opNo,
-                            supportsFiles
-                    ).unwrap()
-                }
-            }
+        val (parsedPosts, parsingDuration) = measureTimedValue {
+            return@measureTimedValue parseNewPostsPosts(
+                    chanReaderProcessor.getToParse() + archivePosts,
+                    chanDescriptor
+            )
         }
 
         val (storedPostNoList, storeDuration) = measureTimedValue {
+            // TODO(archives): delete posts from the cache once it exceeds stickyCap
+            //  (in case it's neither null nor -1)
+            var stickyCap = chanReaderProcessor.op?.stickyCap
+            if (stickyCap != null && stickyCap < 0) {
+                stickyCap = null
+            }
+
             storeNewPostsInRepository(
-                    chanReaderProcessor.getToParse(),
-                    isCatalog
+                    parsedPosts,
+                    loadable.isCatalogMode
             )
         }
 
-        val (updatedPostNoList, updateDuration) = measureTimedValue {
-            updateOldPostsInRepository(
-                    chanReaderProcessor.getToUpdateInRepository(),
-                    isCatalog
-            )
-        }
-
-        val updatedPosts = hashSetOf<Long>().apply {
-            addAll(storedPostNoList)
-            addAll(updatedPostNoList)
-        }
-
-        val (reloadedPosts, reloadingDuration, parsingDuration) = reloadPostsFromRepository(
-                updatedPosts,
+        val (reloadedPosts, reloadingDuration) = reloadPostsFromRepository(
                 chanReaderProcessor,
                 getDescriptor(chanReaderProcessor.loadable)
         )
 
         val cachedPostsCount = chanPostRepository.getCachedValuesCount()
 
-        Logger.d(TAG, "store new posts took $storeDuration (stored ${storedPostNoList.size} posts), " +
-                "update posts took $updateDuration (updated ${updatedPostNoList.size} posts), " +
-                "reload posts took $reloadingDuration, parse posts took = $parsingDuration " +
-                "(reloaded ${reloadedPosts.size} posts), " +
-                "cachedPostsCount = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache})")
+        Logger.d(TAG, "ChanReaderRequest.readJson() stats:\n" +
+                "Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).\n" +
+                "Reload posts took $reloadingDuration, parse posts took = $parsingDuration (reloaded ${reloadedPosts.size} posts).\n" +
+                "Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).\n" +
+                "Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
 
         val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
         return processPosts(op, reloadedPosts)
     }
 
+    private fun getPostsFromArchiveIfNecessary(
+            freshPostsFromServer: List<Post.Builder>
+    ): ModularResult<List<Post.Builder>> {
+        return safeRun<List<Post.Builder>> {
+            if (loadable.isCatalogMode) {
+                return@safeRun emptyList()
+            }
+
+            if (request.isPinWatcherLoader) {
+                // We don't want to fetch deleted posts from archives for PinWatchers to avoid spamming
+                // the archives's servers with our requests every n-seconds. Instead, we load deleted
+                // posts only when the user open a thread normally (or by clicking a Pin).
+                return@safeRun emptyList()
+            }
+
+            val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+            val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor)
+
+            if (archiveDescriptor == null) {
+                // We probably don't have archives for this site or all archives are dead
+                return@safeRun emptyList()
+            }
+
+            // TODO(archives): check whether it's okay to fetch posts:
+            //  1. If it's an automatic thread update, then only fetch new posts once in 1 hour.
+            //  2. If the user manually clicks the "fetch posts from archives" button then only fetch
+            //      the posts once in like 5-10 minutes.
+
+            val threadArchiveRequestLink = archivesManager.getRequestLinkForThread(
+                    threadDescriptor,
+                    archiveDescriptor
+            )
+
+            if (threadArchiveRequestLink == null) {
+                // We probably don't have archives for this site or all archives are dead
+                return@safeRun emptyList()
+            }
+
+            val supportsFiles = archivesManager.doesArchiveSupportsFilesForBoard(
+                    archiveDescriptor,
+                    loadable.boardDescriptor
+            )
+
+            val archivePosts = archivesRepository.fetchThreadFromNetworkBlocking(
+                    threadArchiveRequestLink,
+                    threadDescriptor.opNo,
+                    supportsFiles
+            ).unwrap()
+
+            if (archivePosts.isEmpty()) {
+                return@safeRun emptyList()
+            }
+
+            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
+            val archivePostsNoList = archivePosts.map { archivePost -> archivePost.postNo }
+
+            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
+                    threadDescriptor,
+                    archivePostsNoList
+            ).unwrap().toSet()
+
+            val archivePostsThatWereDeleted = archivePosts.filter { archivePost ->
+                return@filter archivePost.postNo !in freshPostNoSet
+                        && archivePost.postNo !in notCachedArchivePostNoSet
+            }
+
+            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched ${archivePosts.size} " +
+                    "posts in total and ${archivePostsThatWereDeleted.size} deleted posts")
+
+            // TODO(archives): filter out posts that we already have in the DB and in
+            //  freshPostsFromServer, store archive posts, and then return mapped to PostBuilder posts
+
+            return@safeRun emptyList()
+        }
+    }
+
     @OptIn(ExperimentalTime::class)
     private fun updateOldPostsInRepository(
-            toUpdate: List<Post.Builder>,
+            toUpdate: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
         if (toUpdate.isEmpty()) {
             return emptyList()
         }
 
-        val unparsedPosts: MutableList<ChanPostUnparsed> = ArrayList(toUpdate.size)
-        for (postBuilder in toUpdate) {
+        val posts: MutableList<ChanPost> = ArrayList(toUpdate.size)
+        for (post in toUpdate) {
             val postDescriptor = create(
-                    postBuilder.board.site.name(),
-                    postBuilder.board.code,
-                    postBuilder.getOpId(),
-                    postBuilder.id
+                    post.board.site.name(),
+                    post.board.code,
+                    post.opNo,
+                    post.no
             )
 
-            unparsedPosts.add(fromPostBuilder(gson, postDescriptor, postBuilder))
+            posts.add(fromPost(gson, postDescriptor, post))
         }
 
-        return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
+        return chanPostRepository.insertOrUpdateManyBlocking(posts, isCatalog).unwrap()
     }
 
     @OptIn(ExperimentalTime::class)
     private fun storeNewPostsInRepository(
-            toParse: List<Post.Builder>,
+            toParse: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
         if (toParse.isEmpty()) {
             return emptyList()
         }
 
-        val unparsedPosts: MutableList<ChanPostUnparsed> = ArrayList(toParse.size)
-        for (postBuilder in toParse) {
+        val posts: MutableList<ChanPost> = ArrayList(toParse.size)
+        for (post in toParse) {
             val postDescriptor = create(
-                    postBuilder.board.site.name(),
-                    postBuilder.board.code,
-                    postBuilder.getOpId(),
-                    postBuilder.id
+                    post.board.site.name(),
+                    post.board.code,
+                    post.opNo,
+                    post.no
             )
 
-            unparsedPosts.add(fromPostBuilder(gson, postDescriptor, postBuilder))
+            posts.add(fromPost(gson, postDescriptor, post))
         }
 
-        return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
+        return chanPostRepository.insertOrUpdateManyBlocking(posts, isCatalog).unwrap()
     }
 
     @OptIn(ExperimentalTime::class)
     private fun reloadPostsFromRepository(
-            updatedPosts: Set<Long>,
             chanReaderProcessor: ChanReaderProcessor,
             chanDescriptor: ChanDescriptor
-    ): Triple<List<Post>, Duration, Duration> {
-        val (toParse, reloadingDuration) = measureTimedValue {
+    ): Pair<List<Post>, Duration> {
+        val (posts, reloadingDuration) = measureTimedValue {
             return@measureTimedValue when (chanDescriptor) {
                 is ChanDescriptor.ThreadDescriptor -> {
                     chanPostRepository.getThreadPostsBlocking(
@@ -240,48 +294,25 @@ class ChanReaderRequest(
                             chanReaderProcessor.getPostNoListOrdered()
                     ).unwrap()
                 }
-            }.map { unparsedPost ->
-                return@map ChanPostUnparsedMapper.toPostBuilder(
+            }.map { post ->
+                return@map ChanPostMapper.toPost(
                         gson,
                         loadable.board,
-                        unparsedPost
+                        post
                 )
             }
         }
 
-        val (parsedPosts, parsingDuration) = measureTimedValue {
-            return@measureTimedValue parsePosts(updatedPosts, toParse, chanDescriptor)
-        }
-
-        if (parsedPosts.isEmpty()) {
-            return Triple(emptyList(), reloadingDuration, parsingDuration)
-        }
-
-        val sortedPosts = chanReaderProcessor.getPostsSortedByIndexes(parsedPosts)
-        return Triple(sortedPosts, reloadingDuration, parsingDuration)
+        val sortedPosts = chanReaderProcessor.getPostsSortedByIndexes(posts)
+        return Pair(sortedPosts, reloadingDuration)
     }
 
-    private fun parsePosts(
-            updatedPosts: Set<Long>,
-            toParse: List<Post.Builder>,
+    private fun parseNewPostsPosts(
+            postBuildersToParse: List<Post.Builder>,
             chanDescriptor: ChanDescriptor
     ): List<Post> {
-        val cachedPosts = toParse.mapNotNull { postBuilder ->
-            val fromCache = cachedPostsMap[postBuilder.id]
-                    ?: return@mapNotNull null
-
-            if (updatedPosts.contains(postBuilder.id)) {
-                // Post has new info since we last cached it so we need to parse it again
-                return@mapNotNull null
-            }
-
-            // Post didn't change since we last cached it and we have it in the cache - we don't
-            // need to parse it again
-            return@mapNotNull fromCache
-        }
-
-        val parsedPosts = toParse
-                .filter { postBuilder -> !cachedPostsMap.containsKey(postBuilder.id) }
+        return postBuildersToParse
+                .filter { postToParse -> !cachedPostsMap.containsKey(postToParse.id) }
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,
@@ -296,8 +327,6 @@ class ChanReaderRequest(
                 .chunked(Int.MAX_VALUE)
                 .map { postParseCallableList -> EXECUTOR.invokeAll(postParseCallableList) }
                 .flatMap { futureList -> futureList.mapNotNull { future -> future.get() } }
-
-        return cachedPosts + parsedPosts
     }
 
     private fun processPosts(op: Post.Builder, allPosts: List<Post>): ChanLoaderResponse {

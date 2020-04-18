@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e287351262637708077345ea4af064fd",
+    "identityHash": "f83be7ace0848f3429ef26071208b033",
     "entities": [
       {
         "tableName": "chan_board",
@@ -176,7 +176,7 @@
       },
       {
         "tableName": "chan_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `timestamp_seconds` INTEGER NOT NULL, `name` TEXT, `post_comment` TEXT, `subject` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `is_op` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `timestamp_seconds` INTEGER NOT NULL, `name` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `is_op` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postId",
@@ -205,24 +205,6 @@
           {
             "fieldPath": "name",
             "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "postComment",
-            "columnName": "post_comment",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "subject",
-            "columnName": "subject",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "tripcode",
-            "columnName": "tripcode",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -486,6 +468,80 @@
         ]
       },
       {
+        "tableName": "chan_text_span",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`text_span_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_post_id` INTEGER NOT NULL, `original_text` TEXT NOT NULL, `span_info_json` TEXT NOT NULL, `text_type` INTEGER NOT NULL, FOREIGN KEY(`owner_post_id`) REFERENCES `chan_post`(`post_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "textSpanId",
+            "columnName": "text_span_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerPostId",
+            "columnName": "owner_post_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalText",
+            "columnName": "original_text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spanInfoJson",
+            "columnName": "span_info_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "textType",
+            "columnName": "text_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "text_span_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "chan_text_span_owner_post_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_post_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_text_span_owner_post_id_idx` ON `${TABLE_NAME}` (`owner_post_id`)"
+          },
+          {
+            "name": "chan_text_span_owner_post_id_text_type_idx",
+            "unique": true,
+            "columnNames": [
+              "owner_post_id",
+              "text_type"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_text_span_owner_post_id_text_type_idx` ON `${TABLE_NAME}` (`owner_post_id`, `text_type`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chan_post",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_post_id"
+            ],
+            "referencedColumns": [
+              "post_id"
+            ]
+          }
+        ]
+      },
+      {
         "tableName": "media_service_link_extra_content_entity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_id` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_id`))",
         "fields": [
@@ -644,7 +700,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e287351262637708077345ea4af064fd')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f83be7ace0848f3429ef26071208b033')"
     ]
   }
 }

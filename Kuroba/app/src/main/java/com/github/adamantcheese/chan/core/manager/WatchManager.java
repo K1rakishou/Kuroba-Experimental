@@ -1165,7 +1165,10 @@ public class WatchManager
             this.pin = pin;
 
             Logger.d(TAG, "created for " + pin.loadable.toString());
+
             chanLoader = chanLoaderManager.obtain(pin.loadable, this);
+            chanLoader.setPinWatcherLoader(true);
+            
             pageRequestManager.addListener(this);
         }
 

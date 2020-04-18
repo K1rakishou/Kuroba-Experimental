@@ -74,7 +74,7 @@ public class PostHide {
         PostHide postHide = new PostHide();
         postHide.board = post.board.code;
         postHide.no = (int) post.no;
-        postHide.threadNo = (int) post.opId;
+        postHide.threadNo = (int) post.opNo;
         postHide.site = post.board.siteId;
         postHide.wholeThread = wholeThread;
         postHide.hide = hide;

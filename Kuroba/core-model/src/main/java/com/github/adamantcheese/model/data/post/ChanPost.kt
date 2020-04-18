@@ -3,11 +3,11 @@ package com.github.adamantcheese.model.data.post
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 
-class ChanPostUnparsed(
+class ChanPost(
         val databasePostId: Long,
         val postDescriptor: PostDescriptor,
-        val postImages: MutableList<ChanPostImageUnparsed> = mutableListOf(),
-        val postIcons: MutableList<ChanPostHttpIconUnparsed> = mutableListOf(),
+        val postImages: MutableList<ChanPostImage> = mutableListOf(),
+        val postIcons: MutableList<ChanPostHttpIcon> = mutableListOf(),
         var replies: Int = -1,
         var threadImagesCount: Int = -1,
         var uniqueIps: Int = -1,
@@ -28,7 +28,7 @@ class ChanPostUnparsed(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ChanPostUnparsed) return false
+        if (other !is ChanPost) return false
 
         if (databasePostId != other.databasePostId) return false
         if (postDescriptor != other.postDescriptor) return false

@@ -128,6 +128,12 @@ public class ChanThreadLoader
     private long lastLoadTime;
 
     /**
+     * Indicates that this ChanThreadLoader belongs to a Pin. We use this info for archives posts
+     * fetching (we don't load posts from archives for pins)
+     * */
+    private boolean isPinWatcherLoader = false;
+
+    /**
      * <b>Do not call this constructor yourself, obtain ChanLoaders through {@link ChanLoaderManager}</b>
      * Also, do not use feather().instance(WatchManager.class) here because it will create a cyclic
      * dependency instantiation
@@ -137,6 +143,10 @@ public class ChanThreadLoader
         this.watchManager = watchManager;
 
         inject(this);
+    }
+
+    public void setPinWatcherLoader(boolean pinWatcherLoader) {
+        isPinWatcherLoader = pinWatcherLoader;
     }
 
     /**
@@ -163,14 +173,24 @@ public class ChanThreadLoader
 
         if (listeners.isEmpty()) {
             clearTimer();
+
             if (request != null) {
                 request.getVolleyRequest().cancel();
                 request = null;
             }
+
+            // Since chan thread loaders are cached in ChanThreadLoaderManager, instead of being
+            // destroyed, and thus can be reused, we need to reset them before they are put into
+            // cache.
+            resetLoader();
             return true;
         } else {
             return false;
         }
+    }
+
+    private void resetLoader() {
+        isPinWatcherLoader = false;
     }
 
     @Nullable
@@ -400,6 +420,7 @@ public class ChanThreadLoader
         }
 
         ChanLoaderRequestParams requestParams = new ChanLoaderRequestParams(
+                isPinWatcherLoader,
                 loadable,
                 loadable.getSite().chanReader(),
                 cached,

@@ -1,32 +1,32 @@
 package com.github.adamantcheese.model.mapper
 
-import com.github.adamantcheese.model.data.post.ChanPostImageUnparsed
+import com.github.adamantcheese.model.data.post.ChanPostImage
 import com.github.adamantcheese.model.entity.ChanPostImageEntity
 
 object ChanPostImageMapper {
 
-    fun toEntity(ownerPostId: Long, chanPostImageUnparsed: ChanPostImageUnparsed): ChanPostImageEntity {
+    fun toEntity(ownerPostId: Long, chanPostImage: ChanPostImage): ChanPostImageEntity {
         return ChanPostImageEntity(
                 postImageId = 0L,
                 ownerPostId = ownerPostId,
-                serverFilename = chanPostImageUnparsed.serverFilename,
-                thumbnailUrl = chanPostImageUnparsed.thumbnailUrl,
-                spoilerThumbnailUrl = chanPostImageUnparsed.spoilerThumbnailUrl,
-                imageUrl = chanPostImageUnparsed.imageUrl,
-                filename = chanPostImageUnparsed.filename,
-                extension = chanPostImageUnparsed.extension,
-                imageWidth = chanPostImageUnparsed.imageWidth,
-                imageHeight = chanPostImageUnparsed.imageHeight,
-                spoiler = chanPostImageUnparsed.spoiler,
-                isInlined = chanPostImageUnparsed.isInlined,
-                fileSize = chanPostImageUnparsed.size,
-                fileHash = chanPostImageUnparsed.fileHash,
-                type = chanPostImageUnparsed.type
+                serverFilename = chanPostImage.serverFilename,
+                thumbnailUrl = chanPostImage.thumbnailUrl,
+                spoilerThumbnailUrl = chanPostImage.spoilerThumbnailUrl,
+                imageUrl = chanPostImage.imageUrl,
+                filename = chanPostImage.filename,
+                extension = chanPostImage.extension,
+                imageWidth = chanPostImage.imageWidth,
+                imageHeight = chanPostImage.imageHeight,
+                spoiler = chanPostImage.spoiler,
+                isInlined = chanPostImage.isInlined,
+                fileSize = chanPostImage.size,
+                fileHash = chanPostImage.fileHash,
+                type = chanPostImage.type
         )
     }
 
-    fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImageUnparsed {
-        return ChanPostImageUnparsed(
+    fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImage {
+        return ChanPostImage(
                 serverFilename = chanPostImageEntity.serverFilename,
                 thumbnailUrl = chanPostImageEntity.thumbnailUrl,
                 spoilerThumbnailUrl = chanPostImageEntity.spoilerThumbnailUrl,

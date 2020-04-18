@@ -31,7 +31,11 @@ abstract class ChanThreadDao {
         return insert(ChanThreadEntity(0L, threadNo, ownerBoardId))
     }
 
-    suspend fun insertOrUpdate(ownerBoardId: Long, threadNo: Long, chanThreadEntity: ChanThreadEntity): Long {
+    suspend fun insertOrUpdate(
+            ownerBoardId: Long,
+            threadNo: Long,
+            chanThreadEntity: ChanThreadEntity
+    ): Long {
         val prev = select(ownerBoardId, threadNo)
         if (prev != null) {
             chanThreadEntity.threadId = prev.threadId
@@ -50,6 +54,9 @@ abstract class ChanThreadDao {
         AND
             ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNoList)
     """)
-    abstract suspend fun selectManyByThreadNoList(ownerBoardId: Long, threadNoList: List<Long>): List<ChanThreadEntity>
+    abstract suspend fun selectManyByThreadNoList(
+            ownerBoardId: Long,
+            threadNoList: List<Long>
+    ): List<ChanThreadEntity>
 
 }

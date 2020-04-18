@@ -140,9 +140,10 @@ public class PostAdapter
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
                 Post post = displayList.get(getPostPosition(position));
-                boolean highlight =
-                        post == highlightedPost || post.id.equals(highlightedPostId) || post.no == highlightedPostNo
-                                || post.tripcode.equals(highlightedPostTripcode);
+                boolean highlight = post == highlightedPost
+                                || post.posterId.equals(highlightedPostId)
+                                || post.no == highlightedPostNo
+                                || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
                 ((PostCellInterface) postViewHolder.itemView).setPost(
                         loadable,
                         post,

@@ -114,6 +114,10 @@ public class FutabaChanReader
         // 4chan pass leaf
         int since4pass = 0;
 
+        // A sticky thread may as well be a rolling sticky thread. The difference is that in rolling
+        // sticky thread old posts will be deleted right away once they exceed the "sticky_cap" value.
+        int stickyCap = -1;
+
         reader.beginObject();
         while (reader.hasNext()) {
             String key = reader.nextName();
@@ -223,6 +227,9 @@ public class FutabaChanReader
                 case "md5":
                     fileHash = reader.nextString();
                     break;
+                case "sticky_cap":
+                    stickyCap = reader.nextInt();
+                    break;
                 default:
                     // Unknown/ignored key
                     reader.skipValue();
@@ -263,6 +270,11 @@ public class FutabaChanReader
             op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);
+
+            if (builder.sticky) {
+                op.stickyCap(stickyCap);
+            }
+
             chanReaderProcessor.setOp(op);
         }
 

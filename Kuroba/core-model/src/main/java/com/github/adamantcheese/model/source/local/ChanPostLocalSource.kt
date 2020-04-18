@@ -4,12 +4,10 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.post.ChanPost
+import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
-import com.github.adamantcheese.model.mapper.ChanPostHttpIconMapper
-import com.github.adamantcheese.model.mapper.ChanPostImageMapper
-import com.github.adamantcheese.model.mapper.ChanPostMapper
-import com.github.adamantcheese.model.mapper.ChanThreadMapper
+import com.github.adamantcheese.model.mapper.*
 import com.google.gson.Gson
 
 class ChanPostLocalSource(
@@ -24,104 +22,130 @@ class ChanPostLocalSource(
     private val chanPostDao = database.chanPostDao()
     private val chanPostImageDao = database.chanPostImageDao()
     private val chanPostHttpIconDao = database.chanPostHttpIconDao()
+    private val chanTextSpanDao = database.chanTextSpanDao()
 
-    suspend fun insertOriginalPost(chanPostUnparsed: ChanPostUnparsed): Long {
+    suspend fun insertOriginalPost(chanPost: ChanPost): Long {
         ensureInTransaction()
 
-        val chanBoardEntity = chanBoardDao.insert(
-                chanPostUnparsed.postDescriptor.descriptor.siteName(),
-                chanPostUnparsed.postDescriptor.descriptor.boardCode()
-        )
-
-        val threadNo = chanPostUnparsed.postDescriptor.getThreadNo()
-
-        return chanThreadDao.insertOrUpdate(
-                chanBoardEntity.boardId,
-                threadNo,
-                ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPostUnparsed)
-        )
+        return insertManyOriginalPosts(listOf(chanPost)).first()
     }
 
-    suspend fun insertManyOriginalPosts(chanOriginalPostUnparsedList: List<ChanPostUnparsed>) {
+    suspend fun insertManyOriginalPosts(chanOriginalPostList: List<ChanPost>): List<Long> {
         ensureInTransaction()
 
-        if (chanOriginalPostUnparsedList.isEmpty()) {
-            return
+        if (chanOriginalPostList.isEmpty()) {
+            return emptyList()
         }
 
-        val first = chanOriginalPostUnparsedList.first()
+        val first = chanOriginalPostList.first()
 
         val chanBoardEntity = chanBoardDao.insert(
                 first.postDescriptor.descriptor.siteName(),
                 first.postDescriptor.descriptor.boardCode()
         )
 
-        chanOriginalPostUnparsedList.forEach { chanPostUnparsed ->
-            val threadNo = chanPostUnparsed.postDescriptor.getThreadNo()
+        // TODO(archives): BATCHING!!!!!!! Too many separate insert queries!
+        return chanOriginalPostList.map { chanPost ->
+            val threadNo = chanPost.postDescriptor.getThreadNo()
 
             val chanThreadId = chanThreadDao.insertOrUpdate(
                     chanBoardEntity.boardId,
                     threadNo,
-                    ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPostUnparsed)
+                    ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
             )
 
-            val chanPostEntityId = chanPostDao.insertOrUpdate(
-                    chanThreadId,
-                    chanPostUnparsed.postDescriptor.postNo,
-                    ChanPostMapper.toEntity(gson, chanThreadId, chanPostUnparsed)
-            )
-
-            chanPostUnparsed.postImages.forEach { postImage ->
-                chanPostImageDao.insertOrUpdate(
-                        ChanPostImageMapper.toEntity(chanPostEntityId, postImage)
-                )
-            }
-
-            chanPostUnparsed.postIcons.forEach { postIcon ->
-                chanPostHttpIconDao.insertOrUpdate(
-                        ChanPostHttpIconMapper.toEntity(chanPostEntityId, postIcon)
-                )
-            }
+            return@map insertPostFullyInternal(chanThreadId, chanPost)
         }
     }
 
-    suspend fun insertPosts(chanThreadEntityId: Long, chanPostUnparsedList: List<ChanPostUnparsed>) {
+    suspend fun insertPosts(chanThreadId: Long, chanPostList: List<ChanPost>) {
         ensureInTransaction()
 
-        chanPostUnparsedList.forEach { chanPostUnparsed ->
-            val chanPostEntityId = chanPostDao.insertOrUpdate(
-                    chanThreadEntityId,
-                    chanPostUnparsed.postDescriptor.postNo,
-                    ChanPostMapper.toEntity(gson, chanThreadEntityId, chanPostUnparsed)
+        // TODO(archives): BATCHING!!!!!!! Too many separate insert queries!
+        chanPostList.forEach { chanPost ->
+            insertPostFullyInternal(chanThreadId, chanPost)
+        }
+    }
+
+    private suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
+        ensureInTransaction()
+
+        val chanPostEntityId = chanPostDao.insertOrUpdate(
+                chanThreadId,
+                chanPost.postDescriptor.postNo,
+                ChanPostMapper.toEntity(chanThreadId, chanPost)
+        )
+
+        insertPostSpannables(chanPostEntityId, chanPost)
+
+        chanPost.postImages.forEach { postImage ->
+            chanPostImageDao.insertOrUpdate(
+                    ChanPostImageMapper.toEntity(chanPostEntityId, postImage)
             )
+        }
 
-            chanPostUnparsed.postImages.forEach { postImage ->
-                chanPostImageDao.insertOrUpdate(
-                        ChanPostImageMapper.toEntity(chanPostEntityId, postImage)
-                )
-            }
+        chanPost.postIcons.forEach { postIcon ->
+            chanPostHttpIconDao.insertOrUpdate(
+                    ChanPostHttpIconMapper.toEntity(chanPostEntityId, postIcon)
+            )
+        }
 
-            chanPostUnparsed.postIcons.forEach { postIcon ->
-                chanPostHttpIconDao.insertOrUpdate(
-                        ChanPostHttpIconMapper.toEntity(chanPostEntityId, postIcon)
-                )
-            }
+        return chanPostEntityId
+    }
+
+    private suspend fun insertPostSpannables(chanPostEntityId: Long, chanPost: ChanPost) {
+        ensureInTransaction()
+        require(chanPostEntityId > 0) { "Bad chanPostEntityId: ${chanPostEntityId}" }
+
+        val postCommentWithSpansJson = TextSpanMapper.toEntity(
+                gson,
+                chanPostEntityId,
+                chanPost.postComment,
+                ChanTextSpanEntity.TextType.PostComment
+        )
+
+        if (postCommentWithSpansJson != null) {
+            chanTextSpanDao.insertOrUpdate(chanPostEntityId, postCommentWithSpansJson)
+        }
+
+        val subjectWithSpansJson = TextSpanMapper.toEntity(
+                gson,
+                chanPostEntityId,
+                chanPost.subject,
+                ChanTextSpanEntity.TextType.Subject
+        )
+
+        if (subjectWithSpansJson != null) {
+            chanTextSpanDao.insertOrUpdate(chanPostEntityId, subjectWithSpansJson)
+        }
+
+        val tripcodeWithSpansJson = TextSpanMapper.toEntity(
+                gson,
+                chanPostEntityId,
+                chanPost.tripcode,
+                ChanTextSpanEntity.TextType.Tripcode
+        )
+
+        if (tripcodeWithSpansJson != null) {
+            chanTextSpanDao.insertOrUpdate(chanPostEntityId, tripcodeWithSpansJson)
         }
     }
 
     suspend fun getCatalogOriginalPosts(
             descriptor: ChanDescriptor.CatalogDescriptor,
             originalPostNoList: List<Long>
-    ): List<ChanPostUnparsed> {
+    ): List<ChanPost> {
         ensureInTransaction()
 
         if (originalPostNoList.isEmpty()) {
             return emptyList()
         }
 
+        // Load catalog descriptor's board
         val chanBoardEntity = chanBoardDao.select(descriptor.siteName(), descriptor.boardCode())
                 ?: return emptyList()
 
+        // Load catalog descriptor's threads
         val chanThreadEntityList = originalPostNoList
                 .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
                 .flatMap { chunk ->
@@ -132,116 +156,139 @@ class ChanPostLocalSource(
             return emptyList()
         }
 
+        // Load threads' original posts
         val chanPostEntityMap = chanThreadEntityList
-                .map { chanThreadEntity -> chanThreadEntity.threadId to chanThreadEntity.threadNo }
-                // FIXME: Slow! We iterate catalog original posts one by one instead of a single
-                //  query. But to fix this I will have to come up with a query to select by
-                //  ids from two separate lists:
-                //
-                //  SELECT *
-                //  FROM ...
-                //  WHERE
-                //      OWNER_THREAD_COLUMN_NAME IN (:ownerThreadIdList)
-                //  AND
-                //      POST_NO_COLUMN_NAME IN (:postNoList)
-                //
-                //  Which I have no idea how to do and whether would it even work or not
-                .mapNotNull { (threadId, threadNo) ->
-                    chanPostDao.selectByThreadIdAndPostNo(threadId, threadNo)
-                }
+                .map { chanThreadEntity -> chanThreadEntity.threadId }
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
                 .associateBy { chanPostEntity -> chanPostEntity.ownerThreadId }
 
-        val unparsedPosts = chanThreadEntityList.map { chanThreadEntity ->
+        if (chanPostEntityMap.isEmpty()) {
+            return emptyList()
+        }
+
+        val postIdList = chanPostEntityMap.values.map { chanPostEntity ->
+            chanPostEntity.postId
+        }
+
+        // Load posts' comments/subjects/tripcodes and other Spannables
+        val textSpansGroupedByPostId = postIdList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
+                .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
+
+        val posts = chanThreadEntityList.map { chanThreadEntity ->
             val chanPostEntity = checkNotNull(chanPostEntityMap[chanThreadEntity.threadId]) {
                 "Couldn't find post info for original post with id (${chanThreadEntity.threadId})"
             }
 
-            return@map ChanThreadMapper.fromEntity(gson, descriptor, chanThreadEntity, chanPostEntity)
+            val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+
+            return@map ChanThreadMapper.fromEntity(
+                    gson,
+                    descriptor,
+                    chanThreadEntity,
+                    chanPostEntity,
+                    postTextSnapEntityList
+            )
         }
 
-        val postIdList = unparsedPosts.map { it.databasePostId }
 
-        val postImageByPostIdMap = postIdList
-                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .flatMap { chunk -> chanPostImageDao.selectByOwnerPostIdList(chunk) }
-                .groupBy { chanPostImageEntity -> chanPostImageEntity.ownerPostId }
+        return getPostsAdditionalData(postIdList, posts)
+    }
 
-        val postIconsByPostIdMap = postIdList
-                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .flatMap { chunk -> chanPostHttpIconDao.selectByOwnerPostIdList(chunk) }
-                .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
+    suspend fun getThreadPostNoList(descriptor: ChanDescriptor.ThreadDescriptor): List<Long> {
+        ensureInTransaction()
 
-        unparsedPosts.forEach { unparsedPost ->
-            val postImages = postImageByPostIdMap[unparsedPost.databasePostId]
-            if (postImages != null && postImages.isNotEmpty()) {
-                postImages.forEach { postImage ->
-                    unparsedPost.postImages.add(ChanPostImageMapper.fromEntity(postImage))
-                }
-            }
+        val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
+                ?: return emptyList()
 
-            val postIcons = postIconsByPostIdMap[unparsedPost.databasePostId]
-            if (postIcons != null && postIcons.isNotEmpty()) {
-                postIcons.forEach { postIcon ->
-                    unparsedPost.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
-                }
-            }
-        }
-
-        return unparsedPosts
+        return chanPostDao.selectManyPostNoByThreadId(chanThreadEntity.threadId)
     }
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
             postNoList: List<Long>
-    ): List<ChanPostUnparsed> {
+    ): List<ChanPost> {
         ensureInTransaction()
 
-        if (postNoList.isEmpty()) {
-            return emptyList()
-        }
-
+        // Load descriptor's thread
         val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
                 ?: return emptyList()
 
-        val chanPostEntityList = chanPostDao.selectAllPostsByThreadId(chanThreadEntity.threadId)
+        // Load thread's posts
+        val chanPostEntityList = postNoList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk ->
+                    return@flatMap chanPostDao.selectManyByThreadIdAndPostNoList(
+                            chanThreadEntity.threadId,
+                            chunk
+                    )
+                }
+
         if (chanPostEntityList.isEmpty()) {
             return emptyList()
         }
 
         val postIdList = chanPostEntityList.map { it.postId }
 
+        // Load posts' comments/subjects/tripcodes and other Spannables
+        val textSpansGroupedByPostId = postIdList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
+                .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
+
+        val posts = chanPostEntityList
+                .mapNotNull { chanPostEntity ->
+                    val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+
+                    return@mapNotNull ChanPostMapper.fromEntity(
+                            gson,
+                            descriptor,
+                            null,
+                            chanPostEntity,
+                            postTextSnapEntityList
+                    )
+                }
+
+        return getPostsAdditionalData(postIdList, posts)
+    }
+
+    private suspend fun getPostsAdditionalData(
+            postIdList: List<Long>,
+            posts: List<ChanPost>
+    ): List<ChanPost> {
+        ensureInTransaction()
+
+        // Load posts' images
         val postImageByPostIdMap = postIdList
                 .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
                 .flatMap { chunk -> chanPostImageDao.selectByOwnerPostIdList(chunk) }
                 .groupBy { chanPostImageEntity -> chanPostImageEntity.ownerPostId }
 
+        // Load posts' icons
         val postIconsByPostIdMap = postIdList
                 .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
                 .flatMap { chunk -> chanPostHttpIconDao.selectByOwnerPostIdList(chunk) }
                 .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
 
-        val unparsedPosts = chanPostEntityList
-                .mapNotNull { chanPostEntity ->
-                    ChanPostMapper.fromEntity(gson, descriptor, null, chanPostEntity)
-                }
-
-        unparsedPosts.forEach { unparsedPost ->
-            val postImages = postImageByPostIdMap[unparsedPost.databasePostId]
+        posts.forEach { post ->
+            val postImages = postImageByPostIdMap[post.databasePostId]
             if (postImages != null && postImages.isNotEmpty()) {
                 postImages.forEach { postImage ->
-                    unparsedPost.postImages.add(ChanPostImageMapper.fromEntity(postImage))
+                    post.postImages.add(ChanPostImageMapper.fromEntity(postImage))
                 }
             }
 
-            val postIcons = postIconsByPostIdMap[unparsedPost.databasePostId]
+            val postIcons = postIconsByPostIdMap[post.databasePostId]
             if (postIcons != null && postIcons.isNotEmpty()) {
                 postIcons.forEach { postIcon ->
-                    unparsedPost.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
+                    post.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
                 }
             }
         }
 
-        return unparsedPosts
+        return posts
     }
 
     suspend fun containsPostBlocking(descriptor: ChanDescriptor, postNo: Long): Boolean {
@@ -306,5 +353,6 @@ class ChanPostLocalSource(
 
         return chanPostDao.deleteAll()
     }
+
 
 }

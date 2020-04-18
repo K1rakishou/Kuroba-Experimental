@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.data.post
 
 import okhttp3.HttpUrl
 
-class ChanPostImageUnparsed(
+class ChanPostImage(
         val serverFilename: String,
         val thumbnailUrl: HttpUrl? = null,
         val spoilerThumbnailUrl: HttpUrl? = null,
@@ -20,7 +20,7 @@ class ChanPostImageUnparsed(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ChanPostImageUnparsed) return false
+        if (other !is ChanPostImage) return false
 
         if (imageUrl != other.imageUrl) return false
         if (type != other.type) return false
@@ -35,7 +35,7 @@ class ChanPostImageUnparsed(
     }
 
     override fun toString(): String {
-        return "ChanPostImageUnparsed(serverFilename='$serverFilename', " +
+        return "ChanPostImage(serverFilename='$serverFilename', " +
                 "imageUrl=$imageUrl," +
                 "imageWidth=$imageWidth, " +
                 "imageHeight=$imageHeight, " +

@@ -3,27 +3,35 @@ package com.github.adamantcheese.model.entity
 import androidx.room.*
 
 @Entity(
-        tableName = TextSpanEntity.TABLE_NAME,
+        tableName = ChanTextSpanEntity.TABLE_NAME,
         foreignKeys = [
             ForeignKey(
                     entity = ChanPostEntity::class,
                     parentColumns = [ChanPostEntity.POST_ID_COLUMN_NAME],
-                    childColumns = [TextSpanEntity.OWNER_POST_ID_COLUMN_NAME],
+                    childColumns = [ChanTextSpanEntity.OWNER_POST_ID_COLUMN_NAME],
                     onDelete = ForeignKey.CASCADE,
                     onUpdate = ForeignKey.CASCADE
             )
         ],
         indices = [
             Index(
-                    value = [TextSpanEntity.OWNER_POST_ID_INDEX_NAME],
-                    name = TextSpanEntity.OWNER_POST_ID_COLUMN_NAME
+                    name = ChanTextSpanEntity.OWNER_POST_ID_INDEX_NAME,
+                    value = [ChanTextSpanEntity.OWNER_POST_ID_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanTextSpanEntity.OWNER_POST_ID_TEXT_TYPE_INDEX_NAME,
+                    value = [
+                        ChanTextSpanEntity.OWNER_POST_ID_COLUMN_NAME,
+                        ChanTextSpanEntity.TEXT_TYPE_COLUMN_NAME
+                    ],
+                    unique = true
             )
         ]
 )
-data class TextSpanEntity(
+data class ChanTextSpanEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = TEXT_SPAN_ID_COLUMN_NAME)
-        val textSpanId: Long = 0L,
+        var textSpanId: Long = 0L,
         @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
         val ownerPostId: Long,
         @ColumnInfo(name = ORIGINAL_TEXT_COLUMN_NAME)
@@ -49,7 +57,7 @@ data class TextSpanEntity(
     }
 
     companion object {
-        const val TABLE_NAME = "text_span"
+        const val TABLE_NAME = "chan_text_span"
 
         const val TEXT_SPAN_ID_COLUMN_NAME = "text_span_id"
         const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
@@ -58,5 +66,6 @@ data class TextSpanEntity(
         const val TEXT_TYPE_COLUMN_NAME = "text_type"
 
         const val OWNER_POST_ID_INDEX_NAME = "${TABLE_NAME}_owner_post_id_idx"
+        const val OWNER_POST_ID_TEXT_TYPE_INDEX_NAME = "${TABLE_NAME}_owner_post_id_text_type_idx"
     }
 }

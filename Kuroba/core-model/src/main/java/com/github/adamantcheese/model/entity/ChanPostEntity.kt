@@ -44,12 +44,6 @@ data class ChanPostEntity(
         val timestamp: Long = -1L,
         @ColumnInfo(name = NAME_COLUMN_NAME)
         val name: String? = null,
-        @ColumnInfo(name = POST_COMMENT_COLUMN_NAME)
-        val postComment: String? = null,
-        @ColumnInfo(name = SUBJECT_COLUMN_NAME)
-        val subject: String? = null,
-        @ColumnInfo(name = TRIPCODE_COLUMN_NAME)
-        val tripcode: String? = null,
         @ColumnInfo(name = POSTER_ID_COLUMN_NAME)
         val posterId: String? = null,
         @ColumnInfo(name = MODERATOR_CAPCODE_COLUMN_NAME)
@@ -66,10 +60,7 @@ data class ChanPostEntity(
         const val POST_NO_COLUMN_NAME = "post_no"
         const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
         const val TIMESTAMP_SECONDS_COLUMN_NAME = "timestamp_seconds"
-        const val SUBJECT_COLUMN_NAME = "subject"
         const val NAME_COLUMN_NAME = "name"
-        const val POST_COMMENT_COLUMN_NAME = "post_comment"
-        const val TRIPCODE_COLUMN_NAME = "tripcode"
         const val POSTER_ID_COLUMN_NAME = "poster_id"
         const val MODERATOR_CAPCODE_COLUMN_NAME = "moderator_capcode"
         const val IS_OP_COLUMN_NAME = "is_op"

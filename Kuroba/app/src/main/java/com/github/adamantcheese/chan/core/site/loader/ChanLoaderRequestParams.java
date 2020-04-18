@@ -27,6 +27,7 @@ import java.util.List;
  * A request from ChanThreadLoader to load something.
  */
 public class ChanLoaderRequestParams {
+    public final boolean isPinWatcherLoader;
     /**
      * Related loadable for the request.
      */
@@ -50,12 +51,14 @@ public class ChanLoaderRequestParams {
     public final Response.ErrorListener errorListener;
 
     public ChanLoaderRequestParams(
+            boolean isPinWatcherLoader,
             Loadable loadable,
             ChanReader chanReader,
             List<Post> cached,
             Response.Listener<ChanLoaderResponse> listener,
             Response.ErrorListener errorListener
     ) {
+        this.isPinWatcherLoader = isPinWatcherLoader;
         this.loadable = loadable;
         this.chanReader = chanReader;
         this.cached = cached;

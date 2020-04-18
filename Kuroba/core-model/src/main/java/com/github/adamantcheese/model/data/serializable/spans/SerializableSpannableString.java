@@ -21,6 +21,11 @@ public class SerializableSpannableString {
         this.text = "";
     }
 
+    public SerializableSpannableString(List<SpanInfo> spanInfoList, String text) {
+        this.spanInfoList = spanInfoList;
+        this.text = text;
+    }
+
     public void addSpanInfo(SpanInfo spanInfo) {
         spanInfoList.add(spanInfo);
     }
