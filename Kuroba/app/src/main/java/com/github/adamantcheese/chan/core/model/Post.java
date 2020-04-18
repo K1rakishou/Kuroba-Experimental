@@ -51,20 +51,22 @@ public class Post
     public final boolean isOP;
     public final String name;
     private PostComment comment;
-    public final String subject;
+
     /**
      * Unix timestamp, in seconds.
      */
     public final long time;
-    public final String tripcode;
     public final String id;
     public final long opId;
     public final String capcode;
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
-    public final CharSequence subjectSpan;
-    public final CharSequence nameTripcodeIdCapcodeSpan;
     private final PostFilter postFilter;
+
+    @Nullable
+    public final CharSequence subject;
+    @Nullable
+    public final CharSequence tripcode;
 
     /**
      * This post has been deleted (the server isn't sending it anymore).
@@ -152,8 +154,6 @@ public class Post
         );
 
         isSavedReply = builder.isSavedReply;
-        subjectSpan = builder.subjectSpan;
-        nameTripcodeIdCapcodeSpan = builder.nameTripcodeIdCapcodeSpan;
 
         repliesTo = Collections.unmodifiableSet(builder.repliesToIds);
     }
@@ -378,10 +378,8 @@ public class Post
         public boolean closed;
         public boolean archived;
         public long lastModified = -1L;
-        public String subject = "";
         public String name = "";
         public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
-        public String tripcode = "";
         public long unixTimestampSeconds = -1L;
         @NonNull
         public List<PostImage> postImages = new ArrayList<>();
@@ -392,9 +390,12 @@ public class Post
         public int idColor;
         public boolean isLightColor;
         public boolean isSavedReply;
-        public CharSequence subjectSpan;
-        public CharSequence nameTripcodeIdCapcodeSpan;
         private Set<Long> repliesToIds = new HashSet<>();
+
+        @Nullable
+        public CharSequence tripcode;
+        @Nullable
+        public CharSequence subject;
 
         public int filterHighlightedColor;
         public boolean filterStub;
@@ -462,7 +463,7 @@ public class Post
             return this;
         }
 
-        public Builder subject(String subject) {
+        public Builder subject(CharSequence subject) {
             this.subject = subject;
             return this;
         }
@@ -481,7 +482,7 @@ public class Post
             return this;
         }
 
-        public Builder tripcode(String tripcode) {
+        public Builder tripcode(CharSequence tripcode) {
             this.tripcode = tripcode;
             return this;
         }
@@ -551,24 +552,18 @@ public class Post
                 boolean onlyOnOp,
                 boolean filterSaved
         ) {
-            filterHighlightedColor = highlightedColor;
-            filterStub = stub;
-            filterRemove = remove;
-            filterWatch = watch;
+            this.filterHighlightedColor = highlightedColor;
+            this.filterStub = stub;
+            this.filterRemove = remove;
+            this.filterWatch = watch;
             this.filterReplies = filterReplies;
-            filterOnlyOP = onlyOnOp;
+            this.filterOnlyOP = onlyOnOp;
             this.filterSaved = filterSaved;
             return this;
         }
 
         public Builder isSavedReply(boolean isSavedReply) {
             this.isSavedReply = isSavedReply;
-            return this;
-        }
-
-        public Builder spans(CharSequence subjectSpan, CharSequence nameTripcodeIdCapcodeSpan) {
-            this.subjectSpan = subjectSpan;
-            this.nameTripcodeIdCapcodeSpan = nameTripcodeIdCapcodeSpan;
             return this;
         }
 

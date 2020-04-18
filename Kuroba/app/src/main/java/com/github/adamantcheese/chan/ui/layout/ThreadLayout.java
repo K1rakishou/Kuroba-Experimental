@@ -430,13 +430,13 @@ public class ThreadLayout
     }
 
     @Override
-    public void highlightPostTripcode(String tripcode) {
+    public void highlightPostTripcode(CharSequence tripcode) {
         threadListLayout.highlightPostTripcode(tripcode);
     }
 
     @Override
-    public void filterPostTripcode(String tripcode) {
-        callback.openFilterForType(FilterType.TRIPCODE, tripcode);
+    public void filterPostTripcode(CharSequence tripcode) {
+        callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString());
     }
 
     @Override

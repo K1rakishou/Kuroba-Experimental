@@ -1,6 +1,6 @@
-package com.github.adamantcheese.chan.core.model.save.spans.linkable;
+package com.github.adamantcheese.model.data.serializable.spans.linkable;
 
-import com.github.adamantcheese.chan.core.model.save.spans.SerializablePostLinkableSpan;
+import com.github.adamantcheese.model.data.serializable.spans.SerializablePostLinkableSpan;
 import com.google.gson.annotations.SerializedName;
 
 public abstract class PostLinkableValue {

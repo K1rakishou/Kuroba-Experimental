@@ -296,7 +296,7 @@ public class FilterEngine {
     }
 
     @AnyThread
-    public boolean matches(Filter filter, String text, boolean forceCompile) {
+    public boolean matches(Filter filter, CharSequence text, boolean forceCompile) {
         if (TextUtils.isEmpty(text)) {
             return false;
         }
@@ -320,7 +320,7 @@ public class FilterEngine {
         }
 
         if (pattern != null) {
-            Matcher matcher = pattern.matcher(HtmlCompat.fromHtml(text, 0).toString());
+            Matcher matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
             try {
                 return matcher.find();
             } catch (IllegalArgumentException e) {

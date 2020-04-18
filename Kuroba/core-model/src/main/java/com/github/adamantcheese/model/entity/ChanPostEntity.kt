@@ -40,32 +40,22 @@ data class ChanPostEntity(
         val postNo: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
         val ownerThreadId: Long,
-        @ColumnInfo(name = UNIX_TIMESTAMP_SECONDS_COLUMN_NAME)
-        val unixTimestampSeconds: Long = -1L,
-        @ColumnInfo(name = ID_COLOR_COLUMN_NAME)
-        val idColor: Int = 0,
-        @ColumnInfo(name = FILTER_HIGHLIGHTED_COLOR_COLUMN_NAME)
-        val filterHighlightedColor: Int = 0,
-        @ColumnInfo(name = POST_COMMENT_COLUMN_NAME)
-        val postComment: String = "",
-        @ColumnInfo(name = SUBJECT_COLUMN_NAME)
-        val subject: String? = null,
+        @ColumnInfo(name = TIMESTAMP_SECONDS_COLUMN_NAME)
+        val timestamp: Long = -1L,
         @ColumnInfo(name = NAME_COLUMN_NAME)
         val name: String? = null,
+        @ColumnInfo(name = POST_COMMENT_COLUMN_NAME)
+        val postComment: String? = null,
+        @ColumnInfo(name = SUBJECT_COLUMN_NAME)
+        val subject: String? = null,
         @ColumnInfo(name = TRIPCODE_COLUMN_NAME)
         val tripcode: String? = null,
         @ColumnInfo(name = POSTER_ID_COLUMN_NAME)
         val posterId: String? = null,
         @ColumnInfo(name = MODERATOR_CAPCODE_COLUMN_NAME)
         val moderatorCapcode: String? = null,
-        @ColumnInfo(name = SUBJECT_SPAN_COLUMN_NAME)
-        val subjectSpan: String? = null,
-        @ColumnInfo(name = NAME_TRIPCODE_ID_CAPCODE_SPAN_COLUMN_NAME)
-        val nameTripcodeIdCapcodeSpan: String? = null,
         @ColumnInfo(name = IS_OP_COLUMN_NAME)
         val isOp: Boolean = false,
-        @ColumnInfo(name = IS_LIGHT_COLOR_COLUMN_NAME)
-        val isLightColor: Boolean = false,
         @ColumnInfo(name = IS_SAVED_REPLY_COLUMN_NAME)
         val isSavedReply: Boolean = false
 ) {
@@ -75,19 +65,14 @@ data class ChanPostEntity(
         const val POST_ID_COLUMN_NAME = "post_id"
         const val POST_NO_COLUMN_NAME = "post_no"
         const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
-        const val UNIX_TIMESTAMP_SECONDS_COLUMN_NAME = "unix_timestamp_seconds"
-        const val ID_COLOR_COLUMN_NAME = "id_color"
-        const val FILTER_HIGHLIGHTED_COLOR_COLUMN_NAME = "filter_highlighted_color"
+        const val TIMESTAMP_SECONDS_COLUMN_NAME = "timestamp_seconds"
         const val SUBJECT_COLUMN_NAME = "subject"
         const val NAME_COLUMN_NAME = "name"
         const val POST_COMMENT_COLUMN_NAME = "post_comment"
         const val TRIPCODE_COLUMN_NAME = "tripcode"
         const val POSTER_ID_COLUMN_NAME = "poster_id"
         const val MODERATOR_CAPCODE_COLUMN_NAME = "moderator_capcode"
-        const val SUBJECT_SPAN_COLUMN_NAME = "subject_span"
-        const val NAME_TRIPCODE_ID_CAPCODE_SPAN_COLUMN_NAME = "name_tripcode_id_capcode_span"
         const val IS_OP_COLUMN_NAME = "is_op"
-        const val IS_LIGHT_COLOR_COLUMN_NAME = "is_light_color"
         const val IS_SAVED_REPLY_COLUMN_NAME = "is_saved_reply"
 
         const val POST_NO_INDEX_NAME = "${TABLE_NAME}_post_no_idx"

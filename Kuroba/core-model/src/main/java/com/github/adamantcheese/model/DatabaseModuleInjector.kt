@@ -2,8 +2,8 @@ package com.github.adamantcheese.model
 
 import android.app.Application
 import com.github.adamantcheese.common.AppConstants
-import com.github.adamantcheese.model.di.DaggerDatabaseComponent
-import com.github.adamantcheese.model.di.DatabaseComponent
+import com.github.adamantcheese.model.di.DaggerMainComponent
+import com.github.adamantcheese.model.di.MainComponent
 import com.github.adamantcheese.model.di.NetworkModule
 import okhttp3.Dns
 import okhttp3.Protocol
@@ -18,8 +18,8 @@ object DatabaseModuleInjector {
             loggerTagPrefix: String,
             verboseLogs: Boolean,
             appConstants: AppConstants
-    ): DatabaseComponent {
-        return DaggerDatabaseComponent.builder()
+    ): MainComponent {
+        return DaggerMainComponent.builder()
                 .application(application)
                 .okHttpDns(dns)
                 .okHttpProtocols(NetworkModule.OkHttpProtocolList(protocols))

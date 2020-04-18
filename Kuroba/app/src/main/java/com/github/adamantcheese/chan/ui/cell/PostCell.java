@@ -458,12 +458,12 @@ public class PostCell
     private void bindTitle(Theme theme, Post post) {
         List<CharSequence> titleParts = new ArrayList<>(5);
 
-        if (post.subjectSpan != null) {
-            titleParts.add(post.subjectSpan);
+        if (post.subject != null) {
+            titleParts.add(post.subject);
             titleParts.add("\n");
         }
 
-        titleParts.add(post.nameTripcodeIdCapcodeSpan);
+        titleParts.add(post.tripcode);
 
         CharSequence time;
         if (ChanSettings.postFullDate.get()) {

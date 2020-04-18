@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.model.save.spans;
+package com.github.adamantcheese.model.data.serializable.spans;
 
 import com.google.gson.annotations.SerializedName;
 

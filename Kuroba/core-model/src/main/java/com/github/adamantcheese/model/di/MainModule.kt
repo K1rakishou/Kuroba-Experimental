@@ -15,13 +15,14 @@ import com.github.adamantcheese.model.source.local.SeenPostLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContentRemoteSource
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 @Module
-class DatabaseModule {
+class MainModule {
 
     @Singleton
     @Provides
@@ -33,6 +34,12 @@ class DatabaseModule {
     @Provides
     fun provideLogger(@VerboseLogs verboseLogs: Boolean): Logger {
         return Logger(verboseLogs)
+    }
+
+    @Singleton
+    @Provides
+    fun provideGson(): Gson {
+        return Gson().newBuilder().create()
     }
 
     /**
@@ -86,12 +93,14 @@ class DatabaseModule {
     fun provideChanPostLocalSource(
             database: KurobaDatabase,
             @LoggerTagPrefix loggerTag: String,
-            logger: Logger
+            logger: Logger,
+            gson: Gson
     ): ChanPostLocalSource {
         return ChanPostLocalSource(
                 database,
                 loggerTag,
-                logger
+                logger,
+                gson
         )
     }
 

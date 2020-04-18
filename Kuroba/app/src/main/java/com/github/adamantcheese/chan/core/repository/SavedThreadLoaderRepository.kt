@@ -2,7 +2,7 @@ package com.github.adamantcheese.chan.core.repository
 
 import com.github.adamantcheese.chan.core.mapper.ThreadMapper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.save.SerializableThread
+import com.github.adamantcheese.chan.core.model.SerializableThread
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -30,9 +30,7 @@ constructor(
 ) {
 
     @Throws(IOException::class)
-    fun loadOldThreadFromJsonFile(
-            threadSaveDir: AbstractFile
-    ): SerializableThread? {
+    fun loadOldThreadFromJsonFile(threadSaveDir: AbstractFile): SerializableThread? {
         BackgroundUtils.ensureBackgroundThread()
 
         val threadFile = threadSaveDir.clone(FileSegment(THREAD_FILE_NAME))
@@ -75,10 +73,10 @@ constructor(
             return@use DataOutputStream(outputStream).use { dos ->
                 val serializableThread = if (oldSerializableThread != null) {
                     // Merge with old posts if there are any
-                    oldSerializableThread.merge(posts)
+                    oldSerializableThread.merge(gson, posts)
                 } else {
                     // Use only the new posts
-                    ThreadMapper.toSerializableThread(posts)
+                    ThreadMapper.toSerializableThread(gson, posts)
                 }
 
                 val bytes = gson.toJson(serializableThread).toByteArray(StandardCharsets.UTF_8)

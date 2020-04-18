@@ -51,7 +51,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.DatabaseModuleInjector;
-import com.github.adamantcheese.model.di.DatabaseComponent;
+import com.github.adamantcheese.model.di.MainComponent;
 
 import org.codejargon.feather.Feather;
 import org.greenrobot.eventbus.EventBus;
@@ -129,7 +129,7 @@ public class Chan
         Dns okHttpDns = getOkHttpDns();
         OkHttpProtocols okHttpProtocols = getOkHttpProtocols();
 
-        DatabaseComponent databaseComponent = DatabaseModuleInjector.build(
+        MainComponent mainComponent = DatabaseModuleInjector.build(
                 this,
                 okHttpDns,
                 okHttpProtocols.protocols,
@@ -143,7 +143,7 @@ public class Chan
                 new ExecutorsModule(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
-                new RoomDatabaseModule(databaseComponent),
+                new RoomDatabaseModule(mainComponent),
                 new NetModule(),
                 new GsonModule(),
                 new RepositoryModule(),

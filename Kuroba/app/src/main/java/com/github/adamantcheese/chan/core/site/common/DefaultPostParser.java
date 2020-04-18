@@ -68,7 +68,7 @@ public class DefaultPostParser
         }
 
         if (!TextUtils.isEmpty(builder.subject)) {
-            builder.subject = Parser.unescapeEntities(builder.subject, false);
+            builder.subject = Parser.unescapeEntities(builder.subject.toString(), false);
         }
 
         parseSpans(theme, builder);
@@ -106,7 +106,6 @@ public class DefaultPostParser
             builder.posterId("");
         }
 
-        SpannableString subjectSpan = null;
         SpannableString nameSpan = null;
         SpannableString tripcodeSpan = null;
         SpannableString idSpan = null;
@@ -115,11 +114,13 @@ public class DefaultPostParser
         int detailsSizePx = sp(Integer.parseInt(ChanSettings.fontSize.get()) - 4);
 
         if (!TextUtils.isEmpty(builder.subject)) {
-            subjectSpan = new SpannableString(builder.subject);
+            SpannableString subjectSpan = new SpannableString(builder.subject);
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
             if (!builder.filterStub) {
                 subjectSpan.setSpan(new ForegroundColorSpanHashed(theme.subjectColor), 0, subjectSpan.length(), 0);
             }
+
+            builder.subject = subjectSpan;
         }
 
         if (!TextUtils.isEmpty(builder.name) && (!builder.name.equals(defaultName)
@@ -167,7 +168,7 @@ public class DefaultPostParser
             nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, capcodeSpan, " ");
         }
 
-        builder.spans(subjectSpan, nameTripcodeIdCapcodeSpan);
+        builder.tripcode = nameTripcodeIdCapcodeSpan;
     }
 
     private CharSequence parseComment(Theme theme, Post.Builder post, CharSequence commentRaw, Callback callback) {

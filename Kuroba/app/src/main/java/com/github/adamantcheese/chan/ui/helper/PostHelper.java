@@ -52,9 +52,10 @@ public class PostHelper {
     public static String getTitle(@Nullable Post post, @Nullable Loadable loadable) {
         if (post != null) {
             if (!TextUtils.isEmpty(post.subject)) {
-                return post.subject;
+                return post.subject.toString();
             } else if (!TextUtils.isEmpty(post.getComment())) {
-                return "/" + post.boardId + "/ - " + post.getComment().subSequence(0, Math.min(post.getComment().length(), 200));
+                int length = Math.min(post.getComment().length(), 200);
+                return "/" + post.boardId + "/ - " + post.getComment().subSequence(0, length);
             } else {
                 return "/" + post.boardId + "/" + post.no;
             }

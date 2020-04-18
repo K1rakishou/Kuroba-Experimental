@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.mapper;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.save.SerializablePostImage;
+import com.github.adamantcheese.model.data.serializable.SerializablePostImage;
 
 import java.util.ArrayList;
 import java.util.List;

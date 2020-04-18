@@ -3,8 +3,10 @@ package com.github.adamantcheese.model.mapper
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 import com.github.adamantcheese.model.entity.ChanPostEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.google.gson.Gson
 
 object ChanThreadMapper {
 
@@ -23,7 +25,27 @@ object ChanThreadMapper {
         )
     }
 
-    fun fromEntity(chanDescriptor: ChanDescriptor, chanThreadEntity: ChanThreadEntity, chanPostEntity: ChanPostEntity): ChanPostUnparsed {
+    fun fromEntity(
+            gson: Gson,
+            chanDescriptor: ChanDescriptor,
+            chanThreadEntity: ChanThreadEntity,
+            chanPostEntity: ChanPostEntity
+    ): ChanPostUnparsed {
+        val postComment = gson.fromJson(
+                chanPostEntity.postComment,
+                SerializableSpannableString::class.java
+        )
+
+        val subject = gson.fromJson(
+                chanPostEntity.subject,
+                SerializableSpannableString::class.java
+        )
+
+        val tripcode = gson.fromJson(
+                chanPostEntity.tripcode,
+                SerializableSpannableString::class.java
+        )
+
         return ChanPostUnparsed(
                 databasePostId = chanPostEntity.postId,
                 postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
@@ -36,19 +58,14 @@ object ChanThreadMapper {
                 sticky = chanThreadEntity.sticky,
                 closed = chanThreadEntity.closed,
                 archived = chanThreadEntity.archived,
-                unixTimestampSeconds = chanPostEntity.unixTimestampSeconds,
-                idColor = chanPostEntity.idColor,
-                filterHighlightedColor = chanPostEntity.filterHighlightedColor,
-                postComment = chanPostEntity.postComment,
-                subject = chanPostEntity.subject,
+                timestamp = chanPostEntity.timestamp,
                 name = chanPostEntity.name,
-                tripcode = chanPostEntity.tripcode,
+                postComment = postComment,
+                subject = subject,
+                tripcode = tripcode,
                 posterId = chanPostEntity.posterId,
                 moderatorCapcode = chanPostEntity.moderatorCapcode,
-                subjectSpan = chanPostEntity.subjectSpan,
-                nameTripcodeIdCapcodeSpan = chanPostEntity.nameTripcodeIdCapcodeSpan,
                 isOp = chanPostEntity.isOp,
-                isLightColor = chanPostEntity.isLightColor,
                 isSavedReply = chanPostEntity.isSavedReply
         )
     }

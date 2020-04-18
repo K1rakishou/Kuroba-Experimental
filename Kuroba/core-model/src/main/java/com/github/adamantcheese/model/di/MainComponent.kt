@@ -16,10 +16,10 @@ import javax.inject.Singleton
 @Component(
         modules = [
             NetworkModule::class,
-            DatabaseModule::class
+            MainModule::class
         ]
 )
-interface DatabaseComponent {
+interface MainComponent {
     fun inject(application: Application)
 
     fun getMediaServiceLinkExtraContentRepository(): MediaServiceLinkExtraContentRepository
@@ -43,7 +43,7 @@ interface DatabaseComponent {
         @BindsInstance
         fun appConstants(appConstants: AppConstants): Builder
 
-        fun build(): DatabaseComponent
+        fun build(): MainComponent
     }
 
 }

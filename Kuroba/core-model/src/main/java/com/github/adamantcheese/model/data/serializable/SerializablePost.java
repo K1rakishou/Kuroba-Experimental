@@ -1,8 +1,8 @@
-package com.github.adamantcheese.chan.core.model.save;
+package com.github.adamantcheese.model.data.serializable;
 
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.model.save.spans.SerializableSpannableString;
+import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class SerializablePost {
     private long time;
     @SerializedName("images")
     private List<SerializablePostImage> images;
-    @SerializedName("tripcode")
-    private String tripcode;
+    @SerializedName("tripcode_with_spans")
+    private SerializableSpannableString tripcode;
     @SerializedName("id")
     private String id;
     @SerializedName("op_id")
@@ -44,6 +44,8 @@ public class SerializablePost {
     private boolean filterStub;
     @SerializedName("filter_remove")
     private boolean filterRemove;
+    @SerializedName("filter_watch")
+    private boolean filterWatch;
     @SerializedName("filter_replies")
     private boolean filterReplies;
     @SerializedName("filter_only_op")
@@ -52,8 +54,6 @@ public class SerializablePost {
     private boolean filterSaved;
     @SerializedName("replies_to")
     private Set<Long> repliesTo;
-    @SerializedName("name_tripcode_id_capcode_span")
-    private SerializableSpannableString nameTripcodeIdCapcodeSpan;
     @SerializedName("deleted")
     private Boolean deleted;
     @SerializedName("replies_from")
@@ -85,7 +85,7 @@ public class SerializablePost {
             SerializableSpannableString subject,
             long time,
             List<SerializablePostImage> images,
-            String tripcode,
+            SerializableSpannableString tripcode,
             String id,
             long opId,
             String capcode,
@@ -93,11 +93,11 @@ public class SerializablePost {
             int filterHighlightedColor,
             boolean filterStub,
             boolean filterRemove,
+            boolean filterWatch,
             boolean filterReplies,
             boolean filterOnlyOP,
             boolean filterSaved,
             Set<Long> repliesTo,
-            SerializableSpannableString nameTripcodeIdCapcodeSpan,
             Boolean deleted,
             List<Long> repliesFrom,
             boolean sticky,
@@ -126,11 +126,11 @@ public class SerializablePost {
         this.filterHighlightedColor = filterHighlightedColor;
         this.filterStub = filterStub;
         this.filterRemove = filterRemove;
+        this.filterWatch = filterWatch;
         this.filterReplies = filterReplies;
         this.filterOnlyOP = filterOnlyOP;
         this.filterSaved = filterSaved;
         this.repliesTo = repliesTo;
-        this.nameTripcodeIdCapcodeSpan = nameTripcodeIdCapcodeSpan;
         this.deleted = deleted;
         this.repliesFrom = repliesFrom;
         this.sticky = sticky;
@@ -175,7 +175,7 @@ public class SerializablePost {
         return images;
     }
 
-    public String getTripcode() {
+    public SerializableSpannableString getTripcode() {
         return tripcode;
     }
 
@@ -207,6 +207,10 @@ public class SerializablePost {
         return filterRemove;
     }
 
+    public boolean isFilterWatch() {
+        return filterWatch;
+    }
+
     public boolean isFilterReplies() {
         return filterReplies;
     }
@@ -221,10 +225,6 @@ public class SerializablePost {
 
     public Set<Long> getRepliesTo() {
         return repliesTo;
-    }
-
-    public SerializableSpannableString getNameTripcodeIdCapcodeSpan() {
-        return nameTripcodeIdCapcodeSpan;
     }
 
     public Boolean getDeleted() {
@@ -288,7 +288,8 @@ public class SerializablePost {
 
         SerializablePost otherPost = (SerializablePost) other;
 
-        return this.no == otherPost.no && this.board.code.equals(otherPost.board.code)
+        return this.no.equals(otherPost.no)
+                && this.board.code.equals(otherPost.board.code)
                 && this.board.siteId == otherPost.board.siteId;
     }
 }

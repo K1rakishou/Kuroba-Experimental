@@ -50,6 +50,7 @@ import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.common.ModularResult;
 import com.github.adamantcheese.model.repository.ArchivesRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
@@ -90,6 +91,8 @@ public class ChanThreadLoader
     private static final int[] WATCH_TIMEOUTS = {10, 15, 20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600};
     private static final Scheduler backgroundScheduler = Schedulers.from(executor);
 
+    @Inject
+    Gson gson;
     @Inject
     RequestQueue volleyRequestQueue;
     @Inject
@@ -405,6 +408,7 @@ public class ChanThreadLoader
         );
 
         ChanReaderRequest readerRequest = new ChanReaderRequest(
+                gson,
                 databaseManager,
                 filterEngine,
                 chanPostRepository,

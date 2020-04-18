@@ -38,6 +38,7 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.c
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
 import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
+import com.google.gson.Gson
 import okhttp3.HttpUrl
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -54,6 +55,7 @@ import kotlin.time.measureTimedValue
  * changed on the main thread.
  */
 class ChanReaderRequest(
+        private val gson: Gson,
         private val databaseManager: DatabaseManager,
         private val filterEngine: FilterEngine,
         private val chanPostRepository: ChanPostRepository,
@@ -188,7 +190,7 @@ class ChanReaderRequest(
                     postBuilder.id
             )
 
-            unparsedPosts.add(fromPostBuilder(postDescriptor, postBuilder))
+            unparsedPosts.add(fromPostBuilder(gson, postDescriptor, postBuilder))
         }
 
         return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
@@ -212,7 +214,7 @@ class ChanReaderRequest(
                     postBuilder.id
             )
 
-            unparsedPosts.add(fromPostBuilder(postDescriptor, postBuilder))
+            unparsedPosts.add(fromPostBuilder(gson, postDescriptor, postBuilder))
         }
 
         return chanPostRepository.insertOrUpdateManyBlocking(unparsedPosts, isCatalog).unwrap()
@@ -240,6 +242,7 @@ class ChanReaderRequest(
                 }
             }.map { unparsedPost ->
                 return@map ChanPostUnparsedMapper.toPostBuilder(
+                        gson,
                         loadable.board,
                         unparsedPost
                 )

@@ -169,10 +169,12 @@ public class ManagerModule {
     @Provides
     @Singleton
     public SavedThreadLoaderManager provideSavedThreadLoaderManager(
-            SavedThreadLoaderRepository savedThreadLoaderRepository, FileManager fileManager
+            Gson gson,
+            SavedThreadLoaderRepository savedThreadLoaderRepository,
+            FileManager fileManager
     ) {
         Logger.d(AppModule.DI_TAG, "Saved thread loader manager");
-        return new SavedThreadLoaderManager(savedThreadLoaderRepository, fileManager);
+        return new SavedThreadLoaderManager(gson, savedThreadLoaderRepository, fileManager);
     }
 
     @Provides

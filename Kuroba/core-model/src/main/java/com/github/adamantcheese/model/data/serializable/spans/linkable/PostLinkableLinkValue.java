@@ -1,6 +1,6 @@
-package com.github.adamantcheese.chan.core.model.save.spans.linkable;
+package com.github.adamantcheese.model.data.serializable.spans.linkable;
 
-import com.github.adamantcheese.chan.core.model.save.spans.SerializablePostLinkableSpan.PostLinkableType;
+import com.github.adamantcheese.model.data.serializable.spans.SerializablePostLinkableSpan;
 import com.google.gson.annotations.SerializedName;
 
 public class PostLinkableLinkValue
@@ -8,7 +8,7 @@ public class PostLinkableLinkValue
     @SerializedName("link")
     private String link;
 
-    public PostLinkableLinkValue(PostLinkableType type, String link) {
+    public PostLinkableLinkValue(SerializablePostLinkableSpan.PostLinkableType type, String link) {
         super(type);
 
         this.link = link;

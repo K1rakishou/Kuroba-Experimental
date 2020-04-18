@@ -295,7 +295,6 @@ public class DatabaseHideManager {
                         filterSaved
                 )
                 .isSavedReply(childPost.isSavedReply)
-                .spans(childPost.subjectSpan, childPost.nameTripcodeIdCapcodeSpan)
                 .linkables(childPost.getLinkables())
                 .repliesTo(childPost.getRepliesTo())
                 .build();

@@ -1,7 +1,7 @@
 package com.github.adamantcheese.chan.core.mapper;
 
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.save.SerializableBoard;
+import com.github.adamantcheese.model.data.serializable.SerializableBoard;
 
 public class BoardMapper {
 

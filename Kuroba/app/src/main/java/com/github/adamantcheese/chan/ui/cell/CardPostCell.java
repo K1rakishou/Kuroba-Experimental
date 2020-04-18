@@ -229,9 +229,9 @@ public class CardPostCell
             filterMatchColor.setVisibility(GONE);
         }
 
-        if (!TextUtils.isEmpty(post.subjectSpan)) {
+        if (!TextUtils.isEmpty(post.subject)) {
             title.setVisibility(VISIBLE);
-            title.setText(post.subjectSpan);
+            title.setText(post.subject);
         } else {
             title.setVisibility(GONE);
             title.setText(null);

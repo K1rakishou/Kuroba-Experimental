@@ -1,5 +1,6 @@
-package com.github.adamantcheese.chan.core.model.save.spans;
+package com.github.adamantcheese.model.data.serializable.spans;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.Expose;
@@ -7,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SerializableSpannableString {
     @SerializedName("span_info_list")
@@ -16,6 +18,7 @@ public class SerializableSpannableString {
 
     public SerializableSpannableString() {
         this.spanInfoList = new ArrayList<>();
+        this.text = "";
     }
 
     public void addSpanInfo(SpanInfo spanInfo) {
@@ -34,6 +37,32 @@ public class SerializableSpannableString {
         return text;
     }
 
+    public boolean isEmpty() {
+        return spanInfoList.isEmpty() && text.isEmpty();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SerializableSpannableString)) return false;
+        SerializableSpannableString that = (SerializableSpannableString) o;
+        return Objects.equals(spanInfoList, that.spanInfoList) &&
+                Objects.equals(text, that.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(spanInfoList, text);
+    }
+
+    @Override
+    public String toString() {
+        return "SerializableSpannableString{" +
+                "spanInfoList=" + spanInfoList +
+                ", text='" + text + '\'' +
+                '}';
+    }
+
     public static class SpanInfo {
         @SerializedName("span_start")
         private int spanStart;
@@ -41,6 +70,7 @@ public class SerializableSpannableString {
         private int spanEnd;
         @SerializedName("flags")
         private int flags;
+        @NonNull
         @SerializedName("span_type")
         private int spanType;
         @SerializedName("span_data")
@@ -48,7 +78,7 @@ public class SerializableSpannableString {
         @Nullable
         private String spanData;
 
-        public SpanInfo(SpanType spanType, int spanStart, int spanEnd, int flags) {
+        public SpanInfo(@NonNull SpanType spanType, int spanStart, int spanEnd, int flags) {
             this.spanType = spanType.getSpanTypeValue();
             this.spanStart = spanStart;
             this.spanEnd = spanEnd;
@@ -67,6 +97,7 @@ public class SerializableSpannableString {
             return flags;
         }
 
+        @NonNull
         public int getSpanType() {
             return spanType;
         }
@@ -78,6 +109,34 @@ public class SerializableSpannableString {
 
         public void setSpanData(@Nullable String spanData) {
             this.spanData = spanData;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof SpanInfo)) return false;
+            SpanInfo spanInfo = (SpanInfo) o;
+            return spanStart == spanInfo.spanStart &&
+                    spanEnd == spanInfo.spanEnd &&
+                    flags == spanInfo.flags &&
+                    spanType == spanInfo.spanType &&
+                    Objects.equals(spanData, spanInfo.spanData);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(spanStart, spanEnd, flags, spanType, spanData);
+        }
+
+        @Override
+        public String toString() {
+            return "SpanInfo{" +
+                    "spanStart=" + spanStart +
+                    ", spanEnd=" + spanEnd +
+                    ", flags=" + flags +
+                    ", spanType=" + spanType +
+                    ", spanData='" + spanData + '\'' +
+                    '}';
         }
     }
 
@@ -100,6 +159,7 @@ public class SerializableSpannableString {
             return spanTypeValue;
         }
 
+        @NonNull
         public static SpanType from(int value) {
             switch (value) {
                 case 0:

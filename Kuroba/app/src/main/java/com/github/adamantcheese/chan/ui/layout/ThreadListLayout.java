@@ -631,7 +631,7 @@ public class ThreadListLayout
         postAdapter.highlightPostId(id);
     }
 
-    public void highlightPostTripcode(String tripcode) {
+    public void highlightPostTripcode(CharSequence tripcode) {
         postAdapter.highlightPostTripcode(tripcode);
     }
 

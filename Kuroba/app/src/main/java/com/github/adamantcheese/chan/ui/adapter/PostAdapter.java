@@ -67,7 +67,7 @@ public class PostAdapter
     private Post highlightedPost;
     private String highlightedPostId;
     private int highlightedPostNo = -1;
-    private String highlightedPostTripcode;
+    private CharSequence highlightedPostTripcode;
     private int selectedPost = -1;
     private int lastSeenIndicatorPosition = -1;
 
@@ -354,7 +354,7 @@ public class PostAdapter
         notifyDataSetChanged();
     }
 
-    public void highlightPostTripcode(String tripcode) {
+    public void highlightPostTripcode(CharSequence tripcode) {
         highlightedPost = null;
         highlightedPostId = null;
         highlightedPostNo = -1;

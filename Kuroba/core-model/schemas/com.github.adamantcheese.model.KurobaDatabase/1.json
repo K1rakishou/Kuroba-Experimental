@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a3288f42fd05eb6d410148635243e135",
+    "identityHash": "e287351262637708077345ea4af064fd",
     "entities": [
       {
         "tableName": "chan_board",
@@ -176,7 +176,7 @@
       },
       {
         "tableName": "chan_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `unix_timestamp_seconds` INTEGER NOT NULL, `id_color` INTEGER NOT NULL, `filter_highlighted_color` INTEGER NOT NULL, `post_comment` TEXT NOT NULL, `subject` TEXT, `name` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `subject_span` TEXT, `name_tripcode_id_capcode_span` TEXT, `is_op` INTEGER NOT NULL, `is_light_color` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `timestamp_seconds` INTEGER NOT NULL, `name` TEXT, `post_comment` TEXT, `subject` TEXT, `tripcode` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `is_op` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postId",
@@ -197,38 +197,26 @@
             "notNull": true
           },
           {
-            "fieldPath": "unixTimestampSeconds",
-            "columnName": "unix_timestamp_seconds",
+            "fieldPath": "timestamp",
+            "columnName": "timestamp_seconds",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "idColor",
-            "columnName": "id_color",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "filterHighlightedColor",
-            "columnName": "filter_highlighted_color",
-            "affinity": "INTEGER",
-            "notNull": true
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "postComment",
             "columnName": "post_comment",
             "affinity": "TEXT",
-            "notNull": true
+            "notNull": false
           },
           {
             "fieldPath": "subject",
             "columnName": "subject",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -251,26 +239,8 @@
             "notNull": false
           },
           {
-            "fieldPath": "subjectSpan",
-            "columnName": "subject_span",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "nameTripcodeIdCapcodeSpan",
-            "columnName": "name_tripcode_id_capcode_span",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
             "fieldPath": "isOp",
             "columnName": "is_op",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "isLightColor",
-            "columnName": "is_light_color",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -674,7 +644,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a3288f42fd05eb6d410148635243e135')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e287351262637708077345ea4af064fd')"
     ]
   }
 }

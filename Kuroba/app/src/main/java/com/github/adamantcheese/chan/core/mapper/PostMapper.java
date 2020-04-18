@@ -2,30 +2,28 @@ package com.github.adamantcheese.chan.core.mapper;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.save.SerializablePost;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.serializable.SerializablePost;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class PostMapper {
     private static final String TAG = "PostMapper";
-    private static final Comparator<Post> POST_COMPARATOR = (p1, p2) -> Long.compare(p1.no, p2.no);
 
-    public static SerializablePost toSerializablePost(Post post) {
+    public static SerializablePost toSerializablePost(Gson gson, Post post) {
         return new SerializablePost(
                 post.boardId,
                 BoardMapper.toSerializableBoard(post.board),
                 post.no,
                 post.isOP,
                 post.name,
-                SpannableStringMapper.serializeSpannableString(post.getComment()),
-                SpannableStringMapper.serializeSpannableString(post.subject),
+                SpannableStringMapper.serializeSpannableString(gson, post.getComment()),
+                SpannableStringMapper.serializeSpannableString(gson, post.subject),
                 post.time,
                 PostImageMapper.toSerializablePostImageList(post.getPostImages()),
-                post.tripcode,
+                SpannableStringMapper.serializeSpannableString(gson, post.tripcode),
                 post.id,
                 post.opId,
                 post.capcode,
@@ -33,11 +31,11 @@ public class PostMapper {
                 post.getPostFilter().getFilterHighlightedColor(),
                 post.getPostFilter().getFilterStub(),
                 post.getPostFilter().getFilterRemove(),
+                post.getPostFilter().getFilterWatch(),
                 post.getPostFilter().getFilterReplies(),
                 post.getPostFilter().getFilterOnlyOP(),
                 post.getPostFilter().getFilterSaved(),
                 post.getRepliesTo(),
-                SpannableStringMapper.serializeSpannableString(post.nameTripcodeIdCapcodeSpan),
                 post.deleted.get(),
                 post.getRepliesFrom(),
                 post.isSticky(),
@@ -51,29 +49,45 @@ public class PostMapper {
         );
     }
 
-    public static List<SerializablePost> toSerializablePostList(List<Post> postList) {
+    public static List<SerializablePost> toSerializablePostList(Gson gson, List<Post> postList) {
         List<SerializablePost> serializablePostList = new ArrayList<>(postList.size());
 
         for (Post post : postList) {
-            serializablePostList.add(toSerializablePost(post));
+            serializablePostList.add(toSerializablePost(gson, post));
         }
 
         return serializablePostList;
     }
 
-    public static Post fromSerializedPost(Loadable loadable, SerializablePost serializablePost) {
-        CharSequence subject = SpannableStringMapper.deserializeSpannableString(serializablePost.getSubject());
-        CharSequence subjectSpans = subject.length() == 0 ? null : subject;
+    public static Post fromSerializedPost(
+            Gson gson,
+            Loadable loadable,
+            SerializablePost serializablePost
+    ) {
+        CharSequence subject = SpannableStringMapper.deserializeSpannableString(
+                gson,
+                serializablePost.getSubject()
+        );
+        CharSequence tripcode = SpannableStringMapper.deserializeSpannableString(
+                gson,
+                serializablePost.getTripcode()
+        );
 
         Post.Builder postBuilder = new Post.Builder().board(loadable.board)
                 .id(serializablePost.getNo())
                 .op(serializablePost.isOP())
                 .name(serializablePost.getName())
-                .comment(SpannableStringMapper.deserializeSpannableString(serializablePost.getComment()))
-                .subject(subject.toString())
+                .comment(
+                        SpannableStringMapper.deserializeSpannableString(
+                                gson,
+                                serializablePost.getComment())
+                )
+                .subject(subject)
+                .tripcode(tripcode)
                 .setUnixTimestampSeconds(serializablePost.getTime())
-                .postImages(PostImageMapper.fromSerializablePostImageList(serializablePost.getImages()))
-                .tripcode(serializablePost.getTripcode())
+                .postImages(
+                        PostImageMapper.fromSerializablePostImageList(serializablePost.getImages())
+                )
                 .opId(serializablePost.getOpId())
                 .moderatorCapcode(serializablePost.getCapcode())
                 .isSavedReply(serializablePost.isSavedReply())
@@ -81,17 +95,12 @@ public class PostMapper {
                         serializablePost.getFilterHighlightedColor(),
                         serializablePost.isFilterStub(),
                         serializablePost.isFilterRemove(),
-                        // always false, doesn't make sense and may break everything otherwise
-                        false,
+                        serializablePost.isFilterWatch(),
                         serializablePost.isFilterReplies(),
                         serializablePost.isFilterOnlyOP(),
                         serializablePost.isFilterSaved()
                 )
                 .repliesTo(serializablePost.getRepliesTo())
-                .spans(
-                        subjectSpans,
-                        SpannableStringMapper.deserializeSpannableString(serializablePost.getNameTripcodeIdCapcodeSpan())
-                )
                 .sticky(serializablePost.isSticky())
                 .archived(serializablePost.isArchived())
                 .replies(serializablePost.getReplies())
@@ -106,13 +115,17 @@ public class PostMapper {
         return post;
     }
 
-    public static List<Post> fromSerializedPostList(Loadable loadable, List<SerializablePost> serializablePostList) {
+    public static List<Post> fromSerializedPostList(
+            Gson gson,
+            Loadable loadable,
+            List<SerializablePost> serializablePostList
+    ) {
         List<Post> posts = new ArrayList<>(serializablePostList.size());
         Throwable firstException = null;
 
         for (SerializablePost serializablePost : serializablePostList) {
             try {
-                posts.add(fromSerializedPost(loadable, serializablePost));
+                posts.add(fromSerializedPost(gson, loadable, serializablePost));
             } catch (Throwable error) {
                 // Skip post if could not deserialize
                 if (firstException == null) {
@@ -124,10 +137,10 @@ public class PostMapper {
         }
 
         if (firstException != null) {
-            Logger.e(TAG, "There were at least one exception thrown while trying to deserialize posts", firstException);
+            Logger.e(TAG, "There were at least one exception thrown while " +
+                    "trying to deserialize posts", firstException);
         }
 
-        Collections.sort(posts, POST_COMPARATOR);
         return posts;
     }
 }

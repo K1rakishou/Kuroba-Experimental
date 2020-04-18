@@ -10,11 +10,13 @@ import com.github.adamantcheese.model.mapper.ChanPostHttpIconMapper
 import com.github.adamantcheese.model.mapper.ChanPostImageMapper
 import com.github.adamantcheese.model.mapper.ChanPostMapper
 import com.github.adamantcheese.model.mapper.ChanThreadMapper
+import com.google.gson.Gson
 
 class ChanPostLocalSource(
         database: KurobaDatabase,
         loggerTag: String,
-        private val logger: Logger
+        private val logger: Logger,
+        private val gson: Gson
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag ChanPostLocalSource"
     private val chanBoardDao = database.chanBoardDao()
@@ -66,7 +68,7 @@ class ChanPostLocalSource(
             val chanPostEntityId = chanPostDao.insertOrUpdate(
                     chanThreadId,
                     chanPostUnparsed.postDescriptor.postNo,
-                    ChanPostMapper.toEntity(chanThreadId, chanPostUnparsed)
+                    ChanPostMapper.toEntity(gson, chanThreadId, chanPostUnparsed)
             )
 
             chanPostUnparsed.postImages.forEach { postImage ->
@@ -90,7 +92,7 @@ class ChanPostLocalSource(
             val chanPostEntityId = chanPostDao.insertOrUpdate(
                     chanThreadEntityId,
                     chanPostUnparsed.postDescriptor.postNo,
-                    ChanPostMapper.toEntity(chanThreadEntityId, chanPostUnparsed)
+                    ChanPostMapper.toEntity(gson, chanThreadEntityId, chanPostUnparsed)
             )
 
             chanPostUnparsed.postImages.forEach { postImage ->
@@ -122,7 +124,9 @@ class ChanPostLocalSource(
 
         val chanThreadEntityList = originalPostNoList
                 .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .flatMap { chunk -> chanThreadDao.selectManyByThreadNoList(chanBoardEntity.boardId, chunk) }
+                .flatMap { chunk ->
+                    chanThreadDao.selectManyByThreadNoList(chanBoardEntity.boardId, chunk)
+                }
 
         if (chanThreadEntityList.isEmpty()) {
             return emptyList()
@@ -142,7 +146,9 @@ class ChanPostLocalSource(
                 //      POST_NO_COLUMN_NAME IN (:postNoList)
                 //
                 //  Which I have no idea how to do and whether would it even work or not
-                .mapNotNull { (threadId, threadNo) -> chanPostDao.selectByThreadIdAndPostNo(threadId, threadNo) }
+                .mapNotNull { (threadId, threadNo) ->
+                    chanPostDao.selectByThreadIdAndPostNo(threadId, threadNo)
+                }
                 .associateBy { chanPostEntity -> chanPostEntity.ownerThreadId }
 
         val unparsedPosts = chanThreadEntityList.map { chanThreadEntity ->
@@ -150,7 +156,7 @@ class ChanPostLocalSource(
                 "Couldn't find post info for original post with id (${chanThreadEntity.threadId})"
             }
 
-            return@map ChanThreadMapper.fromEntity(descriptor, chanThreadEntity, chanPostEntity)
+            return@map ChanThreadMapper.fromEntity(gson, descriptor, chanThreadEntity, chanPostEntity)
         }
 
         val postIdList = unparsedPosts.map { it.databasePostId }
@@ -215,7 +221,9 @@ class ChanPostLocalSource(
                 .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
 
         val unparsedPosts = chanPostEntityList
-                .mapNotNull { chanPostEntity -> ChanPostMapper.fromEntity(descriptor, null, chanPostEntity) }
+                .mapNotNull { chanPostEntity ->
+                    ChanPostMapper.fromEntity(gson, descriptor, null, chanPostEntity)
+                }
 
         unparsedPosts.forEach { unparsedPost ->
             val postImages = postImageByPostIdMap[unparsedPost.databasePostId]

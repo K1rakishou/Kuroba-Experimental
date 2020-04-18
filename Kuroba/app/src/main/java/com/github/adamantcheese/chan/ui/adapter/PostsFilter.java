@@ -117,7 +117,9 @@ public class PostsFilter {
                 add = false;
                 if (item.getComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                     add = true;
-                } else if (item.subject.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                } else if (item.subject != null &&
+                                item.subject.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)
+                ) {
                     add = true;
                 } else if (item.name.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
                     add = true;

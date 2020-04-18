@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.data.post
 
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 
 class ChanPostUnparsed(
         val databasePostId: Long,
@@ -14,19 +15,14 @@ class ChanPostUnparsed(
         var sticky: Boolean = false,
         var closed: Boolean = false,
         var archived: Boolean = false,
-        var unixTimestampSeconds: Long = -1L,
-        var idColor: Int = 0,
-        var filterHighlightedColor: Int = 0,
-        var postComment: CharSequence = "",
-        var subject: String? = null,
+        var timestamp: Long = -1L,
+        var postComment: SerializableSpannableString = SerializableSpannableString(),
+        var subject: SerializableSpannableString = SerializableSpannableString(),
+        var tripcode: SerializableSpannableString = SerializableSpannableString(),
         var name: String? = null,
-        var tripcode: String? = null,
         var posterId: String? = null,
         var moderatorCapcode: String? = null,
-        var subjectSpan: CharSequence? = null,
-        var nameTripcodeIdCapcodeSpan: CharSequence? = null,
         var isOp: Boolean = false,
-        var isLightColor: Boolean = false,
         var isSavedReply: Boolean = false
 ) {
 
@@ -43,7 +39,6 @@ class ChanPostUnparsed(
         if (tripcode != other.tripcode) return false
         if (posterId != other.posterId) return false
         if (moderatorCapcode != other.moderatorCapcode) return false
-        if (subjectSpan != other.subjectSpan) return false
 
         return true
     }
@@ -53,12 +48,11 @@ class ChanPostUnparsed(
         result = 31 * result + postDescriptor.hashCode()
         result = 31 * result + postImages.hashCode()
         result = 31 * result + postComment.hashCode()
-        result = 31 * result + (subject?.hashCode() ?: 0)
+        result = 31 * result + (subject.hashCode() ?: 0)
         result = 31 * result + (name?.hashCode() ?: 0)
-        result = 31 * result + (tripcode?.hashCode() ?: 0)
+        result = 31 * result + (tripcode.hashCode() ?: 0)
         result = 31 * result + (posterId?.hashCode() ?: 0)
         result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
-        result = 31 * result + (subjectSpan?.hashCode() ?: 0)
         return result
     }
 
@@ -68,7 +62,7 @@ class ChanPostUnparsed(
                 ", postDescriptor=" + postDescriptor +
                 ", isOp=" + isOp +
                 ", subject='" + subject + '\'' +
-                ", postComment=" + postComment.take(64) +
+                ", postComment=" + postComment.text.take(64) +
                 '}'
     }
 

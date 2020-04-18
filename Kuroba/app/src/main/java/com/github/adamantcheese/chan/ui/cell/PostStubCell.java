@@ -189,8 +189,8 @@ public class PostStubCell
             throw new NullPointerException("Callback is null during bindPost()");
         }
 
-        if (!TextUtils.isEmpty(post.subjectSpan)) {
-            title.setText(post.subjectSpan);
+        if (!TextUtils.isEmpty(post.subject)) {
+            title.setText(post.subject);
         } else {
             CharSequence titleText;
             if (post.getComment().length() > TITLE_MAX_LENGTH) {

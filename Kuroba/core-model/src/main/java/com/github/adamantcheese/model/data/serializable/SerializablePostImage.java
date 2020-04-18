@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.model.save;
+package com.github.adamantcheese.model.data.serializable;
 
 import androidx.annotation.Nullable;
 

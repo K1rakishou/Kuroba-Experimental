@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.model.di.DatabaseComponent;
+import com.github.adamantcheese.model.di.MainComponent;
 import com.github.adamantcheese.model.repository.ArchivesRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
@@ -12,39 +12,39 @@ import org.codejargon.feather.Provides;
 import javax.inject.Singleton;
 
 public class RoomDatabaseModule {
-    private DatabaseComponent databaseComponent;
+    private MainComponent mainComponent;
 
-    public RoomDatabaseModule(DatabaseComponent databaseComponent) {
-        this.databaseComponent = databaseComponent;
+    public RoomDatabaseModule(MainComponent mainComponent) {
+        this.mainComponent = mainComponent;
     }
 
     @Provides
     @Singleton
     public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository() {
-        return databaseComponent.getMediaServiceLinkExtraContentRepository();
+        return mainComponent.getMediaServiceLinkExtraContentRepository();
     }
 
     @Provides
     @Singleton
     public SeenPostRepository provideSeenPostRepository() {
-        return databaseComponent.getSeenPostRepository();
+        return mainComponent.getSeenPostRepository();
     }
 
     @Provides
     @Singleton
     public InlinedFileInfoRepository provideInlinedFileInfoRepository() {
-        return databaseComponent.getInlinedFileInfoRepository();
+        return mainComponent.getInlinedFileInfoRepository();
     }
 
     @Provides
     @Singleton
     public ChanPostRepository provideChanPostRepository() {
-        return databaseComponent.getChanPostRepository();
+        return mainComponent.getChanPostRepository();
     }
 
     @Provides
     @Singleton
     public ArchivesRepository provideArchivesRepository() {
-        return databaseComponent.getArchivesRepository();
+        return mainComponent.getArchivesRepository();
     }
 }

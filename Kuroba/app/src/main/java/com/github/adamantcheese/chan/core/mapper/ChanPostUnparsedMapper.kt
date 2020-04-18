@@ -4,11 +4,32 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostUnparsed
+import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
+import com.google.gson.Gson
 
 object ChanPostUnparsedMapper {
 
     @JvmStatic
-    fun fromPostBuilder(postDescriptor: PostDescriptor, postBuilder: Post.Builder): ChanPostUnparsed {
+    fun fromPostBuilder(
+            gson: Gson,
+            postDescriptor: PostDescriptor,
+            postBuilder: Post.Builder
+    ): ChanPostUnparsed {
+        val postComment = SpannableStringMapper.serializeSpannableString(
+                gson,
+                postBuilder.postCommentBuilder.getComment()
+        ) ?: SerializableSpannableString()
+
+        val subject = SpannableStringMapper.serializeSpannableString(
+                gson,
+                postBuilder.subject
+        ) ?: SerializableSpannableString()
+
+        val tripcode = SpannableStringMapper.serializeSpannableString(
+                gson,
+                postBuilder.tripcode
+        ) ?: SerializableSpannableString()
+
         return ChanPostUnparsed(
                 databasePostId = 0L,
                 postDescriptor = postDescriptor,
@@ -22,29 +43,43 @@ object ChanPostUnparsedMapper {
                 threadImagesCount = postBuilder.threadImagesCount,
                 uniqueIps = postBuilder.uniqueIps,
                 lastModified = postBuilder.lastModified,
-                unixTimestampSeconds = postBuilder.unixTimestampSeconds,
-                idColor = postBuilder.idColor,
-                filterHighlightedColor = postBuilder.filterHighlightedColor,
-                postComment = postBuilder.postCommentBuilder.getComment(),
-                subject = postBuilder.subject,
+                timestamp = postBuilder.unixTimestampSeconds,
                 name = postBuilder.name,
-                tripcode = postBuilder.tripcode,
+                postComment = postComment,
+                subject = subject,
+                tripcode = tripcode,
                 posterId = postBuilder.posterId,
                 moderatorCapcode = postBuilder.moderatorCapcode,
-                subjectSpan = postBuilder.subjectSpan,
-                nameTripcodeIdCapcodeSpan = postBuilder.nameTripcodeIdCapcodeSpan,
                 isOp = postBuilder.op,
                 sticky = postBuilder.sticky,
                 closed = postBuilder.closed,
                 archived = postBuilder.archived,
-                isLightColor = postBuilder.isLightColor,
                 isSavedReply = postBuilder.isSavedReply
         )
     }
 
     @JvmStatic
-    fun toPostBuilder(board: Board, chanPostUnparsed: ChanPostUnparsed): Post.Builder {
+    fun toPostBuilder(
+            gson: Gson,
+            board: Board,
+            chanPostUnparsed: ChanPostUnparsed
+    ): Post.Builder {
         val opId = chanPostUnparsed.postDescriptor.getThreadNo()
+
+        val postComment = SpannableStringMapper.deserializeSpannableString(
+                gson,
+                chanPostUnparsed.postComment
+        )
+
+        val subject = SpannableStringMapper.deserializeSpannableString(
+                gson,
+                chanPostUnparsed.subject
+        )
+
+        val tripcode = SpannableStringMapper.deserializeSpannableString(
+                gson,
+                chanPostUnparsed.tripcode
+        )
 
         val postBuilder = Post.Builder()
                 .board(board)
@@ -58,10 +93,10 @@ object ChanPostUnparsedMapper {
                 .closed(chanPostUnparsed.closed)
                 .archived(chanPostUnparsed.archived)
                 .lastModified(chanPostUnparsed.lastModified)
-                .subject(chanPostUnparsed.subject)
                 .name(chanPostUnparsed.name)
-                .tripcode(chanPostUnparsed.tripcode)
-                .setUnixTimestampSeconds(chanPostUnparsed.unixTimestampSeconds)
+                .subject(subject)
+                .tripcode(tripcode)
+                .setUnixTimestampSeconds(chanPostUnparsed.timestamp)
                 .postImages(chanPostUnparsed.postImages.map { chanPostImageUnparsed ->
                     ChanPostImageUnparsedMapper.toPostImage(chanPostImageUnparsed)
                 })
@@ -71,9 +106,8 @@ object ChanPostUnparsedMapper {
                 .posterId(chanPostUnparsed.posterId)
                 .moderatorCapcode(chanPostUnparsed.moderatorCapcode)
                 .isSavedReply(chanPostUnparsed.isSavedReply)
-                .spans(chanPostUnparsed.subjectSpan, chanPostUnparsed.nameTripcodeIdCapcodeSpan)
 
-        postBuilder.postCommentBuilder.setComment(chanPostUnparsed.postComment)
+        postBuilder.postCommentBuilder.setComment(postComment)
         return postBuilder
     }
 

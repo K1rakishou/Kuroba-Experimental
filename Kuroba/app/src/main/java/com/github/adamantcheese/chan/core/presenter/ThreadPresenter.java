@@ -1434,9 +1434,9 @@ public class ThreadPresenter
 
         void highlightPostId(String id);
 
-        void highlightPostTripcode(String tripcode);
+        void highlightPostTripcode(CharSequence tripcode);
 
-        void filterPostTripcode(String tripcode);
+        void filterPostTripcode(CharSequence tripcode);
 
         void filterPostImageHash(Post post);
 
