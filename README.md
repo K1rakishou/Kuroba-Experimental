@@ -35,6 +35,11 @@ bugs will most likely be similar too).
 etc). (This one is already implemented and tested).
 - Third-party archives support. (Load deleted posts/images etc).
 
+### Why does it not say that this is a fork of Kuroba on github page?
+Because Github does not allow to create two separate forks of the same repo. So I decided to create a new, standalone
+ repository. This, actually, has benifits, like, it's now possible to use repository search function which Github does
+ not allow for forks.
+
 # 
 
 Kuroba is a fast Android app for browsing imageboards, such as 4chan and 8chan. It adds inline replying, thread watching, notifications, themes, pass support, filters and a whole lot more. It is based on Clover by Floens, but has additional features added in because Floens doesn't want to merge PRs. Credits to K1rakishou for a number of features.
