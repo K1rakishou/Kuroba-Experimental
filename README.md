@@ -1,16 +1,41 @@
-[![Build Status](https://travis-ci.org/Adamantcheese/Kuroba.svg?branch=multi-feature)](https://travis-ci.org/Adamantcheese/Kuroba)
 
-# Kuroba - imageboard browser for Android
-## All releases are less dev than actual dev. Do not assume they are stable, but they're more stable than actual dev.
+# Kuroba Experimental (Temp name)
 
-Releases are built by Adamantcheese whenever enough changes have been made and the application is fairly stable:
-### [Latest Release APK](https://github.com/Adamantcheese/Kuroba/releases/latest/download/Kuroba.apk)
-### [All Release APKs](https://github.com/Adamantcheese/Kuroba/releases)
+### What is this?
+A fork of Kuroba where new features will be implemented and tested before getting merged into the main repo (or maybe 
+they won't).
+This is an experimental repo so I'm going to do a lot of refactoring and code rewriting to the new Android stack 
+(Kotlin, RxJava/Coroutines, Room, Work Manager etc).
 
-DEV releases are provided by K1rakishou on his server (they are built and uploaded after every new commit):
-### [Latest DEV APK](https://kuroba.io:8443/latest_apk)
-### [All DEV APKs](https://kuroba.io:8443/)
+The main reason for this fork to come alive is because most of my features are huge, they change a lot of code throughout
+the whole app and it's really hard to review them and I have lots of other idea which will require even more code changes
+ so we (with Adamantcheese) decided that it will be easier for both of us if I just do my own fork. 
+ 
+### Where do I get the APK?
+For now there is no APK because all the new features are WIP.
 
+### Is this a separate app? Will I have to install this alongside the other Kuroba app?
+Yes, because I will be using my own keys to sign the APK.
+
+### Will there be a dev and release versions too?
+Yes, most likely.
+
+### Will there be auto updating too?
+Yes, most likely.
+
+### F-droid support?
+Yes, most likely.
+
+### Can I create issues in this repo?
+Yes, if they are related to this particular version (for now the code base is very similar to original Kuroba so the 
+bugs will most likely be similar too).
+
+### What are the new features that are currently being worked on?
+- On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
+etc). (This one is already implemented and tested).
+- Third-party archives support. (Load deleted posts/images etc).
+
+# 
 
 Kuroba is a fast Android app for browsing imageboards, such as 4chan and 8chan. It adds inline replying, thread watching, notifications, themes, pass support, filters and a whole lot more. It is based on Clover by Floens, but has additional features added in because Floens doesn't want to merge PRs. Credits to K1rakishou for a number of features.
 #### [A full feature list can be found here.](https://gist.github.com/Adamantcheese/0c15a36ab983e7829f91f1248ab28844)
