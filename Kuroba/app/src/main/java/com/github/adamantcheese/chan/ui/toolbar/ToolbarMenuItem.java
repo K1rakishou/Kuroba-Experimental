@@ -22,6 +22,8 @@ import android.graphics.drawable.TransitionDrawable;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
@@ -32,7 +34,7 @@ import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.removeFromParentView;
 
 /**
@@ -60,7 +62,7 @@ public class ToolbarMenuItem {
     private ImageView view;
 
     public ToolbarMenuItem(int id, int drawable, ClickCallback clicked) {
-        this(id, getAppContext().getDrawable(drawable), clicked);
+        this(id, ResourcesCompat.getDrawable(getRes(), drawable, null), clicked);
     }
 
     public ToolbarMenuItem(int id, Drawable drawable, ClickCallback clicked) {
@@ -73,7 +75,7 @@ public class ToolbarMenuItem {
             int id, int drawable, ClickCallback clicked, @Nullable ToobarThreedotMenuCallback threedotMenuCallback
     ) {
         this.id = id;
-        this.drawable = getAppContext().getDrawable(drawable);
+        this.drawable = ResourcesCompat.getDrawable(getRes(), drawable, null);
         this.clicked = clicked;
         this.threedotMenuCallback = threedotMenuCallback;
     }
@@ -119,17 +121,19 @@ public class ToolbarMenuItem {
             if (!enabled) {
                 view.setClickable(false);
                 view.setFocusable(false);
-                view.getDrawable().setTint(Color.GRAY);
+
+                DrawableCompat.setTint(view.getDrawable(), Color.GRAY);
             } else {
                 view.setClickable(true);
                 view.setFocusable(true);
-                view.getDrawable().setTint(Color.WHITE);
+
+                DrawableCompat.setTint(view.getDrawable(), Color.WHITE);
             }
         }
     }
 
     public void setImage(int drawable) {
-        setImage(getAppContext().getDrawable(drawable));
+        setImage(ResourcesCompat.getDrawable(getRes(), drawable, null));
     }
 
     public void setImage(Drawable drawable) {

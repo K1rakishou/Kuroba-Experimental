@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.model;
 
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.BuildConfig;
@@ -170,6 +169,7 @@ public class PostImage {
         private boolean spoiler;
         private boolean isInlined = false;
         private long size;
+        private boolean deleted = false;
         @Nullable
         private String fileHash;
 
@@ -191,9 +191,11 @@ public class PostImage {
             return this;
         }
 
-        public Builder imageUrl(@NonNull HttpUrl imageUrl) {
+        public Builder imageUrl(@Nullable HttpUrl imageUrl) {
             if (imageUrl == null) {
-                throw new NullPointerException("imageUrl must not be null!");
+                // imageUrl can actually be null (for example when an archive only store thumbnails
+                // but not the actual images)
+                return this;
             }
 
             this.imageUrl = HttpUrl.parse(imageUrl.toString().replace("http://", "https://"));
@@ -244,6 +246,11 @@ public class PostImage {
                 }
             }
 
+            return this;
+        }
+
+        public Builder deleted(boolean deleted) {
+            this.deleted = deleted;
             return this;
         }
 

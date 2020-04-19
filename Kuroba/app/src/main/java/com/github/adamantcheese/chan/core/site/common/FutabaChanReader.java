@@ -266,7 +266,7 @@ public class FutabaChanReader
             op.closed(builder.closed);
             op.archived(builder.archived);
             op.sticky(builder.sticky);
-            op.replies(builder.replies);
+            op.replies(builder.totalRepliesCount);
             op.threadImagesCount(builder.threadImagesCount);
             op.uniqueIps(builder.uniqueIps);
             op.lastModified(builder.lastModified);

@@ -36,7 +36,7 @@ import static com.github.adamantcheese.chan.Chan.inject;
 public class PostsFilter {
     private static final Comparator<Post> IMAGE_COMPARATOR = (lhs, rhs) -> rhs.getThreadImagesCount() - lhs.getThreadImagesCount();
 
-    private static final Comparator<Post> REPLY_COMPARATOR = (lhs, rhs) -> rhs.getReplies() - lhs.getReplies();
+    private static final Comparator<Post> REPLY_COMPARATOR = (lhs, rhs) -> rhs.getTotalRepliesCount() - lhs.getTotalRepliesCount();
 
     private static final Comparator<Post> NEWEST_COMPARATOR = (lhs, rhs) -> (int) (rhs.time - lhs.time);
 
@@ -49,11 +49,11 @@ public class PostsFilter {
         long currentTimeSeconds = System.currentTimeMillis() / 1000;
 
         //we can't divide by zero, but we can divide by the smallest thing that's closest to 0 instead
-        long score1 = (long) ((currentTimeSeconds - lhs.time) / (lhs.getReplies() != 0
-                ? lhs.getReplies()
+        long score1 = (long) ((currentTimeSeconds - lhs.time) / (lhs.getTotalRepliesCount() != 0
+                ? lhs.getTotalRepliesCount()
                 : Float.MIN_NORMAL));
-        long score2 = (long) ((currentTimeSeconds - rhs.time) / (rhs.getReplies() != 0
-                ? rhs.getReplies()
+        long score2 = (long) ((currentTimeSeconds - rhs.time) / (rhs.getTotalRepliesCount() != 0
+                ? rhs.getTotalRepliesCount()
                 : Float.MIN_NORMAL));
 
         return Long.compare(score1, score2);

@@ -54,7 +54,9 @@ class ChanPostLocalSource(
                     ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
             )
 
-            return@map insertPostFullyInternal(chanThreadId, chanPost)
+            insertPostFullyInternal(chanThreadId, chanPost)
+
+            return@map chanThreadId
         }
     }
 
@@ -328,7 +330,10 @@ class ChanPostLocalSource(
             return null
         }
 
-        return chanThreadDao.select(chanBoardEntity.boardId, postDescriptor.getThreadNo())?.threadId
+        return chanThreadDao.select(
+                chanBoardEntity.boardId,
+                postDescriptor.getThreadNo()
+        )?.threadId
     }
 
     private suspend fun getThreadByThreadDescriptor(

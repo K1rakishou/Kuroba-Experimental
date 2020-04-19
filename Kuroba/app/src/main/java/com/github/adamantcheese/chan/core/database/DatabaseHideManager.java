@@ -271,7 +271,7 @@ public class DatabaseHideManager {
                 .opId(childPost.opNo)
                 .id(childPost.no)
                 .op(childPost.isOP)
-                .replies(childPost.getReplies())
+                .replies(childPost.getTotalRepliesCount())
                 .threadImagesCount(childPost.getThreadImagesCount())
                 .uniqueIps(childPost.getUniqueIps())
                 .sticky(childPost.isSticky())

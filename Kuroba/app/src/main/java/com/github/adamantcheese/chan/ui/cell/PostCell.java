@@ -385,7 +385,7 @@ public class PostCell
             bindCatalogPost(commentText);
         }
 
-        if ((!threadMode && post.getReplies() > 0) || (post.getRepliesFromCount() > 0)) {
+        if ((!threadMode && post.getTotalRepliesCount() > 0) || (post.getRepliesFromCount() > 0)) {
             bindRepliesWithImageCountText(post, post.getRepliesFromCount());
         } else {
             bindRepliesText();
@@ -458,12 +458,12 @@ public class PostCell
     private void bindTitle(Theme theme, Post post) {
         List<CharSequence> titleParts = new ArrayList<>(5);
 
-        if (post.subject != null) {
+        if (post.subject != null && post.subject.length() > 0) {
             titleParts.add(post.subject);
             titleParts.add("\n");
         }
 
-        if (post.tripcode != null) {
+        if (post.tripcode != null && post.tripcode.length() > 0) {
             titleParts.add(post.tripcode);
         }
 
@@ -578,7 +578,7 @@ public class PostCell
         replies.setVisibility(VISIBLE);
         repliesAdditionalArea.setVisibility(VISIBLE);
 
-        int replyCount = threadMode ? repliesFromSize : post.getReplies();
+        int replyCount = threadMode ? repliesFromSize : post.getTotalRepliesCount();
         String text = getQuantityString(R.plurals.reply, replyCount, replyCount);
 
         if (!threadMode && post.getThreadImagesCount() > 0) {

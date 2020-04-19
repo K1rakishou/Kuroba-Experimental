@@ -18,14 +18,16 @@ class ArchivesRepository(
     fun fetchThreadFromNetworkBlocking(
             threadArchiveRequestLink: String,
             threadNo: Long,
-            supportsFiles: Boolean
-    ): ModularResult<List<ArchivesRemoteSource.ArchivePost>> {
+            supportsMediaThumbnails: Boolean,
+            supportsMedia: Boolean
+    ): ModularResult<ArchivesRemoteSource.ArchiveThread> {
         return runBlocking {
             return@runBlocking safeRun {
                 return@safeRun remoteSource.fetchThreadFromNetwork(
                         threadArchiveRequestLink,
                         threadNo,
-                        supportsFiles
+                        supportsMediaThumbnails,
+                        supportsMedia
                 )
             }
         }

@@ -41,7 +41,7 @@ public class PostMapper {
                 post.isSticky(),
                 post.isClosed(),
                 post.isArchived(),
-                post.getReplies(),
+                post.getTotalRepliesCount(),
                 post.getThreadImagesCount(),
                 post.getUniqueIps(),
                 post.getLastModified(),

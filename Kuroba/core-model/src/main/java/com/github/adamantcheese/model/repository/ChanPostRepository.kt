@@ -114,7 +114,14 @@ class ChanPostRepository(
         }
 
         val chanThreadId = if (originalPost != null) {
-            localSource.insertOriginalPost(originalPost!!)
+            val chanThreadId = localSource.insertOriginalPost(originalPost!!)
+            postCache.putIntoCache(
+                    originalPost!!.postDescriptor.descriptor,
+                    originalPost!!.postDescriptor,
+                    originalPost!!
+            )
+
+            chanThreadId
         } else {
             if (postsThatDifferWithCache.isNotEmpty()) {
                 localSource.getThreadIdByPostDescriptor(

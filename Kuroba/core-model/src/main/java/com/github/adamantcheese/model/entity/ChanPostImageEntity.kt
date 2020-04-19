@@ -22,8 +22,11 @@ import okhttp3.HttpUrl
             ),
             Index(
                     name = ChanPostImageEntity.IMAGE_URL_INDEX_NAME,
-                    value = [ChanPostImageEntity.IMAGE_URL_COLUMN_NAME],
-                    unique = true
+                    value = [ChanPostImageEntity.IMAGE_URL_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanPostImageEntity.IMAGE_THUMBNAIL_URL_INDEX_NAME,
+                    value = [ChanPostImageEntity.THUMBNAIL_URL_COLUMN_NAME]
             )
         ]
 )
@@ -40,7 +43,7 @@ data class ChanPostImageEntity(
         @ColumnInfo(name = SPOILER_THUMBNAIL_URL_COLUMN_NAME)
         val spoilerThumbnailUrl: HttpUrl? = null,
         @ColumnInfo(name = IMAGE_URL_COLUMN_NAME)
-        val imageUrl: HttpUrl,
+        val imageUrl: HttpUrl? = null,
         @ColumnInfo(name = FILENAME_COLUMN_NAME)
         val filename: String? = null,
         @ColumnInfo(name = EXTENSION_COLUMN_NAME)
@@ -82,5 +85,6 @@ data class ChanPostImageEntity(
 
         const val OWNER_POST_ID_INDEX_NAME = "${TABLE_NAME}_owner_post_id_idx"
         const val IMAGE_URL_INDEX_NAME = "${TABLE_NAME}_image_url_idx"
+        const val IMAGE_THUMBNAIL_URL_INDEX_NAME = "${TABLE_NAME}_image_thumbnail_url_idx"
     }
 }

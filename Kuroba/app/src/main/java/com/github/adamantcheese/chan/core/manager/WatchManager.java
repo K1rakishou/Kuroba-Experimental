@@ -1168,7 +1168,7 @@ public class WatchManager
 
             chanLoader = chanLoaderManager.obtain(pin.loadable, this);
             chanLoader.setPinWatcherLoader(true);
-            
+
             pageRequestManager.addListener(this);
         }
 
@@ -1269,7 +1269,7 @@ public class WatchManager
         @Override
         public void onChanLoaderData(ChanThread thread) {
             if (thread.getOp() != null) {
-                lastReplyCount = thread.getOp().getReplies();
+                lastReplyCount = thread.getOp().getTotalRepliesCount();
             } else {
                 lastReplyCount = -1;
             }

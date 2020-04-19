@@ -29,6 +29,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
@@ -86,6 +87,7 @@ import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppFileProvider;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAudioManager;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openIntent;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
@@ -94,7 +96,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForMeasure;
 public class MultiImageView
         extends FrameLayout
         implements MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks, AudioListener,
-                   LifecycleObserver {
+        LifecycleObserver {
 
     public enum Mode {
         UNLOADED,
@@ -549,7 +551,14 @@ public class MultiImageView
                         exoVideoView.setControllerHideOnTouch(false);
                         exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING);
                         exoVideoView.setUseArtwork(true);
-                        exoVideoView.setDefaultArtwork(getAppContext().getDrawable(R.drawable.ic_volume_up_white_24dp));
+
+                        exoVideoView.setDefaultArtwork(
+                                ResourcesCompat.getDrawable(
+                                        getRes(),
+                                        R.drawable.ic_volume_up_white_24dp,
+                                        null
+                                )
+                        );
                         exoPlayer.setVolume(getDefaultMuteState() ? 0 : 1);
                         exoPlayer.setPlayWhenReady(true);
                         onModeLoaded(Mode.VIDEO, exoVideoView);
@@ -660,7 +669,14 @@ public class MultiImageView
             exoVideoView.setControllerHideOnTouch(false);
             exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING);
             exoVideoView.setUseArtwork(true);
-            exoVideoView.setDefaultArtwork(getAppContext().getDrawable(R.drawable.ic_volume_up_white_24dp));
+            exoVideoView.setDefaultArtwork(
+                    ResourcesCompat.getDrawable(
+                            getRes(),
+                            R.drawable.ic_volume_up_white_24dp,
+                            null
+                    )
+            );
+
             exoPlayer.setVolume(getDefaultMuteState() ? 0 : 1);
             exoPlayer.setPlayWhenReady(true);
             onModeLoaded(Mode.VIDEO, exoVideoView);
@@ -697,7 +713,8 @@ public class MultiImageView
                 ? (op ? BACKGROUND_COLOR_SFW_OP : BACKGROUND_COLOR_SFW)
                 : (op ? BACKGROUND_COLOR_NSFW_OP : BACKGROUND_COLOR_NSFW);
         View activeView = getActiveView();
-        if (!(activeView instanceof CustomScaleImageView || activeView instanceof GifImageView)) return;
+        if (!(activeView instanceof CustomScaleImageView || activeView instanceof GifImageView))
+            return;
         boolean isImage = activeView instanceof CustomScaleImageView;
         int backgroundColor = !transparentBackground ? Color.TRANSPARENT : boardColor;
         if (isImage) {

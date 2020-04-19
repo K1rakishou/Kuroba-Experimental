@@ -90,6 +90,8 @@ android {
         }
 
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     compileOptions {

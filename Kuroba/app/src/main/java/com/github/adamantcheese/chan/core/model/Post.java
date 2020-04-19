@@ -95,7 +95,7 @@ public class Post
     private boolean sticky;
     private boolean closed;
     private boolean archived;
-    private int replies;
+    private int totalRepliesCount;
     private int threadImagesCount;
     private int uniqueIps;
     private long lastModified;
@@ -117,7 +117,7 @@ public class Post
         no = builder.id;
 
         isOP = builder.op;
-        replies = builder.replies;
+        totalRepliesCount = builder.totalRepliesCount;
         threadImagesCount = builder.threadImagesCount;
         uniqueIps = builder.uniqueIps;
         lastModified = builder.lastModified;
@@ -273,13 +273,13 @@ public class Post
     }
 
     @MainThread
-    public int getReplies() {
-        return replies;
+    public int getTotalRepliesCount() {
+        return totalRepliesCount;
     }
 
     @MainThread
-    public void setReplies(int replies) {
-        this.replies = replies;
+    public void setTotalRepliesCount(int totalRepliesCount) {
+        this.totalRepliesCount = totalRepliesCount;
     }
 
     @MainThread
@@ -381,7 +381,7 @@ public class Post
         public long id = -1;
         public long opId = -1;
         public boolean op;
-        public int replies = -1;
+        public int totalRepliesCount = -1;
         public int threadImagesCount = -1;
         public int uniqueIps = -1;
         public int stickyCap = -1;
@@ -440,7 +440,7 @@ public class Post
         }
 
         public Builder replies(int replies) {
-            this.replies = replies;
+            this.totalRepliesCount = replies;
             return this;
         }
 

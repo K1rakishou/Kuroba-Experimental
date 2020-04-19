@@ -9,32 +9,54 @@ import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import java.io.InputStreamReader
 import java.util.*
+import kotlin.random.Random
 
 class ArchivesManager(
         private val appContext: Context,
         private val gson: Gson
 ) {
     private val archives by lazy { loadArchives() }
+    private val random = Random(System.currentTimeMillis())
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun getArchiveDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchiveDescriptor? {
         if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
             // Only 4chan archives are supported
             return null
         }
 
-        // TODO(archives): !!!!!!!!!!!!!!!!!!!!!
-        val archiveData = archives.filter { archiveData ->
-            archiveData.supportedBoards.contains(threadDescriptor.boardCode())
-        }.firstOrNull { it.domain.contains("archived") }
+        val suitableArchives = archives
+                .filter { archiveData ->
+                    archiveData.supportedBoards.contains(threadDescriptor.boardCode())
+                }
 
-        if (archiveData == null) {
+        if (suitableArchives.isEmpty()) {
             return null
         }
 
-        return ArchiveDescriptor(
-                archiveData.name,
-                archiveData.domain
-        )
+        // Best possible archive is the one that stores media files
+        val bestPossibleArchiveData = suitableArchives.firstOrNull { archiveData ->
+            archiveData.supportedFiles.contains(threadDescriptor.boardCode())
+        }
+
+        if (bestPossibleArchiveData != null) {
+            return ArchiveDescriptor(
+                    bestPossibleArchiveData.name,
+                    bestPossibleArchiveData.domain
+            )
+        }
+
+        // If there are no archives that store media for this board then select one at random
+        val randomArchive = suitableArchives.randomOrNull(random)
+        if (randomArchive != null) {
+            return ArchiveDescriptor(
+                    randomArchive.name,
+                    randomArchive.domain
+            )
+        }
+
+        // For some reason we couldn't find archive for this board at all
+        return null
     }
 
     fun getRequestLinkForThread(
@@ -79,7 +101,7 @@ class ArchivesManager(
         )
     }
 
-    fun doesArchiveSupportsFilesForBoard(
+    fun doesArchiveStoreMedia(
             archiveDescriptor: ArchiveDescriptor,
             boardDescriptor: BoardDescriptor
     ): Boolean {
@@ -91,6 +113,14 @@ class ArchivesManager(
                 ?: return false
 
         return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
+    }
+
+    fun doesArchiveStoreThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
+        return when (archiveDescriptor.domain) {
+            // Archived.moe stores only thumbnails
+            "archived.moe" -> true
+            else -> false
+        }
     }
 
     private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {

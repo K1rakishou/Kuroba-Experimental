@@ -23,6 +23,13 @@ abstract class ChanPostImageDao {
     @Query("""
         SELECT *
         FROM ${ChanPostImageEntity.TABLE_NAME}
+        WHERE ${ChanPostImageEntity.THUMBNAIL_URL_COLUMN_NAME} = :thumbnailUrl
+    """)
+    abstract suspend fun selectByThumbnailUrl(thumbnailUrl: HttpUrl): ChanPostImageEntity?
+
+    @Query("""
+        SELECT *
+        FROM ${ChanPostImageEntity.TABLE_NAME}
         WHERE ${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} IN (:ownerPostIdList)
     """)
     abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostImageEntity>
@@ -35,7 +42,14 @@ abstract class ChanPostImageDao {
     abstract suspend fun selectByServerFileName(serverFileName: String): ChanPostImageEntity?
 
     suspend fun insertOrUpdate(chanPostImageEntity: ChanPostImageEntity) {
-        var prev = selectByImageUrl(chanPostImageEntity.imageUrl)
+        var prev = chanPostImageEntity.imageUrl?.let { imageUrl -> selectByImageUrl(imageUrl) }
+        if (prev != null) {
+            chanPostImageEntity.postImageId = prev.postImageId
+            update(chanPostImageEntity)
+            return
+        }
+
+        prev = chanPostImageEntity.thumbnailUrl?.let { thumbnailUrl -> selectByImageUrl(thumbnailUrl) }
         if (prev != null) {
             chanPostImageEntity.postImageId = prev.postImageId
             update(chanPostImageEntity)

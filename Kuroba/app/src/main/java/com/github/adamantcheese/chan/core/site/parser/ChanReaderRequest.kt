@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper.fromPost
 import com.github.adamantcheese.chan.core.model.Post
@@ -40,6 +41,7 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.c
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.google.gson.Gson
 import okhttp3.HttpUrl
 import java.util.*
@@ -107,8 +109,10 @@ class ChanReaderRequest(
 
         val (archivePosts, archiveFetchDuration) = measureTimedValue {
             return@measureTimedValue getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
-                    .peekError { error -> Logger.e(TAG, "Failed get posts from archive", error) }
-                    .marError { emptyList<Post.Builder>() }
+                    .safeUnwrap { error ->
+                        Logger.e(TAG, "Error while trying to get posts from archive", error)
+                        return@measureTimedValue emptyList<Post.Builder>()
+                    }
         }
 
         val chanDescriptor = getDescriptor(chanReaderProcessor.loadable)
@@ -168,11 +172,14 @@ class ChanReaderRequest(
 
             val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
             val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor)
-
             if (archiveDescriptor == null) {
                 // We probably don't have archives for this site or all archives are dead
+
+                Logger.d(TAG, "No archives for thread descriptor: $threadDescriptor")
                 return@safeRun emptyList()
             }
+
+            Logger.d(TAG, "Got archive descriptor: $archiveDescriptor")
 
             // TODO(archives): check whether it's okay to fetch posts:
             //  1. If it's an automatic thread update, then only fetch new posts once in 1 hour.
@@ -189,66 +196,46 @@ class ChanReaderRequest(
                 return@safeRun emptyList()
             }
 
-            val supportsFiles = archivesManager.doesArchiveSupportsFilesForBoard(
+            val supportsMedia = archivesManager.doesArchiveStoreMedia(
                     archiveDescriptor,
                     loadable.boardDescriptor
             )
 
-            val archivePosts = archivesRepository.fetchThreadFromNetworkBlocking(
+            val supportsMediaThumbnails = archivesManager.doesArchiveStoreThumbnails(archiveDescriptor)
+
+            val archiveThread = archivesRepository.fetchThreadFromNetworkBlocking(
                     threadArchiveRequestLink,
                     threadDescriptor.opNo,
-                    supportsFiles
+                    supportsMediaThumbnails,
+                    supportsMedia
             ).unwrap()
 
-            if (archivePosts.isEmpty()) {
+            if (archiveThread.posts.isEmpty()) {
                 return@safeRun emptyList()
             }
 
             val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
-            val archivePostsNoList = archivePosts.map { archivePost -> archivePost.postNo }
+            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
 
             val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
                     threadDescriptor,
                     archivePostsNoList
             ).unwrap().toSet()
 
-            val archivePostsThatWereDeleted = archivePosts.filter { archivePost ->
+            val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
                 return@filter archivePost.postNo !in freshPostNoSet
                         && archivePost.postNo !in notCachedArchivePostNoSet
             }
 
-            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched ${archivePosts.size} " +
-                    "posts in total and ${archivePostsThatWereDeleted.size} deleted posts")
+            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched " +
+                    "${archiveThread.posts.size} posts in total and " +
+                    "${archivePostsThatWereDeleted.size} deleted posts")
 
-            // TODO(archives): filter out posts that we already have in the DB and in
-            //  freshPostsFromServer, store archive posts, and then return mapped to PostBuilder posts
-
-            return@safeRun emptyList()
-        }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun updateOldPostsInRepository(
-            toUpdate: List<Post>,
-            isCatalog: Boolean
-    ): List<Long> {
-        if (toUpdate.isEmpty()) {
-            return emptyList()
-        }
-
-        val posts: MutableList<ChanPost> = ArrayList(toUpdate.size)
-        for (post in toUpdate) {
-            val postDescriptor = create(
-                    post.board.site.name(),
-                    post.board.code,
-                    post.opNo,
-                    post.no
+            return@safeRun ArchiveThreadMapper.fromThread(
+                    loadable.board,
+                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted)
             )
-
-            posts.add(fromPost(gson, postDescriptor, post))
         }
-
-        return chanPostRepository.insertOrUpdateManyBlocking(posts, isCatalog).unwrap()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -312,7 +299,6 @@ class ChanReaderRequest(
             chanDescriptor: ChanDescriptor
     ): List<Post> {
         return postBuildersToParse
-                .filter { postToParse -> !cachedPostsMap.containsKey(postToParse.id) }
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,

@@ -57,14 +57,6 @@ sealed class ModularResult<V> {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    inline fun <T> marError(mapper: (error: Throwable) -> T): T {
-        return when (this) {
-            is Error -> mapper(error)
-            is Value -> value as T
-        }
-    }
-
     fun ignore() {
         // No-op. Just an indicator that we don't care about handling this result. This is just so
         // it's obvious that the original intention was to ignore handling the result not that it

@@ -30,16 +30,20 @@ object ChanPostMapper {
                 post.tripcode
         ) ?: SerializableSpannableString()
 
+        val postImages = post.postImages.mapNotNull { postImage ->
+            ChanPostImageMapper.fromPostImage(postImage)
+        }.toMutableList()
+
+        val postIcons = post.httpIcons?.map { postHttpIcon ->
+            ChanPostHttpIconMapper.fromPostHttpIcon(postHttpIcon)
+        }?.toMutableList() ?: mutableListOf()
+
         return ChanPost(
                 databasePostId = 0L,
                 postDescriptor = postDescriptor,
-                postImages = post.postImages.mapNotNull { postImage ->
-                    ChanPostImageMapper.fromPostImage(postImage)
-                }.toMutableList(),
-                postIcons = post.httpIcons?.map { postHttpIcon ->
-                    ChanPostHttpIconMapper.fromPostHttpIcon(postHttpIcon)
-                }?.toMutableList() ?: mutableListOf(),
-                replies = post.replies,
+                postImages = postImages,
+                postIcons = postIcons,
+                replies = post.totalRepliesCount,
                 threadImagesCount = post.threadImagesCount,
                 uniqueIps = post.uniqueIps,
                 lastModified = post.lastModified,
@@ -81,6 +85,14 @@ object ChanPostMapper {
                 chanPost.tripcode
         )
 
+        val postImages = chanPost.postImages.map { chanPostImage ->
+            ChanPostImageMapper.toPostImage(chanPostImage)
+        }
+
+        val postIcons = chanPost.postIcons.map { chanPostHttpIcon ->
+            ChanPostHttpIconMapper.toPostIcon(chanPostHttpIcon)
+        }
+
         val postBuilder = Post.Builder()
                 .board(board)
                 .id(chanPost.postDescriptor.postNo)
@@ -97,12 +109,8 @@ object ChanPostMapper {
                 .subject(subject)
                 .tripcode(tripcode)
                 .setUnixTimestampSeconds(chanPost.timestamp)
-                .postImages(chanPost.postImages.map { chanPostImage ->
-                    ChanPostImageMapper.toPostImage(chanPostImage)
-                })
-                .setHttpIcons(chanPost.postIcons.map { chanPostHttpIcon ->
-                    ChanPostHttpIconMapper.toPostIcon(chanPostHttpIcon)
-                })
+                .postImages(postImages)
+                .setHttpIcons(postIcons)
                 .posterId(chanPost.posterId)
                 .moderatorCapcode(chanPost.moderatorCapcode)
                 .isSavedReply(chanPost.isSavedReply)

@@ -6,7 +6,7 @@ class ChanPostImage(
         val serverFilename: String,
         val thumbnailUrl: HttpUrl? = null,
         val spoilerThumbnailUrl: HttpUrl? = null,
-        val imageUrl: HttpUrl,
+        val imageUrl: HttpUrl? = null,
         val filename: String? = null,
         val extension: String? = null,
         val imageWidth: Int = 0,

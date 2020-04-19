@@ -247,7 +247,7 @@ public class CardPostCell
         comment.setText(commentText);
         comment.setTextColor(ThemeHelper.getTheme().textPrimary);
 
-        String status = getString(R.string.card_stats, post.getReplies(), post.getThreadImagesCount());
+        String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
             Chan4PagesRequest.Page p = callback.getPage(post);
             if (p != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {

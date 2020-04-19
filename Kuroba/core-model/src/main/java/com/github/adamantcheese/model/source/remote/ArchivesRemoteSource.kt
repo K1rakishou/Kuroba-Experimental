@@ -20,9 +20,11 @@ class ArchivesRemoteSource(
     open suspend fun fetchThreadFromNetwork(
             threadArchiveRequestLink: String,
             threadNo: Long,
-            supportsFiles: Boolean
-    ): List<ArchivePost> {
-        logger.log(TAG, "fetchThreadFromNetwork($threadArchiveRequestLink)")
+            supportsMediaThumbnails: Boolean,
+            supportsMedia: Boolean
+    ): ArchiveThread {
+        logger.log(TAG, "fetchThreadFromNetwork($threadArchiveRequestLink, $threadNo, " +
+                "$supportsMediaThumbnails, $supportsMedia)")
         ensureBackgroundThread()
 
         val httpRequest = Request.Builder()
@@ -40,14 +42,24 @@ class ArchivesRemoteSource(
 
         return body.byteStream().use { inputStream ->
             return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                    .use { jsonReader -> parsePosts(jsonReader, threadNo, supportsFiles) }
+                    .use { jsonReader ->
+                        val parsedArchivePosts = parsePosts(
+                                jsonReader,
+                                threadNo,
+                                supportsMediaThumbnails,
+                                supportsMedia
+                        )
+
+                        return@use ArchiveThread(parsedArchivePosts)
+                    }
         }
     }
 
     private fun parsePosts(
             jsonReader: JsonReader,
             threadNo: Long,
-            supportsFiles: Boolean
+            supportsMediaThumbnails: Boolean,
+            supportsMedia: Boolean
     ): List<ArchivePost> {
         val archivedPosts = mutableListOf<ArchivePost>()
 
@@ -66,7 +78,11 @@ class ArchivesRemoteSource(
                 while (hasNext()) {
                     when (nextName()) {
                         "op" -> {
-                            val originalPost = readOriginalPost(supportsFiles)
+                            val originalPost = readOriginalPost(
+                                    supportsMediaThumbnails,
+                                    supportsMedia
+                            )
+
                             if (originalPost != null) {
                                 archivedPosts += originalPost
                             }
@@ -78,7 +94,9 @@ class ArchivesRemoteSource(
                                 // wrong and we should abort everything.
                                 skipValue()
                             } else {
-                                archivedPosts.addAll(readRegularPosts(supportsFiles))
+                                archivedPosts.addAll(
+                                        readRegularPosts(supportsMediaThumbnails, supportsMedia)
+                                )
                             }
                         }
                         else -> skipValue()
@@ -95,7 +113,10 @@ class ArchivesRemoteSource(
         return archivedPosts
     }
 
-    private fun JsonReader.readRegularPosts(supportsFiles: Boolean): List<ArchivePost> {
+    private fun JsonReader.readRegularPosts(
+            supportsMediaThumbnails: Boolean,
+            supportsFiles: Boolean
+    ): List<ArchivePost> {
         if (!hasNext()) {
             return emptyList()
         }
@@ -106,7 +127,7 @@ class ArchivesRemoteSource(
             while (hasNext()) {
                 nextName()
 
-                val post = jsonObject { readPost(supportsFiles) }
+                val post = jsonObject { readPost(supportsMediaThumbnails, supportsFiles) }
                 if (!post.isValid()) {
                     continue
                 }
@@ -118,9 +139,12 @@ class ArchivesRemoteSource(
         }
     }
 
-    private fun JsonReader.readOriginalPost(supportsFiles: Boolean): ArchivePost? {
+    private fun JsonReader.readOriginalPost(
+            supportsMediaThumbnails: Boolean,
+            supportsMedia: Boolean
+    ): ArchivePost? {
         return jsonObject {
-            val archivePost = readPost(supportsFiles)
+            val archivePost = readPost(supportsMediaThumbnails, supportsMedia)
             if (!archivePost.isValid()) {
                 logger.logError(TAG, "Invalid archive post: ${archivePost}")
                 return@jsonObject null
@@ -130,7 +154,10 @@ class ArchivesRemoteSource(
         }
     }
 
-    private fun JsonReader.readPost(supportsFiles: Boolean): ArchivePost {
+    private fun JsonReader.readPost(
+            supportsMediaThumbnails: Boolean,
+            supportsMedia: Boolean
+    ): ArchivePost {
         val archivePost = ArchivePost()
 
         while (hasNext()) {
@@ -148,22 +175,21 @@ class ArchivesRemoteSource(
                 "deleted" -> archivePost.archived = nextInt() == 1
                 "trip_processed" -> archivePost.tripcode = nextStringOrNull() ?: ""
                 "media" -> {
-                    if (supportsFiles) {
-                        while (hasNext()) {
+                    if ((supportsMediaThumbnails || supportsMedia) && hasNext()) {
+                        if (peek() == JsonToken.NULL) {
+                            skipValue()
+                        } else {
                             jsonObject {
-                                val archivePostMedia = readPostMedia()
+                                val archivePostMedia = readPostMedia(supportsMedia)
 
                                 if (!archivePostMedia.isValid()) {
-                                    logger.logError(TAG,
-                                            "Invalid archive post media: ${archivePostMedia}")
+                                    logger.logError(TAG, "Invalid archive post media: ${archivePostMedia}")
                                     return@jsonObject
                                 }
 
                                 archivePost.archivePostMediaList += archivePostMedia
                             }
                         }
-                    } else {
-                        skipValue()
                     }
                 }
                 else -> skipValue()
@@ -173,16 +199,19 @@ class ArchivesRemoteSource(
         return archivePost
     }
 
-    private fun JsonReader.readPostMedia(): ArchivePostMedia {
+    private fun JsonReader.readPostMedia(supportsMedia: Boolean): ArchivePostMedia {
         val archivePostMedia = ArchivePostMedia()
 
         while (hasNext()) {
             when (nextName()) {
                 "spoiler" -> archivePostMedia.spoiler = nextInt() == 1
                 "media" -> {
-                    archivePostMedia.serverFilename = nextStringOrNull() ?: ""
-                    archivePostMedia.extension =
-                            extractFileNameExtension(archivePostMedia.serverFilename!!)
+                    val serverFileName = nextStringOrNull()
+
+                    if (!serverFileName.isNullOrEmpty()) {
+                        archivePostMedia.serverFilename = serverFileName
+                        archivePostMedia.extension = extractFileNameExtension(serverFileName)
+                    }
                 }
                 "media_filename_processed" -> archivePostMedia.filename = nextStringOrNull() ?: ""
                 "media_w" -> archivePostMedia.imageWidth = nextInt()
@@ -190,8 +219,14 @@ class ArchivesRemoteSource(
                 "media_size" -> archivePostMedia.size = nextInt().toLong()
                 "media_hash" -> archivePostMedia.fileHashBase64 = nextStringOrNull() ?: ""
                 "banned" -> archivePostMedia.deleted = nextInt() == 1
-                "remote_media_link" -> archivePostMedia.imageUrl = nextStringOrNull() ?: ""
-                "thumb_link" -> archivePostMedia.thumbnailUrl = nextStringOrNull() ?: ""
+                "remote_media_link" -> {
+                    if (supportsMedia) {
+                        archivePostMedia.imageUrl = nextStringOrNull()
+                    } else {
+                        skipValue()
+                    }
+                }
+                "thumb_link" -> archivePostMedia.thumbnailUrl = nextStringOrNull()
                 else -> skipValue()
             }
         }
@@ -212,7 +247,12 @@ class ArchivesRemoteSource(
             return null
         }
 
-        return nextString()
+        val value = nextString()
+        if (value.isNullOrEmpty()) {
+            return null
+        }
+
+        return value
     }
 
     private fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
@@ -225,12 +265,15 @@ class ArchivesRemoteSource(
         }
     }
 
+    class ArchiveThread(
+            val posts: List<ArchivePost>
+    )
+
     class ArchivePost(
             var postNo: Long = -1L,
             var threadNo: Long = -1L,
             var isOP: Boolean = false,
             var unixTimestampSeconds: Long = -1L,
-            var moderatorCapcode: String = "",
             var name: String = "",
             var subject: String = "",
             var comment: String = "",
@@ -240,6 +283,24 @@ class ArchivesRemoteSource(
             var tripcode: String = "",
             val archivePostMediaList: MutableList<ArchivePostMedia> = mutableListOf()
     ) {
+
+        var moderatorCapcode: String = ""
+            set(value) {
+                if (shouldFilterCapcode(value)) {
+                    field = ""
+                } else {
+                    field = value
+                }
+            }
+
+        private fun shouldFilterCapcode(value: String): Boolean {
+            return when (value) {
+                // Archived.moe returns capcode field with "N" symbols for every single post. I have
+                // no idea what this means but I suppose it's the same as no capcode.
+                "N" -> true
+                else -> false
+            }
+        }
 
         override fun toString(): String {
             return "ArchivePost(postNo=$postNo, threadNo=$threadNo, isOP=$isOP, " +
@@ -267,15 +328,13 @@ class ArchivesRemoteSource(
             var spoiler: Boolean = false,
             var deleted: Boolean = false,
             var size: Long = 0L,
-            var fileHashBase64: String? = null,
-            // Need to be set in another place
-            var spoilerThumbnailUrl: String? = null
+            var fileHashBase64: String? = null
     ) {
 
         fun isValid(): Boolean {
             return serverFilename != null
+                    && extension != null
                     && thumbnailUrl != null
-                    && imageUrl != null
                     && imageWidth > 0
                     && imageHeight > 0
                     && size > 0
@@ -285,8 +344,7 @@ class ArchivesRemoteSource(
             return "ArchivePostMedia(serverFilename=$serverFilename, thumbnailUrl=$thumbnailUrl, " +
                     "imageUrl=$imageUrl, filename=$filename, extension=$extension, " +
                     "imageWidth=$imageWidth, imageHeight=$imageHeight, spoiler=$spoiler," +
-                    " deleted=$deleted, size=$size, fileHashBase64=$fileHashBase64, " +
-                    "spoilerThumbnailUrl=$spoilerThumbnailUrl)"
+                    " deleted=$deleted, size=$size, fileHashBase64=$fileHashBase64)"
         }
 
 

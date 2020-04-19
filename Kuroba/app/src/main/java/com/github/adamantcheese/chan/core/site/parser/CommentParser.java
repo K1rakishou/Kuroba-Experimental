@@ -27,6 +27,8 @@ import android.text.style.UnderlineSpan;
 import androidx.annotation.AnyThread;
 
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -155,17 +157,22 @@ public class CommentParser {
             Theme theme, PostParser.Callback callback, Post.Builder post, CharSequence text, Element anchor
     ) {
         CommentParser.Link handlerLink = matchAnchor(post, text, anchor, callback);
-
-        long mockReplyPostNo = mockReplyManager.getLastMockReply(
-                post.board.site.name(),
-                post.board.code,
-                post.opId
-        );
-
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
-        if (mockReplyPostNo >= 0) {
-            addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
+        Board board = post.board;
+        Site site = post.board.site;
+
+        if (board != null && site != null) {
+            long mockReplyPostNo = mockReplyManager.getLastMockReply(
+                    post.board.site.name(),
+                    post.board.code,
+                    post.opId
+            );
+
+
+            if (mockReplyPostNo >= 0) {
+                addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
+            }
         }
 
         if (handlerLink != null) {

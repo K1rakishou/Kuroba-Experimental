@@ -321,12 +321,15 @@ public class ThemeSettingsController
                     .setUnixTimestampSeconds(MILLISECONDS.toSeconds(System.currentTimeMillis() - MINUTES.toMillis(15)))
                     .comment("<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
                             + "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-                    .postImages(Collections.singletonList(new PostImage.Builder().imageUrl(HttpUrl.get(
-                            BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png"))
-                            .thumbnailUrl(HttpUrl.get(BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png"))
-                            .filename("new_icon_512")
-                            .extension("png")
-                            .build()));
+                    .postImages(Collections.singletonList(
+                            new PostImage.Builder()
+                                    .serverFilename("123123123123.jpg")
+                                    .imageUrl(HttpUrl.get(BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png"))
+                                    .thumbnailUrl(HttpUrl.get(BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png"))
+                                    .filename("new_icon_512")
+                                    .extension("png")
+                                    .build())
+                    );
             Post post2 = postParser.parse(theme, builder2, parserCallback);
             List<Post> posts = new ArrayList<>();
             posts.add(post1);

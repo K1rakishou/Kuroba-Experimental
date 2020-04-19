@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
@@ -118,6 +119,8 @@ public class Chan
     public void onCreate() {
         super.onCreate();
         registerActivityLifecycleCallbacks(this);
+
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
 
         AppConstants appConstants = new AppConstants(getApplicationContext());
         logAppConstants(appConstants);
