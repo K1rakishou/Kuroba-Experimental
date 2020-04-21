@@ -40,6 +40,8 @@ data class ChanPostEntity(
         val postNo: Long,
         @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
         val ownerThreadId: Long,
+        @ColumnInfo(name = IS_FROM_ARCHIVE_COLUMN_NAME)
+        val isFromArchive: Boolean,
         @ColumnInfo(name = TIMESTAMP_SECONDS_COLUMN_NAME)
         val timestamp: Long = -1L,
         @ColumnInfo(name = NAME_COLUMN_NAME)
@@ -59,6 +61,7 @@ data class ChanPostEntity(
         const val POST_ID_COLUMN_NAME = "post_id"
         const val POST_NO_COLUMN_NAME = "post_no"
         const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
+        const val IS_FROM_ARCHIVE_COLUMN_NAME = "is_from_archive"
         const val TIMESTAMP_SECONDS_COLUMN_NAME = "timestamp_seconds"
         const val NAME_COLUMN_NAME = "name"
         const val POSTER_ID_COLUMN_NAME = "poster_id"

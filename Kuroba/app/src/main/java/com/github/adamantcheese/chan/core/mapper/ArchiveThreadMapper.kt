@@ -61,6 +61,8 @@ object ArchiveThreadMapper {
                 .postImages(images)
                 .moderatorCapcode(archivePost.moderatorCapcode)
                 .isSavedReply(false)
+                // Always archived == true because this post is from third-party archive
+                .deleted(true)
 
         postBuilder.postCommentBuilder.setComment(archivePost.comment)
         return postBuilder
@@ -79,6 +81,7 @@ object ArchiveThreadMapper {
                 .imageWidth(archivePostMedia.imageWidth)
                 .imageHeight(archivePostMedia.imageHeight)
                 .deleted(archivePostMedia.deleted)
+                .isFromArchive(true)
                 .size(archivePostMedia.size)
                 .fileHash(archivePostMedia.fileHashBase64, true)
                 .imageUrl(imageUrl)

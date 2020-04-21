@@ -47,10 +47,12 @@ public class CommentParserHelper {
     private static final LinkExtractor LINK_EXTRACTOR =
             LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build();
 
-    //@formatter:off
-    private static Pattern imageUrlPattern = Pattern.compile(".*/(.+?)\\.(jpg|png|jpeg|gif|webm|mp4|pdf|bmp|webp|mp3|swf|m4a|ogg|flac)", Pattern.CASE_INSENSITIVE);
+    private static Pattern imageUrlPattern = Pattern.compile(
+            ".*/(.+?)\\.(jpg|png|jpeg|gif|webm|mp4|pdf|bmp|webp|mp3|swf|m4a|ogg|flac)",
+            Pattern.CASE_INSENSITIVE
+    );
+
     private static String[] noThumbLinkSuffixes = {"webm", "pdf", "mp4", "mp3", "swf", "m4a", "ogg", "flac"};
-    //@formatter:on
 
     private static final Pattern dubsPattern = Pattern.compile("(\\d)\\1$");
     private static final Pattern tripsPattern = Pattern.compile("(\\d)\\1{2}$");
@@ -73,52 +75,83 @@ public class CommentParserHelper {
      * @param text      Text to find links in
      * @param spannable Spannable to set the spans on.
      */
-    public static void detectLinks(Theme theme, Post.Builder post, String text, SpannableString spannable) {
+    public static void detectLinks(
+            Theme theme,
+            Post.Builder post,
+            String text,
+            SpannableString spannable
+    ) {
         final Iterable<LinkSpan> links = LINK_EXTRACTOR.extractLinks(text);
+
         for (final LinkSpan link : links) {
             final String linkText = text.substring(link.getBeginIndex(), link.getEndIndex());
             final PostLinkable pl = new PostLinkable(theme, linkText, linkText, PostLinkable.Type.LINK);
-            //priority is 0 by default which is maximum above all else; higher priority is like higher layers, i.e. 2 is above 1, 3 is above 2, etc.
-            //we use 500 here for to go below post linkables, but above everything else basically
+
+            // priority is 0 by default which is maximum above all else; higher priority is like
+            // higher layers, i.e. 2 is above 1, 3 is above 2, etc.
+            // we use 500 here for to go below post linkables, but above everything else basically
             spannable.setSpan(pl,
                     link.getBeginIndex(),
                     link.getEndIndex(),
                     (500 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
             );
+
             post.addLinkable(pl);
         }
     }
 
     public static void addPostImages(Post.Builder post) {
-        if (ChanSettings.parsePostImageLinks.get()) {
-            for (PostLinkable linkable : post.getLinkables()) {
-                if (post.postImages.size() >= 5) return; //max 5 images hotlinked
-                if (linkable.type == PostLinkable.Type.LINK) {
-                    Matcher matcher = imageUrlPattern.matcher(((String) linkable.value));
-                    if (matcher.matches()) {
-                        boolean noThumbnail = StringUtils.endsWithAny((String) linkable.value, noThumbLinkSuffixes);
-                        String spoilerThumbnail = BuildConfig.RESOURCES_ENDPOINT + "internal_spoiler.png";
-                        HttpUrl imageUrl = HttpUrl.parse((String) linkable.value);
+        if (!ChanSettings.parsePostImageLinks.get()) {
+            return;
+        }
 
-                        if (imageUrl == null) {
-                            Logger.e(TAG, "addPostImages() couldn't parse linkable.value (" + linkable.value + ")");
-                            continue;
-                        }
-
-                        post.postImages(Collections.singletonList(new PostImage.Builder().serverFilename(matcher.group(1))
-                                //spoiler thumb for some linked items, the image itself for the rest; probably not a great idea
-                                .thumbnailUrl(HttpUrl.parse(noThumbnail ? spoilerThumbnail : (String) linkable.value))
-                                .spoilerThumbnailUrl(HttpUrl.parse(spoilerThumbnail))
-                                .imageUrl(imageUrl)
-                                .filename(matcher.group(1))
-                                .extension(matcher.group(2))
-                                .spoiler(true)
-                                .isInlined(true)
-                                .size(-1)
-                                .build()));
-                    }
-                }
+        for (PostLinkable linkable : post.getLinkables()) {
+            if (post.postImages.size() >= 5) {
+                // max 5 images hotlinked
+                return;
             }
+
+            if (linkable.type != PostLinkable.Type.LINK) {
+                break;
+            }
+
+            Matcher matcher = imageUrlPattern.matcher(((String) linkable.value));
+            if (!matcher.matches()) {
+                break;
+            }
+
+            boolean noThumbnail = StringUtils.endsWithAny((String) linkable.value, noThumbLinkSuffixes);
+            String spoilerThumbnail = BuildConfig.RESOURCES_ENDPOINT + "internal_spoiler.png";
+            HttpUrl imageUrl = HttpUrl.parse((String) linkable.value);
+
+            if (imageUrl == null) {
+                Logger.e(TAG, "addPostImages() couldn't parse linkable.value (" + linkable.value + ")");
+                continue;
+            }
+
+            // Spoiler thumb for some linked items, the image itself for the rest;
+            // probably not a great idea
+            HttpUrl thumbnailUrl = HttpUrl.parse(
+                    noThumbnail
+                            ? spoilerThumbnail
+                            : (String) linkable.value
+            );
+
+            HttpUrl spoilerThumbnailUrl = HttpUrl.parse(spoilerThumbnail);
+
+            PostImage postImage = new PostImage.Builder()
+                    .serverFilename(matcher.group(1))
+                    .thumbnailUrl(thumbnailUrl)
+                    .spoilerThumbnailUrl(spoilerThumbnailUrl)
+                    .imageUrl(imageUrl)
+                    .filename(matcher.group(1))
+                    .extension(matcher.group(2))
+                    .spoiler(true)
+                    .isInlined(true)
+                    .size(-1)
+                    .build();
+
+            post.postImages(Collections.singletonList(postImage));
         }
     }
 

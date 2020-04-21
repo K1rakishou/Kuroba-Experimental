@@ -17,6 +17,7 @@
 package com.github.adamantcheese.chan.core.site;
 
 import com.android.volley.RequestQueue;
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -29,21 +30,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import okhttp3.HttpUrl;
 
-import static com.github.adamantcheese.chan.Chan.instance;
+import static com.github.adamantcheese.chan.Chan.inject;
 
-public abstract class SiteBase
-        implements Site {
+public abstract class SiteBase implements Site {
     protected int id;
     protected SiteConfig config;
 
+    @Inject
     protected HttpCallManager httpCallManager;
+    @Inject
     protected RequestQueue requestQueue;
+    @Inject
     protected BoardManager boardManager;
+    @Inject
+    protected SiteService siteService;
+    @Inject
+    protected ArchivesManager archivesManager;
+
     protected SettingProvider settingsProvider;
     private JsonSettings userSettings;
     private boolean initialized = false;
+
+    public SiteBase() {
+        inject(this);
+    }
 
     @Override
     public void initialize(int id, SiteConfig config, JsonSettings userSettings) {
@@ -59,13 +73,10 @@ public abstract class SiteBase
 
     @Override
     public void postInitialize() {
-        httpCallManager = instance(HttpCallManager.class);
-        requestQueue = instance(RequestQueue.class);
-        boardManager = instance(BoardManager.class);
-        SiteService siteService = instance(SiteService.class);
-
-        settingsProvider =
-                new JsonSettingsProvider(userSettings, () -> siteService.updateUserSettings(this, userSettings));
+        settingsProvider = new JsonSettingsProvider(
+                userSettings,
+                () -> siteService.updateUserSettings(this, userSettings)
+        );
 
         initializeSettings();
 

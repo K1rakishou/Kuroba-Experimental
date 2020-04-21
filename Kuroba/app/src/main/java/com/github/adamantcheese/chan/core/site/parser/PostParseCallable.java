@@ -20,42 +20,37 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
-import com.github.adamantcheese.model.repository.ChanPostRepository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 // Called concurrently to parse the post html and the filters on it
 // belong to ChanReaderRequest
-class PostParseCallable
-        implements Callable<Post> {
+class PostParseCallable implements Callable<Post> {
     private static final String TAG = "PostParseCallable";
 
     private FilterEngine filterEngine;
     private List<Filter> filters;
     private DatabaseSavedReplyManager savedReplyManager;
-    private ChanPostRepository chanPostRepository;
     private Post.Builder post;
     private ChanReader reader;
-    private final ChanDescriptor descriptor;
+    private Set<Long> internalIds;
 
     public PostParseCallable(
             FilterEngine filterEngine,
             List<Filter> filters,
             DatabaseSavedReplyManager savedReplyManager,
-            ChanPostRepository chanPostRepository,
             Post.Builder post,
             ChanReader reader,
-            ChanDescriptor descriptor
+            Set<Long> internalIds
     ) {
         this.filterEngine = filterEngine;
         this.filters = filters;
         this.savedReplyManager = savedReplyManager;
-        this.chanPostRepository = chanPostRepository;
         this.post = post;
         this.reader = reader;
-        this.descriptor = descriptor;
+        this.internalIds = internalIds;
     }
 
     @Override
@@ -74,11 +69,7 @@ class PostParseCallable
 
             @Override
             public boolean isInternal(long postNo) {
-                // FIXME(archives): I think it's a better idea to load all postNo for a thread at
-                //  once and then do the in-memory search rather than checking every singe post in
-                //  the DB
-                return chanPostRepository.containsPostBlocking(descriptor, postNo)
-                        .unwrap();
+                return internalIds.contains(postNo);
             }
         });
     }

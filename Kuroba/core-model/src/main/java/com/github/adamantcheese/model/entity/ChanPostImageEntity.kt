@@ -36,6 +36,8 @@ data class ChanPostImageEntity(
         var postImageId: Long = 0L,
         @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
         val ownerPostId: Long,
+        @ColumnInfo(name = IS_FROM_ARCHIVE_COLUMN_NAME)
+        val isFromArchive: Boolean,
         @ColumnInfo(name = SERVER_FILENAME_COLUMN_NAME)
         val serverFilename: String,
         @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
@@ -69,6 +71,7 @@ data class ChanPostImageEntity(
 
         const val POST_IMAGE_ID_COLUMN_NAME = "post_image_id"
         const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
+        const val IS_FROM_ARCHIVE_COLUMN_NAME = "is_from_archive"
         const val SERVER_FILENAME_COLUMN_NAME = "server_filename"
         const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
         const val SPOILER_THUMBNAIL_URL_COLUMN_NAME = "spoiler_thumbnail_url"

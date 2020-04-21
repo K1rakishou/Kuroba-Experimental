@@ -87,13 +87,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import okhttp3.HttpUrl;
 
 import static android.text.TextUtils.isEmpty;
 import static android.view.View.MeasureSpec.AT_MOST;
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.UNSPECIFIED;
-import static com.github.adamantcheese.chan.Chan.instance;
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.LayoutMode.AUTO;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.LayoutMode.SPLIT;
 import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
@@ -115,6 +117,11 @@ public class PostCell
         implements PostCellInterface {
     private static final String TAG = "PostCell";
     private static final int COMMENT_MAX_LENGTH_BOARD = 350;
+
+    @Inject
+    ImageLoaderV2 imageLoaderV2;
+    @Inject
+    CacheHandler cacheHandler;
 
     private List<PostImageThumbnailView> thumbnailViews = new ArrayList<>(1);
     private RelativeLayout relativeLayoutContainer;
@@ -166,6 +173,8 @@ public class PostCell
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
+
+        inject(this);
 
         relativeLayoutContainer = findViewById(R.id.relative_layout_container);
         title = findViewById(R.id.title);
@@ -497,32 +506,70 @@ public class PostCell
 
         for (PostImage image : post.getPostImages()) {
             boolean postFileName = ChanSettings.postFilename.get();
+            boolean postFileInfo = ChanSettings.postFileInfo.get();
+
+            SpannableStringBuilder fileInfo = new SpannableStringBuilder();
+
             if (postFileName) {
-                //that special character forces it to be left-to-right, as textDirection didn't want to be obeyed
-                String filename = '\u200E' + (image.spoiler() ? (image.hidden
-                        ? getString(R.string.image_hidden_filename)
-                        : getString(R.string.image_spoiler_filename)) : image.filename + "." + image.extension);
-                SpannableString fileInfo = new SpannableString("\n" + filename);
+                fileInfo.append(getFilename(image));
+            }
+
+            if (postFileInfo) {
+                fileInfo.append(postFileName ? " " : "\n");
+                fileInfo.append(image.extension.toUpperCase());
+
+                // if -1, linked image, no info
+                fileInfo.append(image.getSize() == -1 ? "" : " " + getReadableFileSize(image.getSize()));
+                fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
+            }
+
+            fileInfo.append(getIsFromArchive(image));
+            titleParts.add(fileInfo);
+
+            if (postFileName) {
                 fileInfo.setSpan(new ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length(), 0);
                 fileInfo.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length(), 0);
                 fileInfo.setSpan(new UnderlineSpan(), 0, fileInfo.length(), 0);
-                titleParts.add(fileInfo);
             }
 
-            if (ChanSettings.postFileInfo.get()) {
-                SpannableStringBuilder fileInfo = new SpannableStringBuilder();
-                fileInfo.append(postFileName ? " " : "\n");
-                fileInfo.append(image.extension.toUpperCase());
-                //if -1, linked image, no info
-                fileInfo.append(image.getSize() == -1 ? "" : " " + getReadableFileSize(image.getSize()));
-                fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
+            if (postFileInfo) {
                 fileInfo.setSpan(new ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length(), 0);
                 fileInfo.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length(), 0);
-                titleParts.add(fileInfo);
             }
         }
 
         title.setText(TextUtils.concat(titleParts.toArray(new CharSequence[0])));
+    }
+
+    private String getIsFromArchive(PostImage image) {
+        if (image.isFromArchive) {
+            return getString(R.string.image_from_archive);
+        }
+
+        return "";
+    }
+
+    private String getFilename(PostImage image) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n");
+
+        // that special character forces it to be left-to-right, as textDirection didn't want
+        // to be obeyed
+        stringBuilder.append('\u200E');
+
+        if (image.spoiler()) {
+            if (image.hidden) {
+                stringBuilder.append(getString(R.string.image_hidden_filename));
+            } else {
+                stringBuilder.append(getString(R.string.image_spoiler_filename));
+            }
+        } else {
+            stringBuilder.append(image.filename);
+            stringBuilder.append(".");
+            stringBuilder.append(image.extension);
+        }
+
+        return  stringBuilder.toString();
     }
 
     private void bindPostComment(Theme theme, Post post, CharSequence commentText) {
@@ -568,7 +615,7 @@ public class PostCell
         icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null && post.httpIcons.size() > 0);
 
         if (post.httpIcons != null && post.httpIcons.size() > 0) {
-            icons.setHttpIcons(post.httpIcons, theme, iconSizePx);
+            icons.setHttpIcons(imageLoaderV2, post.httpIcons, theme, iconSizePx);
         }
 
         icons.apply();
@@ -747,19 +794,21 @@ public class PostCell
             int lastId = 0;
             int generatedId = 1;
             boolean first = true;
+
             for (int i = 0; i < post.getPostImagesCount(); i++) {
                 PostImage image = post.getPostImages().get(i);
                 if (image == null || image.imageUrl == null) {
                     continue;
                 }
 
-                PostImageThumbnailView v = new PostImageThumbnailView(getContext());
+                PostImageThumbnailView thumbnailView = new PostImageThumbnailView(getContext());
 
                 // Set the correct id.
                 // The first thumbnail uses thumbnail_view so that the layout can offset to that.
                 final int idToSet = first ? R.id.thumbnail_view : generatedId++;
-                v.setId(idToSet);
                 final int size = getDimen(R.dimen.cell_post_thumbnail_size);
+
+                thumbnailView.setId(idToSet);
 
                 RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(size, size);
                 p.alignWithParent = true;
@@ -768,24 +817,30 @@ public class PostCell
                     p.addRule(RelativeLayout.BELOW, lastId);
                 }
 
-                v.bindPostImage(loadable, image, false, size, size);
-                v.setClickable(true);
-                //don't set a callback if the post is deleted, but if the file already exists in cache let it through
-                if (!post.deleted.get() || instance(CacheHandler.class).cacheFileExists(image.imageUrl.toString())) {
-                    v.setOnClickListener(v2 -> {
+                thumbnailView.bindPostImage(loadable, image, false, size, size);
+                thumbnailView.setClickable(true);
+
+                // Don't set a callback if the post is deleted but if the image is from a
+                // third-party archive then set it. If the file already exists in cache let it
+                // through as well.
+                boolean setCallback = (!post.deleted.get() || image.isFromArchive)
+                        || cacheHandler.cacheFileExists(image.imageUrl.toString());
+
+                if (setCallback) {
+                    thumbnailView.setOnClickListener(v2 -> {
                         if (callback != null) {
-                            callback.onThumbnailClicked(image, v);
+                            callback.onThumbnailClicked(image, thumbnailView);
                         }
                     });
                 }
-                v.setRounding(dp(2));
+                thumbnailView.setRounding(dp(2));
                 p.setMargins(dp(4), first ? dp(4) : 0, 0,
                         //1 extra for bottom divider
                         i + 1 == post.getPostImagesCount() ? dp(1) + dp(4) : 0
                 );
 
-                relativeLayoutContainer.addView(v, p);
-                thumbnailViews.add(v);
+                relativeLayoutContainer.addView(thumbnailView, p);
+                thumbnailViews.add(thumbnailView);
 
                 lastId = idToSet;
                 first = false;
@@ -796,7 +851,12 @@ public class PostCell
     private void setPostLinkableListener(Post post, boolean bind) {
         if (post.getComment() instanceof Spanned) {
             Spanned commentSpanned = (Spanned) post.getComment();
-            PostLinkable[] linkables = commentSpanned.getSpans(0, commentSpanned.length(), PostLinkable.class);
+            PostLinkable[] linkables = commentSpanned.getSpans(
+                    0,
+                    commentSpanned.length(),
+                    PostLinkable.class
+            );
+
             for (PostLinkable linkable : linkables) {
                 linkable.setMarkedNo(bind ? markedNo : -1);
             }
@@ -814,6 +874,7 @@ public class PostCell
         BreakIterator bi = BreakIterator.getWordInstance();
         bi.setText(post.getComment().toString());
         int precedingBoundary = bi.following(PostCell.COMMENT_MAX_LENGTH_BOARD);
+
         // Fallback to old method in case the comment does not have any spaces/individual words
         CharSequence commentText = precedingBoundary > 0
                 ? post.getComment().subSequence(0, precedingBoundary)
@@ -1061,7 +1122,12 @@ public class PostCell
             }
         }
 
-        public void setHttpIcons(List<PostHttpIcon> icons, Theme theme, int size) {
+        public void setHttpIcons(
+                ImageLoaderV2 imageLoaderV2,
+                List<PostHttpIcon> icons,
+                Theme theme,
+                int size
+        ) {
             httpIconTextColor = theme.detailsColor;
             httpIconTextSize = size;
             httpIcons = new ArrayList<>(icons.size());
@@ -1069,7 +1135,7 @@ public class PostCell
             for (PostHttpIcon icon : icons) {
                 int codeIndex = icon.name.indexOf('/'); //this is for country codes
                 String name = icon.name.substring(0, codeIndex != -1 ? codeIndex : icon.name.length());
-                PostIconsHttpIcon j = new PostIconsHttpIcon(this, name, icon.url);
+                PostIconsHttpIcon j = new PostIconsHttpIcon(this, imageLoaderV2, name, icon.url);
                 httpIcons.add(j);
                 j.request();
             }
@@ -1162,11 +1228,16 @@ public class PostCell
         private Bitmap bitmap;
         private ImageLoaderV2 imageLoaderV2;
 
-        private PostIconsHttpIcon(PostIcons postIcons, String name, HttpUrl url) {
+        private PostIconsHttpIcon(
+                PostIcons postIcons,
+                ImageLoaderV2 imageLoaderV2,
+                String name,
+                HttpUrl url
+        ) {
             this.postIcons = postIcons;
             this.name = name;
             this.url = url;
-            this.imageLoaderV2 = instance(ImageLoaderV2.class);
+            this.imageLoaderV2 = imageLoaderV2;
         }
 
         private void request() {

@@ -9,6 +9,7 @@ object ChanPostImageMapper {
         return ChanPostImageEntity(
                 postImageId = 0L,
                 ownerPostId = ownerPostId,
+                isFromArchive = chanPostImage.isFromArchive,
                 serverFilename = chanPostImage.serverFilename,
                 thumbnailUrl = chanPostImage.thumbnailUrl,
                 spoilerThumbnailUrl = chanPostImage.spoilerThumbnailUrl,
@@ -27,6 +28,7 @@ object ChanPostImageMapper {
 
     fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImage {
         return ChanPostImage(
+                isFromArchive = chanPostImageEntity.isFromArchive,
                 serverFilename = chanPostImageEntity.serverFilename,
                 thumbnailUrl = chanPostImageEntity.thumbnailUrl,
                 spoilerThumbnailUrl = chanPostImageEntity.spoilerThumbnailUrl,

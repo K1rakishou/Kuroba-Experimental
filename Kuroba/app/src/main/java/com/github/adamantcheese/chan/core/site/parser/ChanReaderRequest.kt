@@ -41,7 +41,6 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.c
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
-import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.google.gson.Gson
 import okhttp3.HttpUrl
 import java.util.*
@@ -115,13 +114,15 @@ class ChanReaderRequest(
                     }
         }
 
-        val chanDescriptor = getDescriptor(chanReaderProcessor.loadable)
-
         val (parsedPosts, parsingDuration) = measureTimedValue {
-            return@measureTimedValue parseNewPostsPosts(
-                    chanReaderProcessor.getToParse() + archivePosts,
-                    chanDescriptor
-            )
+            // TODO(archives): !!!!!!!!!!!!!
+            val posts = if (loadable.isCatalogMode) {
+                chanReaderProcessor.getToParse() + archivePosts
+            } else {
+                archivePosts
+            }
+
+            return@measureTimedValue parseNewPostsPosts(posts)
         }
 
         val (storedPostNoList, storeDuration) = measureTimedValue {
@@ -214,41 +215,50 @@ class ChanReaderRequest(
                 return@safeRun emptyList()
             }
 
-            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
-            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
+            // TODO(archives): !!!!!!!!!!!!!
+//            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
+//            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
+//
+//            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
+//                    threadDescriptor,
+//                    archivePostsNoList
+//            ).unwrap().toSet()
+//
+//            val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
+//                return@filter archivePost.postNo !in freshPostNoSet
+//                        && archivePost.postNo !in notCachedArchivePostNoSet
+//            }
+//
+//            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched " +
+//                    "${archiveThread.posts.size} posts in total and " +
+//                    "${archivePostsThatWereDeleted.size} deleted posts")
 
-            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
-                    threadDescriptor,
-                    archivePostsNoList
-            ).unwrap().toSet()
+            val mappedArchivePosts = ArchiveThreadMapper.fromThread(
+                    loadable.board,
+//                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted),
+                    archiveThread
+            )
 
-            val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
-                return@filter archivePost.postNo !in freshPostNoSet
-                        && archivePost.postNo !in notCachedArchivePostNoSet
+            // TODO(archives): this is probably okay but just to make sure I need to double check this
+            mappedArchivePosts.forEach { postBuilder ->
+                postBuilder.setArchiveDescriptor(archiveDescriptor)
             }
 
-            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched " +
-                    "${archiveThread.posts.size} posts in total and " +
-                    "${archivePostsThatWereDeleted.size} deleted posts")
-
-            return@safeRun ArchiveThreadMapper.fromThread(
-                    loadable.board,
-                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted)
-            )
+            return@safeRun mappedArchivePosts
         }
     }
 
     @OptIn(ExperimentalTime::class)
     private fun storeNewPostsInRepository(
-            toParse: List<Post>,
+            posts: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
-        if (toParse.isEmpty()) {
+        if (posts.isEmpty()) {
             return emptyList()
         }
 
-        val posts: MutableList<ChanPost> = ArrayList(toParse.size)
-        for (post in toParse) {
+        val chanPosts: MutableList<ChanPost> = ArrayList(posts.size)
+        for (post in posts) {
             val postDescriptor = create(
                     post.board.site.name(),
                     post.board.code,
@@ -256,10 +266,13 @@ class ChanReaderRequest(
                     post.no
             )
 
-            posts.add(fromPost(gson, postDescriptor, post))
+            chanPosts.add(fromPost(gson, postDescriptor, post))
         }
 
-        return chanPostRepository.insertOrUpdateManyBlocking(posts, isCatalog).unwrap()
+        return chanPostRepository.insertOrUpdateManyBlocking(
+                chanPosts,
+                isCatalog
+        ).unwrap()
     }
 
     @OptIn(ExperimentalTime::class)
@@ -294,20 +307,18 @@ class ChanReaderRequest(
         return Pair(sortedPosts, reloadingDuration)
     }
 
-    private fun parseNewPostsPosts(
-            postBuildersToParse: List<Post.Builder>,
-            chanDescriptor: ChanDescriptor
-    ): List<Post> {
+    private fun parseNewPostsPosts(postBuildersToParse: List<Post.Builder>): List<Post> {
+        val internalIds = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
+
         return postBuildersToParse
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,
                             filters,
                             databaseSavedReplyManager,
-                            chanPostRepository,
                             postToParse,
                             reader,
-                            chanDescriptor
+                            internalIds
                     )
                 }
                 .chunked(Int.MAX_VALUE)
@@ -338,6 +349,12 @@ class ChanReaderRequest(
             // mark it as deleted
             if (loadable.isThreadMode) {
                 for (cachedPost in cachedPosts) {
+                    if (cachedPost.deleted.get()) {
+                        // We already updated this post as deleted (most likely we got this info from
+                        // a third-party archive)
+                        continue
+                    }
+
                     cachedPost.deleted.set(!serverPostsByNo.containsKey(cachedPost.no))
                 }
             }

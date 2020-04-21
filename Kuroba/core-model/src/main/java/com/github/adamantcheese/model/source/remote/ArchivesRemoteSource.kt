@@ -205,15 +205,22 @@ class ArchivesRemoteSource(
         while (hasNext()) {
             when (nextName()) {
                 "spoiler" -> archivePostMedia.spoiler = nextInt() == 1
-                "media" -> {
+                "media_orig" -> {
                     val serverFileName = nextStringOrNull()
 
                     if (!serverFileName.isNullOrEmpty()) {
-                        archivePostMedia.serverFilename = serverFileName
+                        archivePostMedia.serverFilename = removeExtensionIfPresent(serverFileName)
                         archivePostMedia.extension = extractFileNameExtension(serverFileName)
                     }
                 }
-                "media_filename_processed" -> archivePostMedia.filename = nextStringOrNull() ?: ""
+                "media_filename_processed" -> {
+                    val filename = nextStringOrNull()
+                    if (filename == null) {
+                        archivePostMedia.filename = ""
+                    } else {
+                        archivePostMedia.filename = removeExtensionIfPresent(filename)
+                    }
+                }
                 "media_w" -> archivePostMedia.imageWidth = nextInt()
                 "media_h" -> archivePostMedia.imageHeight = nextInt()
                 "media_size" -> archivePostMedia.size = nextInt().toLong()
@@ -234,11 +241,22 @@ class ArchivesRemoteSource(
         return archivePostMedia
     }
 
+    private fun removeExtensionIfPresent(filename: String): String {
+        val index = filename.lastIndexOf('.')
+        if (index < 0) {
+            return filename
+        }
+
+        return filename.substring(0, index)
+    }
+
     private fun extractFileNameExtension(filename: String): String? {
         val index = filename.lastIndexOf('.')
         return if (index == -1) {
             null
-        } else filename.substring(index + 1)
+        } else {
+            filename.substring(index + 1)
+        }
     }
 
     private fun JsonReader.nextStringOrNull(): String? {

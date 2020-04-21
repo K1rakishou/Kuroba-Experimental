@@ -4,6 +4,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
+import com.github.adamantcheese.model.data.post.ChanPostImage
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 import com.google.gson.Gson
 
@@ -43,6 +44,7 @@ object ChanPostMapper {
                 postDescriptor = postDescriptor,
                 postImages = postImages,
                 postIcons = postIcons,
+                repliesTo = post.repliesTo,
                 replies = post.totalRepliesCount,
                 threadImagesCount = post.threadImagesCount,
                 uniqueIps = post.uniqueIps,
@@ -58,6 +60,7 @@ object ChanPostMapper {
                 sticky = post.isSticky,
                 closed = post.isClosed,
                 archived = post.isArchived,
+                deleted = post.deleted.get(),
                 isSavedReply = post.isSavedReply
         )
     }
@@ -85,7 +88,10 @@ object ChanPostMapper {
                 chanPost.tripcode
         )
 
-        val postImages = chanPost.postImages.map { chanPostImage ->
+        // We store both - the normal images and the archives images in the database together
+        // (because it's a pain in the ass to tell them apart), so we need to filter out duplicates
+        // during the mapping
+        val postImages = getPostImagesWithoutDuplicates(chanPost).map { chanPostImage ->
             ChanPostImageMapper.toPostImage(chanPostImage)
         }
 
@@ -104,6 +110,7 @@ object ChanPostMapper {
                 .sticky(chanPost.sticky)
                 .closed(chanPost.closed)
                 .archived(chanPost.archived)
+                .deleted(chanPost.deleted)
                 .lastModified(chanPost.lastModified)
                 .name(chanPost.name)
                 .subject(subject)
@@ -114,9 +121,45 @@ object ChanPostMapper {
                 .posterId(chanPost.posterId)
                 .moderatorCapcode(chanPost.moderatorCapcode)
                 .isSavedReply(chanPost.isSavedReply)
+                .repliesTo(chanPost.repliesTo)
 
         postBuilder.postCommentBuilder.setComment(postComment)
         return postBuilder.build()
+    }
+
+    private fun getPostImagesWithoutDuplicates(chanPost: ChanPost): List<ChanPostImage> {
+        if (chanPost.postImages.isEmpty()) {
+            return emptyList()
+        }
+
+        val filtered = mutableListOf<ChanPostImage>()
+
+        for (image in chanPost.postImages) {
+            if (canBeAdded(image, filtered)) {
+                filtered.add(image)
+            }
+        }
+
+        chanPost.postImages.map { chanPostImage ->
+            ChanPostImageMapper.toPostImage(chanPostImage)
+        }
+
+        return filtered
+    }
+
+    private fun canBeAdded(image: ChanPostImage, filtered: MutableList<ChanPostImage>): Boolean {
+        for (alreadyAdded in filtered) {
+            val serverFileNamesEqual = alreadyAdded.serverFilename == image.serverFilename
+            val fileSizeEqual = alreadyAdded.size == image.size
+            val widthEqual = alreadyAdded.imageWidth == image.imageWidth
+            val heightEqual = alreadyAdded.imageHeight == image.imageHeight
+
+            if (serverFileNamesEqual && fileSizeEqual && widthEqual && heightEqual) {
+                return false
+            }
+        }
+
+        return true
     }
 
 }

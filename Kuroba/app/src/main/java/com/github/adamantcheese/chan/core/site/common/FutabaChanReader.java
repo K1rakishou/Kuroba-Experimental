@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.site.common;
 
 import android.util.JsonReader;
 
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -24,11 +25,17 @@ import static com.github.adamantcheese.chan.core.site.SiteEndpoints.makeArgument
 
 public class FutabaChanReader
         implements ChanReader {
-    private final PostParser postParser;
+    private final DefaultPostParser postParser;
 
-    public FutabaChanReader() {
+    public FutabaChanReader(ArchivesManager archivesManager) {
         CommentParser commentParser = new CommentParser().addDefaultRules();
-        this.postParser = new DefaultPostParser(commentParser);
+        FoolFuukaCommentParser foolFuukaCommentParser = new FoolFuukaCommentParser();
+
+        postParser = new DefaultPostParser(commentParser);
+
+        for (ArchivesManager.ArchiveDescriptor archiveDescriptor : archivesManager.getAllArchives()) {
+            postParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser);
+        }
     }
 
     @Override

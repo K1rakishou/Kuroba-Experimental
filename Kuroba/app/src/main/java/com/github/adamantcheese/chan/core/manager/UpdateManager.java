@@ -192,49 +192,52 @@ public class UpdateManager {
             //region Dev build
             //@formatter:off
             JsonObjectRequest request = new JsonObjectRequest(
-            BuildConfig.DEV_API_ENDPOINT + "/latest_apk_uuid",
-                  null,
-                  response -> {
-                      try {
-                          int versionCode = response.getInt("apk_version");
-                          String commitHash = response.getString("commit_hash");
-                          if (commitHash.equals(BuildConfig.COMMIT_HASH)) {
-                              //same version and commit, no update needed
-                              if (manual && BackgroundUtils.isInForeground()) {
-                                  new AlertDialog.Builder(context)
-                                          .setTitle(getString(R.string.update_none,
-                                                                      getApplicationLabel()
-                                          ))
-                                          .setPositiveButton(R.string.ok, null)
-                                          .show();
-                              }
+                    BuildConfig.DEV_API_ENDPOINT + "/latest_apk_uuid",
+                    null,
+                    response -> {
+                        try {
+                            int versionCode = response.getInt("apk_version");
+                            String commitHash = response.getString("commit_hash");
+                            if (commitHash.equals(BuildConfig.COMMIT_HASH)) {
+                                //same version and commit, no update needed
+                                if (manual && BackgroundUtils.isInForeground()) {
+                                    new AlertDialog.Builder(context)
+                                            .setTitle(getString(R.string.update_none,
+                                                    getApplicationLabel()
+                                            ))
+                                            .setPositiveButton(R.string.ok, null)
+                                            .show();
+                                }
 
-                              cancelApkUpdateNotification();
-                          } else {
-                              //new version or commit, update
-                              Matcher versionCodeStringMatcher = Pattern.compile("(\\d+)(\\d{2})(\\d{2})")
-                                      .matcher(String.valueOf(versionCode));
-                              if (versionCodeStringMatcher.matches()) {
-                                  UpdateApiResponse fauxResponse = new UpdateApiResponse();
-                                  fauxResponse.versionCode = versionCode;
-                                  fauxResponse.versionCodeString =
-                                          "v" + Integer.valueOf(versionCodeStringMatcher.group(1))
-                                          + "." + Integer.valueOf(versionCodeStringMatcher.group(2))
-                                          + "." + Integer.valueOf(versionCodeStringMatcher.group(3))
-                                          + "-" + commitHash.substring(0, 7);
-                                  fauxResponse.apkURL = HttpUrl.parse(BuildConfig.DEV_API_ENDPOINT
-                                          + "/apk/" + versionCode + "_" + commitHash + ".apk");
-                                  fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!");
-                                  processUpdateApiResponse(fauxResponse, manual);
-                              } else {
-                                  throw new Exception(); // to reuse the failed code below
-                              }
-                          }
-                      } catch (Exception e) { // any exceptions just fail out
-                          failedUpdate(manual);
-                      }
-                  },
-                  response -> failedUpdate(manual)
+                                cancelApkUpdateNotification();
+                            } else {
+                                //new version or commit, update
+                                Matcher versionCodeStringMatcher = Pattern.compile("(\\d+)(\\d{2})(\\d{2})")
+                                        .matcher(String.valueOf(versionCode));
+                                if (versionCodeStringMatcher.matches()) {
+                                    UpdateApiResponse fauxResponse = new UpdateApiResponse();
+                                    fauxResponse.versionCode = versionCode;
+                                    fauxResponse.versionCodeString =
+                                            "v" + Integer.valueOf(versionCodeStringMatcher.group(1))
+                                                    + "." + Integer.valueOf(versionCodeStringMatcher.group(2))
+                                                    + "." + Integer.valueOf(versionCodeStringMatcher.group(3))
+                                                    + "-" + commitHash.substring(0, 7);
+                                    fauxResponse.apkURL = HttpUrl.parse(BuildConfig.DEV_API_ENDPOINT
+                                            + "/apk/" + versionCode + "_" + commitHash + ".apk");
+                                    fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!");
+                                    processUpdateApiResponse(fauxResponse, manual);
+                                } else {
+                                    throw new Exception(); // to reuse the failed code below
+                                }
+                            }
+                        } catch (Exception e) {
+                            // any exceptions just fail out
+
+                            Logger.e(TAG, "Failed to update", e);
+                            failedUpdate(manual);
+                        }
+                    },
+                    response -> failedUpdate(manual)
             );
             volleyRequestQueue.add(request);
             //@formatter:on
@@ -354,6 +357,8 @@ public class UpdateManager {
 
                     @Override
                     public void onFail(Exception exception) {
+                        Logger.e(TAG, "Failed to download APK update", exception);
+
                         if (!BackgroundUtils.isInForeground()) return;
                         BackgroundUtils.ensureMainThread();
 

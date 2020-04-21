@@ -15,8 +15,23 @@ class ArchivesManager(
         private val appContext: Context,
         private val gson: Gson
 ) {
+    val allArchives = arrayOf(
+            ArchiveDescriptor("4plebs", "archive.4plebs.org"),
+            ArchiveDescriptor("Nyafuu Archive", "archive.nyafuu.org"),
+            ArchiveDescriptor("Rebecca Black Tech", "archive.rebeccablacktech.com"),
+            ArchiveDescriptor("warosu", "warosu.org"),
+            ArchiveDescriptor("Desuarchive", "desuarchive.org"),
+            ArchiveDescriptor("fireden.net", "boards.fireden.net"),
+            ArchiveDescriptor("arch.b4k.co", "arch.b4k.co"),
+            ArchiveDescriptor("bstats", "archive.b-stats.org"),
+            ArchiveDescriptor("Archived.Moe", "archived.moe"),
+            ArchiveDescriptor("TheBArchive.com", "thebarchive.com"),
+            ArchiveDescriptor("Archive Of Sins", "archiveofsins.com")
+    )
+
     private val archives by lazy { loadArchives() }
     private val random = Random(System.currentTimeMillis())
+
 
     @OptIn(ExperimentalStdlibApi::class)
     fun getArchiveDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchiveDescriptor? {
@@ -141,10 +156,29 @@ class ArchivesManager(
         }
     }
 
-    data class ArchiveDescriptor(
+    class ArchiveDescriptor(
             val name: String,
             val domain: String
-    )
+    ) {
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is ArchiveDescriptor) return false
+
+            if (domain != other.domain) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return domain.hashCode()
+        }
+
+        override fun toString(): String {
+            return "ArchiveDescriptor(name='$name', domain='$domain')"
+        }
+
+    }
 
     data class ArchiveData(
             @SerializedName("name")

@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
+import com.github.adamantcheese.model.entity.ChanPostReplyEntity
 import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.github.adamantcheese.model.mapper.*
@@ -23,6 +24,7 @@ class ChanPostLocalSource(
     private val chanPostImageDao = database.chanPostImageDao()
     private val chanPostHttpIconDao = database.chanPostHttpIconDao()
     private val chanTextSpanDao = database.chanTextSpanDao()
+    private val chanPostReplyDao = database.chanPostReplyDao()
 
     suspend fun insertOriginalPost(chanPost: ChanPost): Long {
         ensureInTransaction()
@@ -91,6 +93,17 @@ class ChanPostLocalSource(
                     ChanPostHttpIconMapper.toEntity(chanPostEntityId, postIcon)
             )
         }
+
+        chanPostReplyDao.insertManyOrIgnore(
+                chanPost.repliesTo.map { replyTo ->
+                    ChanPostReplyEntity(
+                            postReplyId = 0L,
+                            ownerPostId = chanPostEntityId,
+                            replyNo = replyTo,
+                            replyType = ChanPostReplyEntity.ReplyType.ReplyTo
+                    )
+                }.toList()
+        )
 
         return chanPostEntityId
     }
@@ -274,6 +287,17 @@ class ChanPostLocalSource(
                 .flatMap { chunk -> chanPostHttpIconDao.selectByOwnerPostIdList(chunk) }
                 .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
 
+        // Load posts' replies to other posts
+        val postReplyToByPostIdMap = postIdList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk ->
+                    return@flatMap chanPostReplyDao.selectByOwnerPostIdList(
+                            chunk,
+                            ChanPostReplyEntity.ReplyType.ReplyTo
+                    )
+                }
+                .groupBy { chanPostReplyEntity -> chanPostReplyEntity.ownerPostId }
+
         posts.forEach { post ->
             val postImages = postImageByPostIdMap[post.databasePostId]
             if (postImages != null && postImages.isNotEmpty()) {
@@ -287,6 +311,11 @@ class ChanPostLocalSource(
                 postIcons.forEach { postIcon ->
                     post.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
                 }
+            }
+
+            val replyToList = postReplyToByPostIdMap[post.databasePostId]
+            if (replyToList != null && replyToList.isNotEmpty()) {
+                post.repliesTo.addAll(replyToList.map { it.replyNo })
             }
         }
 

@@ -4,6 +4,7 @@ import okhttp3.HttpUrl
 
 class ChanPostImage(
         val serverFilename: String,
+        val isFromArchive: Boolean = false,
         val thumbnailUrl: HttpUrl? = null,
         val spoilerThumbnailUrl: HttpUrl? = null,
         val imageUrl: HttpUrl? = null,
@@ -23,6 +24,8 @@ class ChanPostImage(
         if (other !is ChanPostImage) return false
 
         if (imageUrl != other.imageUrl) return false
+        if (thumbnailUrl != other.thumbnailUrl) return false
+        if (isFromArchive != other.isFromArchive) return false
         if (type != other.type) return false
 
         return true
@@ -30,12 +33,16 @@ class ChanPostImage(
 
     override fun hashCode(): Int {
         var result = imageUrl.hashCode()
+        result = 31 * result + isFromArchive.hashCode()
+        result = 31 * result + thumbnailUrl.hashCode()
         result = 31 * result + (type?.hashCode() ?: 0)
         return result
     }
 
     override fun toString(): String {
-        return "ChanPostImage(serverFilename='$serverFilename', " +
+        return "ChanPostImage(" +
+                "serverFilename='$serverFilename', " +
+                "isFromArchive='$isFromArchive', " +
                 "imageUrl=$imageUrl," +
                 "imageWidth=$imageWidth, " +
                 "imageHeight=$imageHeight, " +

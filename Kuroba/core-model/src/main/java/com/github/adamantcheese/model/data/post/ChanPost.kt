@@ -8,6 +8,7 @@ class ChanPost(
         val postDescriptor: PostDescriptor,
         val postImages: MutableList<ChanPostImage> = mutableListOf(),
         val postIcons: MutableList<ChanPostHttpIcon> = mutableListOf(),
+        val repliesTo: MutableSet<Long> = mutableSetOf(),
         var replies: Int = -1,
         var threadImagesCount: Int = -1,
         var uniqueIps: Int = -1,
@@ -15,6 +16,7 @@ class ChanPost(
         var sticky: Boolean = false,
         var closed: Boolean = false,
         var archived: Boolean = false,
+        var deleted: Boolean = false,
         var timestamp: Long = -1L,
         var postComment: SerializableSpannableString = SerializableSpannableString(),
         var subject: SerializableSpannableString = SerializableSpannableString(),
@@ -32,6 +34,12 @@ class ChanPost(
 
         if (databasePostId != other.databasePostId) return false
         if (postDescriptor != other.postDescriptor) return false
+        if (sticky != other.sticky) return false
+        if (closed != other.closed) return false
+        if (archived != other.archived) return false
+        if (deleted != other.deleted) return false
+        if (replies != other.replies) return false
+        if (repliesTo != other.repliesTo) return false
         if (postImages != other.postImages) return false
         if (postComment != other.postComment) return false
         if (subject != other.subject) return false
@@ -46,6 +54,12 @@ class ChanPost(
     override fun hashCode(): Int {
         var result = databasePostId.hashCode()
         result = 31 * result + postDescriptor.hashCode()
+        result = 31 * result + sticky.hashCode()
+        result = 31 * result + closed.hashCode()
+        result = 31 * result + archived.hashCode()
+        result = 31 * result + deleted.hashCode()
+        result = 31 * result + replies.hashCode()
+        result = 31 * result + repliesTo.hashCode()
         result = 31 * result + postImages.hashCode()
         result = 31 * result + postComment.hashCode()
         result = 31 * result + (subject.hashCode() ?: 0)
@@ -60,6 +74,7 @@ class ChanPost(
         return "Builder{" +
                 "databasePostId=" + databasePostId +
                 ", postDescriptor=" + postDescriptor +
+                ", archived=" + archived +
                 ", isOp=" + isOp +
                 ", subject='" + subject + '\'' +
                 ", postComment=" + postComment.text.take(64) +

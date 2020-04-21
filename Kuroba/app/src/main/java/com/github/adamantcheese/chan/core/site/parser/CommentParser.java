@@ -57,6 +57,10 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 @AnyThread
 public class CommentParser {
     private static final String TAG = "CommentParser";
+    private static final Typeface mona = Typeface.createFromAsset(
+            getAppContext().getAssets(),
+            "font/mona.ttf"
+    );
 
     private static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
     private static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
@@ -66,15 +70,15 @@ public class CommentParser {
     @Inject
     MockReplyManager mockReplyManager;
 
+    private Map<String, List<StyleRule>> rules = new HashMap<>();
+
+    private String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
     private Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
     private Pattern quotePattern = Pattern.compile(".*#p(\\d+)");
     private Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
     private Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
     private Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
     private Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
-    private Map<String, List<StyleRule>> rules = new HashMap<>();
-
-    private static final Typeface mona = Typeface.createFromAsset(getAppContext().getAssets(), "font/mona.ttf");
 
     public CommentParser() {
         inject(this);
@@ -87,31 +91,38 @@ public class CommentParser {
 
     public CommentParser addDefaultRules() {
         rule(tagRule("a").action(this::handleAnchor));
-
-        rule(tagRule("span").cssClass("deadlink")
-                .foregroundColor(StyleRule.ForegroundColor.QUOTE)
-                .strikeThrough());
-        rule(tagRule("span").cssClass("spoiler").link(PostLinkable.Type.SPOILER));
         rule(tagRule("span").cssClass("fortune").action(this::handleFortune));
-        rule(tagRule("span").cssClass("abbr").nullify());
-        rule(tagRule("span").foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE).linkify());
-        rule(tagRule("span").cssClass("sjis").typeface(mona));
-
         rule(tagRule("table").action(this::handleTable));
 
         rule(tagRule("s").link(PostLinkable.Type.SPOILER));
-
-        rule(tagRule("strong").bold());
-        rule(tagRule("strong-red;").bold().foregroundColor(StyleRule.ForegroundColor.RED));
         rule(tagRule("b").bold());
-
         rule(tagRule("i").italic());
         rule(tagRule("em").italic());
 
-        rule(tagRule("pre").cssClass("prettyprint")
+        rule(tagRule("pre")
+                .cssClass("prettyprint")
                 .monospace()
                 .size(sp(12f))
-                .backgroundColor(StyleRule.BackgroundColor.CODE));
+                .backgroundColor(StyleRule.BackgroundColor.CODE)
+        );
+
+        rule(tagRule("span")
+                .cssClass("deadlink")
+                .foregroundColor(StyleRule.ForegroundColor.QUOTE)
+                .strikeThrough()
+        );
+        rule(tagRule("span")
+                .cssClass("spoiler")
+                .link(PostLinkable.Type.SPOILER)
+        );
+
+        rule(tagRule("span").cssClass("abbr").nullify());
+        rule(tagRule("span").cssClass("sjis").typeface(mona));
+        rule(tagRule("span").foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE).linkify());
+
+        rule(tagRule("strong").bold());
+        rule(tagRule("strong-red;").bold().foregroundColor(StyleRule.ForegroundColor.RED));
+
         return this;
     }
 
@@ -134,13 +145,19 @@ public class CommentParser {
     }
 
     public CharSequence handleTag(
-            PostParser.Callback callback, Theme theme, Post.Builder post, String tag, CharSequence text, Element element
+            PostParser.Callback callback,
+            Theme theme,
+            Post.Builder post,
+            String tag,
+            CharSequence text,
+            Element element
     ) {
-
         List<StyleRule> rules = this.rules.get(tag);
+
         if (rules != null) {
             for (int i = 0; i < 2; i++) {
                 boolean highPriority = i == 0;
+
                 for (StyleRule rule : rules) {
                     if (rule.highPriority() == highPriority && rule.applies(element)) {
                         return rule.apply(theme, callback, post, text, element);
@@ -154,7 +171,11 @@ public class CommentParser {
     }
 
     private CharSequence handleAnchor(
-            Theme theme, PostParser.Callback callback, Post.Builder post, CharSequence text, Element anchor
+            Theme theme,
+            PostParser.Callback callback,
+            Post.Builder post,
+            CharSequence text,
+            Element anchor
     ) {
         CommentParser.Link handlerLink = matchAnchor(post, text, anchor, callback);
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
@@ -242,7 +263,10 @@ public class CommentParser {
     }
 
     private void addMockReply(
-            Theme theme, Post.Builder post, SpannableStringBuilder spannableStringBuilder, long mockReplyPostNo
+            Theme theme,
+            Post.Builder post,
+            SpannableStringBuilder spannableStringBuilder,
+            long mockReplyPostNo
     ) {
         Logger.d(TAG, "Adding a new mock reply (replyTo: " + mockReplyPostNo + ", replyFrom: " + post.id + ")");
         post.addReplyTo(mockReplyPostNo);
@@ -257,7 +281,11 @@ public class CommentParser {
     }
 
     private CharSequence handleFortune(
-            Theme theme, PostParser.Callback callback, Post.Builder builder, CharSequence text, Element span
+            Theme theme,
+            PostParser.Callback callback,
+            Post.Builder builder,
+            CharSequence text,
+            Element span
     ) {
         // html looks like <span class="fortune" style="color:#0893e1"><br><br><b>Your fortune:</b>
         String style = span.attr("style");
@@ -268,7 +296,8 @@ public class CommentParser {
             if (matcher.find()) {
                 int hexColor = Integer.parseInt(matcher.group(1), 16);
                 if (hexColor >= 0 && hexColor <= 0xffffff) {
-                    text = span(text,
+                    text = span(
+                            text,
                             new ForegroundColorSpanHashed(0xff000000 + hexColor),
                             new StyleSpan(Typeface.BOLD)
                     );
@@ -280,104 +309,159 @@ public class CommentParser {
     }
 
     public CharSequence handleTable(
-            Theme theme, PostParser.Callback callback, Post.Builder builder, CharSequence text, Element table
+            Theme theme,
+            PostParser.Callback callback,
+            Post.Builder builder,
+            CharSequence text,
+            Element table
     ) {
         List<CharSequence> parts = new ArrayList<>();
         Elements tableRows = table.getElementsByTag("tr");
+
         for (int i = 0; i < tableRows.size(); i++) {
             Element tableRow = tableRows.get(i);
+
             if (tableRow.text().length() > 0) {
                 Elements tableDatas = tableRow.getElementsByTag("td");
+
                 for (int j = 0; j < tableDatas.size(); j++) {
                     Element tableData = tableDatas.get(j);
-
                     SpannableString tableDataPart = new SpannableString(tableData.text());
+
                     if (tableData.getElementsByTag("b").size() > 0) {
-                        tableDataPart.setSpan(new StyleSpan(Typeface.BOLD), 0, tableDataPart.length(), 0);
-                        tableDataPart.setSpan(new UnderlineSpan(), 0, tableDataPart.length(), 0);
+                        tableDataPart.setSpan(
+                                new StyleSpan(Typeface.BOLD),
+                                0,
+                                tableDataPart.length(),
+                                0
+                        );
+
+                        tableDataPart.setSpan(
+                                new UnderlineSpan(),
+                                0,
+                                tableDataPart.length(),
+                                0
+                        );
                     }
 
                     parts.add(tableDataPart);
 
-                    if (j < tableDatas.size() - 1) parts.add(": ");
+                    if (j < tableDatas.size() - 1) {
+                        parts.add(": ");
+                    }
                 }
 
-                if (i < tableRows.size() - 1) parts.add("\n");
+                if (i < tableRows.size() - 1) {
+                    parts.add("\n");
+                }
             }
         }
 
         // Overrides the text (possibly) parsed by child nodes.
-        return span(TextUtils.concat(parts.toArray(new CharSequence[0])),
+        return span(
+                TextUtils.concat(parts.toArray(new CharSequence[0])),
                 new ForegroundColorSpanHashed(theme.inlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }
 
-    public Link matchAnchor(Post.Builder post, CharSequence text, Element anchor, PostParser.Callback callback) {
-        String href = anchor.attr("href");
-        //gets us something like /board/ or /thread/postno#quoteno
-        //hacky fix for 4chan having two domains but the same API
-        if (href.matches("//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)")) {
-            href = href.substring(2);
-            href = href.substring(href.indexOf('/'));
-        }
-
-        PostLinkable.Type t;
+    public Link matchAnchor(
+            Post.Builder post,
+            CharSequence text,
+            Element anchor,
+            PostParser.Callback callback
+    ) {
+        PostLinkable.Type type;
         Object value;
 
-        Matcher externalMatcher = fullQuotePattern.matcher(href);
+        String href = extractQuote(anchor.attr("href"), post);
+        Matcher externalMatcher = matchExternalQuote(href, post);
+
         if (externalMatcher.matches()) {
             String board = externalMatcher.group(1);
             int threadId = Integer.parseInt(externalMatcher.group(2));
             int postId = Integer.parseInt(externalMatcher.group(3));
 
             if (board.equals(post.board.code) && callback.isInternal(postId)) {
-                //link to post in same thread with post number (>>post)
-                t = PostLinkable.Type.QUOTE;
+                // link to post in same thread with post number (>>post)
+                type = PostLinkable.Type.QUOTE;
                 value = postId;
             } else {
-                //link to post not in same thread with post number (>>post or >>>/board/post)
-                t = PostLinkable.Type.THREAD;
+                // link to post not in same thread with post number (>>post or >>>/board/post)
+                type = PostLinkable.Type.THREAD;
                 value = new ThreadLink(board, threadId, postId);
             }
         } else {
-            Matcher quoteMatcher = quotePattern.matcher(href);
+            Matcher quoteMatcher = matchInternalQuote(href, post);
             if (quoteMatcher.matches()) {
-                //link to post backup???
-                t = PostLinkable.Type.QUOTE;
+                // link to post backup???
+                type = PostLinkable.Type.QUOTE;
                 value = Integer.parseInt(quoteMatcher.group(1));
             } else {
-                Matcher boardLinkMatcher = boardLinkPattern.matcher(href);
-                Matcher boardLinkMatcher8Chan = boardLinkPattern8Chan.matcher(href);
-                Matcher boardSearchMatcher = boardSearchPattern.matcher(href);
-                if (boardLinkMatcher.matches() || boardLinkMatcher8Chan.matches()) {
-                    //board link
-                    t = PostLinkable.Type.BOARD;
-                    value = boardLinkMatcher.matches() ? boardLinkMatcher.group(1) : boardLinkMatcher8Chan.group(1);
+                Matcher boardLinkMatcher = matchBoardLink(href, post);
+                Matcher boardSearchMatcher = matchBoardSearch(href, post);
+
+                if (boardLinkMatcher.matches()) {
+                    // board link
+                    type = PostLinkable.Type.BOARD;
+                    value = boardLinkMatcher.group(1);
                 } else if (boardSearchMatcher.matches()) {
-                    //search link
+                    // search link
                     String board = boardSearchMatcher.group(1);
                     String search;
+
                     try {
                         search = URLDecoder.decode(boardSearchMatcher.group(2), "US-ASCII");
                     } catch (UnsupportedEncodingException e) {
                         search = boardSearchMatcher.group(2);
                     }
-                    t = PostLinkable.Type.SEARCH;
+
+                    type = PostLinkable.Type.SEARCH;
                     value = new SearchLink(board, search);
                 } else {
-                    //normal link
-                    t = PostLinkable.Type.LINK;
+                    // normal link
+                    type = PostLinkable.Type.LINK;
                     value = href;
                 }
             }
         }
 
         Link link = new Link();
-        link.type = t;
+        link.type = type;
         link.key = text;
         link.value = value;
         return link;
+    }
+
+    protected Matcher matchBoardSearch(String href, Post.Builder post) {
+        return boardSearchPattern.matcher(href);
+    }
+
+    protected Matcher matchBoardLink(String href, Post.Builder post) {
+        Matcher chan4BoardLinkMatcher = boardLinkPattern.matcher(href);
+        if (chan4BoardLinkMatcher.matches()) {
+            return chan4BoardLinkMatcher;
+        }
+
+        return boardLinkPattern8Chan.matcher(href);
+    }
+
+    protected Matcher matchInternalQuote(String href, Post.Builder post) {
+        return quotePattern.matcher(href);
+    }
+
+    protected Matcher matchExternalQuote(String href, Post.Builder post) {
+        return fullQuotePattern.matcher(href);
+    }
+
+    protected String extractQuote(String href, Post.Builder post) {
+        if (href.matches(defaultQuoteRegex)) {
+            // gets us something like /board/ or /thread/postno#quoteno
+            // hacky fix for 4chan having two domains but the same API
+            return href.substring(2).substring(href.indexOf('/'));
+        }
+
+        return href;
     }
 
     public SpannableString span(CharSequence text, Object... additionalSpans) {

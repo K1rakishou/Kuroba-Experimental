@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -124,6 +125,7 @@ public class Post
         sticky = builder.sticky;
         closed = builder.closed;
         archived = builder.archived;
+        deleted.set(builder.deleted);
 
         subject = builder.subject;
         name = builder.name;
@@ -388,6 +390,7 @@ public class Post
         public boolean sticky;
         public boolean closed;
         public boolean archived;
+        public boolean deleted;
         public long lastModified = -1L;
         public String name = "";
         public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
@@ -415,6 +418,9 @@ public class Post
         public boolean filterReplies;
         public boolean filterOnlyOP;
         public boolean filterSaved;
+
+        @Nullable
+        public ArchivesManager.ArchiveDescriptor archiveDescriptor = null;
 
         public Builder() {
         }
@@ -466,6 +472,11 @@ public class Post
 
         public Builder archived(boolean archived) {
             this.archived = archived;
+            return this;
+        }
+
+        public Builder deleted(boolean deleted) {
+            this.deleted = deleted;
             return this;
         }
 
@@ -549,6 +560,10 @@ public class Post
         public Builder setHttpIcons(List<PostHttpIcon> httpIcons) {
             this.httpIcons = httpIcons;
             return this;
+        }
+
+        public void setArchiveDescriptor(@Nullable ArchivesManager.ArchiveDescriptor archiveDescriptor) {
+            this.archiveDescriptor = archiveDescriptor;
         }
 
         public long getOpId() {

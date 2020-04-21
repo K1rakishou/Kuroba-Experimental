@@ -29,7 +29,6 @@ import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.LoaderBatchResult;
 import com.github.adamantcheese.chan.core.loader.LoaderResult;
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
@@ -84,7 +83,6 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
@@ -120,6 +118,8 @@ public class ThreadPresenter
     private static final int POST_OPTION_MOCK_REPLY = 18;
 
     private final WatchManager watchManager;
+    private final CacheHandler cacheHandler;
+    private final FilterWatchManager filterWatchManager;
     private final DatabaseManager databaseManager;
     private final ChanLoaderManager chanLoaderManager;
     private final PageRequestManager pageRequestManager;
@@ -128,7 +128,6 @@ public class ThreadPresenter
     private final MockReplyManager mockReplyManager;
     private final OnDemandContentLoaderManager onDemandContentLoaderManager;
     private final SeenPostsManager seenPostsManager;
-    private final ArchivesManager archivesManager;
 
     private ThreadPresenterCallback threadPresenterCallback;
     private Loadable loadable;
@@ -144,6 +143,8 @@ public class ThreadPresenter
 
     @Inject
     public ThreadPresenter(
+            CacheHandler cacheHandler,
+            FilterWatchManager filterWatchManager,
             WatchManager watchManager,
             DatabaseManager databaseManager,
             ChanLoaderManager chanLoaderManager,
@@ -152,9 +153,10 @@ public class ThreadPresenter
             FileManager fileManager,
             MockReplyManager mockReplyManager,
             OnDemandContentLoaderManager onDemandContentLoaderManager,
-            SeenPostsManager seenPostsManager,
-            ArchivesManager archivesManager
+            SeenPostsManager seenPostsManager
     ) {
+        this.cacheHandler = cacheHandler;
+        this.filterWatchManager = filterWatchManager;
         this.watchManager = watchManager;
         this.databaseManager = databaseManager;
         this.chanLoaderManager = chanLoaderManager;
@@ -164,7 +166,6 @@ public class ThreadPresenter
         this.mockReplyManager = mockReplyManager;
         this.onDemandContentLoaderManager = onDemandContentLoaderManager;
         this.seenPostsManager = seenPostsManager;
-        this.archivesManager = archivesManager;
     }
 
     public void create(ThreadPresenterCallback threadPresenterCallback) {
@@ -654,7 +655,7 @@ public class ThreadPresenter
         }
 
         if (result.getLoadable().isCatalogMode()) {
-            instance(FilterWatchManager.class).onCatalogLoad(result);
+            filterWatchManager.onCatalogLoad(result);
         }
     }
 
@@ -846,19 +847,28 @@ public class ThreadPresenter
 
     @Override
     public void onThumbnailClicked(PostImage postImage, ThumbnailView thumbnail) {
-        if (!isBound()) return;
-        List<PostImage> images = new ArrayList<>();
+        if (!isBound()) {
+            return;
+        }
+
         int index = -1;
+        List<PostImage> images = new ArrayList<>();
         List<Post> posts = threadPresenterCallback.getDisplayingPosts();
-        for (Post item : posts) {
-            for (PostImage image : item.getPostImages()) {
+
+        for (Post post : posts) {
+            for (PostImage image : post.getPostImages()) {
                 if (image.imageUrl == null) {
                     Logger.e(TAG, "onThumbnailClicked() image.imageUrl == null");
                     continue;
                 }
 
-                if (!item.deleted.get() || instance(CacheHandler.class).cacheFileExists(image.imageUrl.toString())) {
-                    //deleted posts always have 404'd images, but let it through if the file exists in cache
+                boolean setCallback = (!post.deleted.get() || image.isFromArchive)
+                        || cacheHandler.cacheFileExists(image.imageUrl.toString());
+
+
+                if (setCallback) {
+                    // Deleted posts always have 404'd images, but let it through if the file exists
+                    // in cache or the image is from a third-party archive
                     images.add(image);
                     if (image.equalUrl(postImage)) {
                         index = images.size() - 1;
