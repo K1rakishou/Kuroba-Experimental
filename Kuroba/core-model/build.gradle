@@ -36,6 +36,7 @@ dependencies {
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
     implementation "joda-time:joda-time:${versions.joda_time}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation "com.google.code.gson:gson:${versions.gson}"
     implementation "joda-time:joda-time:${versions.joda_time}"

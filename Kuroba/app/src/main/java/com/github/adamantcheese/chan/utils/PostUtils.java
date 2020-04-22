@@ -1,11 +1,13 @@
 package com.github.adamantcheese.chan.utils;
 
 import android.annotation.SuppressLint;
+import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
 
 import java.util.ArrayList;
@@ -136,6 +138,102 @@ public class PostUtils {
         }
 
         return new ArrayList<>(newHiddenPosts);
+    }
+
+    public static boolean postsDiffer(Post displayedPost, Post newPost) {
+        if (displayedPost.no != newPost.no) {
+            throw new IllegalStateException("Inconsistency detected! " +
+                    "displayedPost.no = " + displayedPost.no +
+                    ", newPost.no = " + newPost.no);
+        }
+
+        if (displayedPost.isOP && newPost.isOP) {
+            if (displayedPost.isSticky() != newPost.isSticky()) {
+                return true;
+            }
+            if (displayedPost.isClosed() != newPost.isClosed()) {
+                return true;
+            }
+            if (displayedPost.isArchived() != newPost.isArchived()) {
+                return true;
+            }
+            if (displayedPost.deleted.get() != newPost.deleted.get()) {
+                return true;
+            }
+            if (displayedPost.getTotalRepliesCount() != newPost.getTotalRepliesCount()) {
+                return true;
+            }
+        }
+
+        if (postImagesDiffer(displayedPost.getPostImages(), newPost.getPostImages())) {
+            return true;
+        }
+        if (postRepliesDiffer(displayedPost.getRepliesTo(), newPost.getRepliesTo())) {
+            return true;
+        }
+
+        if (!TextUtils.equals(displayedPost.getComment(), newPost.getComment())) {
+            return true;
+        }
+        if (!TextUtils.equals(displayedPost.subject, newPost.subject)) {
+            return true;
+        }
+        if (!TextUtils.equals(displayedPost.name, newPost.name)) {
+            return true;
+        }
+        if (!TextUtils.equals(displayedPost.tripcode, newPost.tripcode)) {
+            return true;
+        }
+        if (!TextUtils.equals(displayedPost.posterId, newPost.posterId)) {
+            return true;
+        }
+        if (!TextUtils.equals(displayedPost.capcode, newPost.capcode)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean postRepliesDiffer(
+            Set<Long> displayedPostRepliesTo,
+            Set<Long> newPostRepliesTo
+    ) {
+        if (displayedPostRepliesTo.size() != newPostRepliesTo.size()) {
+            return true;
+        }
+
+        return displayedPostRepliesTo.equals(newPostRepliesTo);
+    }
+
+    private static boolean postImagesDiffer(
+            List<PostImage> displayedPostImages,
+            List<PostImage> newPostImages
+    ) {
+        if (displayedPostImages.size() != newPostImages.size()) {
+            return true;
+        }
+
+        int size = displayedPostImages.size();
+
+        for (int i = 0; i < size; ++i) {
+            PostImage displayedPostImage = displayedPostImages.get(i);
+            PostImage newPostImage = newPostImages.get(i);
+
+            if (displayedPostImage.isFromArchive != newPostImage.isFromArchive) {
+                return true;
+            }
+            if (displayedPostImage.type != newPostImage.type) {
+                return true;
+            }
+            if (displayedPostImage.imageUrl != newPostImage.imageUrl) {
+                return true;
+            }
+            if (displayedPostImage.thumbnailUrl != newPostImage.thumbnailUrl) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

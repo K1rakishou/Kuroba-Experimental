@@ -121,6 +121,7 @@ public class Chan
         registerActivityLifecycleCallbacks(this);
 
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        System.setProperty("kotlinx.coroutines.debug", BuildConfig.DEBUG ? "on" : "off");
 
         AppConstants appConstants = new AppConstants(getApplicationContext());
         logAppConstants(appConstants);

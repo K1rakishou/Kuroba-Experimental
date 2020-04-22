@@ -71,7 +71,7 @@ class ChanPostLocalSource(
         }
     }
 
-    private suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
+    suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
         ensureInTransaction()
 
         val chanPostEntityId = chanPostDao.insertOrUpdate(

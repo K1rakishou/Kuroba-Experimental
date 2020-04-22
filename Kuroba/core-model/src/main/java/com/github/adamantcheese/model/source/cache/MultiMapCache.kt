@@ -5,7 +5,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
 
-// TODO: tests!
+// TODO(archives): tests!
 class MultiMapCache<K1, K2, V>(
         private val maxValueCount: Int
 ) {
@@ -42,31 +42,6 @@ class MultiMapCache<K1, K2, V>(
 
             accessTimes[key1] = System.currentTimeMillis()
             postCache[key1]!![key2] = value
-        }
-    }
-
-    suspend fun putIntoCacheMany(key1: K1, key2: K2, values: List<V>) {
-        mutex.withLock {
-            if (postCache[key1] == null) {
-                postCache[key1] = mutableMapOf()
-            }
-
-            val count = if (!postCache[key1]!!.containsKey(key2)) {
-                currentValuesCount.addAndGet(values.size)
-            } else {
-                currentValuesCount.get()
-            }
-
-            if (count > maxValueCount) {
-                // Evict 1/4 of the cache
-                val amountToEvict = (count / 100) * 25
-                if (amountToEvict > 0) {
-                    evictOld(amountToEvict)
-                }
-            }
-
-            accessTimes[key1] = System.currentTimeMillis()
-            values.forEach { value -> postCache[key1]!![key2] = value }
         }
     }
 

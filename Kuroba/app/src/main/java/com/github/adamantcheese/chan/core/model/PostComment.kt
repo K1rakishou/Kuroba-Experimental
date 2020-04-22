@@ -24,6 +24,10 @@ data class PostComment(
         return linkables.contains(postLinkable)
     }
 
+    override fun toString(): String {
+        return "PostComment(comment='${comment.take(64)}\', linkablesCount=${linkables.size})"
+    }
+
     companion object {
         @JvmStatic
         fun empty() = PostComment("", mutableListOf())

@@ -2,6 +2,9 @@ package com.github.adamantcheese.chan.core.site.common
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
+import com.github.adamantcheese.chan.core.site.parser.PostParser
+import com.github.adamantcheese.chan.ui.theme.Theme
+import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -9,6 +12,26 @@ class FoolFuukaCommentParser : CommentParser() {
 
     init {
         addDefaultRules()
+    }
+
+    override fun handleTag(
+            callback: PostParser.Callback,
+            theme: Theme,
+            post: Post.Builder,
+            tag: String,
+            text: CharSequence,
+            element: Element
+    ): CharSequence {
+        var newElement = element
+        var newTag = tag
+
+        if (element.getElementsByTag("span").hasClass("greentext")
+                && element.getElementsByTag("a").isNotEmpty()) {
+            newElement = element.getElementsByTag("a").first()
+            newTag = "a"
+        }
+
+        return super.handleTag(callback, theme, post, newTag, text, newElement)
     }
 
     override fun matchBoardSearch(href: String, post: Post.Builder): Matcher {

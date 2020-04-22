@@ -7,7 +7,7 @@ object ChanPostImageMapper {
 
     @JvmStatic
     fun fromPostImage(postImage: PostImage?): ChanPostImage? {
-        if (postImage?.imageUrl == null) {
+        if (postImage == null) {
             return null
         }
 

@@ -23,10 +23,18 @@ class ChanPostImage(
         if (this === other) return true
         if (other !is ChanPostImage) return false
 
-        if (imageUrl != other.imageUrl) return false
-        if (thumbnailUrl != other.thumbnailUrl) return false
-        if (isFromArchive != other.isFromArchive) return false
-        if (type != other.type) return false
+        if (isFromArchive != other.isFromArchive) {
+            return false
+        }
+        if (type != other.type) {
+            return false
+        }
+        if (imageUrl != other.imageUrl) {
+            return false
+        }
+        if (thumbnailUrl != other.thumbnailUrl) {
+            return false
+        }
 
         return true
     }

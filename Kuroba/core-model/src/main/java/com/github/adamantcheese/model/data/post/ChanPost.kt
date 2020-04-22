@@ -32,21 +32,77 @@ class ChanPost(
         if (this === other) return true
         if (other !is ChanPost) return false
 
-        if (databasePostId != other.databasePostId) return false
-        if (postDescriptor != other.postDescriptor) return false
-        if (sticky != other.sticky) return false
-        if (closed != other.closed) return false
-        if (archived != other.archived) return false
-        if (deleted != other.deleted) return false
-        if (replies != other.replies) return false
-        if (repliesTo != other.repliesTo) return false
-        if (postImages != other.postImages) return false
-        if (postComment != other.postComment) return false
-        if (subject != other.subject) return false
-        if (name != other.name) return false
-        if (tripcode != other.tripcode) return false
-        if (posterId != other.posterId) return false
-        if (moderatorCapcode != other.moderatorCapcode) return false
+        if (databasePostId != other.databasePostId) {
+            return false
+        }
+        if (postDescriptor != other.postDescriptor) {
+            return false
+        }
+
+        if (isOp) {
+            if (sticky != other.sticky) {
+                return false
+            }
+            if (closed != other.closed) {
+                return false
+            }
+            if (archived != other.archived) {
+                return false
+            }
+            if (deleted != other.deleted) {
+                return false
+            }
+            if (replies != other.replies) {
+                return false
+            }
+        }
+
+        if (!areRepliesToTheSame(other)) {
+            return false
+        }
+        if (!arePostImagesTheSame(other)) {
+            return false
+        }
+        if (postComment != other.postComment) {
+            return false
+        }
+        if (subject != other.subject) {
+            return false
+        }
+        if (name != other.name) {
+            return false
+        }
+        if (tripcode != other.tripcode) {
+            return false
+        }
+        if (posterId != other.posterId) {
+            return false
+        }
+        if (moderatorCapcode != other.moderatorCapcode) {
+            return false
+        }
+
+        return true
+    }
+
+    private fun areRepliesToTheSame(other: ChanPost): Boolean {
+        if (repliesTo.size != other.repliesTo.size) {
+            return false
+        }
+
+        return repliesTo == other.repliesTo
+    }
+
+    private fun arePostImagesTheSame(other: ChanPost): Boolean {
+        if (postImages.size != other.postImages.size) {
+            return false
+        }
+
+        for (i in postImages.indices) {
+            if (postImages[i] != other.postImages[i]) {
+                return false
+            }
+        }
 
         return true
     }
@@ -62,9 +118,9 @@ class ChanPost(
         result = 31 * result + repliesTo.hashCode()
         result = 31 * result + postImages.hashCode()
         result = 31 * result + postComment.hashCode()
-        result = 31 * result + (subject.hashCode() ?: 0)
+        result = 31 * result + subject.hashCode()
         result = 31 * result + (name?.hashCode() ?: 0)
-        result = 31 * result + (tripcode.hashCode() ?: 0)
+        result = 31 * result + tripcode.hashCode()
         result = 31 * result + (posterId?.hashCode() ?: 0)
         result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
         return result
@@ -74,6 +130,7 @@ class ChanPost(
         return "Builder{" +
                 "databasePostId=" + databasePostId +
                 ", postDescriptor=" + postDescriptor +
+                ", postImages=" + postImages.size +
                 ", archived=" + archived +
                 ", isOp=" + isOp +
                 ", subject='" + subject + '\'' +

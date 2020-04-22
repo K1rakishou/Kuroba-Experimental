@@ -226,7 +226,7 @@ class ArchivesRemoteSource(
                 "media_size" -> archivePostMedia.size = nextInt().toLong()
                 "media_hash" -> archivePostMedia.fileHashBase64 = nextStringOrNull() ?: ""
                 "banned" -> archivePostMedia.deleted = nextInt() == 1
-                "remote_media_link" -> {
+                "media_link" -> {
                     if (supportsMedia) {
                         archivePostMedia.imageUrl = nextStringOrNull()
                     } else {

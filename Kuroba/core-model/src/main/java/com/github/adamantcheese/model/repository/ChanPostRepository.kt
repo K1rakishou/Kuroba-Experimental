@@ -66,7 +66,7 @@ class ChanPostRepository(
         return posts.map { it.postDescriptor.postNo }
     }
 
-    private suspend fun insertOrUpdateThreadPostsBlocking(
+    suspend fun insertOrUpdateThreadPostsBlocking(
             posts: MutableList<ChanPost>
     ): List<Long> {
         val listCapacity = min(posts.size / 2, 10)
@@ -158,7 +158,6 @@ class ChanPostRepository(
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 val originalPostsFromCache = postCache.getAll(descriptor)
-
                 val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
                     post.postDescriptor.postNo
                 }.toSet()
@@ -178,13 +177,9 @@ class ChanPostRepository(
                 )
 
                 if (originalPostsFromDatabase.isNotEmpty()) {
-                    val postDescriptor = originalPostsFromDatabase.first().postDescriptor
-
-                    postCache.putIntoCacheMany(
-                            postDescriptor.descriptor,
-                            postDescriptor,
-                            originalPostsFromDatabase
-                    )
+                    originalPostsFromDatabase.forEach { post ->
+                        postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                    }
                 }
 
                 return@withTransactionSafe originalPostsFromCache + originalPostsFromDatabase
@@ -199,7 +194,9 @@ class ChanPostRepository(
         return runBlocking {
             return@runBlocking withTransactionSafe {
                 val postsFromCache = postCache.getAll(descriptor)
-                val postNoFromCacheSet = postsFromCache.map { post -> post.postDescriptor.postNo }.toSet()
+                val postNoFromCacheSet = postsFromCache.map { post ->
+                    post.postDescriptor.postNo
+                }.toSet()
 
                 val postNoListToGetFromDatabase = postNoList.filter { postNo ->
                     postNo !in postNoFromCacheSet
@@ -210,15 +207,15 @@ class ChanPostRepository(
                     return@withTransactionSafe postsFromCache
                 }
 
-                val postsFromDatabase = localSource.getThreadPosts(descriptor, postNoListToGetFromDatabase)
-                if (postsFromDatabase.isNotEmpty()) {
-                    val postDescriptor = postsFromDatabase.first().postDescriptor
+                val postsFromDatabase = localSource.getThreadPosts(
+                        descriptor,
+                        postNoListToGetFromDatabase
+                )
 
-                    postCache.putIntoCacheMany(
-                            postDescriptor.descriptor,
-                            postDescriptor,
-                            postsFromDatabase
-                    )
+                if (postsFromDatabase.isNotEmpty()) {
+                    postsFromDatabase.forEach { post ->
+                        postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                    }
                 }
 
                 return@withTransactionSafe postsFromCache + postsFromDatabase

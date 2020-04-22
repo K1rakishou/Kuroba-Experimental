@@ -363,19 +363,22 @@ public class Post
         Post otherPost = (Post) other;
 
         // Post.comment can now be mutated so it's not safe to use it in equals()
-
-        //@formatter:off
         return this.no == otherPost.no
                 && this.board.code.equals(otherPost.board.code)
                 && this.board.siteId == otherPost.board.siteId
                 && this.deleted.get() == otherPost.deleted.get();
-        //@formatter:on
     }
 
     @Override
     public String toString() {
-        return "[no = " + no + ", boardCode = " + board.code + ", siteId = " + board.siteId + ", comment = " + comment
-                + "]";
+        return "Post{" +
+                "siteName=" + board.site.name() +
+                ", boardCode=" + board.code +
+                ", no=" + no +
+                ", isOP=" + isOP +
+                ", comment=" + comment +
+                ", postImagesCount=" + postImages.size() +
+                '}';
     }
 
     public static final class Builder {

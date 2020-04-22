@@ -33,6 +33,7 @@ import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.chan.utils.PostUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -59,7 +60,7 @@ public class PostAdapter
     private final List<Post> displayList = new ArrayList<>();
     /**
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
-     * */
+     */
     private final Set<Long> updatingPosts = new HashSet<>(64);
 
     private Loadable loadable = null;
@@ -141,9 +142,9 @@ public class PostAdapter
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
                 Post post = displayList.get(getPostPosition(position));
                 boolean highlight = post == highlightedPost
-                                || post.posterId.equals(highlightedPostId)
-                                || post.no == highlightedPostNo
-                                || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
+                        || post.posterId.equals(highlightedPostId)
+                        || post.no == highlightedPostNo
+                        || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
                 ((PostCellInterface) postViewHolder.itemView).setPost(
                         loadable,
                         post,
@@ -236,7 +237,7 @@ public class PostAdapter
      * cache so the next time recycler decides to update the view it will either throw a NPE or will
      * just show an empty view. Using onViewRecycled to unbind posts is the correct way to handle
      * this issue.
-     * */
+     */
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder.itemView instanceof PostCellInterface) {
@@ -264,47 +265,66 @@ public class PostAdapter
             Loadable threadLoadable, List<Post> posts, boolean refreshAfterHideOrRemovePosts
     ) {
         BackgroundUtils.ensureMainThread();
-        boolean changed = (this.loadable != null && !this.loadable.equals(threadLoadable)); //changed threads, update
 
+        // changed threads, update
+        boolean changed = (this.loadable != null && !this.loadable.equals(threadLoadable));
+        int lastLastSeenIndicator = lastSeenIndicatorPosition;
         this.loadable = threadLoadable;
+
         showError(null);
 
-        int lastLastSeenIndicator = lastSeenIndicatorPosition;
-        if (!changed && displayList.size() == posts.size()) {
-            for (int i = 0; i < displayList.size(); i++) {
-                if (!displayList.get(i).equals(posts.get(i))) {
-                    changed = true; //posts are different, or a post got deleted and needs to be updated
-                    break;
-                }
-            }
-        } else {
-            changed = true; //new posts or fewer posts, update
-        }
+        changed = hasChangedPosts(posts, changed);
 
         updatingPosts.clear();
         displayList.clear();
         displayList.addAll(posts);
 
-        lastSeenIndicatorPosition = -1;
+        lastSeenIndicatorPosition = getLastSeenIndicatorPosition(threadLoadable);
+
+        boolean shouldUpdate = changed
+                // Update for indicator (adds/removes extra recycler item that causes inconsistency
+                // exceptions) or if something changed per reasons above
+                || lastLastSeenIndicator != lastSeenIndicatorPosition
+                // When true that means that the user has just hid or removed post/thread
+                // so we need to refresh the UI
+                || refreshAfterHideOrRemovePosts;
+
+        if (shouldUpdate) {
+            notifyDataSetChanged();
+        }
+    }
+
+    private boolean hasChangedPosts(List<Post> posts, boolean changed) {
+        boolean localChanged = changed;
+
+        if (!localChanged && displayList.size() == posts.size()) {
+            for (int i = 0; i < displayList.size(); i++) {
+                if (PostUtils.postsDiffer(displayList.get(i), posts.get(i))) {
+                    // posts are different, or a post got deleted and needs to be updated
+                    localChanged = true;
+                    break;
+                }
+            }
+        } else {
+            // new posts or fewer posts, update
+            localChanged = true;
+        }
+
+        return localChanged;
+    }
+
+    private int getLastSeenIndicatorPosition(Loadable threadLoadable) {
         if (threadLoadable.lastViewed >= 0) {
             // Do not process the last post, the indicator does not have to appear at the bottom
             for (int i = 0, displayListSize = displayList.size() - 1; i < displayListSize; i++) {
                 Post post = displayList.get(i);
                 if (post.no == threadLoadable.lastViewed) {
-                    lastSeenIndicatorPosition = i + 1;
-                    break;
+                    return lastSeenIndicatorPosition = i + 1;
                 }
             }
         }
 
-        //update for indicator (adds/removes extra recycler item that causes inconsistency exceptions)
-        //or if something changed per reasons above
-        if (lastLastSeenIndicator != lastSeenIndicatorPosition || changed
-                // When true that means that the user has just hid or removed post/thread
-                // so we need to refresh the UI
-                || refreshAfterHideOrRemovePosts) {
-            notifyDataSetChanged();
-        }
+        return -1;
     }
 
     public List<Post> getDisplayList() {
