@@ -341,7 +341,7 @@ public class ChanSettings {
 
             //region APPEARANCE
             // Theme
-            theme = new StringSetting(p, "preference_theme", "yotsuba");
+            theme = new StringSetting(p, "preference_theme", "tomorrow");
 
             //Layout
             layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
