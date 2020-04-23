@@ -28,8 +28,7 @@ import com.github.adamantcheese.chan.controller.Controller;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
-public class LicensesController
-        extends Controller {
+public class LicensesController extends Controller {
     private String title;
     private String url;
 
