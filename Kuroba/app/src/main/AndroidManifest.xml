@@ -30,16 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- !!!! REMOVE usesCleartextTraffic in a couple of months, like in april-may !!!! -->
-
     <application
         android:name=".Chan"
         android:allowBackup="true"
         android:icon="${iconLoc}"
         android:label="${appName}"
         android:requestLegacyExternalStorage="true"
-        android:theme="@style/Chan.Theme"
-        android:usesCleartextTraffic="${devBuild}">
+        android:theme="@style/Chan.Theme">
 
         <uses-library
             android:name="org.apache.http.legacy"
