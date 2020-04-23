@@ -176,11 +176,7 @@ public class DvachApi
             chanReaderProcessor.setOp(op);
         }
 
-        if (chanReaderProcessor.containsPostNo(builder.id).unwrap()) {
-            chanReaderProcessor.addForUpdateInDatabase(builder);
-        } else {
-            chanReaderProcessor.addForParse(builder);
-        }
+        chanReaderProcessor.addPost(builder);
     }
 
     private PostImage readPostImage(JsonReader reader, Post.Builder builder, SiteEndpoints endpoints)

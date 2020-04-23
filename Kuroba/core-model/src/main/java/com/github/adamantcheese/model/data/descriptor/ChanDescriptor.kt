@@ -58,6 +58,10 @@ sealed class ChanDescriptor {
         override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
         override fun boardCode(): String = boardDescriptor.boardCode
 
+        fun toThreadDescriptor(opNo: Long): ThreadDescriptor {
+            return ThreadDescriptor(boardDescriptor, opNo)
+        }
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is CatalogDescriptor) return false

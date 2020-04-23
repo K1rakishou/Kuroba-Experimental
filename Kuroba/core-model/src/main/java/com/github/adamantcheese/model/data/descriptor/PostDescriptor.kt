@@ -1,6 +1,6 @@
 package com.github.adamantcheese.model.data.descriptor
 
-class PostDescriptor(
+class PostDescriptor private constructor(
         /**
          * A post may belong to a thread or to a catalog (OP) that's why we use abstract
          * ChanDescriptor here and not a concrete Thread/Catalog descriptor
@@ -8,6 +8,13 @@ class PostDescriptor(
         val descriptor: ChanDescriptor,
         val postNo: Long
 ) {
+
+    fun getThreadDescriptor(): ChanDescriptor.ThreadDescriptor {
+        return when (descriptor) {
+            is ChanDescriptor.ThreadDescriptor -> descriptor
+            is ChanDescriptor.CatalogDescriptor -> descriptor.toThreadDescriptor(postNo)
+        }
+    }
 
     fun getThreadNo(): Long {
         return when (descriptor) {

@@ -407,7 +407,7 @@ public class Post
         public int idColor;
         public boolean isLightColor;
         public boolean isSavedReply;
-        private Set<Long> repliesToIds = new HashSet<>();
+        public Set<Long> repliesToIds = new HashSet<>();
 
         @Nullable
         public CharSequence tripcode;
@@ -426,6 +426,10 @@ public class Post
         public ArchivesManager.ArchiveDescriptor archiveDescriptor = null;
 
         public Builder() {
+        }
+
+        public Set<Long> getRepliesToIds() {
+            return repliesToIds;
         }
 
         public Builder board(Board board) {

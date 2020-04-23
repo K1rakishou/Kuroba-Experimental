@@ -7,11 +7,10 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
-import com.github.adamantcheese.model.source.cache.MultiMapCache
+import com.github.adamantcheese.model.source.cache.PostsCache
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlin.math.min
 
 class ChanPostRepository(
         database: KurobaDatabase,
@@ -21,8 +20,7 @@ class ChanPostRepository(
         private val appConstants: AppConstants
 ) : AbstractRepository(database, logger) {
     private val TAG = "$loggerTag ChanPostRepository"
-    private val postCache =
-            MultiMapCache<ChanDescriptor, PostDescriptor, ChanPost>(appConstants.maxPostsCountInPostsCache)
+    private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache)
 
     fun getCachedValuesCount(): Int {
         return runBlocking { postCache.getCachedValuesCount() }
@@ -47,7 +45,7 @@ class ChanPostRepository(
         }
     }
 
-    private suspend fun insertOrUpdateCatalogOriginalPostsBlocking(
+    suspend fun insertOrUpdateCatalogOriginalPostsBlocking(
             posts: MutableList<ChanPost>
     ): List<Long> {
         if (posts.isEmpty()) {
@@ -59,7 +57,7 @@ class ChanPostRepository(
 
         if (posts.isNotEmpty()) {
             posts.forEach { post ->
-                postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                postCache.putIntoCache(post.postDescriptor, post)
             }
         }
 
@@ -69,37 +67,13 @@ class ChanPostRepository(
     suspend fun insertOrUpdateThreadPostsBlocking(
             posts: MutableList<ChanPost>
     ): List<Long> {
-        val listCapacity = min(posts.size / 2, 10)
         var originalPost: ChanPost? = null
-        val postsThatDifferWithCache = ArrayList<ChanPost>(listCapacity)
+        val postsThatDifferWithCache = ArrayList<ChanPost>()
 
         // Figure out what posts differ from the cache that we want to update in the
         // database
         posts.forEach { chanPost ->
-            val differsFromCached = kotlin.run {
-                val fromCache = postCache.getFromCache(
-                        chanPost.postDescriptor.descriptor,
-                        chanPost.postDescriptor
-                )
-
-                if (fromCache == null) {
-                    // Posts is not cached yet - update
-                    return@run true
-                }
-
-                if (fromCache.isOp) {
-                    // The post is an original post - always update
-                    return@run true
-                }
-
-                if (fromCache != chanPost) {
-                    // Cached post is not the same as the fresh post - update
-                    return@run true
-                }
-
-                return@run false
-            }
-
+            val differsFromCached = postDiffersFromCached(chanPost)
             if (differsFromCached) {
                 if (chanPost.isOp) {
                     if (originalPost != null) {
@@ -116,7 +90,6 @@ class ChanPostRepository(
         val chanThreadId = if (originalPost != null) {
             val chanThreadId = localSource.insertOriginalPost(originalPost!!)
             postCache.putIntoCache(
-                    originalPost!!.postDescriptor.descriptor,
                     originalPost!!.postDescriptor,
                     originalPost!!
             )
@@ -144,11 +117,39 @@ class ChanPostRepository(
             localSource.insertPosts(chanThreadId, postsThatDifferWithCache)
 
             postsThatDifferWithCache.forEach { post ->
-                postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                postCache.putIntoCache(post.postDescriptor, post)
             }
         }
 
         return postsThatDifferWithCache.map { it.postDescriptor.postNo }
+    }
+
+    fun getCachedPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
+        return runBlocking { postCache.getPostFromCache(postDescriptor, isOP) }
+    }
+
+    suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {
+        val fromCache = postCache.getPostFromCache(
+                chanPost.postDescriptor,
+                chanPost.isOp
+        )
+
+        if (fromCache == null) {
+            // Posts is not cached yet - update
+            return true
+        }
+
+        if (fromCache.isOp) {
+            // The post is an original post - always update
+            return true
+        }
+
+        if (fromCache != chanPost) {
+            // Cached post is not the same as the fresh post - update
+            return true
+        }
+
+        return false
     }
 
     fun getCatalogOriginalPostsBlocking(
@@ -157,7 +158,10 @@ class ChanPostRepository(
     ): ModularResult<List<ChanPost>> {
         return runBlocking {
             return@runBlocking withTransactionSafe {
-                val originalPostsFromCache = postCache.getAll(descriptor)
+                val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
+                    postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
+                }
+
                 val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
                     post.postDescriptor.postNo
                 }.toSet()
@@ -178,7 +182,7 @@ class ChanPostRepository(
 
                 if (originalPostsFromDatabase.isNotEmpty()) {
                     originalPostsFromDatabase.forEach { post ->
-                        postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                        postCache.putIntoCache(post.postDescriptor, post)
                     }
                 }
 
@@ -214,7 +218,7 @@ class ChanPostRepository(
 
                 if (postsFromDatabase.isNotEmpty()) {
                     postsFromDatabase.forEach { post ->
-                        postCache.putIntoCache(post.postDescriptor.descriptor, post.postDescriptor, post)
+                        postCache.putIntoCache(post.postDescriptor, post)
                     }
                 }
 
@@ -223,14 +227,12 @@ class ChanPostRepository(
         }
     }
 
-    fun containsPostBlocking(
-            postDescriptor: PostDescriptor
-    ): ModularResult<Boolean> {
+    fun containsPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
         return runBlocking {
             return@runBlocking withTransactionSafe {
-                val containsInCache = postCache.getFromCache(
-                        postDescriptor.descriptor,
-                        postDescriptor
+                val containsInCache = postCache.getPostFromCache(
+                        postDescriptor,
+                        isOP
                 ) != null
 
                 if (containsInCache) {

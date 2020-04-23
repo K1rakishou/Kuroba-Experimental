@@ -29,10 +29,21 @@ object DescriptorUtils {
     }
 
     fun getPostDescriptor(loadable: Loadable, post: Post): PostDescriptor {
-        return PostDescriptor(
-                getDescriptor(loadable),
-                post.no
-        )
+        return when (val descriptor = getDescriptor(loadable)) {
+            is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
+                    descriptor.siteName(),
+                    descriptor.boardCode(),
+                    descriptor.opNo,
+                    post.no
+            )
+            is ChanDescriptor.CatalogDescriptor -> {
+                PostDescriptor.create(
+                        descriptor.siteName(),
+                        descriptor.boardCode(),
+                        post.no
+                )
+            }
+        }
     }
 
 }

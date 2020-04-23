@@ -262,7 +262,9 @@ public class PostAdapter
     }
 
     public void setThread(
-            Loadable threadLoadable, List<Post> posts, boolean refreshAfterHideOrRemovePosts
+            Loadable threadLoadable,
+            List<Post> posts,
+            boolean refreshAfterHideOrRemovePosts
     ) {
         BackgroundUtils.ensureMainThread();
 

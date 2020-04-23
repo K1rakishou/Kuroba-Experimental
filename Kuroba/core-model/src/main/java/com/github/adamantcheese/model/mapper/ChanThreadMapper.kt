@@ -51,9 +51,23 @@ object ChanThreadMapper {
                 ChanTextSpanEntity.TextType.Tripcode
         ) ?: SerializableSpannableString()
 
+        val postDescriptor = when (chanDescriptor) {
+            is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
+                    chanDescriptor.siteName(),
+                    chanDescriptor.boardCode(),
+                    chanDescriptor.opNo,
+                    chanPostEntity.postNo
+            )
+            is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(
+                    chanDescriptor.siteName(),
+                    chanDescriptor.boardCode(),
+                    chanPostEntity.postNo
+            )
+        }
+
         return ChanPost(
                 databasePostId = chanPostEntity.postId,
-                postDescriptor = PostDescriptor(chanDescriptor, chanPostEntity.postNo),
+                postDescriptor = postDescriptor,
                 postImages = mutableListOf(),
                 postIcons = mutableListOf(),
                 replies = chanThreadEntity.replies,

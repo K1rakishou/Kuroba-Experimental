@@ -253,11 +253,7 @@ public class VichanApi
             builder.addHttpIcon(new PostHttpIcon(countryUrl, countryName + "/t_" + trollCountryCode));
         }
 
-        if (chanReaderProcessor.containsPostNo(builder.id).unwrap()) {
-            chanReaderProcessor.addForUpdateInDatabase(builder);
-        } else {
-            chanReaderProcessor.addForParse(builder);
-        }
+        chanReaderProcessor.addPost(builder);
     }
 
     private PostImage readPostImage(JsonReader reader, Post.Builder builder, SiteEndpoints endpoints)

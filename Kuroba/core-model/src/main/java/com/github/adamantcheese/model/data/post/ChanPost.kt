@@ -40,6 +40,15 @@ class ChanPost(
         }
 
         if (isOp) {
+            if (lastModified != other.lastModified) {
+                return false
+            }
+            if (threadImagesCount != other.threadImagesCount) {
+                return false
+            }
+            if (uniqueIps != other.uniqueIps) {
+                return false
+            }
             if (sticky != other.sticky) {
                 return false
             }
@@ -115,6 +124,8 @@ class ChanPost(
         result = 31 * result + archived.hashCode()
         result = 31 * result + deleted.hashCode()
         result = 31 * result + replies.hashCode()
+        result = 31 * result + threadImagesCount.hashCode()
+        result = 31 * result + uniqueIps.hashCode()
         result = 31 * result + repliesTo.hashCode()
         result = 31 * result + postImages.hashCode()
         result = 31 * result + postComment.hashCode()

@@ -18,7 +18,8 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.chan.utils.PostUtils
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 
 class ChanReaderProcessor(
@@ -26,37 +27,47 @@ class ChanReaderProcessor(
         val loadable: Loadable
 ) {
     private val toParse = ArrayList<Post.Builder>()
-    private val toUpdateInRepository = ArrayList<Long>()
     private val postNoOrderedList = mutableListOf<Long>()
 
     var op: Post.Builder? = null
 
-    fun containsPostNo(postNo: Long): ModularResult<Boolean> {
-        return chanPostRepository.containsPostBlocking(
-                loadable.getPostDescriptor(postNo)
-        )
+    fun addPost(postBuilder: Post.Builder) {
+        if (differsFromCached(postBuilder)) {
+            addForParse(postBuilder)
+        }
+
+        postNoOrderedList.add(postBuilder.id)
     }
 
-    fun addForParse(postBuilder: Post.Builder) {
+    private fun differsFromCached(builder: Post.Builder): Boolean {
+        val postDescriptor = if (builder.op) {
+            PostDescriptor.create(
+                    builder.board.site.name(),
+                    builder.board.code,
+                    builder.id
+            )
+        } else {
+            PostDescriptor.create(
+                    builder.board.site.name(),
+                    builder.board.code,
+                    builder.opId,
+                    builder.id
+            )
+        }
+
+        val chanPost = chanPostRepository.getCachedPostBlocking(postDescriptor, builder.op)
+                ?: return true
+
+        return PostUtils.postsDiffer(builder, chanPost)
+    }
+
+
+    private fun addForParse(postBuilder: Post.Builder) {
         toParse.add(postBuilder)
-        addPostNoOrdered(postBuilder.id)
-    }
-
-    fun addForUpdateInDatabase(postBuilder: Post.Builder) {
-        toUpdateInRepository.add(postBuilder.id)
-        addPostNoOrdered(postBuilder.id)
-    }
-
-    private fun addPostNoOrdered(postNo: Long) {
-        postNoOrderedList.add(postNo)
     }
 
     fun getToParse(): List<Post.Builder> {
         return toParse
-    }
-
-    fun getToUpdateInRepository(): List<Long> {
-        return toUpdateInRepository
     }
 
     fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
