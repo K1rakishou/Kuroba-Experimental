@@ -322,42 +322,54 @@ public class StartActivity
         if (intent.getExtras() != null) {
             int pinId = intent.getExtras().getInt("pin_id", -2);
             if (pinId != -2 && mainNavigationController.getTop() instanceof BrowseController) {
-                if (pinId == -1) {
-                    drawerController.onMenuClicked();
-                } else {
-                    Pin pin = watchManager.findPinById(pinId);
-                    if (pin != null) {
-                        browseController.showThread(pin.loadable, false);
-                    }
-                }
+                passIntentToBrowseController(pinId);
             } else if (pinId != -2 && mainNavigationController.getTop() instanceof ThreadSlideController) {
-                if (pinId == -1) {
-                    drawerController.onMenuClicked();
+                passIntentToThreadSlideController(pinId);
+            }
+        }
+    }
+
+    private void passIntentToThreadSlideController(int pinId) {
+        if (pinId == -1) {
+            drawerController.onMenuClicked();
+            return;
+        }
+
+        Pin pin = watchManager.findPinById(pinId);
+        if (pin == null) {
+            return;
+        }
+
+        List<Controller> controllers = mainNavigationController.childControllers;
+        for (Controller controller : controllers) {
+            if (controller instanceof ViewThreadController) {
+                ((ViewThreadController) controller).loadThread(pin.loadable);
+                break;
+            } else if (controller instanceof ThreadSlideController) {
+                ThreadSlideController slideNav = (ThreadSlideController) controller;
+                if (slideNav.getRightController() instanceof ViewThreadController) {
+                    ((ViewThreadController) slideNav.getRightController()).loadThread(pin.loadable);
+                    slideNav.switchToController(false);
+                    break;
                 } else {
-                    Pin pin = watchManager.findPinById(pinId);
-                    if (pin != null) {
-                        List<Controller> controllers = mainNavigationController.childControllers;
-                        for (Controller controller : controllers) {
-                            if (controller instanceof ViewThreadController) {
-                                ((ViewThreadController) controller).loadThread(pin.loadable);
-                                break;
-                            } else if (controller instanceof ThreadSlideController) {
-                                ThreadSlideController slideNav = (ThreadSlideController) controller;
-                                if (slideNav.getRightController() instanceof ViewThreadController) {
-                                    ((ViewThreadController) slideNav.getRightController()).loadThread(pin.loadable);
-                                    slideNav.switchToController(false);
-                                    break;
-                                } else {
-                                    ViewThreadController v = new ViewThreadController(this, pin.loadable);
-                                    slideNav.setRightController(v);
-                                    slideNav.switchToController(false);
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    ViewThreadController v = new ViewThreadController(this, pin.loadable);
+                    slideNav.setRightController(v);
+                    slideNav.switchToController(false);
+                    break;
                 }
             }
+        }
+    }
+
+    private void passIntentToBrowseController(int pinId) {
+        if (pinId == -1) {
+            drawerController.onMenuClicked();
+            return;
+        }
+
+        Pin pin = watchManager.findPinById(pinId);
+        if (pin != null) {
+            browseController.showThread(pin.loadable, false);
         }
     }
 
@@ -378,43 +390,44 @@ public class StartActivity
         Loadable board = browseController.getLoadable();
         if (board == null) {
             Logger.w(TAG, "Can not save instance state, the board loadable is null");
-        } else {
-            Loadable thread = null;
+            return;
+        }
 
-            if (drawerController.childControllers.get(0) instanceof SplitNavigationController) {
-                SplitNavigationController dblNav = (SplitNavigationController) drawerController.childControllers.get(0);
-                if (dblNav.getRightController() instanceof NavigationController) {
-                    NavigationController rightNavigationController = (NavigationController) dblNav.getRightController();
-                    for (Controller controller : rightNavigationController.childControllers) {
-                        if (controller instanceof ViewThreadController) {
-                            thread = ((ViewThreadController) controller).getLoadable();
-                            break;
-                        }
-                    }
-                }
-            } else {
-                List<Controller> controllers = mainNavigationController.childControllers;
-                for (Controller controller : controllers) {
+        Loadable thread = null;
+
+        if (drawerController.childControllers.get(0) instanceof SplitNavigationController) {
+            SplitNavigationController dblNav = (SplitNavigationController) drawerController.childControllers.get(0);
+            if (dblNav.getRightController() instanceof NavigationController) {
+                NavigationController rightNavigationController = (NavigationController) dblNav.getRightController();
+                for (Controller controller : rightNavigationController.childControllers) {
                     if (controller instanceof ViewThreadController) {
                         thread = ((ViewThreadController) controller).getLoadable();
                         break;
-                    } else if (controller instanceof ThreadSlideController) {
-                        ThreadSlideController slideNav = (ThreadSlideController) controller;
-                        if (slideNav.getRightController() instanceof ViewThreadController) {
-                            thread = ((ViewThreadController) slideNav.getRightController()).getLoadable();
-                            break;
-                        }
                     }
                 }
             }
-
-            if (thread == null) {
-                // Make the parcel happy
-                thread = Loadable.emptyLoadable();
+        } else {
+            List<Controller> controllers = mainNavigationController.childControllers;
+            for (Controller controller : controllers) {
+                if (controller instanceof ViewThreadController) {
+                    thread = ((ViewThreadController) controller).getLoadable();
+                    break;
+                } else if (controller instanceof ThreadSlideController) {
+                    ThreadSlideController slideNav = (ThreadSlideController) controller;
+                    if (slideNav.getRightController() instanceof ViewThreadController) {
+                        thread = ((ViewThreadController) slideNav.getRightController()).getLoadable();
+                        break;
+                    }
+                }
             }
-
-            outState.putParcelable(STATE_KEY, new ChanState(board.clone(), thread.clone()));
         }
+
+        if (thread == null) {
+            // Make the parcel happy
+            thread = Loadable.emptyLoadable();
+        }
+
+        outState.putParcelable(STATE_KEY, new ChanState(board.clone(), thread.clone()));
     }
 
     @Override
@@ -461,8 +474,8 @@ public class StartActivity
     }
 
     public void popController(Controller controller) {
-        //we permit removal of things not on the top of the stack, but everything gets shifted down so the top of the stack
-        //remains the same
+        // we permit removal of things not on the top of the stack, but everything gets shifted down
+        // so the top of the stack remains the same
         stack.remove(controller);
     }
 

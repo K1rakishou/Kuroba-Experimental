@@ -1312,7 +1312,8 @@ public class ThreadPresenter
 
     private void showPosts(boolean refreshAfterHideOrRemovePosts) {
         if (chanLoader != null && chanLoader.getThread() != null) {
-            threadPresenterCallback.showPosts(chanLoader.getThread(),
+            threadPresenterCallback.showPosts(
+                    chanLoader.getThread(),
                     new PostsFilter(order, searchQuery),
                     refreshAfterHideOrRemovePosts
             );
