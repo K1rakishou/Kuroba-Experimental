@@ -32,6 +32,9 @@ class ArchivesManager(
     private val archives by lazy { loadArchives() }
     private val random = Random(System.currentTimeMillis())
 
+    fun getAllArchiveData(): List<ArchiveData> {
+        return archives
+    }
 
     @OptIn(ExperimentalStdlibApi::class)
     fun getArchiveDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchiveDescriptor? {
@@ -145,13 +148,13 @@ class ArchivesManager(
         }
     }
 
-    private fun loadArchives(): Array<ArchiveData> {
+    private fun loadArchives(): List<ArchiveData> {
         return appContext.assets.use { assetManager ->
             return@use assetManager.open(ARCHIVES_JSON_FILE_NAME).use { inputStream ->
                 return@use gson.fromJson<Array<ArchiveData>>(
                         JsonReader(InputStreamReader(inputStream)),
                         Array<ArchiveData>::class.java
-                )
+                ).toList()
             }
         }
     }
@@ -160,7 +163,6 @@ class ArchivesManager(
             val name: String,
             val domain: String
     ) {
-
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is ArchiveDescriptor) return false
@@ -177,7 +179,6 @@ class ArchivesManager(
         override fun toString(): String {
             return "ArchiveDescriptor(name='$name', domain='$domain')"
         }
-
     }
 
     data class ArchiveData(
@@ -189,7 +190,9 @@ class ArchivesManager(
             val supportedBoards: List<String>,
             @SerializedName("files")
             val supportedFiles: List<String>
-    )
+    ) {
+        fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(name, domain)
+    }
 
     companion object {
         private const val TAG = "ArchivesManager"

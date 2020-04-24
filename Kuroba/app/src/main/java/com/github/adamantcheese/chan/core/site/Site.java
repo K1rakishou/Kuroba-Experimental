@@ -66,7 +66,12 @@ public interface Site {
         /**
          * This site reports image hashes.
          */
-        IMAGE_FILE_HASH
+        IMAGE_FILE_HASH,
+
+        /**
+         * This site can retrieve deleted posts from third-party archives (for now it's only 4chan)
+         * */
+        THIRD_PARTY_ARCHIVES
     }
 
     /**

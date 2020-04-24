@@ -111,6 +111,10 @@ android {
         exclude 'META-INF/*'
     }
 
+    kapt {
+        correctErrorTypes = true
+    }
+
     flavorDimensions "default"
 
     productFlavors {
@@ -274,6 +278,9 @@ dependencies {
 
     implementation "com.google.dagger:dagger-android:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-android-processor:${versions.dagger_version}"
+
+    implementation "com.airbnb.android:epoxy:${versions.epoxy}"
+    kapt "com.airbnb.android:epoxy-processor:${versions.epoxy}"
 
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"

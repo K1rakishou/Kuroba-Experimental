@@ -215,6 +215,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_site_group_login">Authentication</string>
     <string name="setup_site_login">Login</string>
     <string name="setup_site_login_description_enabled">Logged in</string>
+    <string name="setup_site_third_party_archives">Third-party archives</string>
+    <string name="setup_site_setup_archives">Setup archives</string>
 
     <string name="setup_site_login_description_disabled">Off</string>
     <string name="setup_board_title">Configure boards of %s</string>
@@ -871,4 +873,9 @@ Don't have a 4chan Pass?<br>
 
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive"> (From archive)</string>
+    <string name="archives_settings_title">Archives settings</string>
+    <string name="epoxy_archive_setting_row_working">WORKING</string>
+    <string name="epoxy_archive_setting_row_experiencing_problems">EXPERIENCING PROBLEMS</string>
+    <string name="epoxy_archive_setting_row_not_working">NOT WORKING</string>
+    <string name="epoxy_archive_setting_row_disabled">DISABLED</string>
 </resources>

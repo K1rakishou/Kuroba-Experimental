@@ -96,10 +96,13 @@ public class Dvach
 
     @Override
     public List<SiteSetting> settings() {
-        return Collections.singletonList(SiteSetting.forOption(captchaType,
-                "Captcha type",
-                Arrays.asList("Javascript", "Noscript")
-        ));
+        return Collections.singletonList(
+                new SiteSetting.SiteOptionsSetting(
+                        "Captcha type",
+                        captchaType,
+                        Arrays.asList("Javascript", "Noscript")
+                )
+        );
     }
 
     @Override
@@ -221,19 +224,19 @@ public class Dvach
             public void boards(final BoardsListener listener) {
                 //@formatter:off
                 requestQueue.add(new DvachBoardsRequest(Dvach.this,
-                   response -> listener.onBoardsReceived(new Boards(response)),
-                   error -> {
-                       Logger.e(TAG, "Failed to get boards from server", error);
+                        response -> listener.onBoardsReceived(new Boards(response)),
+                        error -> {
+                            Logger.e(TAG, "Failed to get boards from server", error);
 
-                       // API fail, provide some default boards
-                       List<Board> list = new ArrayList<>();
-                       list.add(Board.fromSiteNameCode(Dvach.this, "бред", "b"));
-                       list.add(Board.fromSiteNameCode(Dvach.this, "Видеоигры, general, официальные треды", "vg"));
-                       list.add(Board.fromSiteNameCode(Dvach.this, "новости", "news"));
-                       list.add(Board.fromSiteNameCode(Dvach.this, "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi", "po"));
-                       Collections.shuffle(list);
-                       listener.onBoardsReceived(new Boards(list));
-                   }
+                            // API fail, provide some default boards
+                            List<Board> list = new ArrayList<>();
+                            list.add(Board.fromSiteNameCode(Dvach.this, "бред", "b"));
+                            list.add(Board.fromSiteNameCode(Dvach.this, "Видеоигры, general, официальные треды", "vg"));
+                            list.add(Board.fromSiteNameCode(Dvach.this, "новости", "news"));
+                            list.add(Board.fromSiteNameCode(Dvach.this, "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi", "po"));
+                            Collections.shuffle(list);
+                            listener.onBoardsReceived(new Boards(list));
+                        }
                 ));
                 //@formatter:on
             }

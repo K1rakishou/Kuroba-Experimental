@@ -482,8 +482,21 @@ public class Chan4
     @Override
     public List<SiteSetting> settings() {
         List<SiteSetting> settings = new ArrayList<>();
-        settings.add(SiteSetting.forOption(captchaType, "Captcha type", Arrays.asList("Javascript", "Noscript")));
-        settings.add(SiteSetting.forString(flagType, "Country flag code"));
+        settings.add(
+                new SiteSetting.SiteOptionsSetting(
+                        "Captcha type",
+                        captchaType,
+                        Arrays.asList("Javascript", "Noscript")
+                )
+        );
+
+        settings.add(
+                new SiteSetting.SiteStringSetting(
+                        "Country flag code",
+                        flagType
+                )
+        );
+
         return settings;
     }
 

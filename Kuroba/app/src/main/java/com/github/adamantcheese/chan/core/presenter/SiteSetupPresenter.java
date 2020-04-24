@@ -12,7 +12,9 @@ public class SiteSetupPresenter {
     private Callback callback;
     private Site site;
     private DatabaseManager databaseManager;
+
     private boolean hasLogin;
+    private boolean hasThirdPartyArchives;
 
     @Inject
     public SiteSetupPresenter(DatabaseManager databaseManager) {
@@ -24,9 +26,13 @@ public class SiteSetupPresenter {
         this.site = site;
 
         hasLogin = site.siteFeature(Site.SiteFeature.LOGIN);
-
         if (hasLogin) {
             callback.showLogin();
+        }
+
+        hasThirdPartyArchives = site.siteFeature(Site.SiteFeature.THIRD_PARTY_ARCHIVES);
+        if (hasThirdPartyArchives) {
+            callback.showArchivesSettings();
         }
 
         List<SiteSetting> settings = site.settings();
@@ -43,17 +49,18 @@ public class SiteSetupPresenter {
     }
 
     private void setBoardCount(Callback callback, Site site) {
-        callback.setBoardCount(databaseManager.runTask(databaseManager.getDatabaseBoardManager()
-                .getSiteSavedBoards(site)).size());
+        int boardsCount = databaseManager.runTask(
+                databaseManager.getDatabaseBoardManager().getSiteSavedBoards(site)
+        ).size();
+
+        callback.setBoardCount(boardsCount);
     }
 
     public interface Callback {
         void setBoardCount(int boardCount);
-
         void showLogin();
-
+        void showArchivesSettings();
         void setIsLoggedIn(boolean isLoggedIn);
-
         void showSettings(List<SiteSetting> settings);
     }
 }
