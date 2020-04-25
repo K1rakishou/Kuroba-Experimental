@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.features.archives
 
 import android.content.Context
+import android.text.Html
+import androidx.appcompat.app.AlertDialog
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
@@ -8,7 +10,7 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyArchiveSettingRow
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration
-import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -22,11 +24,16 @@ class ArchivesSettingsController(context: Context)
     lateinit var recyclerView: EpoxyRecyclerView
 
     private val presenter = ArchivesSettingsPresenter()
+    private val cancellableToast = CancellableToast()
 
     override fun onCreate() {
         super.onCreate()
 
         navigation.title = getString(R.string.archives_settings_title)
+
+        navigation.buildMenu()
+                .withItem(R.drawable.ic_help_outline_white_24dp) { onHelpClicked() }
+                .build()
 
         view = inflate(context, R.layout.controller_archives_settings)
         recyclerView = view.findViewById(R.id.archives_recycler_view)
@@ -50,6 +57,16 @@ class ArchivesSettingsController(context: Context)
         presenter.onDestroy()
     }
 
+    private fun onHelpClicked() {
+        val dialog = AlertDialog.Builder(context)
+                .setTitle(R.string.help)
+                .setMessage(Html.fromHtml(getString(R.string.archives_settings_help_message)))
+                .setPositiveButton(R.string.close, null)
+                .show()
+
+        dialog.setCanceledOnTouchOutside(true)
+    }
+
     override fun showToast(message: ArchivesSettingsPresenterMessage) {
         val messageText = when (message) {
             is ArchivesSettingsPresenterMessage.RepositoryErrorMessage -> {
@@ -63,7 +80,7 @@ class ArchivesSettingsController(context: Context)
             }
         }.exhaustive
 
-        AndroidUtils.showToast(context, messageText)
+        cancellableToast.showToast(messageText)
     }
 
     override fun onHistoryLoaded(history: List<ThirdPartyArchiveFetchResult>) {

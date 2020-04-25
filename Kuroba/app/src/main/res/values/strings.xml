@@ -104,6 +104,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="send">Send</string>
     <string name="success">Success</string>
     <string name="error">Error</string>
+    <string name="help">Help</string>
     <string name="unhandled_error">Unhandled error!</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
@@ -267,6 +268,30 @@ If the pattern matches, then the post can be hidden, removed, highlighted, or au
 Note that for country code filtering, troll country codes should be prepended with "t_". In addition, a country code filter automatically implies the case insensitive flag for regex.
 ]]>
     </string>
+
+    <string name="filters_controller_help_message">
+        <![CDATA[You can use Regex101 for more comprehensive explanations
+            of your regular expressions, or as a playground for figuring out an expression. Use Javascript to test.<br><br>
+            Actions do the following:<br>
+            <b>Hide:</b> Replace the post with a stub. You can tap it to un-hide it.<br>
+            <b>Highlight:</b> A colored bar of your choosing will appear on the left hand side of this post.<br>
+            <b>Remove:</b> Remove this post. It won\'t be visible at all.<br>
+            <b>Watch:</b> If you have the thread watcher enabled and background watching on,
+            catalogs will be periodically checked based on your interval setting and any OP that matches the filter will be put into your bookmarks.
+            Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br><br>
+            Enabled filters have priority from top to bottom. Filter precedence for actions is as follows:<br>
+            1) Capcode or sticky<br>
+            2) OP<br>
+            3) Saved replies (your posts)<br>
+            4) Tripcode<br>
+            5) Name<br>
+            6) Comment<br>
+            7) ID<br>
+            8) Subject<br>
+            9) Country Code<br>
+            10) Filename"]]>
+    </string>
+
     <string name="filter_tripcode">Tripcode</string>
     <string name="filter_name">Name</string>
     <string name="filter_comment">Comment</string>
@@ -604,6 +629,35 @@ Don't have a 4chan Pass?<br>
     <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
     <string name="archives_settings_archive_is_working">Archive is working normally</string>
 
+    <string name="archives_settings_help_message"><![CDATA[All these archives are used to retrieve deleted posts/images in a thread.<br>
+            All archives are disabled by default, you need to enable them manually.<br>
+            Most of the time you want to enable <b>all</b> of the archives.
+            If one archive is unavailable for some reason, the other one may be used instead
+            (only if they both support the same board).<br><br>
+
+            When fetching posts from an archive, if there was an error (for example an archive was
+            unavailable) we store this error so that we can then use it to calculate a score. We use
+            that score to determine what archive to use when multiple enabled archives support the
+            same board. <br><br>
+
+            We store 5 last fetch results so that means if all 5 fetches succeeded then
+            the archive will have the highest score. Such archives are marked with "WORKING"
+            status. On the other hand if there was at least one error over the last 5 fetches then
+            such archive is marked with "EXPERIENCING PROBLEMS" error. If 4 out of 5 fetches resulted
+            in error then such archive will be marked as "NOT WORKING.<br><br>
+
+            When determining what archive to use we go down from an archive with the highest score
+            to the lowest. If an archive with the highest score does not support files for the board
+            and the next archive supports them then the next archive will be used (since archives
+            that supports files have higher priority). The score resets every 30 minutes for all
+            archives.<br><br>
+
+            The score is ignored when "Reload" button (the one in Toolbar) is clicked or when the
+            bottom status view is clicked.<br><br>
+
+            If one of the archives for some reason does not load (blocked by an ISP) you should
+            disable it so that you don't have to wait ~20 seconds for each opened thread.]]></string>
+
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
@@ -889,4 +943,5 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
     <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
     <string name="epoxy_fetch_history_result_template">Result: %1$s</string>
+
 </resources>

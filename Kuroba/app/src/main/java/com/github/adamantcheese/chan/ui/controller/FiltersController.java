@@ -68,6 +68,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 public class FiltersController
         extends Controller
         implements ToolbarNavigationController.ToolbarSearchCallback, View.OnClickListener {
+
     @Inject
     DatabaseManager databaseManager;
 
@@ -198,21 +199,10 @@ public class FiltersController
     }
 
     private void helpClicked(ToolbarMenuItem item) {
-        final AlertDialog dialog = new AlertDialog.Builder(context).setTitle("Help")
-                .setMessage(Html.fromHtml("You can use Regex101 for more comprehensive explanations "
-                        + "of your regular expressions, or as a playground for figuring out an expression. Use Javascript to test.<br><br>"
-                        + "Actions do the following:<br>"
-                        + "<b>Hide:</b> Replace the post with a stub. You can tap it to un-hide it.<br>"
-                        + "<b>Highlight:</b> A colored bar of your choosing will appear on the left hand side of this post.<br>"
-                        + "<b>Remove:</b> Remove this post. It won't be visible at all.<br>"
-                        + "<b>Watch:</b> If you have the thread watcher enabled and background watching on, "
-                        + "catalogs will be periodically checked based on your interval setting and any OP that matches the filter will be put into your bookmarks. "
-                        + "Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br><br>"
-                        + "Enabled filters have priority from top to bottom. Filter precedence for actions is as follows:<br>"
-                        + "1) Capcode or sticky<br>" + "2) OP<br>" + "3) Saved replies (your posts)<br>"
-                        + "4) Tripcode<br>" + "5) Name<br>" + "6) Comment<br>" + "7) ID<br>" + "8) Subject<br>"
-                        + "9) Country Code<br>" + "10) Filename"))
-                .setPositiveButton("Close", null)
+        final AlertDialog dialog = new AlertDialog.Builder(context)
+                .setTitle(R.string.help)
+                .setMessage(Html.fromHtml(getString(R.string.filters_controller_help_message)))
+                .setPositiveButton(R.string.close, null)
                 .setNegativeButton("Open Regex101", (dialog1, which) -> openLink("https://regex101.com/"))
                 .show();
         dialog.setCanceledOnTouchOutside(true);
