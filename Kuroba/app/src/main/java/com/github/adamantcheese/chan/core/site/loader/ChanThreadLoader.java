@@ -48,8 +48,8 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.common.ModularResult;
-import com.github.adamantcheese.model.repository.ArchivesRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
@@ -108,7 +108,7 @@ public class ChanThreadLoader
     @Inject
     ArchivesManager archivesManager;
     @Inject
-    ArchivesRepository archivesRepository;
+    ThirdPartyArchiveInfoRepository thirdPartyArchiveInfoRepository;
 
     private final WatchManager watchManager;
     private final List<ChanLoaderCallback> listeners = new CopyOnWriteArrayList<>();
@@ -435,7 +435,7 @@ public class ChanThreadLoader
                 chanPostRepository,
                 appConstants,
                 archivesManager,
-                archivesRepository,
+                thirdPartyArchiveInfoRepository,
                 requestParams
         );
 

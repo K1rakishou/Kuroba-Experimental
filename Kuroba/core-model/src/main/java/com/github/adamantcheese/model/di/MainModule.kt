@@ -8,10 +8,7 @@ import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
 import com.github.adamantcheese.model.repository.*
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
-import com.github.adamantcheese.model.source.local.ChanPostLocalSource
-import com.github.adamantcheese.model.source.local.InlinedFileInfoLocalSource
-import com.github.adamantcheese.model.source.local.MediaServiceLinkExtraContentLocalSource
-import com.github.adamantcheese.model.source.local.SeenPostLocalSource
+import com.github.adamantcheese.model.source.local.*
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContentRemoteSource
@@ -101,6 +98,20 @@ class MainModule {
                 loggerTag,
                 logger,
                 gson
+        )
+    }
+
+    @Singleton
+    @Provides
+    fun provideThirdPartyArchiveInfoLocalSource(
+            database: KurobaDatabase,
+            @LoggerTagPrefix loggerTag: String,
+            logger: Logger
+    ): ThirdPartyArchiveInfoLocalSource {
+        return ThirdPartyArchiveInfoLocalSource(
+                database,
+                loggerTag,
+                logger
         )
     }
 
@@ -216,12 +227,21 @@ class MainModule {
 
     @Singleton
     @Provides
-    fun provideArchivesRepository(
+    fun provideThirdPartyArchiveInfoRepository(
             logger: Logger,
             database: KurobaDatabase,
+            thirdPartyArchiveInfoLocalSource: ThirdPartyArchiveInfoLocalSource,
             archivesRemoteSource: ArchivesRemoteSource,
+            appConstants: AppConstants,
             @LoggerTagPrefix loggerTag: String
-    ): ArchivesRepository {
-        return ArchivesRepository(database, loggerTag, logger, archivesRemoteSource)
+    ): ThirdPartyArchiveInfoRepository {
+        return ThirdPartyArchiveInfoRepository(
+                database,
+                loggerTag,
+                logger,
+                thirdPartyArchiveInfoLocalSource,
+                archivesRemoteSource,
+                appConstants
+        )
     }
 }

@@ -102,6 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="no">No</string>
     <string name="save">Save</string>
     <string name="send">Send</string>
+    <string name="unhandled_error">Unhandled error!</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
     <string name="unmark_as_my_post">Unmark as my post</string>
@@ -595,6 +596,9 @@ Don't have a 4chan Pass?<br>
     <string name="apply_options">Apply</string>
     <string name="image_quality">Image quality: %1$d</string>
 
+    <string name="archives_settings_title">Archives settings</string>
+    <string name="archives_settings_repository_error">Repository error: %1$s</string>
+
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
@@ -873,9 +877,10 @@ Don't have a 4chan Pass?<br>
 
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive"> (From archive)</string>
-    <string name="archives_settings_title">Archives settings</string>
     <string name="epoxy_archive_setting_row_working">WORKING</string>
     <string name="epoxy_archive_setting_row_experiencing_problems">EXPERIENCING PROBLEMS</string>
     <string name="epoxy_archive_setting_row_not_working">NOT WORKING</string>
     <string name="epoxy_archive_setting_row_disabled">DISABLED</string>
+    <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
+    <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.manager
 
 import android.content.Context
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
@@ -15,7 +16,7 @@ class ArchivesManager(
         private val appContext: Context,
         private val gson: Gson
 ) {
-    val allArchives = arrayOf(
+    val allArchives = listOf(
             ArchiveDescriptor("4plebs", "archive.4plebs.org"),
             ArchiveDescriptor("Nyafuu Archive", "archive.nyafuu.org"),
             ArchiveDescriptor("Rebecca Black Tech", "archive.rebeccablacktech.com"),
@@ -156,28 +157,6 @@ class ArchivesManager(
                         Array<ArchiveData>::class.java
                 ).toList()
             }
-        }
-    }
-
-    class ArchiveDescriptor(
-            val name: String,
-            val domain: String
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is ArchiveDescriptor) return false
-
-            if (domain != other.domain) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            return domain.hashCode()
-        }
-
-        override fun toString(): String {
-            return "ArchiveDescriptor(name='$name', domain='$domain')"
         }
     }
 

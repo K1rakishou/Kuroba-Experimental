@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.controller.archvies
+package com.github.adamantcheese.chan.ui.epoxy
 
 import android.content.Context
 import android.graphics.Color
@@ -11,9 +11,8 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.presenter.ArchivesSettingsPresenter
+import com.github.adamantcheese.chan.features.archives.ArchiveStatus
 import com.github.adamantcheese.chan.utils.exhaustive
-import java.util.*
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyArchiveSettingRow @JvmOverloads constructor(
@@ -44,21 +43,21 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
     }
 
     @ModelProp
-    fun setArchiveStatus(archiveStatus: ArchivesSettingsPresenter.ArchiveStatus) {
+    fun setArchiveStatus(archiveStatus: ArchiveStatus) {
         when (archiveStatus) {
-            ArchivesSettingsPresenter.ArchiveStatus.Working -> {
+            ArchiveStatus.Working -> {
                 archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_working)
                 archiveStatusTextView.background = ColorDrawable(GREEN_COLOR)
             }
-            ArchivesSettingsPresenter.ArchiveStatus.ExperiencingProblems -> {
+            ArchiveStatus.ExperiencingProblems -> {
                 archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_experiencing_problems)
                 archiveStatusTextView.background = ColorDrawable(ORANGE_COLOR)
             }
-            ArchivesSettingsPresenter.ArchiveStatus.NotWorking -> {
+            ArchiveStatus.NotWorking -> {
                 archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_not_working)
                 archiveStatusTextView.background = ColorDrawable(RED_COLOR)
             }
-            ArchivesSettingsPresenter.ArchiveStatus.Disabled -> {
+            ArchiveStatus.Disabled -> {
                 archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_disabled)
                 archiveStatusTextView.background = ColorDrawable(GRAY_COLOR)
             }
@@ -72,18 +71,16 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
 
     @ModelProp
     fun setSupportedBoards(supportedBoards: String) {
-        archiveSupportedBoardsTextView.text = String.format(
-                Locale.ENGLISH,
-                "Supported boards: %s",
+        archiveSupportedBoardsTextView.text = context.getString(
+                R.string.epoxy_archive_setting_row_supports_boards,
                 supportedBoards
         )
     }
 
     @ModelProp
     fun setSupportedBoardsMedia(supportedBoardsMedia: String) {
-        archiveSupportedBoardsMediaTextView.text = String.format(
-                Locale.ENGLISH,
-                "Supported media on boards: %s",
+        archiveSupportedBoardsMediaTextView.text = context.getString(
+                R.string.epoxy_archive_setting_row_supports_media_on_boards,
                 supportedBoardsMedia
         )
     }

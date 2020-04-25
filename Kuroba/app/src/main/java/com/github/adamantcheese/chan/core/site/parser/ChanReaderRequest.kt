@@ -39,8 +39,8 @@ import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.adamantcheese.model.data.post.ChanPost
-import com.github.adamantcheese.model.repository.ArchivesRepository
 import com.github.adamantcheese.model.repository.ChanPostRepository
+import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import okhttp3.HttpUrl
 import java.util.*
@@ -64,7 +64,7 @@ class ChanReaderRequest(
         private val chanPostRepository: ChanPostRepository,
         private val appConstants: AppConstants,
         private val archivesManager: ArchivesManager,
-        private val archivesRepository: ArchivesRepository,
+        private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
         private val request: ChanLoaderRequestParams
 ) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
     val loadable = request.loadable.clone()
@@ -204,7 +204,7 @@ class ChanReaderRequest(
 
             val supportsMediaThumbnails = archivesManager.doesArchiveStoreThumbnails(archiveDescriptor)
 
-            val archiveThread = archivesRepository.fetchThreadFromNetworkBlocking(
+            val archiveThread = thirdPartyArchiveInfoRepository.fetchThreadFromNetworkBlocking(
                     threadArchiveRequestLink,
                     threadDescriptor.opNo,
                     supportsMediaThumbnails,

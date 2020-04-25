@@ -24,7 +24,7 @@ import com.github.adamantcheese.chan.core.presenter.SiteSetupPresenter
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
-import com.github.adamantcheese.chan.ui.controller.archvies.ArchivesSettingsController
+import com.github.adamantcheese.chan.features.archives.ArchivesSettingsController
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController
 import com.github.adamantcheese.chan.ui.settings.*
 import com.github.adamantcheese.chan.utils.AndroidUtils

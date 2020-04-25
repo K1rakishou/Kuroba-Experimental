@@ -11,6 +11,7 @@ import com.github.adamantcheese.chan.core.site.parser.ChanReader;
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.PostParser;
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 
 import org.jsoup.parser.Parser;
 
@@ -33,7 +34,7 @@ public class FutabaChanReader
 
         postParser = new DefaultPostParser(commentParser);
 
-        for (ArchivesManager.ArchiveDescriptor archiveDescriptor : archivesManager.getAllArchives()) {
+        for (ArchiveDescriptor archiveDescriptor : archivesManager.getAllArchives()) {
             postParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser);
         }
     }

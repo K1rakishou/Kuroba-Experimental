@@ -22,7 +22,6 @@ import android.text.style.BackgroundColorSpan;
 
 import androidx.annotation.GuardedBy;
 
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
@@ -33,6 +32,7 @@ import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.jsoup.Jsoup;
@@ -56,14 +56,14 @@ public class DefaultPostParser
     private CommentParser commentParser;
 
     @GuardedBy("this")
-    private Map<ArchivesManager.ArchiveDescriptor, CommentParser> archiveCommentParsers = new HashMap<>();
+    private Map<ArchiveDescriptor, CommentParser> archiveCommentParsers = new HashMap<>();
 
     public DefaultPostParser(CommentParser commentParser) {
         this.commentParser = commentParser;
     }
 
     public void addArchiveCommentParser(
-            ArchivesManager.ArchiveDescriptor archiveDescriptor,
+            ArchiveDescriptor archiveDescriptor,
             CommentParser commentParser
     ) {
         synchronized (this) {

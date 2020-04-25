@@ -26,7 +26,7 @@ interface MainComponent {
     fun getSeenPostRepository(): SeenPostRepository
     fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
     fun getChanPostRepository(): ChanPostRepository
-    fun getArchivesRepository(): ArchivesRepository
+    fun getThirdPartyArchiveInfoRepository(): ThirdPartyArchiveInfoRepository
 
     @Component.Builder
     interface Builder {

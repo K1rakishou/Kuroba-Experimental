@@ -8,6 +8,8 @@ import androidx.room.TypeConverters
 import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.*
+import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
+import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 
 @Database(
         entities = [
@@ -20,7 +22,9 @@ import com.github.adamantcheese.model.entity.*
             ChanPostReplyEntity::class,
             MediaServiceLinkExtraContentEntity::class,
             SeenPostEntity::class,
-            InlinedFileInfoEntity::class
+            InlinedFileInfoEntity::class,
+            ThirdPartyArchiveFetchHistoryEntity::class,
+            ThirdPartyArchiveInfoEntity::class
         ],
         version = 1,
         exportSchema = true
@@ -48,6 +52,8 @@ abstract class KurobaDatabase : RoomDatabase() {
     abstract fun chanPostHttpIconDao(): ChanPostHttpIconDao
     abstract fun chanTextSpanDao(): ChanTextSpanDao
     abstract fun chanPostReplyDao(): ChanPostReplyDao
+    abstract fun thirdPartyArchiveInfoDao(): ThirdPartyArchiveInfoDao
+    abstract fun thirdPartyArchiveFetchHistoryDao(): ThirdPartyArchiveFetchHistoryDao
 
     companion object {
         const val DATABASE_NAME = "Kuroba.db"

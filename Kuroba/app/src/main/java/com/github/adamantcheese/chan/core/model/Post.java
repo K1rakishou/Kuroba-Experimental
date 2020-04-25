@@ -22,10 +22,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
@@ -423,7 +423,7 @@ public class Post
         public boolean filterSaved;
 
         @Nullable
-        public ArchivesManager.ArchiveDescriptor archiveDescriptor = null;
+        public ArchiveDescriptor archiveDescriptor = null;
 
         public Builder() {
         }
@@ -569,7 +569,7 @@ public class Post
             return this;
         }
 
-        public void setArchiveDescriptor(@Nullable ArchivesManager.ArchiveDescriptor archiveDescriptor) {
+        public void setArchiveDescriptor(@Nullable ArchiveDescriptor archiveDescriptor) {
             this.archiveDescriptor = archiveDescriptor;
         }
 

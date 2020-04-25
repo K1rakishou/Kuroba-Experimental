@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.controller.archvies
+package com.github.adamantcheese.chan.ui.epoxy
 
 import android.content.Context
 import android.util.AttributeSet

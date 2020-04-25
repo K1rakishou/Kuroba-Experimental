@@ -1,11 +1,11 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.model.di.MainComponent;
-import com.github.adamantcheese.model.repository.ArchivesRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
+import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 
 import org.codejargon.feather.Provides;
 
@@ -44,7 +44,7 @@ public class RoomDatabaseModule {
 
     @Provides
     @Singleton
-    public ArchivesRepository provideArchivesRepository() {
-        return mainComponent.getArchivesRepository();
+    public ThirdPartyArchiveInfoRepository provideThirdPartyArchiveInfoRepository() {
+        return mainComponent.getThirdPartyArchiveInfoRepository();
     }
 }

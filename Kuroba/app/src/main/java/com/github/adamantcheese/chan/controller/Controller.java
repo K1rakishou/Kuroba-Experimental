@@ -34,6 +34,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.disposables.CompositeDisposable;
 import kotlin.jvm.functions.Function1;
 
 import static android.view.View.GONE;
@@ -48,15 +49,12 @@ public abstract class Controller {
     public ViewGroup view;
 
     public NavigationItem navigation = new NavigationItem();
-
     public Controller parentController;
-
     public List<Controller> childControllers = new ArrayList<>();
 
     // NavigationControllers members
     public Controller previousSiblingController;
     public NavigationController navigationController;
-
     public DoubleNavigationController doubleNavigationController;
 
     /**
@@ -68,6 +66,8 @@ public abstract class Controller {
      * Controller that this controller is presenting.
      */
     public Controller presentingThisController;
+
+    protected CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public boolean alive = false;
     private boolean shown = false;
@@ -119,6 +119,8 @@ public abstract class Controller {
     @CallSuper
     public void onDestroy() {
         alive = false;
+        compositeDisposable.clear();
+
         if (LOG_STATES) {
             Logger.test(getClass().getSimpleName() + " onDestroy");
         }
