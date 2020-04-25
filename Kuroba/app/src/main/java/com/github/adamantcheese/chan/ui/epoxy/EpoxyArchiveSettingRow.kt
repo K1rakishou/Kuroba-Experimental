@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.SwitchCompat
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
@@ -23,6 +24,7 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
 
     private val archiveNameTextView: TextView
     private val archiveStatusTextView: TextView
+    private val archiveStatusHelpImageView: AppCompatImageView
     private val archiveSupportedBoardsTextView: TextView
     private val archiveSupportedBoardsMediaTextView: TextView
     private val archiveState: SwitchCompat
@@ -32,6 +34,7 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
 
         archiveNameTextView = findViewById(R.id.archive_name)
         archiveStatusTextView = findViewById(R.id.archive_status)
+        archiveStatusHelpImageView = findViewById(R.id.archive_status_help)
         archiveSupportedBoardsTextView = findViewById(R.id.archive_supported_boards)
         archiveSupportedBoardsMediaTextView = findViewById(R.id.archive_supported_boards_media)
         archiveState = findViewById(R.id.archive_state)
@@ -86,7 +89,7 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
     }
 
     @CallbackProp
-    fun setOnClickCallback(callback: ((enabled: Boolean) -> Unit)?) {
+    fun setOnRowClickCallback(callback: ((enabled: Boolean) -> Unit)?) {
         if (callback == null) {
             this.setOnClickListener(null)
             return
@@ -96,6 +99,18 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
             archiveState.isChecked = !archiveState.isChecked
 
             callback.invoke(archiveState.isChecked)
+        }
+    }
+
+    @CallbackProp
+    fun setOnHelpClickCallback(callback: (() -> Unit)?) {
+        if (callback == null) {
+            archiveStatusHelpImageView.setOnClickListener(null)
+            return
+        }
+
+        archiveStatusHelpImageView.setOnClickListener {
+            callback.invoke()
         }
     }
 

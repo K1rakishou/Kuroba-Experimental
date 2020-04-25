@@ -49,7 +49,7 @@ class ThirdPartyArchiveInfoLocalSource(
                         ownerThirdPartyArchiveId = thirdPartyArchiveInfoEntity.archiveId,
                         success = thirdPartyArchiveFetchResult.success,
                         errorText = thirdPartyArchiveFetchResult.errorText,
-                        insertedOn = DateTime.now()
+                        insertedOn = thirdPartyArchiveFetchResult.insertedOn
                 )
         )
     }
@@ -73,7 +73,8 @@ class ThirdPartyArchiveInfoLocalSource(
             return@map ThirdPartyArchiveFetchResult(
                     archiveDescriptor = archiveDescriptor,
                     success = thirdPartyArchiveFetchHistoryEntity.success,
-                    errorText = thirdPartyArchiveFetchHistoryEntity.errorText
+                    errorText = thirdPartyArchiveFetchHistoryEntity.errorText,
+                    insertedOn = thirdPartyArchiveFetchHistoryEntity.insertedOn
             )
         }
     }

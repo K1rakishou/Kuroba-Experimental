@@ -254,6 +254,12 @@ class ArchivesManager(
         return thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveDescriptor, isEnabled)
     }
 
+    suspend fun selectLatestFetchHistory(
+            archiveDescriptor: ArchiveDescriptor
+    ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
+        return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(archiveDescriptor)
+    }
+
     suspend fun selectLatestFetchHistoryForAllArchives(): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
         return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchives)
     }

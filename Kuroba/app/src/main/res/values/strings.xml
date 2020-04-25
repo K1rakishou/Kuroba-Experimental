@@ -102,6 +102,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="no">No</string>
     <string name="save">Save</string>
     <string name="send">Send</string>
+    <string name="success">Success</string>
+    <string name="error">Error</string>
     <string name="unhandled_error">Unhandled error!</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
@@ -217,7 +219,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_site_login">Login</string>
     <string name="setup_site_login_description_enabled">Logged in</string>
     <string name="setup_site_third_party_archives">Third-party archives</string>
-    <string name="setup_site_setup_archives">Setup archives</string>
+    <string name="setup_site_setup_archives_title">Setup archives</string>
+    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread</string>
 
     <string name="setup_site_login_description_disabled">Off</string>
     <string name="setup_board_title">Configure boards of %s</string>
@@ -598,6 +601,8 @@ Don't have a 4chan Pass?<br>
 
     <string name="archives_settings_title">Archives settings</string>
     <string name="archives_settings_repository_error">Repository error: %1$s</string>
+    <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
+    <string name="archives_settings_archive_is_working">Archive is working normally</string>
 
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
@@ -883,4 +888,5 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_archive_setting_row_disabled">DISABLED</string>
     <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
     <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
+    <string name="epoxy_fetch_history_result_template">Result: %1$s</string>
 </resources>

@@ -10,6 +10,7 @@ import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -47,7 +48,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                 return@launch
             }
 
-            loadArchives()
+            loadArchivesAndShow()
         }
     }
 
@@ -83,61 +84,132 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                         return@launch
                     }
 
-            loadArchives()
+            loadArchivesAndShow()
         }
     }
 
-    private suspend fun loadArchives() {
+    fun onArchiveStatusHelpClicked(selectedArchiveInfo: ArchiveInfo) {
+        scope.launch {
+            withView {
+                val allArchives = loadArchives()
+                        .safeUnwrap { error ->
+                            Logger.e(TAG, "Failed to load all archives", error)
+
+                            updateState { ArchivesSettingsState.Error(error.errorMessageOrClassName()) }
+                            return@withView
+                        }
+
+                val archiveInfo = allArchives.firstOrNull { archiveInfo ->
+                    archiveInfo.archiveDescriptor == selectedArchiveInfo.archiveDescriptor
+                }
+
+                checkNotNull(archiveInfo) { "archiveInfo is null" }
+
+                when (archiveInfo.status) {
+                    ArchiveStatus.Working -> {
+                        showToast(ArchivesSettingsPresenterMessage.ArchiveIsWorking)
+                        return@withView
+                    }
+                    ArchiveStatus.Disabled -> {
+                        showToast(ArchivesSettingsPresenterMessage.ArchiveIsDisabled)
+                        return@withView
+                    }
+                    ArchiveStatus.ExperiencingProblems,
+                    ArchiveStatus.NotWorking -> {
+                        showLatestArchiveFetchHistory(archiveInfo.archiveDescriptor)
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun ArchivesSettingsControllerView.showLatestArchiveFetchHistory(
+            archiveDescriptor: ArchiveDescriptor
+    ) {
+        val history = archivesManager.selectLatestFetchHistory(archiveDescriptor)
+                .safeUnwrap { error ->
+                    Logger.e(TAG, "Failed to get latest fetch history for ($archiveDescriptor)", error)
+
+                    val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
+                            error.errorMessageOrClassName()
+                    )
+
+                    showToast(message)
+                    return
+                }
+
+        onHistoryLoaded(history)
+    }
+
+    private suspend fun loadArchivesAndShow() {
         withView {
-            val archivesFetchHistoryMap = archivesManager.selectLatestFetchHistoryForAllArchives()
+            val archiveInfoList = loadArchives()
                     .safeUnwrap { error ->
-                        Logger.e(TAG, "Failed to get latest fetch history", error)
+                        Logger.e(TAG, "Failed to load all archives", error)
 
                         updateState { ArchivesSettingsState.Error(error.errorMessageOrClassName()) }
                         return@withView
                     }
 
-            val archiveInfoList = archivesManager.getAllArchiveData().map { archiveData ->
-                val archiveNameWithDomain = String.format(
-                        Locale.ENGLISH,
-                        "%s (%s)",
-                        archiveData.name,
-                        archiveData.domain
-                )
-
-                val archiveDescriptor = archiveData.getArchiveDescriptor()
-
-                val isArchiveEnabled = archivesManager.isArchiveEnabled(archiveDescriptor)
-                        .mapError { error ->
-                            Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
-
-                            return@mapError false
-                        }
-
-                val status = if (isArchiveEnabled) {
-                    calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
-                } else {
-                    ArchiveStatus.Disabled
-                }
-
-                val state = if (isArchiveEnabled) {
-                    ArchiveState.Enabled
-                } else {
-                    ArchiveState.Disabled
-                }
-
-                ArchiveInfo(
-                        archiveDescriptor,
-                        archiveNameWithDomain,
-                        status,
-                        state,
-                        archiveData.supportedBoards.joinToString(),
-                        archiveData.supportedFiles.joinToString()
-                )
+            if (archiveInfoList.isEmpty()) {
+                return@withView
             }
 
             updateState { ArchivesSettingsState.ArchivesLoaded(archiveInfoList) }
         }
+    }
+
+    private suspend fun loadArchives(): ModularResult<List<ArchiveInfo>> {
+        return safeRun {
+            val archivesFetchHistoryMap = archivesManager.selectLatestFetchHistoryForAllArchives()
+                    .unwrap()
+
+            return@safeRun archivesManager.getAllArchiveData().map { archiveData ->
+                return@map loadArchiveInfo(archiveData, archivesFetchHistoryMap)
+            }
+        }
+    }
+
+    private suspend fun loadArchiveInfo(
+            archiveData: ArchivesManager.ArchiveData,
+            archivesFetchHistoryMap: Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>
+    ): ArchiveInfo {
+        val archiveNameWithDomain = String.format(
+                Locale.ENGLISH,
+                "%s (%s)",
+                archiveData.name,
+                archiveData.domain
+        )
+
+        val archiveDescriptor = archiveData.getArchiveDescriptor()
+
+        val isArchiveEnabled = archivesManager.isArchiveEnabled(archiveDescriptor)
+                .mapError { error ->
+                    Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
+
+                    return@mapError false
+                }
+
+        val status = if (isArchiveEnabled) {
+            calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
+        } else {
+            ArchiveStatus.Disabled
+        }
+
+        val state = if (isArchiveEnabled) {
+            ArchiveState.Enabled
+        } else {
+            ArchiveState.Disabled
+        }
+
+        return ArchiveInfo(
+                archiveDescriptor,
+                archiveNameWithDomain,
+                status,
+                state,
+                archiveData.supportedBoards.joinToString(),
+                archiveData.supportedFiles.joinToString()
+        )
     }
 
     private suspend fun insertDefaultArchivesIfTheyNotExistYet(): ModularResult<Unit> {

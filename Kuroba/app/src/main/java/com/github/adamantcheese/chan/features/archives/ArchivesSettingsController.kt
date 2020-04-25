@@ -14,6 +14,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.chan.utils.plusAssign
+import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 
 class ArchivesSettingsController(context: Context)
     : Controller(context), ArchivesSettingsControllerView {
@@ -54,9 +55,31 @@ class ArchivesSettingsController(context: Context)
             is ArchivesSettingsPresenterMessage.RepositoryErrorMessage -> {
                 context.getString(R.string.archives_settings_repository_error, message.errorMessage)
             }
+            ArchivesSettingsPresenterMessage.ArchiveIsDisabled -> {
+                context.getString(R.string.archives_settings_archive_is_disabled)
+            }
+            ArchivesSettingsPresenterMessage.ArchiveIsWorking -> {
+                context.getString(R.string.archives_settings_archive_is_working)
+            }
         }.exhaustive
 
         AndroidUtils.showToast(context, messageText)
+    }
+
+    override fun onHistoryLoaded(history: List<ThirdPartyArchiveFetchResult>) {
+        if (history.isEmpty()) {
+            return
+        }
+
+        val alreadyPresenting = navigationController.isAlreadyPresenting { controller ->
+            controller is ArchiveFetchHistoryController
+        }
+
+        if (alreadyPresenting) {
+            return
+        }
+
+        navigationController.presentController(ArchiveFetchHistoryController(context, history))
     }
 
     private fun onStateChanged(state: ArchivesSettingsState) {
@@ -84,7 +107,8 @@ class ArchivesSettingsController(context: Context)
                             supportedBoards(archiveInfo.supportedBoards)
                             supportedBoardsMedia(archiveInfo.supportedBoardsMedia)
 
-                            onClickCallback { presenter.onArchiveSettingClicked(archiveInfo) }
+                            onRowClickCallback { presenter.onArchiveSettingClicked(archiveInfo) }
+                            onHelpClickCallback { presenter.onArchiveStatusHelpClicked(archiveInfo) }
                         }
                     }
                 }

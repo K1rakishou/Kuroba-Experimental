@@ -732,10 +732,10 @@ public class ChanThreadLoader
                         return;
                     }
 
-                    Logger.i(TAG, "Loading error", error);
+                    Logger.e(TAG, "Loading error", error);
                     notifyAboutError(error);
                 }, throwable -> {
-                    Logger.i(TAG, "Loading unhandled error", throwable);
+                    Logger.e(TAG, "Loading unhandled error", throwable);
 
                     notifyAboutError(createError(throwable));
                 });

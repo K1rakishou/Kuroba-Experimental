@@ -63,6 +63,17 @@ class ThirdPartyArchiveInfoRepository(
     }
 
     suspend fun selectLatestFetchHistory(
+            archiveDescriptor: ArchiveDescriptor
+    ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
+        return withTransactionSafe {
+            return@withTransactionSafe localSource.selectLatestFetchHistory(
+                    archiveDescriptor,
+                    appConstants.archiveFetchHistoryMaxEntries
+            )
+        }
+    }
+
+    suspend fun selectLatestFetchHistory(
             archiveDescriptorList: List<ArchiveDescriptor>
     ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
         return withTransactionSafe {

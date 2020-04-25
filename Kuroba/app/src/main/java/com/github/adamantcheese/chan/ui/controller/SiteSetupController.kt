@@ -159,8 +159,8 @@ class SiteSetupController(context: Context) : SettingsController(context), SiteS
 
         archivesLink = LinkSettingView(
                 this,
-                getString(R.string.setup_site_setup_archives),
-                "",
+                getString(R.string.setup_site_setup_archives_title),
+                getString(R.string.setup_site_setup_archives_description),
                 View.OnClickListener {
                     navigationController.pushController(ArchivesSettingsController(context))
                 })

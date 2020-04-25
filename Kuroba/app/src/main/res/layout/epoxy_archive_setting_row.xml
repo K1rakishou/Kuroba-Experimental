@@ -30,17 +30,37 @@
                 android:textSize="18sp"
                 tools:text="4plebs (archive.4plebs.org)" />
 
-            <TextView
-                android:id="@+id/archive_status"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:background="#A0FF8000"
-                android:padding="2dp"
-                android:textAllCaps="true"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                tools:text="EXPERIENCING PROBLEMS" />
+
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/archive_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="#A0FF8000"
+                    android:padding="2dp"
+                    android:textAllCaps="true"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    tools:text="EXPERIENCING PROBLEMS" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/archive_status_help"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="?selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:src="@drawable/ic_help_outline_white_24dp" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/archive_supported_boards"
@@ -70,7 +90,7 @@
             android:clickable="false"
             android:focusable="false"
             android:paddingStart="8dp"
-            android:paddingEnd="8dp"/>
+            android:paddingEnd="8dp" />
 
     </LinearLayout>
 
