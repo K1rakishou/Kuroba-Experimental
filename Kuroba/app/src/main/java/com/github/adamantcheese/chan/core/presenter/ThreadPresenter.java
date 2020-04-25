@@ -310,11 +310,15 @@ public class ThreadPresenter
     }
 
     public void requestData() {
+        requestData(false);
+    }
+
+    public void requestData(boolean forced) {
         BackgroundUtils.ensureMainThread();
 
         if (isBound()) {
             threadPresenterCallback.showLoading();
-            chanLoader.requestData();
+            chanLoader.requestData(forced);
         }
     }
 

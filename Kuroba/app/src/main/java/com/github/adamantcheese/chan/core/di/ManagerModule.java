@@ -43,7 +43,9 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
+import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -128,15 +130,18 @@ public class ManagerModule {
             WatchManager watchManager,
             ChanLoaderManager chanLoaderManager,
             BoardRepository boardRepository,
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            Gson gson
     ) {
         Logger.d(AppModule.DI_TAG, "Filter watch manager");
-        return new FilterWatchManager(wakeManager,
+        return new FilterWatchManager(
+                wakeManager,
                 filterEngine,
                 watchManager,
                 chanLoaderManager,
                 boardRepository,
-                databaseManager
+                databaseManager,
+                gson
         );
     }
 
@@ -149,9 +154,14 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ArchivesManager provideArchivesManager(Context appContext, Gson gson) {
+    public ArchivesManager provideArchivesManager(
+            Context appContext,
+            ThirdPartyArchiveInfoRepository thirdPartyArchiveInfoRepository,
+            Gson gson,
+            AppConstants appConstants
+    ) {
         Logger.d(AppModule.DI_TAG, "Archives manager (4chan only)");
-        return new ArchivesManager(appContext, gson);
+        return new ArchivesManager(appContext, thirdPartyArchiveInfoRepository, gson, appConstants);
     }
 
     @Provides

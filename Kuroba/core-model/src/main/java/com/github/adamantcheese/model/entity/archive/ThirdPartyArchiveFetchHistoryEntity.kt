@@ -28,6 +28,7 @@ class ThirdPartyArchiveFetchHistoryEntity(
         val success: Boolean,
         @ColumnInfo(name = ERROR_TEXT_COLUMN_NAME)
         val errorText: String?,
+        // TODO(archives): index!
         @ColumnInfo(name = INSERTED_ON_COLUMN_NAME)
         val insertedOn: DateTime
 ) {

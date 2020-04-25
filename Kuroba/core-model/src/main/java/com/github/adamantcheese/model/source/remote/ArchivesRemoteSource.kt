@@ -4,6 +4,7 @@ import android.util.JsonReader
 import android.util.JsonToken
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.util.ensureBackgroundThread
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
@@ -32,7 +33,7 @@ class ArchivesRemoteSource(
                 .get()
                 .build()
 
-        val response = okHttpClient.suspendCall(httpRequest)
+        val response = withTimeout(MAX_ARCHIVE_FETCH_WAIT_TIME_MS) { okHttpClient.suspendCall(httpRequest) }
         if (!response.isSuccessful) {
             throw IOException("Bad response status: ${response.code}")
         }
@@ -364,7 +365,9 @@ class ArchivesRemoteSource(
                     "imageWidth=$imageWidth, imageHeight=$imageHeight, spoiler=$spoiler," +
                     " deleted=$deleted, size=$size, fileHashBase64=$fileHashBase64)"
         }
+    }
 
-
+    companion object {
+        private const val MAX_ARCHIVE_FETCH_WAIT_TIME_MS = 20_000L
     }
 }

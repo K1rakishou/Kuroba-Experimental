@@ -1,20 +1,28 @@
 package com.github.adamantcheese.chan.core.manager
 
 import android.content.Context
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
+import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import java.io.InputStreamReader
 import java.util.*
-import kotlin.random.Random
 
 class ArchivesManager(
         private val appContext: Context,
-        private val gson: Gson
+        private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
+        private val gson: Gson,
+        private val appConstants: AppConstants
 ) {
     val allArchives = listOf(
             ArchiveDescriptor("4plebs", "archive.4plebs.org"),
@@ -31,51 +39,131 @@ class ArchivesManager(
     )
 
     private val archives by lazy { loadArchives() }
-    private val random = Random(System.currentTimeMillis())
 
     fun getAllArchiveData(): List<ArchiveData> {
         return archives
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun getArchiveDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchiveDescriptor? {
-        if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
-            // Only 4chan archives are supported
-            return null
-        }
+    suspend fun getArchiveDescriptor(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            forced: Boolean
+    ): ModularResult<ArchiveDescriptor?> {
+        return safeRun {
+            Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor, forced=$forced)")
 
-        val suitableArchives = archives
-                .filter { archiveData ->
-                    archiveData.supportedBoards.contains(threadDescriptor.boardCode())
-                }
+            if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
+                // Only 4chan archives are supported
+                return@safeRun null
+            }
 
-        if (suitableArchives.isEmpty()) {
-            return null
-        }
+            val suitableArchives = archives.filter { archiveData ->
+                archiveData.supportedBoards.contains(threadDescriptor.boardCode())
+            }
 
-        // Best possible archive is the one that stores media files
-        val bestPossibleArchiveData = suitableArchives.firstOrNull { archiveData ->
-            archiveData.supportedFiles.contains(threadDescriptor.boardCode())
-        }
+            if (suitableArchives.isEmpty()) {
+                return@safeRun null
+            }
 
-        if (bestPossibleArchiveData != null) {
-            return ArchiveDescriptor(
-                    bestPossibleArchiveData.name,
-                    bestPossibleArchiveData.domain
+            val enabledSuitableArchives = suitableArchives.filter { suitableArchive ->
+                return@filter thirdPartyArchiveInfoRepository.isArchiveEnabled(
+                        suitableArchive.getArchiveDescriptor()
+                ).unwrap()
+            }
+
+            if (enabledSuitableArchives.isEmpty()) {
+                return@safeRun null
+            }
+
+            return@safeRun getBestPossibleArchiveOrNull(
+                    threadDescriptor,
+                    enabledSuitableArchives,
+                    forced
             )
         }
+    }
 
-        // If there are no archives that store media for this board then select one at random
-        val randomArchive = suitableArchives.randomOrNull(random)
-        if (randomArchive != null) {
-            return ArchiveDescriptor(
-                    randomArchive.name,
-                    randomArchive.domain
-            )
+    suspend fun getBestPossibleArchiveOrNull(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            suitableArchives: List<ArchiveData>,
+            forced: Boolean
+    ): ArchiveDescriptor? {
+        Logger.d(TAG, "getBestPossibleArchiveOrNull($threadDescriptor, $suitableArchives, $forced)")
+
+        val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistory(
+                suitableArchives.map { it.getArchiveDescriptor() }
+        ).unwrap()
+
+        if (fetchHistoryMap.isEmpty()) {
+            // No history means we haven't fetched anything yet, so every archive is suitable
+            return suitableArchives.firstOrNull { archiveData ->
+                archiveData.supportedFiles.contains(threadDescriptor.boardCode())
+            }?.getArchiveDescriptor()
         }
 
-        // For some reason we couldn't find archive for this board at all
-        return null
+        val sortedFetchHistoryList = fetchHistoryMap.map { (archiveDescriptor, fetchHistoryList) ->
+            archiveDescriptor to calculateSuccessFetches(fetchHistoryList)
+        }.sortedByDescending { (_, successfulFetchesCount) -> successfulFetchesCount }
+
+        Logger.d(TAG, "$sortedFetchHistoryList")
+        check(sortedFetchHistoryList.isNotEmpty()) { "sortedFetchHistoryList is empty" }
+
+        if (!forced) {
+            val allArchivesAreBad = sortedFetchHistoryList.all { (_, successfulFetchesCount) ->
+                successfulFetchesCount == 0
+            }
+
+            // There are no archives with at least one successful fetch over then last N fetches
+            if (allArchivesAreBad) {
+                return null
+            }
+        }
+
+        // Try to find an archive that supports files for this board
+        for ((archiveDescriptor, successFetches) in sortedFetchHistoryList) {
+            if (successFetches <= 0) {
+                // No success fetches for the current archive. We either had no internet connection
+                // while trying to fetch posts from this archive and now there are no more attempts
+                // left or the archive site is actually dead. In any case we can't use it.
+                continue
+            }
+
+            val suitableArchive = suitableArchives.firstOrNull { archiveData ->
+                archiveData.getArchiveDescriptor() == archiveDescriptor
+            }
+
+            checkNotNull(suitableArchive) {
+                "Couldn't find suitable archive by archiveDescriptor ($archiveDescriptor)"
+            }
+
+            if (suitableArchive.supportedFiles.contains(threadDescriptor.boardCode())) {
+                return suitableArchive.getArchiveDescriptor()
+            }
+        }
+
+        // If we couldn't find an archive that supports files for this board then just return the
+        // first archive with the best success ration
+        return sortedFetchHistoryList.first().first
+    }
+
+    fun calculateSuccessFetches(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
+        val totalFetches = fetchHistoryList.size
+
+        check(totalFetches <= appConstants.archiveFetchHistoryMaxEntries) {
+            "Too many totalFetches: $totalFetches"
+        }
+
+        if (totalFetches < appConstants.archiveFetchHistoryMaxEntries) {
+            // When we haven't sent at least archiveFetchHistoryMaxEntries fetches, we assume that
+            // all unsent yet fetches are success fetches, so basically unsentFetchesCount are
+            // all success fetches
+            val unsentFetchesCount = appConstants.archiveFetchHistoryMaxEntries - totalFetches
+            val successFetchesCount = fetchHistoryList.count { fetchHistory -> fetchHistory.success }
+
+            return unsentFetchesCount + successFetchesCount
+        } else {
+            return fetchHistoryList.count { fetchHistory -> fetchHistory.success }
+        }
     }
 
     fun getRequestLinkForThread(
@@ -150,14 +238,38 @@ class ArchivesManager(
     }
 
     private fun loadArchives(): List<ArchiveData> {
-        return appContext.assets.use { assetManager ->
-            return@use assetManager.open(ARCHIVES_JSON_FILE_NAME).use { inputStream ->
-                return@use gson.fromJson<Array<ArchiveData>>(
-                        JsonReader(InputStreamReader(inputStream)),
-                        Array<ArchiveData>::class.java
-                ).toList()
-            }
+        return appContext.assets.open(ARCHIVES_JSON_FILE_NAME).use { inputStream ->
+            return@use gson.fromJson<Array<ArchiveData>>(
+                    JsonReader(InputStreamReader(inputStream)),
+                    Array<ArchiveData>::class.java
+            ).toList()
         }
+    }
+
+    suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
+        return thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveDescriptor)
+    }
+
+    suspend fun setArchiveEnabled(archiveDescriptor: ArchiveDescriptor, isEnabled: Boolean): ModularResult<Unit> {
+        return thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveDescriptor, isEnabled)
+    }
+
+    suspend fun selectLatestFetchHistoryForAllArchives(): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
+        return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchives)
+    }
+
+    suspend fun archiveExists(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
+        return thirdPartyArchiveInfoRepository.archiveExists(archiveDescriptor)
+    }
+
+    suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): ModularResult<Unit> {
+        return thirdPartyArchiveInfoRepository.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
+    }
+
+    suspend fun insertFetchHistory(
+            thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult
+    ): ModularResult<Unit> {
+        return thirdPartyArchiveInfoRepository.insertFetchHistory(thirdPartyArchiveFetchResult)
     }
 
     data class ArchiveData(

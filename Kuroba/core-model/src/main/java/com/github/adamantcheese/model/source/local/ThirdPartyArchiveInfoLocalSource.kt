@@ -63,7 +63,7 @@ class ThirdPartyArchiveInfoLocalSource(
         val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(archiveDescriptor.domain)
                 ?: return emptyList()
 
-        val newerThan = DateTime.now().minus(FOUR_HOURS)
+        val newerThan = DateTime.now().minus(THIRTY_MINUTES)
 
         return thirdPartyArchiveFetchHistoryDao.selectLatest(
                 thirdPartyArchiveInfoEntity.archiveId,
@@ -99,12 +99,12 @@ class ThirdPartyArchiveInfoLocalSource(
     suspend fun deleteOld() {
         ensureInTransaction()
 
-        val olderThan = DateTime.now().minus(TWENTY_FOUR_HOURS)
+        val olderThan = DateTime.now().minus(ONE_HOUR)
         thirdPartyArchiveFetchHistoryDao.deleteOlderThan(olderThan)
     }
 
     companion object {
-        private val FOUR_HOURS = Duration.standardHours(4)
-        private val TWENTY_FOUR_HOURS = Duration.standardHours(24)
+        private val THIRTY_MINUTES = Duration.standardMinutes(30)
+        private val ONE_HOUR = Duration.standardHours(1)
     }
 }

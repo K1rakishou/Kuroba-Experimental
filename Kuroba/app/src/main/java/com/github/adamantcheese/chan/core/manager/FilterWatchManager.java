@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.manager;
 
+import androidx.annotation.GuardedBy;
+
 import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
@@ -50,6 +52,13 @@ import static com.github.adamantcheese.chan.Chan.instance;
 public class FilterWatchManager
         implements WakeManager.Wakeable {
     private static final String TAG = "FilterWatchManager";
+    private static final DateFormat dateFormat = DateFormat.getTimeInstance(
+            DateFormat.DEFAULT,
+            Locale.ENGLISH
+    );
+
+    // like 11 4chan catalogs? should be plenty
+    private static final int MAX_POSTS_COUNT = 650;
 
     private final WakeManager wakeManager;
     private final FilterEngine filterEngine;
@@ -57,14 +66,18 @@ public class FilterWatchManager
     private final ChanLoaderManager chanLoaderManager;
     private final BoardRepository boardRepository;
     private final DatabaseLoadableManager databaseLoadableManager;
+    private final Gson gson;
 
-    //filterLoaders keeps track of ChanThreadLoaders so they can be cleared correctly each alarm trigger
-    //ignoredPosts keeps track of threads pinned by the filter manager and ignores them for future alarm triggers
-    //this lets you unpin threads that are pinned by the filter pin manager and not have them come back
-    //note that ignoredPosts is currently only saved while the application is running and not in the database
+    // filterLoaders keeps track of ChanThreadLoaders so they can be cleared correctly each alarm
+    // trigger ignoredPosts keeps track of threads pinned by the filter manager and ignores them for
+    // future alarm triggers this lets you unpin threads that are pinned by the filter pin manager
+    // and not have them come back note that ignoredPosts is currently only saved while the
+    // application is running and not in the database
     private final Map<ChanThreadLoader, BackgroundLoader> filterLoaders = new HashMap<>();
     private final Set<Long> ignoredPosts = Collections.synchronizedSet(new HashSet<>());
-    //keep track of how many boards we've checked and their posts so we can cut out things from the ignored posts
+
+    // keep track of how many boards we've checked and their posts so we can cut out things from the
+    // ignored posts
     private int numBoardsChecked = 0;
     private Set<Post> lastCheckedPosts = Collections.synchronizedSet(new HashSet<>());
     private List<Filter> filters;
@@ -77,42 +90,49 @@ public class FilterWatchManager
             WatchManager watchManager,
             ChanLoaderManager chanLoaderManager,
             BoardRepository boardRepository,
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            Gson gson
     ) {
         this.wakeManager = wakeManager;
         this.filterEngine = filterEngine;
         this.watchManager = watchManager;
         this.chanLoaderManager = chanLoaderManager;
         this.boardRepository = boardRepository;
+        this.gson = gson;
         this.databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
         wakeManager.registerWakeable(this);
 
-        Set<Long> previousIgnore = instance(Gson.class).fromJson(PersistableChanState.filterWatchIgnored.get(),
-                new TypeToken<Set<Long>>() {}.getType()
+        Set<Long> previousIgnore = gson.fromJson(
+                PersistableChanState.filterWatchIgnored.get(),
+                new TypeToken<Set<Long>>() {
+                }.getType()
         );
-        if (previousIgnore != null) ignoredPosts.addAll(previousIgnore);
+
+        if (previousIgnore != null) {
+            ignoredPosts.addAll(previousIgnore);
+        }
     }
 
     @Override
     public void onWake() {
         if (!processing) {
             wakeManager.manageLock(true, FilterWatchManager.this);
-            Logger.i(TAG,
-                    "Processing filter loaders, started at " + DateFormat.getTimeInstance(DateFormat.DEFAULT,
-                            Locale.ENGLISH
-                    ).format(new Date())
-            );
+            Logger.i(TAG, "Processing filter loaders, started at " + dateFormat.format(new Date()));
+
             processing = true;
             populateFilterLoaders();
             Logger.d(TAG, "Number of filter loaders: " + numBoardsChecked);
+
             if (!filterLoaders.keySet().isEmpty()) {
                 for (ChanThreadLoader loader : filterLoaders.keySet()) {
                     loader.requestData();
                 }
-            } else {
-                wakeManager.manageLock(false, FilterWatchManager.this);
+
+                return;
             }
+
+            wakeManager.manageLock(false, FilterWatchManager.this);
         }
     }
 
@@ -120,36 +140,49 @@ public class FilterWatchManager
         for (ChanThreadLoader loader : filterLoaders.keySet()) {
             chanLoaderManager.release(loader, filterLoaders.get(loader));
         }
+
         filterLoaders.clear();
-        //get our filters that are tagged as "pin"
+        // get our filters that are tagged as "pin"
         filters = filterEngine.getEnabledWatchFilters();
-        //get a set of boards to background load
+
+        // get a set of boards to background load
         Set<String> boardCodes = new HashSet<>();
+
         for (Filter f : filters) {
-            //if the allBoards flag is set for any one filter, add all saved boards to the set
+            // if the allBoards flag is set for any one filter, add all saved boards to the set
             if (f.allBoards) {
                 for (BoardRepository.SiteBoards s : boardRepository.getSaved().get()) {
                     for (Board b : s.boards) {
                         boardCodes.add(b.code);
                     }
                 }
-                //shortcut out if any filter has the allBoards flag
+
+                // shortcut out if any filter has the allBoards flag
                 break;
             }
+
             boardCodes.addAll(Arrays.asList(f.boardCodesNoId()));
         }
+
         numBoardsChecked = boardCodes.size();
-        //create background loaders for each thing in the board set
+
+        // create background loaders for each thing in the board set
         for (BoardRepository.SiteBoards siteBoard : boardRepository.getSaved().get()) {
             for (Board b : siteBoard.boards) {
                 for (String code : boardCodes) {
-                    if (b.code.equals(code)) {
-                        BackgroundLoader backgroundLoader = new BackgroundLoader();
-                        Loadable boardLoadable = Loadable.forCatalog(b);
-                        boardLoadable = databaseLoadableManager.get(boardLoadable);
-                        ChanThreadLoader catalogLoader = chanLoaderManager.obtain(boardLoadable, backgroundLoader);
-                        filterLoaders.put(catalogLoader, backgroundLoader);
+                    if (!b.code.equals(code)) {
+                        continue;
                     }
+
+                    BackgroundLoader backgroundLoader = new BackgroundLoader();
+                    Loadable boardLoadable = Loadable.forCatalog(b);
+                    boardLoadable = databaseLoadableManager.get(boardLoadable);
+
+                    ChanThreadLoader catalogLoader = chanLoaderManager.obtain(
+                            boardLoadable,
+                            backgroundLoader
+                    );
+                    filterLoaders.put(catalogLoader, backgroundLoader);
                 }
             }
         }
@@ -157,56 +190,84 @@ public class FilterWatchManager
 
     public void onCatalogLoad(ChanThread catalog) {
         Logger.d(TAG, "onCatalogLoad() for /" + catalog.getLoadable().boardCode + "/");
-        if (catalog.getLoadable().isThreadMode()) return; //not a catalog
-        if (processing) return; //filter watch manager is currently processing, ignore
+
+        if (catalog.getLoadable().isThreadMode()) {
+            // not a catalog
+            return;
+        }
+
+        if (processing) {
+            // filter watch manager is currently processing, ignore
+            return;
+        }
 
         Set<Long> toAdd = new HashSet<>();
         //Match filters and ignores
         List<Filter> filters = filterEngine.getEnabledWatchFilters();
+
         for (Filter f : filters) {
             for (Post p : catalog.getPosts()) {
-                if (filterEngine.matches(f, p) && p.getPostFilter().getFilterWatch() && !ignoredPosts.contains(p.no)) {
-                    Loadable pinLoadable = Loadable.forThread(catalog.getLoadable().site,
-                            p.board,
-                            p.no,
-                            PostHelper.getTitle(p, catalog.getLoadable())
-                    );
-                    pinLoadable = databaseLoadableManager.get(pinLoadable);
-                    watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
-                    toAdd.add(p.no);
+                if (!filterEngine.matches(f, p)
+                        || !p.getPostFilter().getFilterWatch()
+                        || ignoredPosts.contains(p.no)) {
+                    continue;
                 }
+
+                Loadable pinLoadable = Loadable.forThread(catalog.getLoadable().site,
+                        p.board,
+                        p.no,
+                        PostHelper.getTitle(p, catalog.getLoadable())
+                );
+
+                pinLoadable = databaseLoadableManager.get(pinLoadable);
+                watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
+                toAdd.add(p.no);
+
             }
         }
-        //clear the ignored posts set if it gets too large; don't have the same sync stuff as background and it's a hassle to keep track of recently loaded catalogs
-        if (ignoredPosts.size() + toAdd.size() > 650) ignoredPosts.clear(); //like 11 4chan catalogs? should be plenty
+
+        // clear the ignored posts set if it gets too large; don't have the same sync stuff as
+        // background and it's a hassle to keep track of recently loaded catalogs
+        if (ignoredPosts.size() + toAdd.size() > MAX_POSTS_COUNT) {
+            ignoredPosts.clear();
+        }
+
         ignoredPosts.addAll(toAdd);
-        PersistableChanState.filterWatchIgnored.set(instance(Gson.class).toJson(ignoredPosts));
+        PersistableChanState.filterWatchIgnored.set(gson.toJson(ignoredPosts));
     }
 
-    private class BackgroundLoader
-            implements ChanThreadLoader.ChanLoaderCallback {
+    private class BackgroundLoader implements ChanThreadLoader.ChanLoaderCallback {
         @Override
         public void onChanLoaderData(ChanThread result) {
             Logger.d(TAG, "onChanLoaderData() for /" + result.getLoadable().boardCode + "/");
             Set<Long> toAdd = new HashSet<>();
-            //Match filters and ignores
+
+            // Match filters and ignores
             for (Filter f : filters) {
                 for (Post p : result.getPosts()) {
-                    if (filterEngine.matches(f, p) && p.getPostFilter().getFilterWatch() && !ignoredPosts.contains(p.no)) {
-                        Loadable pinLoadable = Loadable.forThread(result.getLoadable().site,
-                                p.board,
-                                p.no,
-                                PostHelper.getTitle(p, result.getLoadable())
-                        );
-                        pinLoadable = databaseLoadableManager.get(pinLoadable);
-                        watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
-                        toAdd.add(p.no);
+                    if (!filterEngine.matches(f, p)
+                            || !p.getPostFilter().getFilterWatch()
+                            || ignoredPosts.contains(p.no)) {
+                        continue;
                     }
+
+                    Loadable pinLoadable = Loadable.forThread(result.getLoadable().site,
+                            p.board,
+                            p.no,
+                            PostHelper.getTitle(p, result.getLoadable())
+                    );
+
+                    pinLoadable = databaseLoadableManager.get(pinLoadable);
+                    watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
+                    toAdd.add(p.no);
+
                 }
             }
-            //add all posts to ignore
+
+            // add all posts to ignore
             ignoredPosts.addAll(toAdd);
             lastCheckedPosts.addAll(result.getPosts());
+
             synchronized (this) {
                 numBoardsChecked--;
                 Logger.d(TAG, "Filter loader processed, left " + numBoardsChecked);
@@ -223,24 +284,26 @@ public class FilterWatchManager
             }
         }
 
+        @GuardedBy("this")
         private void checkComplete() {
-            if (numBoardsChecked <= 0) {
-                numBoardsChecked = 0;
-                Set<Long> lastCheckedPostNumbers = new HashSet<>();
-                for (Post post : lastCheckedPosts) {
-                    lastCheckedPostNumbers.add(post.no);
-                }
-                ignoredPosts.retainAll(lastCheckedPostNumbers);
-                PersistableChanState.filterWatchIgnored.set(instance(Gson.class).toJson(ignoredPosts));
-                lastCheckedPosts.clear();
-                processing = false;
-                Logger.i(TAG,
-                        "Finished processing filter loaders, ended at " + DateFormat.getTimeInstance(DateFormat.DEFAULT,
-                                Locale.ENGLISH
-                        ).format(new Date())
-                );
-                wakeManager.manageLock(false, FilterWatchManager.this);
+            if (numBoardsChecked > 0) {
+                return;
             }
+
+            numBoardsChecked = 0;
+            Set<Long> lastCheckedPostNumbers = new HashSet<>();
+
+            for (Post post : lastCheckedPosts) {
+                lastCheckedPostNumbers.add(post.no);
+            }
+
+            ignoredPosts.retainAll(lastCheckedPostNumbers);
+            PersistableChanState.filterWatchIgnored.set(instance(Gson.class).toJson(ignoredPosts));
+            lastCheckedPosts.clear();
+            processing = false;
+
+            Logger.i(TAG, "Finished processing filter loaders, ended at " + dateFormat.format(new Date()));
+            wakeManager.manageLock(false, FilterWatchManager.this);
         }
     }
 }

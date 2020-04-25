@@ -271,7 +271,7 @@ public class ViewThreadController
     }
 
     private void reloadClicked(ToolbarMenuSubItem item) {
-        threadLayout.getPresenter().requestData();
+        threadLayout.getPresenter().requestData(true);
     }
 
     public void showRemovedPostsDialog(ToolbarMenuSubItem item) {

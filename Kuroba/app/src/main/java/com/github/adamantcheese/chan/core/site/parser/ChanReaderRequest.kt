@@ -33,15 +33,19 @@ import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.google.gson.Gson
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -69,6 +73,7 @@ class ChanReaderRequest(
 ) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
     val loadable = request.loadable.clone()
 
+    private val forceLoading: Boolean
     private val reader: ChanReader
     private val databaseSavedReplyManager: DatabaseSavedReplyManager
 
@@ -82,6 +87,7 @@ class ChanReaderRequest(
     init {
         cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
         reader = request.chanReader
+        forceLoading = request.forceLoading
         filters = ArrayList()
 
         val enabledFilters = filterEngine.enabledFilters
@@ -107,11 +113,13 @@ class ChanReaderRequest(
         }
 
         val (archivePosts, archiveFetchDuration) = measureTimedValue {
-            return@measureTimedValue getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
-                    .safeUnwrap { error ->
-                        Logger.e(TAG, "Error while trying to get posts from archive", error)
-                        return@measureTimedValue emptyList<Post.Builder>()
-                    }
+            return@measureTimedValue runBlocking {
+                return@runBlocking getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
+                        .safeUnwrap { error ->
+                            Logger.e(TAG, "Error while trying to get posts from archive", error)
+                            return@runBlocking emptyList<Post.Builder>()
+                        }
+            }
         }
 
         val (parsedPosts, parsingDuration) = measureTimedValue {
@@ -156,7 +164,7 @@ class ChanReaderRequest(
         return processPosts(op, reloadedPosts)
     }
 
-    private fun getPostsFromArchiveIfNecessary(
+    private suspend fun getPostsFromArchiveIfNecessary(
             freshPostsFromServer: List<Post.Builder>
     ): ModularResult<List<Post.Builder>> {
         return safeRun<List<Post.Builder>> {
@@ -172,7 +180,11 @@ class ChanReaderRequest(
             }
 
             val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
-            val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor)
+            val archiveDescriptor = archivesManager.getArchiveDescriptor(
+                    threadDescriptor,
+                    forceLoading
+            ).unwrap()
+
             if (archiveDescriptor == null) {
                 // We probably don't have archives for this site or all archives are dead
 
@@ -204,12 +216,36 @@ class ChanReaderRequest(
 
             val supportsMediaThumbnails = archivesManager.doesArchiveStoreThumbnails(archiveDescriptor)
 
-            val archiveThread = thirdPartyArchiveInfoRepository.fetchThreadFromNetworkBlocking(
+            val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetworkBlocking(
                     threadArchiveRequestLink,
                     threadDescriptor.opNo,
                     supportsMediaThumbnails,
                     supportsMedia
-            ).unwrap()
+            )
+
+            val archiveThread = when (archiveThreadResult) {
+                is ModularResult.Error -> {
+                    Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
+
+                    val fetchResult = ThirdPartyArchiveFetchResult.error(
+                            archiveDescriptor,
+                            archiveThreadResult.error.errorMessageOrClassName()
+                    )
+
+                    archivesManager.insertFetchHistory(fetchResult).unwrap()
+
+                    ArchivesRemoteSource.ArchiveThread(emptyList())
+                }
+                is ModularResult.Value -> {
+                    Logger.d(TAG, "Successfully fetched ${archiveThreadResult.value.posts.size} " +
+                            "posts from archive ${archiveDescriptor}")
+
+                    val fetchResult = ThirdPartyArchiveFetchResult.success(archiveDescriptor)
+                    archivesManager.insertFetchHistory(fetchResult).unwrap()
+
+                    archiveThreadResult.value
+                }
+            }
 
             if (archiveThread.posts.isEmpty()) {
                 return@safeRun emptyList()

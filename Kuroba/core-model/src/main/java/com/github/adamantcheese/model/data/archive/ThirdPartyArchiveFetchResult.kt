@@ -16,4 +16,13 @@ data class ThirdPartyArchiveFetchResult(
         }
     }
 
+    companion object {
+        fun success(archiveDescriptor: ArchiveDescriptor): ThirdPartyArchiveFetchResult {
+            return ThirdPartyArchiveFetchResult(archiveDescriptor, true, null)
+        }
+
+        fun error(archiveDescriptor: ArchiveDescriptor, errorText: String): ThirdPartyArchiveFetchResult {
+            return ThirdPartyArchiveFetchResult(archiveDescriptor, false, errorText)
+        }
+    }
 }

@@ -1241,7 +1241,7 @@ public class WatchManager
                 if (fromBackground) {
                     // Always load regardless of timer, since the time left is not accurate for 15min+ intervals
                     chanLoader.clearTimer();
-                    chanLoader.requestMoreData();
+                    chanLoader.requestMoreData(false);
                     return true;
                 } else {
                     // true if a load was started

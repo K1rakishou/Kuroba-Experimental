@@ -10,7 +10,6 @@ import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
-import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -24,9 +23,6 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     @Inject
     lateinit var archivesManager: ArchivesManager
-
-    @Inject
-    lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
 
     @Inject
     lateinit var appConstants: AppConstants
@@ -63,7 +59,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     fun onArchiveSettingClicked(archiveInfo: ArchiveInfo) {
         scope.launch {
-            val isEnabled = thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveInfo.archiveDescriptor)
+            val isEnabled = archivesManager.isArchiveEnabled(archiveInfo.archiveDescriptor)
                     .safeUnwrap { error ->
                         withView {
                             val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
@@ -75,7 +71,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                         return@launch
                     }
 
-            thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveInfo.archiveDescriptor, !isEnabled)
+            archivesManager.setArchiveEnabled(archiveInfo.archiveDescriptor, !isEnabled)
                     .safeUnwrap { error ->
                         withView {
                             val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
@@ -93,14 +89,13 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     private suspend fun loadArchives() {
         withView {
-            val archivesFetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistory(
-                    archivesManager.allArchives
-            ).safeUnwrap { error ->
-                Logger.e(TAG, "Failed to get latest fetch history", error)
+            val archivesFetchHistoryMap = archivesManager.selectLatestFetchHistoryForAllArchives()
+                    .safeUnwrap { error ->
+                        Logger.e(TAG, "Failed to get latest fetch history", error)
 
-                updateState { ArchivesSettingsState.Error(error.errorMessageOrClassName()) }
-                return@withView
-            }
+                        updateState { ArchivesSettingsState.Error(error.errorMessageOrClassName()) }
+                        return@withView
+                    }
 
             val archiveInfoList = archivesManager.getAllArchiveData().map { archiveData ->
                 val archiveNameWithDomain = String.format(
@@ -112,13 +107,12 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
                 val archiveDescriptor = archiveData.getArchiveDescriptor()
 
-                val isArchiveEnabled = thirdPartyArchiveInfoRepository.isArchiveEnabled(
-                        archiveDescriptor
-                ).mapError { error ->
-                    Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
+                val isArchiveEnabled = archivesManager.isArchiveEnabled(archiveDescriptor)
+                        .mapError { error ->
+                            Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
 
-                    return@mapError false
-                }
+                            return@mapError false
+                        }
 
                 val status = if (isArchiveEnabled) {
                     calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
@@ -153,13 +147,13 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
             }
 
             archivesManager.allArchives.forEach { archiveDescriptor ->
-                if (thirdPartyArchiveInfoRepository.archiveExists(archiveDescriptor).unwrap()) {
+                if (archivesManager.archiveExists(archiveDescriptor).unwrap()) {
                     return@forEach
                 }
 
-                thirdPartyArchiveInfoRepository.insertThirdPartyArchiveInfo(
+                archivesManager.insertThirdPartyArchiveInfo(
                         ThirdPartyArchiveInfo(archiveDescriptor, false)
-                )
+                ).unwrap()
             }
         }
     }
@@ -173,12 +167,12 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
             "Archive fetch history is too long"
         }
 
-        val errorsCount = fetchHistory.count { !it.success }
-        if (errorsCount <= 1) {
+        val successFetchesCount = archivesManager.calculateSuccessFetches(fetchHistory)
+        if (successFetchesCount >= appConstants.archiveFetchHistoryMaxEntries) {
             return ArchiveStatus.Working
         }
 
-        if (errorsCount >= 4) {
+        if (successFetchesCount <= 1) {
             return ArchiveStatus.NotWorking
         }
 

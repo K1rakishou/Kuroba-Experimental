@@ -130,7 +130,7 @@ public class ChanThreadLoader
     /**
      * Indicates that this ChanThreadLoader belongs to a Pin. We use this info for archives posts
      * fetching (we don't load posts from archives for pins)
-     * */
+     */
     private boolean isPinWatcherLoader = false;
 
     /**
@@ -198,17 +198,21 @@ public class ChanThreadLoader
         return thread;
     }
 
+    public void requestData() {
+        requestData(false);
+    }
+
     /**
      * Request data for the first time.
      */
-    public void requestData() {
+    public void requestData(boolean forced) {
         BackgroundUtils.ensureMainThread();
         clearTimer();
 
         Disposable disposable = Single.fromCallable(this::loadSavedCopyIfExists)
                 .subscribeOn(backgroundScheduler)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::requestDataInternal, error -> {
+                .subscribe(loaded -> requestDataInternal(loaded, forced), error -> {
                     Logger.e(TAG, "Error while loading saved thread", error);
 
                     notifyAboutError(new VolleyError(error));
@@ -218,6 +222,10 @@ public class ChanThreadLoader
     }
 
     private void requestDataInternal(Boolean loaded) {
+        requestDataInternal(loaded, false);
+    }
+
+    private void requestDataInternal(Boolean loaded, boolean forced) {
         BackgroundUtils.ensureMainThread();
 
         if (loaded) {
@@ -240,7 +248,7 @@ public class ChanThreadLoader
             thread = null;
         }
 
-        requestMoreDataInternal();
+        requestMoreDataInternal(forced);
     }
 
     private boolean loadSavedCopyIfExists() {
@@ -281,12 +289,12 @@ public class ChanThreadLoader
      *
      * @return {@code true} if a new request was started, {@code false} otherwise.
      */
-    public boolean requestMoreData() {
+    public boolean requestMoreData(boolean forced) {
         BackgroundUtils.ensureMainThread();
         clearPendingRunnable();
 
         if (loadable.isThreadMode() && request == null) {
-            compositeDisposable.add(requestMoreDataInternal());
+            compositeDisposable.add(requestMoreDataInternal(forced));
             return true;
         } else {
             return false;
@@ -294,9 +302,9 @@ public class ChanThreadLoader
     }
 
     @SuppressWarnings("unchecked")
-    private Disposable requestMoreDataInternal() {
+    private Disposable requestMoreDataInternal(boolean forced) {
         return Single.fromCallable(() -> {
-            ChanLoaderRequest request = getData();
+            ChanLoaderRequest request = getData(forced);
             if (request == null) {
                 return ModularResult.error(new ThreadAlreadyArchivedException());
             }
@@ -326,7 +334,7 @@ public class ChanThreadLoader
      */
     public boolean loadMoreIfTime() {
         BackgroundUtils.ensureMainThread();
-        return getTimeUntilLoadMore() < 0L && requestMoreData();
+        return getTimeUntilLoadMore() < 0L && requestMoreData(false);
     }
 
     public void quickLoad() {
@@ -345,7 +353,7 @@ public class ChanThreadLoader
             l.onChanLoaderData(localThread);
         }
 
-        requestMoreData();
+        requestMoreData(false);
     }
 
     /**
@@ -356,7 +364,7 @@ public class ChanThreadLoader
 
         if (request == null) {
             clearTimer();
-            requestMoreData();
+            requestMoreData(true);
         }
     }
 
@@ -374,7 +382,7 @@ public class ChanThreadLoader
 
         pendingFuture = executor.schedule(() -> BackgroundUtils.runOnMainThread(() -> {
             pendingFuture = null;
-            requestMoreData();
+            requestMoreData(false);
         }), watchTimeout, TimeUnit.SECONDS);
     }
 
@@ -399,7 +407,7 @@ public class ChanThreadLoader
         }
     }
 
-    private ChanLoaderRequest getData() {
+    private ChanLoaderRequest getData(boolean forced) {
         BackgroundUtils.ensureBackgroundThread();
 
         if (loadable.mode == Loadable.Mode.THREAD
@@ -424,6 +432,7 @@ public class ChanThreadLoader
                 loadable,
                 loadable.getSite().chanReader(),
                 cached,
+                forced,
                 this,
                 this
         );
@@ -685,8 +694,10 @@ public class ChanThreadLoader
             BackgroundUtils.ensureBackgroundThread();
 
             // Thread was deleted (404), try to load a saved copy (if we have it)
-            if (error.networkResponse != null && error.networkResponse.statusCode == 404
-                    && loadable.mode == Loadable.Mode.THREAD) {
+            if (error.networkResponse != null
+                    && error.networkResponse.statusCode == 404
+                    && loadable.mode == Loadable.Mode.THREAD
+            ) {
                 Logger.d(TAG, "Got 404 status for a thread " + maskPostNo(loadable.no));
 
                 ChanThread chanThread = loadSavedThreadIfItExists();
@@ -696,8 +707,9 @@ public class ChanThreadLoader
                     }
 
                     Logger.d(TAG,
-                            "Successfully loaded local thread " + maskPostNo(loadable.no) + " from disk, isClosed = "
-                                    + chanThread.isClosed() + ", isArchived = " + chanThread.isArchived()
+                            "Successfully loaded local thread " + maskPostNo(loadable.no) +
+                                    " from disk, isClosed = " + chanThread.isClosed() +
+                                    ", isArchived = " + chanThread.isArchived()
                     );
 
                     onPreparedResponseInternal(chanThread,
@@ -713,18 +725,20 @@ public class ChanThreadLoader
 
             // No local thread, show the error screen
             return true;
-        }).subscribeOn(backgroundScheduler).observeOn(AndroidSchedulers.mainThread()).subscribe(showError -> {
-            if (!showError) {
-                return;
-            }
+        }).subscribeOn(backgroundScheduler)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(showError -> {
+                    if (!showError) {
+                        return;
+                    }
 
-            Logger.i(TAG, "Loading error", error);
-            notifyAboutError(error);
-        }, throwable -> {
-            Logger.i(TAG, "Loading unhandled error", throwable);
+                    Logger.i(TAG, "Loading error", error);
+                    notifyAboutError(error);
+                }, throwable -> {
+                    Logger.i(TAG, "Loading unhandled error", throwable);
 
-            notifyAboutError(createError(throwable));
-        });
+                    notifyAboutError(createError(throwable));
+                });
 
         compositeDisposable.add(disposable);
     }

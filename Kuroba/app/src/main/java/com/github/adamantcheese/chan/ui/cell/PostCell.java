@@ -797,7 +797,7 @@ public class PostCell
 
             for (int i = 0; i < post.getPostImagesCount(); i++) {
                 PostImage image = post.getPostImages().get(i);
-                if (image == null || image.imageUrl == null) {
+                if (image == null || (image.imageUrl == null && image.thumbnailUrl == null)) {
                     continue;
                 }
 
@@ -823,8 +823,11 @@ public class PostCell
                 // Don't set a callback if the post is deleted but if the image is from a
                 // third-party archive then set it. If the file already exists in cache let it
                 // through as well.
+                boolean cacheFileAlreadyExists = image.imageUrl != null
+                        && cacheHandler.cacheFileExists(image.imageUrl.toString());
+
                 boolean setCallback = (!post.deleted.get() || image.isFromArchive)
-                        || cacheHandler.cacheFileExists(image.imageUrl.toString());
+                        || cacheFileAlreadyExists;
 
                 if (setCallback) {
                     thumbnailView.setOnClickListener(v2 -> {
