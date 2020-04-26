@@ -214,7 +214,7 @@ class ChanReaderRequest(
                     loadable.boardDescriptor
             )
 
-            val supportsMediaThumbnails = archivesManager.doesArchiveStoreThumbnails(archiveDescriptor)
+            val supportsMediaThumbnails = archivesManager.archiveStoreThumbnails(archiveDescriptor)
 
             val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetworkBlocking(
                     threadArchiveRequestLink,

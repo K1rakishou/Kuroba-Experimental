@@ -7,16 +7,21 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.ui.epoxy.epoxyFetchHistoryRow
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
+import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 
 class ArchiveFetchHistoryController(
         context: Context,
-        private val historyList: List<ThirdPartyArchiveFetchResult>
-) : Controller(context) {
+        fetchResults: List<ThirdPartyArchiveFetchResult>,
+        private val callback: OnFetchHistoryChanged
+) : Controller(context), ArchiveFetchHistoryControllerView {
     lateinit var recyclerView: EpoxyRecyclerView
 
-    private var presenting = false
+    private val presenter = ArchiveFetchHistoryPresenter(ArrayList(fetchResults))
 
+    private var presenting = false
+    private var fetchHistoryChanged = false
 
     override fun onCreate() {
         super.onCreate()
@@ -29,21 +34,69 @@ class ArchiveFetchHistoryController(
                 DividerItemDecoration(recyclerView.context, DividerItemDecoration.VERTICAL)
         )
 
+        presenter.onCreate(this)
+    }
+
+    override fun rebuildFetchResultsList(fetchResultList: List<ThirdPartyArchiveFetchResult>) {
+        BackgroundUtils.ensureMainThread()
+
         recyclerView.withModels {
-            historyList.forEach { history ->
+            fetchResultList.forEach { fetchResult ->
                 epoxyFetchHistoryRow {
-                    id("epoxy_fetch_history_row_${history.hashCode()}")
-                    time(history.insertedOn)
-                    result(history.success)
-                    errorMessage(history.errorText)
+                    id("epoxy_fetch_history_row_${fetchResult.databaseId}")
+                    time(fetchResult.insertedOn)
+                    result(fetchResult.success)
+                    errorMessage(fetchResult.errorText)
+
+                    deleteButtonCallback {
+                        presenter.deleteFetchResult(fetchResult)
+                    }
                 }
             }
         }
     }
 
+    override fun onFetchResultListChanged() {
+        BackgroundUtils.ensureMainThread()
+
+        fetchHistoryChanged = true
+    }
+
+    override fun popController() {
+        BackgroundUtils.ensureMainThread()
+
+        if (presenting) {
+            presenting = false
+            stopPresenting()
+        }
+    }
+
+    override fun showDeleteErrorToast() {
+        BackgroundUtils.ensureMainThread()
+
+        showToast(
+                context,
+                context.getString(R.string.archive_fetch_history_delete_error_message)
+        )
+    }
+
+    override fun showUnknownErrorToast() {
+        BackgroundUtils.ensureMainThread()
+
+        showToast(
+                context,
+                context.getString(R.string.unknown_error)
+        )
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
+        if (fetchHistoryChanged) {
+            callback.onChanged()
+        }
+
+        presenter.onDestroy()
         presenting = false
     }
 
@@ -55,5 +108,9 @@ class ArchiveFetchHistoryController(
         }
 
         return super.onBack()
+    }
+
+    interface OnFetchHistoryChanged {
+        fun onChanged()
     }
 }

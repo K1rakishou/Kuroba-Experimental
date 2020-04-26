@@ -4,5 +4,5 @@ sealed class ArchivesSettingsState {
     object Default : ArchivesSettingsState()
     object Loading : ArchivesSettingsState()
     class Error(val message: String) : ArchivesSettingsState()
-    class ArchivesLoaded(val archiveInfoList: List<ArchiveInfo>) : ArchivesSettingsState()
+    data class ArchivesLoaded(val archiveInfoList: List<ArchiveInfo>) : ArchivesSettingsState()
 }

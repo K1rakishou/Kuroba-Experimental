@@ -31,27 +31,47 @@ class ThirdPartyArchiveInfoLocalSource(
         )
     }
 
-    suspend fun insertFetchHistory(thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult) {
+    suspend fun insertFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ThirdPartyArchiveFetchResult? {
         ensureInTransaction()
+        require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
 
         val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(
-                thirdPartyArchiveFetchResult.archiveDescriptor.domain
+                fetchResult.archiveDescriptor.domain
         )
 
         checkNotNull(thirdPartyArchiveInfoEntity) {
-            "ThirdPartyArchiveInfoEntity was not created for " +
-                    "${thirdPartyArchiveFetchResult.archiveDescriptor} beforehand!"
+            "ThirdPartyArchiveInfoEntity was not created for ${fetchResult.archiveDescriptor} beforehand!"
         }
 
-        thirdPartyArchiveFetchHistoryDao.insert(
+        val databaseId = thirdPartyArchiveFetchHistoryDao.insert(
                 ThirdPartyArchiveFetchHistoryEntity(
                         id = 0L,
                         ownerThirdPartyArchiveId = thirdPartyArchiveInfoEntity.archiveId,
-                        success = thirdPartyArchiveFetchResult.success,
-                        errorText = thirdPartyArchiveFetchResult.errorText,
-                        insertedOn = thirdPartyArchiveFetchResult.insertedOn
+                        success = fetchResult.success,
+                        errorText = fetchResult.errorText,
+                        insertedOn = fetchResult.insertedOn
                 )
         )
+
+        if (databaseId < 0L) {
+            return null
+        }
+
+        return fetchResult.copy(databaseId = databaseId)
+    }
+
+    suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
+        ensureInTransaction()
+
+        val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(
+                fetchResult.archiveDescriptor.domain
+        )
+
+        checkNotNull(thirdPartyArchiveInfoEntity) {
+            "ThirdPartyArchiveInfoEntity was not created for ${fetchResult.archiveDescriptor} beforehand!"
+        }
+
+        thirdPartyArchiveFetchHistoryDao.delete(fetchResult.databaseId)
     }
 
     suspend fun selectLatestFetchHistory(
@@ -71,6 +91,7 @@ class ThirdPartyArchiveInfoLocalSource(
                 count
         ).map { thirdPartyArchiveFetchHistoryEntity ->
             return@map ThirdPartyArchiveFetchResult(
+                    databaseId = thirdPartyArchiveFetchHistoryEntity.id,
                     archiveDescriptor = archiveDescriptor,
                     success = thirdPartyArchiveFetchHistoryEntity.success,
                     errorText = thirdPartyArchiveFetchHistoryEntity.errorText,

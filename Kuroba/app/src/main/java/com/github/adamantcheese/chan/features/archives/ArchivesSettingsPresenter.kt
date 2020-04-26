@@ -15,10 +15,13 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControllerView>() {
 
@@ -36,6 +39,18 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
     override fun onCreate(view: ArchivesSettingsControllerView) {
         super.onCreate(view)
         inject(this)
+
+        scope.launch {
+            archivesManager.listenForFetchHistoryChanges()
+                    .asFlow()
+                    .collect {
+                        if (!isCurrentState<ArchivesSettingsState.ArchivesLoaded>()) {
+                            return@collect
+                        }
+
+                        loadArchivesAndShow()
+                    }
+        }
 
         scope.launch {
             updateState { ArchivesSettingsState.Loading }
@@ -60,31 +75,67 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     fun onArchiveSettingClicked(archiveInfo: ArchiveInfo) {
         scope.launch {
-            val isEnabled = archivesManager.isArchiveEnabled(archiveInfo.archiveDescriptor)
-                    .safeUnwrap { error ->
-                        withView {
-                            val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
-                                    error.errorMessageOrClassName()
-                            )
+            safeRun {
+                val isEnabled = archivesManager.isArchiveEnabled(archiveInfo.archiveDescriptor).unwrap()
+                archivesManager.setArchiveEnabled(archiveInfo.archiveDescriptor, !isEnabled).unwrap()
 
-                            showToast(message)
-                        }
-                        return@launch
+                if (!isCurrentState<ArchivesSettingsState.ArchivesLoaded>()) {
+                    loadArchivesAndShow()
+                    return@safeRun
+                }
+
+                val fetchHistory = archivesManager.selectLatestFetchHistory(
+                        archiveInfo.archiveDescriptor
+                ).unwrap()
+
+                updateState { prevState ->
+                    check(prevState is ArchivesSettingsState.ArchivesLoaded) {
+                        "Unexpected state: ${prevState::class.java}"
                     }
 
-            archivesManager.setArchiveEnabled(archiveInfo.archiveDescriptor, !isEnabled)
-                    .safeUnwrap { error ->
-                        withView {
-                            val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
-                                    error.errorMessageOrClassName()
-                            )
-
-                            showToast(message)
-                        }
-                        return@launch
+                    val index = prevState.archiveInfoList.indexOfFirst { archive ->
+                        archive.archiveDescriptor == archiveInfo.archiveDescriptor
                     }
 
-            loadArchivesAndShow()
+                    if (index < 0) {
+                        return@updateState null
+                    }
+
+                    val newState = if (isEnabled) {
+                        ArchiveState.Disabled
+                    } else {
+                        ArchiveState.Enabled
+                    }
+
+                    val newStatus = when (newState) {
+                        ArchiveState.Enabled -> calculateStatusByFetchHistory(fetchHistory)
+                        ArchiveState.Disabled -> ArchiveStatus.Disabled
+                    }
+
+                    val archiveInfoListCopy = ArrayList(prevState.archiveInfoList)
+                    val updatedState = archiveInfoListCopy[index]?.copy(
+                            state = newState,
+                            status = newStatus
+                    )
+
+                    if (updatedState == null) {
+                        return@updateState null
+                    }
+
+                    archiveInfoListCopy[index] = updatedState
+
+                    return@updateState prevState.copy(
+                            archiveInfoList = archiveInfoListCopy
+                    )
+                }
+            }.safeUnwrap { error ->
+                val message = ArchivesSettingsPresenterMessage.RepositoryErrorMessage(
+                        error.errorMessageOrClassName()
+                )
+
+                withView { showToast(message) }
+                return@launch
+            }
         }
     }
 
@@ -139,6 +190,10 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                 }
 
         onHistoryLoaded(history)
+    }
+
+    fun loadArchivesAndShowAsync() {
+        scope.launch { loadArchivesAndShow() }
     }
 
     private suspend fun loadArchivesAndShow() {
@@ -218,7 +273,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                 return@safeRun
             }
 
-            archivesManager.allArchives.forEach { archiveDescriptor ->
+            ArchivesManager.allArchives.forEach { archiveDescriptor ->
                 if (archivesManager.archiveExists(archiveDescriptor).unwrap()) {
                     return@forEach
                 }
@@ -244,11 +299,15 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
             return ArchiveStatus.Working
         }
 
-        if (successFetchesCount <= 1) {
+        if (successFetchesCount <= 0) {
             return ArchiveStatus.NotWorking
         }
 
         return ArchiveStatus.ExperiencingProblems
+    }
+
+    private inline fun <reified T : ArchivesSettingsState> isCurrentState(): Boolean {
+        return archivesSettingsStateSubject.value is T
     }
 
     @Synchronized

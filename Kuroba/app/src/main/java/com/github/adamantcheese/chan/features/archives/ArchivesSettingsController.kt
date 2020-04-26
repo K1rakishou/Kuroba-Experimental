@@ -19,7 +19,8 @@ import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 
 class ArchivesSettingsController(context: Context)
-    : Controller(context), ArchivesSettingsControllerView {
+    : Controller(context), ArchivesSettingsControllerView,
+        ArchiveFetchHistoryController.OnFetchHistoryChanged {
 
     lateinit var recyclerView: EpoxyRecyclerView
 
@@ -96,7 +97,11 @@ class ArchivesSettingsController(context: Context)
             return
         }
 
-        navigationController.presentController(ArchiveFetchHistoryController(context, history))
+        navigationController.presentController(ArchiveFetchHistoryController(context, history, this))
+    }
+
+    override fun onChanged() {
+        presenter.loadArchivesAndShowAsync()
     }
 
     private fun onStateChanged(state: ArchivesSettingsState) {
@@ -114,13 +119,11 @@ class ArchivesSettingsController(context: Context)
                 }
                 is ArchivesSettingsState.ArchivesLoaded -> {
                     state.archiveInfoList.forEach { archiveInfo ->
-                        val enabled = archiveInfo.state == ArchiveState.Enabled
-
                         epoxyArchiveSettingRow {
                             id("epoxy_archive_setting_row_${archiveInfo.hashCode()}")
                             archiveNameWithDomain(archiveInfo.archiveNameWithDomain)
                             archiveStatus(archiveInfo.status)
-                            archiveState(enabled)
+                            archiveState(archiveInfo.state)
                             supportedBoards(archiveInfo.supportedBoards)
                             supportedBoardsMedia(archiveInfo.supportedBoardsMedia)
 
@@ -138,4 +141,6 @@ class ArchivesSettingsController(context: Context)
             }.exhaustive
         }
     }
+
+
 }

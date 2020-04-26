@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatButton
+import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
@@ -22,6 +24,7 @@ class EpoxyFetchHistoryRow  @JvmOverloads constructor(
     private val fetchHistoryTime: TextView
     private val fetchHistoryResult: TextView
     private val fetchHistoryErrorMessage: TextView
+    private val fetchHistoryDelete: AppCompatButton
 
     init {
         inflate(context, R.layout.epoxy_archive_fetch_history_row, this)
@@ -29,6 +32,7 @@ class EpoxyFetchHistoryRow  @JvmOverloads constructor(
         fetchHistoryTime = findViewById(R.id.fetch_history_time)
         fetchHistoryResult = findViewById(R.id.fetch_history_result)
         fetchHistoryErrorMessage = findViewById(R.id.fetch_history_error_message)
+        fetchHistoryDelete = findViewById(R.id.fetch_history_delete)
     }
 
     @ModelProp
@@ -61,12 +65,21 @@ class EpoxyFetchHistoryRow  @JvmOverloads constructor(
         fetchHistoryErrorMessage.text = errorMessage
     }
 
+    @CallbackProp
+    fun setDeleteButtonCallback(func: (() -> Unit)?) {
+        if (func == null) {
+            fetchHistoryDelete.setOnClickListener(null)
+            return
+        }
+
+        fetchHistoryDelete.setOnClickListener { func.invoke() }
+    }
+
     companion object {
         private val formatter = DateTimeFormatterBuilder()
                 .append(ISODateTimeFormat.date())
                 .appendLiteral(' ')
                 .append(ISODateTimeFormat.hourMinuteSecond())
-                .appendLiteral(" UTC")
                 .toFormatter()
     }
 }

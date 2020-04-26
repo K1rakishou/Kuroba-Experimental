@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import org.joda.time.DateTime
 
 data class ThirdPartyArchiveFetchResult(
+        val databaseId: Long,
         val archiveDescriptor: ArchiveDescriptor,
         val success: Boolean,
         val errorText: String?,
@@ -20,11 +21,11 @@ data class ThirdPartyArchiveFetchResult(
 
     companion object {
         fun success(archiveDescriptor: ArchiveDescriptor): ThirdPartyArchiveFetchResult {
-            return ThirdPartyArchiveFetchResult(archiveDescriptor, true, null, DateTime.now())
+            return ThirdPartyArchiveFetchResult(0L, archiveDescriptor, true, null, DateTime.now())
         }
 
         fun error(archiveDescriptor: ArchiveDescriptor, errorText: String): ThirdPartyArchiveFetchResult {
-            return ThirdPartyArchiveFetchResult(archiveDescriptor, false, errorText, DateTime.now())
+            return ThirdPartyArchiveFetchResult(0L, archiveDescriptor, false, errorText, DateTime.now())
         }
     }
 }

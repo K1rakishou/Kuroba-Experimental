@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.base
 
 import androidx.annotation.CallSuper
 import com.github.adamantcheese.common.ModularResult
+import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -10,6 +11,7 @@ abstract class BasePresenter<V> {
     private val initialized = AtomicBoolean(false)
 
     protected val scope = MainScope() + CoroutineName("BasePresenter")
+    protected val compositeDisposable = CompositeDisposable()
 
     @CallSuper
     open fun onCreate(view: V) {
@@ -27,7 +29,9 @@ abstract class BasePresenter<V> {
         }
 
         this.view = null
+
         scope.cancel()
+        compositeDisposable.clear()
     }
 
     fun withViewNormal(func: V.() -> Unit) {

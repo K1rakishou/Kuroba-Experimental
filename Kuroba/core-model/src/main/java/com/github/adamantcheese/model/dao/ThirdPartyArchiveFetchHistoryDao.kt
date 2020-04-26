@@ -11,7 +11,7 @@ import org.joda.time.DateTime
 abstract class ThirdPartyArchiveFetchHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract suspend fun insert(thirdPartyArchiveFetchHistoryEntity: ThirdPartyArchiveFetchHistoryEntity)
+    abstract suspend fun insert(thirdPartyArchiveFetchHistoryEntity: ThirdPartyArchiveFetchHistoryEntity): Long
 
     @Query("""
         SELECT *
@@ -31,7 +31,14 @@ abstract class ThirdPartyArchiveFetchHistoryDao {
 
     @Query("""
         DELETE FROM ${ThirdPartyArchiveFetchHistoryEntity.TABLE_NAME}
+        WHERE ${ThirdPartyArchiveFetchHistoryEntity.ID_COLUMN_NAME} = :databaseId
+    """)
+    abstract suspend fun delete(databaseId: Long)
+
+    @Query("""
+        DELETE FROM ${ThirdPartyArchiveFetchHistoryEntity.TABLE_NAME}
         WHERE ${ThirdPartyArchiveFetchHistoryEntity.INSERTED_ON_COLUMN_NAME} < :olderThan
     """)
-    abstract fun deleteOlderThan(olderThan: DateTime)
+    abstract suspend fun deleteOlderThan(olderThan: DateTime)
+
 }

@@ -10,7 +10,6 @@ data class ArchiveInfo(
         val supportedBoards: String,
         val supportedBoardsMedia: String
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ArchiveInfo) return false

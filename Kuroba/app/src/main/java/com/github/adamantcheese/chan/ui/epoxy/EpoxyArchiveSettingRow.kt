@@ -12,6 +12,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.features.archives.ArchiveState
 import com.github.adamantcheese.chan.features.archives.ArchiveStatus
 import com.github.adamantcheese.chan.utils.exhaustive
 
@@ -68,8 +69,11 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
     }
 
     @ModelProp
-    fun setArchiveState(enabled: Boolean) {
-        archiveState.isChecked = enabled
+    fun setArchiveState(state: ArchiveState) {
+        archiveState.isChecked = when (state) {
+            ArchiveState.Enabled -> true
+            ArchiveState.Disabled -> false
+        }
     }
 
     @ModelProp

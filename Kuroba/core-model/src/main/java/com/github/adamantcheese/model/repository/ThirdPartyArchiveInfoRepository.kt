@@ -33,12 +33,21 @@ class ThirdPartyArchiveInfoRepository(
         }
     }
 
-    suspend fun insertFetchHistory(
-            thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult
-    ): ModularResult<Unit> {
+    suspend fun insertFetchResult(
+            fetchResult: ThirdPartyArchiveFetchResult
+    ): ModularResult<ThirdPartyArchiveFetchResult?> {
         return withTransactionSafe {
+            require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
             deleteOld()
-            localSource.insertFetchHistory(thirdPartyArchiveFetchResult)
+
+            return@withTransactionSafe localSource.insertFetchResult(fetchResult)
+        }
+    }
+
+    suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
+        return withTransactionSafe {
+            require(fetchResult.databaseId > 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
+            localSource.deleteFetchResult(fetchResult)
 
             return@withTransactionSafe
         }
@@ -56,7 +65,10 @@ class ThirdPartyArchiveInfoRepository(
         }
     }
 
-    suspend fun setArchiveEnabled(archiveDescriptor: ArchiveDescriptor, isEnabled: Boolean): ModularResult<Unit> {
+    suspend fun setArchiveEnabled(
+            archiveDescriptor: ArchiveDescriptor,
+            isEnabled: Boolean
+    ): ModularResult<Unit> {
         return withTransactionSafe {
             return@withTransactionSafe localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
         }

@@ -38,6 +38,15 @@
             android:textSize="16sp"
             tools:text="Error message: failed to connect to desuarchive.org/2606:4700:3037::6818:7f35 (port 443) from /fec0::511d:8bae:33f9:cfe6 (port 49654) after 30000ms" />
 
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/fetch_history_delete"
+            android:layout_width="128dp"
+            android:layout_marginTop="16dp"
+            android:layout_gravity="right"
+            android:layout_height="wrap_content"
+            android:text="@string/delete"/>
+
     </LinearLayout>
 
 </merge>

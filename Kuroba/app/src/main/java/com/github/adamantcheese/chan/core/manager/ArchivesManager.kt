@@ -15,6 +15,9 @@ import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.PublishProcessor
 import java.io.InputStreamReader
 import java.util.*
 
@@ -24,24 +27,21 @@ class ArchivesManager(
         private val gson: Gson,
         private val appConstants: AppConstants
 ) {
-    val allArchives = listOf(
-            ArchiveDescriptor("4plebs", "archive.4plebs.org"),
-            ArchiveDescriptor("Nyafuu Archive", "archive.nyafuu.org"),
-            ArchiveDescriptor("Rebecca Black Tech", "archive.rebeccablacktech.com"),
-            ArchiveDescriptor("warosu", "warosu.org"),
-            ArchiveDescriptor("Desuarchive", "desuarchive.org"),
-            ArchiveDescriptor("fireden.net", "boards.fireden.net"),
-            ArchiveDescriptor("arch.b4k.co", "arch.b4k.co"),
-            ArchiveDescriptor("bstats", "archive.b-stats.org"),
-            ArchiveDescriptor("Archived.Moe", "archived.moe"),
-            ArchiveDescriptor("TheBArchive.com", "thebarchive.com"),
-            ArchiveDescriptor("Archive Of Sins", "archiveofsins.com")
-    )
-
+    private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
     private val archives by lazy { loadArchives() }
 
     fun getAllArchiveData(): List<ArchiveData> {
         return archives
+    }
+
+    /**
+     * This flowable is only for notifying that something has changed in the fetch history. You have
+     * to reload the history by yourself after receiving a notification
+     * */
+    fun listenForFetchHistoryChanges(): Flowable<FetchHistoryChange> {
+        return archiveFetchHistoryChangeSubject
+                .observeOn(AndroidSchedulers.mainThread())
+                .hide()
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -83,7 +83,7 @@ class ArchivesManager(
         }
     }
 
-    suspend fun getBestPossibleArchiveOrNull(
+    private suspend fun getBestPossibleArchiveOrNull(
             threadDescriptor: ChanDescriptor.ThreadDescriptor,
             suitableArchives: List<ArchiveData>,
             forced: Boolean
@@ -222,7 +222,7 @@ class ArchivesManager(
         return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
     }
 
-    fun doesArchiveStoreThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
+    fun archiveStoreThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
         return when (archiveDescriptor.domain) {
             // Archived.moe stores only thumbnails
             "archived.moe" -> true
@@ -268,14 +268,40 @@ class ArchivesManager(
         return thirdPartyArchiveInfoRepository.archiveExists(archiveDescriptor)
     }
 
-    suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): ModularResult<Unit> {
+    suspend fun insertThirdPartyArchiveInfo(
+            thirdPartyArchiveInfo: ThirdPartyArchiveInfo
+    ): ModularResult<Unit> {
         return thirdPartyArchiveInfoRepository.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
     }
 
     suspend fun insertFetchHistory(
-            thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult
-    ): ModularResult<Unit> {
-        return thirdPartyArchiveInfoRepository.insertFetchHistory(thirdPartyArchiveFetchResult)
+            fetchResult: ThirdPartyArchiveFetchResult
+    ): ModularResult<ThirdPartyArchiveFetchResult?> {
+        return thirdPartyArchiveInfoRepository.insertFetchResult(fetchResult)
+                .peekValue { value ->
+                    if (value != null) {
+                        val fetchHistoryChange = FetchHistoryChange(
+                                value.databaseId,
+                                fetchResult.archiveDescriptor,
+                                FetchHistoryChangeType.Insert
+                        )
+
+                        archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
+                    }
+                }
+    }
+
+    suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
+        return thirdPartyArchiveInfoRepository.deleteFetchResult(fetchResult)
+                .peekValue {
+                    val fetchHistoryChange = FetchHistoryChange(
+                            fetchResult.databaseId,
+                            fetchResult.archiveDescriptor,
+                            FetchHistoryChangeType.Delete
+                    )
+
+                    archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
+                }
     }
 
     data class ArchiveData(
@@ -291,10 +317,36 @@ class ArchivesManager(
         fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(name, domain)
     }
 
+    data class FetchHistoryChange(
+            val databaseId: Long,
+            val archiveDescriptor: ArchiveDescriptor,
+            val changeType: FetchHistoryChangeType
+    )
+
+    enum class FetchHistoryChangeType {
+        Insert,
+        Delete
+    }
+
     companion object {
         private const val TAG = "ArchivesManager"
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
         private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"
         private const val FOOLFUUKA_POST_ENDPOINT_FORMAT = "https://%s/_/api/chan/post/?board=%s&num=%d"
+
+        @JvmStatic
+        val allArchives = listOf(
+                ArchiveDescriptor("4plebs", "archive.4plebs.org"),
+                ArchiveDescriptor("Nyafuu Archive", "archive.nyafuu.org"),
+                ArchiveDescriptor("Rebecca Black Tech", "archive.rebeccablacktech.com"),
+                ArchiveDescriptor("warosu", "warosu.org"),
+                ArchiveDescriptor("Desuarchive", "desuarchive.org"),
+                ArchiveDescriptor("fireden.net", "boards.fireden.net"),
+                ArchiveDescriptor("arch.b4k.co", "arch.b4k.co"),
+                ArchiveDescriptor("bstats", "archive.b-stats.org"),
+                ArchiveDescriptor("Archived.Moe", "archived.moe"),
+                ArchiveDescriptor("TheBArchive.com", "thebarchive.com"),
+                ArchiveDescriptor("Archive Of Sins", "archiveofsins.com")
+        )
     }
 }

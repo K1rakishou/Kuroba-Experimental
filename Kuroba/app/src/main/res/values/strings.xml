@@ -106,6 +106,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="error">Error</string>
     <string name="help">Help</string>
     <string name="unhandled_error">Unhandled error!</string>
+    <string name="unknown_error">Unknown error</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
     <string name="unmark_as_my_post">Unmark as my post</string>
@@ -629,22 +630,26 @@ Don't have a 4chan Pass?<br>
     <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
     <string name="archives_settings_archive_is_working">Archive is working normally</string>
 
-    <string name="archives_settings_help_message"><![CDATA[All these archives are used to retrieve deleted posts/images in a thread.<br>
+    <string name="archives_settings_help_message">
+        <![CDATA[All these archives are used to retrieve deleted posts/images in a thread.<br>
             All archives are disabled by default, you need to enable them manually.<br>
             Most of the time you want to enable <b>all</b> of the archives.
             If one archive is unavailable for some reason, the other one may be used instead
             (only if they both support the same board).<br><br>
 
             When fetching posts from an archive, if there was an error (for example an archive was
-            unavailable) we store this error so that we can then use it to calculate a score. We use
-            that score to determine what archive to use when multiple enabled archives support the
+            unavailable) the error is stored so that it can be used to calculate a score. The score
+            is used to determine what archive to use when multiple enabled archives support the
             same board. <br><br>
 
-            We store 5 last fetch results so that means if all 5 fetches succeeded then
-            the archive will have the highest score. Such archives are marked with "WORKING"
-            status. On the other hand if there was at least one error over the last 5 fetches then
-            such archive is marked with "EXPERIENCING PROBLEMS" error. If 4 out of 5 fetches resulted
-            in error then such archive will be marked as "NOT WORKING.<br><br>
+            Results of the last 5 last fetches are stored and used for the score calculation, which
+            means that if all 5 fetches succeeded then the archive will have the highest score.
+            Such archives are marked with "WORKING" status. If there was at least one error over the
+            last 5 fetches then such archive is marked with "EXPERIENCING PROBLEMS" error. If all
+            5 fetches resulted in an error then such archive will be marked as "NOT WORKING". Most
+            of the scores are used mostly for notifying the user of what\'s going on. Only the
+            "NOT WORKING" score will disable an archive until all the previous fetch results are
+            not valid anymore (this takes like 30 minutes).<br><br>
 
             When determining what archive to use we go down from an archive with the highest score
             to the lowest. If an archive with the highest score does not support files for the board
@@ -652,11 +657,15 @@ Don't have a 4chan Pass?<br>
             that supports files have higher priority). The score resets every 30 minutes for all
             archives.<br><br>
 
+            You can also manually delete fetch results to change the score so that an archive can
+            be used again if you don\'t want to wait until it\'s done automatically.
+
             The score is ignored when "Reload" button (the one in Toolbar) is clicked or when the
             bottom status view is clicked.<br><br>
 
-            If one of the archives for some reason does not load (blocked by an ISP) you should
-            disable it so that you don't have to wait ~20 seconds for each opened thread.]]></string>
+            If one of the archives for some reason does not load at all (blocked by an ISP) you should
+            disable it (so that you don\'t have to wait ~20 seconds each time you open a thread).]]>
+    </string>
 
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
@@ -943,5 +952,6 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
     <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
     <string name="epoxy_fetch_history_result_template">Result: %1$s</string>
+    <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
 
 </resources>
