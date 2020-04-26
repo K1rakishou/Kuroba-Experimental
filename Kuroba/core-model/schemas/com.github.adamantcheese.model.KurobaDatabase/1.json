@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f9e268c649c4ab953d9f28a91a5f00ab",
+    "identityHash": "f95995edd93afead33260a71063fc556",
     "entities": [
       {
         "tableName": "chan_board",
@@ -827,7 +827,24 @@
           ],
           "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "third_party_archive_fetch_history_owner_third_party_archive_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_third_party_archive_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_owner_third_party_archive_idx` ON `${TABLE_NAME}` (`owner_third_party_archive_id`)"
+          },
+          {
+            "name": "third_party_archive_fetch_history_inserted_on_idx",
+            "unique": false,
+            "columnNames": [
+              "inserted_on"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_inserted_on_idx` ON `${TABLE_NAME}` (`inserted_on`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "third_party_archive_info",
@@ -887,7 +904,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f9e268c649c4ab953d9f28a91a5f00ab')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f95995edd93afead33260a71063fc556')"
     ]
   }
 }

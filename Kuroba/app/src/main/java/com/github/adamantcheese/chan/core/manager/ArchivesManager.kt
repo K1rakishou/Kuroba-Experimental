@@ -18,20 +18,45 @@ import com.google.gson.stream.JsonReader
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.io.InputStreamReader
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 class ArchivesManager(
         private val appContext: Context,
         private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
         private val gson: Gson,
         private val appConstants: AppConstants
-) {
+) : CoroutineScope {
+    private val supervisorJob = SupervisorJob()
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Default + supervisorJob
+
     private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
-    private val archives by lazy { loadArchives() }
+    private val allArchivesData by lazy { loadArchives() }
+    private val allArchiveDescriptors by lazy { allArchivesData.map { it.getArchiveDescriptor() } }
+
+    init {
+        launch {
+            val thirdPartyArchiveInfo = allArchiveDescriptors.map { archiveDescriptor ->
+                ThirdPartyArchiveInfo(archiveDescriptor, false)
+            }
+
+            thirdPartyArchiveInfoRepository.init(thirdPartyArchiveInfo)
+        }
+    }
 
     fun getAllArchiveData(): List<ArchiveData> {
-        return archives
+        return allArchivesData
+    }
+
+    fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
+        return allArchiveDescriptors
     }
 
     /**
@@ -57,7 +82,7 @@ class ArchivesManager(
                 return@safeRun null
             }
 
-            val suitableArchives = archives.filter { archiveData ->
+            val suitableArchives = allArchivesData.filter { archiveData ->
                 archiveData.supportedBoards.contains(threadDescriptor.boardCode())
             }
 
@@ -231,7 +256,7 @@ class ArchivesManager(
     }
 
     private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
-        return archives.firstOrNull { archiveData ->
+        return allArchivesData.firstOrNull { archiveData ->
             return@firstOrNull archiveData.name == archiveDescriptor.name
                     && archiveData.domain == archiveDescriptor.domain
         }
@@ -261,17 +286,7 @@ class ArchivesManager(
     }
 
     suspend fun selectLatestFetchHistoryForAllArchives(): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
-        return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchives)
-    }
-
-    suspend fun archiveExists(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
-        return thirdPartyArchiveInfoRepository.archiveExists(archiveDescriptor)
-    }
-
-    suspend fun insertThirdPartyArchiveInfo(
-            thirdPartyArchiveInfo: ThirdPartyArchiveInfo
-    ): ModularResult<Unit> {
-        return thirdPartyArchiveInfoRepository.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
+        return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors)
     }
 
     suspend fun insertFetchHistory(
@@ -333,20 +348,5 @@ class ArchivesManager(
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
         private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"
         private const val FOOLFUUKA_POST_ENDPOINT_FORMAT = "https://%s/_/api/chan/post/?board=%s&num=%d"
-
-        @JvmStatic
-        val allArchives = listOf(
-                ArchiveDescriptor("4plebs", "archive.4plebs.org"),
-                ArchiveDescriptor("Nyafuu Archive", "archive.nyafuu.org"),
-                ArchiveDescriptor("Rebecca Black Tech", "archive.rebeccablacktech.com"),
-                ArchiveDescriptor("warosu", "warosu.org"),
-                ArchiveDescriptor("Desuarchive", "desuarchive.org"),
-                ArchiveDescriptor("fireden.net", "boards.fireden.net"),
-                ArchiveDescriptor("arch.b4k.co", "arch.b4k.co"),
-                ArchiveDescriptor("bstats", "archive.b-stats.org"),
-                ArchiveDescriptor("Archived.Moe", "archived.moe"),
-                ArchiveDescriptor("TheBArchive.com", "thebarchive.com"),
-                ArchiveDescriptor("Archive Of Sins", "archiveofsins.com")
-        )
     }
 }

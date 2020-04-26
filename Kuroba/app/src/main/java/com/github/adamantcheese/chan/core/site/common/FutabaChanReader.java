@@ -28,13 +28,13 @@ public class FutabaChanReader
         implements ChanReader {
     private final DefaultPostParser postParser;
 
-    public FutabaChanReader() {
+    public FutabaChanReader(ArchivesManager archivesManager) {
         CommentParser commentParser = new CommentParser().addDefaultRules();
         FoolFuukaCommentParser foolFuukaCommentParser = new FoolFuukaCommentParser();
 
         postParser = new DefaultPostParser(commentParser);
 
-        for (ArchiveDescriptor archiveDescriptor : ArchivesManager.getAllArchives()) {
+        for (ArchiveDescriptor archiveDescriptor : archivesManager.getAllArchivesDescriptors()) {
             postParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser);
         }
     }

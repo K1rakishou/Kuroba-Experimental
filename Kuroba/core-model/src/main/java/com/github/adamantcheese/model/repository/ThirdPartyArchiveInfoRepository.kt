@@ -1,7 +1,10 @@
 package com.github.adamantcheese.model.repository
 
+import android.util.Log
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
@@ -22,46 +25,53 @@ class ThirdPartyArchiveInfoRepository(
 ) : AbstractRepository(database, logger) {
     private val TAG = "$loggerTag ThirdPartyArchiveInfoRepository"
     private val alreadyDeletedOld = AtomicBoolean(false)
+    private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_SuspendableLazy<Unit>", false)
 
-    suspend fun insertThirdPartyArchiveInfo(
-            thirdPartyArchiveInfo: ThirdPartyArchiveInfo
-    ): ModularResult<Unit> {
-        return withTransactionSafe {
-            localSource.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
+    suspend fun init(thirdPartyArchiveInfoList: List<ThirdPartyArchiveInfo>) {
+        val result = withTransactionSafe {
+            thirdPartyArchiveInfoList.forEach { thirdPartyArchiveInfo ->
+                if (!localSource.archiveExists(thirdPartyArchiveInfo.archiveDescriptor)) {
+                    localSource.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
+                }
+            }
 
+            Log.d(TAG, "withTransactionSafe end")
             return@withTransactionSafe
         }
+
+        Log.d(TAG, "before initWithModularResult()")
+        suspendableInitializer.initWithModularResult(result)
     }
 
     suspend fun insertFetchResult(
             fetchResult: ThirdPartyArchiveFetchResult
     ): ModularResult<ThirdPartyArchiveFetchResult?> {
-        return withTransactionSafe {
-            require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
-            deleteOld()
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
+                deleteOld()
 
-            return@withTransactionSafe localSource.insertFetchResult(fetchResult)
+                return@withTransactionSafe localSource.insertFetchResult(fetchResult)
+            }
         }
     }
 
     suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
-        return withTransactionSafe {
-            require(fetchResult.databaseId > 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
-            localSource.deleteFetchResult(fetchResult)
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                require(fetchResult.databaseId > 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
+                localSource.deleteFetchResult(fetchResult)
 
-            return@withTransactionSafe
-        }
-    }
-
-    suspend fun archiveExists(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
-        return withTransactionSafe {
-            return@withTransactionSafe localSource.archiveExists(archiveDescriptor)
+                return@withTransactionSafe
+            }
         }
     }
 
     suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
-        return withTransactionSafe {
-            return@withTransactionSafe localSource.isArchiveEnabled(archiveDescriptor)
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                return@withTransactionSafe localSource.isArchiveEnabled(archiveDescriptor)
+            }
         }
     }
 
@@ -69,38 +79,44 @@ class ThirdPartyArchiveInfoRepository(
             archiveDescriptor: ArchiveDescriptor,
             isEnabled: Boolean
     ): ModularResult<Unit> {
-        return withTransactionSafe {
-            return@withTransactionSafe localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                return@withTransactionSafe localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
+            }
         }
     }
 
     suspend fun selectLatestFetchHistory(
             archiveDescriptor: ArchiveDescriptor
     ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
-        return withTransactionSafe {
-            return@withTransactionSafe localSource.selectLatestFetchHistory(
-                    archiveDescriptor,
-                    appConstants.archiveFetchHistoryMaxEntries
-            )
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                return@withTransactionSafe localSource.selectLatestFetchHistory(
+                        archiveDescriptor,
+                        appConstants.archiveFetchHistoryMaxEntries
+                )
+            }
         }
     }
 
     suspend fun selectLatestFetchHistory(
             archiveDescriptorList: List<ArchiveDescriptor>
     ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
-        return withTransactionSafe {
-            val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized withTransactionSafe {
+                val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
 
-            archiveDescriptorList.forEach { archiveDescriptor ->
-                val history = localSource.selectLatestFetchHistory(
-                        archiveDescriptor,
-                        appConstants.archiveFetchHistoryMaxEntries
-                )
+                archiveDescriptorList.forEach { archiveDescriptor ->
+                    val history = localSource.selectLatestFetchHistory(
+                            archiveDescriptor,
+                            appConstants.archiveFetchHistoryMaxEntries
+                    )
 
-                resultMap[archiveDescriptor] = history
+                    resultMap[archiveDescriptor] = history
+                }
+
+                return@withTransactionSafe resultMap.toMap()
             }
-
-            return@withTransactionSafe resultMap
         }
     }
 
@@ -110,8 +126,9 @@ class ThirdPartyArchiveInfoRepository(
             supportsMediaThumbnails: Boolean,
             supportsMedia: Boolean
     ): ModularResult<ArchivesRemoteSource.ArchiveThread> {
+        // We don't need to use SuspendableInitializer here
         return runBlocking {
-            return@runBlocking ModularResult.safeRun {
+            return@runBlocking safeRun {
                 return@safeRun remoteSource.fetchThreadFromNetwork(
                         threadArchiveRequestLink,
                         threadNo,

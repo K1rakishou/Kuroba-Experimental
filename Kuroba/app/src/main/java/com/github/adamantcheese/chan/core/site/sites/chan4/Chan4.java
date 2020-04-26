@@ -554,7 +554,7 @@ public class Chan4
 
     @Override
     public ChanReader chanReader() {
-        return new FutabaChanReader();
+        return new FutabaChanReader(archivesManager);
     }
 
     @Override

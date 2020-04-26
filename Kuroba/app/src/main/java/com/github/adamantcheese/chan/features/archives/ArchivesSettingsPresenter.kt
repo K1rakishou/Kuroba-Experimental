@@ -9,7 +9,6 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
-import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
@@ -33,8 +31,6 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     private val archivesSettingsStateSubject =
             BehaviorProcessor.createDefault<ArchivesSettingsState>(ArchivesSettingsState.Default)
-
-    private val defaultArchivesInserted = AtomicBoolean(false)
 
     override fun onCreate(view: ArchivesSettingsControllerView) {
         super.onCreate(view)
@@ -55,13 +51,6 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
         scope.launch {
             updateState { ArchivesSettingsState.Loading }
             delay(250L)
-
-            insertDefaultArchivesIfTheyNotExistYet().safeUnwrap { error ->
-                Logger.e(TAG, "Failed to insert default archives", error)
-
-                updateState { ArchivesSettingsState.Error(error.errorMessageOrClassName()) }
-                return@launch
-            }
 
             loadArchivesAndShow()
         }
@@ -265,24 +254,6 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                 archiveData.supportedBoards.joinToString(),
                 archiveData.supportedFiles.joinToString()
         )
-    }
-
-    private suspend fun insertDefaultArchivesIfTheyNotExistYet(): ModularResult<Unit> {
-        return safeRun {
-            if (!defaultArchivesInserted.compareAndSet(false, true)) {
-                return@safeRun
-            }
-
-            ArchivesManager.allArchives.forEach { archiveDescriptor ->
-                if (archivesManager.archiveExists(archiveDescriptor).unwrap()) {
-                    return@forEach
-                }
-
-                archivesManager.insertThirdPartyArchiveInfo(
-                        ThirdPartyArchiveInfo(archiveDescriptor, false)
-                ).unwrap()
-            }
-        }
     }
 
     private fun calculateStatusByFetchHistory(fetchHistory: List<ThirdPartyArchiveFetchResult>?): ArchiveStatus {
