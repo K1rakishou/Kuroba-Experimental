@@ -36,15 +36,15 @@ public class DatabaseBoardManager {
 
     public Callable<Board> createOrUpdate(final Board board) {
         return () -> {
-            QueryBuilder<Board, Integer> q = helper.boardsDao.queryBuilder();
+            QueryBuilder<Board, Integer> q = helper.getBoardsDao().queryBuilder();
             q.where().eq("site", board.site.id()).and().eq("value", board.code);
             Board existing = q.queryForFirst();
             if (existing != null) {
                 existing.updateExcludingUserFields(board);
-                helper.boardsDao.update(existing);
+                helper.getBoardsDao().update(existing);
                 board.updateExcludingUserFields(existing);
             } else {
-                helper.boardsDao.create(board);
+                helper.getBoardsDao().create(board);
             }
 
             return board;
@@ -53,7 +53,7 @@ public class DatabaseBoardManager {
 
     public Callable<Void> updateIncludingUserFields(final Board board) {
         return () -> {
-            helper.boardsDao.update(board);
+            helper.getBoardsDao().update(board);
 
             return null;
         };
@@ -62,7 +62,7 @@ public class DatabaseBoardManager {
     public Callable<Void> updateIncludingUserFields(final List<Board> boards) {
         return () -> {
             for (Board board : boards) {
-                helper.boardsDao.update(board);
+                helper.getBoardsDao().update(board);
             }
 
             return null;
@@ -74,7 +74,7 @@ public class DatabaseBoardManager {
             SelectArg id = new SelectArg();
             SelectArg order = new SelectArg();
 
-            UpdateBuilder<Board, Integer> updateBuilder = helper.boardsDao.updateBuilder();
+            UpdateBuilder<Board, Integer> updateBuilder = helper.getBoardsDao().updateBuilder();
             updateBuilder.where().eq("id", id);
             updateBuilder.updateColumnValue("order", order);
             PreparedUpdate<Board> statement = updateBuilder.prepare();
@@ -84,7 +84,7 @@ public class DatabaseBoardManager {
 
                 id.setValue(board.id);
                 order.setValue(i);
-                helper.boardsDao.update(statement);
+                helper.getBoardsDao().update(statement);
             }
 
             return null;
@@ -93,7 +93,7 @@ public class DatabaseBoardManager {
 
     public Callable<Boolean> createAll(final Site site, final List<Board> boards) {
         return () -> {
-            List<Board> allFromDb = helper.boardsDao.queryForEq("site", site.id());
+            List<Board> allFromDb = helper.getBoardsDao().queryForEq("site", site.id());
             Map<String, Board> byCodeFromDb = new HashMap<>();
             for (Board board : allFromDb) {
                 byCodeFromDb.put(board.code, board);
@@ -115,7 +115,7 @@ public class DatabaseBoardManager {
 
             if (!toCreate.isEmpty()) {
                 for (Board board : toCreate) {
-                    helper.boardsDao.create(board);
+                    helper.getBoardsDao().create(board);
                 }
             }
 
@@ -125,7 +125,7 @@ public class DatabaseBoardManager {
                     Board newPropertiesBoard = pair.second;
 
                     dbBoard.updateExcludingUserFields(newPropertiesBoard);
-                    helper.boardsDao.update(dbBoard);
+                    helper.getBoardsDao().update(dbBoard);
                 }
             }
 
@@ -135,7 +135,7 @@ public class DatabaseBoardManager {
 
     public Callable<Board> getBoard(final Site site, final String code) {
         return () -> {
-            Board board = helper.boardsDao.queryBuilder()
+            Board board = helper.getBoardsDao().queryBuilder()
                     .where()
                     .eq("site", site.id())
                     .and()
@@ -154,7 +154,7 @@ public class DatabaseBoardManager {
     public Callable<List<Pair<Site, List<Board>>>> getBoardsForAllSitesOrdered(List<Site> sites) {
         return () -> {
             // Query the orders of the sites.
-            QueryBuilder<SiteModel, Integer> q = helper.siteDao.queryBuilder();
+            QueryBuilder<SiteModel, Integer> q = helper.getSiteDao().queryBuilder();
             q.selectColumns("id", "order");
             List<SiteModel> modelsWithOrder = q.query();
             Map<Integer, Integer> ordering = new HashMap<>();
@@ -171,7 +171,7 @@ public class DatabaseBoardManager {
             for (Site site : sitesOrdered) {
                 siteIds.add(site.id());
             }
-            List<Board> allBoards = helper.boardsDao.queryBuilder().where().in("site", siteIds).query();
+            List<Board> allBoards = helper.getBoardsDao().queryBuilder().where().in("site", siteIds).query();
 
             // Map the boards from siteId to a list of boards.
             Map<Integer, Site> sitesById = new HashMap<>();
@@ -204,7 +204,7 @@ public class DatabaseBoardManager {
 
     public Callable<List<Board>> getSiteBoards(final Site site) {
         return () -> {
-            List<Board> boards = helper.boardsDao.queryBuilder().where().eq("site", site.id()).query();
+            List<Board> boards = helper.getBoardsDao().queryBuilder().where().eq("site", site.id()).query();
             for (int i = 0; i < boards.size(); i++) {
                 Board board = boards.get(i);
                 board.site = site;
@@ -216,7 +216,7 @@ public class DatabaseBoardManager {
     public Callable<List<Board>> getSiteSavedBoards(final Site site) {
         return () -> {
             List<Board> boards =
-                    helper.boardsDao.queryBuilder().where().eq("site", site.id()).and().eq("saved", true).query();
+                    helper.getBoardsDao().queryBuilder().where().eq("site", site.id()).and().eq("saved", true).query();
             for (int i = 0; i < boards.size(); i++) {
                 Board board = boards.get(i);
                 board.site = site;
@@ -227,7 +227,7 @@ public class DatabaseBoardManager {
 
     public Callable<Void> deleteBoards(Site site) {
         return () -> {
-            DeleteBuilder<Board, Integer> builder = helper.boardsDao.deleteBuilder();
+            DeleteBuilder<Board, Integer> builder = helper.getBoardsDao().deleteBuilder();
 
             builder.where().eq("site", site.id());
             builder.delete();

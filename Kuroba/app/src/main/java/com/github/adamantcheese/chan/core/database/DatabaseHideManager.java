@@ -44,7 +44,7 @@ public class DatabaseHideManager {
     public Callable<Void> load() {
         return () -> {
             Chan.instance(DatabaseManager.class)
-                    .trimTable(helper.postHideDao, "posthide", POST_HIDE_TRIM_TRIGGER, POST_HIDE_TRIM_COUNT);
+                    .trimTable(helper.getPostHideDao(), "posthide", POST_HIDE_TRIM_TRIGGER, POST_HIDE_TRIM_COUNT);
 
             return null;
         };
@@ -159,7 +159,7 @@ public class DatabaseHideManager {
         }
 
         for (PostHide postHide : newHiddenPosts) {
-            helper.postHideDao.createIfNotExists(postHide);
+            helper.getPostHideDao().createIfNotExists(postHide);
         }
     }
 
@@ -182,7 +182,7 @@ public class DatabaseHideManager {
     private Map<Long, PostHide> getHiddenPosts(int siteId, String board, List<Long> postNoList)
             throws SQLException {
 
-        Set<PostHide> hiddenInDatabase = new HashSet<>(helper.postHideDao.queryBuilder()
+        Set<PostHide> hiddenInDatabase = new HashSet<>(helper.getPostHideDao().queryBuilder()
                 .where()
                 .in("no", postNoList)
                 .and()
@@ -320,7 +320,7 @@ public class DatabaseHideManager {
                 return null;
             }
 
-            helper.postHideDao.createIfNotExists(hide);
+            helper.getPostHideDao().createIfNotExists(hide);
 
             return null;
         };
@@ -330,7 +330,7 @@ public class DatabaseHideManager {
         return () -> {
             for (PostHide postHide : hideList) {
                 if (contains(postHide)) continue;
-                helper.postHideDao.createIfNotExists(postHide);
+                helper.getPostHideDao().createIfNotExists(postHide);
             }
 
             return null;
@@ -344,7 +344,7 @@ public class DatabaseHideManager {
     public Callable<Void> removePostsHide(List<PostHide> hideList) {
         return () -> {
             for (PostHide postHide : hideList) {
-                DeleteBuilder<PostHide, Integer> deleteBuilder = helper.postHideDao.deleteBuilder();
+                DeleteBuilder<PostHide, Integer> deleteBuilder = helper.getPostHideDao().deleteBuilder();
 
                 deleteBuilder.where()
                         .eq("no", postHide.no)
@@ -362,7 +362,7 @@ public class DatabaseHideManager {
 
     private boolean contains(PostHide hide)
             throws SQLException {
-        PostHide inDb = helper.postHideDao.queryBuilder()
+        PostHide inDb = helper.getPostHideDao().queryBuilder()
                 .where()
                 .eq("no", hide.no)
                 .and()
@@ -385,12 +385,12 @@ public class DatabaseHideManager {
 
     public List<PostHide> getRemovedPostsWithThreadNo(long threadNo)
             throws SQLException {
-        return helper.postHideDao.queryBuilder().where().eq("thread_no", threadNo).and().eq("hide", false).query();
+        return helper.getPostHideDao().queryBuilder().where().eq("thread_no", threadNo).and().eq("hide", false).query();
     }
 
     public Callable<Void> deleteThreadHides(Site site) {
         return () -> {
-            DeleteBuilder<PostHide, Integer> builder = helper.postHideDao.deleteBuilder();
+            DeleteBuilder<PostHide, Integer> builder = helper.getPostHideDao().deleteBuilder();
             builder.where().eq("site", site.id());
             builder.delete();
 

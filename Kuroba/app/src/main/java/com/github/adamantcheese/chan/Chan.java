@@ -23,7 +23,6 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
@@ -109,6 +108,7 @@ public class Chan
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+
         AndroidUtils.init(this);
         AndroidUtils.getBuildType(); //spit out the build hash to the log
         // remove this if you need to debug some sort of event bus issue
@@ -118,9 +118,8 @@ public class Chan
     @Override
     public void onCreate() {
         super.onCreate();
-        registerActivityLifecycleCallbacks(this);
 
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+        registerActivityLifecycleCallbacks(this);
         System.setProperty("kotlinx.coroutines.debug", BuildConfig.DEBUG ? "on" : "off");
 
         AppConstants appConstants = new AppConstants(getApplicationContext());

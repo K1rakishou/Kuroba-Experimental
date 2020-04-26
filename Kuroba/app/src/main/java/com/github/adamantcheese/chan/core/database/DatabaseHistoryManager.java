@@ -50,7 +50,7 @@ public class DatabaseHistoryManager {
     public Callable<Void> load() {
         return () -> {
             Chan.instance(DatabaseManager.class)
-                    .trimTable(helper.historyDao, "history", HISTORY_TRIM_TRIGGER, HISTORY_TRIM_COUNT);
+                    .trimTable(helper.getHistoryDao(), "history", HISTORY_TRIM_TRIGGER, HISTORY_TRIM_COUNT);
 
             return null;
         };
@@ -58,7 +58,7 @@ public class DatabaseHistoryManager {
 
     public Callable<List<History>> getHistory() {
         return () -> {
-            QueryBuilder<History, Integer> historyQuery = helper.historyDao.queryBuilder();
+            QueryBuilder<History, Integer> historyQuery = helper.getHistoryDao().queryBuilder();
             List<History> date = historyQuery.orderBy("date", false).query();
             for (History history : date) {
                 history.loadable = databaseLoadableManager.refreshForeign(history.loadable);
@@ -77,16 +77,16 @@ public class DatabaseHistoryManager {
         }
 
         return () -> {
-            QueryBuilder<History, Integer> builder = helper.historyDao.queryBuilder();
+            QueryBuilder<History, Integer> builder = helper.getHistoryDao().queryBuilder();
             List<History> existingHistories = builder.where().eq("loadable_id", history.loadable.id).query();
             History existingHistoryForLoadable = existingHistories.isEmpty() ? null : existingHistories.get(0);
 
             if (existingHistoryForLoadable != null) {
                 existingHistoryForLoadable.date = System.currentTimeMillis();
-                helper.historyDao.update(existingHistoryForLoadable);
+                helper.getHistoryDao().update(existingHistoryForLoadable);
             } else {
                 history.date = System.currentTimeMillis();
-                helper.historyDao.create(history);
+                helper.getHistoryDao().create(history);
             }
 
             return history;
@@ -95,7 +95,7 @@ public class DatabaseHistoryManager {
 
     public Callable<Void> removeHistory(final History history) {
         return () -> {
-            helper.historyDao.delete(history);
+            helper.getHistoryDao().delete(history);
             return null;
         };
     }
@@ -115,7 +115,7 @@ public class DatabaseHistoryManager {
                 loadableIdSet.add(loadable.id);
             }
 
-            DeleteBuilder<History, Integer> builder = helper.historyDao.deleteBuilder();
+            DeleteBuilder<History, Integer> builder = helper.getHistoryDao().deleteBuilder();
             builder.where().in("loadable_id", loadableIdSet);
             builder.delete();
 

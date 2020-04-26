@@ -157,15 +157,15 @@ public class DatabaseManager {
         String o = "";
 
         try {
-            o += "Loadable rows: " + helper.loadableDao.countOf() + "\n";
-            o += "Pin rows: " + helper.pinDao.countOf() + "\n";
-            o += "SavedReply rows: " + helper.savedDao.countOf() + "\n";
-            o += "Board rows: " + helper.boardsDao.countOf() + "\n";
-            o += "PostHide rows: " + helper.postHideDao.countOf() + "\n";
-            o += "History rows: " + helper.historyDao.countOf() + "\n";
-            o += "Filter rows: " + helper.filterDao.countOf() + "\n";
-            o += "Site rows: " + helper.siteDao.countOf() + "\n";
-            o += "Local thread rows: " + helper.savedThreadDao.countOf() + "\n";
+            o += "Loadable rows: " + helper.getLoadableDao().countOf() + "\n";
+            o += "Pin rows: " + helper.getPinDao().countOf() + "\n";
+            o += "SavedReply rows: " + helper.getSavedDao().countOf() + "\n";
+            o += "Board rows: " + helper.getBoardsDao().countOf() + "\n";
+            o += "PostHide rows: " + helper.getPostHideDao().countOf() + "\n";
+            o += "History rows: " + helper.getHistoryDao().countOf() + "\n";
+            o += "Filter rows: " + helper.getFilterDao().countOf() + "\n";
+            o += "Site rows: " + helper.getSiteDao().countOf() + "\n";
+            o += "Local thread rows: " + helper.getSavedThreadDao().countOf() + "\n";
         } catch (SQLException e) {
             e.printStackTrace();
         }

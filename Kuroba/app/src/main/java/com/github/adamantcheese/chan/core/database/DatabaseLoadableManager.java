@@ -70,7 +70,7 @@ public class DatabaseLoadableManager {
             if (!toFlush.isEmpty()) {
                 Logger.d(TAG, "Flushing " + toFlush.size() + " loadable(s)");
                 for (Loadable loadable : toFlush) {
-                    helper.loadableDao.update(loadable);
+                    helper.getLoadableDao().update(loadable);
                 }
             }
 
@@ -123,7 +123,7 @@ public class DatabaseLoadableManager {
         }
 
         // Add it to the cache, refresh contents
-        helper.loadableDao.refresh(loadable);
+        helper.getLoadableDao().refresh(loadable);
         loadable.site = instance(SiteRepository.class).forId(loadable.siteId);
         loadable.board = loadable.site.board(loadable.boardCode);
         cachedLoadables.put(loadable, loadable);
@@ -141,7 +141,7 @@ public class DatabaseLoadableManager {
                 Logger.v(TAG, "Cached loadable found");
                 return cachedLoadable;
             } else {
-                QueryBuilder<Loadable, Integer> builder = helper.loadableDao.queryBuilder();
+                QueryBuilder<Loadable, Integer> builder = helper.getLoadableDao().queryBuilder();
                 List<Loadable> results = builder.where()
                         .eq("site", loadable.siteId)
                         .and()
@@ -162,7 +162,7 @@ public class DatabaseLoadableManager {
                 Loadable result = results.isEmpty() ? null : results.get(0);
                 if (result == null) {
                     Log.d(TAG, "Creating loadable");
-                    helper.loadableDao.create(loadable);
+                    helper.getLoadableDao().create(loadable);
                     result = loadable;
                 } else {
                     Log.d(TAG, "Loadable found in db");
@@ -177,7 +177,7 @@ public class DatabaseLoadableManager {
     }
 
     public Callable<List<Loadable>> getLoadables(Site site) {
-        return () -> helper.loadableDao.queryForEq("site", site.id());
+        return () -> helper.getLoadableDao().queryForEq("site", site.id());
     }
 
     public Callable<Object> deleteLoadables(List<Loadable> siteLoadables) {
@@ -188,7 +188,7 @@ public class DatabaseLoadableManager {
                 loadableIdSet.add(loadable.id);
             }
 
-            DeleteBuilder<Loadable, Integer> builder = helper.loadableDao.deleteBuilder();
+            DeleteBuilder<Loadable, Integer> builder = helper.getLoadableDao().deleteBuilder();
             builder.where().in("id", loadableIdSet);
 
             int deletedCount = builder.delete();
@@ -211,7 +211,7 @@ public class DatabaseLoadableManager {
                 }
             }
 
-            helper.loadableDao.update(updatedLoadable);
+            helper.getLoadableDao().update(updatedLoadable);
             return null;
         };
     }

@@ -39,41 +39,41 @@ public class DatabaseSiteManager {
     }
 
     public Callable<SiteModel> byId(int id) {
-        return () -> helper.siteDao.queryForId(id);
+        return () -> helper.getSiteDao().queryForId(id);
     }
 
     public Callable<List<SiteModel>> getAll() {
-        return () -> helper.siteDao.queryForAll();
+        return () -> helper.getSiteDao().queryForAll();
     }
 
     public Callable<Long> getCount() {
-        return () -> helper.siteDao.countOf();
+        return () -> helper.getSiteDao().countOf();
     }
 
     public Callable<SiteModel> add(final SiteModel site) {
         return () -> {
-            helper.siteDao.create(site);
+            helper.getSiteDao().create(site);
             return site;
         };
     }
 
     public Callable<SiteModel> update(final SiteModel site) {
         return () -> {
-            helper.siteDao.update(site);
+            helper.getSiteDao().update(site);
             return site;
         };
     }
 
     public Callable<SiteModel> updateId(final SiteModel site, final int newId) {
         return () -> {
-            helper.siteDao.updateId(site, newId);
+            helper.getSiteDao().updateId(site, newId);
             return site;
         };
     }
 
     public Callable<Map<Integer, Integer>> getOrdering() {
         return () -> {
-            QueryBuilder<SiteModel, Integer> q = helper.siteDao.queryBuilder();
+            QueryBuilder<SiteModel, Integer> q = helper.getSiteDao().queryBuilder();
             q.selectColumns("id", "order");
             List<SiteModel> modelsWithOrder = q.query();
             Map<Integer, Integer> ordering = new HashMap<>();
@@ -88,9 +88,9 @@ public class DatabaseSiteManager {
         return () -> {
             for (int i = 0; i < siteIdsWithCorrectOrder.size(); i++) {
                 Integer id = siteIdsWithCorrectOrder.get(i);
-                SiteModel m = helper.siteDao.queryForId(id);
+                SiteModel m = helper.getSiteDao().queryForId(id);
                 m.order = i;
-                helper.siteDao.update(m);
+                helper.getSiteDao().update(m);
             }
             return null;
         };
@@ -98,7 +98,7 @@ public class DatabaseSiteManager {
 
     public Callable<Void> deleteSite(Site site) {
         return () -> {
-            DeleteBuilder<SiteModel, Integer> builder = helper.siteDao.deleteBuilder();
+            DeleteBuilder<SiteModel, Integer> builder = helper.getSiteDao().deleteBuilder();
             builder.where().eq("id", site.id());
             builder.delete();
 

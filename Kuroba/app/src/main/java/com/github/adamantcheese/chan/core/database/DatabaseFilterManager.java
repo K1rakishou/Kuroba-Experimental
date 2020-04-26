@@ -41,7 +41,7 @@ public class DatabaseFilterManager {
 
     public Callable<Filter> createFilter(final Filter filter) {
         return () -> {
-            helper.filterDao.create(filter);
+            helper.getFilterDao().create(filter);
             return filter;
         };
     }
@@ -49,7 +49,7 @@ public class DatabaseFilterManager {
     public Callable<List<Filter>> updateFilters(final List<Filter> filters) {
         return () -> {
             for (Filter filter : filters) {
-                helper.filterDao.update(filter);
+                helper.getFilterDao().update(filter);
             }
             return filters;
         };
@@ -57,21 +57,21 @@ public class DatabaseFilterManager {
 
     public Callable<Void> deleteFilter(final Filter filter) {
         return () -> {
-            helper.filterDao.delete(filter);
+            helper.getFilterDao().delete(filter);
             return null;
         };
     }
 
     public Callable<Filter> updateFilter(final Filter filter) {
         return () -> {
-            helper.filterDao.update(filter);
+            helper.getFilterDao().update(filter);
             return filter;
         };
     }
 
     public Callable<List<Filter>> getFilters() {
         return () -> {
-            List<Filter> filters = helper.filterDao.queryForAll();
+            List<Filter> filters = helper.getFilterDao().queryForAll();
             Collections.sort(filters, (lhs, rhs) -> lhs.order - rhs.order);
             updateFilters(filters);
             return filters;
@@ -79,7 +79,7 @@ public class DatabaseFilterManager {
     }
 
     public Callable<Long> getCount() {
-        return () -> helper.filterDao.countOf();
+        return () -> helper.getFilterDao().countOf();
     }
 
     public Callable<Void> deleteFilters(List<Filter> filtersToDelete) {
@@ -90,7 +90,7 @@ public class DatabaseFilterManager {
                 filterIdSet.add(filter.id);
             }
 
-            DeleteBuilder<Filter, Integer> builder = helper.filterDao.deleteBuilder();
+            DeleteBuilder<Filter, Integer> builder = helper.getFilterDao().deleteBuilder();
             builder.where().in("id", filterIdSet);
 
             int deletedCount = builder.delete();
