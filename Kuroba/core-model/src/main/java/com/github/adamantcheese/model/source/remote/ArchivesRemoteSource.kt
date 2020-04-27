@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.source.remote
 
 import android.util.JsonReader
 import android.util.JsonToken
+import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.withTimeout

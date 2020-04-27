@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.InlinedFileInfo
 import com.github.adamantcheese.model.util.ensureBackgroundThread

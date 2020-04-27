@@ -30,17 +30,15 @@ class ChanPostRepository(
      * Returns a list of posts that differ from the cached ones and which we want to parse again and
      * show the user (otherwise show cached posts)
      * */
-    fun insertOrUpdateManyBlocking(
+    suspend fun insertOrUpdateMany(
             posts: MutableList<ChanPost>,
             isCatalog: Boolean
     ): ModularResult<List<Long>> {
-        return runBlocking {
-            return@runBlocking withTransactionSafe {
-                if (isCatalog) {
-                    return@withTransactionSafe insertOrUpdateCatalogOriginalPostsBlocking(posts)
-                } else {
-                    return@withTransactionSafe insertOrUpdateThreadPostsBlocking(posts)
-                }
+        return withTransactionSafe {
+            if (isCatalog) {
+                return@withTransactionSafe insertOrUpdateCatalogOriginalPostsBlocking(posts)
+            } else {
+                return@withTransactionSafe insertOrUpdateThreadPostsBlocking(posts)
             }
         }
     }
@@ -152,78 +150,74 @@ class ChanPostRepository(
         return false
     }
 
-    fun getCatalogOriginalPostsBlocking(
+    suspend fun getCatalogOriginalPosts(
             descriptor: ChanDescriptor.CatalogDescriptor,
             threadNoList: List<Long>
     ): ModularResult<List<ChanPost>> {
-        return runBlocking {
-            return@runBlocking withTransactionSafe {
-                val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
-                    postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
-                }
-
-                val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
-                    post.postDescriptor.postNo
-                }.toSet()
-
-                val originalPostNoListToGetFromDatabase = threadNoList.filter { threadNo ->
-                    threadNo !in originalPostNoFromCacheSet
-                }
-
-                if (originalPostNoListToGetFromDatabase.isEmpty()) {
-                    // All posts were found in the cache
-                    return@withTransactionSafe originalPostsFromCache
-                }
-
-                val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
-                        descriptor,
-                        originalPostNoListToGetFromDatabase
-                )
-
-                if (originalPostsFromDatabase.isNotEmpty()) {
-                    originalPostsFromDatabase.forEach { post ->
-                        postCache.putIntoCache(post.postDescriptor, post)
-                    }
-                }
-
-                return@withTransactionSafe originalPostsFromCache + originalPostsFromDatabase
+        return withTransactionSafe {
+            val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
+                postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
             }
+
+            val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
+                post.postDescriptor.postNo
+            }.toSet()
+
+            val originalPostNoListToGetFromDatabase = threadNoList.filter { threadNo ->
+                threadNo !in originalPostNoFromCacheSet
+            }
+
+            if (originalPostNoListToGetFromDatabase.isEmpty()) {
+                // All posts were found in the cache
+                return@withTransactionSafe originalPostsFromCache
+            }
+
+            val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+                    descriptor,
+                    originalPostNoListToGetFromDatabase
+            )
+
+            if (originalPostsFromDatabase.isNotEmpty()) {
+                originalPostsFromDatabase.forEach { post ->
+                    postCache.putIntoCache(post.postDescriptor, post)
+                }
+            }
+
+            return@withTransactionSafe originalPostsFromCache + originalPostsFromDatabase
         }
     }
 
-    fun getThreadPostsBlocking(
+    suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
             postNoList: List<Long>
     ): ModularResult<List<ChanPost>> {
-        return runBlocking {
-            return@runBlocking withTransactionSafe {
-                val postsFromCache = postCache.getAll(descriptor)
-                val postNoFromCacheSet = postsFromCache.map { post ->
-                    post.postDescriptor.postNo
-                }.toSet()
+        return withTransactionSafe {
+            val postsFromCache = postCache.getAll(descriptor)
+            val postNoFromCacheSet = postsFromCache.map { post ->
+                post.postDescriptor.postNo
+            }.toSet()
 
-                val postNoListToGetFromDatabase = postNoList.filter { postNo ->
-                    postNo !in postNoFromCacheSet
-                }
-
-                if (postNoListToGetFromDatabase.isEmpty()) {
-                    // All posts were found in the cache
-                    return@withTransactionSafe postsFromCache
-                }
-
-                val postsFromDatabase = localSource.getThreadPosts(
-                        descriptor,
-                        postNoListToGetFromDatabase
-                )
-
-                if (postsFromDatabase.isNotEmpty()) {
-                    postsFromDatabase.forEach { post ->
-                        postCache.putIntoCache(post.postDescriptor, post)
-                    }
-                }
-
-                return@withTransactionSafe postsFromCache + postsFromDatabase
+            val postNoListToGetFromDatabase = postNoList.filter { postNo ->
+                postNo !in postNoFromCacheSet
             }
+
+            if (postNoListToGetFromDatabase.isEmpty()) {
+                // All posts were found in the cache
+                return@withTransactionSafe postsFromCache
+            }
+
+            val postsFromDatabase = localSource.getThreadPosts(
+                    descriptor,
+                    postNoListToGetFromDatabase
+            )
+
+            if (postsFromDatabase.isNotEmpty()) {
+                postsFromDatabase.forEach { post ->
+                    postCache.putIntoCache(post.postDescriptor, post)
+                }
+            }
+
+            return@withTransactionSafe postsFromCache + postsFromDatabase
         }
     }
 

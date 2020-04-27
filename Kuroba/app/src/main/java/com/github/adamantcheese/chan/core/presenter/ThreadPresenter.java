@@ -53,6 +53,7 @@ import com.github.adamantcheese.chan.core.site.SiteActions;
 import com.github.adamantcheese.chan.core.site.http.DeleteRequest;
 import com.github.adamantcheese.chan.core.site.http.DeleteResponse;
 import com.github.adamantcheese.chan.core.site.http.HttpCall;
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
@@ -697,8 +698,10 @@ public class ThreadPresenter
     }
 
     @Override
-    public void onChanLoaderError(ChanThreadLoader.ChanLoaderException error) {
+    public void onChanLoaderError(ChanLoaderException error) {
+        BackgroundUtils.ensureMainThread();
         Logger.d(TAG, "onChanLoaderError()");
+
         threadPresenterCallback.showError(error);
     }
 
@@ -1407,7 +1410,7 @@ public class ThreadPresenter
 
         void postClicked(Post post);
 
-        void showError(ChanThreadLoader.ChanLoaderException error);
+        void showError(ChanLoaderException error);
 
         void showLoading();
 

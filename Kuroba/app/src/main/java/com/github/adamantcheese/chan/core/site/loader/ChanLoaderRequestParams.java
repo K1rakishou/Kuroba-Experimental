@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.site.loader;
 
-import com.android.volley.Response;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.parser.ChanReader;
@@ -47,31 +46,17 @@ public class ChanLoaderRequestParams {
      * */
     public final boolean forceLoading;
 
-    /**
-     * Success listener.
-     */
-    public final Response.Listener<ChanLoaderResponse> listener;
-
-    /**
-     * Error listener.
-     */
-    public final Response.ErrorListener errorListener;
-
     public ChanLoaderRequestParams(
             boolean isPinWatcherLoader,
             Loadable loadable,
             ChanReader chanReader,
             List<Post> cached,
-            boolean forceLoading,
-            Response.Listener<ChanLoaderResponse> listener,
-            Response.ErrorListener errorListener
+            boolean forceLoading
     ) {
         this.isPinWatcherLoader = isPinWatcherLoader;
         this.loadable = loadable;
         this.chanReader = chanReader;
         this.cached = cached;
         this.forceLoading = forceLoading;
-        this.listener = listener;
-        this.errorListener = errorListener;
     }
 }

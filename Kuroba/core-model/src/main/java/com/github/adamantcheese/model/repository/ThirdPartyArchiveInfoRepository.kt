@@ -12,7 +12,6 @@ import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.source.local.ThirdPartyArchiveInfoLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ThirdPartyArchiveInfoRepository(
@@ -120,22 +119,20 @@ class ThirdPartyArchiveInfoRepository(
         }
     }
 
-    fun fetchThreadFromNetworkBlocking(
+    suspend fun fetchThreadFromNetwork(
             threadArchiveRequestLink: String,
             threadNo: Long,
             supportsMediaThumbnails: Boolean,
             supportsMedia: Boolean
     ): ModularResult<ArchivesRemoteSource.ArchiveThread> {
         // We don't need to use SuspendableInitializer here
-        return runBlocking {
-            return@runBlocking safeRun {
-                return@safeRun remoteSource.fetchThreadFromNetwork(
-                        threadArchiveRequestLink,
-                        threadNo,
-                        supportsMediaThumbnails,
-                        supportsMedia
-                )
-            }
+        return safeRun {
+            return@safeRun remoteSource.fetchThreadFromNetwork(
+                    threadArchiveRequestLink,
+                    threadNo,
+                    supportsMediaThumbnails,
+                    supportsMedia
+            )
         }
     }
 

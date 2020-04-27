@@ -228,10 +228,10 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
         val archiveDescriptor = archiveData.getArchiveDescriptor()
 
         val isArchiveEnabled = archivesManager.isArchiveEnabled(archiveDescriptor)
-                .mapError { error ->
+                .mapErrorToValue { error ->
                     Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
 
-                    return@mapError false
+                    return@mapErrorToValue false
                 }
 
         val status = if (isArchiveEnabled) {

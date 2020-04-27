@@ -58,7 +58,15 @@ sealed class ModularResult<V> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <T> mapError(mapper: (error: Throwable) -> T): T {
+    inline fun mapError(mapper: (error: Throwable) -> Throwable): ModularResult<V> {
+        return when (this) {
+            is Error -> error(mapper(error))
+            is Value -> this
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    inline fun <T> mapErrorToValue(mapper: (error: Throwable) -> T): T {
         return when (this) {
             is Error -> mapper(error)
             is Value -> value as T

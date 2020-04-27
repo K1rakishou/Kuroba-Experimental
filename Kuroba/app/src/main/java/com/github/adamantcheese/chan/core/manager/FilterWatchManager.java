@@ -28,8 +28,10 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
+import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -239,6 +241,8 @@ public class FilterWatchManager
     private class BackgroundLoader implements ChanThreadLoader.ChanLoaderCallback {
         @Override
         public void onChanLoaderData(ChanThread result) {
+            BackgroundUtils.ensureMainThread();
+
             Logger.d(TAG, "onChanLoaderData() for /" + result.getLoadable().boardCode + "/");
             Set<Long> toAdd = new HashSet<>();
 
@@ -276,7 +280,9 @@ public class FilterWatchManager
         }
 
         @Override
-        public void onChanLoaderError(ChanThreadLoader.ChanLoaderException error) {
+        public void onChanLoaderError(ChanLoaderException error) {
+            BackgroundUtils.ensureMainThread();
+
             synchronized (this) {
                 numBoardsChecked--;
                 Logger.d(TAG, "Filter loader failed, left " + numBoardsChecked);

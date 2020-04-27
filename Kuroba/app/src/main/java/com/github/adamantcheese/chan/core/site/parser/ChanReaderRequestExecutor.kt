@@ -17,8 +17,8 @@
 package com.github.adamantcheese.chan.core.site.parser
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
@@ -27,9 +27,10 @@ import com.github.adamantcheese.chan.core.mapper.ChanPostMapper.fromPost
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
+import com.github.adamantcheese.chan.core.site.loader.ServerException
 import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
@@ -37,6 +38,7 @@ import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
@@ -45,14 +47,18 @@ import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.google.gson.Gson
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import okhttp3.HttpUrl
+import okhttp3.Request
+import java.io.IOException
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.ArrayList
-import kotlin.time.Duration
+import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -61,35 +67,29 @@ import kotlin.time.measureTimedValue
  * This class is highly multithreaded, take good care to not access models that are to be only
  * changed on the main thread.
  */
-class ChanReaderRequest(
+class ChanReaderRequestExecutor(
         private val gson: Gson,
-        private val databaseManager: DatabaseManager,
+        private val okHttpClient: NetModule.ProxiedOkHttpClient,
+        private val databaseSavedReplyManager: DatabaseSavedReplyManager,
         private val filterEngine: FilterEngine,
         private val chanPostRepository: ChanPostRepository,
         private val appConstants: AppConstants,
         private val archivesManager: ArchivesManager,
         private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
         private val request: ChanLoaderRequestParams
-) : JsonReaderRequest<ChanLoaderResponse>(getChanUrl(request.loadable).toString(), request.listener, request.errorListener) {
-    val loadable = request.loadable.clone()
+) : CoroutineScope {
+    private val job = SupervisorJob()
 
-    private val forceLoading: Boolean
-    private val reader: ChanReader
-    private val databaseSavedReplyManager: DatabaseSavedReplyManager
+    private val loadable = request.loadable.clone()
+    private val forceLoading = request.forceLoading
+    private val reader = request.chanReader
+    private val cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
+    private val filters = ArrayList<Filter>()
 
-    private val cachedPostsMap: MutableMap<Long, Post>
-    private val filters: MutableList<Filter>
-
-    override fun getPriority(): Priority {
-        return Priority.HIGH
-    }
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO + job + CoroutineName("ChanReaderRequest")
 
     init {
-        cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
-        reader = request.chanReader
-        forceLoading = request.forceLoading
-        filters = ArrayList()
-
         val enabledFilters = filterEngine.enabledFilters
         for (filter in enabledFilters) {
             if (filterEngine.matchesBoard(filter, loadable.board)) {
@@ -97,71 +97,112 @@ class ChanReaderRequest(
                 filters.add(filter.clone())
             }
         }
+    }
 
-        databaseSavedReplyManager = databaseManager.databaseSavedReplyManager
+    fun execute(url: String, resultCallback: (ModularResult<ChanLoaderResponse>) -> Unit): Job {
+        return launch {
+            val result = safeRun {
+                val request = Request.Builder()
+                        .url(url)
+                        .get()
+                        .build()
+
+                val response = okHttpClient.suspendCall(request)
+                if (!response.isSuccessful) {
+                    if (response.code == 404) {
+                        return@safeRun tryLoadFromArchivesOrLocalCopyIfPossible()
+                    }
+
+                    throw ServerException(response.code)
+                }
+
+                val body = response.body
+                        ?: throw IOException("Response has no body")
+
+                return@safeRun body.byteStream().use { inputStream ->
+                    return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
+                            .use { jsonReader -> readJson(jsonReader).unwrap() }
+                }
+            }.mapError { error -> ChanLoaderException(error) }
+
+            resultCallback.invoke(result)
+        }
+    }
+
+    private suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(): ChanLoaderResponse {
+        TODO("Not yet implemented")
+
+        // TODO(archives): don't forget to throw ServerException with 404 if we don't have neither
+        //  the saved thread nor archive to load the posts from
+        // throw ServerException(response.code)
     }
 
     @OptIn(ExperimentalTime::class)
-    @Throws(Exception::class)
-    override fun readJson(reader: JsonReader): ChanLoaderResponse {
-        val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, loadable)
+    private suspend fun readJson(reader: JsonReader): ModularResult<ChanLoaderResponse> {
+        return safeRun {
+            val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, loadable)
 
-        when {
-            loadable.isThreadMode -> this.reader.loadThread(reader, chanReaderProcessor)
-            loadable.isCatalogMode -> this.reader.loadCatalog(reader, chanReaderProcessor)
-            else -> throw IllegalArgumentException("Unknown mode")
-        }
+            when {
+                loadable.isThreadMode -> this.reader.loadThread(reader, chanReaderProcessor)
+                loadable.isCatalogMode -> this.reader.loadCatalog(reader, chanReaderProcessor)
+                else -> throw IllegalArgumentException("Unknown mode")
+            }
 
-        val (archivePosts, archiveFetchDuration) = measureTimedValue {
-            return@measureTimedValue runBlocking {
-                return@runBlocking getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
+            val (archivePosts, archiveFetchDuration) = measureTimedValue {
+                return@measureTimedValue getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
                         .safeUnwrap { error ->
                             Logger.e(TAG, "Error while trying to get posts from archive", error)
-                            return@runBlocking emptyList<Post.Builder>()
+                            return@measureTimedValue emptyList<Post.Builder>()
                         }
             }
-        }
 
-        val (parsedPosts, parsingDuration) = measureTimedValue {
-            // TODO(archives): !!!!!!!!!!!!!
-            val posts = if (loadable.isCatalogMode) {
-                chanReaderProcessor.getToParse() + archivePosts
-            } else {
-                archivePosts
+            val (parsedPosts, parsingDuration) = measureTimedValue {
+                // TODO(archives): !!!!!!!!!!!!!
+                val posts = if (loadable.isCatalogMode) {
+                    chanReaderProcessor.getToParse() + archivePosts
+                } else {
+                    archivePosts
+                }
+
+                return@measureTimedValue parseNewPostsPosts(posts)
             }
 
-            return@measureTimedValue parseNewPostsPosts(posts)
-        }
+            val (storedPostNoList, storeDuration) = measureTimedValue {
+                // TODO(archives): delete posts from the cache once it exceeds stickyCap
+                //  (in case it's neither null nor -1)
+                var stickyCap = chanReaderProcessor.op?.stickyCap
+                if (stickyCap != null && stickyCap < 0) {
+                    stickyCap = null
+                }
 
-        val (storedPostNoList, storeDuration) = measureTimedValue {
-            // TODO(archives): delete posts from the cache once it exceeds stickyCap
-            //  (in case it's neither null nor -1)
-            var stickyCap = chanReaderProcessor.op?.stickyCap
-            if (stickyCap != null && stickyCap < 0) {
-                stickyCap = null
+                storeNewPostsInRepository(
+                        parsedPosts,
+                        loadable.isCatalogMode
+                )
             }
 
-            storeNewPostsInRepository(
-                    parsedPosts,
-                    loadable.isCatalogMode
-            )
+            val (reloadedPosts, reloadingDuration) = measureTimedValue {
+                return@measureTimedValue reloadPostsFromRepository(
+                        chanReaderProcessor,
+                        getDescriptor(chanReaderProcessor.loadable)
+                )
+            }
+
+            val cachedPostsCount = chanPostRepository.getCachedValuesCount()
+
+            val logMsg = """
+ChanReaderRequest.readJson() stats:
+Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).
+Reload posts took $reloadingDuration, parse posts took = $parsingDuration (reloaded ${reloadedPosts.size} posts).
+Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).
+Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).
+"""
+
+            Logger.d(TAG, logMsg)
+
+            val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
+            return@safeRun processPosts(op, reloadedPosts)
         }
-
-        val (reloadedPosts, reloadingDuration) = reloadPostsFromRepository(
-                chanReaderProcessor,
-                getDescriptor(chanReaderProcessor.loadable)
-        )
-
-        val cachedPostsCount = chanPostRepository.getCachedValuesCount()
-
-        Logger.d(TAG, "ChanReaderRequest.readJson() stats:\n" +
-                "Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).\n" +
-                "Reload posts took $reloadingDuration, parse posts took = $parsingDuration (reloaded ${reloadedPosts.size} posts).\n" +
-                "Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).\n" +
-                "Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
-
-        val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
-        return processPosts(op, reloadedPosts)
     }
 
     private suspend fun getPostsFromArchiveIfNecessary(
@@ -216,7 +257,7 @@ class ChanReaderRequest(
 
             val supportsMediaThumbnails = archivesManager.archiveStoreThumbnails(archiveDescriptor)
 
-            val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetworkBlocking(
+            val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetwork(
                     threadArchiveRequestLink,
                     threadDescriptor.opNo,
                     supportsMediaThumbnails,
@@ -265,7 +306,7 @@ class ChanReaderRequest(
 //                        && archivePost.postNo !in notCachedArchivePostNoSet
 //            }
 //
-//            Logger.d(TAG, "archivesRepository.fetchThreadFromNetworkBlocking fetched " +
+//            Logger.d(TAG, "archivesRepository.fetchThreadFromNetwork fetched " +
 //                    "${archiveThread.posts.size} posts in total and " +
 //                    "${archivePostsThatWereDeleted.size} deleted posts")
 
@@ -285,7 +326,7 @@ class ChanReaderRequest(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun storeNewPostsInRepository(
+    private suspend fun storeNewPostsInRepository(
             posts: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
@@ -305,27 +346,25 @@ class ChanReaderRequest(
             chanPosts.add(fromPost(gson, postDescriptor, post))
         }
 
-        return chanPostRepository.insertOrUpdateManyBlocking(
+        return chanPostRepository.insertOrUpdateMany(
                 chanPosts,
                 isCatalog
         ).unwrap()
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun reloadPostsFromRepository(
+    private suspend fun reloadPostsFromRepository(
             chanReaderProcessor: ChanReaderProcessor,
             chanDescriptor: ChanDescriptor
-    ): Pair<List<Post>, Duration> {
-        val (posts, reloadingDuration) = measureTimedValue {
-            return@measureTimedValue when (chanDescriptor) {
+    ): List<Post> {
+        val posts = when (chanDescriptor) {
                 is ChanDescriptor.ThreadDescriptor -> {
-                    chanPostRepository.getThreadPostsBlocking(
+                    chanPostRepository.getThreadPosts(
                             chanDescriptor,
                             chanReaderProcessor.getPostNoListOrdered()
                     ).unwrap()
                 }
                 is ChanDescriptor.CatalogDescriptor -> {
-                    chanPostRepository.getCatalogOriginalPostsBlocking(
+                    chanPostRepository.getCatalogOriginalPosts(
                             chanDescriptor,
                             chanReaderProcessor.getPostNoListOrdered()
                     ).unwrap()
@@ -337,10 +376,8 @@ class ChanReaderRequest(
                         post
                 )
             }
-        }
 
-        val sortedPosts = chanReaderProcessor.getPostsSortedByIndexes(posts)
-        return Pair(sortedPosts, reloadingDuration)
+        return chanReaderProcessor.getPostsSortedByIndexes(posts)
     }
 
     private fun parseNewPostsPosts(postBuildersToParse: List<Post.Builder>): List<Post> {
@@ -467,7 +504,8 @@ class ChanReaderRequest(
             }
         }
 
-        private fun getChanUrl(loadable: Loadable): HttpUrl {
+        @JvmStatic
+        fun getChanUrl(loadable: Loadable): HttpUrl {
             if (loadable.site == null) {
                 throw NullPointerException("Loadable.site == null")
             }

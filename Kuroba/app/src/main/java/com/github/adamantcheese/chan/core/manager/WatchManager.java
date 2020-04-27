@@ -43,6 +43,7 @@ import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
@@ -1253,7 +1254,8 @@ public class WatchManager
         }
 
         @Override
-        public void onChanLoaderError(ChanThreadLoader.ChanLoaderException error) {
+        public void onChanLoaderError(ChanLoaderException error) {
+            BackgroundUtils.ensureMainThread();
             Logger.d(TAG, "onChanLoaderError()");
 
             // Ignore normal network errors, we only pause pins when there is absolutely no way
@@ -1268,6 +1270,8 @@ public class WatchManager
 
         @Override
         public void onChanLoaderData(ChanThread thread) {
+            BackgroundUtils.ensureMainThread();
+
             if (thread.getOp() != null) {
                 lastReplyCount = thread.getOp().getTotalRepliesCount();
             } else {
@@ -1287,7 +1291,7 @@ public class WatchManager
                 pin.isError = true;
                 pin.watching = false;
 
-                onChanLoaderError(new ChanThreadLoader.ChanLoaderException(serverError));
+                onChanLoaderError(new ChanLoaderException(serverError));
                 return;
             }
 

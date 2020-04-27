@@ -49,7 +49,7 @@ import com.github.adamantcheese.chan.core.model.orm.PostHide;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
-import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.helper.PostPopupHelper;
@@ -273,7 +273,7 @@ public class ThreadLayout
     }
 
     @Override
-    public void showError(ChanThreadLoader.ChanLoaderException error) {
+    public void showError(ChanLoaderException error) {
         String errorMessage = getString(error.getErrorMessage());
 
         if (visible == Visible.THREAD) {
