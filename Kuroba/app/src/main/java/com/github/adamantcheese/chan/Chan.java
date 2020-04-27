@@ -110,7 +110,10 @@ public class Chan
         super.attachBaseContext(base);
 
         AndroidUtils.init(this);
-        AndroidUtils.getBuildType(); //spit out the build hash to the log
+
+        // spit out the build hash to the log
+        AndroidUtils.getBuildType();
+
         // remove this if you need to debug some sort of event bus issue
         EventBus.builder().logNoSubscriberMessages(false).installDefaultEventBus();
     }
@@ -223,18 +226,7 @@ public class Chan
             Logger.e("UNCAUGHT", "Development Build: " + getBuildType().name());
             Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL);
 
-            /*
-            Runtime runtime = Runtime.getRuntime();
-            long usedMemInMB = (runtime.totalMemory() - runtime.freeMemory()) / 1048576L;
-            long maxHeapSizeInMB = runtime.maxMemory() / 1048576L;
-            long availHeapSizeInMB = maxHeapSizeInMB - usedMemInMB;
-            Logger.e("UNCAUGHT", "Used memory (MB): " + usedMemInMB);
-            Logger.e("UNCAUGHT", "Max memory (MB): " + maxHeapSizeInMB);
-            Logger.e("UNCAUGHT", "Available memory (MB): " + availHeapSizeInMB);
-             */
-
             onUnhandledException(e, errorText);
-
             System.exit(999);
         });
 

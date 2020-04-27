@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.common.vichan;
 
+import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
 import com.github.adamantcheese.chan.core.site.common.MultipartHttpCall;
@@ -35,10 +36,13 @@ import okhttp3.Response;
 
 import static android.text.TextUtils.isEmpty;
 
-public class VichanActions
-        extends CommonSite.CommonActions {
-    public VichanActions(CommonSite commonSite) {
+public class VichanActions extends CommonSite.CommonActions {
+    private NetModule.ProxiedOkHttpClient okHttpClient;
+
+    public VichanActions(CommonSite commonSite, NetModule.ProxiedOkHttpClient okHttpClient) {
         super(commonSite);
+
+        this.okHttpClient = okHttpClient;
     }
 
     @Override
@@ -78,8 +82,13 @@ public class VichanActions
 
     @Override
     public void prepare(MultipartHttpCall call, Reply reply, ReplyResponse replyResponse) {
-        VichanAntispam antispam = new VichanAntispam(HttpUrl.parse(reply.loadable.desktopUrl()));
+        VichanAntispam antispam = new VichanAntispam(
+                okHttpClient,
+                HttpUrl.parse(reply.loadable.desktopUrl())
+        );
+
         antispam.addDefaultIgnoreFields();
+
         for (Map.Entry<String, String> e : antispam.get().entrySet()) {
             call.parameter(e.getKey(), e.getValue());
         }

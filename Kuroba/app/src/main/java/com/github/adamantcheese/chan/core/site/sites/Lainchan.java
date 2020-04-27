@@ -114,7 +114,7 @@ public class Lainchan
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this));
+        setActions(new VichanActions(this, okHttpClient));
         setApi(new VichanApi(this));
         setParser(new VichanCommentParser());
     }

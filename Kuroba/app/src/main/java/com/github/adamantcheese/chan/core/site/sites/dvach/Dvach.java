@@ -152,7 +152,7 @@ public class Dvach
             }
         });
 
-        setActions(new VichanActions(this) {
+        setActions(new VichanActions(this, okHttpClient) {
 
             @Override
             public void setupPost(Reply reply, MultipartHttpCall call) {

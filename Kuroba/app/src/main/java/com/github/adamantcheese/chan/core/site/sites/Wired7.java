@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.site.sites;
 
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
@@ -125,15 +126,15 @@ public class Wired7
         });
 
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
-        setActions(new Wired7Actions(this));
+        setActions(new Wired7Actions(this, okHttpClient));
         setApi(new VichanApi(this));
         setParser(new VichanCommentParser());
     }
 
-    private static class Wired7Actions
-            extends VichanActions {
-        Wired7Actions(CommonSite commonSite) {
-            super(commonSite);
+    private static class Wired7Actions extends VichanActions {
+
+        Wired7Actions(CommonSite commonSite, NetModule.ProxiedOkHttpClient okHttpClient) {
+            super(commonSite, okHttpClient);
         }
 
         @Override

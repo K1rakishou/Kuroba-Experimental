@@ -109,7 +109,7 @@ public class Kun8
             }
         });
 
-        setActions(new VichanActions(this) {
+        setActions(new VichanActions(this, okHttpClient) {
             @Override
             public void setupPost(Reply reply, MultipartHttpCall call) {
                 super.setupPost(reply, call);

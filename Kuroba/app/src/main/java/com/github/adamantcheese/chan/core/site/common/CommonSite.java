@@ -62,8 +62,7 @@ import okhttp3.Response;
 
 import static android.text.TextUtils.isEmpty;
 
-public abstract class CommonSite
-        extends SiteBase {
+public abstract class CommonSite extends SiteBase {
     private final Random secureRandom = new SecureRandom();
 
     private String name;
@@ -419,8 +418,7 @@ public abstract class CommonSite
         }
     }
 
-    public static abstract class CommonActions
-            implements SiteActions {
+    public static abstract class CommonActions implements SiteActions {
         protected CommonSite site;
 
         public CommonActions(CommonSite site) {
