@@ -173,7 +173,7 @@ public class NetModule {
                         .dns(okHttpDns)
                         .build();
             }
-            
+
             return proxiedClient;
         }
     }
