@@ -242,7 +242,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                     loadable.boardDescriptor
             )
 
-            val supportsMediaThumbnails = archivesManager.archiveStoreThumbnails(archiveDescriptor)
+            val supportsMediaThumbnails = archivesManager.archiveStoresThumbnails(archiveDescriptor)
 
             val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetwork(
                     threadArchiveRequestLink,

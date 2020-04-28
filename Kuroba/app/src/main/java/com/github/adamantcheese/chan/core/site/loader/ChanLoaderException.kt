@@ -6,6 +6,7 @@ import com.google.gson.JsonParseException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLException
 
 
@@ -42,6 +43,10 @@ class ChanLoaderException(
 
     private fun isServerErrorNotFound(exception: ServerException): Boolean {
         return exception.statusCode == 404
+    }
+
+    fun isCoroutineCancellationError(): Boolean {
+        return exception is CancellationException
     }
 
 }

@@ -38,8 +38,16 @@ class ArchivesManager(
         get() = Dispatchers.Default + supervisorJob
 
     private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
-    private val allArchivesData by lazy { loadArchives() }
-    private val allArchiveDescriptors by lazy { allArchivesData.map { it.getArchiveDescriptor() } }
+
+    private val allArchivesData by lazy {
+        return@lazy loadArchives().filter { archiveData ->
+            archiveData.domain !in disabledArchives
+        }
+    }
+
+    private val allArchiveDescriptors by lazy {
+        return@lazy allArchivesData.map { it.getArchiveDescriptor() }
+    }
 
     init {
         launch {
@@ -247,7 +255,7 @@ class ArchivesManager(
         return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
     }
 
-    fun archiveStoreThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
+    fun archiveStoresThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
         return when (archiveDescriptor.domain) {
             // Archived.moe stores only thumbnails
             "archived.moe" -> true
@@ -329,7 +337,11 @@ class ArchivesManager(
             @SerializedName("files")
             val supportedFiles: List<String>
     ) {
-        fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(name, domain)
+        fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(
+                name,
+                domain,
+                ArchiveDescriptor.ArchiveType.byDomain(domain)
+        )
     }
 
     data class FetchHistoryChange(
@@ -344,6 +356,9 @@ class ArchivesManager(
     }
 
     companion object {
+        // These archives are disabled for now
+        private val disabledArchives = setOf("archive.b-stats.org")
+
         private const val TAG = "ArchivesManager"
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
         private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"

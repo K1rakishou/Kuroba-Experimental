@@ -633,6 +633,11 @@ class ChanThreadLoader(
     private fun onErrorResponse(error: ChanLoaderException) {
         requestJob = null
 
+        if (error.isCoroutineCancellationError()) {
+            Logger.d(TAG, "Request canceled")
+            return
+        }
+
         val disposable = tryLoadSavedThread(error)
                 .subscribeOn(backgroundScheduler)
                 .observeOn(AndroidSchedulers.mainThread())
