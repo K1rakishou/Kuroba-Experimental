@@ -127,6 +127,7 @@ class ArchivesRemoteSource(
             val archivedPosts = mutableListOf<ArchivePost>()
 
             while (hasNext()) {
+                // skip the json key
                 nextName()
 
                 val post = jsonObject { readPost(supportsMediaThumbnails, supportsFiles) }
@@ -177,7 +178,7 @@ class ArchivesRemoteSource(
                 "deleted" -> archivePost.archived = nextInt() == 1
                 "trip_processed" -> archivePost.tripcode = nextStringOrNull() ?: ""
                 "media" -> {
-                    if ((supportsMediaThumbnails || supportsMedia) && hasNext()) {
+                    if (supportsMediaThumbnails || supportsMedia || hasNext()) {
                         if (peek() == JsonToken.NULL) {
                             skipValue()
                         } else {
@@ -192,6 +193,8 @@ class ArchivesRemoteSource(
                                 archivePost.archivePostMediaList += archivePostMedia
                             }
                         }
+                    } else {
+                        skipValue()
                     }
                 }
                 else -> skipValue()

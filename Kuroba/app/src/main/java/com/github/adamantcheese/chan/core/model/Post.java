@@ -62,6 +62,7 @@ public class Post
     public final String capcode;
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
+    private final int stickyCap;
     private final PostFilter postFilter;
 
     @Nullable
@@ -123,6 +124,7 @@ public class Post
         uniqueIps = builder.uniqueIps;
         lastModified = builder.lastModified;
         sticky = builder.sticky;
+        stickyCap = builder.stickyCap;
         closed = builder.closed;
         archived = builder.archived;
         deleted.set(builder.deleted);
@@ -389,6 +391,13 @@ public class Post
         public int totalRepliesCount = -1;
         public int threadImagesCount = -1;
         public int uniqueIps = -1;
+        /**
+         * When in rolling sticky thread this parameter means the maximum amount of posts in the
+         * thread. Once the capacity is exceeded old posts are deleted right away (except the OP).
+         *
+         * Be really careful with this param since we use it in the database query when selecting
+         * thread's posts.
+         * */
         public int stickyCap = -1;
         public boolean sticky;
         public boolean closed;
@@ -469,6 +478,11 @@ public class Post
 
         public Builder stickyCap(int cap) {
             this.stickyCap = cap;
+
+            if (this.stickyCap == 0) {
+                this.stickyCap = -1;
+            }
+
             return this;
         }
 

@@ -395,8 +395,12 @@ class ChanThreadLoader(
 
         return readerRequest.execute(url) { chanLoaderResponseResult ->
             when (chanLoaderResponseResult) {
-                is ModularResult.Value -> onResponse(chanLoaderResponseResult.value)
-                is ModularResult.Error -> onErrorResponse(chanLoaderResponseResult.error as ChanLoaderException)
+                is ModularResult.Value -> {
+                    onResponse(chanLoaderResponseResult.value)
+                }
+                is ModularResult.Error -> {
+                    onErrorResponse(chanLoaderResponseResult.error as ChanLoaderException)
+                }
             }
         }
     }
@@ -470,9 +474,7 @@ class ChanThreadLoader(
             // Set isFullyDownloaded and isStopped to true so we can stop downloading it and stop
             // showing the download thread animated icon.
             BackgroundUtils.runOnMainThread {
-                val savedThread = watchManager.findSavedThreadByLoadableId(
-                        chanThread.loadableId
-                )
+                val savedThread = watchManager.findSavedThreadByLoadableId(chanThread.loadableId)
                 if (savedThread != null && !savedThread.isFullyDownloaded) {
                     updateThreadAsDownloaded(archived, chanThread, savedThread)
                 }

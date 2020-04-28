@@ -28,13 +28,22 @@ abstract class ChanPostDao {
         FROM ${ChanPostEntity.TABLE_NAME}
         WHERE 
             ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
-        AND
-            ${ChanPostEntity.POST_NO_COLUMN_NAME} IN (:postNoList)
+        AND 
+            ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+        ORDER BY ${ChanPostEntity.POST_NO_COLUMN_NAME} DESC
+        LIMIT :maxCount
     """)
-    abstract suspend fun selectManyByThreadIdAndPostNoList(
-            ownerThreadId: Long,
-            postNoList: List<Long>
-    ): List<ChanPostEntity>
+    abstract suspend fun selectAllByThreadId(ownerThreadId: Long, maxCount: Int): List<ChanPostEntity>
+
+    @Query("""
+        SELECT *
+        FROM ${ChanPostEntity.TABLE_NAME}
+        WHERE 
+            ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND 
+            ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
+    """)
+    abstract suspend fun selectOriginalPost(ownerThreadId: Long): ChanPostEntity?
 
     @Query("""
         SELECT ${ChanPostEntity.POST_NO_COLUMN_NAME}

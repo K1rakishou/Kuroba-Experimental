@@ -34,6 +34,10 @@ open class MediaServiceLinkExtraContentRemoteSource(
                     .build()
 
             val response = okHttpClient.suspendCall(httpRequest)
+            if (!response.isSuccessful) {
+                return@safeRun MediaServiceLinkExtraInfo.empty()
+            }
+
             return@safeRun extractMediaServiceLinkExtraInfo(
                     mediaServiceType,
                     response

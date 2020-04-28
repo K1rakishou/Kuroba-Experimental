@@ -273,7 +273,8 @@ public class Loadable
      * viewing the local copy of the thread
      */
     public boolean isLocal() {
-        return loadableDownloadingState == DownloadingAndViewable || loadableDownloadingState == AlreadyDownloaded;
+        return loadableDownloadingState == DownloadingAndViewable
+                || loadableDownloadingState == AlreadyDownloaded;
     }
 
     /**
@@ -281,6 +282,10 @@ public class Loadable
      */
     public boolean isDownloading() {
         return loadableDownloadingState == DownloadingAndNotViewable;
+    }
+
+    public boolean isDownloadingOrDownloaded() {
+        return isLocal() || isDownloading();
     }
 
     /**

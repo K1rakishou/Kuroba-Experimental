@@ -189,26 +189,12 @@ class ChanPostRepository(
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
-            postNoList: List<Long>
+            maxCount: Int
     ): ModularResult<List<ChanPost>> {
         return withTransactionSafe {
-            val postsFromCache = postCache.getAll(descriptor)
-            val postNoFromCacheSet = postsFromCache.map { post ->
-                post.postDescriptor.postNo
-            }.toSet()
-
-            val postNoListToGetFromDatabase = postNoList.filter { postNo ->
-                postNo !in postNoFromCacheSet
-            }
-
-            if (postNoListToGetFromDatabase.isEmpty()) {
-                // All posts were found in the cache
-                return@withTransactionSafe postsFromCache
-            }
-
             val postsFromDatabase = localSource.getThreadPosts(
                     descriptor,
-                    postNoListToGetFromDatabase
+                    maxCount
             )
 
             if (postsFromDatabase.isNotEmpty()) {
@@ -217,7 +203,7 @@ class ChanPostRepository(
                 }
             }
 
-            return@withTransactionSafe postsFromCache + postsFromDatabase
+            return@withTransactionSafe postsFromDatabase
         }
     }
 

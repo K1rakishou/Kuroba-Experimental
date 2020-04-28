@@ -84,20 +84,9 @@ class ChanReaderRequestExecutor(
     private val forceLoading = request.forceLoading
     private val reader = request.chanReader
     private val cachedPostsMap = request.cached.associateBy { post -> post.no }.toMutableMap()
-    private val filters = ArrayList<Filter>()
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job + CoroutineName("ChanReaderRequest")
-
-    init {
-        val enabledFilters = filterEngine.enabledFilters
-        for (filter in enabledFilters) {
-            if (filterEngine.matchesBoard(filter, loadable.board)) {
-                // copy the filter because it will get used on other threads
-                filters.add(filter.clone())
-            }
-        }
-    }
 
     fun execute(url: String, resultCallback: (ModularResult<ChanLoaderResponse>) -> Unit): Job {
         return launch {
@@ -164,17 +153,10 @@ class ChanReaderRequestExecutor(
                     archivePosts
                 }
 
-                return@measureTimedValue parseNewPostsPosts(posts)
+                return@measureTimedValue parseNewPostsPosts(loadable, posts)
             }
 
             val (storedPostNoList, storeDuration) = measureTimedValue {
-                // TODO(archives): delete posts from the cache once it exceeds stickyCap
-                //  (in case it's neither null nor -1)
-                var stickyCap = chanReaderProcessor.op?.stickyCap
-                if (stickyCap != null && stickyCap < 0) {
-                    stickyCap = null
-                }
-
                 storeNewPostsInRepository(
                         parsedPosts,
                         loadable.isCatalogMode
@@ -210,6 +192,11 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     ): ModularResult<List<Post.Builder>> {
         return safeRun<List<Post.Builder>> {
             if (loadable.isCatalogMode) {
+                return@safeRun emptyList()
+            }
+
+            if (loadable.isDownloadingOrDownloaded) {
+                // Do not fetch posts from archives in local threads
                 return@safeRun emptyList()
             }
 
@@ -357,37 +344,47 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             chanDescriptor: ChanDescriptor
     ): List<Post> {
         val posts = when (chanDescriptor) {
-                is ChanDescriptor.ThreadDescriptor -> {
-                    chanPostRepository.getThreadPosts(
-                            chanDescriptor,
-                            chanReaderProcessor.getPostNoListOrdered()
-                    ).unwrap()
+            is ChanDescriptor.ThreadDescriptor -> {
+                var maxCount = chanReaderProcessor.op?.stickyCap ?: Int.MAX_VALUE
+                if (maxCount < 0) {
+                    maxCount = Int.MAX_VALUE
                 }
-                is ChanDescriptor.CatalogDescriptor -> {
-                    chanPostRepository.getCatalogOriginalPosts(
-                            chanDescriptor,
-                            chanReaderProcessor.getPostNoListOrdered()
-                    ).unwrap()
-                }
-            }.map { post ->
-                return@map ChanPostMapper.toPost(
-                        gson,
-                        loadable.board,
-                        post
-                )
-            }
 
-        return chanReaderProcessor.getPostsSortedByIndexes(posts)
+                // When in the mode, we can just select every post we have for this thread
+                // descriptor and then just sort the in the correct order. We should also use
+                // the stickyCap parameter if present.
+                chanPostRepository.getThreadPosts(chanDescriptor, maxCount).unwrap()
+            }
+            is ChanDescriptor.CatalogDescriptor -> {
+                val postsToGet = chanReaderProcessor.getPostNoListOrdered()
+
+                // When in catalog mode, we can't just select posts from the database and then
+                // sort them, because the actual order of the posts in the catalog depends on
+                // a lot of stuff (thread may be saged/auto-saged by mods etc). So the easiest way
+                // is to get every post by it's postNo that we receive from the server. It's
+                // already in correct order (the server order) so we don't even need to sort
+                // them.
+                chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
+            }
+        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post) }
+
+        return when (chanDescriptor) {
+            is ChanDescriptor.ThreadDescriptor -> posts
+            is ChanDescriptor.CatalogDescriptor -> chanReaderProcessor.getPostsSortedByIndexes(posts)
+        }
     }
 
-    private fun parseNewPostsPosts(postBuildersToParse: List<Post.Builder>): List<Post> {
+    private fun parseNewPostsPosts(
+            loadable: Loadable,
+            postBuildersToParse: List<Post.Builder>
+    ): List<Post> {
         val internalIds = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
 
         return postBuildersToParse
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,
-                            filters,
+                            loadFilters(loadable),
                             databaseSavedReplyManager,
                             postToParse,
                             reader,
@@ -397,6 +394,13 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 .chunked(Int.MAX_VALUE)
                 .map { postParseCallableList -> EXECUTOR.invokeAll(postParseCallableList) }
                 .flatMap { futureList -> futureList.mapNotNull { future -> future.get() } }
+    }
+
+    private fun loadFilters(loadable: Loadable): List<Filter> {
+        return filterEngine.enabledFilters
+                .filter { filter -> filterEngine.matchesBoard(filter, loadable.board) }
+                // copy the filter because it will get used on other threads
+                .map { filter -> filter.clone() }
     }
 
     private fun processPosts(op: Post.Builder, allPosts: List<Post>): ChanLoaderResponse {
