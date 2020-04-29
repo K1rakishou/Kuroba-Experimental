@@ -166,6 +166,7 @@ class ArchivesRemoteSource(
         while (hasNext()) {
             when (nextName()) {
                 "num" -> archivePost.postNo = nextInt().toLong()
+                "subnum" -> archivePost.postSubNo = nextInt().toLong()
                 "thread_num" -> archivePost.threadNo = nextInt().toLong()
                 "op" -> archivePost.isOP = nextInt() == 1
                 "timestamp" -> archivePost.unixTimestampSeconds = nextInt().toLong()
@@ -294,6 +295,7 @@ class ArchivesRemoteSource(
 
     class ArchivePost(
             var postNo: Long = -1L,
+            var postSubNo: Long = 0L,
             var threadNo: Long = -1L,
             var isOP: Boolean = false,
             var unixTimestampSeconds: Long = -1L,
@@ -326,7 +328,7 @@ class ArchivesRemoteSource(
         }
 
         override fun toString(): String {
-            return "ArchivePost(postNo=$postNo, threadNo=$threadNo, isOP=$isOP, " +
+            return "ArchivePost(postNo=$postNo, postSubNo=$postSubNo, threadNo=$threadNo, isOP=$isOP, " +
                     "unixTimestampSeconds=$unixTimestampSeconds, moderatorCapcode='$moderatorCapcode'," +
                     " name='$name', subject='$subject', comment='$comment', sticky=$sticky, " +
                     "closed=$closed, archived=$archived, tripcode='$tripcode', " +
@@ -334,6 +336,11 @@ class ArchivesRemoteSource(
         }
 
         fun isValid(): Boolean {
+            if (postSubNo > 0L) {
+                // Skip all archive ghost posts because they will fuck up the database
+                return false
+            }
+
             return postNo > 0
                     && threadNo > 0
                     && unixTimestampSeconds > 0

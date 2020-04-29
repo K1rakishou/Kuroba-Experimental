@@ -199,6 +199,16 @@ class ArchivesManager(
         }
     }
 
+    fun getArchiveDescriptorByDomain(archiveDomain: String?): ArchiveDescriptor? {
+        if (archiveDomain == null) {
+            return null
+        }
+
+        return allArchiveDescriptors.firstOrNull { archiveDescriptor ->
+            archiveDescriptor.domain == archiveDomain
+        }
+    }
+
     fun getRequestLinkForThread(
             threadDescriptor: ChanDescriptor.ThreadDescriptor,
             archiveDescriptor: ArchiveDescriptor

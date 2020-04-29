@@ -51,7 +51,8 @@ class ArchiveDescriptor(
             )
 
             fun byDomain(domain: String): ArchiveType {
-                return map[domain] ?: throw IllegalArgumentException("Unsupported archive: ${domain}")
+                return map[domain]
+                        ?: throw IllegalArgumentException("Unsupported archive: ${domain}")
             }
         }
     }
