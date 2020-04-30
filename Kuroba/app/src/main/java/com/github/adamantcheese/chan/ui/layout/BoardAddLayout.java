@@ -70,12 +70,11 @@ public class BoardAddLayout
 
         // View setup
         search.setCallback(this);
+        search.requestFocus();
 
         checkAllButton.setOnClickListener(this);
         suggestionsRecycler.setLayoutManager(new LinearLayoutManager(getContext()));
         suggestionsRecycler.setAdapter(suggestionsAdapter);
-
-        suggestionsRecycler.requestFocus();
     }
 
     @Override
