@@ -78,13 +78,13 @@ class FoolFuukaCommentParser : CommentParser() {
             ArchiveDescriptor.ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.RebeccaBlackTech -> REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN
-            ArchiveDescriptor.ArchiveType.Warosu -> WASORU_BLACK_TECH_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.DesuArchive -> DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.Fireden -> FIREDEN_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.TheBarchive -> THE_B_ARCHIVE_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
+            ArchiveDescriptor.ArchiveType.Warosu,
             ArchiveDescriptor.ArchiveType.Bstats -> null
         }
     }

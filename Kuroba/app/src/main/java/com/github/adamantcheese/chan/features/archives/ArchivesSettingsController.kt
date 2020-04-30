@@ -79,6 +79,9 @@ class ArchivesSettingsController(context: Context)
             ArchivesSettingsPresenterMessage.ArchiveIsWorking -> {
                 context.getString(R.string.archives_settings_archive_is_working)
             }
+            ArchivesSettingsPresenterMessage.ArchiveIsPermanentlyDisabled -> {
+                context.getString(R.string.archives_settings_archive_is_disabled_permanently)
+            }
         }.exhaustive
 
         cancellableToast.showToast(messageText)
@@ -127,7 +130,10 @@ class ArchivesSettingsController(context: Context)
                             supportedBoards(archiveInfo.supportedBoards)
                             supportedBoardsMedia(archiveInfo.supportedBoardsMedia)
 
-                            onRowClickCallback { presenter.onArchiveSettingClicked(archiveInfo) }
+                            if (archiveInfo.state != ArchiveState.PermanentlyDisabled) {
+                                onRowClickCallback { presenter.onArchiveSettingClicked(archiveInfo) }
+                            }
+
                             onHelpClickCallback { presenter.onArchiveStatusHelpClicked(archiveInfo) }
                         }
                     }

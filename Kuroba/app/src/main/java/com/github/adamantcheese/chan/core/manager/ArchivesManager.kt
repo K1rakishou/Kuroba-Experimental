@@ -40,9 +40,7 @@ class ArchivesManager(
     private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
 
     private val allArchivesData by lazy {
-        return@lazy loadArchives().filter { archiveData ->
-            archiveData.domain !in disabledArchives
-        }
+        return@lazy loadArchives()
     }
 
     private val allArchiveDescriptors by lazy {
@@ -347,6 +345,8 @@ class ArchivesManager(
             @SerializedName("files")
             val supportedFiles: List<String>
     ) {
+        fun isEnabled(): Boolean = domain !in disabledArchives
+
         fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(
                 name,
                 domain,
@@ -367,7 +367,12 @@ class ArchivesManager(
 
     companion object {
         // These archives are disabled for now
-        private val disabledArchives = setOf("archive.b-stats.org")
+        private val disabledArchives = setOf(
+                // Disabled because it's weird as hell. I can't even say whether it's working or not.
+                "archive.b-stats.org",
+                // Disabled because it requires Cloudflare check which is not supported for now.
+                "warosu.org"
+        )
 
         private const val TAG = "ArchivesManager"
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"

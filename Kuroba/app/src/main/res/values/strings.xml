@@ -628,6 +628,7 @@ Don't have a 4chan Pass?<br>
     <string name="archives_settings_title">Archives settings</string>
     <string name="archives_settings_repository_error">Repository error: %1$s</string>
     <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
+    <string name="archives_settings_archive_is_disabled_permanently">Archive is disabled because something doesn\'t work as expected. Maybe it will be enabled some time in the future</string>
     <string name="archives_settings_archive_is_working">Archive is working normally</string>
 
     <string name="archives_settings_help_message">

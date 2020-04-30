@@ -18,17 +18,10 @@ enum class ArchiveStatus {
     /**
      * Archive is manually disabled
      * */
-    Disabled;
-
-    companion object {
-        fun fromValue(value: Int): ArchiveStatus {
-            return when (value) {
-                0 -> Working
-                1 -> ExperiencingProblems
-                2 -> NotWorking
-                3 -> Disabled
-                else -> throw IllegalArgumentException("Bad value: $value")
-            }
-        }
-    }
+    Disabled,
+    /**
+     * Disabled with no ability to enable it manually. Usually that means that the archive does not
+     * work properly and maybe it will be enabled some time in the future.
+     * */
+    PermanentlyDisabled
 }

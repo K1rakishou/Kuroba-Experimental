@@ -65,6 +65,10 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
                 archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_disabled)
                 archiveStatusTextView.background = ColorDrawable(GRAY_COLOR)
             }
+            ArchiveStatus.PermanentlyDisabled -> {
+                archiveStatusTextView.text = context.getString(R.string.epoxy_archive_setting_row_disabled)
+                archiveStatusTextView.background = ColorDrawable(BLACK_COLOR)
+            }
         }.exhaustive
     }
 
@@ -72,7 +76,14 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
     fun setArchiveState(state: ArchiveState) {
         archiveState.isChecked = when (state) {
             ArchiveState.Enabled -> true
-            ArchiveState.Disabled -> false
+            ArchiveState.Disabled,
+            ArchiveState.PermanentlyDisabled -> false
+        }
+
+        if (state == ArchiveState.PermanentlyDisabled) {
+            archiveState.isEnabled = false
+            archiveState.isClickable = false
+            archiveState.isFocusable = false
         }
     }
 
@@ -123,5 +134,6 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
         private val ORANGE_COLOR = Color.parseColor("#994C00")
         private val RED_COLOR = Color.parseColor("#990000")
         private val GRAY_COLOR = Color.parseColor("#4A4A4A")
+        private val BLACK_COLOR = Color.parseColor("#000000")
     }
 }

@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
+import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
@@ -90,15 +91,21 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                         return@updateState null
                     }
 
-                    val newState = if (isEnabled) {
-                        ArchiveState.Disabled
+
+                    val newState = if (prevState.archiveInfoList[index].state == ArchiveState.PermanentlyDisabled) {
+                        ArchiveState.PermanentlyDisabled
                     } else {
-                        ArchiveState.Enabled
+                        if (isEnabled) {
+                            ArchiveState.Disabled
+                        } else {
+                            ArchiveState.Enabled
+                        }
                     }
 
                     val newStatus = when (newState) {
                         ArchiveState.Enabled -> calculateStatusByFetchHistory(fetchHistory)
                         ArchiveState.Disabled -> ArchiveStatus.Disabled
+                        ArchiveState.PermanentlyDisabled -> ArchiveStatus.PermanentlyDisabled
                     }
 
                     val archiveInfoListCopy = ArrayList(prevState.archiveInfoList)
@@ -158,7 +165,10 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                     ArchiveStatus.NotWorking -> {
                         showLatestArchiveFetchHistory(archiveInfo.archiveDescriptor)
                     }
-                }
+                    ArchiveStatus.PermanentlyDisabled -> {
+                        showToast(ArchivesSettingsPresenterMessage.ArchiveIsPermanentlyDisabled)
+                    }
+                }.exhaustive
             }
         }
     }
@@ -234,16 +244,24 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
                     return@mapErrorToValue false
                 }
 
-        val status = if (isArchiveEnabled) {
-            calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
+        val status = if (archiveData.isEnabled()) {
+            if (isArchiveEnabled) {
+                calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
+            } else {
+                ArchiveStatus.Disabled
+            }
         } else {
-            ArchiveStatus.Disabled
+            ArchiveStatus.PermanentlyDisabled
         }
 
-        val state = if (isArchiveEnabled) {
-            ArchiveState.Enabled
+        val state = if (archiveData.isEnabled()) {
+            if (isArchiveEnabled) {
+                ArchiveState.Enabled
+            } else {
+                ArchiveState.Disabled
+            }
         } else {
-            ArchiveState.Disabled
+            ArchiveState.PermanentlyDisabled
         }
 
         return ArchiveInfo(
