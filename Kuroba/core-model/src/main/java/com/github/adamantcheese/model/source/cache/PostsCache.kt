@@ -15,7 +15,9 @@ class PostsCache(private val maxValueCount: Int) {
 
     @GuardedBy("mutex")
     private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, ChanPost>>()
+    @GuardedBy("mutex")
     private val originalPostsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+    @GuardedBy("mutex")
     private val accessTimes = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
 
     suspend fun putIntoCache(postDescriptor: PostDescriptor, post: ChanPost) {

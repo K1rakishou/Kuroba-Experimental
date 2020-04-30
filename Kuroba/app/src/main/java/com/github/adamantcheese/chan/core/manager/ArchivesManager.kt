@@ -6,7 +6,6 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
-import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -48,13 +47,7 @@ class ArchivesManager(
     }
 
     init {
-        launch {
-            val thirdPartyArchiveInfo = allArchiveDescriptors.map { archiveDescriptor ->
-                ThirdPartyArchiveInfo(archiveDescriptor, false)
-            }
-
-            thirdPartyArchiveInfoRepository.init(thirdPartyArchiveInfo)
-        }
+        launch { thirdPartyArchiveInfoRepository.init(allArchiveDescriptors) }
     }
 
     fun getAllArchiveData(): List<ArchiveData> {

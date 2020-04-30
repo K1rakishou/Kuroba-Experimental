@@ -8,7 +8,6 @@ import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 import org.joda.time.DateTime
-import org.joda.time.Duration
 
 class ThirdPartyArchiveInfoLocalSource(
         database: KurobaDatabase,
@@ -19,15 +18,34 @@ class ThirdPartyArchiveInfoLocalSource(
     private val thirdPartyArchiveInfoDao = database.thirdPartyArchiveInfoDao()
     private val thirdPartyArchiveFetchHistoryDao = database.thirdPartyArchiveFetchHistoryDao()
 
-    suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): Long {
+    suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): ThirdPartyArchiveInfo? {
         ensureInTransaction()
 
-        return thirdPartyArchiveInfoDao.insertOrUpdate(
+        val databaseId = thirdPartyArchiveInfoDao.insertOrUpdate(
                 ThirdPartyArchiveInfoEntity(
                         archiveId = 0L,
                         archiveDomain = thirdPartyArchiveInfo.archiveDescriptor.domain,
                         enabled = thirdPartyArchiveInfo.enabled
                 )
+        )
+
+        if (databaseId < 0L) {
+            return null
+        }
+
+        return thirdPartyArchiveInfo.copy(databaseId = databaseId)
+    }
+
+    suspend fun selectThirdPartyArchiveInfo(archiveDescriptor: ArchiveDescriptor): ThirdPartyArchiveInfo? {
+        ensureInTransaction()
+
+        val entity = thirdPartyArchiveInfoDao.select(archiveDescriptor.domain)
+                ?: return null
+
+        return ThirdPartyArchiveInfo(
+                entity.archiveId,
+                archiveDescriptor,
+                entity.enabled
         )
     }
 
@@ -76,14 +94,13 @@ class ThirdPartyArchiveInfoLocalSource(
 
     suspend fun selectLatestFetchHistory(
             archiveDescriptor: ArchiveDescriptor,
+            newerThan: DateTime,
             count: Int
     ): List<ThirdPartyArchiveFetchResult> {
         ensureInTransaction()
 
         val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(archiveDescriptor.domain)
                 ?: return emptyList()
-
-        val newerThan = DateTime.now().minus(THIRTY_MINUTES)
 
         return thirdPartyArchiveFetchHistoryDao.selectLatest(
                 thirdPartyArchiveInfoEntity.archiveId,
@@ -106,27 +123,16 @@ class ThirdPartyArchiveInfoLocalSource(
         return thirdPartyArchiveInfoDao.select(archiveDescriptor.domain) != null
     }
 
-    suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): Boolean {
-        ensureInTransaction()
-
-        return thirdPartyArchiveInfoDao.selectIsArchiveEnabled(archiveDescriptor.domain)
-    }
-
     suspend fun setArchiveEnabled(archiveDescriptor: ArchiveDescriptor, enabled: Boolean) {
         ensureInTransaction()
 
         thirdPartyArchiveInfoDao.updateArchiveEnabled(archiveDescriptor.domain, enabled)
     }
 
-    suspend fun deleteOld() {
+    suspend fun deleteOld(olderThan: DateTime) {
         ensureInTransaction()
 
-        val olderThan = DateTime.now().minus(ONE_HOUR)
         thirdPartyArchiveFetchHistoryDao.deleteOlderThan(olderThan)
     }
 
-    companion object {
-        private val THIRTY_MINUTES = Duration.standardMinutes(30)
-        private val ONE_HOUR = Duration.standardHours(1)
-    }
 }

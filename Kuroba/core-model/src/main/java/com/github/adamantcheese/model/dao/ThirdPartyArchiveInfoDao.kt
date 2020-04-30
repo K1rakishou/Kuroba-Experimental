@@ -31,13 +31,6 @@ abstract class ThirdPartyArchiveInfoDao {
     }
 
     @Query("""
-        SELECT ${ThirdPartyArchiveInfoEntity.ARCHIVE_ENABLED_COLUMN_NAME}
-        FROM ${ThirdPartyArchiveInfoEntity.TABLE_NAME}
-        WHERE ${ThirdPartyArchiveInfoEntity.ARCHIVE_DOMAIN_COLUMN_NAME} = :domain
-    """)
-    abstract suspend fun selectIsArchiveEnabled(domain: String): Boolean
-
-    @Query("""
         UPDATE ${ThirdPartyArchiveInfoEntity.TABLE_NAME}
         SET ${ThirdPartyArchiveInfoEntity.ARCHIVE_ENABLED_COLUMN_NAME} = :enabled
         WHERE ${ThirdPartyArchiveInfoEntity.ARCHIVE_DOMAIN_COLUMN_NAME} = :domain

@@ -1,6 +1,5 @@
 package com.github.adamantcheese.model.repository
 
-import android.util.Log
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
@@ -10,8 +9,11 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.source.cache.ThirdPartyArchiveInfoCache
 import com.github.adamantcheese.model.source.local.ThirdPartyArchiveInfoLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
+import org.joda.time.DateTime
+import org.joda.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ThirdPartyArchiveInfoRepository(
@@ -24,21 +26,47 @@ class ThirdPartyArchiveInfoRepository(
 ) : AbstractRepository(database, logger) {
     private val TAG = "$loggerTag ThirdPartyArchiveInfoRepository"
     private val alreadyDeletedOld = AtomicBoolean(false)
-    private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_SuspendableLazy<Unit>", false)
+    private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
+    private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
 
-    suspend fun init(thirdPartyArchiveInfoList: List<ThirdPartyArchiveInfo>) {
+    suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>) {
         val result = withTransactionSafe {
-            thirdPartyArchiveInfoList.forEach { thirdPartyArchiveInfo ->
-                if (!localSource.archiveExists(thirdPartyArchiveInfo.archiveDescriptor)) {
-                    localSource.insertThirdPartyArchiveInfo(thirdPartyArchiveInfo)
-                }
+            val thirdPartyArchiveInfoList = allArchiveDescriptors.map { archiveDescriptor ->
+                ThirdPartyArchiveInfo(
+                        databaseId = 0L,
+                        archiveDescriptor = archiveDescriptor,
+                        enabled = false
+                )
             }
 
-            Log.d(TAG, "withTransactionSafe end")
+            thirdPartyArchiveInfoList.forEach { thirdPartyArchiveInfo ->
+                val archiveInfo = if (!localSource.archiveExists(thirdPartyArchiveInfo.archiveDescriptor)) {
+                    val insertedIntoDatabase = localSource.insertThirdPartyArchiveInfo(
+                            thirdPartyArchiveInfo
+                    )
+
+                    requireNotNull(insertedIntoDatabase) {
+                        "Couldn't insert archive info into the database, " +
+                                "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
+                    }
+                } else {
+                    val fromDatabase = localSource.selectThirdPartyArchiveInfo(
+                            thirdPartyArchiveInfo.archiveDescriptor
+                    )
+
+                    requireNotNull(fromDatabase) {
+                        "Couldn't find archive info in the database, " +
+                                "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
+                    }
+                }
+
+                thirdPartyArchiveInfoCache.putThirdPartyArchiveInfo(archiveInfo)
+            }
+
+            logger.log(TAG, "Loaded ${thirdPartyArchiveInfoList.size} archives")
             return@withTransactionSafe
         }
 
-        Log.d(TAG, "before initWithModularResult()")
         suspendableInitializer.initWithModularResult(result)
     }
 
@@ -47,10 +75,19 @@ class ThirdPartyArchiveInfoRepository(
     ): ModularResult<ThirdPartyArchiveFetchResult?> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
-                require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
+                require(fetchResult.databaseId == 0L) {
+                    "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
+                }
                 deleteOld()
 
-                return@withTransactionSafe localSource.insertFetchResult(fetchResult)
+                val thirdPartyArchiveFetchResult = localSource.insertFetchResult(fetchResult)
+                if (thirdPartyArchiveFetchResult != null) {
+                    thirdPartyArchiveInfoCache.putThirdPartyArchiveFetchResult(
+                            thirdPartyArchiveFetchResult
+                    )
+                }
+
+                return@withTransactionSafe thirdPartyArchiveFetchResult
             }
         }
     }
@@ -58,8 +95,12 @@ class ThirdPartyArchiveInfoRepository(
     suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
-                require(fetchResult.databaseId > 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
+                require(fetchResult.databaseId > 0L) {
+                    "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
+                }
+
                 localSource.deleteFetchResult(fetchResult)
+                thirdPartyArchiveInfoCache.deleteFetchResult(fetchResult)
 
                 return@withTransactionSafe
             }
@@ -69,7 +110,7 @@ class ThirdPartyArchiveInfoRepository(
     suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
-                return@withTransactionSafe localSource.isArchiveEnabled(archiveDescriptor)
+                return@withTransactionSafe thirdPartyArchiveInfoCache.isArchiveEnabled(archiveDescriptor)
             }
         }
     }
@@ -80,7 +121,10 @@ class ThirdPartyArchiveInfoRepository(
     ): ModularResult<Unit> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
-                return@withTransactionSafe localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
+                localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
+                thirdPartyArchiveInfoCache.setArchiveEnabled(archiveDescriptor, isEnabled)
+
+                return@withTransactionSafe
             }
         }
     }
@@ -90,8 +134,11 @@ class ThirdPartyArchiveInfoRepository(
     ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
-                return@withTransactionSafe localSource.selectLatestFetchHistory(
+                val newerThan = DateTime.now().minus(THIRTY_MINUTES)
+
+                return@withTransactionSafe thirdPartyArchiveInfoCache.selectLatestFetchHistory(
                         archiveDescriptor,
+                        newerThan,
                         appConstants.archiveFetchHistoryMaxEntries
                 )
             }
@@ -104,10 +151,12 @@ class ThirdPartyArchiveInfoRepository(
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized withTransactionSafe {
                 val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+                val newerThan = DateTime.now().minus(THIRTY_MINUTES)
 
                 archiveDescriptorList.forEach { archiveDescriptor ->
-                    val history = localSource.selectLatestFetchHistory(
+                    val history = thirdPartyArchiveInfoCache.selectLatestFetchHistory(
                             archiveDescriptor,
+                            newerThan,
                             appConstants.archiveFetchHistoryMaxEntries
                     )
 
@@ -141,7 +190,13 @@ class ThirdPartyArchiveInfoRepository(
             return
         }
 
-        localSource.deleteOld()
+        val olderThan = DateTime.now().minus(ONE_HOUR)
+        localSource.deleteOld(olderThan)
+        thirdPartyArchiveInfoCache.deleteOld(olderThan)
     }
 
+    companion object {
+        private val ONE_HOUR = Duration.standardHours(1)
+        private val THIRTY_MINUTES = Duration.standardMinutes(30)
+    }
 }

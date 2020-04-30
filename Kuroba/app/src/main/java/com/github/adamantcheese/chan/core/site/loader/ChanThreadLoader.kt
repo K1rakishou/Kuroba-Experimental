@@ -194,7 +194,6 @@ class ChanThreadLoader(
                 .subscribe(
                         { loaded: Boolean -> requestDataInternal(loaded, forced) },
                         { error: Throwable ->
-                            Logger.e(TAG, "Error while loading saved thread", error)
                             notifyAboutError(ChanLoaderException(error))
                         }
                 )
@@ -413,7 +412,6 @@ class ChanThreadLoader(
                 .subscribe({
                     // no-op
                 }, { error ->
-                    Logger.e(TAG, "onResponse error", error)
                     notifyAboutError(ChanLoaderException(error!!))
                 })
 
@@ -646,10 +644,8 @@ class ChanThreadLoader(
                         return@subscribe
                     }
 
-                    Logger.e(TAG, "Loading error", error)
                     notifyAboutError(error)
                 }, { throwable ->
-                    Logger.e(TAG, "Loading unhandled error", throwable)
                     notifyAboutError(ChanLoaderException(throwable))
                 })
 
@@ -695,6 +691,12 @@ class ChanThreadLoader(
         BackgroundUtils.ensureMainThread()
         clearTimer()
 
+        if (error.isCoroutineCancellationError()) {
+            Logger.d(TAG, "Request canceled")
+            return
+        }
+
+        Logger.e(TAG, "notifyAboutError()", error)
         listeners.forEach { listener -> listener.onChanLoaderError(error) }
     }
 
