@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f95995edd93afead33260a71063fc556",
+    "identityHash": "5008bfac30fec36b5926b958e32dbe69",
     "entities": [
       {
         "tableName": "chan_board",
@@ -788,7 +788,7 @@
       },
       {
         "tableName": "third_party_archive_fetch_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_third_party_archive_id` INTEGER NOT NULL, `success` INTEGER NOT NULL, `error_text` TEXT, `inserted_on` INTEGER NOT NULL, FOREIGN KEY(`owner_third_party_archive_id`) REFERENCES `third_party_archive_info`(`archive_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_third_party_archive_id` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `success` INTEGER NOT NULL, `error_text` TEXT, `inserted_on` INTEGER NOT NULL, FOREIGN KEY(`owner_third_party_archive_id`) REFERENCES `third_party_archive_info`(`archive_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -799,6 +799,12 @@
           {
             "fieldPath": "ownerThirdPartyArchiveId",
             "columnName": "owner_third_party_archive_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -837,6 +843,15 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_owner_third_party_archive_idx` ON `${TABLE_NAME}` (`owner_third_party_archive_id`)"
           },
           {
+            "name": "third_party_archive_fetch_history_owner_third_party_archive_thread_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_third_party_archive_id",
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_owner_third_party_archive_thread_id_idx` ON `${TABLE_NAME}` (`owner_third_party_archive_id`, `owner_thread_id`)"
+          },
+          {
             "name": "third_party_archive_fetch_history_inserted_on_idx",
             "unique": false,
             "columnNames": [
@@ -855,6 +870,17 @@
             ],
             "referencedColumns": [
               "archive_id"
+            ]
+          },
+          {
+            "table": "chan_thread",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
             ]
           }
         ]
@@ -904,7 +930,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f95995edd93afead33260a71063fc556')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5008bfac30fec36b5926b958e32dbe69')"
     ]
   }
 }

@@ -257,20 +257,23 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
                     val fetchResult = ThirdPartyArchiveFetchResult.error(
                             archiveDescriptor,
+                            threadDescriptor,
                             archiveThreadResult.error.errorMessageOrClassName()
                     )
 
                     archivesManager.insertFetchHistory(fetchResult).unwrap()
-
                     ArchivesRemoteSource.ArchiveThread(emptyList())
                 }
                 is ModularResult.Value -> {
                     Logger.d(TAG, "Successfully fetched ${archiveThreadResult.value.posts.size} " +
                             "posts from archive ${archiveDescriptor}")
 
-                    val fetchResult = ThirdPartyArchiveFetchResult.success(archiveDescriptor)
-                    archivesManager.insertFetchHistory(fetchResult).unwrap()
+                    val fetchResult = ThirdPartyArchiveFetchResult.success(
+                            archiveDescriptor,
+                            threadDescriptor
+                    )
 
+                    archivesManager.insertFetchHistory(fetchResult).unwrap()
                     archiveThreadResult.value
                 }
             }

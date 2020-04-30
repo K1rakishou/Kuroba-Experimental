@@ -15,6 +15,8 @@ class ThirdPartyArchiveInfoLocalSource(
         private val logger: Logger
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag ThirdPartyArchiveInfoLocalSource"
+    private val chanBoardDao = database.chanBoardDao()
+    private val chanThreadDao = database.chanThreadDao()
     private val thirdPartyArchiveInfoDao = database.thirdPartyArchiveInfoDao()
     private val thirdPartyArchiveFetchHistoryDao = database.thirdPartyArchiveFetchHistoryDao()
 
@@ -53,6 +55,9 @@ class ThirdPartyArchiveInfoLocalSource(
         ensureInTransaction()
         require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
 
+        val chanThreadId = getChanThreadIdOrNull(fetchResult)
+                ?: return null
+
         val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(
                 fetchResult.archiveDescriptor.domain
         )
@@ -65,6 +70,7 @@ class ThirdPartyArchiveInfoLocalSource(
                 ThirdPartyArchiveFetchHistoryEntity(
                         id = 0L,
                         ownerThirdPartyArchiveId = thirdPartyArchiveInfoEntity.archiveId,
+                        ownerThreadId = chanThreadId,
                         success = fetchResult.success,
                         errorText = fetchResult.errorText,
                         insertedOn = fetchResult.insertedOn
@@ -76,6 +82,22 @@ class ThirdPartyArchiveInfoLocalSource(
         }
 
         return fetchResult.copy(databaseId = databaseId)
+    }
+
+    private suspend fun getChanThreadIdOrNull(fetchResult: ThirdPartyArchiveFetchResult): Long? {
+        val chanBoardEntity = chanBoardDao.select(
+                fetchResult.threadDescriptor.siteName(),
+                fetchResult.threadDescriptor.boardCode()
+        )
+
+        if (chanBoardEntity == null) {
+            return null
+        }
+
+        return chanThreadDao.select(
+                chanBoardEntity.boardId,
+                fetchResult.threadDescriptor.opNo
+        )?.threadId
     }
 
     suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
@@ -90,31 +112,6 @@ class ThirdPartyArchiveInfoLocalSource(
         }
 
         thirdPartyArchiveFetchHistoryDao.delete(fetchResult.databaseId)
-    }
-
-    suspend fun selectLatestFetchHistory(
-            archiveDescriptor: ArchiveDescriptor,
-            newerThan: DateTime,
-            count: Int
-    ): List<ThirdPartyArchiveFetchResult> {
-        ensureInTransaction()
-
-        val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(archiveDescriptor.domain)
-                ?: return emptyList()
-
-        return thirdPartyArchiveFetchHistoryDao.selectLatest(
-                thirdPartyArchiveInfoEntity.archiveId,
-                newerThan,
-                count
-        ).map { thirdPartyArchiveFetchHistoryEntity ->
-            return@map ThirdPartyArchiveFetchResult(
-                    databaseId = thirdPartyArchiveFetchHistoryEntity.id,
-                    archiveDescriptor = archiveDescriptor,
-                    success = thirdPartyArchiveFetchHistoryEntity.success,
-                    errorText = thirdPartyArchiveFetchHistoryEntity.errorText,
-                    insertedOn = thirdPartyArchiveFetchHistoryEntity.insertedOn
-            )
-        }
     }
 
     suspend fun archiveExists(archiveDescriptor: ArchiveDescriptor): Boolean {

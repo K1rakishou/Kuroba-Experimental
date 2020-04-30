@@ -9,6 +9,7 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.source.cache.ThirdPartyArchiveInfoCache
 import com.github.adamantcheese.model.source.local.ThirdPartyArchiveInfoLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
@@ -109,8 +110,8 @@ class ThirdPartyArchiveInfoRepository(
 
     suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
         return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized withTransactionSafe {
-                return@withTransactionSafe thirdPartyArchiveInfoCache.isArchiveEnabled(archiveDescriptor)
+            return@invokeWhenInitialized safeRun {
+                return@safeRun thirdPartyArchiveInfoCache.isArchiveEnabled(archiveDescriptor)
             }
         }
     }
@@ -129,14 +130,39 @@ class ThirdPartyArchiveInfoRepository(
         }
     }
 
+    suspend fun selectLatestFetchHistoryForThread(
+            archiveDescriptorList: List<ArchiveDescriptor>,
+            threadDescriptor: ChanDescriptor.ThreadDescriptor
+    ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized safeRun {
+                val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+                val newerThan = DateTime.now().minus(THIRTY_MINUTES)
+
+                archiveDescriptorList.forEach { archiveDescriptor ->
+                    val threadArchiveFetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistoryForThread(
+                            archiveDescriptor,
+                            threadDescriptor,
+                            newerThan,
+                            appConstants.archiveFetchHistoryMaxEntries
+                    )
+
+                    resultMap[archiveDescriptor] = threadArchiveFetchHistory
+                }
+
+                return@safeRun resultMap.toMap()
+            }
+        }
+    }
+
     suspend fun selectLatestFetchHistory(
             archiveDescriptor: ArchiveDescriptor
     ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
         return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized withTransactionSafe {
+            return@invokeWhenInitialized safeRun {
                 val newerThan = DateTime.now().minus(THIRTY_MINUTES)
 
-                return@withTransactionSafe thirdPartyArchiveInfoCache.selectLatestFetchHistory(
+                return@safeRun thirdPartyArchiveInfoCache.selectLatestFetchHistory(
                         archiveDescriptor,
                         newerThan,
                         appConstants.archiveFetchHistoryMaxEntries
@@ -149,7 +175,7 @@ class ThirdPartyArchiveInfoRepository(
             archiveDescriptorList: List<ArchiveDescriptor>
     ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
         return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized withTransactionSafe {
+            return@invokeWhenInitialized safeRun {
                 val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
                 val newerThan = DateTime.now().minus(THIRTY_MINUTES)
 
@@ -163,7 +189,7 @@ class ThirdPartyArchiveInfoRepository(
                     resultMap[archiveDescriptor] = history
                 }
 
-                return@withTransactionSafe resultMap.toMap()
+                return@safeRun resultMap.toMap()
             }
         }
     }
@@ -189,6 +215,8 @@ class ThirdPartyArchiveInfoRepository(
         if (!alreadyDeletedOld.compareAndSet(false, true)) {
             return
         }
+
+        require(isInTransaction()) { "Must be called in transaction!" }
 
         val olderThan = DateTime.now().minus(ONE_HOUR)
         localSource.deleteOld(olderThan)

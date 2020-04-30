@@ -4,6 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
@@ -12,11 +13,11 @@ class ThirdPartyArchiveInfoCache {
     private val mutex = Mutex()
 
     @GuardedBy("mutex")
-    private val thirdPartyArchiveInfoMap =
-            mutableMapOf<ArchiveDescriptor, ThirdPartyArchiveInfo>()
+    private val thirdPartyArchiveInfoMap = mutableMapOf<ArchiveDescriptor, ThirdPartyArchiveInfo>()
     @GuardedBy("mutex")
-    private val thirdPartyArchiveFetchResultMap =
-            mutableMapOf<ArchiveDescriptor, MutableList<ThirdPartyArchiveFetchResult>>()
+    private val thirdPartyArchiveFetchResultMap = mutableMapOf<ArchiveDescriptor, FetchResultsPerThread>()
+    @GuardedBy("mutex")
+    private val latestFetchResultsMap = mutableMapOf<ArchiveDescriptor, MutableList<ThirdPartyArchiveFetchResult>>()
 
     suspend fun putThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo) {
         mutex.withLock {
@@ -24,15 +25,39 @@ class ThirdPartyArchiveInfoCache {
         }
     }
 
-    suspend fun putThirdPartyArchiveFetchResult(thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult) {
+    suspend fun putThirdPartyArchiveFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
         mutex.withLock {
-            val archiveDescriptor = thirdPartyArchiveFetchResult.archiveDescriptor
+            val archiveDescriptor = fetchResult.archiveDescriptor
 
             if (!thirdPartyArchiveFetchResultMap.containsKey(archiveDescriptor)) {
-                thirdPartyArchiveFetchResultMap[archiveDescriptor] = mutableListOf()
+                thirdPartyArchiveFetchResultMap[archiveDescriptor] = FetchResultsPerThread()
             }
 
-            thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.add(thirdPartyArchiveFetchResult)
+            if (!latestFetchResultsMap.containsKey(fetchResult.archiveDescriptor)) {
+                latestFetchResultsMap[fetchResult.archiveDescriptor] = mutableListOf()
+            }
+
+            latestFetchResultsMap[fetchResult.archiveDescriptor]!!.add(fetchResult)
+            thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.addFetchResult(fetchResult)
+        }
+    }
+
+    suspend fun selectLatestFetchHistoryForThread(
+            archiveDescriptor: ArchiveDescriptor,
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            newerThan: DateTime,
+            archiveFetchHistoryMaxEntries: Int
+    ): List<ThirdPartyArchiveFetchResult> {
+        return mutex.withLock {
+            if (!thirdPartyArchiveFetchResultMap.containsKey(archiveDescriptor)) {
+                return@withLock emptyList()
+            }
+
+            return thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.selectLatestFetchHistory(
+                    threadDescriptor,
+                    newerThan,
+                    archiveFetchHistoryMaxEntries
+            )
         }
     }
 
@@ -42,16 +67,13 @@ class ThirdPartyArchiveInfoCache {
             archiveFetchHistoryMaxEntries: Int
     ): List<ThirdPartyArchiveFetchResult> {
         return mutex.withLock {
-            if (!thirdPartyArchiveInfoMap.containsKey(archiveDescriptor)) {
+            if (!latestFetchResultsMap.containsKey(archiveDescriptor)) {
                 return@withLock emptyList()
             }
 
-            val fetchResults = thirdPartyArchiveFetchResultMap[archiveDescriptor]
-                    ?: return@withLock emptyList()
-
-            val sortedFetchResults = fetchResults.sortedByDescending { fetchResult ->
-                fetchResult.insertedOn
-            }
+            val sortedFetchResults = latestFetchResultsMap[archiveDescriptor]
+                    ?.sortedByDescending { fetchResult -> fetchResult.insertedOn }
+                    ?: return emptyList()
 
             val toReturnList = mutableListOf<ThirdPartyArchiveFetchResult>()
             val toRemoveList = mutableListOf<ThirdPartyArchiveFetchResult>()
@@ -67,7 +89,7 @@ class ThirdPartyArchiveInfoCache {
 
             if (toRemoveList.isNotEmpty()) {
                 toRemoveList.forEach { toRemove ->
-                    thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.remove(toRemove)
+                    latestFetchResultsMap[archiveDescriptor]!!.remove(toRemove)
                 }
             }
 
@@ -90,28 +112,86 @@ class ThirdPartyArchiveInfoCache {
         }
     }
 
-    suspend fun deleteFetchResult(thirdPartyArchiveFetchResult: ThirdPartyArchiveFetchResult) {
+    suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
         mutex.withLock {
-            val archiveDescriptor = thirdPartyArchiveFetchResult.archiveDescriptor
+            val archiveDescriptor = fetchResult.archiveDescriptor
 
             if (!thirdPartyArchiveFetchResultMap.containsKey(archiveDescriptor)) {
                 return@withLock
             }
 
-            thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.remove(thirdPartyArchiveFetchResult)
+            latestFetchResultsMap[fetchResult.archiveDescriptor]?.remove(fetchResult)
+            thirdPartyArchiveFetchResultMap[archiveDescriptor]!!.deleteFetchResult(fetchResult)
         }
     }
 
     suspend fun deleteOld(olderThan: DateTime) {
         mutex.withLock {
-            thirdPartyArchiveFetchResultMap.values.forEach { thirdPartyArchiveFetchResultList ->
-                val iter = thirdPartyArchiveFetchResultList.iterator()
+            thirdPartyArchiveFetchResultMap.values.forEach { fetchResultsPerThread ->
+                fetchResultsPerThread.deleteOld(olderThan)
+            }
+        }
+    }
 
-                while (iter.hasNext()) {
-                    val thirdPartyArchiveFetchResult = iter.next()
-                    if (thirdPartyArchiveFetchResult.insertedOn < olderThan) {
-                        iter.remove()
-                    }
+}
+
+internal class FetchResultsPerThread {
+    private val fetchResultsMap: MutableMap<ChanDescriptor.ThreadDescriptor, MutableList<ThirdPartyArchiveFetchResult>> = mutableMapOf()
+
+    internal fun addFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
+        if (!fetchResultsMap.containsKey(fetchResult.threadDescriptor)) {
+            fetchResultsMap[fetchResult.threadDescriptor] = mutableListOf()
+        }
+
+        fetchResultsMap[fetchResult.threadDescriptor]!!.add(fetchResult)
+    }
+
+    fun selectLatestFetchHistory(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            newerThan: DateTime,
+            archiveFetchHistoryMaxEntries: Int
+    ): List<ThirdPartyArchiveFetchResult> {
+        if (!fetchResultsMap.containsKey(threadDescriptor)) {
+            return emptyList()
+        }
+
+        val sortedFetchResults = fetchResultsMap[threadDescriptor]
+                ?.sortedByDescending { fetchResult -> fetchResult.insertedOn }
+                ?: return emptyList()
+
+        val toReturnList = mutableListOf<ThirdPartyArchiveFetchResult>()
+        val toRemoveList = mutableListOf<ThirdPartyArchiveFetchResult>()
+
+        sortedFetchResults.forEach { thirdPartyArchiveFetchResult ->
+            if (thirdPartyArchiveFetchResult.insertedOn > newerThan
+                    && toReturnList.size <= archiveFetchHistoryMaxEntries) {
+                toReturnList.add(thirdPartyArchiveFetchResult)
+            } else {
+                toRemoveList.add(thirdPartyArchiveFetchResult)
+            }
+        }
+
+        if (toRemoveList.isNotEmpty()) {
+            toRemoveList.forEach { toRemove ->
+                fetchResultsMap[threadDescriptor]!!.remove(toRemove)
+            }
+        }
+
+        return toReturnList
+    }
+
+    internal fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
+        fetchResultsMap[fetchResult.threadDescriptor]?.remove(fetchResult)
+    }
+
+    internal fun deleteOld(olderThan: DateTime) {
+        fetchResultsMap.values.forEach { fetchResultList ->
+            val iter = fetchResultList.iterator()
+
+            while (iter.hasNext()) {
+                val thirdPartyArchiveFetchResult = iter.next()
+                if (thirdPartyArchiveFetchResult.insertedOn < olderThan) {
+                    iter.remove()
                 }
             }
         }

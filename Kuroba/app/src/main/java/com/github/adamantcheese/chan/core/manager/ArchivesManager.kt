@@ -1,7 +1,6 @@
 package com.github.adamantcheese.chan.core.manager
 
 import android.content.Context
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.safeRun
@@ -21,6 +20,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.joda.time.DateTime
+import org.joda.time.Duration
 import java.io.InputStreamReader
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -74,8 +75,6 @@ class ArchivesManager(
             forced: Boolean
     ): ModularResult<ArchiveDescriptor?> {
         return safeRun {
-            Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor, forced=$forced)")
-
             if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
                 // Only 4chan archives are supported
                 return@safeRun null
@@ -112,32 +111,49 @@ class ArchivesManager(
             suitableArchives: List<ArchiveData>,
             forced: Boolean
     ): ArchiveDescriptor? {
-        Logger.d(TAG, "getBestPossibleArchiveOrNull($threadDescriptor, $suitableArchives, $forced)")
-
-        val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistory(
-                suitableArchives.map { it.getArchiveDescriptor() }
+        // Get fetch history (last N fetch results) for this thread for every suitable archive
+        val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
+                suitableArchives.map { it.getArchiveDescriptor() },
+                threadDescriptor
         ).unwrap()
 
         if (fetchHistoryMap.isEmpty()) {
             // No history means we haven't fetched anything yet, so every archive is suitable
             return suitableArchives.firstOrNull { archiveData ->
-                archiveData.supportedFiles.contains(threadDescriptor.boardCode())
+                return@firstOrNull archiveData.supportedFiles.contains(threadDescriptor.boardCode())
             }?.getArchiveDescriptor()
         }
 
-        val sortedFetchHistoryList = fetchHistoryMap.map { (archiveDescriptor, fetchHistoryList) ->
-            archiveDescriptor to calculateSuccessFetches(fetchHistoryList)
+        val fetchIsFreshTimeThreshold = if (forced) {
+            DateTime.now().minus(FORCED_ARCHIVE_UPDATE_INTERVAL)
+        } else {
+            DateTime.now().minus(NORMAL_ARCHIVE_UPDATE_INTERVAL)
+        }
+
+        val sortedFetchHistoryList = fetchHistoryMap.mapNotNull { (archiveDescriptor, fetchHistoryList) ->
+            // If fetch history contains at least one fetch that was executed later than
+            // [fetchIsFreshTimeThreshold] that means the whole history is still fresh and we don't
+            // need to fetch posts from this archive right now. So we just need to filter out this
+            // archive.
+            if (hasFreshSuccessfulFetchResult(fetchHistoryList, fetchIsFreshTimeThreshold)) {
+                return@mapNotNull null
+            }
+
+            // Otherwise calculate score for archive
+            return@mapNotNull archiveDescriptor to calculateFetchResultsScore(fetchHistoryList)
         }.sortedByDescending { (_, successfulFetchesCount) -> successfulFetchesCount }
 
-        Logger.d(TAG, "$sortedFetchHistoryList")
-        check(sortedFetchHistoryList.isNotEmpty()) { "sortedFetchHistoryList is empty" }
+        if (sortedFetchHistoryList.isEmpty()) {
+            return null
+        }
 
         if (!forced) {
             val allArchivesAreBad = sortedFetchHistoryList.all { (_, successfulFetchesCount) ->
                 successfulFetchesCount == 0
             }
 
-            // There are no archives with at least one successful fetch over then last N fetches
+            // If there are no archive with positive score and we are not forced to fetch new posts
+            // then do not fetch anything.
             if (allArchivesAreBad) {
                 return null
             }
@@ -146,9 +162,7 @@ class ArchivesManager(
         // Try to find an archive that supports files for this board
         for ((archiveDescriptor, successFetches) in sortedFetchHistoryList) {
             if (successFetches <= 0) {
-                // No success fetches for the current archive. We either had no internet connection
-                // while trying to fetch posts from this archive and now there are no more attempts
-                // left or the archive site is actually dead. In any case we can't use it.
+                // No success fetches for the current archive. We can't use it.
                 continue
             }
 
@@ -161,16 +175,32 @@ class ArchivesManager(
             }
 
             if (suitableArchive.supportedFiles.contains(threadDescriptor.boardCode())) {
+                // Archive has a positive score and it even supports files for this board. We found
+                // the most suitable archive for the next fetch.
                 return suitableArchive.getArchiveDescriptor()
             }
         }
 
-        // If we couldn't find an archive that supports files for this board then just return the
-        // first archive with the best success ration
+        // If we couldn't find an archive that supports files for this board, but we are forced
+        // to do a fetch in any case, then just return the first archive with the highest score
         return sortedFetchHistoryList.first().first
     }
 
-    fun calculateSuccessFetches(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
+    /**
+     * Checks whether fetch result history contains at least one successful fetch result and that
+     * fetch was executed later than [fetchIsFreshTimeThreshold]. If we managed to find such fetch
+     * result that means we don't need to do a fetch to this archive for now.
+     * */
+    private fun hasFreshSuccessfulFetchResult(
+            fetchHistoryList: List<ThirdPartyArchiveFetchResult>,
+            fetchIsFreshTimeThreshold: DateTime
+    ): Boolean {
+        return fetchHistoryList.any { fetchHistory ->
+            fetchHistory.success && fetchHistory.insertedOn > fetchIsFreshTimeThreshold
+        }
+    }
+
+    fun calculateFetchResultsScore(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
         val totalFetches = fetchHistoryList.size
 
         check(totalFetches <= appConstants.archiveFetchHistoryMaxEntries) {
@@ -182,21 +212,13 @@ class ArchivesManager(
             // all unsent yet fetches are success fetches, so basically unsentFetchesCount are
             // all success fetches
             val unsentFetchesCount = appConstants.archiveFetchHistoryMaxEntries - totalFetches
-            val successFetchesCount = fetchHistoryList.count { fetchHistory -> fetchHistory.success }
+            val successFetchesCount = fetchHistoryList.count { fetchHistory ->
+                fetchHistory.success
+            }
 
             return unsentFetchesCount + successFetchesCount
         } else {
             return fetchHistoryList.count { fetchHistory -> fetchHistory.success }
-        }
-    }
-
-    fun getArchiveDescriptorByDomain(archiveDomain: String?): ArchiveDescriptor? {
-        if (archiveDomain == null) {
-            return null
-        }
-
-        return allArchiveDescriptors.firstOrNull { archiveDescriptor ->
-            archiveDescriptor.domain == archiveDomain
         }
     }
 
@@ -366,6 +388,11 @@ class ArchivesManager(
                 // Disabled because it requires Cloudflare check which is not supported for now.
                 "warosu.org"
         )
+
+        // We can forcefully fetch posts from an archive no more than once in 5 minutes
+        private val FORCED_ARCHIVE_UPDATE_INTERVAL = Duration.standardMinutes(5)
+        // We can normally fetch posts from an archive no more than once in two hours
+        private val NORMAL_ARCHIVE_UPDATE_INTERVAL = Duration.standardHours(2)
 
         private const val TAG = "ArchivesManager"
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"

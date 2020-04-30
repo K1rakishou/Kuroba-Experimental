@@ -274,7 +274,9 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
         )
     }
 
-    private fun calculateStatusByFetchHistory(fetchHistory: List<ThirdPartyArchiveFetchResult>?): ArchiveStatus {
+    private fun calculateStatusByFetchHistory(
+            fetchHistory: List<ThirdPartyArchiveFetchResult>?
+    ): ArchiveStatus {
         if (fetchHistory == null) {
             return ArchiveStatus.Working
         }
@@ -283,7 +285,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
             "Archive fetch history is too long"
         }
 
-        val successFetchesCount = archivesManager.calculateSuccessFetches(fetchHistory)
+        val successFetchesCount = archivesManager.calculateFetchResultsScore(fetchHistory)
         if (successFetchesCount >= appConstants.archiveFetchHistoryMaxEntries) {
             return ArchiveStatus.Working
         }
