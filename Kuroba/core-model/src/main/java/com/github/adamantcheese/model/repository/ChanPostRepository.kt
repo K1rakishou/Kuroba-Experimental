@@ -36,14 +36,14 @@ class ChanPostRepository(
     ): ModularResult<List<Long>> {
         return tryWithTransaction {
             if (isCatalog) {
-                return@tryWithTransaction insertOrUpdateCatalogOriginalPostsBlocking(posts)
+                return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(posts)
             } else {
-                return@tryWithTransaction insertOrUpdateThreadPostsBlocking(posts)
+                return@tryWithTransaction insertOrUpdateThreadPosts(posts)
             }
         }
     }
 
-    suspend fun insertOrUpdateCatalogOriginalPostsBlocking(
+    private suspend fun insertOrUpdateCatalogOriginalPosts(
             posts: MutableList<ChanPost>
     ): List<Long> {
         if (posts.isEmpty()) {
@@ -62,7 +62,7 @@ class ChanPostRepository(
         return posts.map { it.postDescriptor.postNo }
     }
 
-    suspend fun insertOrUpdateThreadPostsBlocking(
+    private suspend fun insertOrUpdateThreadPosts(
             posts: MutableList<ChanPost>
     ): List<Long> {
         var originalPost: ChanPost? = null
@@ -126,7 +126,7 @@ class ChanPostRepository(
         return runBlocking { postCache.getPostFromCache(postDescriptor, isOP) }
     }
 
-    suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {
+    private suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {
         val fromCache = postCache.getPostFromCache(
                 chanPost.postDescriptor,
                 chanPost.isOp
@@ -207,60 +207,54 @@ class ChanPostRepository(
         }
     }
 
-    fun containsPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
-        return runBlocking {
-            return@runBlocking tryWithTransaction {
-                val containsInCache = postCache.getPostFromCache(
-                        postDescriptor,
-                        isOP
-                ) != null
+    suspend fun containsPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
+        return tryWithTransaction {
+            val containsInCache = postCache.getPostFromCache(
+                    postDescriptor,
+                    isOP
+            ) != null
 
-                if (containsInCache) {
-                    return@tryWithTransaction true
-                }
-
-                return@tryWithTransaction localSource.containsPostBlocking(
-                        postDescriptor.descriptor,
-                        postDescriptor.postNo
-                )
+            if (containsInCache) {
+                return@tryWithTransaction true
             }
+
+            return@tryWithTransaction localSource.containsPostBlocking(
+                    postDescriptor.descriptor,
+                    postDescriptor.postNo
+            )
         }
     }
 
-    fun containsPostBlocking(
+    suspend fun containsPost(
             descriptor: ChanDescriptor,
             postNo: Long
     ): ModularResult<Boolean> {
-        return runBlocking {
-            return@runBlocking tryWithTransaction {
-                return@tryWithTransaction localSource.containsPostBlocking(descriptor, postNo)
-            }
+        return tryWithTransaction {
+            return@tryWithTransaction localSource.containsPostBlocking(descriptor, postNo)
         }
     }
 
-    fun filterAlreadyCachedPostNo(
+    suspend fun filterAlreadyCachedPostNo(
             threadDescriptor: ChanDescriptor.ThreadDescriptor,
             archivePostsNoList: List<Long>
     ): ModularResult<List<Long>> {
-        return runBlocking {
-            return@runBlocking tryWithTransaction {
-                val cachedInMemorySet = postCache.getAll(threadDescriptor)
-                        .map { post -> post.postDescriptor.postNo }.toSet()
+        return tryWithTransaction {
+            val cachedInMemorySet = postCache.getAll(threadDescriptor)
+                    .map { post -> post.postDescriptor.postNo }.toSet()
 
-                val notInMemoryCached = archivePostsNoList.filter { archivePostNo ->
-                    archivePostNo !in cachedInMemorySet
-                }
+            val notInMemoryCached = archivePostsNoList.filter { archivePostNo ->
+                archivePostNo !in cachedInMemorySet
+            }
 
-                if (notInMemoryCached.isEmpty()) {
-                    return@tryWithTransaction emptyList<Long>()
-                }
+            if (notInMemoryCached.isEmpty()) {
+                return@tryWithTransaction emptyList<Long>()
+            }
 
-                val cachedInDatabase = localSource.getThreadPostNoList(threadDescriptor)
-                        .toSet()
+            val cachedInDatabase = localSource.getThreadPostNoList(threadDescriptor)
+                    .toSet()
 
-                return@tryWithTransaction notInMemoryCached.filter { archivePostNo ->
-                    archivePostNo !in cachedInDatabase
-                }
+            return@tryWithTransaction notInMemoryCached.filter { archivePostNo ->
+                archivePostNo !in cachedInDatabase
             }
         }
     }

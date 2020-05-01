@@ -79,7 +79,7 @@ public class Post
      * We use this map to avoid infinite loops when binding posts since after all post content
      * loaders have done their jobs we update the post via notifyItemChange, which triggers
      * onPostBind() again.
-     * */
+     */
     private final Map<LoaderType, Boolean> onDemandContentLoadedMap = new HashMap<>();
     /**
      * This post replies to the these ids.
@@ -383,6 +383,47 @@ public class Post
                 '}';
     }
 
+    public Post.Builder toPostBuilder(ArchiveDescriptor archiveDescriptor) {
+        Post.Builder postBuilder = new Post.Builder()
+                .board(board)
+                .id(no)
+                .opId(opNo)
+                .op(isOP)
+                .replies(totalRepliesCount)
+                .threadImagesCount(threadImagesCount)
+                .uniqueIps(uniqueIps)
+                .stickyCap(stickyCap)
+                .sticky(sticky)
+                .archived(archived)
+                .deleted(deleted.get())
+                .lastModified(lastModified)
+                .closed(closed)
+                .subject(subject)
+                .name(name)
+                .comment(comment.getComment())
+                .tripcode(tripcode)
+                .setUnixTimestampSeconds(time)
+                .postImages(postImages)
+                .posterId(posterId)
+                .moderatorCapcode(capcode)
+                .setHttpIcons(httpIcons)
+                .filter(
+                        postFilter.getFilterHighlightedColor(),
+                        postFilter.getFilterStub(),
+                        postFilter.getFilterRemove(),
+                        postFilter.getFilterWatch(),
+                        postFilter.getFilterReplies(),
+                        postFilter.getFilterOnlyOP(),
+                        postFilter.getFilterSaved()
+                )
+                .isSavedReply(isSavedReply)
+                .linkables(getLinkables())
+                .repliesTo(repliesTo);
+
+        postBuilder.setArchiveDescriptor(archiveDescriptor);
+        return postBuilder;
+    }
+
     public static final class Builder {
         public Board board;
         public long id = -1;
@@ -394,10 +435,10 @@ public class Post
         /**
          * When in rolling sticky thread this parameter means the maximum amount of posts in the
          * thread. Once the capacity is exceeded old posts are deleted right away (except the OP).
-         *
+         * <p>
          * Be really careful with this param since we use it in the database query when selecting
          * thread's posts.
-         * */
+         */
         public int stickyCap = -1;
         public boolean sticky;
         public boolean closed;

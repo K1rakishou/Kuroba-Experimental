@@ -106,12 +106,6 @@ class ChanThreadLoader(
     private var lastLoadTime: Long = 0
 
     /**
-     * Indicates that this ChanThreadLoader belongs to a Pin. We use this info for archives posts
-     * fetching (we don't load posts from archives for pins)
-     */
-    private var isPinWatcherLoader = false
-
-    /**
      * Get the time in milliseconds until another loadMore is recommended
      */
     val timeUntilLoadMore: Long
@@ -132,10 +126,6 @@ class ChanThreadLoader(
      */
     init {
         inject(this)
-    }
-
-    fun setPinWatcherLoader(pinWatcherLoader: Boolean) {
-        isPinWatcherLoader = pinWatcherLoader
     }
 
     /**
@@ -177,7 +167,6 @@ class ChanThreadLoader(
     }
 
     private fun resetLoader() {
-        isPinWatcherLoader = false
     }
 
     /**
@@ -192,10 +181,8 @@ class ChanThreadLoader(
                 .subscribeOn(backgroundScheduler)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        { loaded: Boolean -> requestDataInternal(loaded, forced) },
-                        { error: Throwable ->
-                            notifyAboutError(ChanLoaderException(error))
-                        }
+                        { loaded -> requestDataInternal(loaded, forced) },
+                        { error -> notifyAboutError(ChanLoaderException(error)) }
                 )
 
         compositeDisposable.add(disposable)
@@ -371,7 +358,6 @@ class ChanThreadLoader(
         Logger.d(TAG, "Requested /" + loadable.boardCode + "/, " + StringUtils.maskPostNo(loadable.no))
 
         val requestParams = ChanLoaderRequestParams(
-                isPinWatcherLoader,
                 loadable,
                 loadable.getSite().chanReader(),
                 synchronized(this) { thread?.posts ?: ArrayList() },
@@ -569,7 +555,7 @@ class ChanThreadLoader(
     private fun onResponseInternalNext(fakeOp: Post.Builder) {
         BackgroundUtils.ensureBackgroundThread()
 
-        val localThread: ChanThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
+        val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
         processResponse(fakeOp)
 
         if (TextUtils.isEmpty(loadable.title)) {

@@ -96,10 +96,26 @@ class ChanReaderRequestExecutor(
                         .get()
                         .build()
 
+                val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, loadable)
                 val response = okHttpClient.suspendCall(request)
+
                 if (!response.isSuccessful) {
                     if (response.code == 404) {
-                        return@Try tryLoadFromArchivesOrLocalCopyIfPossible()
+                        if (chanReaderProcessor.loadable.isDownloadingOrDownloaded) {
+                            // Thread is being downloaded or has been already downloaded, so use
+                            // local copy.
+                            throw ServerException(response.code)
+                        }
+
+                        // Thread is not being downloading/downloaded so fetch posts from an archive
+                        val chanLoaderResponse = tryLoadFromArchivesOrLocalCopyIfPossible(chanReaderProcessor)
+                        if (chanLoaderResponse == null) {
+                            // Couldn't load neither posts from an archive nor posts cached in the
+                            // database
+                            throw ServerException(response.code)
+                        }
+
+                        return@Try chanLoaderResponse!!
                     }
 
                     throw ServerException(response.code)
@@ -110,7 +126,7 @@ class ChanReaderRequestExecutor(
 
                 return@Try body.byteStream().use { inputStream ->
                     return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                            .use { jsonReader -> readJson(jsonReader).unwrap() }
+                            .use { jsonReader -> readJson(chanReaderProcessor, jsonReader).unwrap() }
                 }
             }.mapError { error -> ChanLoaderException(error) }
 
@@ -118,19 +134,54 @@ class ChanReaderRequestExecutor(
         }
     }
 
-    private suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(): ChanLoaderResponse {
-        TODO("Not yet implemented")
+    suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(
+            chanReaderProcessor: ChanReaderProcessor
+    ): ChanLoaderResponse? {
+        val postsFromArchive = getPostsFromArchiveIfNecessary(chanReaderProcessor.getToParse())
+                .safeUnwrap { error ->
+                    Logger.e(TAG, "Error while trying to get posts from archive", error)
+                    return null
+                }
 
-        // TODO(archives): don't forget to throw ServerException with 404 if we don't have neither
-        //  the saved thread nor archive to load the posts from
-        // throw ServerException(response.code)
+        if (postsFromArchive.isNotEmpty()) {
+            val parsedPosts = parseNewPostsPosts(loadable, postsFromArchive)
+            storeNewPostsInRepository(parsedPosts, false)
+        }
+
+        val reloadedPosts = reloadPostsFromRepository(
+                chanReaderProcessor,
+                getDescriptor(loadable)
+        )
+
+        if (reloadedPosts.isEmpty()) {
+            Logger.d(TAG, "reloadPostsFromRepository() returned empty list")
+            return null
+        }
+
+        val originalPost = reloadedPosts.firstOrNull { post -> post.isOP }
+        if (originalPost == null) {
+            Logger.e(TAG, "Reloaded from the database posts have no OP")
+            return null
+        }
+
+        val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+        val archiveDescriptor = archivesManager.getArchiveDescriptor(
+                threadDescriptor,
+                forceLoading
+        ).safeUnwrap { error ->
+            Logger.e(TAG, "Error while trying to get archive descriptor", error)
+            return null
+        }
+
+        return ChanLoaderResponse(originalPost.toPostBuilder(archiveDescriptor), reloadedPosts)
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun readJson(reader: JsonReader): ModularResult<ChanLoaderResponse> {
+    private suspend fun readJson(
+            chanReaderProcessor: ChanReaderProcessor,
+            reader: JsonReader
+    ): ModularResult<ChanLoaderResponse> {
         return Try {
-            val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, loadable)
-
             when {
                 loadable.isThreadMode -> this.reader.loadThread(reader, chanReaderProcessor)
                 loadable.isCatalogMode -> this.reader.loadCatalog(reader, chanReaderProcessor)
@@ -146,13 +197,7 @@ class ChanReaderRequestExecutor(
             }
 
             val (parsedPosts, parsingDuration) = measureTimedValue {
-                // TODO(archives): !!!!!!!!!!!!!
-                val posts = if (loadable.isCatalogMode) {
-                    chanReaderProcessor.getToParse() + archivePosts
-                } else {
-                    archivePosts
-                }
-
+                val posts = chanReaderProcessor.getToParse() + archivePosts
                 return@measureTimedValue parseNewPostsPosts(loadable, posts)
             }
 
@@ -187,7 +232,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         }
     }
 
-    private suspend fun getPostsFromArchiveIfNecessary(
+    suspend fun getPostsFromArchiveIfNecessary(
             freshPostsFromServer: List<Post.Builder>
     ): ModularResult<List<Post.Builder>> {
         return Try<List<Post.Builder>> {
@@ -200,13 +245,6 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 return@Try emptyList()
             }
 
-            if (request.isPinWatcherLoader) {
-                // We don't want to fetch deleted posts from archives for PinWatchers to avoid spamming
-                // the archives's servers with our requests every n-seconds. Instead, we load deleted
-                // posts only when the user open a thread normally (or by clicking a Pin).
-                return@Try emptyList()
-            }
-
             val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
             val archiveDescriptor = archivesManager.getArchiveDescriptor(
                     threadDescriptor,
@@ -215,7 +253,6 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
             if (archiveDescriptor == null) {
                 // We probably don't have archives for this site or all archives are dead
-
                 Logger.d(TAG, "No archives for thread descriptor: $threadDescriptor")
                 return@Try emptyList()
             }
@@ -236,12 +273,10 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                     loadable.boardDescriptor
             )
 
-            val supportsMediaThumbnails = archivesManager.archiveStoresThumbnails(archiveDescriptor)
-
             val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetwork(
                     threadArchiveRequestLink,
                     threadDescriptor.opNo,
-                    supportsMediaThumbnails,
+                    archivesManager.archiveStoresThumbnails(archiveDescriptor),
                     supportsMedia
             )
 
@@ -276,31 +311,28 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 return@Try emptyList()
             }
 
-            // TODO(archives): !!!!!!!!!!!!!
-//            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
-//            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
-//
-//            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
-//                    threadDescriptor,
-//                    archivePostsNoList
-//            ).unwrap().toSet()
-//
-//            val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
-//                return@filter archivePost.postNo !in freshPostNoSet
-//                        && archivePost.postNo !in notCachedArchivePostNoSet
-//            }
-//
-//            Logger.d(TAG, "archivesRepository.fetchThreadFromNetwork fetched " +
-//                    "${archiveThread.posts.size} posts in total and " +
-//                    "${archivePostsThatWereDeleted.size} deleted posts")
+            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
+            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
+
+            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
+                    threadDescriptor,
+                    archivePostsNoList
+            ).unwrap().toSet()
+
+            val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
+                return@filter archivePost.postNo !in freshPostNoSet
+                        && archivePost.postNo in notCachedArchivePostNoSet
+            }
+
+            Logger.d(TAG, "thirdPartyArchiveInfoRepository.fetchThreadFromNetwork fetched " +
+                    "${archiveThread.posts.size} posts in total and " +
+                    "${archivePostsThatWereDeleted.size} deleted posts")
 
             val mappedArchivePosts = ArchiveThreadMapper.fromThread(
                     loadable.board,
-//                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted),
-                    archiveThread
+                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted)
             )
 
-            // TODO(archives): this is probably okay but just to make sure I need to double check this
             mappedArchivePosts.forEach { postBuilder ->
                 postBuilder.setArchiveDescriptor(archiveDescriptor)
             }
@@ -310,7 +342,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun storeNewPostsInRepository(
+    suspend fun storeNewPostsInRepository(
             posts: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
@@ -336,7 +368,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         ).unwrap()
     }
 
-    private suspend fun reloadPostsFromRepository(
+    suspend fun reloadPostsFromRepository(
             chanReaderProcessor: ChanReaderProcessor,
             chanDescriptor: ChanDescriptor
     ): List<Post> {
@@ -375,7 +407,13 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             loadable: Loadable,
             postBuildersToParse: List<Post.Builder>
     ): List<Post> {
-        val internalIds = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
+        if (postBuildersToParse.isEmpty()) {
+            return emptyList()
+        }
+
+        val internalIds = postBuildersToParse.map { postBuilder ->
+            return@map postBuilder.id
+        }.toSet()
 
         return postBuildersToParse
                 .map { postToParse ->

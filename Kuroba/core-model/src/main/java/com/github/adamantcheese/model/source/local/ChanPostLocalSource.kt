@@ -46,7 +46,6 @@ class ChanPostLocalSource(
                 first.postDescriptor.descriptor.boardCode()
         )
 
-        // TODO(archives): BATCHING!!!!!!! Too many separate insert queries!
         return chanOriginalPostList.map { chanPost ->
             val threadNo = chanPost.postDescriptor.getThreadNo()
 
@@ -57,7 +56,6 @@ class ChanPostLocalSource(
             )
 
             insertPostFullyInternal(chanThreadId, chanPost)
-
             return@map chanThreadId
         }
     }
@@ -65,13 +63,28 @@ class ChanPostLocalSource(
     suspend fun insertPosts(chanThreadId: Long, chanPostList: List<ChanPost>) {
         ensureInTransaction()
 
-        // TODO(archives): BATCHING!!!!!!! Too many separate insert queries!
+        val originalPost = chanPostList.firstOrNull { chanPost -> chanPost.isOp }
+        if (originalPost != null) {
+            val chanBoardEntity = chanBoardDao.insert(
+                    originalPost.postDescriptor.descriptor.siteName(),
+                    originalPost.postDescriptor.descriptor.boardCode()
+            )
+
+            val threadNo = originalPost.postDescriptor.getThreadNo()
+
+            chanThreadDao.insertOrUpdate(
+                    chanBoardEntity.boardId,
+                    threadNo,
+                    ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, originalPost)
+            )
+        }
+
         chanPostList.forEach { chanPost ->
             insertPostFullyInternal(chanThreadId, chanPost)
         }
     }
 
-    suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
+    private suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
         ensureInTransaction()
 
         val chanPostEntityId = chanPostDao.insertOrUpdate(
