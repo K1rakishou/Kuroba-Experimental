@@ -31,7 +31,8 @@ class ArchivesManager(
         private val appContext: Context,
         private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
         private val gson: Gson,
-        private val appConstants: AppConstants
+        private val appConstants: AppConstants,
+        private val verboseLogsEnabled: Boolean
 ) : CoroutineScope {
     private val supervisorJob = SupervisorJob()
 
@@ -88,6 +89,10 @@ class ArchivesManager(
             }
 
             if (suitableArchives.isEmpty()) {
+                if (verboseLogsEnabled) {
+                    Logger.d(TAG, "No archives for board (${threadDescriptor.boardCode()})")
+                }
+
                 return@Try null
             }
 
@@ -98,6 +103,10 @@ class ArchivesManager(
             }
 
             if (enabledSuitableArchives.isEmpty()) {
+                if (verboseLogsEnabled) {
+                    Logger.d(TAG, "All archives are disabled")
+                }
+
                 return@Try null
             }
 
@@ -114,7 +123,8 @@ class ArchivesManager(
             suitableArchives: List<ArchiveData>,
             forced: Boolean
     ): ArchiveDescriptor? {
-        Logger.d(TAG, "getBestPossibleArchiveOrNull($threadDescriptor, $suitableArchives, $forced)")
+        Logger.d(TAG, "getBestPossibleArchiveOrNull(threadDescriptor=$threadDescriptor, " +
+                "suitableArchivesSize=${suitableArchives.size}, forced=$forced)")
 
         // Get fetch history (last N fetch results) for this thread for every suitable archive
         val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
@@ -148,9 +158,20 @@ class ArchivesManager(
             return@mapNotNull archiveDescriptor to calculateFetchResultsScore(fetchHistoryList)
         }.sortedByDescending { (_, successfulFetchesCount) -> successfulFetchesCount }
 
-        Logger.d(TAG, "$sortedFetchHistoryList")
         if (sortedFetchHistoryList.isEmpty()) {
+            if (verboseLogsEnabled) {
+                Logger.d(TAG, "sortedFetchHistoryList is empty")
+            }
+
             return null
+        }
+
+        if (verboseLogsEnabled) {
+            sortedFetchHistoryList.forEachIndexed { index, pair ->
+                val (archiveDescriptor, score) = pair
+
+                Logger.d(TAG, "sortedFetchHistoryList[$index]: archiveDescriptor=$archiveDescriptor, score=$score")
+            }
         }
 
         if (!forced) {

@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState
 import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.model.orm.SavedThread
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequestExecutor
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequestExecutor.Companion.getChanUrl
@@ -373,7 +374,8 @@ class ChanThreadLoader(
                 appConstants,
                 archivesManager,
                 thirdPartyArchiveInfoRepository,
-                requestParams
+                requestParams,
+                ChanSettings.verboseLogs.get()
         )
 
         val url = getChanUrl(loadable).toString()

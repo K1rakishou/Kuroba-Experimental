@@ -41,6 +41,7 @@ import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
@@ -161,7 +162,13 @@ public class ManagerModule {
             AppConstants appConstants
     ) {
         Logger.d(AppModule.DI_TAG, "Archives manager (4chan only)");
-        return new ArchivesManager(appContext, thirdPartyArchiveInfoRepository, gson, appConstants);
+        return new ArchivesManager(
+                appContext,
+                thirdPartyArchiveInfoRepository,
+                gson,
+                appConstants,
+                ChanSettings.verboseLogs.get()
+        );
     }
 
     @Provides

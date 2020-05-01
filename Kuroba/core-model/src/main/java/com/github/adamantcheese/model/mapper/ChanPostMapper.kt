@@ -32,7 +32,7 @@ object ChanPostMapper {
     fun fromEntity(
             gson: Gson,
             chanDescriptor: ChanDescriptor,
-            chanThreadEntity: ChanThreadEntity?,
+            chanThreadEntity: ChanThreadEntity,
             chanPostEntity: ChanPostEntity?,
             chanTextSpanEntityList: List<ChanTextSpanEntity>?
     ): ChanPost? {
@@ -72,7 +72,7 @@ object ChanPostMapper {
             )
         }
 
-        if (chanThreadEntity != null) {
+        if (chanPostEntity.isOp) {
             return ChanPost(
                     databasePostId = chanPostEntity.postId,
                     postDescriptor = postDescriptor,

@@ -277,7 +277,7 @@ class ChanPostLocalSource(
                     return@mapNotNull ChanPostMapper.fromEntity(
                             gson,
                             descriptor,
-                            null,
+                            chanThreadEntity,
                             chanPostEntity,
                             postTextSnapEntityList
                     )

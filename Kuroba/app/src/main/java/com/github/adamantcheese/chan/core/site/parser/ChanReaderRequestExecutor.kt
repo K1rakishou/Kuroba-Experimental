@@ -76,7 +76,8 @@ class ChanReaderRequestExecutor(
         private val appConstants: AppConstants,
         private val archivesManager: ArchivesManager,
         private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
-        private val request: ChanLoaderRequestParams
+        private val request: ChanLoaderRequestParams,
+        private val verboseLogsEnabled: Boolean
 ) : CoroutineScope {
     private val job = SupervisorJob()
 
@@ -165,13 +166,11 @@ class ChanReaderRequestExecutor(
         }
 
         val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
-        val archiveDescriptor = archivesManager.getArchiveDescriptor(
-                threadDescriptor,
-                forceLoading
-        ).safeUnwrap { error ->
-            Logger.e(TAG, "Error while trying to get archive descriptor", error)
-            return null
-        }
+        val archiveDescriptor = archivesManager.getArchiveDescriptor(threadDescriptor, forceLoading)
+                .safeUnwrap { error ->
+                    Logger.e(TAG, "Error while trying to get archive descriptor", error)
+                    return null
+                }
 
         return ChanLoaderResponse(originalPost.toPostBuilder(archiveDescriptor), reloadedPosts)
     }
@@ -252,12 +251,17 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             ).unwrap()
 
             if (archiveDescriptor == null) {
+                if (verboseLogsEnabled) {
+                    Logger.d(TAG, "No archives for thread descriptor: $threadDescriptor")
+                }
+
                 // We probably don't have archives for this site or all archives are dead
-                Logger.d(TAG, "No archives for thread descriptor: $threadDescriptor")
                 return@Try emptyList()
             }
 
-            Logger.d(TAG, "Got archive descriptor: $archiveDescriptor")
+            if (verboseLogsEnabled) {
+                Logger.d(TAG, "Got archive descriptor: $archiveDescriptor")
+            }
 
             val threadArchiveRequestLink = archivesManager.getRequestLinkForThread(
                     threadDescriptor,
@@ -407,6 +411,11 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             loadable: Loadable,
             postBuildersToParse: List<Post.Builder>
     ): List<Post> {
+        if (verboseLogsEnabled) {
+            Logger.d(TAG, "parseNewPostsPosts(loadable=${loadable.toShortString()}, " +
+                    "postsToParseSize=${postBuildersToParse.size}")
+        }
+
         if (postBuildersToParse.isEmpty()) {
             return emptyList()
         }
