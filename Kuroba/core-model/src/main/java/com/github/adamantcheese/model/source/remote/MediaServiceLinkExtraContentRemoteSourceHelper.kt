@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import com.github.adamantcheese.model.util.ensureBackgroundThread
 import com.google.gson.JsonElement
@@ -15,8 +15,8 @@ internal object MediaServiceLinkExtraContentRemoteSourceHelper {
     ): ModularResult<Period> {
         ensureBackgroundThread()
 
-        return safeRun {
-            return@safeRun when (mediaServiceType) {
+        return Try {
+            return@Try when (mediaServiceType) {
                 MediaServiceType.Youtube -> tryExtractYoutubeVideoDuration(parser)
             }
         }
@@ -28,8 +28,8 @@ internal object MediaServiceLinkExtraContentRemoteSourceHelper {
     ): ModularResult<String> {
         ensureBackgroundThread()
 
-        return safeRun {
-            return@safeRun when (mediaServiceType) {
+        return Try {
+            return@Try when (mediaServiceType) {
                 MediaServiceType.Youtube -> tryExtractYoutubeVideoTitle(parser)
             }
         }

@@ -4,7 +4,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -19,8 +19,8 @@ object ArchiveThreadMapper {
         val imagesCount = archiveThread.posts.sumBy { post -> post.archivePostMediaList.size }
 
         return archiveThread.posts.mapNotNull { post ->
-            return@mapNotNull safeRun {
-                return@safeRun fromPost(board, repliesCount, imagesCount, post)
+            return@mapNotNull Try {
+                return@Try fromPost(board, repliesCount, imagesCount, post)
             }.safeUnwrap { error ->
                 Logger.e(TAG, "Error mapping archive post ${post.postNo}", error)
                 return@mapNotNull null
@@ -35,8 +35,8 @@ object ArchiveThreadMapper {
             archivePost: ArchivesRemoteSource.ArchivePost
     ): Post.Builder {
         val images = archivePost.archivePostMediaList.mapNotNull { archivePostMedia ->
-            return@mapNotNull safeRun {
-                return@safeRun fromPostMedia(archivePostMedia)
+            return@mapNotNull Try {
+                return@Try fromPostMedia(archivePostMedia)
             }.safeUnwrap { error ->
                 Logger.e(TAG, "Error mapping archive post media ${archivePostMedia.imageUrl}", error)
                 return@mapNotNull null

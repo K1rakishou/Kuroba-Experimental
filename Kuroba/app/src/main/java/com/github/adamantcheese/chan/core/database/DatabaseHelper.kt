@@ -24,7 +24,7 @@ import com.github.adamantcheese.chan.core.settings.*
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.stmt.DeleteBuilder
@@ -266,7 +266,7 @@ class DatabaseHelper @Inject constructor(
                 }
 
                 //some descriptions changed for arisuchan
-                safeRun {
+                Try {
                     val art = boardsDao.queryForEq("key", "art and design")[0]
                     if (art != null) {
                         art.name = "art and creative"
@@ -274,7 +274,7 @@ class DatabaseHelper @Inject constructor(
                     }
                 }.ignore()
 
-                safeRun {
+                Try {
                     val sci = boardsDao.queryForEq("key", "science and technology")[0]
                     if (sci != null) {
                         sci.name = "technology"
@@ -282,7 +282,7 @@ class DatabaseHelper @Inject constructor(
                     }
                 }.ignore()
 
-                safeRun {
+                Try {
                     val diy = boardsDao.queryForEq("key", "diy and projects")[0]
                     if (diy != null) {
                         diy.name = "shape your world"
@@ -290,7 +290,7 @@ class DatabaseHelper @Inject constructor(
                     }
                 }.ignore()
 
-                safeRun {
+                Try {
                     val ru = boardsDao.queryForEq("key", "киберпанк-доска")[0]
                     if (ru != null) {
                         ru.name = "Киберпанк"

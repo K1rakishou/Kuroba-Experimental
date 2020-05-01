@@ -76,7 +76,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     ): ModularResult<SpanUpdateBatch> {
         BackgroundUtils.ensureBackgroundThread()
 
-        return ModularResult.safeRun {
+        return ModularResult.Try {
             val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
                 is ModularResult.Error -> ExtraLinkInfo.Error
                 is ModularResult.Value -> {
@@ -92,7 +92,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
                 }
             }
 
-            return@safeRun SpanUpdateBatch(
+            return@Try SpanUpdateBatch(
                     url,
                     extraLinkInfo,
                     oldPostLinkableSpans,

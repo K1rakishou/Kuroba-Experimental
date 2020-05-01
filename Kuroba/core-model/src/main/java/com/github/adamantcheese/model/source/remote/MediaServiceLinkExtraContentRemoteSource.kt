@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.MediaServiceLinkExtraInfo
@@ -27,7 +27,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
         logger.log(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
         ensureBackgroundThread()
 
-        return safeRun {
+        return Try {
             val httpRequest = Request.Builder()
                     .url(requestUrl)
                     .get()
@@ -35,10 +35,10 @@ open class MediaServiceLinkExtraContentRemoteSource(
 
             val response = okHttpClient.suspendCall(httpRequest)
             if (!response.isSuccessful) {
-                return@safeRun MediaServiceLinkExtraInfo.empty()
+                return@Try MediaServiceLinkExtraInfo.empty()
             }
 
-            return@safeRun extractMediaServiceLinkExtraInfo(
+            return@Try extractMediaServiceLinkExtraInfo(
                     mediaServiceType,
                     response
             )

@@ -8,7 +8,7 @@ import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import io.reactivex.Flowable
@@ -65,13 +65,13 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
     fun onArchiveSettingClicked(archiveInfo: ArchiveInfo) {
         scope.launch {
-            safeRun {
+            Try {
                 val isEnabled = archivesManager.isArchiveEnabled(archiveInfo.archiveDescriptor).unwrap()
                 archivesManager.setArchiveEnabled(archiveInfo.archiveDescriptor, !isEnabled).unwrap()
 
                 if (!isCurrentState<ArchivesSettingsState.ArchivesLoaded>()) {
                     loadArchivesAndShow()
-                    return@safeRun
+                    return@Try
                 }
 
                 val fetchHistory = archivesManager.selectLatestFetchHistory(
@@ -214,17 +214,17 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
     }
 
     private suspend fun loadArchives(): ModularResult<List<ArchiveInfo>> {
-        return safeRun {
+        return Try {
             val archivesFetchHistoryMap = archivesManager.selectLatestFetchHistoryForAllArchives()
                     .unwrap()
 
-            return@safeRun archivesManager.getAllArchiveData().map { archiveData ->
+            return@Try archivesManager.getAllArchiveData().map { archiveData ->
                 return@map loadArchiveInfo(archiveData, archivesFetchHistoryMap)
             }
         }
     }
 
-    private suspend fun loadArchiveInfo(
+    suspend fun loadArchiveInfo(
             archiveData: ArchivesManager.ArchiveData,
             archivesFetchHistoryMap: Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>
     ): ArchiveInfo {

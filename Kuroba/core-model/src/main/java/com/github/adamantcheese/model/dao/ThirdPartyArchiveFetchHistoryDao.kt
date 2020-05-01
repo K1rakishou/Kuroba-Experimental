@@ -30,6 +30,25 @@ abstract class ThirdPartyArchiveFetchHistoryDao {
     ): List<ThirdPartyArchiveFetchHistoryEntity>
 
     @Query("""
+        SELECT *
+        FROM ${ThirdPartyArchiveFetchHistoryEntity.TABLE_NAME}
+        WHERE
+            ${ThirdPartyArchiveFetchHistoryEntity.OWNER_THIRD_PARTY_ARCHIVE_ID_COLUMN_NAME} = :ownerArchiveId
+        AND 
+            ${ThirdPartyArchiveFetchHistoryEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerChanThreadId
+        AND 
+            ${ThirdPartyArchiveFetchHistoryEntity.INSERTED_ON_COLUMN_NAME} > :newerThan
+        ORDER BY ${ThirdPartyArchiveFetchHistoryEntity.INSERTED_ON_COLUMN_NAME} DESC
+        LIMIT :maxCount
+    """)
+    abstract suspend fun selectLatestForThread(
+            ownerArchiveId: Long,
+            ownerChanThreadId: Long,
+            newerThan: DateTime,
+            maxCount: Int
+    ): List<ThirdPartyArchiveFetchHistoryEntity>
+
+    @Query("""
         DELETE FROM ${ThirdPartyArchiveFetchHistoryEntity.TABLE_NAME}
         WHERE ${ThirdPartyArchiveFetchHistoryEntity.ID_COLUMN_NAME} = :databaseId
     """)
@@ -37,8 +56,11 @@ abstract class ThirdPartyArchiveFetchHistoryDao {
 
     @Query("""
         DELETE FROM ${ThirdPartyArchiveFetchHistoryEntity.TABLE_NAME}
-        WHERE ${ThirdPartyArchiveFetchHistoryEntity.INSERTED_ON_COLUMN_NAME} < :olderThan
+        WHERE 
+            ${ThirdPartyArchiveFetchHistoryEntity.OWNER_THIRD_PARTY_ARCHIVE_ID_COLUMN_NAME} = :ownerThirdPartyArchiveId
+        AND
+            ${ThirdPartyArchiveFetchHistoryEntity.ID_COLUMN_NAME} < :minFetchHistoryId
     """)
-    abstract suspend fun deleteOlderThan(olderThan: DateTime)
+    abstract suspend fun deleteOlderThan(ownerThirdPartyArchiveId: Long, minFetchHistoryId: Long): Int
 
 }

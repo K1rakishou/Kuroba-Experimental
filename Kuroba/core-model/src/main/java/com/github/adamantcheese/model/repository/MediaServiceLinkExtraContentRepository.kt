@@ -32,7 +32,7 @@ class MediaServiceLinkExtraContentRepository(
                 cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(videoId) },
                 getFromLocalSourceFunc = {
-                    withTransactionSafe {
+                    tryWithTransaction {
                         mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
                     }
                 },
@@ -40,7 +40,7 @@ class MediaServiceLinkExtraContentRepository(
                     mediaServiceLinkExtraContentRemoteSource.fetchFromNetwork(
                             requestUrl,
                             mediaServiceType
-                    ).map {
+                    ).mapValue {
                         MediaServiceLinkExtraContent(
                                 videoId,
                                 mediaServiceType,
@@ -53,7 +53,7 @@ class MediaServiceLinkExtraContentRepository(
                         cache.store(requestUrl, mediaServiceLinkExtraContent)
                 },
                 storeIntoLocalSourceFunc = { mediaServiceLinkExtraContent ->
-                    withTransactionSafe {
+                    tryWithTransaction {
                         mediaServiceLinkExtraContentLocalSource.insert(mediaServiceLinkExtraContent)
                     }
                 },
@@ -62,13 +62,13 @@ class MediaServiceLinkExtraContentRepository(
     }
 
     suspend fun isCached(videoId: String): ModularResult<Boolean> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             val hasInCache = cache.contains(videoId)
             if (hasInCache) {
-                return@withTransactionSafe true
+                return@tryWithTransaction true
             }
 
-            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId) != null
+            return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId) != null
         }
     }
 
@@ -77,18 +77,18 @@ class MediaServiceLinkExtraContentRepository(
     }
 
     suspend fun deleteAll(): ModularResult<Int> {
-        return withTransactionSafe {
-            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.deleteAll()
+        return tryWithTransaction {
+            return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.deleteAll()
         }
     }
 
     private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             if (!alreadyExecuted.compareAndSet(false, true)) {
-                return@withTransactionSafe 0
+                return@tryWithTransaction 0
             }
 
-            return@withTransactionSafe mediaServiceLinkExtraContentLocalSource.deleteOlderThan(
+            return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.deleteOlderThan(
                     MediaServiceLinkExtraContentLocalSource.ONE_WEEK_AGO
             )
         }

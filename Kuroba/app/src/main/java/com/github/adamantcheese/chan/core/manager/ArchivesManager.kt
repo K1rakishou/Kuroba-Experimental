@@ -1,9 +1,10 @@
 package com.github.adamantcheese.chan.core.manager
 
 import android.content.Context
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
@@ -74,10 +75,12 @@ class ArchivesManager(
             threadDescriptor: ChanDescriptor.ThreadDescriptor,
             forced: Boolean
     ): ModularResult<ArchiveDescriptor?> {
-        return safeRun {
+        Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor, forced=$forced)")
+
+        return Try {
             if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
                 // Only 4chan archives are supported
-                return@safeRun null
+                return@Try null
             }
 
             val suitableArchives = allArchivesData.filter { archiveData ->
@@ -85,7 +88,7 @@ class ArchivesManager(
             }
 
             if (suitableArchives.isEmpty()) {
-                return@safeRun null
+                return@Try null
             }
 
             val enabledSuitableArchives = suitableArchives.filter { suitableArchive ->
@@ -95,10 +98,10 @@ class ArchivesManager(
             }
 
             if (enabledSuitableArchives.isEmpty()) {
-                return@safeRun null
+                return@Try null
             }
 
-            return@safeRun getBestPossibleArchiveOrNull(
+            return@Try getBestPossibleArchiveOrNull(
                     threadDescriptor,
                     enabledSuitableArchives,
                     forced
@@ -111,6 +114,8 @@ class ArchivesManager(
             suitableArchives: List<ArchiveData>,
             forced: Boolean
     ): ArchiveDescriptor? {
+        Logger.d(TAG, "getBestPossibleArchiveOrNull($threadDescriptor, $suitableArchives, $forced)")
+
         // Get fetch history (last N fetch results) for this thread for every suitable archive
         val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
                 suitableArchives.map { it.getArchiveDescriptor() },
@@ -143,6 +148,7 @@ class ArchivesManager(
             return@mapNotNull archiveDescriptor to calculateFetchResultsScore(fetchHistoryList)
         }.sortedByDescending { (_, successfulFetchesCount) -> successfulFetchesCount }
 
+        Logger.d(TAG, "$sortedFetchHistoryList")
         if (sortedFetchHistoryList.isEmpty()) {
             return null
         }
@@ -279,11 +285,7 @@ class ArchivesManager(
     }
 
     fun archiveStoresThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
-        return when (archiveDescriptor.domain) {
-            // Archived.moe stores only thumbnails
-            "archived.moe" -> true
-            else -> false
-        }
+        return archiveDescriptor.domain in archivesThatOnlyStoreThumbnails
     }
 
     private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
@@ -385,8 +387,17 @@ class ArchivesManager(
         private val disabledArchives = setOf(
                 // Disabled because it's weird as hell. I can't even say whether it's working or not.
                 "archive.b-stats.org",
-                // Disabled because it requires Cloudflare check which is not supported for now.
-                "warosu.org"
+                // Disabled because it requires Cloudflare authentication which is not supported for
+                // now.
+                "warosu.org",
+                // Disable because it always returns 403 when sending requests via the OkHttpClient,
+                // but works normally when opening in the browser. Apparently some kind of
+                // authentication is required.
+                "thebarchive.com"
+        )
+
+        private val archivesThatOnlyStoreThumbnails = setOf(
+                "archived.moe"
         )
 
         // We can forcefully fetch posts from an archive no more than once in 5 minutes

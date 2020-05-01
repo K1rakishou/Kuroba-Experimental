@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.InlinedFileInfo
@@ -20,7 +20,7 @@ open class InlinedFileInfoRemoteSource(
         logger.log(TAG, "fetchFromNetwork($fileUrl)")
         ensureBackgroundThread()
 
-        return safeRun {
+        return Try {
             val httpRequest = Request.Builder()
                     .url(fileUrl)
                     .head()
@@ -28,7 +28,7 @@ open class InlinedFileInfoRemoteSource(
 
             val response = okHttpClient.suspendCall(httpRequest)
             if (!response.isSuccessful) {
-                return@safeRun InlinedFileInfo.empty(fileUrl)
+                return@Try InlinedFileInfo.empty(fileUrl)
             }
 
             val result = InlinedFileInfoRemoteSourceHelper.extractInlinedFileInfo(
@@ -36,7 +36,7 @@ open class InlinedFileInfoRemoteSource(
                     response.headers
             )
 
-            return@safeRun result.unwrap()
+            return@Try result.unwrap()
         }
     }
 }

@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.repository
 
 import androidx.room.withTransaction
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.util.errorMessageOrClassName
@@ -11,8 +12,8 @@ abstract class AbstractRepository(
         protected val logger: Logger
 ) {
 
-    protected suspend fun <T> withTransactionSafe(func: suspend () -> T): ModularResult<T> {
-        return ModularResult.safeRun { database.withTransaction(func) }
+    protected suspend fun <T> tryWithTransaction(func: suspend () -> T): ModularResult<T> {
+        return Try { database.withTransaction(func) }
     }
 
     protected fun isInTransaction() = database.inTransaction()

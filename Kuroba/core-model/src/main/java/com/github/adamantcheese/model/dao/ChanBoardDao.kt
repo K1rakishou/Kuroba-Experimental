@@ -33,6 +33,13 @@ abstract class ChanBoardDao {
     """)
     abstract suspend fun select(boardId: Long): ChanBoardEntity?
 
+    @Query("""
+        SELECT *
+        FROM ${ChanBoardEntity.TABLE_NAME}
+        WHERE ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} IN (:boardIdList)
+    """)
+    abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardEntity>
+
     suspend fun insert(siteName: String, boardCode: String): ChanBoardEntity {
         val prev = select(siteName, boardCode)
         if (prev != null) {

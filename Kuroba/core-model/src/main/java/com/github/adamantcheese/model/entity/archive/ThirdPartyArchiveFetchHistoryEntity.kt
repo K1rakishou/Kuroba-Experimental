@@ -40,7 +40,7 @@ import org.joda.time.DateTime
             )
         ]
 )
-class ThirdPartyArchiveFetchHistoryEntity(
+data class ThirdPartyArchiveFetchHistoryEntity(
         @PrimaryKey(autoGenerate = true)
         @ColumnInfo(name = ID_COLUMN_NAME)
         val id: Long,

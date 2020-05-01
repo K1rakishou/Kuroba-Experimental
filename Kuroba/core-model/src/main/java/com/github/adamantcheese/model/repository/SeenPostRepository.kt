@@ -20,18 +20,18 @@ class SeenPostRepository(
     private val alreadyExecuted = AtomicBoolean(false)
 
     suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             seenPostLocalRepositoryCleanup()
 
-            return@withTransactionSafe seenPostLocalSource.insert(seenPost)
+            return@tryWithTransaction seenPostLocalSource.insert(seenPost)
         }
     }
 
     suspend fun selectAllByThreadDescriptor(
             threadDescriptor: ChanDescriptor.ThreadDescriptor
     ): ModularResult<List<SeenPost>> {
-        return withTransactionSafe {
-            return@withTransactionSafe seenPostLocalSource.selectAllByThreadDescriptor(threadDescriptor)
+        return tryWithTransaction {
+            return@tryWithTransaction seenPostLocalSource.selectAllByThreadDescriptor(threadDescriptor)
         }
     }
 

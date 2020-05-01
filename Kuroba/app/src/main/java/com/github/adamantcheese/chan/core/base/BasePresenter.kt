@@ -57,7 +57,7 @@ abstract class BasePresenter<V> {
 
         view?.let { v ->
             withContext(scope.coroutineContext) {
-                val result = ModularResult.safeRun { func(v) }
+                val result = ModularResult.Try { func(v) }
                 handleResult(result)
             }
         }
@@ -76,7 +76,7 @@ abstract class BasePresenter<V> {
 
         view?.let { v ->
             runBlocking {
-                val result = ModularResult.safeRun { func(v) }
+                val result = ModularResult.Try { func(v) }
                 handleResult(result)
             }
         }

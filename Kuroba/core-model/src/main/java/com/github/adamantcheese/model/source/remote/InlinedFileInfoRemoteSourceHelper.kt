@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.source.remote
 
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.InlinedFileInfo
 import com.github.adamantcheese.model.util.ensureBackgroundThread
 import okhttp3.Headers
@@ -12,10 +12,10 @@ object InlinedFileInfoRemoteSourceHelper {
     fun extractInlinedFileInfo(fileUrl: String, headers: Headers): ModularResult<InlinedFileInfo> {
         ensureBackgroundThread()
 
-        return safeRun {
+        return Try {
             val fileSize = headers[CONTENT_LENGTH_HEADER]?.toLong()
 
-            return@safeRun InlinedFileInfo(fileUrl, fileSize)
+            return@Try InlinedFileInfo(fileUrl, fileSize)
         }
     }
 

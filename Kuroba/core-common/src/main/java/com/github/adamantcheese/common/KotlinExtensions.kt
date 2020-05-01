@@ -11,7 +11,7 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
         val call = newCall(request)
 
         continuation.invokeOnCancellation {
-            ModularResult.safeRun { call.cancel() }.ignore()
+            ModularResult.Try { call.cancel() }.ignore()
         }
 
         call.enqueue(object : Callback {
@@ -24,4 +24,19 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
             }
         })
     }
+}
+
+public inline fun <T, R> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R>?): List<R> {
+    return flatMapNotNullTo(ArrayList<R>(), transform)
+}
+
+public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(destination: C, transform: (T) -> Iterable<R>?): C {
+    for (element in this) {
+        val list = transform(element)
+
+        if (list != null) {
+            destination.addAll(list)
+        }
+    }
+    return destination
 }

@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 import org.joda.time.DateTime
@@ -55,7 +56,7 @@ class ThirdPartyArchiveInfoLocalSource(
         ensureInTransaction()
         require(fetchResult.databaseId == 0L) { "Bad fetchResult.databaseId: ${fetchResult.databaseId}" }
 
-        val chanThreadId = getChanThreadIdOrNull(fetchResult)
+        val chanThreadId = getChanThreadIdOrNull(fetchResult.threadDescriptor)
                 ?: return null
 
         val thirdPartyArchiveInfoEntity = thirdPartyArchiveInfoDao.select(
@@ -84,20 +85,91 @@ class ThirdPartyArchiveInfoLocalSource(
         return fetchResult.copy(databaseId = databaseId)
     }
 
-    private suspend fun getChanThreadIdOrNull(fetchResult: ThirdPartyArchiveFetchResult): Long? {
-        val chanBoardEntity = chanBoardDao.select(
-                fetchResult.threadDescriptor.siteName(),
-                fetchResult.threadDescriptor.boardCode()
-        )
+    suspend fun selectLatestFetchHistory(
+            archiveDescriptorList: List<ArchiveDescriptor>,
+            newerThan: DateTime,
+            count: Int
+    ): Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>> {
+        ensureInTransaction()
 
-        if (chanBoardEntity == null) {
-            return null
+        val domainList = archiveDescriptorList.map { archiveDescriptor -> archiveDescriptor.domain }
+        if (domainList.isEmpty()) {
+            return emptyMap()
         }
 
-        return chanThreadDao.select(
-                chanBoardEntity.boardId,
-                fetchResult.threadDescriptor.opNo
-        )?.threadId
+        val thirdPartyArchiveInfoEntityList = thirdPartyArchiveInfoDao.selectMany(domainList)
+        if (thirdPartyArchiveInfoEntityList.isEmpty()) {
+            return emptyMap()
+        }
+
+        val fetchHistoryList = thirdPartyArchiveInfoEntityList.flatMap { thirdPartyArchiveInfoEntity ->
+            return@flatMap thirdPartyArchiveFetchHistoryDao.selectLatest(
+                    thirdPartyArchiveInfoEntity.archiveId,
+                    newerThan,
+                    count
+            )
+        }
+
+        if (fetchHistoryList.isEmpty()) {
+            return emptyMap()
+        }
+
+        // This thing is a little bit tricky because we need to get N latest fetch results overall,
+        // but ThirdPartyArchiveFetchResult requires us to provide ThreadDescriptor as well, which
+        // we don't have here. So we are forced to construct them manually by searching all the
+        // necessary stuff in the database directly.
+        val chanThreadEntityMap = fetchHistoryList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .map { fetchHistoryList -> fetchHistoryList.map { fetchHistory -> fetchHistory.ownerThreadId } }
+                .flatMap { ownerThreadIdListChunk -> chanThreadDao.selectManyByThreadIdList(ownerThreadIdListChunk) }
+                .groupBy { chanThreadEntity -> chanThreadEntity.threadId }
+
+        val chanBoardIdList = chanThreadEntityMap.values.flatMap { chanThreadEntityList ->
+            return@flatMap chanThreadEntityList.map { chanThreadEntity -> chanThreadEntity.ownerBoardId }
+        }.distinct()
+
+        val chanBoardEntityMap = chanBoardIdList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chanBoardIdListChunk -> chanBoardDao.selectMany(chanBoardIdListChunk) }
+                .associateBy { chanThreadEntity -> chanThreadEntity.boardId }
+
+        val archiveDescriptorMap = archiveDescriptorList
+                .associateBy { archiveDescriptor -> archiveDescriptor.domain }
+        val thirdPartyArchiveInfoEntityMap = thirdPartyArchiveInfoEntityList
+                .associateBy { thirdPartyArchiveInfoEntity -> thirdPartyArchiveInfoEntity.archiveId }
+
+        return fetchHistoryList
+                .sortedByDescending { thirdPartyArchiveFetchHistoryEntity ->
+                    return@sortedByDescending thirdPartyArchiveFetchHistoryEntity.insertedOn
+                }
+                .mapNotNull { thirdPartyArchiveFetchHistoryEntity ->
+                    val archiveId = thirdPartyArchiveFetchHistoryEntity.ownerThirdPartyArchiveId
+                    val threadId = thirdPartyArchiveFetchHistoryEntity.ownerThreadId
+                    val domain = thirdPartyArchiveInfoEntityMap[archiveId]?.archiveDomain
+
+                    val archiveDescriptor = archiveDescriptorMap[domain]
+                            ?: return@mapNotNull null
+                    val chanThreadEntity = chanThreadEntityMap[threadId]?.firstOrNull()
+                            ?: return@mapNotNull null
+                    val chanBoardEntity = chanBoardEntityMap[chanThreadEntity.ownerBoardId]
+                            ?: return@mapNotNull null
+
+                    val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+                            chanBoardEntity.siteName,
+                            chanBoardEntity.boardCode,
+                            chanThreadEntity.threadNo
+                    )
+
+                    return@mapNotNull ThirdPartyArchiveFetchResult(
+                            databaseId = thirdPartyArchiveFetchHistoryEntity.id,
+                            archiveDescriptor = archiveDescriptor,
+                            threadDescriptor = threadDescriptor,
+                            success = thirdPartyArchiveFetchHistoryEntity.success,
+                            errorText = thirdPartyArchiveFetchHistoryEntity.errorText,
+                            insertedOn = thirdPartyArchiveFetchHistoryEntity.insertedOn
+                    )
+                }
+                .groupBy { fetchResult -> fetchResult.archiveDescriptor }
     }
 
     suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
@@ -120,16 +192,41 @@ class ThirdPartyArchiveInfoLocalSource(
         return thirdPartyArchiveInfoDao.select(archiveDescriptor.domain) != null
     }
 
+    suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): Boolean {
+        ensureInTransaction()
+
+        return thirdPartyArchiveInfoDao.isArchiveEnabled(archiveDescriptor.domain)
+    }
+
     suspend fun setArchiveEnabled(archiveDescriptor: ArchiveDescriptor, enabled: Boolean) {
         ensureInTransaction()
 
         thirdPartyArchiveInfoDao.updateArchiveEnabled(archiveDescriptor.domain, enabled)
     }
 
-    suspend fun deleteOld(olderThan: DateTime) {
+    suspend fun deleteOlderThan(archiveDescriptor: ArchiveDescriptor, fetchHistoryId: Long): Int {
         ensureInTransaction()
 
-        thirdPartyArchiveFetchHistoryDao.deleteOlderThan(olderThan)
+        val archiveId = thirdPartyArchiveInfoDao.select(archiveDescriptor.domain)?.archiveId
+                ?: return 0
+
+        return thirdPartyArchiveFetchHistoryDao.deleteOlderThan(archiveId, fetchHistoryId)
+    }
+
+    private suspend fun getChanThreadIdOrNull(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
+        val chanBoardEntity = chanBoardDao.select(
+                threadDescriptor.siteName(),
+                threadDescriptor.boardCode()
+        )
+
+        if (chanBoardEntity == null) {
+            return null
+        }
+
+        return chanThreadDao.select(
+                chanBoardEntity.boardId,
+                threadDescriptor.opNo
+        )?.threadId
     }
 
 }

@@ -27,25 +27,25 @@ class InlinedFileInfoRepository(
                 cleanupFunc = { inlinedFileInfoRepositoryCleanup().ignore() },
                 getFromCacheFunc = { cache.get(fileUrl) },
                 getFromLocalSourceFunc = {
-                    withTransactionSafe { inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) }
+                    tryWithTransaction { inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) }
                 },
                 getFromRemoteSourceFunc = { inlinedFileInfoRemoteSource.fetchFromNetwork(fileUrl) },
                 storeIntoCacheFunc = { inlinedFileInfo -> cache.store(fileUrl, inlinedFileInfo) },
                 storeIntoLocalSourceFunc = { inlinedFileInfo ->
-                    withTransactionSafe { inlinedFileInfoLocalSource.insert(inlinedFileInfo) }
+                    tryWithTransaction { inlinedFileInfoLocalSource.insert(inlinedFileInfo) }
                 },
                 tag = TAG
         )
     }
 
     suspend fun isCached(fileUrl: String): ModularResult<Boolean> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             val hasInCache = cache.contains(fileUrl)
             if (hasInCache) {
-                return@withTransactionSafe true
+                return@tryWithTransaction true
             }
 
-            return@withTransactionSafe inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) != null
+            return@tryWithTransaction inlinedFileInfoLocalSource.selectByFileUrl(fileUrl) != null
         }
     }
 
@@ -54,18 +54,18 @@ class InlinedFileInfoRepository(
     }
 
     suspend fun deleteAll(): ModularResult<Int> {
-        return withTransactionSafe {
-            return@withTransactionSafe inlinedFileInfoLocalSource.deleteAll()
+        return tryWithTransaction {
+            return@tryWithTransaction inlinedFileInfoLocalSource.deleteAll()
         }
     }
 
     private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             if (!alreadyExecuted.compareAndSet(false, true)) {
-                return@withTransactionSafe 0
+                return@tryWithTransaction 0
             }
 
-            return@withTransactionSafe inlinedFileInfoLocalSource.deleteOlderThan(
+            return@tryWithTransaction inlinedFileInfoLocalSource.deleteOlderThan(
                     InlinedFileInfoLocalSource.ONE_WEEK_AGO
             )
         }

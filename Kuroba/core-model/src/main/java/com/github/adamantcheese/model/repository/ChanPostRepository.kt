@@ -34,11 +34,11 @@ class ChanPostRepository(
             posts: MutableList<ChanPost>,
             isCatalog: Boolean
     ): ModularResult<List<Long>> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             if (isCatalog) {
-                return@withTransactionSafe insertOrUpdateCatalogOriginalPostsBlocking(posts)
+                return@tryWithTransaction insertOrUpdateCatalogOriginalPostsBlocking(posts)
             } else {
-                return@withTransactionSafe insertOrUpdateThreadPostsBlocking(posts)
+                return@tryWithTransaction insertOrUpdateThreadPostsBlocking(posts)
             }
         }
     }
@@ -154,7 +154,7 @@ class ChanPostRepository(
             descriptor: ChanDescriptor.CatalogDescriptor,
             threadNoList: List<Long>
     ): ModularResult<List<ChanPost>> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
                 postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
             }
@@ -169,7 +169,7 @@ class ChanPostRepository(
 
             if (originalPostNoListToGetFromDatabase.isEmpty()) {
                 // All posts were found in the cache
-                return@withTransactionSafe originalPostsFromCache
+                return@tryWithTransaction originalPostsFromCache
             }
 
             val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
@@ -183,7 +183,7 @@ class ChanPostRepository(
                 }
             }
 
-            return@withTransactionSafe originalPostsFromCache + originalPostsFromDatabase
+            return@tryWithTransaction originalPostsFromCache + originalPostsFromDatabase
         }
     }
 
@@ -191,7 +191,7 @@ class ChanPostRepository(
             descriptor: ChanDescriptor.ThreadDescriptor,
             maxCount: Int
     ): ModularResult<List<ChanPost>> {
-        return withTransactionSafe {
+        return tryWithTransaction {
             val postsFromDatabase = localSource.getThreadPosts(
                     descriptor,
                     maxCount
@@ -203,23 +203,23 @@ class ChanPostRepository(
                 }
             }
 
-            return@withTransactionSafe postsFromDatabase
+            return@tryWithTransaction postsFromDatabase
         }
     }
 
     fun containsPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
         return runBlocking {
-            return@runBlocking withTransactionSafe {
+            return@runBlocking tryWithTransaction {
                 val containsInCache = postCache.getPostFromCache(
                         postDescriptor,
                         isOP
                 ) != null
 
                 if (containsInCache) {
-                    return@withTransactionSafe true
+                    return@tryWithTransaction true
                 }
 
-                return@withTransactionSafe localSource.containsPostBlocking(
+                return@tryWithTransaction localSource.containsPostBlocking(
                         postDescriptor.descriptor,
                         postDescriptor.postNo
                 )
@@ -232,8 +232,8 @@ class ChanPostRepository(
             postNo: Long
     ): ModularResult<Boolean> {
         return runBlocking {
-            return@runBlocking withTransactionSafe {
-                return@withTransactionSafe localSource.containsPostBlocking(descriptor, postNo)
+            return@runBlocking tryWithTransaction {
+                return@tryWithTransaction localSource.containsPostBlocking(descriptor, postNo)
             }
         }
     }
@@ -243,7 +243,7 @@ class ChanPostRepository(
             archivePostsNoList: List<Long>
     ): ModularResult<List<Long>> {
         return runBlocking {
-            return@runBlocking withTransactionSafe {
+            return@runBlocking tryWithTransaction {
                 val cachedInMemorySet = postCache.getAll(threadDescriptor)
                         .map { post -> post.postDescriptor.postNo }.toSet()
 
@@ -252,13 +252,13 @@ class ChanPostRepository(
                 }
 
                 if (notInMemoryCached.isEmpty()) {
-                    return@withTransactionSafe emptyList<Long>()
+                    return@tryWithTransaction emptyList<Long>()
                 }
 
                 val cachedInDatabase = localSource.getThreadPostNoList(threadDescriptor)
                         .toSet()
 
-                return@withTransactionSafe notInMemoryCached.filter { archivePostNo ->
+                return@tryWithTransaction notInMemoryCached.filter { archivePostNo ->
                     archivePostNo !in cachedInDatabase
                 }
             }
@@ -270,8 +270,8 @@ class ChanPostRepository(
     }
 
     suspend fun deleteAll(): ModularResult<Int> {
-        return withTransactionSafe {
-            return@withTransactionSafe localSource.deleteAll()
+        return tryWithTransaction {
+            return@tryWithTransaction localSource.deleteAll()
         }
     }
 }

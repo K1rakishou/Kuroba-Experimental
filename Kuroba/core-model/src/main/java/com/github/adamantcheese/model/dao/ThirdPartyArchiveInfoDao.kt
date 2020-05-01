@@ -19,6 +19,13 @@ abstract class ThirdPartyArchiveInfoDao {
     """)
     abstract suspend fun select(domain: String): ThirdPartyArchiveInfoEntity?
 
+    @Query("""
+        SELECT *
+        FROM ${ThirdPartyArchiveInfoEntity.TABLE_NAME}
+        WHERE ${ThirdPartyArchiveInfoEntity.ARCHIVE_DOMAIN_COLUMN_NAME} IN (:domainList)
+    """)
+    abstract suspend fun selectMany(domainList: List<String>): List<ThirdPartyArchiveInfoEntity>
+
     suspend fun insertOrUpdate(thirdPartyArchiveInfoEntity: ThirdPartyArchiveInfoEntity): Long {
         val prev = select(thirdPartyArchiveInfoEntity.archiveDomain)
         if (prev != null) {
@@ -29,6 +36,13 @@ abstract class ThirdPartyArchiveInfoDao {
 
         return insert(thirdPartyArchiveInfoEntity)
     }
+
+    @Query("""
+        SELECT ${ThirdPartyArchiveInfoEntity.ARCHIVE_ENABLED_COLUMN_NAME}
+        FROM ${ThirdPartyArchiveInfoEntity.TABLE_NAME}
+        WHERE ${ThirdPartyArchiveInfoEntity.ARCHIVE_DOMAIN_COLUMN_NAME} = :domain
+    """)
+    abstract suspend fun isArchiveEnabled(domain: String): Boolean
 
     @Query("""
         UPDATE ${ThirdPartyArchiveInfoEntity.TABLE_NAME}

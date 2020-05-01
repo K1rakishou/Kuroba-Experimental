@@ -80,7 +80,7 @@ class ThirdPartyArchiveInfoCache {
 
             sortedFetchResults.forEach { thirdPartyArchiveFetchResult ->
                 if (thirdPartyArchiveFetchResult.insertedOn > newerThan
-                        && toReturnList.size <= archiveFetchHistoryMaxEntries) {
+                        && toReturnList.size < archiveFetchHistoryMaxEntries) {
                     toReturnList.add(thirdPartyArchiveFetchResult)
                 } else {
                     toRemoveList.add(thirdPartyArchiveFetchResult)
@@ -97,9 +97,9 @@ class ThirdPartyArchiveInfoCache {
         }
     }
 
-    suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): Boolean {
+    suspend fun isArchiveEnabledOrNull(archiveDescriptor: ArchiveDescriptor): Boolean? {
         return mutex.withLock {
-            return@withLock thirdPartyArchiveInfoMap[archiveDescriptor]!!.enabled
+            return@withLock thirdPartyArchiveInfoMap[archiveDescriptor]?.enabled
         }
     }
 
@@ -164,7 +164,7 @@ internal class FetchResultsPerThread {
 
         sortedFetchResults.forEach { thirdPartyArchiveFetchResult ->
             if (thirdPartyArchiveFetchResult.insertedOn > newerThan
-                    && toReturnList.size <= archiveFetchHistoryMaxEntries) {
+                    && toReturnList.size < archiveFetchHistoryMaxEntries) {
                 toReturnList.add(thirdPartyArchiveFetchResult)
             } else {
                 toRemoveList.add(thirdPartyArchiveFetchResult)

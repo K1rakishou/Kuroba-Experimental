@@ -37,7 +37,7 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.safeRun
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -90,7 +90,7 @@ class ChanReaderRequestExecutor(
 
     fun execute(url: String, resultCallback: (ModularResult<ChanLoaderResponse>) -> Unit): Job {
         return launch {
-            val result = safeRun {
+            val result = Try {
                 val request = Request.Builder()
                         .url(url)
                         .get()
@@ -99,7 +99,7 @@ class ChanReaderRequestExecutor(
                 val response = okHttpClient.suspendCall(request)
                 if (!response.isSuccessful) {
                     if (response.code == 404) {
-                        return@safeRun tryLoadFromArchivesOrLocalCopyIfPossible()
+                        return@Try tryLoadFromArchivesOrLocalCopyIfPossible()
                     }
 
                     throw ServerException(response.code)
@@ -108,7 +108,7 @@ class ChanReaderRequestExecutor(
                 val body = response.body
                         ?: throw IOException("Response has no body")
 
-                return@safeRun body.byteStream().use { inputStream ->
+                return@Try body.byteStream().use { inputStream ->
                     return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
                             .use { jsonReader -> readJson(jsonReader).unwrap() }
                 }
@@ -128,7 +128,7 @@ class ChanReaderRequestExecutor(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun readJson(reader: JsonReader): ModularResult<ChanLoaderResponse> {
-        return safeRun {
+        return Try {
             val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, loadable)
 
             when {
@@ -183,28 +183,28 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             Logger.d(TAG, logMsg)
 
             val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
-            return@safeRun processPosts(op, reloadedPosts)
+            return@Try processPosts(op, reloadedPosts)
         }
     }
 
     private suspend fun getPostsFromArchiveIfNecessary(
             freshPostsFromServer: List<Post.Builder>
     ): ModularResult<List<Post.Builder>> {
-        return safeRun<List<Post.Builder>> {
+        return Try<List<Post.Builder>> {
             if (loadable.isCatalogMode) {
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             if (loadable.isDownloadingOrDownloaded) {
                 // Do not fetch posts from archives in local threads
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             if (request.isPinWatcherLoader) {
                 // We don't want to fetch deleted posts from archives for PinWatchers to avoid spamming
                 // the archives's servers with our requests every n-seconds. Instead, we load deleted
                 // posts only when the user open a thread normally (or by clicking a Pin).
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
@@ -217,15 +217,10 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 // We probably don't have archives for this site or all archives are dead
 
                 Logger.d(TAG, "No archives for thread descriptor: $threadDescriptor")
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             Logger.d(TAG, "Got archive descriptor: $archiveDescriptor")
-
-            // TODO(archives): check whether it's okay to fetch posts:
-            //  1. If it's an automatic thread update, then only fetch new posts once in 1 hour.
-            //  2. If the user manually clicks the "fetch posts from archives" button then only fetch
-            //      the posts once in like 5-10 minutes.
 
             val threadArchiveRequestLink = archivesManager.getRequestLinkForThread(
                     threadDescriptor,
@@ -233,8 +228,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             )
 
             if (threadArchiveRequestLink == null) {
-                // We probably don't have archives for this site or all archives are dead
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             val supportsMedia = archivesManager.doesArchiveStoreMedia(
@@ -279,7 +273,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             }
 
             if (archiveThread.posts.isEmpty()) {
-                return@safeRun emptyList()
+                return@Try emptyList()
             }
 
             // TODO(archives): !!!!!!!!!!!!!
@@ -311,7 +305,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 postBuilder.setArchiveDescriptor(archiveDescriptor)
             }
 
-            return@safeRun mappedArchivePosts
+            return@Try mappedArchivePosts
         }
     }
 

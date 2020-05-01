@@ -2,12 +2,9 @@ package com.github.adamantcheese.common
 
 import java.util.*
 
-sealed class ModularResult<V> {
-    data class Value<V>(val value: V) : ModularResult<V>()
-    data class Error<V>(val error: Throwable) : ModularResult<V>()
-
-    fun isError() = this is Error
-    fun isValue() = this is Value
+sealed class ModularResult<V : Any?> {
+    data class Value<V : Any?>(val value: V) : ModularResult<V>()
+    data class Error<V : Any?>(val error: Throwable) : ModularResult<V>()
 
     fun peekError(func: (Throwable) -> Unit): ModularResult<V> {
         when (this) {
@@ -29,11 +26,6 @@ sealed class ModularResult<V> {
         }
     }
 
-    fun peek(func: (ModularResult<V>) -> Unit): ModularResult<V> {
-        func(this)
-        return this
-    }
-
     fun valueOrNull(): V? {
         if (this is Value) {
             return value
@@ -50,10 +42,10 @@ sealed class ModularResult<V> {
         return null
     }
 
-    inline fun <T> map(func: (value: V) -> T): ModularResult<T> {
+    inline fun <T : Any?> mapValue(func: (value: V) -> T): ModularResult<T> {
         return when (this) {
             is Error -> error(error)
-            is Value -> safeRun { func(value) }
+            is Value -> Try { func(value) }
         }
     }
 
@@ -66,7 +58,7 @@ sealed class ModularResult<V> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <T> mapErrorToValue(mapper: (error: Throwable) -> T): T {
+    inline fun <T : Any?> mapErrorToValue(mapper: (error: Throwable) -> T): T {
         return when (this) {
             is Error -> mapper(error)
             is Value -> value as T
@@ -111,16 +103,17 @@ sealed class ModularResult<V> {
 
     companion object {
         @JvmStatic
-        fun <V> value(value: V): ModularResult<V> {
+        fun <V : Any?> value(value: V): ModularResult<V> {
             return Value(value)
         }
 
         @JvmStatic
-        fun <V> error(error: Throwable): ModularResult<V> {
+        fun <V : Any?> error(error: Throwable): ModularResult<V> {
             return Error(error)
         }
 
-        inline fun <T> safeRun(func: () -> T): ModularResult<T> {
+        @Suppress("FunctionName")
+        inline fun <T> Try(func: () -> T): ModularResult<T> {
             return try {
                 value(func())
             } catch (error: Throwable) {
@@ -128,24 +121,5 @@ sealed class ModularResult<V> {
             }
         }
 
-        // These two are for calling from the Java code since it's not really convenient to use
-        // kotlin's lambdas in Java code.
-        @JvmStatic
-        fun safeRun(func: VoidFunction): ModularResult<Unit> {
-            return try {
-                value(func.invoke())
-            } catch (error: Throwable) {
-                error(error)
-            }
-        }
-
-        @JvmStatic
-        fun <T> safeRunR(func: GenericFunction<T>): ModularResult<T> {
-            return try {
-                value(func.invoke())
-            } catch (error: Throwable) {
-                error(error)
-            }
-        }
     }
 }
