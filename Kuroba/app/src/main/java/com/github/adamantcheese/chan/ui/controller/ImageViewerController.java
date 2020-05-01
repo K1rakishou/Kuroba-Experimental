@@ -721,9 +721,7 @@ public class ImageViewerController
 
     public interface ImageViewerCallback {
         ThumbnailView getPreviewImageTransitionView(PostImage postImage);
-
         void scrollToImage(PostImage postImage);
-
         Post getPostForPostImage(PostImage postImage);
     }
 

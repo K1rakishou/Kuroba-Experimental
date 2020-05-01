@@ -740,39 +740,22 @@ public class ImageViewerPresenter
 
     public interface Callback {
         void startPreviewInTransition(Loadable loadable, PostImage postImage);
-
         void startPreviewOutTransition(Loadable loadable, PostImage postImage);
-
         void setPreviewVisibility(boolean visible);
-
         void setPagerVisiblity(boolean visible);
-
         void setPagerItems(Loadable loadable, List<PostImage> images, int initialIndex);
-
         void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center);
-
         void setVolume(PostImage postImage, boolean muted);
-
         void setTitle(PostImage postImage, int index, int count, boolean spoiler);
-
         void scrollToImage(PostImage postImage);
-
         void updatePreviewImage(PostImage postImage);
-
         void saveImage();
-
         MultiImageView.Mode getImageMode(PostImage postImage);
-
         void showProgress(boolean show);
-
         void onLoadProgress(List<Float> progress);
-
         void showVolumeMenuItem(boolean show, boolean muted);
-
         void showDownloadMenuItem(boolean show);
-
         boolean isImmersive();
-
         void showSystemUI(boolean show);
     }
 }

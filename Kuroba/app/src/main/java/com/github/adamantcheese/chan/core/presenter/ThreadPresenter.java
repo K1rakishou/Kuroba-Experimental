@@ -1411,89 +1411,47 @@ public class ThreadPresenter
 
     public interface ThreadPresenterCallback {
         void showPosts(ChanThread thread, PostsFilter filter, boolean refreshAfterHideOrRemovePosts);
-
         void postClicked(Post post);
-
         void showError(ChanLoaderException error);
-
         void showLoading();
-
         void showEmpty();
-
         void showPostInfo(String info);
-
         void showPostLinkables(Post post);
-
         void clipboardPost(Post post);
-
         void showThread(Loadable threadLoadable);
-
         void showBoard(Loadable catalogLoadable);
-
         void showBoardAndSearch(Loadable catalogLoadable, String searchQuery);
-
         void openLink(String link);
-
         void openReportView(Post post);
-
         void showPostsPopup(Post forPost, List<Post> posts);
-
         void hidePostsPopup();
-
         List<Post> getDisplayingPosts();
-
         int[] getCurrentPosition();
-
         void showImages(List<PostImage> images, int index, Loadable loadable, ThumbnailView thumbnail);
-
         void showAlbum(List<PostImage> images, int index);
-
         void scrollTo(int displayPosition, boolean smooth);
-
         void smoothScrollNewPosts(int displayPosition);
-
         void highlightPost(Post post);
-
         void highlightPostId(String id);
-
         void highlightPostTripcode(CharSequence tripcode);
-
         void filterPostTripcode(CharSequence tripcode);
-
         void filterPostImageHash(Post post);
-
         void selectPost(int post);
-
         void showSearch(boolean show);
-
         void setSearchStatus(String query, boolean setEmptyText, boolean hideKeyboard);
-
         void quote(Post post, boolean withText);
-
         void quote(Post post, CharSequence text);
-
         void confirmPostDelete(Post post);
-
         void showDeleting();
-
         void hideDeleting(String message);
-
         void hideThread(Post post, long threadNo, boolean hide);
-
         void showNewPostsNotification(boolean show, int more);
-
         void showImageReencodingWindow(Loadable loadable, boolean supportsReencode);
-
         void showHideOrRemoveWholeChainDialog(boolean hide, Post post, long threadNo);
-
         void hideOrRemovePosts(boolean hide, boolean wholeChain, Set<Post> posts, long threadNo);
-
         void unhideOrUnremovePost(Post post);
-
         void viewRemovedPostsForTheThread(List<Post> threadPosts, long threadNo);
-
         void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Long> selectedPosts);
-
         void onPostUpdated(Post post);
     }
 }

@@ -1013,27 +1013,16 @@ public class MultiImageView
 
     public interface Callback {
         void onTap();
-
         void checkImmersive();
-
         void onSwipeToCloseImage();
-
         void onSwipeToSaveImage();
-
         void onStartDownload(MultiImageView multiImageView, int chunksCount);
-
         void onProgress(MultiImageView multiImageView, int chunkIndex, long current, long total);
-
         void onDownloaded(PostImage postImage);
-
         void onVideoLoaded(MultiImageView multiImageView);
-
         void onModeLoaded(MultiImageView multiImageView, Mode mode);
-
         void onAudioLoaded(MultiImageView multiImageView);
-
         void hideProgress(MultiImageView multiImageView);
-
         Loadable getLoadable();
     }
 }

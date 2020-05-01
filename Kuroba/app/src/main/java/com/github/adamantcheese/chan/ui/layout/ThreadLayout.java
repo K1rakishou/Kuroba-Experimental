@@ -810,27 +810,16 @@ public class ThreadLayout
 
     public interface ThreadLayoutCallback {
         void showThread(Loadable threadLoadable);
-
         void showBoard(Loadable catalogLoadable);
-
         void showBoardAndSearch(Loadable catalogLoadable, String searchQuery);
-
         void showImages(List<PostImage> images, int index, Loadable loadable, ThumbnailView thumbnail);
-
         void showAlbum(List<PostImage> images, int index);
-
         void onShowPosts();
-
         void presentController(Controller controller);
-
         void openReportController(Post post);
-
         void hideSwipeRefreshLayout();
-
         Toolbar getToolbar();
-
         void openFilterForType(FilterType type, String filterText);
-
         boolean threadBackPressed();
     }
 }
