@@ -83,6 +83,7 @@ import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import okhttp3.HttpUrl;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
@@ -864,19 +865,22 @@ public class ThreadPresenter
 
         for (Post post : posts) {
             for (PostImage image : post.getPostImages()) {
-                if (image.imageUrl == null) {
-                    Logger.e(TAG, "onThumbnailClicked() image.imageUrl == null");
+                if (image.imageUrl == null && image.thumbnailUrl == null) {
+                    Logger.d(TAG, "onThumbnailClicked() image.imageUrl == null && image.thumbnailUrl == null");
                     continue;
                 }
 
+                HttpUrl imageUrl = image.imageUrl;
+
                 boolean setCallback = (!post.deleted.get() || image.isFromArchive)
-                        || cacheHandler.cacheFileExists(image.imageUrl.toString());
+                        || (imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()));
 
 
                 if (setCallback) {
                     // Deleted posts always have 404'd images, but let it through if the file exists
                     // in cache or the image is from a third-party archive
                     images.add(image);
+
                     if (image.equalUrl(postImage)) {
                         index = images.size() - 1;
                     }

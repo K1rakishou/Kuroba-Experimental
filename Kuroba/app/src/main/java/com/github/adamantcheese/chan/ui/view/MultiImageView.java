@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.ui.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -95,7 +96,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForMeasure;
 
 public class MultiImageView
         extends FrameLayout
-        implements MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks, AudioListener,
+        implements MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks,
+        AudioListener,
         LifecycleObserver {
 
     public enum Mode {
@@ -108,6 +110,7 @@ public class MultiImageView
     }
 
     private static final String TAG = "MultiImageView";
+    private static final int MAX_BYTES_SIZE = 100 * 1024 * 1024;
 
     @Inject
     FileCacheV2 fileCacheV2;
@@ -181,11 +184,13 @@ public class MultiImageView
     public void setMode(Loadable loadable, final Mode newMode, boolean center) {
         this.mode = newMode;
         hasContent = false;
+
         waitForMeasure(this, view -> {
             if (getWidth() == 0 || getHeight() == 0 || !isLaidOut()) {
                 Logger.e(TAG, "getWidth() or getHeight() returned 0, or view not laid out, not loading");
                 return false;
             }
+
             switch (newMode) {
                 case LOWRES:
                     setThumbnail(loadable, postImage, center);
@@ -204,6 +209,7 @@ public class MultiImageView
                     setOther(loadable, postImage);
                     break;
             }
+
             return true;
         });
     }
@@ -216,7 +222,10 @@ public class MultiImageView
     @Override
     public View getActiveView() {
         View ret = null;
-        if (!hasContent) return new View(getContext());
+        if (!hasContent) {
+            return new View(getContext());
+        }
+
         switch (mode) {
             case LOWRES:
             case OTHER:
@@ -232,7 +241,10 @@ public class MultiImageView
                 ret = findView(PlayerView.class);
                 break;
         }
-        return ret == null ? new View(getContext()) : ret;
+
+        return ret == null
+                ? new View(getContext())
+                : ret;
     }
 
     @Nullable
@@ -242,6 +254,7 @@ public class MultiImageView
                 return getChildAt(i);
             }
         }
+
         return null;
     }
 
@@ -292,8 +305,8 @@ public class MultiImageView
     }
 
     private boolean getDefaultMuteState() {
-        return ChanSettings.videoDefaultMuted.get() && (ChanSettings.headsetDefaultMuted.get()
-                || !getAudioManager().isWiredHeadsetOn());
+        return ChanSettings.videoDefaultMuted.get()
+                && (ChanSettings.headsetDefaultMuted.get() || !getAudioManager().isWiredHeadsetOn());
     }
 
     public void setVolume(boolean muted) {
@@ -319,8 +332,13 @@ public class MultiImageView
             return;
         }
 
-        thumbnailRequest =
-                imageLoaderV2.getImage(true, loadable, postImage, getWidth(), getHeight(), new ImageListener() {
+        thumbnailRequest = imageLoaderV2.getImage(
+                true,
+                loadable,
+                postImage,
+                getWidth(),
+                getHeight(),
+                new ImageListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         thumbnailRequest = null;
@@ -329,10 +347,9 @@ public class MultiImageView
                         }
                     }
 
+                    @SuppressLint("ClickableViewAccessibility")
                     @Override
-                    public void onResponse(
-                            ImageContainer response, boolean isImmediate
-                    ) {
+                    public void onResponse(ImageContainer response, boolean isImmediate) {
                         thumbnailRequest = null;
 
                         if (response.getBitmap() != null && (!hasContent || mode == Mode.LOWRES)) {
@@ -340,7 +357,9 @@ public class MultiImageView
                             thumbnail.setType(postImage.type);
                             thumbnail.setImageBitmap(response.getBitmap());
                             thumbnail.setOnClickListener(null);
-                            thumbnail.setOnTouchListener((view, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
+                            thumbnail.setOnTouchListener((view, motionEvent) ->
+                                    gestureDetector.onTouchEvent(motionEvent)
+                            );
 
                             onModeLoaded(Mode.LOWRES, thumbnail);
                         }
@@ -348,8 +367,8 @@ public class MultiImageView
                 });
 
         if (thumbnailRequest != null && thumbnailRequest.getBitmap() != null) {
-            // Request was immediate and thumbnailRequest was first set to null in onResponse, and then set to the container
-            // when the method returned
+            // Request was immediate and thumbnailRequest was first set to null in onResponse,
+            // and then set to the container when the method returned
             // Still set it to null here
             thumbnailRequest = null;
         }
@@ -362,11 +381,16 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(
+                postImage.getSize(),
+                postImage.fileHash
+        );
 
-        bigImageRequest =
-                fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {
-
+        bigImageRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
+                loadable,
+                postImage,
+                extraInfo,
+                new FileCacheListener() {
                     @Override
                     public void onStart(int chunksCount) {
                         BackgroundUtils.ensureMainThread();
@@ -386,7 +410,6 @@ public class MultiImageView
                         BackgroundUtils.ensureMainThread();
 
                         setBitImageFileInternal(new File(file.getFullPath()), true);
-
                         callback.onDownloaded(postImage);
                     }
 
@@ -421,11 +444,16 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(
+                postImage.getSize(),
+                postImage.fileHash
+        );
 
-        gifRequest =
-                fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {
-
+        gifRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
+                loadable,
+                postImage,
+                extraInfo,
+                new FileCacheListener() {
                     @Override
                     public void onStart(int chunksCount) {
                         BackgroundUtils.ensureMainThread();
@@ -475,8 +503,10 @@ public class MultiImageView
                 });
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setGifFile(File file) {
         GifDrawable drawable;
+
         try {
             drawable = new GifDrawable(file.getAbsolutePath());
 
@@ -502,7 +532,10 @@ public class MultiImageView
         GifImageView view = new GifImageView(getContext());
         view.setImageDrawable(drawable);
         view.setOnClickListener(null);
-        view.setOnTouchListener((view1, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
+        view.setOnTouchListener((view1, motionEvent) ->
+                gestureDetector.onTouchEvent(motionEvent)
+        );
+
         onModeLoaded(Mode.GIFIMAGE, view);
         toggleTransparency();
     }
@@ -517,6 +550,7 @@ public class MultiImageView
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void openVideoInternalStream(Loadable loadable, PostImage postImage) {
         webmStreamingSource.createMediaSource(loadable, postImage, new MediaSourceCallback() {
             @Override
@@ -545,8 +579,11 @@ public class MultiImageView
                         exoPlayer.prepare(source);
                         exoPlayer.setVolume(0f);
                         exoPlayer.addAudioListener(MultiImageView.this);
+
                         exoVideoView.setOnClickListener(null);
-                        exoVideoView.setOnTouchListener((view, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
+                        exoVideoView.setOnTouchListener((view, motionEvent) ->
+                                gestureDetector.onTouchEvent(motionEvent)
+                        );
                         exoVideoView.setUseController(false);
                         exoVideoView.setControllerHideOnTouch(false);
                         exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING);
@@ -559,6 +596,7 @@ public class MultiImageView
                                         null
                                 )
                         );
+
                         exoPlayer.setVolume(getDefaultMuteState() ? 0 : 1);
                         exoPlayer.setPlayWhenReady(true);
                         onModeLoaded(Mode.VIDEO, exoVideoView);
@@ -573,7 +611,10 @@ public class MultiImageView
                 BackgroundUtils.ensureMainThread();
 
                 Logger.e(TAG, "Error while trying to stream a webm", error);
-                showToast(getContext(), "Couldn't open webm in streaming mode, error = " + error.getMessage());
+                showToast(
+                        getContext(),
+                        "Couldn't open webm in streaming mode, error = " + error.getMessage()
+                );
             }
         });
     }
@@ -585,11 +626,16 @@ public class MultiImageView
             return;
         }
 
-        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
+        DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(
+                postImage.getSize(),
+                postImage.fileHash
+        );
 
-        videoRequest =
-                fileCacheV2.enqueueChunkedDownloadFileRequest(loadable, postImage, extraInfo, new FileCacheListener() {
-
+        videoRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
+                loadable,
+                postImage,
+                extraInfo,
+                new FileCacheListener() {
                     @Override
                     public void onStart(int chunksCount) {
                         BackgroundUtils.ensureMainThread();
@@ -639,11 +685,16 @@ public class MultiImageView
                 });
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setVideoFile(final File file) {
         if (ChanSettings.videoOpenExternal.get()) {
             Intent intent = new Intent(Intent.ACTION_VIEW);
 
-            Uri uriForFile = FileProvider.getUriForFile(getAppContext(), getAppFileProvider(), file);
+            Uri uriForFile = FileProvider.getUriForFile(
+                    getAppContext(),
+                    getAppFileProvider(),
+                    file
+            );
 
             intent.setDataAndType(uriForFile, "video/*");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -654,17 +705,28 @@ public class MultiImageView
             PlayerView exoVideoView = new PlayerView(getContext());
             exoPlayer = new SimpleExoPlayer.Builder(getContext()).build();
             exoVideoView.setPlayer(exoPlayer);
-            String userAgent = Util.getUserAgent(getAppContext(), NetModule.USER_AGENT);
-            DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(getContext(), userAgent);
-            ProgressiveMediaSource.Factory progressiveFactory = new ProgressiveMediaSource.Factory(dataSourceFactory);
-            MediaSource videoSource = progressiveFactory.createMediaSource(Uri.fromFile(file));
 
-            exoPlayer.setRepeatMode(ChanSettings.videoAutoLoop.get() ? Player.REPEAT_MODE_ALL : Player.REPEAT_MODE_OFF);
+            String userAgent = Util.getUserAgent(getAppContext(), NetModule.USER_AGENT);
+
+            DataSource.Factory dataSourceFactory =
+                    new DefaultDataSourceFactory(getContext(), userAgent);
+            ProgressiveMediaSource.Factory progressiveFactory =
+                    new ProgressiveMediaSource.Factory(dataSourceFactory);
+            MediaSource videoSource =
+                    progressiveFactory.createMediaSource(Uri.fromFile(file));
+
+            int repeatMode = ChanSettings.videoAutoLoop.get()
+                    ? Player.REPEAT_MODE_ALL
+                    : Player.REPEAT_MODE_OFF;
+            exoPlayer.setRepeatMode(repeatMode);
 
             exoPlayer.prepare(videoSource);
             exoPlayer.addAudioListener(this);
+
             exoVideoView.setOnClickListener(null);
-            exoVideoView.setOnTouchListener((view, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
+            exoVideoView.setOnTouchListener((view, motionEvent) ->
+                    gestureDetector.onTouchEvent(motionEvent)
+            );
             exoVideoView.setUseController(false);
             exoVideoView.setControllerHideOnTouch(false);
             exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING);
@@ -694,7 +756,7 @@ public class MultiImageView
     private void setOther(Loadable loadable, PostImage image) {
         if (image.type == ChanPostImageType.PDF) {
             cancellableToast.showToast(R.string.pdf_not_viewable);
-            //this lets the user download the PDF, even though we haven't actually downloaded anything
+            // this lets the user download the PDF, even though we haven't actually downloaded anything
             callback.onDownloaded(image);
         } else if (image.type == ChanPostImageType.SWF) {
             cancellableToast.showToast(R.string.swf_not_viewable);
@@ -704,65 +766,86 @@ public class MultiImageView
 
     public void toggleTransparency() {
         transparentBackground = !transparentBackground;
+
         // these colors are specific to 4chan for the time being
         final int BACKGROUND_COLOR_SFW = Color.argb(255, 214, 218, 240);
         final int BACKGROUND_COLOR_SFW_OP = Color.argb(255, 238, 242, 255);
         final int BACKGROUND_COLOR_NSFW = Color.argb(255, 240, 224, 214);
         final int BACKGROUND_COLOR_NSFW_OP = Color.argb(255, 255, 255, 238);
+
         int boardColor = callback.getLoadable().board.workSafe
                 ? (op ? BACKGROUND_COLOR_SFW_OP : BACKGROUND_COLOR_SFW)
                 : (op ? BACKGROUND_COLOR_NSFW_OP : BACKGROUND_COLOR_NSFW);
+
         View activeView = getActiveView();
-        if (!(activeView instanceof CustomScaleImageView || activeView instanceof GifImageView))
+        if (!(activeView instanceof CustomScaleImageView || activeView instanceof GifImageView)) {
             return;
+        }
+
         boolean isImage = activeView instanceof CustomScaleImageView;
         int backgroundColor = !transparentBackground ? Color.TRANSPARENT : boardColor;
+
         if (isImage) {
             ((CustomScaleImageView) activeView).setTileBackgroundColor(backgroundColor);
         } else {
-            ((GifImageView) activeView).getDrawable().setColorFilter(backgroundColor, PorterDuff.Mode.DST_OVER);
+            ((GifImageView) activeView).getDrawable().setColorFilter(
+                    backgroundColor,
+                    PorterDuff.Mode.DST_OVER
+            );
         }
     }
 
     public void rotateImage(int degrees) {
         View activeView = getActiveView();
-        if (!(activeView instanceof CustomScaleImageView)) return;
+        if (!(activeView instanceof CustomScaleImageView)) {
+            return;
+        }
+
         CustomScaleImageView imageView = (CustomScaleImageView) activeView;
-        if (degrees % 90 != 0 && degrees >= -90 && degrees <= 180)
-            throw new IllegalArgumentException("Degrees must be a multiple of 90 and in the range -90 < deg < 180");
-        //swap the current scale to the opposite one every 90 degree increment
-        //0 degrees is X scale, 90 is Y, 180 is X, 270 is Y
+        if (degrees % 90 != 0 && degrees >= -90 && degrees <= 180) {
+            throw new IllegalArgumentException(
+                    "Degrees must be a multiple of 90 and in the range -90 < deg < 180"
+            );
+        }
+
+        // swap the current scale to the opposite one every 90 degree increment
+        // 0 degrees is X scale, 90 is Y, 180 is X, 270 is Y
         float curScale = imageView.getScale();
         float scaleX = imageView.getWidth() / (float) imageView.getSWidth();
         float scaleY = imageView.getHeight() / (float) imageView.getSHeight();
         imageView.setScaleAndCenter(curScale == scaleX ? scaleY : scaleX, imageView.getCenter());
-        //apply the rotation through orientation rather than rotation, as
-        //orientation is internal to the subsamplingimageview's internal bitmap while rotation is on the entire view
+
+        // apply the rotation through orientation rather than rotation, as
+        // orientation is internal to the subsamplingimageview's internal bitmap while rotation
+        // is on the entire view
         switch (imageView.getAppliedOrientation()) {
             case SubsamplingScaleImageView.ORIENTATION_0:
-                //rotate from 0 (0 is 0, 90 is 90, 180 is 180, -90 is 270)
+                // rotate from 0 (0 is 0, 90 is 90, 180 is 180, -90 is 270)
                 imageView.setOrientation(degrees >= 0 ? degrees : 360 + degrees);
                 break;
             case SubsamplingScaleImageView.ORIENTATION_90:
-                //rotate from 90 (0 is 90, 90 is 180, 180 is 270, -90 is 0)
+                // rotate from 90 (0 is 90, 90 is 180, 180 is 270, -90 is 0)
                 imageView.setOrientation(90 + degrees);
                 break;
             case SubsamplingScaleImageView.ORIENTATION_180:
-                //rotate from 180 (0 is 180, 90 is 270, 180 is 0, -90 is 90)
+                // rotate from 180 (0 is 180, 90 is 270, 180 is 0, -90 is 90)
                 imageView.setOrientation(degrees == 180 ? 0 : 180 + degrees);
                 break;
             case SubsamplingScaleImageView.ORIENTATION_270:
-                //rotate from 270 (0 is 270, 90 is 0, 180 is 90, -90 is 180)
+                // rotate from 270 (0 is 270, 90 is 0, 180 is 90, -90 is 180)
                 imageView.setOrientation(degrees >= 90 ? degrees - 90 : 270 + degrees);
                 break;
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setBitImageFileInternal(File file, boolean tiling) {
         final CustomScaleImageView image = new CustomScaleImageView(getContext());
         image.setImage(ImageSource.uri(file.getAbsolutePath()).tiling(tiling));
-        //this is required because unlike the other views, if we don't have layout dimensions, the callback won't be called
-        //see https://github.com/davemorrissey/subsampling-scale-image-view/issues/143
+
+        // this is required because unlike the other views, if we don't have layout dimensions,
+        // the callback won't be called
+        // see https://github.com/davemorrissey/subsampling-scale-image-view/issues/143
         addView(image, 0, new LayoutParams(MATCH_PARENT, MATCH_PARENT));
         image.setCallback(new CustomScaleImageView.Callback() {
             @Override
@@ -785,6 +868,7 @@ public class MultiImageView
                 }
             }
         });
+
         image.setOnClickListener(null);
         image.setOnTouchListener((view, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
     }
@@ -851,12 +935,17 @@ public class MultiImageView
         if (view != null) {
             // Remove all other views
             boolean alreadyAttached = false;
+
             for (int i = getChildCount() - 1; i >= 0; i--) {
                 View child = getChildAt(i);
                 if (child != view) {
                     if (child instanceof PlayerView) {
+                        Player player = ((PlayerView) child).getPlayer();
                         releaseStreamCallbacks();
-                        ((PlayerView) child).getPlayer().release();
+
+                        if (player != null) {
+                            player.release();
+                        }
                     }
                     removeViewAt(i);
                 } else {
@@ -877,38 +966,48 @@ public class MultiImageView
     }
 
     private void releaseStreamCallbacks() {
-        if (ChanSettings.videoStream.get()) {
-            try {
-                Field mediaSource = exoPlayer.getClass().getDeclaredField("mediaSource");
-                mediaSource.setAccessible(true);
-                if (mediaSource.get(exoPlayer) != null) {
-                    ProgressiveMediaSource source = (ProgressiveMediaSource) mediaSource.get(exoPlayer);
-                    Field dataSource = source.getClass().getDeclaredField("dataSourceFactory");
-                    dataSource.setAccessible(true);
-                    DataSource.Factory factory = (DataSource.Factory) dataSource.get(source);
-                    ((WebmStreamingDataSource) factory.createDataSource()).clearListeners();
-                    dataSource.setAccessible(false);
-                }
-                mediaSource.setAccessible(false);
-            } catch (Exception ignored) {
-                // data source likely is from a file rather than a stream, ignore any exceptions
+        if (!ChanSettings.videoStream.get()) {
+            return;
+        }
+
+        try {
+            Field mediaSource = exoPlayer.getClass().getDeclaredField("mediaSource");
+            mediaSource.setAccessible(true);
+
+            if (mediaSource.get(exoPlayer) != null) {
+                ProgressiveMediaSource source = (ProgressiveMediaSource) mediaSource.get(exoPlayer);
+                Field dataSource = source.getClass().getDeclaredField("dataSourceFactory");
+                dataSource.setAccessible(true);
+                DataSource.Factory factory = (DataSource.Factory) dataSource.get(source);
+                ((WebmStreamingDataSource) factory.createDataSource()).clearListeners();
+                dataSource.setAccessible(false);
             }
+
+            mediaSource.setAccessible(false);
+        } catch (Exception ignored) {
+            // data source likely is from a file rather than a stream, ignore any exceptions
         }
     }
 
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        if (child instanceof GifImageView) {
-            GifImageView gif = (GifImageView) child;
-            if (gif.getDrawable() instanceof GifDrawable) {
-                GifDrawable drawable = (GifDrawable) gif.getDrawable();
-                if (drawable.getFrameByteCount() > 100 * 1024 * 1024) { // max size from RecordingCanvas
-                    onError(new Exception("Uncompressed GIF too large (>100MB), " + PostUtils.getReadableFileSize(
-                            drawable.getFrameByteCount())));
-                    return false;
-                }
+        if (!(child instanceof GifImageView)) {
+            return super.drawChild(canvas, child, drawingTime);
+        }
+
+        GifImageView gif = (GifImageView) child;
+        if (gif.getDrawable() instanceof GifDrawable) {
+            GifDrawable drawable = (GifDrawable) gif.getDrawable();
+            // max size from RecordingCanvas
+            if (drawable.getFrameByteCount() > MAX_BYTES_SIZE) {
+                String errorMessage = "Uncompressed GIF too large (>100MB), "
+                        + PostUtils.getReadableFileSize(drawable.getFrameByteCount());
+
+                onError(new Exception(errorMessage));
+                return false;
             }
         }
+
         return super.drawChild(canvas, child, drawingTime);
     }
 

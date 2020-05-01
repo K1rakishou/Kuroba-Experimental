@@ -151,11 +151,14 @@ class FileCacheV2(
             throw IllegalArgumentException("Cannot use local thread loadable for prefetching!")
         }
 
+        val imageUrl = postImage.imageUrl
+                ?: return null
+
         if (postImage.isInlined) {
-            throw IllegalAccessException("Cannot prefetch inlined files! url = ${postImage.imageUrl}")
+            throw IllegalAccessException("Cannot prefetch inlined files! url = $imageUrl")
         }
 
-        val url = postImage.imageUrl.toString()
+        val url = imageUrl.toString()
         val file = cacheHandler.getOrCreateCacheFile(url)
                 ?: return null
 
@@ -226,7 +229,10 @@ class FileCacheV2(
             isBatchDownload: Boolean,
             callback: FileCacheListener?
     ): CancelableDownload? {
-        val url = postImage.imageUrl.toString()
+        val imageUrl = postImage.imageUrl
+                ?: return null
+
+        val url = imageUrl.toString()
 
         if (!postImage.isInlined && (loadable.isLocal || loadable.isDownloading)) {
             log(TAG, "Handling local thread file, url = ${maskImageUrl(url)}")
@@ -466,10 +472,11 @@ class FileCacheV2(
             } else {
                 // SAF file
                 try {
-                    val resultFile = cacheHandler.getOrCreateCacheFile(postImage.imageUrl.toString())
-                    if (resultFile == null) {
-                        throw IOException("Couldn't get or create cache file")
-                    }
+                    val imageUrl = postImage.imageUrl
+                            ?: throw IOException("PostImage has no imageUrl")
+
+                    val resultFile = cacheHandler.getOrCreateCacheFile(imageUrl.toString())
+                            ?: throw IOException("Couldn't get or create cache file")
 
                     if (!fileManager.copyFileContents(file, resultFile)) {
                         if (!cacheHandler.deleteCacheFile(resultFile)) {

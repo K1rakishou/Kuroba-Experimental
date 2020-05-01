@@ -108,11 +108,12 @@ class InlinedFileInfoLoader(
                 .chunked(MAX_CONCURRENCY)
                 .flatMap { inlinedImagesChunk ->
                     return@flatMap supervisorScope {
-                        return@supervisorScope inlinedImagesChunk.map { inlinedImage ->
-                            return@map async {
-                                return@async inlinedFileInfoRepository.getInlinedFileInfo(
-                                        inlinedImage.imageUrl!!.toString()
-                                )
+                        return@supervisorScope inlinedImagesChunk.mapNotNull { inlinedImage ->
+                            val imageUrl = inlinedImage.imageUrl
+                                    ?: return@mapNotNull null
+
+                            return@mapNotNull async {
+                                return@async inlinedFileInfoRepository.getInlinedFileInfo(imageUrl.toString())
                             }
                         }.awaitAll()
                     }

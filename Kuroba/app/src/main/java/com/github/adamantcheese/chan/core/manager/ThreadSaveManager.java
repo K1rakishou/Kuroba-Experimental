@@ -984,7 +984,8 @@ public class ThreadSaveManager {
         }
 
         try {
-            downloadImageIntoFile(snapshotFileManager,
+            downloadImageIntoFile(
+                    snapshotFileManager,
                     threadSaveDirImages,
                     postImage.serverFilename,
                     postImage.extension,
@@ -999,7 +1000,8 @@ public class ThreadSaveManager {
                     error.getMessage()
             );
 
-            deleteImageCompletely(snapshotFileManager,
+            deleteImageCompletely(
+                    snapshotFileManager,
                     threadSaveDirImages,
                     postImage.serverFilename,
                     postImage.extension
@@ -1014,7 +1016,8 @@ public class ThreadSaveManager {
 
             addImageToAlreadyDeletedImage(loadable, postImage.serverFilename);
 
-            deleteImageCompletely(snapshotFileManager,
+            deleteImageCompletely(
+                    snapshotFileManager,
                     threadSaveDirImages,
                     postImage.serverFilename,
                     postImage.extension

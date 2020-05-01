@@ -181,7 +181,10 @@ public abstract class ThreadController
 
     @Override
     public void showImages(
-            List<PostImage> images, int index, Loadable loadable, final ThumbnailView thumbnail
+            List<PostImage> images,
+            int index,
+            Loadable loadable,
+            final ThumbnailView thumbnail
     ) {
         boolean isAlreadyPresenting =
                 isAlreadyPresenting((controller) -> controller instanceof ImageViewerNavigationController);

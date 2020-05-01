@@ -97,8 +97,8 @@ public class ImageViewerPresenter
     private boolean viewPagerVisible = false;
     private boolean changeViewsOnInTransitionEnd = false;
 
-    private boolean muted = ChanSettings.videoDefaultMuted.get() && (ChanSettings.headsetDefaultMuted.get()
-            || !getAudioManager().isWiredHeadsetOn());
+    private boolean muted = ChanSettings.videoDefaultMuted.get() &&
+            (ChanSettings.headsetDefaultMuted.get() || !getAudioManager().isWiredHeadsetOn());
 
     public ImageViewerPresenter(Context context, Callback callback) {
         this.context = context;
@@ -291,14 +291,17 @@ public class ImageViewerPresenter
     private void onLowResInCenter() {
         PostImage postImage = images.get(selectedPosition);
 
-        if (imageAutoLoad(loadable, postImage) && (!postImage.spoiler() || ChanSettings.revealimageSpoilers.get())) {
+        if (imageAutoLoad(loadable, postImage)
+                && (!postImage.spoiler() || ChanSettings.revealimageSpoilers.get())) {
             if (postImage.type == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
             } else if (postImage.type == ChanPostImageType.GIF) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.MOVIE && videoAutoLoad(loadable, postImage)) {
+            } else if (postImage.type == ChanPostImageType.MOVIE
+                    && videoAutoLoad(loadable, postImage)) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else if (postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF) {
+            } else if (postImage.type == ChanPostImageType.PDF
+                    || postImage.type == ChanPostImageType.SWF) {
                 callback.setImageMode(postImage, OTHER, true);
             }
         }
@@ -355,15 +358,24 @@ public class ImageViewerPresenter
         List<String> nonCancelableImages = new ArrayList<>(3);
 
         if (index - 1 >= 0) {
-            nonCancelableImages.add(images.get(index - 1).imageUrl.toString());
+            HttpUrl imageUrl = images.get(index - 1).imageUrl;
+            if (imageUrl != null) {
+                nonCancelableImages.add(imageUrl.toString());
+            }
         }
 
         if (index >= 0 && index < images.size()) {
-            nonCancelableImages.add(images.get(index).imageUrl.toString());
+            HttpUrl imageUrl = images.get(index).imageUrl;
+            if (imageUrl != null) {
+                nonCancelableImages.add(imageUrl.toString());
+            }
         }
 
         if (index + 1 < images.size()) {
-            nonCancelableImages.add(images.get(index + 1).imageUrl.toString());
+            HttpUrl imageUrl = images.get(index + 1).imageUrl;
+            if (imageUrl != null) {
+                nonCancelableImages.add(imageUrl.toString());
+            }
         }
 
         return nonCancelableImages;
@@ -408,7 +420,8 @@ public class ImageViewerPresenter
             if (loadChunked) {
                 DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
 
-                preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(loadable,
+                preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
+                        loadable,
                         postImage,
                         extraInfo,
                         fileCacheListener
@@ -453,6 +466,11 @@ public class ImageViewerPresenter
         }
 
         PostImage previousImage = images.get(position);
+
+        if (previousImage.imageUrl == null) {
+            throw new NullPointerException("PostImage has no imageUrl!");
+        }
+
         if (downloader.getUrl().equals(previousImage.imageUrl.toString())) {
             downloader.cancel();
             preloadingImages.remove(downloader);
@@ -608,8 +626,13 @@ public class ImageViewerPresenter
             return true;
         }
 
+        HttpUrl imageUrl = postImage.imageUrl;
+        if (imageUrl == null) {
+            return false;
+        }
+
         // Auto load the image when it is cached
-        return cacheHandler.cacheFileExists(postImage.imageUrl.toString())
+        return cacheHandler.cacheFileExists(imageUrl.toString())
                 || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
     }
 
@@ -619,7 +642,8 @@ public class ImageViewerPresenter
             return true;
         }
 
-        return imageAutoLoad(loadable, postImage) && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+        return imageAutoLoad(loadable, postImage)
+                && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
     }
 
     private void setTitle(PostImage postImage, int position) {
@@ -644,12 +668,18 @@ public class ImageViewerPresenter
     public boolean forceReload() {
         PostImage currentImage = getCurrentPostImage();
 
-        if (fileCacheV2.isRunning(currentImage.imageUrl.toString())) {
+        HttpUrl imageUrl = currentImage.imageUrl;
+        if (imageUrl == null) {
+            showToast(context, "Image has no imageUrl!");
+            return false;
+        }
+
+        if (fileCacheV2.isRunning(imageUrl.toString())) {
             showToast(context, "Image is not yet downloaded");
             return false;
         }
 
-        if (!cacheHandler.deleteCacheFileByUrl(currentImage.imageUrl.toString())) {
+        if (!cacheHandler.deleteCacheFileByUrl(imageUrl.toString())) {
             showToast(context, "Can't force reload because couldn't delete cached image");
             return false;
         }
@@ -697,7 +727,9 @@ public class ImageViewerPresenter
      */
     @Nullable
     private HttpUrl getSearchImageUrl(final PostImage postImage) {
-        return postImage.type == ChanPostImageType.MOVIE ? postImage.thumbnailUrl : postImage.imageUrl;
+        return postImage.type == ChanPostImageType.MOVIE
+                ? postImage.thumbnailUrl
+                : postImage.imageUrl;
     }
 
     private enum SwipeDirection {

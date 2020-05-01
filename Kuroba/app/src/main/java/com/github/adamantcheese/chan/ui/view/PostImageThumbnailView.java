@@ -122,14 +122,20 @@ public class PostImageThumbnailView
             String fileName;
 
             if (postImage.spoiler()) {
-                String extension =
-                        StringUtils.extractFileNameExtension(postImage.spoilerThumbnailUrl.toString());
+                String extension = StringUtils.extractFileNameExtension(
+                        postImage.spoilerThumbnailUrl.toString()
+                );
 
                 fileName = ThreadSaveManager.formatSpoilerImageName(extension);
             } else {
-                String extension = StringUtils.extractFileNameExtension(postImage.thumbnailUrl.toString());
+                String extension = StringUtils.extractFileNameExtension(
+                        postImage.thumbnailUrl.toString()
+                );
 
-                fileName = ThreadSaveManager.formatThumbnailImageName(postImage.serverFilename, extension);
+                fileName = ThreadSaveManager.formatThumbnailImageName(
+                        postImage.serverFilename,
+                        extension
+                );
             }
 
             setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
@@ -175,7 +181,12 @@ public class PostImageThumbnailView
 
     private String getUrl(PostImage postImage, boolean useHiRes) {
         String url = postImage.getThumbnailUrl().toString();
-        if ((ChanSettings.autoLoadThreadImages.get() || ChanSettings.highResCells.get()) && useHiRes) {
+
+        boolean autoLoad = ChanSettings.autoLoadThreadImages.get();
+        boolean highRes = ChanSettings.highResCells.get() && useHiRes;
+        boolean hasImageUrl = postImage.imageUrl != null;
+
+        if ((autoLoad || highRes) && hasImageUrl) {
             if (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get()) {
                 url = postImage.type == ChanPostImageType.STATIC
                         ? postImage.imageUrl.toString()
