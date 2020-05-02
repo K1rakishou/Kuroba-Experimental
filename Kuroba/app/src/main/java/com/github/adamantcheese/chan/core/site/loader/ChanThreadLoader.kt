@@ -100,6 +100,21 @@ class ChanThreadLoader(
     var thread: ChanThread? = null
         private set
 
+    private val chanLoaderRequestExecutor by lazy {
+        return@lazy ChanLoaderRequestExecutor(
+                gson,
+                okHttpClient,
+                databaseManager.databaseSavedReplyManager,
+                filterEngine,
+                chanPostRepository,
+                appConstants,
+                archivesManager,
+                thirdPartyArchiveInfoRepository,
+                ChanSettings.verboseLogs.get(),
+                themeHelper.theme
+        )
+    }
+
     private val compositeDisposable = CompositeDisposable()
     private var requestJob: Job? = null
     private var pendingFuture: ScheduledFuture<*>? = null
@@ -368,23 +383,9 @@ class ChanThreadLoader(
                 forced
         )
 
-        val readerRequest = ChanLoaderRequestExecutor(
-                gson,
-                okHttpClient,
-                databaseManager.databaseSavedReplyManager,
-                filterEngine,
-                chanPostRepository,
-                appConstants,
-                archivesManager,
-                thirdPartyArchiveInfoRepository,
-                requestParams,
-                ChanSettings.verboseLogs.get(),
-                themeHelper.theme
-        )
-
         val url = getChanUrl(loadable).toString()
 
-        return readerRequest.execute(url) { chanLoaderResponseResult ->
+        return chanLoaderRequestExecutor.execute(url, requestParams) { chanLoaderResponseResult ->
             when (chanLoaderResponseResult) {
                 is ModularResult.Value -> {
                     onResponse(chanLoaderResponseResult.value)
