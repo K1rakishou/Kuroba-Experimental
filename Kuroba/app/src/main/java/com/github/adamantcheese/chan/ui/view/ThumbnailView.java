@@ -29,6 +29,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
@@ -41,22 +42,25 @@ import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkError;
 import com.android.volley.ParseError;
 import com.android.volley.TimeoutError;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader.ImageContainer;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.utils.Logger;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
+
+import coil.request.RequestDisposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
-public class ThumbnailView extends View implements ImageListener {
-    private ImageContainer container;
+public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
+    private static final String TAG = "ThumbnailView";
+    private RequestDisposable requestDisposable;
 
     private boolean circular = false;
     private int rounding = 0;
@@ -107,28 +111,29 @@ public class ThumbnailView extends View implements ImageListener {
         textPaint.setTextSize(sp(14));
     }
 
-    public void setUrl(String url, int maxWidth, int maxHeight) {
-        if (container != null
-                && container.getRequestUrl() != null
-                && container.getRequestUrl().equals(url)) {
-            return;
-        }
+    public void setUrl(String url, Integer maxWidth, Integer maxHeight) {
+        if (requestDisposable != null) {
+            requestDisposable.dispose();
+            requestDisposable = null;
 
-        if (container != null) {
-            imageLoaderV2.cancelRequest(container);
-            container = null;
             error = false;
             setImageBitmap(null);
             animate().cancel();
         }
 
         if (!TextUtils.isEmpty(url)) {
-            container = imageLoaderV2.get(url, this, maxWidth, maxHeight);
+            requestDisposable = imageLoaderV2.loadFromNetwork(
+                    getContext(),
+                    url,
+                    maxWidth,
+                    maxHeight,
+                    this
+            );
         }
     }
 
     public void setUrl(String url) {
-        setUrl(url, 0, 0);
+        setUrl(url, null, null);
     }
 
     public void setUrlFromDisk(
@@ -140,13 +145,14 @@ public class ThumbnailView extends View implements ImageListener {
     ) {
         animate().cancel();
 
-        container = imageLoaderV2.getFromDisk(
+        requestDisposable = imageLoaderV2.loadFromDisk(
+                getContext(),
                 loadable,
                 filename,
                 isSpoiler,
-                this,
                 width,
                 height,
+                this,
                 null
         );
     }
@@ -201,30 +207,22 @@ public class ThumbnailView extends View implements ImageListener {
     }
 
     @Override
-    public void onResponse(ImageContainer response, boolean isImmediate) {
-        if (response.getBitmap() != null) {
-            setImageBitmap(cloneBitmap(response));
-            onImageSet(isImmediate);
-        }
-    }
-
-    private Bitmap cloneBitmap(ImageContainer response) {
-        Bitmap originalBitmap = response.getBitmap();
-
-        return originalBitmap.copy(originalBitmap.getConfig(), false);
+    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+        setImageBitmap(drawable.getBitmap());
+        onImageSet(isImmediate);
     }
 
     @Override
-    public void onErrorResponse(VolleyError e) {
-        error = true;
+    public void onResponseError(@NotNull Throwable error) {
+        this.error = true;
 
-        if (e instanceof NetworkError
-                || e instanceof TimeoutError
-                || e instanceof ParseError
-                || e instanceof AuthFailureError) {
+        if (error instanceof NetworkError
+                || error instanceof TimeoutError
+                || error instanceof ParseError
+                || error instanceof AuthFailureError) {
             errorText = getString(R.string.thumbnail_load_failed_network);
         } else {
-            errorText = "404";
+            errorText = getString(R.string.thumbnail_load_failed_404);
         }
 
         onImageSet(false);
@@ -280,58 +278,64 @@ public class ThumbnailView extends View implements ImageListener {
             canvas.drawText(errorText, x + getPaddingLeft(), y + getPaddingTop(), textPaint);
 
             canvas.restore();
-        } else {
-            if (bitmap == null || bitmap.isRecycled()) {
-                return;
-            }
-
-            if (calculate) {
-                calculate = false;
-                bitmapRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
-                float scale = Math.max(width / (float) bitmap.getWidth(), height / (float) bitmap.getHeight());
-                float scaledX = bitmap.getWidth() * scale;
-                float scaledY = bitmap.getHeight() * scale;
-                float offsetX = (scaledX - width) * 0.5f;
-                float offsetY = (scaledY - height) * 0.5f;
-
-                drawRect.set(-offsetX, -offsetY, scaledX - offsetX, scaledY - offsetY);
-                drawRect.offset(getPaddingLeft(), getPaddingTop());
-
-                outputRect.set(getPaddingLeft(),
-                        getPaddingTop(),
-                        getWidth() - getPaddingRight(),
-                        getHeight() - getPaddingBottom()
-                );
-
-                matrix.setRectToRect(bitmapRect, drawRect, Matrix.ScaleToFit.FILL);
-
-                bitmapShader.setLocalMatrix(matrix);
-                paint.setShader(bitmapShader);
-            }
-
-            canvas.save();
-            canvas.clipRect(outputRect);
-
-            if (circular) {
-                canvas.drawRoundRect(outputRect, width / 2f, height / 2f, paint);
-            } else {
-                canvas.drawRoundRect(outputRect, rounding, rounding, paint);
-            }
-
-            canvas.restore();
-            canvas.save();
-
-            if (foreground != null) {
-                if (foregroundCalculate) {
-                    foregroundCalculate = false;
-                    foreground.setBounds(0, 0, getRight(), getBottom());
-                }
-
-                foreground.draw(canvas);
-            }
-
-            canvas.restore();
+            return;
         }
+
+        if (bitmap == null) {
+            return;
+        }
+
+        if (bitmap.isRecycled()) {
+            Logger.e(TAG, "Attempt to draw recycled bitmap!");
+            return;
+        }
+
+        if (calculate) {
+            calculate = false;
+            bitmapRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
+            float scale = Math.max(width / (float) bitmap.getWidth(), height / (float) bitmap.getHeight());
+            float scaledX = bitmap.getWidth() * scale;
+            float scaledY = bitmap.getHeight() * scale;
+            float offsetX = (scaledX - width) * 0.5f;
+            float offsetY = (scaledY - height) * 0.5f;
+
+            drawRect.set(-offsetX, -offsetY, scaledX - offsetX, scaledY - offsetY);
+            drawRect.offset(getPaddingLeft(), getPaddingTop());
+
+            outputRect.set(getPaddingLeft(),
+                    getPaddingTop(),
+                    getWidth() - getPaddingRight(),
+                    getHeight() - getPaddingBottom()
+            );
+
+            matrix.setRectToRect(bitmapRect, drawRect, Matrix.ScaleToFit.FILL);
+
+            bitmapShader.setLocalMatrix(matrix);
+            paint.setShader(bitmapShader);
+        }
+
+        canvas.save();
+        canvas.clipRect(outputRect);
+
+        if (circular) {
+            canvas.drawRoundRect(outputRect, width / 2f, height / 2f, paint);
+        } else {
+            canvas.drawRoundRect(outputRect, rounding, rounding, paint);
+        }
+
+        canvas.restore();
+        canvas.save();
+
+        if (foreground != null) {
+            if (foregroundCalculate) {
+                foregroundCalculate = false;
+                foreground.setBounds(0, 0, getRight(), getBottom());
+            }
+
+            foreground.draw(canvas);
+        }
+
+        canvas.restore();
     }
 
     @Override
@@ -367,6 +371,7 @@ public class ThumbnailView extends View implements ImageListener {
 
     private void onImageSet(boolean isImmediate) {
         clearAnimation();
+
         if (!isImmediate) {
             setAlpha(0f);
             animate().alpha(1f).setDuration(200);
@@ -379,10 +384,6 @@ public class ThumbnailView extends View implements ImageListener {
     private void setImageBitmap(Bitmap bitmap) {
         bitmapShader = null;
         paint.setShader(null);
-
-        if (this.bitmap != null && !this.bitmap.isRecycled()) {
-            this.bitmap.recycle();
-        }
 
         if (bitmap != null) {
             calculate = true;

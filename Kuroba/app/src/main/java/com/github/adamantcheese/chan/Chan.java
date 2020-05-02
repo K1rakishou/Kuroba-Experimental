@@ -55,6 +55,7 @@ import com.github.adamantcheese.model.di.MainComponent;
 import com.github.k1rakishou.feather2.Feather;
 
 import org.greenrobot.eventbus.EventBus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -67,6 +68,9 @@ import javax.inject.Inject;
 
 import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import okhttp3.Dns;
 import okhttp3.Protocol;
 
@@ -76,24 +80,26 @@ import static java.lang.Thread.currentThread;
 
 public class Chan
         extends Application
-        implements Application.ActivityLifecycleCallbacks {
+        implements Application.ActivityLifecycleCallbacks, CoroutineScope {
     private static final String TAG = "Chan";
     private int activityForegroundCounter = 0;
 
     @Inject
     DatabaseManager databaseManager;
-
     @Inject
     SiteService siteService;
-
     @Inject
     BoardManager boardManager;
-
     @Inject
     ReportManager reportManager;
-
     @Inject
     SettingsNotificationManager settingsNotificationManager;
+
+    @NotNull
+    @Override
+    public CoroutineContext getCoroutineContext() {
+        return Dispatchers.getMain();
+    }
 
     private static Feather feather;
 
@@ -159,7 +165,7 @@ public class Chan
         );
 
         feather = Feather.with(
-                new AppModule(this, okHttpDns, okHttpProtocols, appConstants),
+                new AppModule(this, this, okHttpDns, okHttpProtocols, appConstants),
                 new ExecutorsModule(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather

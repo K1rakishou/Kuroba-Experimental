@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -35,9 +36,6 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader.ImageContainer;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.davemorrissey.labs.subscaleview.ImageSource;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.adamantcheese.chan.R;
@@ -80,6 +78,7 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
+import coil.request.RequestDisposable;
 import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
@@ -124,7 +123,8 @@ public class MultiImageView
     private boolean op;
 
     private Mode mode = Mode.UNLOADED;
-    private ImageContainer thumbnailRequest;
+    @Nullable
+    private RequestDisposable thumbnailRequestDisposable;
     private CancelableDownload bigImageRequest;
     private CancelableDownload gifRequest;
     private CancelableDownload videoRequest;
@@ -328,34 +328,28 @@ public class MultiImageView
     private void setThumbnail(Loadable loadable, PostImage postImage, boolean center) {
         BackgroundUtils.ensureMainThread();
 
-        if (thumbnailRequest != null) {
+        if (thumbnailRequestDisposable != null) {
             return;
         }
 
-        thumbnailRequest = imageLoaderV2.getImage(
+        thumbnailRequestDisposable = imageLoaderV2.load(
+                getContext(),
                 true,
                 loadable,
                 postImage,
                 getWidth(),
                 getHeight(),
-                new ImageListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        thumbnailRequest = null;
-                        if (center) {
-                            onError(error);
-                        }
-                    }
+                new ImageLoaderV2.ImageListener() {
 
                     @SuppressLint("ClickableViewAccessibility")
                     @Override
-                    public void onResponse(ImageContainer response, boolean isImmediate) {
-                        thumbnailRequest = null;
+                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                        thumbnailRequestDisposable = null;
 
-                        if (response.getBitmap() != null && (!hasContent || mode == Mode.LOWRES)) {
+                        if (!hasContent || mode == Mode.LOWRES) {
                             ThumbnailImageView thumbnail = new ThumbnailImageView(getContext());
                             thumbnail.setType(postImage.type);
-                            thumbnail.setImageBitmap(response.getBitmap());
+                            thumbnail.setImageDrawable(drawable);
                             thumbnail.setOnClickListener(null);
                             thumbnail.setOnTouchListener((view, motionEvent) ->
                                     gestureDetector.onTouchEvent(motionEvent)
@@ -364,14 +358,16 @@ public class MultiImageView
                             onModeLoaded(Mode.LOWRES, thumbnail);
                         }
                     }
-                });
 
-        if (thumbnailRequest != null && thumbnailRequest.getBitmap() != null) {
-            // Request was immediate and thumbnailRequest was first set to null in onResponse,
-            // and then set to the container when the method returned
-            // Still set it to null here
-            thumbnailRequest = null;
-        }
+                    @Override
+                    public void onResponseError(@NotNull Throwable error) {
+                        thumbnailRequestDisposable = null;
+
+                        if (center) {
+                            onError(error);
+                        }
+                    }
+                });
     }
 
     private void setBigImage(Loadable loadable, PostImage postImage) {
@@ -873,7 +869,7 @@ public class MultiImageView
         image.setOnTouchListener((view, motionEvent) -> gestureDetector.onTouchEvent(motionEvent));
     }
 
-    private void onError(Exception exception) {
+    private void onError(Throwable exception) {
         String message = String.format(Locale.ENGLISH,
                 "%s: %s",
                 getString(R.string.image_preview_failed),
@@ -902,9 +898,9 @@ public class MultiImageView
     }
 
     private void cancelLoad() {
-        if (thumbnailRequest != null) {
-            imageLoaderV2.cancelRequest(thumbnailRequest);
-            thumbnailRequest = null;
+        if (thumbnailRequestDisposable != null) {
+            thumbnailRequestDisposable.dispose();
+            thumbnailRequestDisposable = null;
         }
         if (bigImageRequest != null) {
             bigImageRequest.cancel();

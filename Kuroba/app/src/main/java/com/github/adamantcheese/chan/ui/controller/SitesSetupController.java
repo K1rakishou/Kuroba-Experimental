@@ -322,7 +322,7 @@ public class SitesSetupController
 
         private void setSiteIcon(Site site) {
             siteIcon = site.icon();
-            siteIcon.get((siteIcon, icon) -> {
+            siteIcon.get(context, (siteIcon, icon) -> {
                 if (SiteCell.this.siteIcon == siteIcon) {
                     image.setImageDrawable(icon);
                     image.getDrawable().setTintList(null);

@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,6 +27,7 @@ import static com.github.adamantcheese.chan.core.presenter.ImageReencodingPresen
 import static com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
 import static com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_PNG;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 
 public class BitmapUtils {
     private static final String TAG = "BitmapUtils";
@@ -65,7 +67,11 @@ public class BitmapUtils {
         reduce = MathUtils.clamp(reduce, MIN_REDUCE, MAX_REDUCE);
 
         //all parameters are default - do nothing
-        if (quality == MAX_QUALITY && reduce == MIN_REDUCE && reencodeType == AS_IS && !fixExif && !removeMetadata
+        if (quality == MAX_QUALITY
+                && reduce == MIN_REDUCE
+                && reencodeType == AS_IS
+                && !fixExif
+                && !removeMetadata
                 && !changeImageChecksum) {
             return inputBitmapFile;
         }
@@ -252,5 +258,9 @@ public class BitmapUtils {
         } catch (Exception e) {
             return new Pair<>(-1, -1);
         }
+    }
+
+    public static BitmapDrawable bitmapToDrawable(Bitmap bitmap) {
+        return new BitmapDrawable(getRes(), bitmap);
     }
 }

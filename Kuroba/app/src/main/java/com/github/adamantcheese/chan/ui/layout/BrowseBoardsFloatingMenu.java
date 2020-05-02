@@ -488,7 +488,7 @@ public class BrowseBoardsFloatingMenu
 
             image.setTag(icon);
             image.setImageDrawable(null);
-            icon.get((siteIcon, drawable) -> {
+            icon.get(getContext(), (siteIcon, drawable) -> {
                 if (image.getTag() == siteIcon) {
                     image.setImageDrawable(drawable);
                     image.getDrawable().setTintList(null);

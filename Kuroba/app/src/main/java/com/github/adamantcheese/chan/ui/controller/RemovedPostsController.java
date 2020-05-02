@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.ui.controller;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -17,9 +18,6 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.ColorUtils;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -29,9 +27,12 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -216,7 +217,7 @@ public class RemovedPostsController
             AppCompatCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
 
-            postNo.setText(String.format("No. %d", removedPost.postNo));
+            postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postNo));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
             checkbox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
@@ -227,18 +228,23 @@ public class RemovedPostsController
                 PostImage image = removedPost.getImages().get(0);
                 postImage.setVisibility(VISIBLE);
 
-                imageLoaderV2.get(image.getThumbnailUrl().toString(), new ImageListener() {
-                    @Override
-                    public void onResponse(ImageLoader.ImageContainer response, boolean isImmediate) {
-                        postImage.setImageBitmap(response.getBitmap());
-                    }
+                imageLoaderV2.loadFromNetwork(
+                        getContext(),
+                        image.getThumbnailUrl().toString(),
+                        postImage.getWidth(),
+                        postImage.getHeight(),
+                        new ImageLoaderV2.ImageListener() {
+                            @Override
+                            public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                                postImage.setImageBitmap(drawable.getBitmap());
+                            }
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Logger.e(TAG, "Error while trying to download post image", error);
-                        postImage.setVisibility(GONE);
-                    }
-                }, postImage.getWidth(), postImage.getHeight());
+                            @Override
+                            public void onResponseError(@NotNull Throwable error) {
+                                Logger.e(TAG, "Error while trying to download post image", error);
+                                postImage.setVisibility(GONE);
+                            }
+                        });
             } else {
                 postImage.setVisibility(GONE);
             }

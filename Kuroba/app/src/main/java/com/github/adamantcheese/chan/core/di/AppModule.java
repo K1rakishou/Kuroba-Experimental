@@ -19,12 +19,9 @@ package com.github.adamantcheese.chan.core.di;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.ImageLoader;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
-import com.github.adamantcheese.chan.core.net.BitmapLruImageCache;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
@@ -41,9 +38,12 @@ import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
 import com.google.gson.Gson;
 
 import java.io.File;
+import java.util.Objects;
 
 import javax.inject.Singleton;
 
+import coil.ImageLoader;
+import kotlinx.coroutines.CoroutineScope;
 import okhttp3.Dns;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
@@ -54,6 +54,7 @@ import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAn
 
 public class AppModule {
     private Context applicationContext;
+    private CoroutineScope applicationCoroutineScope;
     private Dns okHttpDns;
     private Chan.OkHttpProtocols okHttpProtocols;
     private AppConstants appConstants;
@@ -62,11 +63,19 @@ public class AppModule {
 
     public AppModule(
             Context applicationContext,
+            CoroutineScope applicationCoroutineScope,
             Dns dns,
             Chan.OkHttpProtocols protocols,
             AppConstants appConstants
     ) {
+        Objects.requireNonNull(applicationContext);
+        Objects.requireNonNull(applicationCoroutineScope);
+        Objects.requireNonNull(dns);
+        Objects.requireNonNull(protocols);
+        Objects.requireNonNull(appConstants);
+
         this.applicationContext = applicationContext;
+        this.applicationCoroutineScope = applicationCoroutineScope;
         this.okHttpDns = dns;
         this.okHttpProtocols = protocols;
         this.appConstants = appConstants;
@@ -77,6 +86,13 @@ public class AppModule {
     public Context provideApplicationContext() {
         Logger.d(DI_TAG, "App Context");
         return applicationContext;
+    }
+
+    @Provides
+    @Singleton
+    public CoroutineScope proviceApplicationCoroutineScope() {
+        Logger.d(DI_TAG, "App CoroutineScope");
+        return applicationCoroutineScope;
     }
 
     @Provides
@@ -115,14 +131,22 @@ public class AppModule {
 
     @Provides
     @Singleton
+    public ImageLoader provideCoilImageLoader(Context applicationContext) {
+        Logger.d(DI_TAG, "Coil Image loader");
+        return ImageLoader
+                .builder(applicationContext)
+                .build();
+    }
+
+    @Provides
+    @Singleton
     public ImageLoaderV2 provideImageLoaderV2(
-            RequestQueue requestQueue, Context applicationContext, ThemeHelper themeHelper, FileManager fileManager
+            CoroutineScope applicationCoroutineScope,
+            ImageLoader coilImageLoader,
+            FileManager fileManager
     ) {
-        final int runtimeMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        final int lruImageCacheSize = runtimeMemory / 8;
-        ImageLoader imageLoader = new ImageLoader(requestQueue, new BitmapLruImageCache(lruImageCacheSize));
         Logger.d(DI_TAG, "Image loader v2");
-        return new ImageLoaderV2(imageLoader, fileManager);
+        return new ImageLoaderV2(applicationCoroutineScope, coilImageLoader, fileManager);
     }
 
     @Provides

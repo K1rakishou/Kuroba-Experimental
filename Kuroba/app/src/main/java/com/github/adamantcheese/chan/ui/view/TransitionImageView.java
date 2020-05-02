@@ -67,7 +67,6 @@ public class TransitionImageView
         // Center inside method
         float selfWidth = getWidth();
         float selfHeight = getHeight();
-
         float destScale = Math.min(selfWidth / (float) bitmap.getWidth(), selfHeight / (float) bitmap.getHeight());
 
         RectF output = new RectF((selfWidth - bitmap.getWidth() * destScale) * 0.5f,

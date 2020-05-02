@@ -172,6 +172,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_confirm_exit">Tap back again to exit</string>
 
     <string name="thumbnail_load_failed_network">Error</string>
+    <string name="thumbnail_load_failed_404">404</string>
     <string name="image_preview_failed">Failed to show image</string>
     <string name="image_preview_failed_oom">Failed to show image (out of memory)</string>
     <string name="image_failed_big_image">Failed to show image (deep-zoom loading failed)</string>

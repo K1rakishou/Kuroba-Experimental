@@ -28,6 +28,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -55,10 +57,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader.ImageContainer;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -82,6 +82,8 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,6 +91,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import coil.request.RequestDisposable;
 import okhttp3.HttpUrl;
 
 import static android.text.TextUtils.isEmpty;
@@ -110,6 +113,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.openIntent;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
+import static com.github.adamantcheese.chan.utils.BitmapUtils.bitmapToDrawable;
 import static com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize;
 
 public class PostCell
@@ -117,6 +121,22 @@ public class PostCell
         implements PostCellInterface {
     private static final String TAG = "PostCell";
     private static final int COMMENT_MAX_LENGTH_BOARD = 350;
+
+    private static BitmapDrawable stickyIcon = bitmapToDrawable(
+            BitmapFactory.decodeResource(getRes(), R.drawable.sticky_icon)
+    );
+    private static BitmapDrawable closedIcon = bitmapToDrawable(
+            BitmapFactory.decodeResource(getRes(), R.drawable.closed_icon)
+    );
+    private static BitmapDrawable trashIcon = bitmapToDrawable(
+            BitmapFactory.decodeResource(getRes(), R.drawable.trash_icon)
+    );
+    private static BitmapDrawable archivedIcon = bitmapToDrawable(
+            BitmapFactory.decodeResource(getRes(), R.drawable.archived_icon)
+    );
+    private static BitmapDrawable errorIcon = bitmapToDrawable(
+            BitmapFactory.decodeResource(getRes(), R.drawable.error_icon)
+    );
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -1056,14 +1076,7 @@ public class PostCell
         }
     }
 
-    private static Bitmap stickyIcon = BitmapFactory.decodeResource(getRes(), R.drawable.sticky_icon);
-    private static Bitmap closedIcon = BitmapFactory.decodeResource(getRes(), R.drawable.closed_icon);
-    private static Bitmap trashIcon = BitmapFactory.decodeResource(getRes(), R.drawable.trash_icon);
-    private static Bitmap archivedIcon = BitmapFactory.decodeResource(getRes(), R.drawable.archived_icon);
-    private static Bitmap errorIcon = BitmapFactory.decodeResource(getRes(), R.drawable.error_icon);
-
-    public static class PostIcons
-            extends View {
+    public static class PostIcons extends View {
         private static final int STICKY = 0x1;
         private static final int CLOSED = 0x2;
         private static final int DELETED = 0x4;
@@ -1136,11 +1149,20 @@ public class PostCell
             httpIcons = new ArrayList<>(icons.size());
 
             for (PostHttpIcon icon : icons) {
-                int codeIndex = icon.name.indexOf('/'); //this is for country codes
+                // this is for country codes
+                int codeIndex = icon.name.indexOf('/');
+
                 String name = icon.name.substring(0, codeIndex != -1 ? codeIndex : icon.name.length());
-                PostIconsHttpIcon j = new PostIconsHttpIcon(this, imageLoaderV2, name, icon.url);
-                httpIcons.add(j);
-                j.request();
+                PostIconsHttpIcon postIconsHttpIcon = new PostIconsHttpIcon(
+                        getContext(),
+                        this,
+                        imageLoaderV2,
+                        name,
+                        icon.url
+                );
+
+                httpIcons.add(postIconsHttpIcon);
+                postIconsHttpIcon.request();
             }
         }
 
@@ -1166,7 +1188,9 @@ public class PostCell
 
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-            int measureHeight = icons == 0 ? 0 : (height + getPaddingTop() + getPaddingBottom());
+            int measureHeight = icons == 0
+                    ? 0
+                    : (height + getPaddingTop() + getPaddingBottom());
 
             setMeasuredDimension(widthMeasureSpec, MeasureSpec.makeMeasureSpec(measureHeight, EXACTLY));
         }
@@ -1180,29 +1204,30 @@ public class PostCell
                 int offset = 0;
 
                 if (get(STICKY)) {
-                    offset += drawBitmap(canvas, stickyIcon, offset);
+                    offset += drawBitmapDrawable(canvas, stickyIcon, offset);
                 }
 
                 if (get(CLOSED)) {
-                    offset += drawBitmap(canvas, closedIcon, offset);
+                    offset += drawBitmapDrawable(canvas, closedIcon, offset);
                 }
 
                 if (get(DELETED)) {
-                    offset += drawBitmap(canvas, trashIcon, offset);
+                    offset += drawBitmapDrawable(canvas, trashIcon, offset);
                 }
 
                 if (get(ARCHIVED)) {
-                    offset += drawBitmap(canvas, archivedIcon, offset);
+                    offset += drawBitmapDrawable(canvas, archivedIcon, offset);
                 }
 
                 if (get(HTTP_ICONS) && httpIcons != null) {
                     for (PostIconsHttpIcon httpIcon : httpIcons) {
-                        if (httpIcon.bitmap != null) {
-                            offset += drawBitmap(canvas, httpIcon.bitmap, offset);
+                        if (httpIcon.getDrawable() != null) {
+                            offset += drawDrawable(canvas, httpIcon.getDrawable(), offset);
 
                             textPaint.setColor(httpIconTextColor);
                             textPaint.setTextSize(httpIconTextSize);
                             textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length(), textRect);
+
                             float y = height / 2f - textRect.exactCenterY();
                             canvas.drawText(httpIcon.name, offset, y, textPaint);
                             offset += textRect.width() + spacing;
@@ -1214,63 +1239,86 @@ public class PostCell
             }
         }
 
-        private int drawBitmap(Canvas canvas, Bitmap bitmap, int offset) {
+        private int drawBitmapDrawable(Canvas canvas, BitmapDrawable bitmapDrawable, int offset) {
+            Bitmap bitmap = bitmapDrawable.getBitmap();
+
             int width = (int) (((float) height / bitmap.getHeight()) * bitmap.getWidth());
             drawRect.set(offset, 0f, offset + width, height);
             canvas.drawBitmap(bitmap, null, drawRect, null);
             return width + spacing;
         }
+
+        private int drawDrawable(Canvas canvas, Drawable drawable, int offset) {
+            int width = (int) (((float) height / drawable.getIntrinsicHeight()) * drawable.getIntrinsicWidth());
+            drawable.setBounds(offset, 0, offset + width, height);
+            drawable.draw(canvas);
+
+            return width + spacing;
+        }
     }
 
-    private static class PostIconsHttpIcon
-            implements ImageListener {
+    private static class PostIconsHttpIcon implements ImageLoaderV2.ImageListener {
+        private final Context context;
         private final PostIcons postIcons;
         private final String name;
         private final HttpUrl url;
-        private ImageContainer request;
-        private Bitmap bitmap;
+        @Nullable
+        private RequestDisposable requestDisposable;
+        @Nullable
+        private Drawable drawable;
         private ImageLoaderV2 imageLoaderV2;
 
         private PostIconsHttpIcon(
+                Context context,
                 PostIcons postIcons,
                 ImageLoaderV2 imageLoaderV2,
                 String name,
                 HttpUrl url
         ) {
+            if (!(context instanceof StartActivity)) {
+                throw new IllegalArgumentException("Bad context type! Must be StartActivity, actual: "
+                        + context.getClass().getSimpleName());
+            }
+
+            this.context = context;
             this.postIcons = postIcons;
             this.name = name;
             this.url = url;
             this.imageLoaderV2 = imageLoaderV2;
         }
 
+        @Nullable
+        public Drawable getDrawable() {
+            return drawable;
+        }
+
         private void request() {
-            request = imageLoaderV2.get(url.toString(), this);
+            cancel();
+
+            requestDisposable = imageLoaderV2.loadFromNetwork(context, url.toString(), this);
         }
 
         private void cancel() {
-            if (request != null) {
-                imageLoaderV2.cancelRequest(request);
-                request = null;
+            if (requestDisposable != null) {
+                requestDisposable.dispose();
+                requestDisposable = null;
             }
         }
 
         @Override
-        public void onResponse(ImageContainer response, boolean isImmediate) {
-            if (response.getBitmap() != null) {
-                bitmap = response.getBitmap();
-                postIcons.invalidate();
-            }
+        public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+            this.drawable = drawable;
+            postIcons.invalidate();
         }
 
         @Override
-        public void onErrorResponse(VolleyError error) {
-            bitmap = errorIcon;
+        public void onResponseError(@NotNull Throwable error) {
+            this.drawable = errorIcon;
             postIcons.invalidate();
         }
     }
 
-    private class DoubleTapGestureListener
-            extends GestureDetector.SimpleOnGestureListener {
+    private class DoubleTapGestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
         public boolean onDoubleTap(MotionEvent e) {
             if (callback != null) {

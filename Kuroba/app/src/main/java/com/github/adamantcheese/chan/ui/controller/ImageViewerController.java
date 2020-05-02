@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -40,9 +41,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader.ImageContainer;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
@@ -70,6 +68,8 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.TransitionImageView;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -435,22 +435,23 @@ public class ImageViewerController
 
     @Override
     public void updatePreviewImage(PostImage postImage) {
-        imageLoaderV2.getImage(true,
+        imageLoaderV2.load(
+                context,
+                true,
                 loadable,
                 postImage,
                 previewImage.getWidth(),
                 previewImage.getHeight(),
-                new ImageListener() {
+                new ImageLoaderV2.ImageListener() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // the preview image will just remain as the last successful response; good enough
+                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                        previewImage.setBitmap(drawable.getBitmap());
                     }
 
                     @Override
-                    public void onResponse(ImageContainer response, boolean isImmediate) {
-                        if (response.getBitmap() != null) {
-                            previewImage.setBitmap(response.getBitmap());
-                        }
+                    public void onResponseError(@NotNull Throwable error) {
+                        // the preview image will just remain as the last successful response;
+                        // good enough
                     }
                 }
         );
@@ -541,27 +542,25 @@ public class ImageViewerController
             }
         });
 
-        imageLoaderV2.getImage(true,
+        imageLoaderV2.load(
+                context,
+                true,
                 loadable,
                 postImage,
                 previewImage.getWidth(),
                 previewImage.getHeight(),
-                new ImageListener() {
+                new ImageLoaderV2.ImageListener() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e(
-                                TAG,
-                                "onErrorResponse for preview in transition in ImageViewerController, cannot show correct transition bitmap"
-                        );
+                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                        previewImage.setBitmap(drawable.getBitmap());
                         startAnimation.start();
                     }
 
                     @Override
-                    public void onResponse(ImageContainer response, boolean isImmediate) {
-                        if (response.getBitmap() != null) {
-                            previewImage.setBitmap(response.getBitmap());
-                            startAnimation.start();
-                        }
+                    public void onResponseError(@NotNull Throwable error) {
+                        Log.e(TAG, "onErrorResponse for preview in transition in ImageViewerController, " +
+                                "cannot show correct transition bitmap");
+                        startAnimation.start();
                     }
                 }
         );

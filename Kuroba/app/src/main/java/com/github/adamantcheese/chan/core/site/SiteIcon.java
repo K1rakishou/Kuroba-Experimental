@@ -16,18 +16,18 @@
  */
 package com.github.adamantcheese.chan.core.site;
 
+import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageLoader.ImageContainer;
-import com.android.volley.toolbox.ImageLoader.ImageListener;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.utils.Logger;
 
-import okhttp3.HttpUrl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
+import coil.request.RequestDisposable;
+import okhttp3.HttpUrl;
 
 public class SiteIcon {
     private static final String TAG = "SiteIcon";
@@ -36,6 +36,8 @@ public class SiteIcon {
     private ImageLoaderV2 imageLoaderV2;
     private HttpUrl url;
     private Drawable drawable;
+    @Nullable
+    private RequestDisposable requestDisposable;
 
     public static SiteIcon fromFavicon(ImageLoaderV2 imageLoaderV2, HttpUrl url) {
         SiteIcon siteIcon = new SiteIcon(imageLoaderV2);
@@ -53,27 +55,34 @@ public class SiteIcon {
         this.imageLoaderV2 = imageLoaderV2;
     }
 
-    public void get(SiteIconResult result) {
+    public void get(Context context, SiteIconResult result) {
         if (drawable != null) {
             result.onSiteIcon(SiteIcon.this, drawable);
             return;
         }
 
         if (url != null) {
-            imageLoaderV2.get(url.toString(), new ImageListener() {
-                @Override
-                public void onResponse(ImageContainer response, boolean isImmediate) {
-                    if (response.getBitmap() != null) {
-                        Drawable drawable = new BitmapDrawable(getRes(), response.getBitmap());
-                        result.onSiteIcon(SiteIcon.this, drawable);
-                    }
-                }
+            if (requestDisposable != null) {
+                requestDisposable.dispose();
+                requestDisposable = null;
+            }
 
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Logger.e(TAG, "Error loading favicon", error);
-                }
-            }, FAVICON_SIZE, FAVICON_SIZE);
+            requestDisposable = imageLoaderV2.loadFromNetwork(
+                    context,
+                    url.toString(),
+                    FAVICON_SIZE,
+                    FAVICON_SIZE,
+                    new ImageLoaderV2.ImageListener() {
+                        @Override
+                        public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                            result.onSiteIcon(SiteIcon.this, drawable);
+                        }
+
+                        @Override
+                        public void onResponseError(@NotNull Throwable error) {
+                            Logger.e(TAG, "Error loading favicon", error);
+                        }
+                    });
         }
     }
 
