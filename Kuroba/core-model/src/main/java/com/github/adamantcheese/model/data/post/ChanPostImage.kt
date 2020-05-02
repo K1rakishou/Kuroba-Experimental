@@ -51,7 +51,7 @@ class ChanPostImage(
         return "ChanPostImage(" +
                 "serverFilename='$serverFilename', " +
                 "isFromArchive='$isFromArchive', " +
-                "imageUrl=$imageUrl," +
+                "imageUrl=$imageUrl, " +
                 "imageWidth=$imageWidth, " +
                 "imageHeight=$imageHeight, " +
                 "size=$size, " +

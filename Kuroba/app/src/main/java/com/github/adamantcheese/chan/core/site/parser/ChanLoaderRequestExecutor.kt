@@ -35,6 +35,7 @@ import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.PostUtils
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
@@ -215,7 +216,7 @@ class ChanLoaderRequestExecutor(
             }
 
             val (parsedPosts, parsingDuration) = measureTimedValue {
-                val posts = chanReaderProcessor.getToParse() + archivePosts
+                val posts = mergePosts(chanReaderProcessor.getToParse(), archivePosts)
                 return@measureTimedValue parseNewPostsPosts(loadable, reader, posts)
             }
 
@@ -250,6 +251,32 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
             return@Try processPosts(op, reloadedPosts, requestParams)
         }
+    }
+
+    /**
+     * [postsFromServer] and [postsFromArchive] may contain posts with the same postNo so we need to
+     * filter out [postsFromServer] in case there are already posts with the same postNos in
+     * [postsFromArchive].
+     * */
+    private fun mergePosts(
+            postsFromServer: List<Post.Builder>,
+            postsFromArchive: List<Post.Builder>
+    ): List<Post.Builder> {
+        val resultList = mutableListOf<Post.Builder>()
+        val archivePostsMap = postsFromArchive.associateBy { archivePost -> archivePost.id }
+
+        postsFromServer.forEach { freshPost ->
+            // If we have two posts with the same postNo in both fresh posts and posts from archives
+            // then prefer the post from archives because it should contain more useful information
+            // (like deleted images etc)
+            if (!archivePostsMap.containsKey(freshPost.id)) {
+                resultList += freshPost
+            } else {
+                resultList += requireNotNull(archivePostsMap[freshPost.id])
+            }
+        }
+
+        return resultList
     }
 
     private suspend fun getPostsFromArchiveIfNecessary(
@@ -339,21 +366,24 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             }
 
             val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
-            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }
+            val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }.toSet()
 
-            val notCachedArchivePostNoSet = chanPostRepository.filterAlreadyCachedPostNo(
+            val cachedArchivePostsMap = chanPostRepository.getThreadPosts(
                     threadDescriptor,
                     archivePostsNoList
-            ).unwrap().toSet()
+            ).unwrap().associateBy { chanPost -> chanPost.postDescriptor.postNo }
 
             val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
-                return@filter archivePost.postNo !in freshPostNoSet
-                        && archivePost.postNo in notCachedArchivePostNoSet
+                return@filter retainDeletedOrUpdatedPosts(
+                        archivePost,
+                        freshPostNoSet,
+                        cachedArchivePostsMap
+                )
             }
 
             Logger.d(TAG, "thirdPartyArchiveInfoRepository.fetchThreadFromNetwork fetched " +
                     "${archiveThread.posts.size} posts in total and " +
-                    "${archivePostsThatWereDeleted.size} deleted posts")
+                    "${archivePostsThatWereDeleted.size} deleted (or updated) posts")
 
             val mappedArchivePosts = ArchiveThreadMapper.fromThread(
                     loadable.board,
@@ -366,6 +396,33 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
             return@Try mappedArchivePosts
         }
+    }
+
+    private fun retainDeletedOrUpdatedPosts(
+            archivePost: ArchivesRemoteSource.ArchivePost,
+            freshPostNoSet: Set<Long>,
+            cachedArchivePostsMap: Map<Long, ChanPost>
+    ): Boolean {
+        if (archivePost.postNo !in freshPostNoSet) {
+            // Post does not exist in the post list we got from the server. We need to update this
+            // post in the database.
+            return true
+        }
+
+        if (!cachedArchivePostsMap.containsKey(archivePost.postNo)) {
+            // Post is not cached in the database/cache. We need to update this post in the database.
+            return true
+        }
+
+        // Post was deleted and we already have it in the cache. We need to check whether it's the
+        // same as in the cache or maybe it was changed somehow (user was banned/post image was
+        // deleted etc.)
+        val cachedArchivePost = requireNotNull(cachedArchivePostsMap[archivePost.postNo]) {
+            "Wtf? Post does not exist in notCachedArchivePostNoSet but it also does not exist in " +
+                    "cachedArchivePostsMap and it's not a fresh post! This shouldn't happen."
+        }
+
+        return PostUtils.postsDifferFast(archivePost, cachedArchivePost)
     }
 
     @OptIn(ExperimentalTime::class)

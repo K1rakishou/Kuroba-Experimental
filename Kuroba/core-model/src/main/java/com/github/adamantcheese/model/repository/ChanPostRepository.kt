@@ -188,6 +188,35 @@ class ChanPostRepository(
     }
 
     suspend fun getThreadPosts(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            postNoSet: Set<Long>
+    ): ModularResult<List<ChanPost>> {
+        return tryWithTransaction {
+            val fromCache = postCache.getPostsFromCache(threadDescriptor, postNoSet)
+            if (fromCache.size == postNoSet.size) {
+                return@tryWithTransaction fromCache
+            }
+
+            val getFromDatabasePostList = postNoSet.subtract(
+                    fromCache.map { post -> post.postDescriptor.postNo }
+            )
+
+            val postsFromDatabase = localSource.getThreadPosts(
+                    threadDescriptor,
+                    getFromDatabasePostList
+            )
+
+            if (postsFromDatabase.isNotEmpty()) {
+                postsFromDatabase.forEach { post ->
+                    postCache.putIntoCache(post.postDescriptor, post)
+                }
+            }
+
+            return@tryWithTransaction fromCache + postsFromDatabase
+        }
+    }
+
+    suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
             maxCount: Int
     ): ModularResult<List<ChanPost>> {

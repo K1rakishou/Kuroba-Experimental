@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import java.util.*
 import kotlin.math.abs
 
@@ -247,6 +248,33 @@ object PostUtils {
         return false
     }
 
+    /**
+     * This version of postsDiffer function is to compare a post from archives with already cached
+     * post from the DB. We only care about the images count difference. It changes when original
+     * image gets deleted by mods. We would also like to check the comments difference, but we can't
+     * because at this point [archivePost]'s comment is still unparsed so it contains stuff like HTMl
+     * tags etc.
+     * */
+    fun postsDifferFast(archivePost: ArchivesRemoteSource.ArchivePost, cachedArchivePost: ChanPost): Boolean {
+        if (archivePost.archivePostMediaList.size != cachedArchivePost.postImages.size) {
+            return true
+        }
+
+        repeat(archivePost.archivePostMediaList.size) { index ->
+            val archiveImage = archivePost.archivePostMediaList[index]
+            val cachedArchiveImage = cachedArchivePost.postImages[index]
+
+            if (archiveImage.imageUrl != cachedArchiveImage.imageUrl?.toString()) {
+                return true
+            }
+
+            if (archiveImage.thumbnailUrl != cachedArchiveImage.thumbnailUrl?.toString()) {
+                return true
+            }
+        }
+
+        return false
+    }
 
     @JvmStatic
     fun postsDiffer(displayedPost: Post, newPost: Post): Boolean {

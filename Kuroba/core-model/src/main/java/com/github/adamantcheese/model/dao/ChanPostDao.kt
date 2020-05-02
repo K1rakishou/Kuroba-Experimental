@@ -29,6 +29,19 @@ abstract class ChanPostDao {
         WHERE 
             ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND 
+            ${ChanPostEntity.POST_NO_COLUMN_NAME} IN (:postNoCollection)
+    """)
+    abstract suspend fun selectMany(
+            ownerThreadId: Long,
+            postNoCollection: Collection<Long>
+    ): List<ChanPostEntity>
+
+    @Query("""
+        SELECT *
+        FROM ${ChanPostEntity.TABLE_NAME}
+        WHERE 
+            ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND 
             ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
         ORDER BY ${ChanPostEntity.POST_NO_COLUMN_NAME} DESC
         LIMIT :maxCount

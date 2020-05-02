@@ -236,6 +236,45 @@ class ChanPostLocalSource(
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
+            postNoCollection: Collection<Long>
+    ): List<ChanPost> {
+        ensureInTransaction()
+
+        // Load descriptor's thread
+        val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
+                ?: return emptyList()
+
+        val chanPostEntityList = chanPostDao.selectMany(chanThreadEntity.threadId, postNoCollection)
+        if (chanPostEntityList.isEmpty()) {
+            return emptyList()
+        }
+
+        val postIdList = chanPostEntityList.map { it.postId }
+
+        // Load posts' comments/subjects/tripcodes and other Spannables
+        val textSpansGroupedByPostId = postIdList
+                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+                .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
+                .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
+
+        val posts = chanPostEntityList
+                .mapNotNull { chanPostEntity ->
+                    val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+
+                    return@mapNotNull ChanPostMapper.fromEntity(
+                            gson,
+                            descriptor,
+                            chanThreadEntity,
+                            chanPostEntity,
+                            postTextSnapEntityList
+                    )
+                }
+
+        return getPostsAdditionalData(postIdList, posts)
+    }
+
+    suspend fun getThreadPosts(
+            descriptor: ChanDescriptor.ThreadDescriptor,
             maxCount: Int
     ): List<ChanPost> {
         ensureInTransaction()

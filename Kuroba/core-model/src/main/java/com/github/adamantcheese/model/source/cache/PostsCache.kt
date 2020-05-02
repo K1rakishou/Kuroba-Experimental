@@ -90,6 +90,34 @@ class PostsCache(private val maxValueCount: Int) {
         }
     }
 
+    suspend fun getPostsFromCache(
+            threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            postNoSet: Set<Long>
+    ): List<ChanPost> {
+        return mutex.withLock {
+            accessTimes[threadDescriptor] = System.currentTimeMillis()
+
+            val postsMap = postsCache[threadDescriptor]
+            if (postsMap.isNullOrEmpty()) {
+                return@withLock emptyList()
+            }
+
+            val resultList = mutableListOf<ChanPost>()
+
+            postsMap.keys.forEach { postDescriptor ->
+                if (postDescriptor.postNo in postNoSet) {
+                    val post = requireNotNull(postsMap[postDescriptor]) {
+                        "getPostsFromCache() probably synchronization issue"
+                    }
+
+                    resultList.add(post)
+                }
+            }
+
+            return@withLock resultList
+        }
+    }
+
     suspend fun getPostsFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
         return mutex.withLock {
             accessTimes[threadDescriptor] = System.currentTimeMillis()
