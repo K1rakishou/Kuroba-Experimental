@@ -41,7 +41,6 @@ import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
@@ -55,6 +54,8 @@ public class ImageReencodingPresenter {
 
     @Inject
     ReplyManager replyManager;
+    @Inject
+    Gson gson;
 
     private Executor executor = Executors.newSingleThreadExecutor();
     private ImageReencodingPresenterCallback callback;
@@ -63,13 +64,17 @@ public class ImageReencodingPresenter {
     private BackgroundUtils.Cancelable cancelable;
 
     public ImageReencodingPresenter(
-            Context context, ImageReencodingPresenterCallback callback, Loadable loadable, ImageOptions lastOptions
+            Context context,
+            ImageReencodingPresenterCallback callback,
+            Loadable loadable,
+            ImageOptions lastOptions
     ) {
         inject(this);
 
         this.context = context;
         this.loadable = loadable;
         this.callback = callback;
+
         if (lastOptions != null) {
             imageOptions = lastOptions;
         } else {
@@ -89,9 +94,13 @@ public class ImageReencodingPresenter {
     public void loadImagePreview() {
         Reply reply = replyManager.getReply(loadable);
         Point displaySize = getDisplaySize();
-        ImageDecoder.decodeFileOnBackgroundThread(reply.file,
+
+        ImageDecoder.decodeFileOnBackgroundThread(
+                reply.file,
                 //decode to the device width/height, whatever is smaller
-                dp(Math.min(displaySize.x, displaySize.y)), 0, bitmap -> {
+                dp(Math.min(displaySize.x, displaySize.y)),
+                0,
+                bitmap -> {
                     if (bitmap == null) {
                         showToast(context, R.string.could_not_decode_image_bitmap);
                         return;
@@ -152,7 +161,7 @@ public class ImageReencodingPresenter {
             reply = replyManager.getReply(loadable);
         }
 
-        ChanSettings.lastImageOptions.set(instance(Gson.class).toJson(imageOptions));
+        ChanSettings.lastImageOptions.set(gson.toJson(imageOptions));
         Logger.d(TAG, "imageOptions: [" + imageOptions.toString() + "]");
 
         //all options are default - do nothing

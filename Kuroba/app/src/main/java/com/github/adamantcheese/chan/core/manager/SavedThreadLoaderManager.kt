@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory
+import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -20,7 +21,7 @@ class SavedThreadLoaderManager @Inject constructor(
         private val fileManager: FileManager
 ) {
 
-    fun loadSavedThread(loadable: Loadable): ChanThread? {
+    fun loadSavedThread(loadable: Loadable, currentTheme: Theme): ChanThread? {
         BackgroundUtils.ensureBackgroundThread()
 
         val baseDir = fileManager.newBaseDirectoryFile<LocalThreadsBaseDirectory>()
@@ -77,7 +78,7 @@ class SavedThreadLoaderManager @Inject constructor(
                 return null
             }
 
-            return ThreadMapper.fromSerializedThread(gson, loadable, serializableThread)
+            return ThreadMapper.fromSerializedThread(gson, loadable, serializableThread, currentTheme)
         } catch (e: IOException) {
             Logger.e(TAG, "Could not load saved thread", e)
             return null

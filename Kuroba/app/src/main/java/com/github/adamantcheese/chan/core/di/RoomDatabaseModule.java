@@ -6,8 +6,7 @@ import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
-
-import org.codejargon.feather.Provides;
+import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
 

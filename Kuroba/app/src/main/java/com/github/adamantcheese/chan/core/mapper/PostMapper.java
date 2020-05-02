@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.mapper;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.serializable.SerializablePost;
 import com.google.gson.Gson;
@@ -62,15 +63,18 @@ public class PostMapper {
     public static Post fromSerializedPost(
             Gson gson,
             Loadable loadable,
-            SerializablePost serializablePost
+            SerializablePost serializablePost,
+            Theme currentTheme
     ) {
         CharSequence subject = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                serializablePost.getSubject()
+                serializablePost.getSubject(),
+                currentTheme
         );
         CharSequence tripcode = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                serializablePost.getTripcode()
+                serializablePost.getTripcode(),
+                currentTheme
         );
 
         Post.Builder postBuilder = new Post.Builder().board(loadable.board)
@@ -80,7 +84,9 @@ public class PostMapper {
                 .comment(
                         SpannableStringMapper.deserializeSpannableString(
                                 gson,
-                                serializablePost.getComment())
+                                serializablePost.getComment(),
+                                currentTheme
+                        )
                 )
                 .subject(subject)
                 .tripcode(tripcode)
@@ -118,14 +124,15 @@ public class PostMapper {
     public static List<Post> fromSerializedPostList(
             Gson gson,
             Loadable loadable,
-            List<SerializablePost> serializablePostList
+            List<SerializablePost> serializablePostList,
+            Theme currentTheme
     ) {
         List<Post> posts = new ArrayList<>(serializablePostList.size());
         Throwable firstException = null;
 
         for (SerializablePost serializablePost : serializablePostList) {
             try {
-                posts.add(fromSerializedPost(gson, loadable, serializablePost));
+                posts.add(fromSerializedPost(gson, loadable, serializablePost, currentTheme));
             } catch (Throwable error) {
                 // Skip post if could not deserialize
                 if (firstException == null) {

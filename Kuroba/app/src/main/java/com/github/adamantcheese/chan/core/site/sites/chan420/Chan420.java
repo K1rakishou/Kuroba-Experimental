@@ -91,7 +91,7 @@ public class Chan420
     @Override
     public void setup() {
         setName("420Chan");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://420chan.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://420chan.org/favicon.ico")));
         setBoardsType(BoardsType.DYNAMIC);
 
         setResolvable(URL_HANDLER);

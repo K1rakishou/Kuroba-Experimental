@@ -42,11 +42,17 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
         extends BaseFloatingController {
     private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
@@ -57,6 +63,8 @@ public class PostRepliesController
 
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
         super(context);
+        inject(this);
+
         this.postPopupHelper = postPopupHelper;
         this.presenter = presenter;
     }
@@ -141,15 +149,15 @@ public class PostRepliesController
         View repliesClose = dataView.findViewById(R.id.replies_close);
         repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
 
-        Drawable backDrawable = ThemeHelper.getTheme().backDrawable.makeDrawable(context);
-        Drawable doneDrawable = ThemeHelper.getTheme().doneDrawable.makeDrawable(context);
+        Drawable backDrawable = themeHelper.getTheme().backDrawable.makeDrawable(context);
+        Drawable doneDrawable = themeHelper.getTheme().doneDrawable.makeDrawable(context);
 
         TextView repliesBackText = dataView.findViewById(R.id.replies_back_icon);
         TextView repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
         repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
         repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
 
-        RepliesAdapter repliesAdapter = new RepliesAdapter(presenter, loadable);
+        RepliesAdapter repliesAdapter = new RepliesAdapter(themeHelper, presenter, loadable);
         repliesAdapter.setHasStableIds(true);
         repliesView.setLayoutManager(new LinearLayoutManager(context));
         repliesView.setAdapter(repliesAdapter);
@@ -209,11 +217,13 @@ public class PostRepliesController
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
         public static final int POST_REPLY_VIEW_TYPE = 0;
 
+        private ThemeHelper themeHelper;
         private ThreadPresenter presenter;
         private Loadable loadable;
         private PostPopupHelper.RepliesData data;
 
-        public RepliesAdapter(ThreadPresenter presenter, Loadable loadable) {
+        public RepliesAdapter(ThemeHelper themeHelper, ThreadPresenter presenter, Loadable loadable) {
+            this.themeHelper = themeHelper;
             this.presenter = presenter;
             this.loadable = loadable;
         }
@@ -223,7 +233,7 @@ public class PostRepliesController
         public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = inflate(parent.getContext(), R.layout.cell_post, parent, false);
 
-            return new ReplyViewHolder(view);
+            return new ReplyViewHolder(view, themeHelper);
         }
 
         @Override
@@ -275,11 +285,13 @@ public class PostRepliesController
 
     private static class ReplyViewHolder extends RecyclerView.ViewHolder {
         private PostCellInterface postCellInterface;
+        private ThemeHelper themeHelper;
 
-        public ReplyViewHolder(@NonNull View itemView) {
+        public ReplyViewHolder(@NonNull View itemView, ThemeHelper themeHelper) {
             super(itemView);
 
             this.postCellInterface = (PostCellInterface) itemView;
+            this.themeHelper = themeHelper;
         }
 
         public void onBind(
@@ -303,7 +315,7 @@ public class PostRepliesController
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
                     false,
-                    ThemeHelper.getTheme()
+                    themeHelper.getTheme()
             );
         }
     }

@@ -25,12 +25,19 @@ import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainer
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
-public class StyledToolbarNavigationController
-        extends ToolbarNavigationController {
+public class StyledToolbarNavigationController extends ToolbarNavigationController {
+
+    @Inject
+    ThemeHelper themeHelper;
+
     public StyledToolbarNavigationController(Context context) {
         super(context);
+        inject(this);
     }
 
     @Override
@@ -39,11 +46,13 @@ public class StyledToolbarNavigationController
 
         view = inflate(context, R.layout.controller_navigation_toolbar);
         container = (NavigationControllerContainerLayout) view.findViewById(R.id.container);
+
         NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
         nav.setNavigationController(this);
         nav.setSwipeEnabled(ChanSettings.controllerSwipeable.get());
+
         toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setBackgroundColor(ThemeHelper.getTheme().primaryColor.color);
+        toolbar.setBackgroundColor(themeHelper.getTheme().primaryColor.color);
         toolbar.setCallback(this);
     }
 

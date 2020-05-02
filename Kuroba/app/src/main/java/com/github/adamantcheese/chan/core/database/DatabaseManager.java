@@ -23,6 +23,7 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
 
@@ -58,6 +59,8 @@ public class DatabaseManager {
 
     @Inject
     DatabaseHelper helper;
+    @Inject
+    FileManager fileManager;
 
     private final DatabasePinManager databasePinManager;
     private final DatabaseLoadableManager databaseLoadableManager;
@@ -75,15 +78,15 @@ public class DatabaseManager {
 
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
-        databaseLoadableManager = new DatabaseLoadableManager();
-        databasePinManager = new DatabasePinManager(databaseLoadableManager);
-        databaseHistoryManager = new DatabaseHistoryManager(databaseLoadableManager);
-        databaseSavedReplyManager = new DatabaseSavedReplyManager();
-        databaseFilterManager = new DatabaseFilterManager();
-        databaseBoardManager = new DatabaseBoardManager();
-        databaseSiteManager = new DatabaseSiteManager();
-        databaseHideManager = new DatabaseHideManager();
-        databaseSavedThreadManager = new DatabaseSavedThreadManager();
+        databaseLoadableManager = new DatabaseLoadableManager(helper, this);
+        databasePinManager = new DatabasePinManager(helper, databaseLoadableManager);
+        databaseHistoryManager = new DatabaseHistoryManager(helper, this, databaseLoadableManager);
+        databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
+        databaseFilterManager = new DatabaseFilterManager(helper);
+        databaseBoardManager = new DatabaseBoardManager(helper);
+        databaseSiteManager = new DatabaseSiteManager(helper);
+        databaseHideManager = new DatabaseHideManager(helper, this);
+        databaseSavedThreadManager = new DatabaseSavedThreadManager(helper, fileManager);
         EventBus.getDefault().register(this);
     }
 

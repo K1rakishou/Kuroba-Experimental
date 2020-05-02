@@ -43,6 +43,9 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -52,6 +55,9 @@ public class CardPostCell
         extends CardView
         implements PostCellInterface, View.OnClickListener {
     private static final int COMMENT_MAX_LENGTH = 200;
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private Post post;
     private Loadable loadable;
@@ -67,14 +73,21 @@ public class CardPostCell
 
     public CardPostCell(Context context) {
         super(context);
+        init();
     }
 
     public CardPostCell(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public CardPostCell(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     @Override
@@ -94,7 +107,6 @@ public class CardPostCell
         filterMatchColor = findViewById(R.id.filter_match_color);
 
         setOnClickListener(this);
-
         setCompact(compact);
 
         options.setOnClickListener(v -> {
@@ -245,7 +257,7 @@ public class CardPostCell
         }
 
         comment.setText(commentText);
-        comment.setTextColor(ThemeHelper.getTheme().textPrimary);
+        comment.setTextColor(themeHelper.getTheme().textPrimary);
 
         String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {

@@ -32,9 +32,10 @@ import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.model.orm.SavedThread
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
-import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequestExecutor
-import com.github.adamantcheese.chan.core.site.parser.ChanReaderRequestExecutor.Companion.getChanUrl
+import com.github.adamantcheese.chan.core.site.parser.ChanLoaderRequestExecutor
+import com.github.adamantcheese.chan.core.site.parser.ChanLoaderRequestExecutor.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.StringUtils
@@ -92,6 +93,8 @@ class ChanThreadLoader(
     lateinit var archivesManager: ArchivesManager
     @Inject
     lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
+    @Inject
+    lateinit var themeHelper: ThemeHelper
 
     @Volatile
     var thread: ChanThread? = null
@@ -365,7 +368,7 @@ class ChanThreadLoader(
                 forced
         )
 
-        val readerRequest = ChanReaderRequestExecutor(
+        val readerRequest = ChanLoaderRequestExecutor(
                 gson,
                 okHttpClient,
                 databaseManager.databaseSavedReplyManager,
@@ -375,7 +378,8 @@ class ChanThreadLoader(
                 archivesManager,
                 thirdPartyArchiveInfoRepository,
                 requestParams,
-                ChanSettings.verboseLogs.get()
+                ChanSettings.verboseLogs.get(),
+                themeHelper.theme
         )
 
         val url = getChanUrl(loadable).toString()
@@ -713,7 +717,7 @@ class ChanThreadLoader(
             return null
         }
 
-        return savedThreadLoaderManager.loadSavedThread(loadable)
+        return savedThreadLoaderManager.loadSavedThread(loadable, themeHelper.theme)
     }
 
     private fun getSavedThreadByThreadLoadable(loadable: Loadable): SavedThread? {

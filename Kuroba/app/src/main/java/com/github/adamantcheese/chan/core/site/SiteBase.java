@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.site;
 
 import com.android.volley.RequestQueue;
 import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig;
@@ -53,6 +54,8 @@ public abstract class SiteBase implements Site {
     protected ArchivesManager archivesManager;
     @Inject
     protected NetModule.ProxiedOkHttpClient okHttpClient;
+    @Inject
+    protected ImageLoaderV2 imageLoaderV2;
 
     protected SettingProvider settingsProvider;
     private JsonSettings userSettings;

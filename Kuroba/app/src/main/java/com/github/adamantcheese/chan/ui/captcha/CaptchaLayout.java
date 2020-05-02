@@ -75,6 +75,8 @@ public class CaptchaLayout
     CaptchaHolder captchaHolder;
     @Inject
     Gson gson;
+    @Inject
+    ThemeHelper themeHelper;
 
     public CaptchaLayout(Context context) {
         super(context);
@@ -166,31 +168,34 @@ public class CaptchaLayout
     public void hardReset() {
         String html = IOUtils.assetAsString(getContext(), "html/captcha2.html");
         html = html.replace("__site_key__", siteKey);
-        html = html.replace("__theme__", ThemeHelper.getTheme().isLightTheme ? "light" : "dark");
+        html = html.replace("__theme__", themeHelper.getTheme().isLightTheme ? "light" : "dark");
 
         Point displaySize = getDisplaySize();
-        boolean isSplitMode =
-                ChanSettings.layoutMode.get() == SPLIT || (ChanSettings.layoutMode.get() == AUTO && isTablet());
+        boolean isSplitMode = ChanSettings.layoutMode.get() == SPLIT
+                || (ChanSettings.layoutMode.get() == AUTO && isTablet());
 
         measure(
-                //0.35 is from SplitNavigationControllerLayout for the smaller side; measure for the larger of the two sides to find left/right
+                // 0.35 is from SplitNavigationControllerLayout for the smaller side; measure for the
+                // larger of the two sides to find left/right
                 MeasureSpec.makeMeasureSpec(isSplitMode ? (int) (displaySize.x * 0.65) : displaySize.x, AT_MOST),
                 MeasureSpec.makeMeasureSpec(displaySize.y, AT_MOST)
         );
-        //for a 2560 wide screen, partitions in split layout are 896(equal) / 2(divider) / 1662 (devicewidth*0.65 - 2(divider))
-        //for some reason, the measurement of THIS view's width is larger than the parent view's width; makes no sense
-        //but once onDraw is called, the parent has the correct width, so we use that
+
+        // for a 2560 wide screen, partitions in split layout are 896(equal) / 2(divider) / 1662
+        // (devicewidth*0.65 - 2(divider)) for some reason, the measurement of THIS view's
+        // width is larger than the parent view's width; makes no sense but once onDraw is called,
+        // the parent has the correct width, so we use that
         int containerWidth = ((View) getParent()).getMeasuredWidth();
 
-        //if split, smaller side has captcha on the left, larger right; otherwise always on the left
+        // if split, smaller side has captcha on the left, larger right; otherwise always on the left
         html = html.replace(
                 "__positioning_horizontal__",
-                //equal is left, greater is right
+                // equal is left, greater is right
                 isSplitMode ? (containerWidth == displaySize.x * 0.35 ? "left" : "right") : "left"
         );
         html = html.replace(
                 "__positioning_vertical__",
-                //split mode should always be on the bottom
+                // split mode should always be on the bottom
                 isSplitMode ? "bottom" : (ChanSettings.captchaOnBottom.get() ? "bottom" : "top")
         );
 
@@ -200,19 +205,19 @@ public class CaptchaLayout
     private void onCaptchaEntered(String challenge, String response) {
         if (TextUtils.isEmpty(response)) {
             reset();
-        } else {
-            captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
-
-            String token;
-
-            if (isAutoReply) {
-                token = captchaHolder.getToken();
-            } else {
-                token = response;
-            }
-
-            callback.onAuthenticationComplete(this, challenge, token, isAutoReply);
+            return;
         }
+
+        captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
+
+        String token;
+        if (isAutoReply) {
+            token = captchaHolder.getToken();
+        } else {
+            token = response;
+        }
+
+        callback.onAuthenticationComplete(this, challenge, token, isAutoReply);
     }
 
     @Override
@@ -221,6 +226,7 @@ public class CaptchaLayout
             loaded = true;
             hardReset();
         }
+
         super.onDraw(canvas);
     }
 

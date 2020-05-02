@@ -35,13 +35,19 @@ import com.github.adamantcheese.chan.core.presenter.BoardSetupPresenter;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
+
 public class BoardAddLayout
         extends LinearLayout
         implements SearchLayout.SearchLayoutCallback, BoardSetupPresenter.AddCallback, View.OnClickListener {
+
+    @Inject
+    ThemeHelper themeHelper;
+
     private BoardSetupPresenter presenter;
-
     private SuggestionsAdapter suggestionsAdapter;
-
     private Button checkAllButton;
 
     public BoardAddLayout(Context context) {
@@ -54,6 +60,11 @@ public class BoardAddLayout
 
     public BoardAddLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     @Override
@@ -170,8 +181,8 @@ public class BoardAddLayout
             description = itemView.findViewById(R.id.description);
             check = itemView.findViewById(R.id.check);
             check.setOnCheckedChangeListener(this);
-            check.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-            check.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+            check.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+            check.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
 
             itemView.setOnClickListener(this);
         }

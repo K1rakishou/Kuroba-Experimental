@@ -23,10 +23,9 @@ import com.github.adamantcheese.chan.core.settings.json.LongJsonSetting;
 import com.github.adamantcheese.chan.core.settings.json.RuntimeTypeAdapterFactory;
 import com.github.adamantcheese.chan.core.settings.json.StringJsonSetting;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.k1rakishou.feather2.Provides;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import org.codejargon.feather.Provides;
 
 import javax.inject.Singleton;
 

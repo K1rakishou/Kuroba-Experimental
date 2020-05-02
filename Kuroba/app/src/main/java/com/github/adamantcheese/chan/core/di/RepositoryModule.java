@@ -24,10 +24,9 @@ import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
-
-import org.codejargon.feather.Provides;
 
 import javax.inject.Singleton;
 

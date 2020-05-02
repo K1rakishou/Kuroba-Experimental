@@ -47,10 +47,9 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
+import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
-
-import org.codejargon.feather.Provides;
 
 import java.io.File;
 import java.util.HashSet;

@@ -52,13 +52,10 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
-public class ThumbnailView
-        extends View
-        implements ImageListener {
+public class ThumbnailView extends View implements ImageListener {
     private ImageContainer container;
 
     private boolean circular = false;
@@ -84,7 +81,9 @@ public class ThumbnailView
     private Rect tmpTextRect = new Rect();
 
     @Inject
-    public ImageLoaderV2 imageLoaderV2;
+    ImageLoaderV2 imageLoaderV2;
+    @Inject
+    ThemeHelper themeHelper;
 
     public ThumbnailView(Context context) {
         super(context);
@@ -102,14 +101,16 @@ public class ThumbnailView
     }
 
     private void init() {
-        textPaint.setColor(ThemeHelper.getTheme().textPrimary);
-        textPaint.setTextSize(sp(14));
-
         inject(this);
+
+        textPaint.setColor(themeHelper.getTheme().textPrimary);
+        textPaint.setTextSize(sp(14));
     }
 
     public void setUrl(String url, int maxWidth, int maxHeight) {
-        if (container != null && container.getRequestUrl() != null && container.getRequestUrl().equals(url)) {
+        if (container != null
+                && container.getRequestUrl() != null
+                && container.getRequestUrl().equals(url)) {
             return;
         }
 
@@ -122,7 +123,7 @@ public class ThumbnailView
         }
 
         if (!TextUtils.isEmpty(url)) {
-            container = instance(ImageLoaderV2.class).get(url, this, maxWidth, maxHeight);
+            container = imageLoaderV2.get(url, this, maxWidth, maxHeight);
         }
     }
 
@@ -130,9 +131,24 @@ public class ThumbnailView
         setUrl(url, 0, 0);
     }
 
-    public void setUrlFromDisk(Loadable loadable, String filename, boolean isSpoiler, int width, int height) {
+    public void setUrlFromDisk(
+            Loadable loadable,
+            String filename,
+            boolean isSpoiler,
+            int width,
+            int height
+    ) {
         animate().cancel();
-        container = imageLoaderV2.getFromDisk(loadable, filename, isSpoiler, this, width, height, null);
+
+        container = imageLoaderV2.getFromDisk(
+                loadable,
+                filename,
+                isSpoiler,
+                this,
+                width,
+                height,
+                null
+        );
     }
 
     public void setCircular(boolean circular) {
@@ -153,11 +169,19 @@ public class ThumbnailView
             foregroundCalculate = clickable;
             if (clickable) {
                 TypedValue rippleAttrForThemeValue = new TypedValue();
-                getContext().getTheme().resolveAttribute(R.attr.colorControlHighlight, rippleAttrForThemeValue, true);
-                foreground = new RippleDrawable(ColorStateList.valueOf(rippleAttrForThemeValue.data),
+
+                getContext().getTheme().resolveAttribute(
+                        R.attr.colorControlHighlight,
+                        rippleAttrForThemeValue,
+                        true
+                );
+
+                foreground = new RippleDrawable(
+                        ColorStateList.valueOf(rippleAttrForThemeValue.data),
                         null,
                         new ColorDrawable(Color.WHITE)
                 );
+
                 foreground.setCallback(this);
                 if (foreground.isStateful()) {
                     foreground.setState(getDrawableState());
@@ -166,6 +190,7 @@ public class ThumbnailView
                 unscheduleDrawable(foreground);
                 foreground = null;
             }
+
             requestLayout();
             invalidate();
         }
@@ -193,7 +218,9 @@ public class ThumbnailView
     public void onErrorResponse(VolleyError e) {
         error = true;
 
-        if (e instanceof NetworkError || e instanceof TimeoutError || e instanceof ParseError
+        if (e instanceof NetworkError
+                || e instanceof TimeoutError
+                || e instanceof ParseError
                 || e instanceof AuthFailureError) {
             errorText = getString(R.string.thumbnail_load_failed_network);
         } else {
@@ -211,6 +238,7 @@ public class ThumbnailView
         } else {
             paint.setAlpha(alpha);
         }
+
         invalidate();
 
         return true;
@@ -219,7 +247,12 @@ public class ThumbnailView
     public void setGreyscale(boolean grey) {
         ColorMatrix greyMatrix = new ColorMatrix();
         greyMatrix.setSaturation(0);
-        paint.setColorFilter(grey ? new ColorMatrixColorFilter(greyMatrix) : null);
+
+        ColorMatrixColorFilter colorFilter = grey
+                ? new ColorMatrixColorFilter(greyMatrix)
+                : null;
+
+        paint.setColorFilter(colorFilter);
     }
 
     @Override

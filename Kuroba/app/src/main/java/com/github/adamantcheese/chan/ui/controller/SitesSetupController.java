@@ -64,6 +64,8 @@ public class SitesSetupController
 
     @Inject
     SitesSetupPresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
 
     private CrossfadeView crossfadeView;
     private FloatingActionButton addButton;
@@ -119,10 +121,13 @@ public class SitesSetupController
         sitesRecyclerview.setLayoutManager(new LinearLayoutManager(context));
         sitesRecyclerview.setAdapter(sitesAdapter);
         sitesRecyclerview.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
+
         itemTouchHelper = new ItemTouchHelper(touchHelperCallback);
         itemTouchHelper.attachToRecyclerView(sitesRecyclerview);
+
         addButton.setOnClickListener(this);
-        ThemeHelper.getTheme().applyFabColor(addButton);
+        themeHelper.getTheme().applyFabColor(addButton);
+
         crossfadeView.toggle(false, false);
 
         // Presenter
@@ -294,8 +299,8 @@ public class SitesSetupController
 
             setRoundItemBackground(settings);
             setRoundItemBackground(removeSite);
-            ThemeHelper.getTheme().settingsDrawable.apply(settings);
-            ThemeHelper.getTheme().clearDrawable.apply(removeSite);
+            themeHelper.getTheme().settingsDrawable.apply(settings);
+            themeHelper.getTheme().clearDrawable.apply(removeSite);
 
             Drawable drawable = context.getDrawable(R.drawable.ic_reorder_black_24dp);
             assert drawable != null;

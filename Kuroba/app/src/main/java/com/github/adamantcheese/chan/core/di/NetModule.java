@@ -30,10 +30,9 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteResolver;
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
-
-import org.codejargon.feather.Provides;
 
 import java.io.File;
 

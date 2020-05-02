@@ -39,9 +39,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
+
 public class SelectLayout<T>
         extends LinearLayout
         implements SearchLayout.SearchLayoutCallback, View.OnClickListener {
+
+    @Inject
+    ThemeHelper themeHelper;
+
     private RecyclerView recyclerView;
     private Button checkAllButton;
 
@@ -51,14 +59,21 @@ public class SelectLayout<T>
 
     public SelectLayout(Context context) {
         super(context);
+        init();
     }
 
     public SelectLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public SelectLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     @Override
@@ -209,8 +224,8 @@ public class SelectLayout<T>
             description = itemView.findViewById(R.id.description);
 
             checkBox.setOnCheckedChangeListener(this);
-            checkBox.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-            checkBox.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+            checkBox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+            checkBox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
 
             itemView.setOnClickListener(this);
         }

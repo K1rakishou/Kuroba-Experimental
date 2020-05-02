@@ -27,36 +27,40 @@ import com.github.adamantcheese.chan.utils.Logger;
 
 import okhttp3.HttpUrl;
 
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 
 public class SiteIcon {
     private static final String TAG = "SiteIcon";
     private static final int FAVICON_SIZE = 64;
 
+    private ImageLoaderV2 imageLoaderV2;
     private HttpUrl url;
     private Drawable drawable;
 
-    public static SiteIcon fromFavicon(HttpUrl url) {
-        SiteIcon siteIcon = new SiteIcon();
+    public static SiteIcon fromFavicon(ImageLoaderV2 imageLoaderV2, HttpUrl url) {
+        SiteIcon siteIcon = new SiteIcon(imageLoaderV2);
         siteIcon.url = url;
         return siteIcon;
     }
 
-    public static SiteIcon fromDrawable(Drawable drawable) {
-        SiteIcon siteIcon = new SiteIcon();
+    public static SiteIcon fromDrawable(ImageLoaderV2 imageLoaderV2, Drawable drawable) {
+        SiteIcon siteIcon = new SiteIcon(imageLoaderV2);
         siteIcon.drawable = drawable;
         return siteIcon;
     }
 
-    private SiteIcon() {
+    private SiteIcon(ImageLoaderV2 imageLoaderV2) {
+        this.imageLoaderV2 = imageLoaderV2;
     }
 
     public void get(SiteIconResult result) {
         if (drawable != null) {
             result.onSiteIcon(SiteIcon.this, drawable);
-        } else if (url != null) {
-            instance(ImageLoaderV2.class).get(url.toString(), new ImageListener() {
+            return;
+        }
+
+        if (url != null) {
+            imageLoaderV2.get(url.toString(), new ImageListener() {
                 @Override
                 public void onResponse(ImageContainer response, boolean isImmediate) {
                     if (response.getBitmap() != null) {

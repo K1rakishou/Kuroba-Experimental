@@ -49,10 +49,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import static com.github.adamantcheese.chan.Chan.instance;
-
-public class FilterWatchManager
-        implements WakeManager.Wakeable {
+public class FilterWatchManager implements WakeManager.Wakeable {
     private static final String TAG = "FilterWatchManager";
     private static final DateFormat dateFormat = DateFormat.getTimeInstance(
             DateFormat.DEFAULT,
@@ -304,7 +301,7 @@ public class FilterWatchManager
             }
 
             ignoredPosts.retainAll(lastCheckedPostNumbers);
-            PersistableChanState.filterWatchIgnored.set(instance(Gson.class).toJson(ignoredPosts));
+            PersistableChanState.filterWatchIgnored.set(gson.toJson(ignoredPosts));
             lastCheckedPosts.clear();
             processing = false;
 

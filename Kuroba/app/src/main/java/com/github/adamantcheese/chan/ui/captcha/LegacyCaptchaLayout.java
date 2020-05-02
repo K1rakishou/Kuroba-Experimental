@@ -38,34 +38,46 @@ import com.github.adamantcheese.chan.ui.view.FixedRatioThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.IOUtils;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 
 public class LegacyCaptchaLayout
         extends LinearLayout
         implements AuthenticationLayoutInterface, View.OnClickListener {
+
+    @Inject
+    ThemeHelper themeHelper;
+
     private FixedRatioThumbnailView image;
     private EditText input;
     private ImageView submit;
-
     private WebView internalWebView;
+    private AuthenticationLayoutCallback callback;
 
     private String baseUrl;
     private String siteKey;
-    private AuthenticationLayoutCallback callback;
-
     private String challenge;
 
     public LegacyCaptchaLayout(Context context) {
         super(context);
+        init();
     }
 
     public LegacyCaptchaLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public LegacyCaptchaLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -85,8 +97,9 @@ public class LegacyCaptchaLayout
             }
             return false;
         });
+
         submit = findViewById(R.id.submit);
-        ThemeHelper.getTheme().sendDrawable.apply(submit);
+        themeHelper.getTheme().sendDrawable.apply(submit);
         setRoundItemBackground(submit);
         submit.setOnClickListener(this);
 

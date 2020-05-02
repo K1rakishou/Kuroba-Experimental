@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.SerializableThread;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.gson.Gson;
 
@@ -25,12 +26,14 @@ public class ThreadMapper {
     public static ChanThread fromSerializedThread(
             Gson gson,
             Loadable loadable,
-            SerializableThread serializableThread
+            SerializableThread serializableThread,
+            Theme currentTheme
     ) {
         List<Post> posts = PostMapper.fromSerializedPostList(
                 gson,
                 loadable,
-                serializableThread.getPostList()
+                serializableThread.getPostList(),
+                currentTheme
         );
 
         if (posts.isEmpty()) {

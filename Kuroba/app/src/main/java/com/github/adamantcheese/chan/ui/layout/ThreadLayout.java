@@ -98,9 +98,10 @@ public class ThreadLayout
 
     @Inject
     DatabaseManager databaseManager;
-
     @Inject
     ThreadPresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
 
     private ThreadLayoutCallback callback;
     private View progressLayout;
@@ -159,7 +160,7 @@ public class ThreadLayout
         postPopupHelper = new PostPopupHelper(getContext(), presenter, this);
         imageReencodingHelper = new ImageOptionsHelper(getContext(), this);
         removedPostsHelper = new RemovedPostsHelper(getContext(), presenter, this);
-        errorText.setTypeface(ThemeHelper.getTheme().mainFont);
+        errorText.setTypeface(themeHelper.getTheme().mainFont);
         errorRetryButton.setOnClickListener(this);
 
         // Setup
@@ -169,7 +170,7 @@ public class ThreadLayout
         } else {
             replyButton.setOnClickListener(this);
             replyButton.setToolbar(callback.getToolbar());
-            ThemeHelper.getTheme().applyFabColor(replyButton);
+            themeHelper.getTheme().applyFabColor(replyButton);
         }
 
         presenter.create(this);
@@ -338,7 +339,7 @@ public class ThreadLayout
         if (ChanSettings.openLinkBrowser.get()) {
             AndroidUtils.openLink(link);
         } else {
-            openLinkInBrowser(getContext(), link);
+            openLinkInBrowser(getContext(), link, themeHelper.getTheme());
         }
     }
 
@@ -495,8 +496,9 @@ public class ThreadLayout
         @SuppressLint("InflateParams")
         final View view = AndroidUtils.inflate(getContext(), R.layout.dialog_post_delete, null);
         CheckBox checkBox = view.findViewById(R.id.image_only);
-        checkBox.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        checkBox.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+        checkBox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        checkBox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+
         new AlertDialog.Builder(getContext()).setTitle(R.string.delete_confirm)
                 .setView(view)
                 .setNegativeButton(R.string.cancel, null)
@@ -625,6 +627,7 @@ public class ThreadLayout
                     presenter.onNewPostsViewClicked();
                     dismissSnackbar();
                 }).show();
+
                 fixSnackbarText(getContext(), newPostsNotification);
             } else {
                 dismissSnackbar();

@@ -97,7 +97,7 @@ public class Wired7
     @Override
     public void setup() {
         setName("Wired-7");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://wired-7.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://wired-7.org/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "Random", "b"),

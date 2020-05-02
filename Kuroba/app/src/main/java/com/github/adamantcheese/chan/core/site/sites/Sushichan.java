@@ -81,7 +81,7 @@ public class Sushichan
     @Override
     public void setup() {
         setName("Sushichan");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://sushigirl.us/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "artsy", "wildcard"),

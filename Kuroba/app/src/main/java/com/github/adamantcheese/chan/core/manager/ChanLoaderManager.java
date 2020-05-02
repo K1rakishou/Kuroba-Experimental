@@ -20,6 +20,7 @@ import android.util.LruCache;
 
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback;
@@ -29,7 +30,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.github.adamantcheese.chan.Chan.instance;
+import static com.github.adamantcheese.chan.Chan.inject;
 
 /**
  * ChanLoaderManager is a manager/factory for ChanLoaders. ChanLoaders for threads are cached.
@@ -43,15 +44,32 @@ public class ChanLoaderManager {
     private static final String TAG = "ChanLoaderManager";
     public static final int THREAD_LOADERS_CACHE_SIZE = 25;
 
-    //map between a loadable and a chan loader instance for it, currently in use
+    private WatchManager watchManager;
+
+    // map between a loadable and a chan loader instance for it, currently in use
     private Map<Loadable, ChanThreadLoader> threadLoaders = new HashMap<>();
-    //chan loader cache for released loadables
+    // chan loader cache for released loadables
     private LruCache<Loadable, ChanThreadLoader> threadLoadersCache = new LruCache<>(THREAD_LOADERS_CACHE_SIZE);
+
+    public ChanLoaderManager() {
+        inject(this);
+    }
+
+    private synchronized WatchManager getWatchManager() {
+        if (watchManager != null) {
+            return watchManager;
+        }
+
+        // TODO(dependency-cycles): get rid of dependency cycle
+        // We have to use Chan.instance() here because we can't inject it normally since it will
+        // create a dependency cycle
+        watchManager = Chan.instance(WatchManager.class);
+        return watchManager;
+    }
 
     @NonNull
     public synchronized ChanThreadLoader obtain(@NonNull Loadable loadable, ChanLoaderCallback listener) {
         BackgroundUtils.ensureMainThread();
-        WatchManager watchManager = instance(WatchManager.class);
 
         ChanThreadLoader chanLoader;
         if (loadable.isThreadMode()) {
@@ -69,11 +87,11 @@ public class ChanLoaderManager {
             }
 
             if (chanLoader == null) {
-                chanLoader = new ChanThreadLoader(loadable, watchManager);
+                chanLoader = new ChanThreadLoader(loadable, getWatchManager());
                 threadLoaders.put(loadable, chanLoader);
             }
         } else {
-            chanLoader = new ChanThreadLoader(loadable, watchManager);
+            chanLoader = new ChanThreadLoader(loadable, getWatchManager());
         }
 
         chanLoader.addListener(listener);

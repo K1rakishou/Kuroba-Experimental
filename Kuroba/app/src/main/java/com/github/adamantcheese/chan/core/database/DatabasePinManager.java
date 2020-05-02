@@ -25,19 +25,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
-
 public class DatabasePinManager {
     private static final String TAG = "DatabasePinManager";
 
-    @Inject
-    DatabaseHelper helper;
+    private DatabaseHelper helper;
     private DatabaseLoadableManager databaseLoadableManager;
 
-    public DatabasePinManager(DatabaseLoadableManager databaseLoadableManager) {
-        inject(this);
+    public DatabasePinManager(
+            DatabaseHelper databaseHelper,
+            DatabaseLoadableManager databaseLoadableManager
+    ) {
+        this.helper = databaseHelper;
         this.databaseLoadableManager = databaseLoadableManager;
     }
 

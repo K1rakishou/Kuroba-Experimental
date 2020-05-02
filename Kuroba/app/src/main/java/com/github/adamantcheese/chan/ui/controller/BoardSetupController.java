@@ -67,6 +67,8 @@ public class BoardSetupController
         implements View.OnClickListener, BoardSetupPresenter.Callback {
     @Inject
     BoardSetupPresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
 
     private CrossfadeView crossfadeView;
     private RecyclerView savedBoardsRecycler;
@@ -74,7 +76,6 @@ public class BoardSetupController
 
     private SavedBoardsAdapter savedAdapter;
     private ItemTouchHelper itemTouchHelper;
-
     private Site site;
 
     private ItemTouchHelper.SimpleCallback touchHelperCallback =
@@ -139,7 +140,7 @@ public class BoardSetupController
         itemTouchHelper.attachToRecyclerView(savedBoardsRecycler);
 
         add.setOnClickListener(this);
-        ThemeHelper.getTheme().applyFabColor(add);
+        themeHelper.getTheme().applyFabColor(add);
         crossfadeView.toggle(false, false);
 
         // Presenter

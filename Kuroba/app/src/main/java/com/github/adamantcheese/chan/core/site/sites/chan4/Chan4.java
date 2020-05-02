@@ -64,8 +64,7 @@ import okhttp3.Request;
 import static com.github.adamantcheese.chan.core.site.sites.chan4.Chan4.CaptchaType.V2JS;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getPreferences;
 
-public class Chan4
-        extends SiteBase {
+public class Chan4 extends SiteBase {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
 
     private static final String TAG = "Chan4";
@@ -507,7 +506,7 @@ public class Chan4
 
     @Override
     public SiteIcon icon() {
-        return SiteIcon.fromFavicon(HttpUrl.parse("https://s.4cdn.org/image/favicon.ico"));
+        return SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://s.4cdn.org/image/favicon.ico"));
     }
 
     @Override

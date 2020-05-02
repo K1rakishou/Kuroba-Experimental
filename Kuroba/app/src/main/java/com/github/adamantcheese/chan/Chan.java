@@ -52,8 +52,8 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.DatabaseModuleInjector;
 import com.github.adamantcheese.model.di.MainComponent;
+import com.github.k1rakishou.feather2.Feather;
 
-import org.codejargon.feather.Feather;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
@@ -77,6 +77,7 @@ import static java.lang.Thread.currentThread;
 public class Chan
         extends Application
         implements Application.ActivityLifecycleCallbacks {
+    private static final String TAG = "Chan";
     private int activityForegroundCounter = 0;
 
     @Inject
@@ -96,6 +97,11 @@ public class Chan
 
     private static Feather feather;
 
+    /**
+     * Only ever use this method in cases when there is no other way around it (like when normal
+     * injection will create a circular dependency)
+     * TODO(dependency-cycles): get rid of this method once all dependency cycles are resolved
+     * */
     public static <T> T instance(Class<T> tClass) {
         return feather.instance(tClass);
     }
@@ -122,6 +128,14 @@ public class Chan
     public void onCreate() {
         super.onCreate();
 
+        long start = System.currentTimeMillis();
+        onCreateInternal();
+
+        long diff = System.currentTimeMillis() - start;
+        Logger.d(TAG, "Application initialization took " + diff + "ms");
+    }
+
+    private void onCreateInternal() {
         registerActivityLifecycleCallbacks(this);
         System.setProperty("kotlinx.coroutines.debug", BuildConfig.DEBUG ? "on" : "off");
 

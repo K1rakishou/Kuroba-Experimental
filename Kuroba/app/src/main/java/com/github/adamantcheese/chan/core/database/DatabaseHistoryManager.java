@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.database;
 
-import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.model.orm.History;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.j256.ormlite.stmt.DeleteBuilder;
@@ -28,29 +27,34 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
-
 public class DatabaseHistoryManager {
     private static final String TAG = "DatabaseHistoryManager";
 
     private static final long HISTORY_TRIM_TRIGGER = 100;
     private static final long HISTORY_TRIM_COUNT = 50;
 
-    @Inject
-    DatabaseHelper helper;
+    private DatabaseHelper helper;
+    private DatabaseManager databaseManager;
     private DatabaseLoadableManager databaseLoadableManager;
 
-    public DatabaseHistoryManager(DatabaseLoadableManager databaseLoadableManager) {
-        inject(this);
+    public DatabaseHistoryManager(
+            DatabaseHelper databaseHelper,
+            DatabaseManager databaseManager,
+            DatabaseLoadableManager databaseLoadableManager
+    ) {
+        this.helper = databaseHelper;
+        this.databaseManager = databaseManager;
         this.databaseLoadableManager = databaseLoadableManager;
     }
 
     public Callable<Void> load() {
         return () -> {
-            Chan.instance(DatabaseManager.class)
-                    .trimTable(helper.getHistoryDao(), "history", HISTORY_TRIM_TRIGGER, HISTORY_TRIM_COUNT);
+            databaseManager.trimTable(
+                    helper.getHistoryDao(),
+                    "history",
+                    HISTORY_TRIM_TRIGGER,
+                    HISTORY_TRIM_COUNT
+            );
 
             return null;
         };

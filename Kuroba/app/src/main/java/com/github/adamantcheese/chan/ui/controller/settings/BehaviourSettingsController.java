@@ -31,12 +31,17 @@ import com.github.adamantcheese.chan.ui.settings.LinkSettingView;
 import com.github.adamantcheese.chan.ui.settings.SettingsGroup;
 import com.github.adamantcheese.chan.ui.settings.StringSettingView;
 
-import static com.github.adamantcheese.chan.Chan.instance;
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class BehaviourSettingsController
         extends SettingsController {
+    @Inject
+    DatabaseManager databaseManager;
+
     public BehaviourSettingsController(Context context) {
         super(context);
     }
@@ -46,6 +51,7 @@ public class BehaviourSettingsController
         super.onCreate();
         navigation.setTitle(R.string.settings_screen_behavior);
 
+        inject(this);
         setupLayout();
         rebuildPreferences();
     }
@@ -113,7 +119,6 @@ public class BehaviourSettingsController
 
             general.add(new LinkSettingView(this, R.string.setting_clear_thread_hides, 0, v -> {
                 // TODO: don't do this here.
-                DatabaseManager databaseManager = instance(DatabaseManager.class);
                 databaseManager.runTask(databaseManager.getDatabaseHideManager().clearAllThreadHides());
                 showToast(context, R.string.setting_cleared_thread_hides, Toast.LENGTH_LONG);
                 postToEventBus(new RefreshUIMessage("clearhides"));

@@ -60,6 +60,8 @@ public class HistoryController
         implements CompoundButton.OnCheckedChangeListener, ToolbarNavigationController.ToolbarSearchCallback {
     @Inject
     DatabaseManager databaseManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private DatabaseHistoryManager databaseHistoryManager;
     private DatabaseSavedReplyManager databaseSavedReplyManager;
@@ -265,10 +267,9 @@ public class HistoryController
             thumbnail.setCircular(true);
             text = itemView.findViewById(R.id.text);
             subtext = itemView.findViewById(R.id.subtext);
+
             delete = itemView.findViewById(R.id.delete);
-
-            ThemeHelper.getTheme().clearDrawable.apply(delete);
-
+            themeHelper.getTheme().clearDrawable.apply(delete);
             delete.setOnClickListener(this);
 
             itemView.setOnClickListener(this);

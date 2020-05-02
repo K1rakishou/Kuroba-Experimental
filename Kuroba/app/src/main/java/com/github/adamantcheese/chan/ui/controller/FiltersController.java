@@ -71,9 +71,10 @@ public class FiltersController
 
     @Inject
     DatabaseManager databaseManager;
-
     @Inject
     FilterEngine filterEngine;
+    @Inject
+    ThemeHelper themeHelper;
 
     private RecyclerView recyclerView;
     private FloatingActionButton add;
@@ -90,7 +91,9 @@ public class FiltersController
             ) {
                 @Override
                 public boolean onMove(
-                        RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target
+                        RecyclerView recyclerView,
+                        RecyclerView.ViewHolder viewHolder,
+                        RecyclerView.ViewHolder target
                 ) {
                     int from = viewHolder.getAdapterPosition();
                     int to = target.getAdapterPosition();
@@ -144,11 +147,11 @@ public class FiltersController
 
         add = view.findViewById(R.id.add);
         add.setOnClickListener(this);
-        ThemeHelper.getTheme().applyFabColor(add);
+        themeHelper.getTheme().applyFabColor(add);
 
         enable = view.findViewById(R.id.enable);
         enable.setOnClickListener(this);
-        ThemeHelper.getTheme().applyFabColor(enable);
+        themeHelper.getTheme().applyFabColor(enable);
     }
 
     @Override
@@ -167,11 +170,13 @@ public class FiltersController
         } else if (v == enable && !locked) {
             FloatingActionButton enableButton = (FloatingActionButton) v;
             locked = true;
-            //if every filter is disabled, enable all of them and set the drawable to be an x
-            //if every filter is enabled, disable all of them and set the drawable to be a checkmark
-            //if some filters are enabled, disable them and set the drawable to be a checkmark
+
+            // if every filter is disabled, enable all of them and set the drawable to be an x
+            // if every filter is enabled, disable all of them and set the drawable to be a checkmark
+            // if some filters are enabled, disable them and set the drawable to be a checkmark
             List<Filter> enabledFilters = filterEngine.getEnabledFilters();
             List<Filter> allFilters = filterEngine.getAllFilters();
+
             if (enabledFilters.isEmpty()) {
                 setFilters(allFilters, true);
                 enableButton.setImageResource(R.drawable.ic_clear_white_24dp);
@@ -182,7 +187,8 @@ public class FiltersController
                 setFilters(enabledFilters, false);
                 enableButton.setImageResource(R.drawable.ic_done_white_24dp);
             }
-            ThemeHelper.getTheme().applyFabColor(enable);
+
+            themeHelper.getTheme().applyFabColor(enable);
         }
     }
 
@@ -211,20 +217,24 @@ public class FiltersController
     public void showFilterDialog(final Filter filter) {
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
-        final AlertDialog alertDialog =
-                new AlertDialog.Builder(context).setView(filterLayout).setPositiveButton("Save", (dialog, which) -> {
+        final AlertDialog alertDialog = new AlertDialog.Builder(context)
+                .setView(filterLayout)
+                .setPositiveButton("Save", (dialog, which) -> {
                     filterEngine.createOrUpdateFilter(filterLayout.getFilter());
                     if (filterEngine.getEnabledFilters().isEmpty()) {
                         enable.setImageResource(R.drawable.ic_done_white_24dp);
                     } else {
                         enable.setImageResource(R.drawable.ic_clear_white_24dp);
                     }
-                    ThemeHelper.getTheme().applyFabColor(enable);
+
+                    themeHelper.getTheme().applyFabColor(enable);
                     postToEventBus(new RefreshUIMessage("filters"));
                     adapter.reload();
                 }).show();
 
-        filterLayout.setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(enabled));
+        filterLayout
+                .setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                .setEnabled(enabled));
         filterLayout.setFilter(filter);
     }
 

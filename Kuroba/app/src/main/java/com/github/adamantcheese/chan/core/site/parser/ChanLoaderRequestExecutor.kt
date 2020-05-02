@@ -31,6 +31,7 @@ import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.core.site.loader.ServerException
+import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
@@ -62,12 +63,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
-/**
- * Process a typical imageboard json response.<br></br>
- * This class is highly multithreaded, take good care to not access models that are to be only
- * changed on the main thread.
- */
-class ChanReaderRequestExecutor(
+class ChanLoaderRequestExecutor(
         private val gson: Gson,
         private val okHttpClient: NetModule.ProxiedOkHttpClient,
         private val databaseSavedReplyManager: DatabaseSavedReplyManager,
@@ -77,7 +73,8 @@ class ChanReaderRequestExecutor(
         private val archivesManager: ArchivesManager,
         private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
         private val request: ChanLoaderRequestParams,
-        private val verboseLogsEnabled: Boolean
+        private val verboseLogsEnabled: Boolean,
+        private val currentTheme: Theme
 ) : CoroutineScope {
     private val job = SupervisorJob()
 
@@ -399,7 +396,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 // them.
                 chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
             }
-        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post) }
+        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post, currentTheme) }
 
         return when (chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> posts
@@ -428,8 +425,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 .map { postToParse ->
                     return@map PostParseCallable(
                             filterEngine,
-                            loadFilters(loadable),
                             databaseSavedReplyManager,
+                            currentTheme,
+                            loadFilters(loadable),
                             postToParse,
                             reader,
                             internalIds

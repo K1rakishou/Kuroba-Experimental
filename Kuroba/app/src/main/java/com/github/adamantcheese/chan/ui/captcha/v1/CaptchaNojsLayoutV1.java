@@ -30,6 +30,7 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -45,13 +46,11 @@ import javax.inject.Inject;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
 
 /**
@@ -66,6 +65,8 @@ public class CaptchaNojsLayoutV1
 
     @Inject
     CaptchaHolder captchaHolder;
+    @Inject
+    NetModule.ProxiedOkHttpClient okHttpClient;
 
     private AuthenticationLayoutCallback callback;
     private String baseUrl;
@@ -113,10 +114,8 @@ public class CaptchaNojsLayoutV1
         setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-                Logger.i(
-                        TAG,
-                        consoleMessage.lineNumber() + ":" + consoleMessage.message() + " " + consoleMessage.sourceId()
-                );
+                Logger.i(TAG, consoleMessage.lineNumber() + ":" +
+                        consoleMessage.message() + " " + consoleMessage.sourceId());
                 return true;
             }
         });
@@ -173,7 +172,8 @@ public class CaptchaNojsLayoutV1
                 .header("User-Agent", webviewUserAgent)
                 .header("Referer", baseUrl)
                 .build();
-        instance(OkHttpClient.class).newCall(request).enqueue(new Callback() {
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
             }

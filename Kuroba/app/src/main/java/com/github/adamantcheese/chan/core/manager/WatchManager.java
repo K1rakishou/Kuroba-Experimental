@@ -743,10 +743,8 @@ public class WatchManager
     private void updateStateInternal(boolean watchEnabled, boolean backgroundEnabled) {
         BackgroundUtils.ensureMainThread();
 
-        Logger.d(TAG,
-                "updateState watchEnabled=" + watchEnabled + " backgroundEnabled=" + backgroundEnabled + " foreground="
-                        + isInForeground()
-        );
+        Logger.d(TAG, "updateState watchEnabled=" + watchEnabled +
+                " backgroundEnabled=" + backgroundEnabled + " foreground=" + isInForeground());
 
         updateDeletedOrArchivedLocalThreads();
         switchIncrementalThreadDownloadingState(watchEnabled && backgroundEnabled);

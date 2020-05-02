@@ -81,7 +81,7 @@ public class Lainchan
     @Override
     public void setup() {
         setName("Lainchan");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://lainchan.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://lainchan.org/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "Programming", "λ"),

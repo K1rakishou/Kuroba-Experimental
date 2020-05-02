@@ -11,7 +11,7 @@ import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.BackgroundColorSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper
+import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.model.data.serializable.spans.*
 import com.github.adamantcheese.model.data.serializable.spans.SerializablePostLinkableSpan.PostLinkableType
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString.SpanInfo
@@ -221,7 +221,8 @@ object SpannableStringMapper {
     @JvmStatic
     fun deserializeSpannableString(
             gson: Gson,
-            serializableSpannableString: SerializableSpannableString?
+            serializableSpannableString: SerializableSpannableString?,
+            currentTheme: Theme
     ): CharSequence {
         if (serializableSpannableString == null || serializableSpannableString.text.isEmpty()) {
             return ""
@@ -298,7 +299,8 @@ object SpannableStringMapper {
                 SpanType.PostLinkable -> deserializeAndApplyPostLinkableSpan(
                         gson,
                         spannableString,
-                        spanInfo
+                        spanInfo,
+                        currentTheme
                 )
             }
         }
@@ -307,17 +309,16 @@ object SpannableStringMapper {
 
     private fun deserializeAndApplyPostLinkableSpan(
             gson: Gson,
-            spannableString: SpannableString, spanInfo: SpanInfo
+            spannableString: SpannableString,
+            spanInfo: SpanInfo,
+            currentTheme: Theme
     ) {
         val serializablePostLinkableSpan = gson.fromJson(
                 spanInfo.spanData,
                 SerializablePostLinkableSpan::class.java
         )
 
-        val currentTheme = ThemeHelper.getTheme()
-        val postLinkable: PostLinkable
-
-        postLinkable = when (serializablePostLinkableSpan.postLinkableType) {
+        val postLinkable = when (serializablePostLinkableSpan.postLinkableType) {
             PostLinkableType.Quote -> {
                 val postLinkableQuoteValue = gson.fromJson(
                         serializablePostLinkableSpan.postLinkableValueJson,

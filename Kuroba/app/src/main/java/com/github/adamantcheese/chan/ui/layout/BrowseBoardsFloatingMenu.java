@@ -44,6 +44,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter;
 import com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter.Item;
@@ -93,9 +94,13 @@ public class BrowseBoardsFloatingMenu
     private boolean dismissed = false;
 
     @Inject
-    private BoardsMenuPresenter presenter;
-    private BoardsMenuPresenter.Items items;
+    BoardsMenuPresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
+    @Inject
+    ImageLoaderV2 imageLoaderV2;
 
+    private BoardsMenuPresenter.Items items;
     private BrowseBoardsAdapter adapter;
 
     private ClickCallback clickCallback;
@@ -149,9 +154,9 @@ public class BrowseBoardsFloatingMenu
                 @Override
                 public void setup() {
                     setName("App Setup");
-                    Drawable setupIcon = ThemeHelper.getTheme().settingsDrawable.makeDrawable(getAppContext());
-                    setupIcon.setColorFilter(ThemeHelper.getTheme().textPrimary, PorterDuff.Mode.SRC_IN);
-                    setIcon(SiteIcon.fromDrawable(setupIcon));
+                    Drawable setupIcon = themeHelper.getTheme().settingsDrawable.makeDrawable(getAppContext());
+                    setupIcon.setColorFilter(themeHelper.getTheme().textPrimary, PorterDuff.Mode.SRC_IN);
+                    setIcon(SiteIcon.fromDrawable(imageLoaderV2, setupIcon));
                     setBoardsType(BoardsType.STATIC);
                     setConfig(new CommonConfig() {});
                     setResolvable(new CommonSiteUrlHandler() {
@@ -471,7 +476,7 @@ public class BrowseBoardsFloatingMenu
             text = itemView.findViewById(R.id.text);
 
             // View setup
-            text.setTypeface(ThemeHelper.getTheme().mainFont);
+            text.setTypeface(themeHelper.getTheme().mainFont);
         }
 
         public void bind(Site site) {
@@ -509,7 +514,7 @@ public class BrowseBoardsFloatingMenu
             text = (TextView) itemView;
 
             // View setup
-            text.setTypeface(ThemeHelper.getTheme().mainFont);
+            text.setTypeface(themeHelper.getTheme().mainFont);
         }
 
         public void bind(Board board) {

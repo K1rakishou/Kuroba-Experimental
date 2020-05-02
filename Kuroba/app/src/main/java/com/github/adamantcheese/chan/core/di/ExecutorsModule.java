@@ -1,8 +1,7 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.utils.Logger;
-
-import org.codejargon.feather.Provides;
+import com.github.k1rakishou.feather2.Provides;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;

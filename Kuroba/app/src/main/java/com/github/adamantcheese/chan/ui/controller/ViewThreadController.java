@@ -47,6 +47,7 @@ import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
@@ -91,6 +92,8 @@ public class ViewThreadController
     WatchManager watchManager;
     @Inject
     FileManager fileManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private boolean pinItemPinned = false;
     private DownloadThreadState prevState = DownloadThreadState.Default;
@@ -285,7 +288,7 @@ public class ViewThreadController
         }
 
         Loadable loadable = threadLayout.getPresenter().getLoadable();
-        openLinkInBrowser(context, loadable.desktopUrl());
+        openLinkInBrowser(context, loadable.desktopUrl(), themeHelper.getTheme());
     }
 
     private void shareClicked(ToolbarMenuSubItem item) {

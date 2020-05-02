@@ -86,9 +86,10 @@ public class FilterLayout
 
     @Inject
     BoardManager boardManager;
-
     @Inject
     FilterEngine filterEngine;
+    @Inject
+    ThemeHelper themeHelper;
 
     private FilterLayoutCallback callback;
     private Filter filter;
@@ -147,9 +148,11 @@ public class FilterLayout
         });
         patternPreviewStatus = findViewById(R.id.pattern_preview_status);
         enabled = findViewById(R.id.enabled);
+
         help = findViewById(R.id.help);
-        ThemeHelper.getTheme().helpDrawable.apply(help);
+        themeHelper.getTheme().helpDrawable.apply(help);
         help.setOnClickListener(this);
+
         colorContainer = findViewById(R.id.color_container);
         colorContainer.setOnClickListener(this);
         colorPreview = findViewById(R.id.color_preview);
@@ -184,14 +187,14 @@ public class FilterLayout
                 getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
         ), null);
 
-        enabled.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        enabled.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        applyToReplies.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        applyToReplies.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        onlyOnOP.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        onlyOnOP.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        applyToSaved.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        applyToSaved.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+        enabled.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        enabled.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        applyToReplies.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        applyToReplies.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        onlyOnOP.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        onlyOnOP.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        applyToSaved.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        applyToSaved.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
     }
 
     public void setFilter(Filter filter) {

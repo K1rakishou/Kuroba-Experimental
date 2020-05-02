@@ -31,6 +31,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ImageSearch;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
@@ -82,6 +83,8 @@ public class ImageViewerPresenter
     FileCacheV2 fileCacheV2;
     @Inject
     CacheHandler cacheHandler;
+    @Inject
+    ThemeHelper themeHelper;
 
     private boolean entering = true;
     private boolean exiting = false;
@@ -706,7 +709,12 @@ public class ImageViewerPresenter
                             break;
                         }
 
-                        openLinkInBrowser(context, imageSearch.getUrl(searchImageUrl.toString()));
+                        openLinkInBrowser(
+                                context,
+                                imageSearch.getUrl(searchImageUrl.toString()),
+                                themeHelper.getTheme()
+                        );
+
                         break;
                     }
                 }

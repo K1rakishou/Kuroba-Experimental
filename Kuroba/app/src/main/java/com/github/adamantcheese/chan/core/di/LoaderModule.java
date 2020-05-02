@@ -11,8 +11,7 @@ import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationMana
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
-
-import org.codejargon.feather.Provides;
+import com.github.k1rakishou.feather2.Provides;
 
 import java.util.ArrayList;
 import java.util.List;

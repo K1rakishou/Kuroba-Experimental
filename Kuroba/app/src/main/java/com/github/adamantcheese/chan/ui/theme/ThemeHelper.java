@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.BLACK;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.BROWN;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.DARK;
@@ -112,8 +111,8 @@ public class ThemeHelper {
     }
 
     @AnyThread
-    public static Theme getTheme() {
-        return instance(ThemeHelper.class).theme;
+    public Theme getTheme() {
+        return theme;
     }
 
     public List<Theme> getThemes() {

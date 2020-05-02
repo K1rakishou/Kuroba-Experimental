@@ -53,18 +53,19 @@ import com.github.adamantcheese.chan.utils.StringUtils;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 import static com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize;
 
-public class ReplyPresenter
-        implements AuthenticationLayoutCallback, ImagePickDelegate.ImagePickCallback, SiteActions.PostListener {
+public class ReplyPresenter implements AuthenticationLayoutCallback,
+        ImagePickDelegate.ImagePickCallback,
+        SiteActions.PostListener {
 
     public enum Page {
         INPUT,
@@ -75,7 +76,7 @@ public class ReplyPresenter
     private static final String TAG = "ReplyPresenter";
     private Context context;
     private static final Pattern QUOTE_PATTERN = Pattern.compile(">>\\d+");
-    private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     private ReplyPresenterCallback callback;
 
@@ -83,6 +84,8 @@ public class ReplyPresenter
     private WatchManager watchManager;
     private DatabaseManager databaseManager;
     private LastReplyRepository lastReplyRepository;
+    private SiteRepository siteRepository;
+    private BoardRepository boardRepository;
 
     private boolean bound = false;
     private Loadable loadable;
@@ -101,13 +104,17 @@ public class ReplyPresenter
             ReplyManager replyManager,
             WatchManager watchManager,
             DatabaseManager databaseManager,
-            LastReplyRepository lastReplyRepository
+            LastReplyRepository lastReplyRepository,
+            SiteRepository siteRepository,
+            BoardRepository boardRepository
     ) {
         this.context = context;
         this.replyManager = replyManager;
         this.watchManager = watchManager;
         this.databaseManager = databaseManager;
         this.lastReplyRepository = lastReplyRepository;
+        this.siteRepository = siteRepository;
+        this.boardRepository = boardRepository;
     }
 
     public void create(ReplyPresenterCallback callback) {
@@ -296,17 +303,22 @@ public class ReplyPresenter
     @Override
     public void onPostComplete(HttpCall httpCall, ReplyResponse replyResponse) {
         if (replyResponse.posted) {
-            //if the thread being presented has changed in the time waiting for this call to complete, the loadable field in
-            //ReplyPresenter will be incorrect; reconstruct the loadable (local to this method) from the reply response
-            Site localSite = instance(SiteRepository.class).forId(replyResponse.siteId);
-            Board localBoard = instance(BoardRepository.class).getFromCode(localSite, replyResponse.boardCode);
-            Loadable localLoadable =
-                    databaseManager.getDatabaseLoadableManager().get(Loadable.forThread(localSite, localBoard,
-                            //this loadable is for the reply response's site and board
-                            replyResponse.threadNo == 0 ? replyResponse.postNo : replyResponse.threadNo,
-                            //for the time being, will be updated later when the watchmanager updates
-                            "/" + localBoard.code + "/"
-                    ));
+            // if the thread being presented has changed in the time waiting for this call to
+            // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
+            // the loadable (local to this method) from the reply response
+            Site localSite = siteRepository.forId(replyResponse.siteId);
+            Board localBoard = boardRepository.getFromCode(localSite, replyResponse.boardCode);
+
+            Loadable newLoadable = Loadable.forThread(
+                    localSite,
+                    localBoard,
+                    // this loadable is for the reply response's site and board
+                    replyResponse.threadNo == 0 ? replyResponse.postNo : replyResponse.threadNo,
+                    // for the time being, will be updated later when the watchmanager updates
+                    "/" + localBoard.code + "/"
+            );
+
+            Loadable localLoadable = databaseManager.getDatabaseLoadableManager().get(newLoadable);
 
             lastReplyRepository.putLastReply(localLoadable.board);
             if (loadable.isCatalogMode()) {
@@ -315,7 +327,7 @@ public class ReplyPresenter
 
             if (ChanSettings.postPinThread.get()) {
                 if (localLoadable.isThreadMode()) {
-                    //reply
+                    // reply
                     ChanThread thread = callback.getThread();
                     if (thread != null) {
                         watchManager.createPin(localLoadable, thread.getOp(), PinType.WATCH_NEW_POSTS);
@@ -323,26 +335,35 @@ public class ReplyPresenter
                         watchManager.createPin(localLoadable);
                     }
                 } else {
-                    //new thread
+                    // new thread
                     watchManager.createPin(localLoadable, draft);
                 }
             }
 
-            SavedReply savedReply =
-                    SavedReply.fromBoardNoPassword(localLoadable.board, replyResponse.postNo, replyResponse.password);
-            databaseManager.runTaskAsync(databaseManager.getDatabaseSavedReplyManager().saveReply(savedReply));
+            SavedReply savedReply = SavedReply.fromBoardNoPassword(
+                    localLoadable.board,
+                    replyResponse.postNo,
+                    replyResponse.password
+            );
+
+            databaseManager.runTaskAsync(
+                    databaseManager.getDatabaseSavedReplyManager().saveReply(savedReply)
+            );
 
             switchPage(Page.INPUT);
             closeAll();
             highlightQuotes();
+
             String name = draft.name;
             draft = new Reply();
             draft.name = name;
             replyManager.putReply(localLoadable, draft);
+
             callback.loadDraftIntoViews(draft);
             callback.onPosted();
 
-            //special case for new threads, check if we were on the catalog with the nonlocal loadable
+            // special case for new threads, check if we were on the catalog with the nonlocal
+            // loadable
             if (bound && loadable.isCatalogMode()) {
                 callback.showThread(localLoadable);
             }
@@ -362,7 +383,7 @@ public class ReplyPresenter
 
     @Override
     public void onUploadingProgress(int percent) {
-        //called on a background thread!
+        // called on a background thread!
         BackgroundUtils.runOnMainThread(() -> callback.onUploadingProgress(percent));
     }
 
@@ -371,8 +392,8 @@ public class ReplyPresenter
         Logger.e(TAG, "onPostError", exception);
 
         switchPage(Page.INPUT);
-
         String errorMessage = getString(R.string.reply_error);
+
         if (exception != null) {
             String message = exception.getMessage();
             if (message != null) {
@@ -385,7 +406,10 @@ public class ReplyPresenter
 
     @Override
     public void onAuthenticationComplete(
-            AuthenticationLayoutInterface authenticationLayout, String challenge, String response, boolean autoReply
+            AuthenticationLayoutInterface authenticationLayout,
+            String challenge,
+            String response,
+            boolean autoReply
     ) {
         draft.captchaChallenge = challenge;
         draft.captchaResponse = response;
@@ -425,6 +449,7 @@ public class ReplyPresenter
         } else {
             currentExt = "." + currentExt;
         }
+
         draft.fileName = System.currentTimeMillis() + currentExt;
         callback.loadDraftIntoViews(draft);
         return true;
@@ -443,7 +468,8 @@ public class ReplyPresenter
 
         StringBuilder insert = new StringBuilder();
         int selectStart = callback.getSelectionStart();
-        if (selectStart - 1 >= 0 && selectStart - 1 < draft.comment.length()
+        if (selectStart - 1 >= 0 &&
+                selectStart - 1 < draft.comment.length()
                 && draft.comment.charAt(selectStart - 1) != '\n') {
             insert.append('\n');
         }
@@ -456,6 +482,7 @@ public class ReplyPresenter
             String[] lines = textQuote.split("\n+");
             // matches for >>123, >>123 (text), >>>/fit/123
             final Pattern quotePattern = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$");
+
             for (String line : lines) {
                 // do not include post no from quoted post
                 if (!quotePattern.matcher(line).matches()) {
@@ -477,13 +504,16 @@ public class ReplyPresenter
         pickingFile = false;
         draft.file = file;
         draft.fileName = name;
+
         try {
             ExifInterface exif = new ExifInterface(file.getAbsolutePath());
             int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);
             if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
                 callback.openMessage(getString(R.string.file_has_exif_data));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
+
         showPreview(name, file);
     }
 
@@ -529,6 +559,7 @@ public class ReplyPresenter
     public void switchPage(Page page, boolean useV2NoJsCaptcha, boolean autoReply) {
         if (!useV2NoJsCaptcha || this.page != page) {
             this.page = page;
+
             switch (page) {
                 case LOADING:
                 case INPUT:

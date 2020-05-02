@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.text.style.BackgroundColorSpan;
 
 import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -30,7 +31,6 @@ import com.github.adamantcheese.chan.core.site.parser.PostParser;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.vdurmont.emoji.EmojiParser;
@@ -49,8 +49,7 @@ import java.util.Map;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
-public class DefaultPostParser
-        implements PostParser {
+public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
     private CommentParser commentParser;
@@ -77,11 +76,7 @@ public class DefaultPostParser
     }
 
     @Override
-    public Post parse(Theme theme, Post.Builder builder, Callback callback) {
-        if (theme == null) {
-            theme = ThemeHelper.getTheme();
-        }
-
+    public Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback) {
         if (!TextUtils.isEmpty(builder.name)) {
             builder.name = Parser.unescapeEntities(builder.name, false);
         }

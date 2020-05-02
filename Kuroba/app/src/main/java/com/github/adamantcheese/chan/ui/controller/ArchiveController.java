@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ArchivePresenter;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.view.CrossfadeView;
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration;
@@ -58,7 +59,9 @@ public class ArchiveController
     private View errorView;
 
     @Inject
-    private ArchivePresenter presenter;
+    ArchivePresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
 
     private ArchiveAdapter adapter;
 
@@ -98,7 +101,7 @@ public class ArchiveController
         archiveRecyclerview.setLayoutManager(new LinearLayoutManager(context));
         archiveRecyclerview.setAdapter(adapter);
         archiveRecyclerview.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
-        FastScrollerHelper.create(archiveRecyclerview);
+        FastScrollerHelper.create(archiveRecyclerview, themeHelper.getTheme());
         crossfadeView.toggle(false, false);
         swipeRefreshLayout.setOnRefreshListener(this);
 

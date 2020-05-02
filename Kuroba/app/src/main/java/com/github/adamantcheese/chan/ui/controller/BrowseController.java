@@ -41,6 +41,7 @@ import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.layout.BrowseBoardsFloatingMenu;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
@@ -68,6 +69,8 @@ public class BrowseController
 
     @Inject
     BrowsePresenter presenter;
+    @Inject
+    ThemeHelper themeHelper;
 
     private PostsFilter.Order order;
     @Nullable
@@ -140,8 +143,9 @@ public class BrowseController
         // Toolbar menu
         navigation.hasBack = false;
 
-        // this controller is used for catalog views; displaying things on two rows for them middle menu is how we want it done
-        // these need to be setup before the view is rendered, otherwise the subtitle view is removed
+        // this controller is used for catalog views; displaying things on two rows for them middle
+        // menu is how we want it done these need to be setup before the view is rendered,
+        // otherwise the subtitle view is removed
         navigation.title = "App Setup";
         navigation.subtitle = "Tap for site/board setup";
 
@@ -320,7 +324,7 @@ public class BrowseController
             if (share) {
                 shareLink(link);
             } else {
-                openLinkInBrowser(context, link);
+                openLinkInBrowser(context, link, themeHelper.getTheme());
             }
         }
     }

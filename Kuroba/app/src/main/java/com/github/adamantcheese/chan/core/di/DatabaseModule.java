@@ -21,8 +21,7 @@ import android.content.Context;
 import com.github.adamantcheese.chan.core.database.DatabaseHelper;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.utils.Logger;
-
-import org.codejargon.feather.Provides;
+import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
 

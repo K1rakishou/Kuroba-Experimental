@@ -70,7 +70,7 @@ public class Kun8
     @Override
     public void setup() {
         setName("8kun");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://8kun.top/static/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://8kun.top/static/favicon.ico")));
         setBoardsType(BoardsType.INFINITE);
         setResolvable(URL_HANDLER);
 

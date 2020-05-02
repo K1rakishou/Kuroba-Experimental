@@ -37,11 +37,18 @@ import com.github.adamantcheese.chan.utils.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class FloatingMenu {
+
+    @Inject
+    ThemeHelper themeHelper;
+
     private final Context context;
     private View anchor;
     private int anchorGravity = Gravity.LEFT;
@@ -62,16 +69,25 @@ public class FloatingMenu {
     public FloatingMenu(Context context, View anchor, List<FloatingMenuItem> items) {
         this.context = context;
         this.anchor = anchor;
+
         anchorOffsetX = -dp(5);
         anchorOffsetY = dp(5);
         anchorGravity = Gravity.RIGHT;
+
         for (FloatingMenuItem item : items) {
             if (item.isEnabled()) this.items.add(item);
         }
+
+        init();
     }
 
     public FloatingMenu(Context context) {
         this.context = context;
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     public void setAnchor(View anchor, int anchorGravity, int anchorOffsetX, int anchorOffsetY) {
@@ -155,8 +171,13 @@ public class FloatingMenu {
             popupWindow.setAdapter(adapter);
             popupWindow.setWidth(measureContentWidth(adapter));
         } else {
-            FloatingMenuArrayAdapter arrayAdapter =
-                    new FloatingMenuArrayAdapter(context, R.layout.toolbar_menu_item, items);
+            FloatingMenuArrayAdapter arrayAdapter = new FloatingMenuArrayAdapter(
+                    themeHelper,
+                    context,
+                    R.layout.toolbar_menu_item,
+                    items
+            );
+
             popupWindow.setAdapter(arrayAdapter);
             popupWindow.setWidth(measureContentWidth(arrayAdapter));
         }
@@ -248,8 +269,7 @@ public class FloatingMenu {
         void onFloatingMenuDismissed(FloatingMenu menu);
     }
 
-    public static class FloatingMenuCallbackAdapter
-            implements FloatingMenuCallback {
+    public static class FloatingMenuCallbackAdapter implements FloatingMenuCallback {
         @Override
         public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
         }
@@ -259,10 +279,18 @@ public class FloatingMenu {
         }
     }
 
-    private static class FloatingMenuArrayAdapter
-            extends ArrayAdapter<FloatingMenuItem> {
-        public FloatingMenuArrayAdapter(Context context, int resource, List<FloatingMenuItem> objects) {
+    private static class FloatingMenuArrayAdapter extends ArrayAdapter<FloatingMenuItem> {
+        private ThemeHelper themeHelper;
+
+        public FloatingMenuArrayAdapter(
+                ThemeHelper themeHelper,
+                Context context,
+                int resource,
+                List<FloatingMenuItem> objects
+        ) {
             super(context, resource, objects);
+
+            this.themeHelper = themeHelper;
         }
 
         @Override
@@ -278,7 +306,7 @@ public class FloatingMenu {
             textView.setTextColor(getAttrColor(getContext(),
                     item.isEnabled() ? R.attr.text_color_primary : R.attr.text_color_hint
             ));
-            textView.setTypeface(ThemeHelper.getTheme().mainFont);
+            textView.setTypeface(themeHelper.getTheme().mainFont);
 
             return textView;
         }

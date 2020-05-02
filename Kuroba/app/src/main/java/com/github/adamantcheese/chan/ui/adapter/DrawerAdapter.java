@@ -68,8 +68,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackg
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
 
-public class DrawerAdapter
-        extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = "DrawerAdapter";
 
     private static final int SETTINGS_OFFSET = 0;
@@ -90,6 +89,8 @@ public class DrawerAdapter
     WatchManager watchManager;
     @Inject
     SettingsNotificationManager settingsNotificationManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private Context context;
     private Drawable downloadIconOutline;
@@ -106,7 +107,7 @@ public class DrawerAdapter
         setHasStableIds(true);
 
         downloadIconOutline = context.getDrawable(R.drawable.ic_download_anim0).mutate();
-        downloadIconOutline.setTint(ThemeHelper.getTheme().textPrimary);
+        downloadIconOutline.setTint(themeHelper.getTheme().textPrimary);
 
         downloadIconFilled = context.getDrawable(R.drawable.ic_download_anim1).mutate();
         downloadIconFilled.setTint(Color.GRAY);
@@ -177,7 +178,7 @@ public class DrawerAdapter
             case TYPE_HEADER:
                 HeaderHolder headerHolder = (HeaderHolder) holder;
                 headerHolder.text.setText(R.string.drawer_pinned);
-                ThemeHelper.getTheme().clearDrawable.apply(headerHolder.clear);
+                themeHelper.getTheme().clearDrawable.apply(headerHolder.clear);
 
                 break;
             case TYPE_PIN:
@@ -192,11 +193,11 @@ public class DrawerAdapter
                     case 0:
                         linkHolder.text.setText(R.string.drawer_settings);
                         updateNotificationIcon(linkHolder);
-                        ThemeHelper.getTheme().settingsDrawable.apply(linkHolder.image);
+                        themeHelper.getTheme().settingsDrawable.apply(linkHolder.image);
                         break;
                     case 1:
                         linkHolder.text.setText(R.string.drawer_history);
-                        ThemeHelper.getTheme().historyDrawable.apply(linkHolder.image);
+                        themeHelper.getTheme().historyDrawable.apply(linkHolder.image);
                         break;
                 }
                 break;
@@ -344,7 +345,7 @@ public class DrawerAdapter
 
         boolean highlighted = pin == this.highlighted;
         if (highlighted && !holder.highlighted) {
-            holder.itemView.setBackgroundColor(ThemeHelper.getTheme().highlightedPinViewHolderColor);
+            holder.itemView.setBackgroundColor(themeHelper.getTheme().highlightedPinViewHolderColor);
             holder.highlighted = true;
         } else if (!highlighted && holder.highlighted) {
             Drawable attrDrawable =
@@ -367,11 +368,11 @@ public class DrawerAdapter
         watchCount.setVisibility(View.VISIBLE);
 
         if (pin.getNewQuoteCount() > 0) {
-            watchCount.setTextColor(ThemeHelper.getTheme().pinPostsHasRepliesColor);
+            watchCount.setTextColor(themeHelper.getTheme().pinPostsHasRepliesColor);
         } else if (!pin.watching) {
-            watchCount.setTextColor(ThemeHelper.getTheme().pinPostsNotWatchingColor);
+            watchCount.setTextColor(themeHelper.getTheme().pinPostsNotWatchingColor);
         } else {
-            watchCount.setTextColor(ThemeHelper.getTheme().pinPostsNormalColor);
+            watchCount.setTextColor(themeHelper.getTheme().pinPostsNormalColor);
         }
 
         watchCount.setTypeface(watchCount.getTypeface(), Typeface.NORMAL);
@@ -467,7 +468,7 @@ public class DrawerAdapter
 
         if (!(holder.threadDownloadIcon.getDrawable() instanceof AnimatedVectorDrawableCompat)) {
             AnimatedVectorDrawableCompat downloadAnimation =
-                    AnimationUtils.createAnimatedDownloadIcon(context, ThemeHelper.getTheme().textPrimary);
+                    AnimationUtils.createAnimatedDownloadIcon(context, themeHelper.getTheme().textPrimary);
             holder.threadDownloadIcon.setImageDrawable(downloadAnimation);
 
             downloadAnimation.start();
@@ -495,9 +496,9 @@ public class DrawerAdapter
             image = itemView.findViewById(R.id.thumb);
             image.setCircular(true);
             textView = itemView.findViewById(R.id.text);
-            textView.setTypeface(ThemeHelper.getTheme().mainFont);
+            textView.setTypeface(themeHelper.getTheme().mainFont);
             watchCountText = itemView.findViewById(R.id.watch_count);
-            watchCountText.setTypeface(ThemeHelper.getTheme().mainFont);
+            watchCountText.setTypeface(themeHelper.getTheme().mainFont);
             threadDownloadIcon = itemView.findViewById(R.id.thread_download_icon);
 
             setRoundItemBackground(watchCountText);
@@ -533,7 +534,7 @@ public class DrawerAdapter
         private HeaderHolder(View itemView) {
             super(itemView);
             text = itemView.findViewById(R.id.text);
-            text.setTypeface(ThemeHelper.getTheme().mainFont);
+            text.setTypeface(themeHelper.getTheme().mainFont);
             clear = itemView.findViewById(R.id.clear);
             setRoundItemBackground(clear);
             clear.setOnClickListener(v -> callback.onHeaderClicked(HeaderAction.CLEAR));
@@ -560,7 +561,7 @@ public class DrawerAdapter
             super(itemView);
             image = itemView.findViewById(R.id.image);
             text = itemView.findViewById(R.id.text);
-            text.setTypeface(ThemeHelper.getTheme().mainFont);
+            text.setTypeface(themeHelper.getTheme().mainFont);
             notificationIcon = itemView.findViewById(R.id.setting_notification_icon);
             totalNotificationsCount = itemView.findViewById(R.id.setting_notification_total_count);
             updatePaddings(notificationIcon, dp(4), dp(4), dp(4), dp(4));

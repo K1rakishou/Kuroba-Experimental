@@ -56,6 +56,7 @@ import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.adapter.ImageViewerAdapter;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
@@ -106,6 +107,8 @@ public class ImageViewerController
     ImageLoaderV2 imageLoaderV2;
     @Inject
     ImageSaver imageSaver;
+    @Inject
+    ThemeHelper themeHelper;
 
     private int statusBarColorPrevious;
     private AnimatorSet startAnimation;
@@ -238,7 +241,7 @@ public class ImageViewerController
         if (ChanSettings.openLinkBrowser.get()) {
             openLink(postImage.imageUrl.toString());
         } else {
-            openLinkInBrowser(context, postImage.imageUrl.toString());
+            openLinkInBrowser(context, postImage.imageUrl.toString(), themeHelper.getTheme());
         }
     }
 

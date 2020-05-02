@@ -113,7 +113,7 @@ public class Dvach
     @Override
     public void setup() {
         setName("2ch.hk");
-        setIcon(SiteIcon.fromFavicon(HttpUrl.parse("https://2ch.hk/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://2ch.hk/favicon.ico")));
         setBoardsType(BoardsType.DYNAMIC);
 
         setResolvable(URL_HANDLER);

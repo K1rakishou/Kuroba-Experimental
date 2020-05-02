@@ -77,6 +77,8 @@ public class AlbumDownloadController
 
     @Inject
     ImageSaver imageSaver;
+    @Inject
+    ThemeHelper themeHelper;
 
     private CompositeDisposable compositeDisposable;
     private boolean allChecked = true;
@@ -98,7 +100,7 @@ public class AlbumDownloadController
 
         download = view.findViewById(R.id.download);
         download.setOnClickListener(this);
-        ThemeHelper.getTheme().applyFabColor(download);
+        themeHelper.getTheme().applyFabColor(download);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);

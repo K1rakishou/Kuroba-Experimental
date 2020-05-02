@@ -49,9 +49,12 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import static android.text.TextUtils.isEmpty;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.removeFromParentView;
@@ -74,21 +77,20 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
  * This is also the class that is responsible for the orientation and animation of the arrow-menu
  * drawable.
  */
-public class ToolbarContainer
-        extends FrameLayout {
-    private Callback callback;
+public class ToolbarContainer extends FrameLayout {
 
+    @Inject
+    ThemeHelper themeHelper;
+
+    private Callback callback;
     private ArrowMenuDrawable arrowMenu;
 
     @Nullable
     private ItemView previousView;
-
     @Nullable
     private ItemView currentView;
-
     @Nullable
     private ItemView transitionView;
-
     @Nullable
     private ToolbarPresenter.TransitionAnimationStyle transitionAnimationStyle;
 
@@ -104,6 +106,11 @@ public class ToolbarContainer
 
     public ToolbarContainer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        inject(this);
     }
 
     public void setCallback(Callback callback) {
@@ -450,7 +457,7 @@ public class ToolbarContainer
 
             // Title
             final TextView titleView = menu.findViewById(R.id.title);
-            titleView.setTypeface(theme != null ? theme.mainFont : ThemeHelper.getTheme().mainFont);
+            titleView.setTypeface(theme != null ? theme.mainFont : themeHelper.getTheme().mainFont);
             titleView.setText(item.title);
             titleView.setTextColor(Color.WHITE);
 

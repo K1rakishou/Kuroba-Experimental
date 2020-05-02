@@ -25,18 +25,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
-
 public class DatabaseFilterManager {
     private static final String TAG = "DatabaseFilterManager";
 
-    @Inject
     DatabaseHelper helper;
 
-    public DatabaseFilterManager() {
-        inject(this);
+    public DatabaseFilterManager(DatabaseHelper databaseHelper) {
+        this.helper = databaseHelper;
     }
 
     public Callable<Filter> createFilter(final Filter filter) {

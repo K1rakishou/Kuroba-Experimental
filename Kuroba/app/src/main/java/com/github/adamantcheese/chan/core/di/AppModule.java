@@ -33,13 +33,12 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDi
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
+import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
 import com.google.gson.Gson;
-
-import org.codejargon.feather.Provides;
 
 import java.io.File;
 

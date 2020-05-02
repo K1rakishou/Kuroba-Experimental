@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.mapper
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
@@ -69,23 +70,27 @@ object ChanPostMapper {
     fun toPost(
             gson: Gson,
             board: Board,
-            chanPost: ChanPost
+            chanPost: ChanPost,
+            currentTheme: Theme
     ): Post {
         val opId = chanPost.postDescriptor.getThreadNo()
 
         val postComment = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.postComment
+                chanPost.postComment,
+                currentTheme
         )
 
         val subject = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.subject
+                chanPost.subject,
+                currentTheme
         )
 
         val tripcode = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.tripcode
+                chanPost.tripcode,
+                currentTheme
         )
 
         // We store both - the normal images and the archives images in the database together

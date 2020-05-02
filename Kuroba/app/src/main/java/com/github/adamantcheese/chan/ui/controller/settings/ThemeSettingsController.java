@@ -70,11 +70,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import okhttp3.HttpUrl;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.adamantcheese.chan.Chan.instance;
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -85,6 +87,9 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class ThemeSettingsController
         extends Controller
         implements View.OnClickListener {
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private Board dummyBoard = new Board();
     private Loadable dummyLoadable = Loadable.emptyLoadable();
@@ -187,12 +192,12 @@ public class ThemeSettingsController
     @Override
     public void onCreate() {
         super.onCreate();
+        inject(this);
 
         navigation.setTitle(R.string.settings_screen_theme);
         navigation.swipeable = false;
         view = inflate(context, R.layout.controller_theme);
-
-        themes = instance(ThemeHelper.class).getThemes();
+        themes = themeHelper.getThemes();
 
         pager = view.findViewById(R.id.pager);
         done = view.findViewById(R.id.add);
@@ -225,7 +230,7 @@ public class ThemeSettingsController
             }
             selectedPrimaryColors.add(primaryColor);
         }
-        selectedAccentColor = ThemeHelper.getTheme().accentColor;
+        selectedAccentColor = themeHelper.getTheme().accentColor;
         done.setBackgroundTintList(ColorStateList.valueOf(selectedAccentColor.color));
     }
 
@@ -240,16 +245,21 @@ public class ThemeSettingsController
         int currentItem = pager.getCurrentItem();
         Theme selectedTheme = themes.get(currentItem);
         ThemeHelper.PrimaryColor selectedColor = selectedPrimaryColors.get(currentItem);
-        instance(ThemeHelper.class).changeTheme(selectedTheme, selectedColor, selectedAccentColor);
+        themeHelper.changeTheme(selectedTheme, selectedColor, selectedAccentColor);
+
         ((StartActivity) context).restartApp();
     }
 
     private void showAccentColorPicker() {
         List<FloatingMenuItem> items = new ArrayList<>();
         FloatingMenuItem selected = null;
-        for (ThemeHelper.PrimaryColor color : instance(ThemeHelper.class).getColors()) {
-            FloatingMenuItem floatingMenuItem =
-                    new FloatingMenuItem(new ColorsAdapterItem(color, color.color), color.displayName);
+
+        for (ThemeHelper.PrimaryColor color : themeHelper.getColors()) {
+            FloatingMenuItem floatingMenuItem = new FloatingMenuItem(
+                    new ColorsAdapterItem(color, color.color),
+                    color.displayName
+            );
+
             items.add(floatingMenuItem);
             if (color == selectedAccentColor) {
                 selected = floatingMenuItem;
@@ -302,6 +312,7 @@ public class ThemeSettingsController
 
             CommentParser parser = new CommentParser().addDefaultRules();
             DefaultPostParser postParser = new DefaultPostParser(parser);
+
             Post.Builder builder1 = new Post.Builder().board(dummyBoard)
                     .id(123456789)
                     .opId(123456789)
@@ -312,6 +323,7 @@ public class ThemeSettingsController
                     .comment("<span class=\"deadlink\">&gt;&gt;987654321</span><br>" + "http://example.com/<br>"
                             + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
                             + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>");
+
             Post post1 = postParser.parse(theme, builder1, parserCallback);
             post1.getRepliesFrom().add(234567890L);
 
@@ -330,6 +342,7 @@ public class ThemeSettingsController
                                     .extension("png")
                                     .build())
                     );
+
             Post post2 = postParser.parse(theme, builder2, parserCallback);
             List<Post> posts = new ArrayList<>();
             posts.add(post1);
@@ -343,6 +356,7 @@ public class ThemeSettingsController
             LinearLayoutManager layoutManager = new LinearLayoutManager(themeContext);
             layoutManager.setOrientation(RecyclerView.VERTICAL);
             postsView.setLayoutManager(layoutManager);
+
             PostAdapter adapter = new PostAdapter(postsView, new PostAdapter.PostAdapterCallback() {
                 @Override
                 public Loadable getLoadable() {
@@ -378,6 +392,7 @@ public class ThemeSettingsController
                 public void onListStatusClicked() {
                 }
             }, theme);
+
             adapter.setThread(dummyLoadable, posts, false);
             adapter.setPostViewMode(ChanSettings.PostViewMode.LIST);
             postsView.setAdapter(adapter);
@@ -386,7 +401,8 @@ public class ThemeSettingsController
             final View.OnClickListener colorClick = v -> {
                 List<FloatingMenuItem> items = new ArrayList<>();
                 FloatingMenuItem selected = null;
-                for (ThemeHelper.PrimaryColor color : instance(ThemeHelper.class).getColors()) {
+
+                for (ThemeHelper.PrimaryColor color : themeHelper.getColors()) {
                     FloatingMenuItem floatingMenuItem =
                             new FloatingMenuItem(new ColorsAdapterItem(color, color.color500), color.displayName);
                     items.add(floatingMenuItem);
@@ -456,7 +472,7 @@ public class ThemeSettingsController
             @SuppressLint("ViewHolder")
             TextView textView = (TextView) inflate(parent.getContext(), R.layout.toolbar_menu_item, parent, false);
             textView.setText(getItem(position));
-            textView.setTypeface(ThemeHelper.getTheme().mainFont);
+            textView.setTypeface(themeHelper.getTheme().mainFont);
 
             ColorsAdapterItem color = (ColorsAdapterItem) items.get(position).getId();
 

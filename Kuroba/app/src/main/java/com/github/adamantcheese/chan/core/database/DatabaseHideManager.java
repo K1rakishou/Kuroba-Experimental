@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -24,27 +23,31 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
-
 public class DatabaseHideManager {
     private static final String TAG = "DatabaseHideManager";
 
     private static final long POST_HIDE_TRIM_TRIGGER = 25000;
     private static final long POST_HIDE_TRIM_COUNT = 5000;
 
-    @Inject
-    DatabaseHelper helper;
+    private DatabaseHelper helper;
+    private DatabaseManager databaseManager;
 
-    public DatabaseHideManager() {
-        inject(this);
+    public DatabaseHideManager(
+            DatabaseHelper databaseHelper,
+            DatabaseManager databaseManager
+    ) {
+        this.helper = databaseHelper;
+        this.databaseManager = databaseManager;
     }
 
     public Callable<Void> load() {
         return () -> {
-            Chan.instance(DatabaseManager.class)
-                    .trimTable(helper.getPostHideDao(), "posthide", POST_HIDE_TRIM_TRIGGER, POST_HIDE_TRIM_COUNT);
+            databaseManager.trimTable(
+                    helper.getPostHideDao(),
+                    "posthide",
+                    POST_HIDE_TRIM_TRIGGER,
+                    POST_HIDE_TRIM_COUNT
+            );
 
             return null;
         };
@@ -55,7 +58,7 @@ public class DatabaseHideManager {
      * to already hidden posts and if there are hides them as well.
      */
     public List<Post> filterHiddenPosts(List<Post> posts, int siteId, String board) {
-        return Chan.instance(DatabaseManager.class).runTask(() -> {
+        return databaseManager.runTask(() -> {
             List<Long> postNoList = new ArrayList<>(posts.size());
             for (Post post : posts) {
                 postNoList.add(post.no);

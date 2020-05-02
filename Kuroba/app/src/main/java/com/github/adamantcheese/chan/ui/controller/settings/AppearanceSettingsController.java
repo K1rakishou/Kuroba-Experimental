@@ -29,6 +29,9 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class AppearanceSettingsController
@@ -37,9 +40,13 @@ public class AppearanceSettingsController
         super(context);
     }
 
+    @Inject
+    ThemeHelper themeHelper;
+
     @Override
     public void onCreate() {
         super.onCreate();
+        inject(this);
 
         navigation.setTitle(R.string.settings_screen_appearance);
 
@@ -55,7 +62,7 @@ public class AppearanceSettingsController
 
             appearance.add(new LinkSettingView(this,
                     getString(R.string.setting_theme),
-                    ThemeHelper.getTheme().displayName,
+                    themeHelper.getTheme().displayName,
                     v -> navigationController.pushController(new ThemeSettingsController(context))
             ));
 

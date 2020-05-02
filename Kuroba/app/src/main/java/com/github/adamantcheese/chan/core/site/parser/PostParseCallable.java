@@ -20,6 +20,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
+import com.github.adamantcheese.chan.ui.theme.Theme;
 
 import java.util.List;
 import java.util.Set;
@@ -31,23 +32,28 @@ class PostParseCallable implements Callable<Post> {
     private static final String TAG = "PostParseCallable";
 
     private FilterEngine filterEngine;
-    private List<Filter> filters;
     private DatabaseSavedReplyManager savedReplyManager;
+    private Theme currentTheme;
+
+    private List<Filter> filters;
     private Post.Builder post;
     private ChanReader reader;
     private Set<Long> internalIds;
 
     public PostParseCallable(
             FilterEngine filterEngine,
-            List<Filter> filters,
             DatabaseSavedReplyManager savedReplyManager,
+            Theme currentTheme,
+            List<Filter> filters,
             Post.Builder post,
             ChanReader reader,
             Set<Long> internalIds
     ) {
         this.filterEngine = filterEngine;
-        this.filters = filters;
         this.savedReplyManager = savedReplyManager;
+
+        this.currentTheme = currentTheme;
+        this.filters = filters;
         this.post = post;
         this.reader = reader;
         this.internalIds = internalIds;
@@ -61,7 +67,7 @@ class PostParseCallable implements Callable<Post> {
         // Process the filters before finish, because parsing the html is dependent on filter matches
         processPostFilter(post);
 
-        return reader.getParser().parse(null, post, new PostParser.Callback() {
+        return reader.getParser().parse(currentTheme, post, new PostParser.Callback() {
             @Override
             public boolean isSaved(int postNo) {
                 return savedReplyManager.isSaved(post.board, postNo);

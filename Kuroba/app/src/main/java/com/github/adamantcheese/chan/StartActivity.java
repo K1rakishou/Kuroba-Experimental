@@ -74,7 +74,6 @@ import kotlin.jvm.functions.Function1;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.isTablet;
@@ -85,7 +84,6 @@ public class StartActivity
         extends AppCompatActivity
         implements NfcAdapter.CreateNdefMessageCallback, FSAFActivityCallbacks {
     private static final String TAG = "StartActivity";
-
     private static final String STATE_KEY = "chan_state";
 
     private ViewGroup contentView;
@@ -114,17 +112,30 @@ public class StartActivity
     SiteService siteService;
     @Inject
     FileChooser fileChooser;
+    @Inject
+    ThemeHelper themeHelper;
+    @Inject
+    SiteRepository siteRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        long start = System.currentTimeMillis();
+        onCreateInternal(savedInstanceState);
+
+        long diff = System.currentTimeMillis() - start;
+        Logger.d(TAG, "StartActivity initialization took " + diff + "ms");
+    }
+
+    private void onCreateInternal(Bundle savedInstanceState) {
         inject(this);
 
         if (intentMismatchWorkaround()) {
             return;
         }
 
-        instance(ThemeHelper.class).setupContext(this);
+        themeHelper.setupContext(this);
 
         fileChooser.setCallbacks(this);
         imagePickDelegate = new ImagePickDelegate(this);
@@ -144,7 +155,8 @@ public class StartActivity
         pushController(drawerController);
 
         // Prevent overdraw
-        // Do this after setContentView, or the decor creating will reset the background to a default non-null drawable
+        // Do this after setContentView, or the decor creating will reset the background to a
+        // default non-null drawable
         getWindow().setBackgroundDrawable(null);
 
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
@@ -250,7 +262,7 @@ public class StartActivity
             return null;
         }
 
-        Site site = instance(SiteRepository.class).forId(stateLoadable.siteId);
+        Site site = siteRepository.forId(stateLoadable.siteId);
         if (site != null) {
             Board board = site.board(stateLoadable.boardCode);
             if (board != null) {

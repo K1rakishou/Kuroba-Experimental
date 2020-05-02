@@ -68,7 +68,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import static com.github.adamantcheese.chan.Chan.instance;
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode.CARD;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode.LIST;
 import static com.github.adamantcheese.chan.ui.adapter.PostAdapter.TYPE_POST;
@@ -90,6 +92,11 @@ public class ThreadListLayout
         implements ReplyLayout.ReplyLayoutCallback {
     private static final String TAG = "ThreadListLayout";
     public static final int MAX_SMOOTH_SCROLL_DISTANCE = 20;
+
+    @Inject
+    WatchManager watchManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -137,6 +144,8 @@ public class ThreadListLayout
     protected void onFinishInflate() {
         super.onFinishInflate();
 
+        inject(this);
+
         // View binding
         reply = findViewById(R.id.reply);
         searchStatus = findViewById(R.id.search_status);
@@ -150,7 +159,7 @@ public class ThreadListLayout
 
         // View setup
         reply.setCallback(this);
-        searchStatus.setTypeface(ThemeHelper.getTheme().mainFont);
+        searchStatus.setTypeface(themeHelper.getTheme().mainFont);
     }
 
     public void setCallbacks(
@@ -163,12 +172,14 @@ public class ThreadListLayout
         this.callback = callback;
         this.threadListLayoutCallback = threadListLayoutCallback;
 
-        postAdapter = new PostAdapter(recyclerView,
+        postAdapter = new PostAdapter(
+                recyclerView,
                 postAdapterCallback,
                 postCellCallback,
                 statusCellCallback,
-                ThemeHelper.getTheme()
+                themeHelper.getTheme()
         );
+
         recyclerView.setAdapter(postAdapter);
         // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
         // back to it onViewRecycled() will be called TWICE for that view. Setting setMaxRecycledViews
@@ -184,6 +195,7 @@ public class ThreadListLayout
         } else {
             reply.setPadding(0, toolbarHeight(), 0, 0);
         }
+
         updatePaddings(searchStatus, -1, -1, searchStatus.getPaddingTop() + toolbarHeight(), -1);
     }
 
@@ -291,9 +303,13 @@ public class ThreadListLayout
     }
 
     public void showPosts(
-            ChanThread thread, PostsFilter filter, boolean initial, boolean refreshAfterHideOrRemovePosts
+            ChanThread thread,
+            PostsFilter filter,
+            boolean initial,
+            boolean refreshAfterHideOrRemovePosts
     ) {
         showingThread = thread;
+
         if (initial) {
             reply.bindLoadable(showingThread.getLoadable());
 
@@ -331,23 +347,31 @@ public class ThreadListLayout
          * long since we have like 300-500 posts in a thread to filter in the database).
          * BUT if for some reason it starts to cause ANRs then we will have to apply the callback solution.
          */
-        List<Post> filteredPosts =
-                filter.apply(thread.getPosts(), thread.getLoadable().siteId, thread.getLoadable().boardCode);
+        List<Post> filteredPosts = filter.apply(
+                thread.getPosts(),
+                thread.getLoadable().siteId,
+                thread.getLoadable().boardCode
+        );
 
-        //Filter out any bookmarked threads from the catalog
+        // Filter out any bookmarked threads from the catalog
         if (ChanSettings.removeWatchedFromCatalog.get() && thread.getLoadable().isCatalogMode()) {
             List<Post> toRemove = new ArrayList<>();
-            for (Pin pin : instance(WatchManager.class).getAllPins()) {
+
+            for (Pin pin : watchManager.getAllPins()) {
                 for (Post post : filteredPosts) {
-                    if (pin.loadable.equals(Loadable.forThread(thread.getLoadable().site,
+                    Loadable loadable = Loadable.forThread(
+                            thread.getLoadable().site,
                             thread.getLoadable().board,
                             post.no,
                             ""
-                    ))) {
+                    );
+
+                    if (pin.loadable.equals(loadable)) {
                         toRemove.add(post);
                     }
                 }
             }
+
             filteredPosts.removeAll(toRemove);
         }
 
@@ -721,7 +745,7 @@ public class ThreadListLayout
             }
         } else {
             if (fastScroller == null) {
-                fastScroller = FastScrollerHelper.create(recyclerView);
+                fastScroller = FastScrollerHelper.create(recyclerView, themeHelper.getTheme());
             }
         }
         recyclerView.setVerticalScrollBarEnabled(!enabled);

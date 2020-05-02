@@ -20,6 +20,9 @@ import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getWindow;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
@@ -30,6 +33,9 @@ public class ImageReencodeOptionsController
         implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
     private final static String TAG = "ImageReencodeOptionsController";
     private static final int TRANSITION_DURATION = 200;
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private ImageReencodeOptionsCallbacks callbacks;
     private ImageOptionsHelper imageReencodingHelper;
@@ -93,6 +99,7 @@ public class ImageReencodeOptionsController
             ImageReencodingPresenter.ReencodeSettings lastOptions
     ) {
         super(context);
+        inject(this);
 
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;
@@ -132,12 +139,12 @@ public class ImageReencodeOptionsController
         if (imageFormat == Bitmap.CompressFormat.PNG) {
             quality.setEnabled(false);
             reencodeImageAsPng.setEnabled(false);
-            reencodeImageAsPng.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            reencodeImageAsPng.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            reencodeImageAsPng.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            reencodeImageAsPng.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
         } else if (imageFormat == Bitmap.CompressFormat.JPEG) {
             reencodeImageAsJpeg.setEnabled(false);
-            reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
         }
 
         statusBarColorPrevious = getWindow(context).getStatusBarColor();

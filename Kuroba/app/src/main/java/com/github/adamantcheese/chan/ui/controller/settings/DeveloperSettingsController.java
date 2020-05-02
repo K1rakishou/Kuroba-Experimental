@@ -49,7 +49,6 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.Chan.instance;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.NO_HASH_SET;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
@@ -72,6 +71,10 @@ public class DeveloperSettingsController
     MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository;
     @Inject
     InlinedFileInfoRepository inlinedFileInfoRepository;
+    @Inject
+    FilterWatchManager filterWatchManager;
+    @Inject
+    WakeManager wakeManager;
 
     public DeveloperSettingsController(Context context) {
         super(context);
@@ -148,7 +151,6 @@ public class DeveloperSettingsController
         Button clearFilterWatchIgnores = new Button(context);
         clearFilterWatchIgnores.setOnClickListener(v -> {
             try {
-                FilterWatchManager filterWatchManager = instance(FilterWatchManager.class);
                 Field ignoredField = filterWatchManager.getClass().getDeclaredField("ignoredPosts");
                 ignoredField.setAccessible(true);
                 ignoredField.set(filterWatchManager, Collections.synchronizedSet(new HashSet<Integer>()));
@@ -196,7 +198,6 @@ public class DeveloperSettingsController
         Button forceWake = new Button(context);
         forceWake.setOnClickListener(v -> {
             try {
-                WakeManager wakeManager = instance(WakeManager.class);
                 Field wakeables = wakeManager.getClass().getDeclaredField("wakeableSet");
                 wakeables.setAccessible(true);
                 for (WakeManager.Wakeable wakeable : (Set<WakeManager.Wakeable>) wakeables.get(wakeManager)) {

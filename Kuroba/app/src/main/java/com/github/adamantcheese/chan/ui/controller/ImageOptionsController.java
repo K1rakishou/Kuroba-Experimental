@@ -41,10 +41,13 @@ import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 
+import javax.inject.Inject;
+
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDisplaySize;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -58,6 +61,9 @@ public class ImageOptionsController
                    ImageReencodingPresenter.ImageReencodingPresenterCallback {
     private final static String TAG = "ImageOptionsController";
     private static final int TRANSITION_DURATION = 200;
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private ImageReencodingPresenter presenter;
     private ImageOptionsHelper imageReencodingHelper;
@@ -89,6 +95,8 @@ public class ImageOptionsController
             boolean supportsReencode
     ) {
         super(context);
+        inject(this);
+
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;
         lastSettings = lastOptions;
@@ -142,27 +150,27 @@ public class ImageOptionsController
         if (presenter.getImageFormat() != Bitmap.CompressFormat.JPEG) {
             fixExif.setChecked(false);
             fixExif.setEnabled(false);
-            fixExif.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            fixExif.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            fixExif.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            fixExif.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
         }
 
         if (!reencodeEnabled) {
             changeImageChecksum.setChecked(false);
             changeImageChecksum.setEnabled(false);
-            changeImageChecksum.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            changeImageChecksum.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            changeImageChecksum.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            changeImageChecksum.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
             fixExif.setChecked(false);
             fixExif.setEnabled(false);
-            fixExif.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            fixExif.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            fixExif.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            fixExif.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
             removeMetadata.setChecked(false);
             removeMetadata.setEnabled(false);
-            removeMetadata.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            removeMetadata.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            removeMetadata.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            removeMetadata.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
             reencode.setChecked(false);
             reencode.setEnabled(false);
-            reencode.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-            reencode.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+            reencode.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            reencode.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
         }
 
         viewHolder.setOnClickListener(this);
@@ -240,8 +248,8 @@ public class ImageOptionsController
     public void onReencodingCanceled() {
         removeMetadata.setChecked(false);
         removeMetadata.setEnabled(true);
-        removeMetadata.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        removeMetadata.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+        removeMetadata.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        removeMetadata.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
         reencode.setChecked(false);
 
         reencode.setText(getString(R.string.image_options_re_encode));
@@ -252,8 +260,8 @@ public class ImageOptionsController
     public void onReencodeOptionsSet(ImageReencodingPresenter.ReencodeSettings reencodeSettings) {
         removeMetadata.setChecked(true);
         removeMetadata.setEnabled(false);
-        removeMetadata.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
-        removeMetadata.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textSecondary));
+        removeMetadata.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+        removeMetadata.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
 
         reencode.setText(String.format("Re-encode %s", reencodeSettings.prettyPrint(presenter.getImageFormat())));
 

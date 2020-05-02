@@ -55,6 +55,8 @@ public class PostImageThumbnailView
 
     @Inject
     PrefetchIndicatorAnimationManager prefetchIndicatorAnimationManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private PostImage postImage;
     private Drawable playIcon;
@@ -80,7 +82,6 @@ public class PostImageThumbnailView
 
     public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         inject(this);
 
         this.setOnLongClickListener(this);
@@ -90,7 +91,7 @@ public class PostImageThumbnailView
         playIcon = context.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
 
         circularProgressDrawable.setStrokeWidth(5f);
-        circularProgressDrawable.setColorSchemeColors(ThemeHelper.getTheme().accentColor.color);
+        circularProgressDrawable.setColorSchemeColors(themeHelper.getTheme().accentColor.color);
 
         Disposable disposable = prefetchIndicatorAnimationManager.listenForPrefetchStateUpdates()
                 .filter((prefetchStateData) -> showPrefetchLoadingIndicator && postImage != null)

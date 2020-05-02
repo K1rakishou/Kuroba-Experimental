@@ -108,9 +108,10 @@ public class ReplyLayout
     ReplyPresenter presenter;
     @Inject
     CaptchaHolder captchaHolder;
+    @Inject
+    ThemeHelper themeHelper;
 
     private ReplyLayoutCallback callback;
-
     private AuthenticationLayoutInterface authenticationLayout;
 
     private boolean blockSelectionChange = false;
@@ -225,8 +226,8 @@ public class ReplyLayout
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
 
-        spoiler.setButtonTintList(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
-        spoiler.setTextColor(ColorStateList.valueOf(ThemeHelper.getTheme().textPrimary));
+        spoiler.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        spoiler.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
 
         // Setup reply layout views
         fileName.setOnLongClickListener(v -> presenter.fileNameLongClicked());
@@ -257,7 +258,7 @@ public class ReplyLayout
         setRoundItemBackground(more);
         more.setOnClickListener(this);
 
-        ThemeHelper.getTheme().imageDrawable.apply(attach);
+        themeHelper.getTheme().imageDrawable.apply(attach);
         setRoundItemBackground(attach);
         attach.setOnClickListener(this);
         attach.setOnLongClickListener(v -> {
@@ -269,7 +270,7 @@ public class ReplyLayout
         setRoundItemBackground(captchaImage);
         captcha.setOnClickListener(this);
 
-        ThemeHelper.getTheme().sendDrawable.apply(submit);
+        themeHelper.getTheme().sendDrawable.apply(submit);
         setRoundItemBackground(submit);
         submit.setOnClickListener(this);
         submit.setOnLongClickListener(v -> {
@@ -284,7 +285,7 @@ public class ReplyLayout
         // Setup captcha layout views
         captchaContainer.setLayoutParams(new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-        ThemeHelper.getTheme().refreshDrawable.apply(captchaHardReset);
+        themeHelper.getTheme().refreshDrawable.apply(captchaHardReset);
         setRoundItemBackground(captchaHardReset);
         captchaHardReset.setOnClickListener(this);
 
@@ -733,13 +734,13 @@ public class ReplyLayout
         previewHolder.setClickable(false);
         if (show) {
             ImageDecoder.decodeFileOnBackgroundThread(previewFile, dp(400), dp(300), this);
-            ThemeHelper.getTheme().clearDrawable.apply(attach);
+            themeHelper.getTheme().clearDrawable.apply(attach);
         } else {
             spoiler.setVisibility(GONE);
             previewHolder.setVisibility(GONE);
             previewMessage.setVisibility(GONE);
             callback.updatePadding();
-            ThemeHelper.getTheme().imageDrawable.apply(attach);
+            themeHelper.getTheme().imageDrawable.apply(attach);
         }
         // the delay is taken from LayoutTransition, as this class is set to automatically animate layout changes
         // only allow the preview to be clicked if it is fully visible

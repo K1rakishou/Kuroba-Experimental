@@ -60,7 +60,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.EventBus;
@@ -207,11 +207,12 @@ public class AndroidUtils {
         }
     }
 
-    public static void openLinkInBrowser(Context context, String link) {
+    public static void openLinkInBrowser(Context context, String link, Theme theme) {
         if (TextUtils.isEmpty(link)) {
             showToast(context, R.string.open_link_failed);
             return;
         }
+
         // Hack that's sort of the same as openLink
         // The link won't be opened in a custom tab if this app is the default handler for that link.
         // Manually check if this app opens it instead of a custom tab, and use the logic of
@@ -220,13 +221,16 @@ public class AndroidUtils {
         Intent urlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
         PackageManager pm = application.getPackageManager();
         ComponentName resolvedActivity = urlIntent.resolveActivity(pm);
+
         if (resolvedActivity != null) {
             openWithCustomTabs = !resolvedActivity.getPackageName().equals(application.getPackageName());
         }
 
         if (openWithCustomTabs) {
-            CustomTabsIntent tabsIntent =
-                    new CustomTabsIntent.Builder().setToolbarColor(ThemeHelper.getTheme().primaryColor.color).build();
+            CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().setToolbarColor(
+                    theme.primaryColor.color
+            ).build();
+
             try {
                 tabsIntent.launchUrl(context, Uri.parse(link));
             } catch (ActivityNotFoundException e) {

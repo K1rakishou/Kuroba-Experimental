@@ -36,12 +36,16 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
@@ -52,6 +56,9 @@ public class Toolbar
         implements View.OnClickListener, ToolbarPresenter.Callback, ToolbarContainer.Callback {
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
+
+    @Inject
+    ThemeHelper themeHelper;
 
     private final RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -72,12 +79,9 @@ public class Toolbar
     };
 
     private ToolbarPresenter presenter;
-
     private ImageView arrowMenuView;
     private ArrowMenuDrawable arrowMenuDrawable;
-
     private ToolbarContainer navigationItemContainer;
-
     private ToolbarCallback callback;
     private int lastScrollDeltaOffset;
     private int scrollOffset;
@@ -93,11 +97,14 @@ public class Toolbar
 
     public Toolbar(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
         setOrientation(HORIZONTAL);
-        if (isInEditMode()) return;
 
-        presenter = new ToolbarPresenter(this);
+        if (isInEditMode()) {
+            return;
+        }
+
+        inject(this);
+        presenter = new ToolbarPresenter(this, themeHelper);
 
         //initView
         FrameLayout leftButtonContainer = new FrameLayout(getContext());

@@ -33,12 +33,14 @@ public class ToolbarPresenter {
     }
 
     private Callback callback;
+    private ThemeHelper themeHelper;
 
     private NavigationItem item;
     private NavigationItem transition;
 
-    public ToolbarPresenter(Callback callback) {
+    public ToolbarPresenter(Callback callback, ThemeHelper themeHelper) {
         this.callback = callback;
+        this.themeHelper = themeHelper;
     }
 
     void set(NavigationItem newItem, Theme theme, AnimationStyle animation) {
@@ -59,7 +61,7 @@ public class ToolbarPresenter {
     void startTransition(NavigationItem newItem) {
         cancelTransitionIfNeeded();
         if (closeSearchIfNeeded()) {
-            callback.showForNavigationItem(item, ThemeHelper.getTheme(), AnimationStyle.NONE);
+            callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
         }
 
         transition = newItem;
@@ -76,8 +78,9 @@ public class ToolbarPresenter {
 
         if (didComplete) {
             item = transition;
-            callback.showForNavigationItem(item, ThemeHelper.getTheme(), AnimationStyle.NONE);
+            callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
         }
+
         transition = null;
     }
 
@@ -95,8 +98,8 @@ public class ToolbarPresenter {
         cancelTransitionIfNeeded();
 
         item.search = true;
-        callback.showForNavigationItem(item, ThemeHelper.getTheme(), AnimationStyle.NONE);
 
+        callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
         callback.onSearchVisibilityChanged(item, true);
     }
 
@@ -123,7 +126,8 @@ public class ToolbarPresenter {
      * Returns true if search was closed, false otherwise
      */
     public boolean closeSearchIfNeeded() {
-        // Cancel search, but don't unmark it as a search item so that onback will automatically pull up the search window
+        // Cancel search, but don't unmark it as a search item so that onback will automatically
+        // pull up the search window
         if (item != null && item.search) {
             callback.onSearchVisibilityChanged(item, false);
             return true;
@@ -142,17 +146,11 @@ public class ToolbarPresenter {
 
     interface Callback {
         void showForNavigationItem(NavigationItem item, Theme theme, AnimationStyle animation);
-
         void containerStartTransition(NavigationItem item, TransitionAnimationStyle animation);
-
         void containerStopTransition(boolean didComplete);
-
         void containerSetTransitionProgress(float progress);
-
         void onSearchVisibilityChanged(NavigationItem item, boolean visible);
-
         void onSearchInput(NavigationItem item, String input);
-
         void updateViewForItem(NavigationItem item);
     }
 }

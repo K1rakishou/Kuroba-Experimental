@@ -21,8 +21,7 @@ import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.SiteResolver;
 import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.utils.Logger;
-
-import org.codejargon.feather.Provides;
+import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
 
