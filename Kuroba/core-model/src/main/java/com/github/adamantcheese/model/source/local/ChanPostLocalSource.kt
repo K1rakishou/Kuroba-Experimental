@@ -438,11 +438,55 @@ class ChanPostLocalSource(
         return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.opNo)
     }
 
+    suspend fun countTotalAmountOfPosts(): Int {
+        ensureInTransaction()
+
+        return chanPostDao.count()
+    }
+
     open suspend fun deleteAll(): Int {
         ensureInTransaction()
 
         return chanPostDao.deleteAll()
     }
 
+    suspend fun deleteOldPosts(toDeleteCount: Int): Int {
+        ensureInTransaction()
+        require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }
 
+        var deletedTotal = 0
+        var offset = 0
+
+        do {
+            val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
+            if (threadBatch.isEmpty()) {
+                logger.log(TAG, "selectThreadsWithPostsOtherThanOp returned empty list")
+                return deletedTotal
+            }
+
+            for (thread in threadBatch) {
+                if (deletedTotal >= toDeleteCount) {
+                    logger.log(TAG, "Deleted enough posts (deletedTotal = $deletedTotal, " +
+                            "toDeleteCount = $toDeleteCount), exiting early")
+                    break
+                }
+
+                val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
+                deletedTotal += thread.postsCount
+
+                logger.log(TAG, "Deleting posts in " +
+                        "(threadId=${thread.threadId}, threadNo=${thread.threadNo}, " +
+                        "lastModified=${thread.lastModified}) thread, deleted $deletedPosts posts," +
+                        "deletedTotal = $deletedTotal")
+            }
+
+            offset += threadBatch.size
+        } while (deletedTotal < toDeleteCount)
+
+        return deletedTotal
+    }
+
+    companion object {
+        private const val THREADS_IN_BATCH = 128
+    }
 }

@@ -37,8 +37,9 @@ public abstract class FileCacheListener {
     }
 
     /**
-     * In case of the file being downloaded in chunks [chunkIndex] will be representing the chunk
-     * index. Otherwise it will always be 0.
+     * In case of the file being downloaded in chunks [chunkIndex] will be representing the current
+     * chunk's index. Otherwise it will always be 0. This is useful when you want to render multiple
+     * progress bars, each progress bar for it's own chunk.
      * The amount of chunks is being passed into the [onStart] event.
      */
     public void onProgress(int chunkIndex, long downloaded, long total) {

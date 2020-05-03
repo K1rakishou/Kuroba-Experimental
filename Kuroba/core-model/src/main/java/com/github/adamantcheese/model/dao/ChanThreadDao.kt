@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.dao
 
 import androidx.room.*
 import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.ChanThreadsWithPosts
 
 @Dao
 abstract class ChanThreadDao {
@@ -66,4 +67,6 @@ abstract class ChanThreadDao {
     """)
     abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
 
+    @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
+    abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
 }

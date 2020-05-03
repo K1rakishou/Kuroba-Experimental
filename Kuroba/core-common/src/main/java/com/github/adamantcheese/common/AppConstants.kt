@@ -14,6 +14,8 @@ class AppConstants(context: Context) {
      * */
     val archiveFetchHistoryMaxEntries = 5
 
+    val maxAmountOfPostsInDatabase = 125_000
+
     init {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 

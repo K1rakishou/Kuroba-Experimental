@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.di.annotation.AppCoroutineScope
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
 import com.github.adamantcheese.model.repository.*
@@ -15,11 +16,12 @@ import com.github.adamantcheese.model.source.remote.MediaServiceLinkExtraContent
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 @Module
-class MainModule {
+class ModelMainModule {
 
     @Singleton
     @Provides
@@ -214,12 +216,14 @@ class MainModule {
             database: KurobaDatabase,
             chanPostLocalSource: ChanPostLocalSource,
             @LoggerTagPrefix loggerTag: String,
+            @AppCoroutineScope scope: CoroutineScope,
             appConstants: AppConstants
     ): ChanPostRepository {
         return ChanPostRepository(
                 database,
                 loggerTag,
                 logger,
+                scope,
                 chanPostLocalSource,
                 appConstants
         )

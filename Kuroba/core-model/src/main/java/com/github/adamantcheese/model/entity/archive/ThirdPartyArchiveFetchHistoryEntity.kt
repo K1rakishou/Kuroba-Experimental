@@ -28,6 +28,10 @@ import org.joda.time.DateTime
                     value = [ThirdPartyArchiveFetchHistoryEntity.OWNER_THIRD_PARTY_ARCHIVE_ID_COLUMN_NAME]
             ),
             Index(
+                    name = ThirdPartyArchiveFetchHistoryEntity.OWNER_THREAD_ID_INDEX_NAME,
+                    value = [ThirdPartyArchiveFetchHistoryEntity.OWNER_THREAD_ID_COLUMN_NAME]
+            ),
+            Index(
                     name = ThirdPartyArchiveFetchHistoryEntity.OWNER_THIRD_PARTY_ARCHIVE_THREAD_ID_INDEX_NAME,
                     value = [
                         ThirdPartyArchiveFetchHistoryEntity.OWNER_THIRD_PARTY_ARCHIVE_ID_COLUMN_NAME,
@@ -67,6 +71,7 @@ data class ThirdPartyArchiveFetchHistoryEntity(
         const val INSERTED_ON_COLUMN_NAME = "inserted_on"
 
         const val OWNER_THIRD_PARTY_ARCHIVE_ID_INDEX_NAME = "${TABLE_NAME}_owner_third_party_archive_idx"
+        const val OWNER_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_owner_thread_id_idx"
         const val OWNER_THIRD_PARTY_ARCHIVE_THREAD_ID_INDEX_NAME = "${TABLE_NAME}_owner_third_party_archive_thread_id_idx"
         const val INSERTED_ON_INDEX_NAME = "${TABLE_NAME}_inserted_on_idx"
     }

@@ -129,14 +129,13 @@ public class StartActivity
     }
 
     private void onCreateInternal(Bundle savedInstanceState) {
-        inject(this);
-
         if (intentMismatchWorkaround()) {
             return;
         }
 
-        themeHelper.setupContext(this);
+        inject(this);
 
+        themeHelper.setupContext(this);
         fileChooser.setCallbacks(this);
         imagePickDelegate = new ImagePickDelegate(this);
         runtimePermissionsHelper = new RuntimePermissionsHelper(this);

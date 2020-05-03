@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5008bfac30fec36b5926b958e32dbe69",
+    "identityHash": "9823adcda88bc1342b36871bab9e54f4",
     "entities": [
       {
         "tableName": "chan_board",
@@ -843,6 +843,14 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_owner_third_party_archive_idx` ON `${TABLE_NAME}` (`owner_third_party_archive_id`)"
           },
           {
+            "name": "third_party_archive_fetch_history_owner_thread_id_idx",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `third_party_archive_fetch_history_owner_thread_id_idx` ON `${TABLE_NAME}` (`owner_thread_id`)"
+          },
+          {
             "name": "third_party_archive_fetch_history_owner_third_party_archive_thread_id_idx",
             "unique": false,
             "columnNames": [
@@ -927,10 +935,15 @@
         "foreignKeys": []
       }
     ],
-    "views": [],
+    "views": [
+      {
+        "viewName": "chan_threads_with_posts",
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT \n                chan_thread.thread_id,\n                chan_thread.last_modified,\n            FROM \n                chan_thread chan_thread, \n                chan_post chan_post\n            WHERE \n                chan_thread.thread_id = chan_post.owner_thread_id\n            AND\n                (SELECT COUNT(*) \n                FROM chan_post \n                WHERE chan_post.is_op = 0) > 0\n            ORDER BY chan_thread.last_modified ASC"
+      }
+    ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5008bfac30fec36b5926b958e32dbe69')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9823adcda88bc1342b36871bab9e54f4')"
     ]
   }
 }

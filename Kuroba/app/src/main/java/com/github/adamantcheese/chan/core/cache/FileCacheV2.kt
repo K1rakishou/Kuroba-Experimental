@@ -469,38 +469,38 @@ class FileCacheV2(
             if (file is RawFile) {
                 // Regular Java File
                 return@fromCallable file as RawFile
-            } else {
-                // SAF file
-                try {
-                    val imageUrl = postImage.imageUrl
-                            ?: throw IOException("PostImage has no imageUrl")
+            }
 
-                    val resultFile = cacheHandler.getOrCreateCacheFile(imageUrl.toString())
-                            ?: throw IOException("Couldn't get or create cache file")
+            // SAF file
+            try {
+                val imageUrl = postImage.imageUrl
+                        ?: throw IOException("PostImage has no imageUrl")
 
-                    if (!fileManager.copyFileContents(file, resultFile)) {
-                        if (!cacheHandler.deleteCacheFile(resultFile)) {
-                            Logger.e(TAG, "Couldn't delete cache file ${resultFile.getFullPath()}")
-                        }
+                val resultFile = cacheHandler.getOrCreateCacheFile(imageUrl.toString())
+                        ?: throw IOException("Couldn't get or create cache file")
 
-                        val error = IOException(
-                                "Could not copy external SAF file into internal cache file, " +
-                                        "externalFile = " + file.getFullPath() +
-                                        ", resultFile = " + resultFile.getFullPath()
-                        )
-
-                        throw error
+                if (!fileManager.copyFileContents(file, resultFile)) {
+                    if (!cacheHandler.deleteCacheFile(resultFile)) {
+                        Logger.e(TAG, "Couldn't delete cache file ${resultFile.getFullPath()}")
                     }
 
-                    if (!cacheHandler.markFileDownloaded(resultFile)) {
-                        throw FileCacheException.CouldNotMarkFileAsDownloaded(resultFile)
-                    }
+                    val error = IOException(
+                            "Could not copy external SAF file into internal cache file, " +
+                                    "externalFile = " + file.getFullPath() +
+                                    ", resultFile = " + resultFile.getFullPath()
+                    )
 
-                    return@fromCallable resultFile as RawFile
-                } catch (e: IOException) {
-                    logError(TAG, "Error while trying to create a new random cache file", e)
-                    throw e
+                    throw error
                 }
+
+                if (!cacheHandler.markFileDownloaded(resultFile)) {
+                    throw FileCacheException.CouldNotMarkFileAsDownloaded(resultFile)
+                }
+
+                return@fromCallable resultFile as RawFile
+            } catch (e: IOException) {
+                logError(TAG, "Error while trying to create a new random cache file", e)
+                throw e
             }
         }
     }
@@ -805,7 +805,6 @@ class FileCacheV2(
     companion object {
         private const val TAG = "FileCacheV2"
         private const val NORMAL_THREAD_NAME_FORMAT = "NormalFileCacheV2Thread-%d"
-        private const val BATCH_THREAD_NAME_FORMAT = "BatchFileCacheV2Thread-%d"
         private const val MAX_TIMEOUT_MS = 1000L
 
         const val MIN_CHUNK_SIZE = 1024L * 8L // 8 KB

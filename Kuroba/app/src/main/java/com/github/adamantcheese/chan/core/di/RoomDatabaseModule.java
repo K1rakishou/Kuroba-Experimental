@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.model.di.MainComponent;
+import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
@@ -11,39 +11,39 @@ import com.github.k1rakishou.feather2.Provides;
 import javax.inject.Singleton;
 
 public class RoomDatabaseModule {
-    private MainComponent mainComponent;
+    private ModelMainComponent modelMainComponent;
 
-    public RoomDatabaseModule(MainComponent mainComponent) {
-        this.mainComponent = mainComponent;
+    public RoomDatabaseModule(ModelMainComponent modelMainComponent) {
+        this.modelMainComponent = modelMainComponent;
     }
 
     @Provides
     @Singleton
     public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository() {
-        return mainComponent.getMediaServiceLinkExtraContentRepository();
+        return modelMainComponent.getMediaServiceLinkExtraContentRepository();
     }
 
     @Provides
     @Singleton
     public SeenPostRepository provideSeenPostRepository() {
-        return mainComponent.getSeenPostRepository();
+        return modelMainComponent.getSeenPostRepository();
     }
 
     @Provides
     @Singleton
     public InlinedFileInfoRepository provideInlinedFileInfoRepository() {
-        return mainComponent.getInlinedFileInfoRepository();
+        return modelMainComponent.getInlinedFileInfoRepository();
     }
 
     @Provides
     @Singleton
     public ChanPostRepository provideChanPostRepository() {
-        return mainComponent.getChanPostRepository();
+        return modelMainComponent.getChanPostRepository();
     }
 
     @Provides
     @Singleton
     public ThirdPartyArchiveInfoRepository provideThirdPartyArchiveInfoRepository() {
-        return mainComponent.getThirdPartyArchiveInfoRepository();
+        return modelMainComponent.getThirdPartyArchiveInfoRepository();
     }
 }

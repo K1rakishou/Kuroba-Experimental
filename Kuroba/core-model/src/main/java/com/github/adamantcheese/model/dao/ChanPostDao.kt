@@ -92,6 +92,19 @@ abstract class ChanPostDao {
         return insert(chanPostEntity)
     }
 
+    @Query("SELECT COUNT(*) FROM ${ChanPostEntity.TABLE_NAME}")
+    abstract suspend fun count(): Int
+
     @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
     abstract suspend fun deleteAll(): Int
+
+    @Query("""
+        DELETE 
+        FROM ${ChanPostEntity.TABLE_NAME} 
+        WHERE 
+            ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND
+            ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+    """)
+    abstract suspend fun deletePostsByThreadId(ownerThreadId: Long): Int
 }

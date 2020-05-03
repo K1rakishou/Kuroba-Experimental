@@ -88,16 +88,12 @@ public class UpdateManager {
 
     @Inject
     RequestQueue volleyRequestQueue;
-
     @Inject
     FileCacheV2 fileCacheV2;
-
     @Inject
     FileManager fileManager;
-
     @Inject
     SettingsNotificationManager settingsNotificationManager;
-
     @Inject
     FileChooser fileChooser;
 

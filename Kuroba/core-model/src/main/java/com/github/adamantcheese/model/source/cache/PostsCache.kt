@@ -8,7 +8,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
 
-// TODO(archives): tests!
 class PostsCache(private val maxValueCount: Int) {
     private val mutex = Mutex()
     private val currentValuesCount = AtomicInteger(0)
@@ -128,7 +127,6 @@ class PostsCache(private val maxValueCount: Int) {
     suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
         return mutex.withLock {
             accessTimes[threadDescriptor] = System.currentTimeMillis()
-
             return@withLock postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
         }
     }

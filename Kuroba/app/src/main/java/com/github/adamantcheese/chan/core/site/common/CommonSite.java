@@ -567,6 +567,7 @@ public abstract class CommonSite extends SiteBase {
             this.site = site;
         }
 
+        @NonNull
         @Override
         public PostParser getParser() {
             return site.postParser;

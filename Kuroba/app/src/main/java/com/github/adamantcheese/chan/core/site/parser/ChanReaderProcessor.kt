@@ -31,7 +31,7 @@ class ChanReaderProcessor(
 
     var op: Post.Builder? = null
 
-    fun addPost(postBuilder: Post.Builder) {
+    suspend fun addPost(postBuilder: Post.Builder) {
         if (differsFromCached(postBuilder)) {
             addForParse(postBuilder)
         }
@@ -39,7 +39,7 @@ class ChanReaderProcessor(
         postNoOrderedList.add(postBuilder.id)
     }
 
-    private fun differsFromCached(builder: Post.Builder): Boolean {
+    private suspend fun differsFromCached(builder: Post.Builder): Boolean {
         val postDescriptor = if (builder.op) {
             PostDescriptor.create(
                     builder.board.site.name(),
@@ -55,7 +55,7 @@ class ChanReaderProcessor(
             )
         }
 
-        val chanPost = chanPostRepository.getCachedPostBlocking(postDescriptor, builder.op)
+        val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
                 ?: return true
 
         return PostUtils.postsDiffer(builder, chanPost)

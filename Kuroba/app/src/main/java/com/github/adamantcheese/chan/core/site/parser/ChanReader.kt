@@ -14,19 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.parser;
+package com.github.adamantcheese.chan.core.site.parser
 
-import android.util.JsonReader;
+import android.util.JsonReader
 
-public interface ChanReader {
-    PostParser getParser();
+interface ChanReader {
+    val parser: PostParser
 
-    void loadThread(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
-            throws Exception;
+    @Throws(Exception::class)
+    suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 
-    void loadCatalog(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
-            throws Exception;
+    @Throws(Exception::class)
+    suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 
-    void readPostObject(JsonReader reader, ChanReaderProcessor chanReaderProcessor)
-            throws Exception;
+    @Throws(Exception::class)
+    suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 }

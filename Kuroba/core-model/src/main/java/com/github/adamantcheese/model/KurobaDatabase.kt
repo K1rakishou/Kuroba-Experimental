@@ -26,6 +26,9 @@ import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
             ThirdPartyArchiveFetchHistoryEntity::class,
             ThirdPartyArchiveInfoEntity::class
         ],
+        views = [
+            ChanThreadsWithPosts::class
+        ],
         version = 1,
         exportSchema = true
 )
