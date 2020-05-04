@@ -1,5 +1,8 @@
 package com.github.adamantcheese.chan.utils
 
+import com.airbnb.epoxy.AsyncEpoxyController
+import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
@@ -51,4 +54,15 @@ fun Throwable.errorMessageOrClassName(): String {
     }
 
     return this::class.java.name
+}
+
+fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
+    val controller = object : AsyncEpoxyController(true) {
+        override fun buildModels() {
+            buildModels(this)
+        }
+    }
+
+    setController(controller)
+    controller.requestModelBuild()
 }

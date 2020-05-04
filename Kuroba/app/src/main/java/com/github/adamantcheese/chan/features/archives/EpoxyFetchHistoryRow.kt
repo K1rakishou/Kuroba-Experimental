@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.epoxy
+package com.github.adamantcheese.chan.features.archives
 
 import android.content.Context
 import android.util.AttributeSet

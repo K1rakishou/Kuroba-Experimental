@@ -21,7 +21,6 @@ import android.content.Context;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.TextView;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
@@ -34,7 +33,6 @@ import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
-import com.github.adamantcheese.chan.ui.controller.LogsController;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
@@ -42,15 +40,11 @@ import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRep
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.inject.Inject;
 
-import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.NO_HASH_SET;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
@@ -85,82 +79,8 @@ public class DeveloperSettingsController
     public void onCreate() {
         super.onCreate();
 
-        inject(this);
-
-        navigation.setTitle(R.string.settings_developer);
-
         LinearLayout wrapper = new LinearLayout(context);
         wrapper.setOrientation(LinearLayout.VERTICAL);
-
-        //VIEW LOGS
-        Button logsButton = new Button(context);
-        logsButton.setOnClickListener(v -> navigationController.pushController(new LogsController(context)));
-        logsButton.setText(R.string.settings_open_logs);
-        wrapper.addView(logsButton);
-
-        // Enable/Disable verbose logs
-        addVerboseLogsButton(wrapper);
-
-        //CRASH APP
-        Button crashButton = new Button(context);
-        crashButton.setOnClickListener(v -> {
-            throw new RuntimeException("Debug crash");
-        });
-        crashButton.setText("Crash the app");
-        wrapper.addView(crashButton);
-
-        //CLEAR CACHE
-        Button clearCacheButton = new Button(context);
-
-        clearCacheButton.setOnClickListener(v -> {
-            fileCacheV2.clearCache();
-            showToast(context, "Cleared image cache");
-            clearCacheButton.setText("Clear image cache (currently " + cacheHandler.getSize() / 1024 / 1024 + "MB)");
-        });
-        clearCacheButton.setText("Clear image cache (currently " + cacheHandler.getSize() / 1024 / 1024 + "MB)");
-        wrapper.addView(clearCacheButton);
-
-        //DATABASE SUMMARY
-        TextView summaryText = new TextView(context);
-        summaryText.setText("Database summary:\n" + databaseManager.getSummary());
-        summaryText.setPadding(dp(15), dp(5), 0, 0);
-        wrapper.addView(summaryText);
-
-        //DATABASE RESET
-        Button resetDbButton = new Button(context);
-        resetDbButton.setOnClickListener(v -> {
-            databaseManager.reset();
-            ((StartActivity) context).restartApp();
-        });
-        resetDbButton.setText("Delete database & restart");
-        wrapper.addView(resetDbButton);
-
-        // Clear seen posts table
-        addClearSeenPostsButton(wrapper);
-
-        // Clear posts table
-        addClearPostsButton(wrapper);
-
-        // Clear external link extra info table
-        addClearExternalLinkExtraInfoTable(wrapper);
-
-        // Clear inlined files info table
-        addClearInlinedFilesInfoTable(wrapper);
-
-        //FILTER WATCH IGNORE RESET
-        Button clearFilterWatchIgnores = new Button(context);
-        clearFilterWatchIgnores.setOnClickListener(v -> {
-            try {
-                Field ignoredField = filterWatchManager.getClass().getDeclaredField("ignoredPosts");
-                ignoredField.setAccessible(true);
-                ignoredField.set(filterWatchManager, Collections.synchronizedSet(new HashSet<Integer>()));
-                showToast(context, "Cleared ignores");
-            } catch (Exception e) {
-                showToast(context, "Failed to clear ignores");
-            }
-        });
-        clearFilterWatchIgnores.setText("Clear ignored filter watches");
-        wrapper.addView(clearFilterWatchIgnores);
 
         //THREAD STACK DUMPER
         Button dumpAllThreadStacks = new Button(context);
@@ -314,22 +234,5 @@ public class DeveloperSettingsController
         }
 
         wrapper.addView(crashOnSafeThrow);
-    }
-
-    private void addVerboseLogsButton(LinearLayout wrapper) {
-        Button verboseLogsButton = new Button(context);
-
-        verboseLogsButton.setOnClickListener(v -> {
-            ChanSettings.verboseLogs.setSync(!ChanSettings.verboseLogs.get());
-            ((StartActivity) context).restartApp();
-        });
-
-        if (ChanSettings.verboseLogs.get()) {
-            verboseLogsButton.setText(R.string.settings_disable_verbose_logs);
-        } else {
-            verboseLogsButton.setText(R.string.settings_enable_verbose_logs);
-        }
-
-        wrapper.addView(verboseLogsButton);
     }
 }

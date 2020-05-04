@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.epoxy
+package com.github.adamantcheese.chan.features.archives
 
 import android.content.Context
 import android.graphics.Color
@@ -12,8 +12,6 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.features.archives.ArchiveState
-import com.github.adamantcheese.chan.features.archives.ArchiveStatus
 import com.github.adamantcheese.chan.utils.exhaustive
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)

@@ -596,6 +596,11 @@ Tap the toolbar menu to change its color."
     <string name="settings_open_logs">View logs</string>
     <string name="settings_enable_verbose_logs">Enable verbose logs</string>
     <string name="settings_disable_verbose_logs">Disable verbose logs</string>
+    <string name="settings_crash_app">Crash the app</string>
+    <string name="settings_clear_file_cache">Clear file cache</string>
+    <string name="settings_clear_file_cache_bottom_description">Currently %1$d MB</string>
+    <string name="settings_database_summary">Database summary</string>
+    <string name="settings_clear_ignored_filter_watches">Clear ignored filter watches</string>
 
     <!-- Theme settings -->
     <string name="settings_logs_screen">Logs</string>

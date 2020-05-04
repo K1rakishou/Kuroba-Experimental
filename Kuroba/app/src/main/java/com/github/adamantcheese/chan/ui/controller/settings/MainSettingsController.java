@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.presenter.SettingsPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.features.settings.DeveloperSettingsControllerV2;
 import com.github.adamantcheese.chan.ui.controller.FiltersController;
 import com.github.adamantcheese.chan.ui.controller.LicensesController;
 import com.github.adamantcheese.chan.ui.controller.ReportProblemController;
@@ -249,7 +250,7 @@ public class MainSettingsController
         about.add(new LinkSettingView(this,
                 R.string.settings_developer,
                 0,
-                v -> navigationController.pushController(new DeveloperSettingsController(context))
+                v -> navigationController.pushController(new DeveloperSettingsControllerV2(context))
         ));
 
         addGroup(about);

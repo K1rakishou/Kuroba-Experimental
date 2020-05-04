@@ -73,7 +73,7 @@ public class FilterWatchManager implements WakeManager.Wakeable {
     // and not have them come back note that ignoredPosts is currently only saved while the
     // application is running and not in the database
     private final Map<ChanThreadLoader, BackgroundLoader> filterLoaders = new HashMap<>();
-    private final Set<Long> ignoredPosts = Collections.synchronizedSet(new HashSet<>());
+    private Set<Long> ignoredPosts = Collections.synchronizedSet(new HashSet<>());
 
     // keep track of how many boards we've checked and their posts so we can cut out things from the
     // ignored posts
@@ -133,6 +133,10 @@ public class FilterWatchManager implements WakeManager.Wakeable {
 
             wakeManager.manageLock(false, FilterWatchManager.this);
         }
+    }
+
+    public void clearFilterWatchIgnores() {
+        ignoredPosts = Collections.synchronizedSet(new HashSet<>());
     }
 
     private void populateFilterLoaders() {
