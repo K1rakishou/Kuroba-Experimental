@@ -47,4 +47,9 @@ class SettingsGraph(
     screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke().apply { rebuildGroups() }
   }
 
+  fun clear() {
+    screenMap.clear()
+    screensBuilderMap.clear()
+  }
+
 }

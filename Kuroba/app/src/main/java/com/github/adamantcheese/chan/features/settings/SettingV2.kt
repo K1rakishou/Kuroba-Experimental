@@ -126,7 +126,7 @@ class SettingV2 private constructor() {
           settingV2.callback = fun(): SettingClickAction {
             return when (val callbackResult = clickCallback.invoke()) {
               is SettingsIdentifier.Screen -> SettingClickAction.OpenScreen(callbackResult)
-              is Unit -> SettingClickAction.RefreshCurrentScreen
+              is Unit -> SettingClickAction.RefreshClickedSetting
               else -> throw IllegalStateException("Bad callbackResult: $callbackResult")
             }
           }

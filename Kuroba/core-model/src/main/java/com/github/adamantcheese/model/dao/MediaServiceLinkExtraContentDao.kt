@@ -10,29 +10,32 @@ import org.joda.time.DateTime
 @Dao
 abstract class MediaServiceLinkExtraContentDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract suspend fun insert(mediaServiceLinkExtraContentEntity: MediaServiceLinkExtraContentEntity)
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun insert(mediaServiceLinkExtraContentEntity: MediaServiceLinkExtraContentEntity)
 
-    @Query("""
+  @Query("""
         SELECT * 
         FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME} 
         WHERE ${MediaServiceLinkExtraContentEntity.VIDEO_ID_COLUMN_NAME} = :videoId
     """)
-    abstract suspend fun selectByVideoId(videoId: String): MediaServiceLinkExtraContentEntity?
+  abstract suspend fun selectByVideoId(videoId: String): MediaServiceLinkExtraContentEntity?
 
-    @Query("""
+  @Query("""
         DELETE 
         FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}
         WHERE ${MediaServiceLinkExtraContentEntity.INSERTED_AT_COLUMN_NAME} < :dateTime
     """)
-    abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
+  abstract suspend fun deleteOlderThan(dateTime: DateTime): Int
 
-    @Query("DELETE FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
-    abstract suspend fun deleteAll(): Int
+  @Query("DELETE FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
+  abstract suspend fun deleteAll(): Int
 
-    /**
-     * For tests only!
-     * */
-    @Query("SELECT *FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
-    abstract suspend fun testGetAll(): List<MediaServiceLinkExtraContentEntity>
+  @Query("SELECT COUNT(*) FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
+  abstract fun count(): Int
+
+  /**
+   * For tests only!
+   * */
+  @Query("SELECT *FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME}")
+  abstract suspend fun testGetAll(): List<MediaServiceLinkExtraContentEntity>
 }

@@ -23,7 +23,7 @@ class SettingsGroup(
     settingsMap.values.forEachIndexed { index, settingV2 -> iterator(index, settingV2) }
   }
 
-  fun iterateSettingsIndexedByQuery(query: String, iterator: (Int, SettingV2) -> Unit) {
+  fun iterateSettingsIndexedFilteredByQuery(query: String, iterator: (Int, SettingV2) -> Unit) {
     var index = 0
 
     settingsMap.values.forEach { settingV2 ->

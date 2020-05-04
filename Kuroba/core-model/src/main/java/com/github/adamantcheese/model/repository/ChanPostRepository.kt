@@ -12,9 +12,7 @@ import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.source.cache.PostsCache
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.math.max
 
 class ChanPostRepository(
@@ -215,11 +213,6 @@ class ChanPostRepository(
                 }
             }
         }
-    }
-
-    // TODO(archives): convert whatever this is getting called from into kotlin an remove runBlocking
-    fun deleteAllSync(): ModularResult<Int> {
-        return runBlocking(Dispatchers.Default) { deleteAll() }
     }
 
     suspend fun deleteAll(): ModularResult<Int> {

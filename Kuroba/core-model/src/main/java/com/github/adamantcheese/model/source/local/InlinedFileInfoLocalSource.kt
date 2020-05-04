@@ -7,43 +7,49 @@ import com.github.adamantcheese.model.mapper.InlinedFileInfoMapper
 import org.joda.time.DateTime
 
 open class InlinedFileInfoLocalSource(
-        database: KurobaDatabase,
-        loggerTag: String,
-        private val logger: Logger
+  database: KurobaDatabase,
+  loggerTag: String,
+  private val logger: Logger
 ) : AbstractLocalSource(database) {
-    private val TAG = "$loggerTag InlinedFileInfoLocalSource"
-    private val inlinedFileInfoDao = database.inlinedFileDao()
+  private val TAG = "$loggerTag InlinedFileInfoLocalSource"
+  private val inlinedFileInfoDao = database.inlinedFileDao()
 
-    open suspend fun insert(inlinedFileInfo: InlinedFileInfo) {
-        ensureInTransaction()
+  open suspend fun insert(inlinedFileInfo: InlinedFileInfo) {
+    ensureInTransaction()
 
-        return inlinedFileInfoDao.insert(
-                InlinedFileInfoMapper.toEntity(
-                        inlinedFileInfo,
-                        DateTime.now()
-                )
-        )
-    }
+    return inlinedFileInfoDao.insert(
+      InlinedFileInfoMapper.toEntity(
+        inlinedFileInfo,
+        DateTime.now()
+      )
+    )
+  }
 
-    open suspend fun selectByFileUrl(fileUrl: String): InlinedFileInfo? {
-        ensureInTransaction()
+  open suspend fun selectByFileUrl(fileUrl: String): InlinedFileInfo? {
+    ensureInTransaction()
 
-        return InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
-    }
+    return InlinedFileInfoMapper.fromEntity(inlinedFileInfoDao.selectByFileUrl(fileUrl))
+  }
 
-    open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): Int {
-        ensureInTransaction()
+  open suspend fun deleteOlderThan(dateTime: DateTime = ONE_WEEK_AGO): Int {
+    ensureInTransaction()
 
-        return inlinedFileInfoDao.deleteOlderThan(dateTime)
-    }
+    return inlinedFileInfoDao.deleteOlderThan(dateTime)
+  }
 
-    open suspend fun deleteAll(): Int {
-        ensureInTransaction()
+  open suspend fun deleteAll(): Int {
+    ensureInTransaction()
 
-        return inlinedFileInfoDao.deleteAll()
-    }
+    return inlinedFileInfoDao.deleteAll()
+  }
 
-    companion object {
-        val ONE_WEEK_AGO = DateTime.now().minusWeeks(1)
-    }
+  suspend fun count(): Int {
+    ensureInTransaction()
+
+    return inlinedFileInfoDao.count()
+  }
+
+  companion object {
+    val ONE_WEEK_AGO = DateTime.now().minusWeeks(1)
+  }
 }

@@ -78,9 +78,16 @@ public class WakeManager {
             Logger.w(TAG, "Background update broadcast ignored because it was requested too soon");
         } else {
             lastBackgroundUpdateTime = System.currentTimeMillis();
+
             for (Wakeable wakeable : wakeableSet) {
                 wakeable.onWake();
             }
+        }
+    }
+
+    public void forceWake() {
+        for (Wakeable wakeable : wakeableSet) {
+            wakeable.onWake();
         }
     }
 
@@ -146,10 +153,11 @@ public class WakeManager {
     }
 
     /**
-     * Want a wake lock? Request true. If a lock already exists it will be freed before acquiring a new one.
-     * Don't need it any more? Request false.
+     * Want a wake lock? Request true. If a lock already exists it will be freed before acquiring
+     * a new one. Don't need it any more? Request false.
      * <p>
-     * Do be warned that wakelocks in this method aren't reference counted, so you can manage true a bunch but managed false once and the wakelock is gone.
+     * Do be warned that wakelocks in this method aren't reference counted, so you can manage true
+     * a bunch but managed false once and the wakelock is gone.
      * The locker object is to prevent duplicate wakelocks from being generated for the same object.
      */
     public void manageLock(boolean lock, Object locker) {

@@ -5,19 +5,17 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
-import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.ui.controller.LogsController
+import com.github.adamantcheese.chan.features.settings.screens.DatabaseSummaryScreen
+import com.github.adamantcheese.chan.features.settings.screens.DeveloperSettingsScreen
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
-import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.model.repository.ChanPostRepository
@@ -30,42 +28,56 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import java.util.*
 import javax.inject.Inject
 
 class DeveloperSettingsControllerV2(context: Context) : Controller(context), ToolbarSearchCallback {
 
   @Inject
   lateinit var databaseManager: DatabaseManager
-
   @Inject
   lateinit var fileCacheV2: FileCacheV2
-
   @Inject
   lateinit var cacheHandler: CacheHandler
-
   @Inject
   lateinit var seenPostRepository: SeenPostRepository
-
   @Inject
   lateinit var chanPostRepository: ChanPostRepository
-
   @Inject
   lateinit var mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
-
   @Inject
   lateinit var inlinedFileInfoRepository: InlinedFileInfoRepository
-
   @Inject
   lateinit var filterWatchManager: FilterWatchManager
-
   @Inject
   lateinit var wakeManager: WakeManager
 
   lateinit var recyclerView: EpoxyRecyclerView
 
+  private val developerSettingsScreen by lazy {
+    DeveloperSettingsScreen(
+      context,
+      navigationController!!,
+      cacheHandler,
+      fileCacheV2,
+      filterWatchManager,
+      wakeManager
+    )
+  }
+
+  private val databaseSummaryScreen by lazy {
+    DatabaseSummaryScreen(
+      context,
+      inlinedFileInfoRepository,
+      mediaServiceLinkExtraContentRepository,
+      seenPostRepository
+    )
+  }
+
   private val normalSettingsGraph by lazy { buildSettingsGraph() }
   private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
 
+  private val screenStack = Stack<SettingsIdentifier.Screen>()
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
 
   @OptIn(FlowPreview::class)
@@ -99,6 +111,13 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     rebuildDefaultScreen()
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+
+    normalSettingsGraph.clear()
+    searchSettingsGraph.clear()
+  }
+
   override fun onSearchVisibilityChanged(visible: Boolean) {
     if (!visible) {
       rebuildDefaultScreen()
@@ -107,6 +126,15 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
   override fun onSearchEntered(entered: String?) {
     onSearchEnteredSubject.onNext(entered ?: "")
+  }
+
+  override fun onBack(): Boolean {
+    if (screenStack.isEmpty()) {
+      return false
+    }
+
+    rebuildScreen(screenStack.pop())
+    return true
   }
 
   private fun rebuildDefaultScreen() {
@@ -148,68 +176,64 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private fun EpoxyController.renderSearchScreen(graph: SettingsGraph, query: String) {
     graph.iterateScreens { settingsScreen ->
       settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
-        settingsGroup.iterateSettingsIndexedByQuery(query) { settingIndex, setting ->
-          epoxySettingLink {
-            id("epoxy_setting_link_${setting.settingsIdentifier.identifier}")
-            topDescription(setting.topDescription)
-            bottomDescription(setting.bottomDescription)
-
-            clickListener {
-              when (val clickAction = setting.callback.invoke()) {
-                SettingClickAction.RefreshCurrentScreen -> {
-                  rebuildSetting(
-                    settingsScreen.screenIdentifier,
-                    settingsGroup.groupIdentifier,
-                    setting.settingsIdentifier
-                  )
-                }
-                is SettingClickAction.OpenScreen -> rebuildScreen(clickAction.screenIdentifier)
-              }.exhaustive
-            }
-          }
-
-          if (settingIndex != settingsGroup.lastIndex()) {
-            epoxyDividerView {
-              id("epoxy_divider_${settingIndex}")
-            }
-          }
+        settingsGroup.iterateSettingsIndexedFilteredByQuery(query) { settingIndex, setting ->
+          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex, true)
         }
       }
     }
   }
 
   private fun EpoxyController.renderScreen(settingsScreen: SettingsScreen) {
-    settingsScreen.iterateGroupsIndexed { _, group ->
+    settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
       epoxySettingsGroupTitle {
-        id("epoxy_settings_group_title_${group.groupIdentifier.identifier}")
-        groupTitle(group.groupTitle)
+        id("epoxy_settings_group_title_${settingsGroup.groupIdentifier.identifier}")
+        groupTitle(settingsGroup.groupTitle)
       }
 
-      group.iterateGroupsIndexed { settingIndex, setting ->
-        epoxySettingLink {
-          id("epoxy_setting_link_${setting.settingsIdentifier.identifier}")
-          topDescription(setting.topDescription)
-          bottomDescription(setting.bottomDescription)
+      settingsGroup.iterateGroupsIndexed { settingIndex, setting ->
+        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex, false)
+      }
+    }
+  }
 
-          clickListener {
-            when (val clickAction = setting.callback.invoke()) {
-              SettingClickAction.RefreshCurrentScreen -> {
-                rebuildSetting(
-                  settingsScreen.screenIdentifier,
-                  group.groupIdentifier,
-                  setting.settingsIdentifier
-                )
-              }
-              is SettingClickAction.OpenScreen -> rebuildScreen(clickAction.screenIdentifier)
-            }.exhaustive
-          }
-        }
+  private fun EpoxyController.renderSettingInternal(
+    setting: SettingV2,
+    settingsScreen: SettingsScreen,
+    settingsGroup: SettingsGroup,
+    settingIndex: Int,
+    searchMode: Boolean
+  ) {
+    epoxySettingLink {
+      id("epoxy_setting_link_${setting.settingsIdentifier.identifier}")
+      topDescription(setting.topDescription)
+      bottomDescription(setting.bottomDescription)
 
-        if (settingIndex != group.lastIndex()) {
-          epoxyDividerView {
-            id("epoxy_divider_${settingIndex}")
+      clickListener {
+        when (val clickAction = setting.callback.invoke()) {
+          SettingClickAction.RefreshClickedSetting -> {
+            // TODO(archives): when searchMode == true we need to use another version of
+            //  rebuildSetting method which will rebuild searchSettingsGraph instead of
+            //  normalSettingsGraph.
+            rebuildSetting(
+              settingsScreen.screenIdentifier,
+              settingsGroup.groupIdentifier,
+              setting.settingsIdentifier
+            )
           }
-        }
+          // TODO(archives): when searchMode == true we need to use another version of
+          //  rebuildSetting method which will rebuild searchSettingsGraph instead of
+          //  normalSettingsGraph.
+          is SettingClickAction.OpenScreen -> {
+            screenStack.push(settingsScreen.screenIdentifier)
+            rebuildScreen(clickAction.screenIdentifier)
+          }
+        }.exhaustive
+      }
+    }
+
+    if (settingIndex != settingsGroup.lastIndex()) {
+      epoxyDividerView {
+        id("epoxy_divider_${settingIndex}")
       }
     }
   }
@@ -217,149 +241,10 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private fun buildSettingsGraph(): SettingsGraph {
     val graph = SettingsGraph()
 
-    graph += buildSettingScreen()
+    graph += developerSettingsScreen.build()
+    graph += databaseSummaryScreen.build()
 
     return graph
-  }
-
-  private fun buildSettingScreen(): SettingsScreen.SettingsScreenBuilder {
-    val identifier = SettingsIdentifier.Screen.DeveloperSettingsScreen
-
-    return SettingsScreen.SettingsScreenBuilder(
-      screenIdentifier = identifier,
-      buildFunction = fun(): SettingsScreen {
-        val screen = SettingsScreen(
-          title = context.getString(R.string.settings_developer),
-          screenIdentifier = SettingsIdentifier.Screen.DeveloperSettingsScreen
-        )
-
-        screen += buildSettingsGroup()
-
-        return screen
-      }
-    )
-  }
-
-  private fun buildSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = SettingsIdentifier.Group.DeveloperSettingsGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
-        val group = SettingsGroup(
-          groupIdentifier = identifier
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.ViewLogs,
-          topDescriptionIdFunc = {
-            R.string.settings_open_logs
-          },
-          callback = {
-            navigationController!!.pushController(LogsController(context))
-          }
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.EnableDisableVerboseLogs,
-          topDescriptionIdFunc = {
-            if (ChanSettings.verboseLogs.get()) {
-              R.string.settings_disable_verbose_logs
-            } else {
-              R.string.settings_enable_verbose_logs
-            }
-          },
-          callback = {
-            ChanSettings.verboseLogs.setSync(!ChanSettings.verboseLogs.get())
-            (context as StartActivity).restartApp()
-          }
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.CrashApp,
-          topDescriptionIdFunc = {
-            R.string.settings_crash_app
-          },
-          callback = {
-            throw RuntimeException("Debug crash")
-          }
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.ClearFileCache,
-          topDescriptionStringFunc = {
-            context.getString(R.string.settings_clear_file_cache)
-          },
-          bottomDescriptionStringFunc = {
-            val cacheSize = cacheHandler.getSize() / 1024 / 1024
-            context.getString(R.string.settings_clear_file_cache_bottom_description, cacheSize)
-          },
-          callback = {
-            fileCacheV2.clearCache()
-            AndroidUtils.showToast(context, "Cleared image cache")
-          }
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.ShowDatabaseSummary,
-          topDescriptionIdFunc = {
-            R.string.settings_database_summary
-          },
-          callback = {
-            showDatabaseSummary()
-          }
-        )
-
-        group += SettingV2.createBuilder(
-          context = context,
-          identifier = SettingsIdentifier.Developer.FilterWatchIgnoreReset,
-          topDescriptionIdFunc = {
-            R.string.settings_clear_ignored_filter_watches
-          },
-          callback = {
-            filterWatchManager.clearFilterWatchIgnores()
-            AndroidUtils.showToast(context, "Cleared ignores")
-          }
-        )
-
-        return group
-      }
-    )
-  }
-
-  // TODO(archives):
-  private fun showDatabaseSummary() {
-//        //DATABASE SUMMARY
-//        TextView summaryText = new TextView(context);
-//        summaryText.setText("Database summary:\n" + databaseManager.getSummary());
-//        summaryText.setPadding(dp(15), dp(5), 0, 0);
-//        wrapper.addView(summaryText);
-
-//        //DATABASE RESET
-//        Button resetDbButton = new Button(context);
-//        resetDbButton.setOnClickListener(v -> {
-//            databaseManager.reset();
-//            ((StartActivity) context).restartApp();
-//        });
-//        resetDbButton.setText("Delete database & restart");
-//        wrapper.addView(resetDbButton);
-//
-//        // Clear seen posts table
-//        addClearSeenPostsButton(wrapper);
-//
-//        // Clear posts table
-//        addClearPostsButton(wrapper);
-//
-//        // Clear external link extra info table
-//        addClearExternalLinkExtraInfoTable(wrapper);
-//
-//        // Clear inlined files info table
-//        addClearInlinedFilesInfoTable(wrapper);
   }
 
   companion object {

@@ -601,6 +601,18 @@ Tap the toolbar menu to change its color."
     <string name="settings_clear_file_cache_bottom_description">Currently %1$d MB</string>
     <string name="settings_database_summary">Database summary</string>
     <string name="settings_clear_ignored_filter_watches">Clear ignored filter watches</string>
+    <string name="settings_dump_thread_stack">Dump active thread stack traces to log</string>
+    <string name="settings_force_wake_manager_wake">Force wake manager wake</string>
+    <string name="settings_reset_thread_open_counter">Reset thread open counter</string>
+    <string name="settings_crash_on_safe_throw_enabled">Crash on safe throw (ENABLED)</string>
+    <string name="settings_crash_on_safe_throw_disabled">Crash on safe throw (DISABLED)</string>
+    <string name="settings_simulate_app_updated">Simulate app updated</string>
+    <string name="settings_simulate_app_updated_bottom">Makes the app think it\'s updated to the latest version. This will be reset the next time you manually check for updates</string>
+    <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
+    <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
+    <string name="settings_clear_inlined_files_table">Clear inlined files info table</string>
+    <string name="settings_clear_link_info_table">Clear external link extra info table</string>
+    <string name="settings_clear_seen_posts_table">Clear seen posts table</string>
 
     <!-- Theme settings -->
     <string name="settings_logs_screen">Logs</string>
