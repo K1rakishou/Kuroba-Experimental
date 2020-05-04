@@ -23,6 +23,18 @@ class SettingsGroup(
     settingsMap.values.forEachIndexed { index, settingV2 -> iterator(index, settingV2) }
   }
 
+  fun iterateSettingsIndexedByQuery(query: String, iterator: (Int, SettingV2) -> Unit) {
+    var index = 0
+
+    settingsMap.values.forEach { settingV2 ->
+      if (settingV2.topDescription.contains(query, true)
+        || settingV2.bottomDescription?.contains(query, true) == true) {
+        iterator(index, settingV2)
+        ++index
+      }
+    }
+  }
+
   fun lastIndex() = settingsMap.values.size - 1
 
   fun rebuildSettings() {
@@ -46,4 +58,8 @@ class SettingsGroup(
     settingsMap[settingsIdentifier] = settingsBuilderMap[settingsIdentifier]!!.invoke(newUpdateCounter)
   }
 
+  class SettingsGroupBuilder(
+    val groupIdentifier: SettingsIdentifier.Group,
+    val buildFunction: () -> SettingsGroup
+  )
 }

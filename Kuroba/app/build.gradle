@@ -272,6 +272,8 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin_compiler}"
     implementation "joda-time:joda-time:${versions.joda_time}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
     implementation "io.coil-kt:coil-base:0.10.1"
 

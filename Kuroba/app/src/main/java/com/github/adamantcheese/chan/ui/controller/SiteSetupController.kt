@@ -147,7 +147,7 @@ class SiteSetupController(context: Context) : SettingsController(context), SiteS
                 View.OnClickListener {
                     val loginController = LoginController(context)
                     loginController.setSite(site)
-                    navigationController.pushController(loginController)
+                    navigationController!!.pushController(loginController)
                 })
 
         login.add(loginLink)
@@ -162,7 +162,7 @@ class SiteSetupController(context: Context) : SettingsController(context), SiteS
                 getString(R.string.setup_site_setup_archives_title),
                 getString(R.string.setup_site_setup_archives_description),
                 View.OnClickListener {
-                    navigationController.pushController(ArchivesSettingsController(context))
+                    navigationController!!.pushController(ArchivesSettingsController(context))
                 })
 
         archives.add(archivesLink)
@@ -179,7 +179,7 @@ class SiteSetupController(context: Context) : SettingsController(context), SiteS
                 View.OnClickListener {
                     val boardSetupController = BoardSetupController(context)
                     boardSetupController.setSite(site)
-                    navigationController.pushController(boardSetupController)
+                    navigationController!!.pushController(boardSetupController)
                 })
 
         general.add(boardsLink)

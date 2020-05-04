@@ -1,41 +1,50 @@
 package com.github.adamantcheese.chan.features.settings
 
 class SettingsGraph(
-  private val settingsScreenMap: MutableMap<SettingsIdentifier.Screen, SettingsScreen> = mutableMapOf()
+  private val screenMap: MutableMap<SettingsIdentifier.Screen, SettingsScreen> = mutableMapOf()
 ) {
+  private val screensBuilderMap = mutableMapOf<SettingsIdentifier.Screen, () -> SettingsScreen>()
 
-  operator fun set(screenIdentifier: SettingsIdentifier.Screen, newScreen: SettingsScreen) {
-    if (settingsScreenMap.containsKey(screenIdentifier)) {
+  operator fun plusAssign(screenBuilder: SettingsScreen.SettingsScreenBuilder) {
+    val screenIdentifier = screenBuilder.screenIdentifier
+    val screenBuildFunction = screenBuilder.buildFunction
+
+    if (screenMap.containsKey(screenIdentifier)) {
       throw IllegalArgumentException("Settings graph already contain screen with " +
         "identifier: ${screenIdentifier.identifier}")
     }
 
-    settingsScreenMap[screenIdentifier] = newScreen
+    screensBuilderMap[screenIdentifier] = screenBuildFunction
   }
 
   operator fun get(screenIdentifier: SettingsIdentifier.Screen): SettingsScreen {
-    return requireNotNull(settingsScreenMap[screenIdentifier]) {
-      "SettingsScreen with identifier: ${screenIdentifier.identifier} does not exist in SettingsGraph"
+    val cached = screenMap[screenIdentifier]
+    if (cached != null) {
+      return cached
+    }
+
+    rebuildScreen(screenIdentifier)
+    return screenMap[screenIdentifier]!!
+  }
+
+  fun iterateScreens(iterator: (SettingsScreen) -> Unit) {
+    screenMap.values.forEach { screen -> iterator(screen) }
+  }
+
+  fun rebuildScreens() {
+    screenMap.clear()
+
+    screensBuilderMap.forEach { (screenIdentifier, buildFunction) ->
+      screenMap[screenIdentifier] = buildFunction.invoke().apply { rebuildGroups() }
     }
   }
 
-  fun rebuildSetting(
-    screenIdentifier: SettingsIdentifier.Screen,
-    groupIdentifier: SettingsIdentifier.Group,
-    settingIdentifier: SettingsIdentifier
-  ) {
-    settingsScreenMap[screenIdentifier]!!.rebuildSetting(groupIdentifier, settingIdentifier)
-  }
-
-  fun rebuildGroup(
-    screenIdentifier: SettingsIdentifier.Screen,
-    groupIdentifier: SettingsIdentifier.Group
-  ) {
-    settingsScreenMap[screenIdentifier]!!.rebuildGroup(groupIdentifier)
-  }
-
   fun rebuildScreen(screenIdentifier: SettingsIdentifier.Screen) {
-    settingsScreenMap[screenIdentifier]!!.rebuildScreen()
+    requireNotNull(screensBuilderMap[screenIdentifier]) {
+      "Screen builder does not exist, identifier: ${screenIdentifier}"
+    }
+
+    screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke().apply { rebuildGroups() }
   }
 
 }

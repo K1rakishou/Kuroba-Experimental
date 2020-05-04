@@ -91,7 +91,7 @@ class ArchivesSettingsController(context: Context)
             return
         }
 
-        val alreadyPresenting = navigationController.isAlreadyPresenting { controller ->
+        val alreadyPresenting = navigationController!!.isAlreadyPresenting { controller ->
             controller is ArchiveFetchHistoryController
         }
 
@@ -99,7 +99,7 @@ class ArchivesSettingsController(context: Context)
             return
         }
 
-        navigationController.presentController(ArchiveFetchHistoryController(context, history, this))
+        navigationController!!.presentController(ArchiveFetchHistoryController(context, history, this))
     }
 
     override fun onChanged() {

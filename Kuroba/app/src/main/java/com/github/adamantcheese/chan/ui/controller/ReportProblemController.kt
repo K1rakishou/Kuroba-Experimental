@@ -28,7 +28,7 @@ class ReportProblemController(context: Context)
         hideProgressDialog()
 
         loadingViewController = LoadingViewController(context, true)
-        presentController(loadingViewController)
+        presentController(loadingViewController!!)
     }
 
     override fun hideProgressDialog() {
@@ -37,6 +37,6 @@ class ReportProblemController(context: Context)
     }
 
     override fun onFinished() {
-        this.navigationController.popController()
+        this.navigationController!!.popController()
     }
 }

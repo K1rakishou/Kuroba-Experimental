@@ -5,18 +5,37 @@ class SettingsScreen(
   val screenIdentifier: SettingsIdentifier.Screen,
   private val groupsMap: MutableMap<SettingsIdentifier.Group, SettingsGroup> = mutableMapOf()
 ) {
+  private val groupsBuilderMap = mutableMapOf<SettingsIdentifier.Group, () -> SettingsGroup>()
 
-  operator fun plusAssign(newGroup: SettingsGroup) {
-    if (groupsMap.containsKey(newGroup.groupIdentifier)) {
-      throw IllegalArgumentException("Settings screen already contain group with " +
-        "identifier: ${newGroup.groupIdentifier}")
+  operator fun plusAssign(groupBuilder: SettingsGroup.SettingsGroupBuilder) {
+    val groupIdentifier = groupBuilder.groupIdentifier
+    val groupBuildFunction = groupBuilder.buildFunction
+
+    if (groupsMap.containsKey(groupIdentifier)) {
+      throw IllegalArgumentException("Settings screen already contain group with identifier: $groupIdentifier")
     }
 
-    groupsMap[newGroup.groupIdentifier] = newGroup
+    groupsBuilderMap[groupIdentifier] = groupBuildFunction
   }
 
   fun iterateGroupsIndexed(iterator: (Int, SettingsGroup) -> Unit) {
     groupsMap.values.forEachIndexed { index, settingsGroup -> iterator(index, settingsGroup) }
+  }
+
+  fun rebuildGroups() {
+    groupsMap.clear()
+
+    groupsBuilderMap.forEach { (groupIdentifier, buildFunction) ->
+      groupsMap[groupIdentifier] = buildFunction.invoke().apply { rebuildSettings() }
+    }
+  }
+
+  fun rebuildGroup(groupIdentifier: SettingsIdentifier.Group) {
+    requireNotNull(groupsBuilderMap[groupIdentifier]) {
+      "Group builder does not exist, identifier: ${groupIdentifier}"
+    }
+
+    groupsMap[groupIdentifier] = groupsBuilderMap[groupIdentifier]!!.invoke().apply { rebuildSettings() }
   }
 
   fun rebuildSetting(groupIdentifier: SettingsIdentifier.Group, settingIdentifier: SettingsIdentifier) {
@@ -25,14 +44,8 @@ class SettingsScreen(
     }.rebuildSetting(settingIdentifier)
   }
 
-  fun rebuildGroup(groupIdentifier: SettingsIdentifier.Group) {
-    requireNotNull(groupsMap[groupIdentifier]) {
-      "Group does not exist, groupIdentifier: $groupIdentifier"
-    }.rebuildSettings()
-  }
-
-  fun rebuildScreen() {
-    groupsMap.values.forEach { group -> group.rebuildSettings() }
-  }
-
+  class SettingsScreenBuilder(
+    val screenIdentifier: SettingsIdentifier.Screen,
+    val buildFunction: () -> SettingsScreen
+  )
 }

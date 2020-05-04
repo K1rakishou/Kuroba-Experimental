@@ -26,6 +26,6 @@ class ViewFullCrashLogController(
     }
 
     override fun onFinished() {
-        navigationController.popController()
+        navigationController!!.popController()
     }
 }

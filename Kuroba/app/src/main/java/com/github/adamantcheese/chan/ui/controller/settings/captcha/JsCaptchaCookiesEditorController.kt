@@ -19,7 +19,7 @@ class JsCaptchaCookiesEditorController(context: Context) :
     }
 
     override fun onFinished() {
-        navigationController.popController()
+        navigationController!!.popController()
     }
 
 }

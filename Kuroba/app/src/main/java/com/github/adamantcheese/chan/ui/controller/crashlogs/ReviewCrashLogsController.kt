@@ -28,7 +28,7 @@ class ReviewCrashLogsController(context: Context) : Controller(context), ReviewC
         hideProgressDialog()
 
         loadingViewController = LoadingViewController(context, true)
-        presentController(loadingViewController)
+        presentController(loadingViewController!!)
     }
 
     override fun hideProgressDialog() {
@@ -37,10 +37,10 @@ class ReviewCrashLogsController(context: Context) : Controller(context), ReviewC
     }
 
     override fun onCrashLogClicked(crashLog: CrashLog) {
-        navigationController.pushController(ViewFullCrashLogController(context, crashLog))
+        navigationController!!.pushController(ViewFullCrashLogController(context, crashLog))
     }
 
     override fun onFinished() {
-        navigationController.popController()
+        navigationController!!.popController()
     }
 }
