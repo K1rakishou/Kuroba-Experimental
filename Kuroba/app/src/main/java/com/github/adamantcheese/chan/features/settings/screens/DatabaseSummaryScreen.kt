@@ -2,9 +2,9 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.features.settings.SettingV2
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
+import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
@@ -19,7 +19,7 @@ class DatabaseSummaryScreen(
   private val seenPostRepository: SeenPostRepository
 ) : BaseSettingsScreen(
   context,
-  SettingsIdentifier.Screen.DatabaseSummaryScreen,
+  SettingsIdentifier.DatabaseSummaryScreen,
   R.string.settings_database_summary
 ) {
 
@@ -30,7 +30,7 @@ class DatabaseSummaryScreen(
   }
 
   private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = SettingsIdentifier.Group.DatabaseSummaryGroup
+    val identifier = SettingsIdentifier.DatabaseSummaryScreen.MainGroup
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
@@ -39,9 +39,9 @@ class DatabaseSummaryScreen(
           groupIdentifier = identifier
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DatabaseSummary.ClearInlinedFilesTable,
+          identifier = SettingsIdentifier.DatabaseSummaryScreen.MainGroup.ClearInlinedFilesTable,
           topDescriptionIdFunc = {
             R.string.settings_clear_inlined_files_table
           },
@@ -56,9 +56,9 @@ class DatabaseSummaryScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DatabaseSummary.ClearLinkExtraInfoTable,
+          identifier = SettingsIdentifier.DatabaseSummaryScreen.MainGroup.ClearLinkExtraInfoTable,
           topDescriptionIdFunc = {
             R.string.settings_clear_link_info_table
           },
@@ -73,9 +73,9 @@ class DatabaseSummaryScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DatabaseSummary.ClearSeenPostsTable,
+          identifier = SettingsIdentifier.DatabaseSummaryScreen.MainGroup.ClearSeenPostsTable,
           topDescriptionIdFunc = {
             R.string.settings_clear_seen_posts_table
           },

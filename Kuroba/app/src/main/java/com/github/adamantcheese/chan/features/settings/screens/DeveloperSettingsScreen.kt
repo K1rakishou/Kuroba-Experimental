@@ -11,9 +11,10 @@ import com.github.adamantcheese.chan.core.manager.FilterWatchManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
-import com.github.adamantcheese.chan.features.settings.SettingV2
+import com.github.adamantcheese.chan.features.settings.SettingClickAction
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
+import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.ui.controller.LogsController
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
@@ -27,7 +28,7 @@ class DeveloperSettingsScreen(
   private val wakeManager: WakeManager
 ) : BaseSettingsScreen(
   context,
-  SettingsIdentifier.Screen.DeveloperSettingsScreen,
+  SettingsIdentifier.DeveloperScreen,
   R.string.settings_developer
 ) {
 
@@ -38,7 +39,7 @@ class DeveloperSettingsScreen(
   }
 
   private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = SettingsIdentifier.Group.DeveloperSettingsGroup
+    val identifier = SettingsIdentifier.DeveloperScreen.MainGroup
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
@@ -47,9 +48,9 @@ class DeveloperSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.ViewLogs,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ViewLogs,
           topDescriptionIdFunc = {
             R.string.settings_open_logs
           },
@@ -58,9 +59,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.EnableDisableVerboseLogs,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.EnableDisableVerboseLogs,
           topDescriptionIdFunc = {
             if (ChanSettings.verboseLogs.get()) {
               R.string.settings_disable_verbose_logs
@@ -74,9 +75,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.CrashApp,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.CrashApp,
           topDescriptionIdFunc = {
             R.string.settings_crash_app
           },
@@ -85,9 +86,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.ClearFileCache,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ClearFileCache,
           topDescriptionStringFunc = {
             context.getString(R.string.settings_clear_file_cache)
           },
@@ -101,20 +102,20 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.ShowDatabaseSummary,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ShowDatabaseSummary,
           topDescriptionIdFunc = {
             R.string.settings_database_summary
           },
-          openScreenCallback = {
-            SettingsIdentifier.Screen.DatabaseSummaryScreen
+          callbackWithClickAction = {
+            SettingClickAction.OpenScreen(SettingsIdentifier.DatabaseSummaryScreen)
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.FilterWatchIgnoreReset,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.FilterWatchIgnoreReset,
           topDescriptionIdFunc = {
             R.string.settings_clear_ignored_filter_watches
           },
@@ -124,9 +125,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.DumpThreadStack,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.DumpThreadStack,
           topDescriptionIdFunc = {
             R.string.settings_dump_thread_stack
           },
@@ -136,9 +137,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.ForceAwakeWakeables,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ForceAwakeWakeables,
           topDescriptionIdFunc = {
             R.string.settings_force_wake_manager_wake
           },
@@ -148,9 +149,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.ResetThreadOpenCounter,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ResetThreadOpenCounter,
           topDescriptionIdFunc = {
             R.string.settings_reset_thread_open_counter
           },
@@ -160,9 +161,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.CrashOnSafeThrow,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.CrashOnSafeThrow,
           topDescriptionIdFunc = {
             if (ChanSettings.crashOnSafeThrow.get()) {
               R.string.settings_crash_on_safe_throw_enabled
@@ -175,9 +176,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.SimulateAppUpdated,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.SimulateAppUpdated,
           topDescriptionIdFunc = {
             R.string.settings_simulate_app_updated
           },
@@ -192,9 +193,9 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += SettingV2.createBuilder(
+        group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.Developer.SimulateAppNotUpdated,
+          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.SimulateAppNotUpdated,
           topDescriptionIdFunc = {
             R.string.settings_simulate_app_not_updated
           },

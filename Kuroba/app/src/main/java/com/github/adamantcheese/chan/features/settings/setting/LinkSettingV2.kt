@@ -1,33 +1,37 @@
-package com.github.adamantcheese.chan.features.settings
+package com.github.adamantcheese.chan.features.settings.setting
 
 import android.content.Context
-import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.features.settings.SettingClickAction
+import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 
-class SettingV2 private constructor() {
+open class LinkSettingV2 protected constructor() : SettingV2() {
   private var updateCounter = 0
 
-  private var requiresRestart: Boolean = false
-  private var requiresUiRefresh: Boolean = false
+  override var requiresRestart: Boolean = false
+  override var requiresUiRefresh: Boolean = false
+  override lateinit var settingsIdentifier: SettingsIdentifier
+  override lateinit var topDescription: String
+  override var bottomDescription: String? = null
 
-  lateinit var settingsIdentifier: SettingsIdentifier
-    private set
-  lateinit var topDescription: String
-    private set
-  lateinit var callback: () -> SettingClickAction
-    private set
-  var bottomDescription: String? = null
+  private var _callback: (() -> SettingClickAction)? = null
+  var callback: () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
+    get() = _callback!!
     private set
 
-  fun update(): Int {
+  override fun update(): Int {
     return ++updateCounter
+  }
+
+  override fun dispose() {
+    _callback = null
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is SettingV2) return false
+    if (other !is LinkSettingV2) return false
 
     if (updateCounter != other.updateCounter) return false
-    if (settingsIdentifier.identifier != other.settingsIdentifier.identifier) return false
+    if (settingsIdentifier.getIdentifier() != other.settingsIdentifier.getIdentifier()) return false
     if (topDescription != other.topDescription) return false
     if (bottomDescription != other.bottomDescription) return false
     if (requiresRestart != other.requiresRestart) return false
@@ -37,7 +41,7 @@ class SettingV2 private constructor() {
   }
 
   override fun hashCode(): Int {
-    var result = settingsIdentifier.identifier.hashCode()
+    var result = settingsIdentifier.getIdentifier().hashCode()
     result = 31 * result + updateCounter.hashCode()
     result = 31 * result + topDescription.hashCode()
     result = 31 * result + (bottomDescription?.hashCode() ?: 0)
@@ -47,7 +51,7 @@ class SettingV2 private constructor() {
   }
 
   override fun toString(): String {
-    return "SettingV2(updateCounter=${updateCounter}, identifier=${settingsIdentifier.identifier}, " +
+    return "SettingV2(updateCounter=${updateCounter}, identifier=${settingsIdentifier.getIdentifier()}, " +
       "topDescription=$topDescription, bottomDescription=$bottomDescription, " +
       "requiresRestart=$requiresRestart, requiresUiRefresh=$requiresUiRefresh)"
   }
@@ -57,7 +61,7 @@ class SettingV2 private constructor() {
       context: Context,
       identifier: SettingsIdentifier,
       callback: (() -> Unit)? = null,
-      openScreenCallback: (() -> SettingsIdentifier.Screen)? = null,
+      callbackWithClickAction: (() -> SettingClickAction)? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,
       bottomDescriptionIdFunc: (() -> Int)? = null,
@@ -67,10 +71,7 @@ class SettingV2 private constructor() {
     ): SettingV2Builder {
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(updateCounter: Int): SettingV2 {
-          Logger.d("SettingV2", "buildFunction called for identifier: $identifier")
-          val settingV2 = SettingV2()
-
+        buildFunction = fun(updateCounter: Int): LinkSettingV2 {
           if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
             throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
           }
@@ -79,10 +80,11 @@ class SettingV2 private constructor() {
             throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
           }
 
-          if (callback != null && openScreenCallback != null) {
+          if (callback != null && callbackWithClickAction != null) {
             throw IllegalArgumentException("Both callbacks are not null!")
           }
 
+          val settingV2 = LinkSettingV2()
           settingV2.settingsIdentifier = identifier
 
           val topDescResult = listOf(
@@ -116,17 +118,17 @@ class SettingV2 private constructor() {
 
           val clickCallback = listOfNotNull(
             callback,
-            openScreenCallback
+            callbackWithClickAction
           ).lastOrNull()
 
           if (clickCallback == null) {
             throw IllegalArgumentException("Both callbacks are null")
           }
 
-          settingV2.callback = fun(): SettingClickAction {
+          settingV2._callback = fun(): SettingClickAction {
             return when (val callbackResult = clickCallback.invoke()) {
-              is SettingsIdentifier.Screen -> SettingClickAction.OpenScreen(callbackResult)
-              is Unit -> SettingClickAction.RefreshClickedSetting
+              is SettingClickAction -> callbackResult as SettingClickAction
+              is Unit -> SettingClickAction.RefreshClickedSetting as SettingClickAction
               else -> throw IllegalStateException("Bad callbackResult: $callbackResult")
             }
           }
@@ -137,10 +139,5 @@ class SettingV2 private constructor() {
       )
     }
   }
-
-  class SettingV2Builder(
-    val settingsIdentifier: SettingsIdentifier,
-    val buildFunction: (Int) -> SettingV2
-  )
 
 }

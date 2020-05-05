@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.features.settings
+package com.github.adamantcheese.chan.features.settings.epoxy
 
 import android.content.Context
 import android.util.AttributeSet
@@ -10,27 +10,22 @@ import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxySettingsGroupTitle  @JvmOverloads constructor(
+class EpoxyNoSettingsFoundView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val groupTitle: TextView
+  private val messageView: TextView
 
   init {
-    View.inflate(context, R.layout.epoxy_settings_group_title, this)
+    View.inflate(context, R.layout.epoxy_no_settings_found, this)
 
-    groupTitle = findViewById(R.id.group_title)
+    messageView = findViewById(R.id.message_view)
   }
 
   @ModelProp
-  fun setGroupTitle(title: String?) {
-    if (title != null) {
-      groupTitle.visibility = View.VISIBLE
-      groupTitle.text = title
-    } else {
-      groupTitle.visibility = View.GONE
-    }
+  fun setQuery(query: String) {
+    messageView.text = context.getString(R.string.epoxy_no_settings_found_by_query, query)
   }
 
 }

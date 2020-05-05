@@ -2,8 +2,8 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import androidx.annotation.StringRes
+import com.github.adamantcheese.chan.features.settings.IScreenIdentifier
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
-import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.features.settings.SettingsScreen
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
 
 abstract class BaseSettingsScreen(
   protected val context: Context,
-  protected val identifier: SettingsIdentifier.Screen,
+  protected val identifier: IScreenIdentifier,
   @StringRes
   private val screenTitle: Int
 ) : CoroutineScope {
@@ -31,8 +31,10 @@ abstract class BaseSettingsScreen(
           screenIdentifier = identifier
         )
 
-        buildGroups().forEach { settingsGroup -> screen += settingsGroup }
+        val groups = buildGroups()
+        check(groups.isNotEmpty()) { "No groups were built" }
 
+        groups.forEach { settingsGroup -> screen += settingsGroup }
         return screen
       }
     )

@@ -11,8 +11,16 @@ import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
+import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
+import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
+import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
+import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupTitle
 import com.github.adamantcheese.chan.features.settings.screens.DatabaseSummaryScreen
 import com.github.adamantcheese.chan.features.settings.screens.DeveloperSettingsScreen
+import com.github.adamantcheese.chan.features.settings.screens.MainSettingsScreen
+import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
+import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
+import com.github.adamantcheese.chan.features.settings.setting.SettingV2
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
@@ -55,6 +63,10 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
   lateinit var recyclerView: EpoxyRecyclerView
 
+  private val mainSettingsScreen by lazy {
+    MainSettingsScreen(context)
+  }
+
   private val developerSettingsScreen by lazy {
     DeveloperSettingsScreen(
       context,
@@ -78,7 +90,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private val normalSettingsGraph by lazy { buildSettingsGraph() }
   private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
 
-  private val screenStack = Stack<SettingsIdentifier.Screen>()
+  private val screenStack = Stack<IScreenIdentifier>()
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
 
   @OptIn(FlowPreview::class)
@@ -144,8 +156,8 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun rebuildDefaultScreen() {
-    pushScreen(SettingsIdentifier.Screen.DeveloperSettingsScreen)
-    rebuildScreen(SettingsIdentifier.Screen.DeveloperSettingsScreen)
+    pushScreen(SettingsIdentifier.MainScreen)
+    rebuildScreen(SettingsIdentifier.MainScreen)
   }
 
   private fun rebuildTopStackScreen() {
@@ -164,7 +176,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun rebuildScreen(
-    screen: SettingsIdentifier.Screen,
+    screen: IScreenIdentifier,
     searchMode: Boolean = false
   ) {
     val settingsScreen = if (searchMode) {
@@ -183,8 +195,8 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun rebuildSetting(
-    screen: SettingsIdentifier.Screen,
-    group: SettingsIdentifier.Group,
+    screen: IScreenIdentifier,
+    group: IGroupIdentifier,
     setting: SettingsIdentifier,
     searchMode: Boolean = false
   ) {
@@ -211,6 +223,9 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     var foundSomething = false
 
     graph.iterateScreens { settingsScreen ->
+      // TODO(archives):
+      //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/sealed-subclasses.html
+      //  Search not only on the current screen, but on all child screens as well
       if (topScreenIdentifier != null && settingsScreen.screenIdentifier != topScreenIdentifier) {
         return@iterateScreens
       }
@@ -234,7 +249,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private fun EpoxyController.renderScreen(settingsScreen: SettingsScreen) {
     settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
       epoxySettingsGroupTitle {
-        id("epoxy_settings_group_title_${settingsGroup.groupIdentifier.identifier}")
+        id("epoxy_settings_group_title_${settingsGroup.groupIdentifier.getGroupIdentifier()}")
         groupTitle(settingsGroup.groupTitle)
       }
 
@@ -245,32 +260,55 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun EpoxyController.renderSettingInternal(
-    setting: SettingV2,
+    settingV2: SettingV2,
     settingsScreen: SettingsScreen,
     settingsGroup: SettingsGroup,
     settingIndex: Int,
     searchMode: Boolean
   ) {
-    epoxySettingLink {
-      id("epoxy_setting_link_${setting.settingsIdentifier.identifier}")
-      topDescription(setting.topDescription)
-      bottomDescription(setting.bottomDescription)
+    when (settingV2) {
+      is LinkSettingV2 -> {
+        epoxyLinkSetting {
+          id("epoxy_link_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
 
-      clickListener {
-        when (val clickAction = setting.callback.invoke()) {
-          SettingClickAction.RefreshClickedSetting -> {
-            rebuildSetting(
-              settingsScreen.screenIdentifier,
-              settingsGroup.groupIdentifier,
-              setting.settingsIdentifier,
-              searchMode
-            )
+          clickListener {
+            when (val clickAction = settingV2.callback.invoke()) {
+              SettingClickAction.RefreshClickedSetting -> {
+                rebuildSetting(
+                  settingsScreen.screenIdentifier,
+                  settingsGroup.groupIdentifier,
+                  settingV2.settingsIdentifier,
+                  searchMode
+                )
+              }
+              is SettingClickAction.OpenScreen -> {
+                pushScreen(clickAction.screenIdentifier)
+                rebuildScreen(clickAction.screenIdentifier, searchMode)
+              }
+            }.exhaustive
           }
-          is SettingClickAction.OpenScreen -> {
-            pushScreen(clickAction.screenIdentifier)
-            rebuildScreen(clickAction.screenIdentifier, searchMode)
+        }
+      }
+      is BooleanSettingV2 -> {
+        epoxyBooleanSetting {
+          id("epoxy_boolean_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+
+          clickListener {
+            settingV2.callback.invoke()
+
+            // TODO: rebuild?
           }
-        }.exhaustive
+
+          checkListener { isChecked ->
+            settingV2.onCheckedChanged(isChecked)
+
+            // TODO: rebuild?
+          }
+        }
       }
     }
 
@@ -281,7 +319,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     }
   }
 
-  private fun pushScreen(screenIdentifier: SettingsIdentifier.Screen) {
+  private fun pushScreen(screenIdentifier: IScreenIdentifier) {
     val stackAlreadyContainsScreen = screenStack.any { screenIdentifierInStack ->
       screenIdentifierInStack == screenIdentifier
     }
@@ -295,6 +333,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private fun buildSettingsGraph(): SettingsGraph {
     val graph = SettingsGraph()
 
+    graph += mainSettingsScreen.build()
     graph += developerSettingsScreen.build()
     graph += databaseSummaryScreen.build()
 

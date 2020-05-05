@@ -2,10 +2,10 @@ package com.github.adamantcheese.chan.features.settings
 
 class SettingsScreen(
   val title: String,
-  val screenIdentifier: SettingsIdentifier.Screen,
-  private val groupsMap: MutableMap<SettingsIdentifier.Group, SettingsGroup> = mutableMapOf()
+  val screenIdentifier: IScreenIdentifier,
+  private val groupsMap: MutableMap<IGroupIdentifier, SettingsGroup> = mutableMapOf()
 ) {
-  private val groupsBuilderMap = mutableMapOf<SettingsIdentifier.Group, () -> SettingsGroup>()
+  private val groupsBuilderMap = mutableMapOf<IGroupIdentifier, () -> SettingsGroup>()
 
   operator fun plusAssign(groupBuilder: SettingsGroup.SettingsGroupBuilder) {
     val groupIdentifier = groupBuilder.groupIdentifier
@@ -30,7 +30,7 @@ class SettingsScreen(
     }
   }
 
-  fun rebuildGroup(groupIdentifier: SettingsIdentifier.Group) {
+  fun rebuildGroup(groupIdentifier: IGroupIdentifier) {
     requireNotNull(groupsBuilderMap[groupIdentifier]) {
       "Group builder does not exist, identifier: ${groupIdentifier}"
     }
@@ -38,14 +38,14 @@ class SettingsScreen(
     groupsMap[groupIdentifier] = groupsBuilderMap[groupIdentifier]!!.invoke().apply { rebuildSettings() }
   }
 
-  fun rebuildSetting(groupIdentifier: SettingsIdentifier.Group, settingIdentifier: SettingsIdentifier) {
+  fun rebuildSetting(groupIdentifier: IGroupIdentifier, settingIdentifier: SettingsIdentifier) {
     requireNotNull(groupsMap[groupIdentifier]) {
       "Group does not exist, groupIdentifier: $groupIdentifier"
     }.rebuildSetting(settingIdentifier)
   }
 
   class SettingsScreenBuilder(
-    val screenIdentifier: SettingsIdentifier.Screen,
+    val screenIdentifier: IScreenIdentifier,
     val buildFunction: () -> SettingsScreen
   )
 }

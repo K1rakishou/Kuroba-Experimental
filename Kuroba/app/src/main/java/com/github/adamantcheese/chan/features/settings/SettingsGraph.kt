@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.features.settings
 
 class SettingsGraph(
-  private val screenMap: MutableMap<SettingsIdentifier.Screen, SettingsScreen> = mutableMapOf()
+  private val screenMap: MutableMap<IScreenIdentifier, SettingsScreen> = mutableMapOf()
 ) {
-  private val screensBuilderMap = mutableMapOf<SettingsIdentifier.Screen, () -> SettingsScreen>()
+  private val screensBuilderMap = mutableMapOf<IScreenIdentifier, () -> SettingsScreen>()
 
   operator fun plusAssign(screenBuilder: SettingsScreen.SettingsScreenBuilder) {
     val screenIdentifier = screenBuilder.screenIdentifier
@@ -11,13 +11,13 @@ class SettingsGraph(
 
     if (screenMap.containsKey(screenIdentifier)) {
       throw IllegalArgumentException("Settings graph already contain screen with " +
-        "identifier: ${screenIdentifier.identifier}")
+        "identifier: ${screenIdentifier.getIdentifier()}")
     }
 
     screensBuilderMap[screenIdentifier] = screenBuildFunction
   }
 
-  operator fun get(screenIdentifier: SettingsIdentifier.Screen): SettingsScreen {
+  operator fun get(screenIdentifier: IScreenIdentifier): SettingsScreen {
     val cached = screenMap[screenIdentifier]
     if (cached != null) {
       return cached
@@ -39,7 +39,7 @@ class SettingsGraph(
     }
   }
 
-  fun rebuildScreen(screenIdentifier: SettingsIdentifier.Screen) {
+  fun rebuildScreen(screenIdentifier: IScreenIdentifier) {
     requireNotNull(screensBuilderMap[screenIdentifier]) {
       "Screen builder does not exist, identifier: ${screenIdentifier}"
     }

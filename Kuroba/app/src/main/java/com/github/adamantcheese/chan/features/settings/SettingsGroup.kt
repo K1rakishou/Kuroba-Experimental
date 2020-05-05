@@ -1,19 +1,23 @@
 package com.github.adamantcheese.chan.features.settings
 
+import com.github.adamantcheese.chan.features.settings.setting.SettingV2
+import com.github.adamantcheese.chan.features.settings.setting.SettingV2Builder
+
 class SettingsGroup(
-  val groupIdentifier: SettingsIdentifier.Group,
+  val groupIdentifier: IGroupIdentifier,
   val groupTitle: String? = null,
   private val settingsMap: MutableMap<SettingsIdentifier, SettingV2> = mutableMapOf()
 ) {
   private val settingsBuilderMap = mutableMapOf<SettingsIdentifier, (Int) -> SettingV2>()
 
-  operator fun plusAssign(settingV2Builder: SettingV2.SettingV2Builder) {
-    val settingIdentifier = settingV2Builder.settingsIdentifier
-    val settingBuildFunction = settingV2Builder.buildFunction
+  @Suppress("UNCHECKED_CAST")
+  operator fun plusAssign(linkSettingV2Builder: SettingV2Builder) {
+    val settingIdentifier = linkSettingV2Builder.settingsIdentifier
+    val settingBuildFunction = linkSettingV2Builder.buildFunction
 
     if (settingsMap.containsKey(settingIdentifier)) {
       throw IllegalArgumentException("Settings group already contain setting with " +
-        "identifier: ${settingIdentifier.identifier}")
+        "identifier: ${settingIdentifier.getIdentifier()}")
     }
 
     settingsBuilderMap[settingIdentifier] = settingBuildFunction
@@ -59,7 +63,7 @@ class SettingsGroup(
   }
 
   class SettingsGroupBuilder(
-    val groupIdentifier: SettingsIdentifier.Group,
+    val groupIdentifier: IGroupIdentifier,
     val buildFunction: () -> SettingsGroup
   )
 }
