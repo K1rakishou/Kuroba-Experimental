@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <TextView
+        android:id="@+id/message_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:textSize="18sp"
+        android:gravity="center_horizontal"
+        android:textColor="?text_color_secondary"
+        tools:text="No settings were found by query &quot;Test awr awr awr awr awr awr 3t 2t6234yt 354y&quot;"/>
+
+</merge>

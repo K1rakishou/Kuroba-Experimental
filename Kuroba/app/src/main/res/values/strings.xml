@@ -971,6 +971,7 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
     <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
     <string name="epoxy_fetch_history_result_template">Result: %1$s</string>
+    <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
 

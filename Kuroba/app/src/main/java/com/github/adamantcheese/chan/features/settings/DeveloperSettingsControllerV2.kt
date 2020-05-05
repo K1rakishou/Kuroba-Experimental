@@ -17,6 +17,7 @@ import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
@@ -100,7 +101,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
         .debounce(DEBOUNCE_TIME_MS)
         .collect { query ->
           if (query.length < MIN_QUERY_LENGTH) {
-            rebuildDefaultScreen()
+            rebuildTopStackScreen()
             return@collect
           }
 
@@ -120,7 +121,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
     if (!visible) {
-      rebuildDefaultScreen()
+      rebuildTopStackScreen()
     }
   }
 
@@ -129,16 +130,29 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   override fun onBack(): Boolean {
-    if (screenStack.isEmpty()) {
+    if (screenStack.size <= 1) {
+      Logger.d(TAG, "onBack() screenStack.size <= 1, exiting")
       return false
     }
 
-    rebuildScreen(screenStack.pop())
+    screenStack.pop()
+    val screenIdentifier = screenStack.peek()
+    Logger.d(TAG, "onBack() switching to ${screenIdentifier} screen")
+
+    rebuildScreen(screenIdentifier)
     return true
   }
 
   private fun rebuildDefaultScreen() {
+    pushScreen(SettingsIdentifier.Screen.DeveloperSettingsScreen)
     rebuildScreen(SettingsIdentifier.Screen.DeveloperSettingsScreen)
+  }
+
+  private fun rebuildTopStackScreen() {
+    require(screenStack.isNotEmpty()) { "Stack is empty" }
+
+    val screenIdentifier = screenStack.peek()
+    rebuildScreen(screenIdentifier)
   }
 
   private fun rebuildScreenWithSearchQuery(query: String) {
@@ -149,8 +163,17 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     }
   }
 
-  private fun rebuildScreen(screen: SettingsIdentifier.Screen) {
-    val settingsScreen = normalSettingsGraph[screen]
+  private fun rebuildScreen(
+    screen: SettingsIdentifier.Screen,
+    searchMode: Boolean = false
+  ) {
+    val settingsScreen = if (searchMode) {
+      searchSettingsGraph.rebuildScreen(screen)
+      searchSettingsGraph[screen]
+    } else {
+      normalSettingsGraph.rebuildScreen(screen)
+      normalSettingsGraph[screen]
+    }
 
     recyclerView.withModels {
       navigation.title = settingsScreen.title
@@ -162,9 +185,14 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   private fun rebuildSetting(
     screen: SettingsIdentifier.Screen,
     group: SettingsIdentifier.Group,
-    setting: SettingsIdentifier
+    setting: SettingsIdentifier,
+    searchMode: Boolean = false
   ) {
-    val settingsScreen = normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
+    val settingsScreen = if (searchMode) {
+      searchSettingsGraph[screen].apply { rebuildSetting(group, setting) }
+    } else {
+      normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
+    }
 
     recyclerView.withModels {
       navigation.title = settingsScreen.title
@@ -174,11 +202,31 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun EpoxyController.renderSearchScreen(graph: SettingsGraph, query: String) {
+    val topScreenIdentifier = if (screenStack.isEmpty()) {
+      null
+    } else {
+      screenStack.peek()
+    }
+
+    var foundSomething = false
+
     graph.iterateScreens { settingsScreen ->
+      if (topScreenIdentifier != null && settingsScreen.screenIdentifier != topScreenIdentifier) {
+        return@iterateScreens
+      }
+
       settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
         settingsGroup.iterateSettingsIndexedFilteredByQuery(query) { settingIndex, setting ->
+          foundSomething = true
           renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex, true)
         }
+      }
+    }
+
+    if (!foundSomething) {
+      epoxyNoSettingsFoundView {
+        id("no_settings_found")
+        query(query)
       }
     }
   }
@@ -211,21 +259,16 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
       clickListener {
         when (val clickAction = setting.callback.invoke()) {
           SettingClickAction.RefreshClickedSetting -> {
-            // TODO(archives): when searchMode == true we need to use another version of
-            //  rebuildSetting method which will rebuild searchSettingsGraph instead of
-            //  normalSettingsGraph.
             rebuildSetting(
               settingsScreen.screenIdentifier,
               settingsGroup.groupIdentifier,
-              setting.settingsIdentifier
+              setting.settingsIdentifier,
+              searchMode
             )
           }
-          // TODO(archives): when searchMode == true we need to use another version of
-          //  rebuildSetting method which will rebuild searchSettingsGraph instead of
-          //  normalSettingsGraph.
           is SettingClickAction.OpenScreen -> {
-            screenStack.push(settingsScreen.screenIdentifier)
-            rebuildScreen(clickAction.screenIdentifier)
+            pushScreen(clickAction.screenIdentifier)
+            rebuildScreen(clickAction.screenIdentifier, searchMode)
           }
         }.exhaustive
       }
@@ -235,6 +278,17 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
       epoxyDividerView {
         id("epoxy_divider_${settingIndex}")
       }
+    }
+  }
+
+  private fun pushScreen(screenIdentifier: SettingsIdentifier.Screen) {
+    val stackAlreadyContainsScreen = screenStack.any { screenIdentifierInStack ->
+      screenIdentifierInStack == screenIdentifier
+    }
+
+    if (!stackAlreadyContainsScreen) {
+      Logger.d(TAG, "Pushing $screenIdentifier screen onto the stack")
+      screenStack.push(screenIdentifier)
     }
   }
 
