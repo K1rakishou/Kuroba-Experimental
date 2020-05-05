@@ -33,6 +33,9 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
     settingViewHolder = findViewById(R.id.preference_item)
     switcher = findViewById(R.id.switcher)
     notificationIcon = findViewById(R.id.setting_notification_icon)
+
+    switcher.isClickable = false
+    switcher.isFocusable = false
   }
 
   @ModelProp
@@ -50,6 +53,11 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
     }
   }
 
+  @ModelProp
+  fun setChecked(isChecked: Boolean) {
+    switcher.isChecked = isChecked
+  }
+
   @CallbackProp
   fun setClickListener(callback: (() -> Unit)?) {
     if (callback == null) {
@@ -58,16 +66,6 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
     }
 
     settingViewHolder.setOnClickListener { callback.invoke() }
-  }
-
-  @CallbackProp
-  fun setCheckListener(callback: ((Boolean) -> Unit)?) {
-    if (callback == null) {
-      switcher.setOnCheckedChangeListener(null)
-      return
-    }
-
-    switcher.setOnCheckedChangeListener { _, isChecked -> callback.invoke(isChecked) }
   }
 
 }

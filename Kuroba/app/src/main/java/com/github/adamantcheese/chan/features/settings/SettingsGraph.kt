@@ -10,7 +10,12 @@ class SettingsGraph(
     val screenBuildFunction = screenBuilder.buildFunction
 
     if (screenMap.containsKey(screenIdentifier)) {
-      throw IllegalArgumentException("Settings graph already contain screen with " +
+      throw IllegalArgumentException("Settings graph already contains screen with " +
+        "identifier: ${screenIdentifier.getIdentifier()}")
+    }
+
+    if (screensBuilderMap.containsKey(screenIdentifier)) {
+      throw IllegalArgumentException("Settings graph already contains screen builder with " +
         "identifier: ${screenIdentifier.getIdentifier()}")
     }
 

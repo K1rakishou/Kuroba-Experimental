@@ -442,7 +442,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_peek_description">Show a heads-up notification when quoted</string>
     <string name="setting_watch_led">Notification light</string>
     <string name="settings_group_about">About</string>
-    <string name="settings_update_check">Check for updates</string>
+    <string name="settings_update_check">Tap to check for updates</string>
     <string name="settings_about_license">Released under the GNU GPLv3 license</string>
 
     <!-- Main About group -->
@@ -911,6 +911,8 @@ Don't have a 4chan Pass?<br>
     <string name="settings_report_review_button_text">Review crash logs</string>
     <string name="settings_report_review_later_button_text">Review later</string>
     <string name="settings_report_delete_all_crash_logs">Delete all crash logs</string>
+    <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
+    <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
     <string name="deleted_n_crashlogs">Deleted %1$d crash log(s)</string>
     <string name="sent_n_crashlogs">Sent %1$d crash log(s)</string>
 

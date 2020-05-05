@@ -3,18 +3,24 @@ package com.github.adamantcheese.chan.features.settings.setting
 import android.content.Context
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
+import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 
 class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
-  private var isChecked = false
+  private var setting: Setting<Boolean>? = null
 
   override var requiresRestart: Boolean = false
   override var requiresUiRefresh: Boolean = false
   override lateinit var settingsIdentifier: SettingsIdentifier
   override lateinit var topDescription: String
   override var bottomDescription: String? = null
+  override var notificationType: SettingNotificationType? = null
 
-  private var setting: Setting<Boolean>? = null
-  val callback: () -> Unit = {
+  var isChecked = false
+    private set
+  var callback: (() -> Unit)? = null
+    private set
+
+  private val defaultCallback: () -> Unit = {
     val prev = setting?.get()
 
     if (prev != null) {
@@ -27,12 +33,11 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
     onCheckedChanged(isChecked)
   }
 
-  fun onCheckedChanged(isChecked: Boolean) {
+  private fun onCheckedChanged(isChecked: Boolean) {
     this.isChecked = isChecked
   }
 
   override fun update(): Int {
-    // // TODO(archives): ???
     return 0
   }
 
@@ -82,8 +87,10 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
       topDescriptionStringFunc: (() -> String)? = null,
       bottomDescriptionIdFunc: (() -> Int)? = null,
       bottomDescriptionStringFunc: (() -> String)? = null,
+      checkChangedCallback: ((Boolean) -> Unit)? = null,
       requiresRestart: Boolean = false,
-      requiresUiRefresh: Boolean = false
+      requiresUiRefresh: Boolean = false,
+      notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
       return SettingV2Builder(
         settingsIdentifier = identifier,
@@ -126,12 +133,21 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
 
           booleanSettingV2.requiresRestart = requiresRestart
           booleanSettingV2.requiresUiRefresh = requiresUiRefresh
+          booleanSettingV2.notificationType = notificationType
 
           booleanSettingV2.isChecked = setting.get()
           booleanSettingV2.settingsIdentifier = identifier
 
           booleanSettingV2.setting = setting.apply {
             addCallback(booleanSettingV2)
+          }
+
+          checkChangedCallback?.let { callback ->
+            booleanSettingV2.callback = fun() {
+              booleanSettingV2.defaultCallback.invoke()
+
+              callback.invoke(booleanSettingV2.isChecked)
+            }
           }
 
           return booleanSettingV2

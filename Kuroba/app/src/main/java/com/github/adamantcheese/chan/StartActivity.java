@@ -34,6 +34,7 @@ import androidx.core.util.Pair;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.OnLifecycleEvent;
 
+import com.airbnb.epoxy.EpoxyController;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.NavigationController;
 import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
@@ -134,6 +135,10 @@ public class StartActivity
         }
 
         inject(this);
+
+        if (BuildConfig.DEV_BUILD) {
+            EpoxyController.setGlobalDebugLoggingEnabled(true);
+        }
 
         themeHelper.setupContext(this);
         fileChooser.setCallbacks(this);

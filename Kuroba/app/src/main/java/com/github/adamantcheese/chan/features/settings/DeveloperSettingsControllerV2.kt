@@ -5,17 +5,20 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager
+import com.github.adamantcheese.chan.core.manager.ReportManager
+import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupTitle
-import com.github.adamantcheese.chan.features.settings.screens.DatabaseSummaryScreen
+import com.github.adamantcheese.chan.features.settings.screens.DatabaseSettingsSummaryScreen
 import com.github.adamantcheese.chan.features.settings.screens.DeveloperSettingsScreen
 import com.github.adamantcheese.chan.features.settings.screens.MainSettingsScreen
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
@@ -27,12 +30,12 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.exhaustive
-import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -51,8 +54,6 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   @Inject
   lateinit var seenPostRepository: SeenPostRepository
   @Inject
-  lateinit var chanPostRepository: ChanPostRepository
-  @Inject
   lateinit var mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
   @Inject
   lateinit var inlinedFileInfoRepository: InlinedFileInfoRepository
@@ -60,11 +61,21 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   lateinit var filterWatchManager: FilterWatchManager
   @Inject
   lateinit var wakeManager: WakeManager
+  @Inject
+  lateinit var reportManager: ReportManager
+  @Inject
+  lateinit var settingsNotificationManager: SettingsNotificationManager
 
   lateinit var recyclerView: EpoxyRecyclerView
 
   private val mainSettingsScreen by lazy {
-    MainSettingsScreen(context)
+    MainSettingsScreen(
+      context,
+      databaseManager,
+      (context as StartActivity).updateManager,
+      reportManager,
+      navigationController!!
+    )
   }
 
   private val developerSettingsScreen by lazy {
@@ -79,7 +90,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private val databaseSummaryScreen by lazy {
-    DatabaseSummaryScreen(
+    DatabaseSettingsSummaryScreen(
       context,
       inlinedFileInfoRepository,
       mediaServiceLinkExtraContentRepository,
@@ -92,6 +103,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
   private val screenStack = Stack<IScreenIdentifier>()
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
+  private val defaultScreen = MainScreen
 
   @OptIn(FlowPreview::class)
   override fun onCreate() {
@@ -99,7 +111,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     Chan.inject(this)
 
     view = inflate(context, R.layout.controller_developer_settings)
-    recyclerView = view.findViewById(R.id.archives_recycler_view)
+    recyclerView = view.findViewById(R.id.settings_recycler_view)
 
     navigation.buildMenu()
       .withItem(R.drawable.ic_search_white_24dp) {
@@ -119,6 +131,15 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
           rebuildScreenWithSearchQuery(query)
         }
+    }
+
+    mainScope.launch {
+      settingsNotificationManager.listenForNotificationUpdates()
+        .asFlow()
+        .catch { error ->
+          Logger.e(TAG, "Unknown error received from SettingsNotificationManager", error)
+        }
+        .collect { onNotificationsChanged() }
     }
 
     rebuildDefaultScreen()
@@ -155,9 +176,41 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     return true
   }
 
+  private fun onNotificationsChanged() {
+    Logger.d(TAG, "onNotificationsChanged called")
+
+    // TODO(archives):
+//    updateSettingNotificationIcon(settingsNotificationManager.getOrDefault(SettingNotificationType.ApkUpdate),
+//      getViewGroupOrThrow(updateSettingView)
+//    )
+//    updateSettingNotificationIcon(settingsNotificationManager.getOrDefault(SettingNotificationType.CrashLog),
+//      getViewGroupOrThrow(reportSettingView)
+//    )
+  }
+
+//  protected fun updateSettingNotificationIcon(
+//    settingNotificationType: SettingNotificationType, preferenceView: ViewGroup
+//  ) {
+//    val notificationIcon: AppCompatImageView = preferenceView.findViewById(R.id.setting_notification_icon)
+//    if (notificationIcon != null) {
+//      AndroidUtils.updatePaddings(notificationIcon, AndroidUtils.dp(16f), AndroidUtils.dp(16f), -1, -1)
+//    } else {
+//      Logger.e(TAG, "Notification icon is null, can't update setting notification for this view.")
+//      return
+//    }
+//    val hasNotifications = settingsNotificationManager.hasNotifications(settingNotificationType)
+//    if (settingNotificationType !== SettingNotificationType.Default && hasNotifications) {
+//      val tintColor = AndroidUtils.getRes().getColor(settingNotificationType.notificationIconTintColor)
+//      notificationIcon.setColorFilter(tintColor, PorterDuff.Mode.SRC_IN)
+//      notificationIcon.visibility = View.VISIBLE
+//    } else {
+//      notificationIcon.visibility = View.GONE
+//    }
+//  }
+
   private fun rebuildDefaultScreen() {
-    pushScreen(SettingsIdentifier.MainScreen)
-    rebuildScreen(SettingsIdentifier.MainScreen)
+    pushScreen(defaultScreen)
+    rebuildScreen(defaultScreen)
   }
 
   private fun rebuildTopStackScreen() {
@@ -221,19 +274,23 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     }
 
     var foundSomething = false
+    var settingIndex = 0
+
+    val isDefaultScreen = (topScreenIdentifier != null
+      && topScreenIdentifier.getScreenIdentifier() == defaultScreen.getScreenIdentifier())
 
     graph.iterateScreens { settingsScreen ->
-      // TODO(archives):
-      //  https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-class/sealed-subclasses.html
-      //  Search not only on the current screen, but on all child screens as well
-      if (topScreenIdentifier != null && settingsScreen.screenIdentifier != topScreenIdentifier) {
+      val isCurrentScreen =
+        settingsScreen.screenIdentifier.getScreenIdentifier() != topScreenIdentifier?.getScreenIdentifier()
+
+      if (!isDefaultScreen && isCurrentScreen) {
         return@iterateScreens
       }
 
-      settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
-        settingsGroup.iterateSettingsIndexedFilteredByQuery(query) { settingIndex, setting ->
+      settingsScreen.iterateGroups { settingsGroup ->
+        settingsGroup.iterateSettingsFilteredByQuery(query) { setting ->
           foundSomething = true
-          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex, true)
+          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, true)
         }
       }
     }
@@ -247,14 +304,16 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
   }
 
   private fun EpoxyController.renderScreen(settingsScreen: SettingsScreen) {
-    settingsScreen.iterateGroupsIndexed { _, settingsGroup ->
+    var settingIndex = 0
+
+    settingsScreen.iterateGroups { settingsGroup ->
       epoxySettingsGroupTitle {
         id("epoxy_settings_group_title_${settingsGroup.groupIdentifier.getGroupIdentifier()}")
         groupTitle(settingsGroup.groupTitle)
       }
 
-      settingsGroup.iterateGroupsIndexed { settingIndex, setting ->
-        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex, false)
+      settingsGroup.iterateGroups { setting ->
+        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, false)
       }
     }
   }
@@ -296,17 +355,17 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
           id("epoxy_boolean_setting_${settingV2.settingsIdentifier.getIdentifier()}")
           topDescription(settingV2.topDescription)
           bottomDescription(settingV2.bottomDescription)
+          checked(settingV2.isChecked)
 
           clickListener {
-            settingV2.callback.invoke()
+            settingV2.callback?.invoke()
 
-            // TODO: rebuild?
-          }
-
-          checkListener { isChecked ->
-            settingV2.onCheckedChanged(isChecked)
-
-            // TODO: rebuild?
+            rebuildSetting(
+              settingsScreen.screenIdentifier,
+              settingsGroup.groupIdentifier,
+              settingV2.settingsIdentifier,
+              searchMode
+            )
           }
         }
       }
@@ -342,7 +401,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
   companion object {
     private const val TAG = "DeveloperSettingsControllerV2"
-    private const val MIN_QUERY_LENGTH = 4
-    private const val DEBOUNCE_TIME_MS = 250L
+    private const val MIN_QUERY_LENGTH = 3
+    private const val DEBOUNCE_TIME_MS = 350L
   }
 }

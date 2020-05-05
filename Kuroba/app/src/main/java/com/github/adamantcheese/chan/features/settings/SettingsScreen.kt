@@ -12,14 +12,18 @@ class SettingsScreen(
     val groupBuildFunction = groupBuilder.buildFunction
 
     if (groupsMap.containsKey(groupIdentifier)) {
-      throw IllegalArgumentException("Settings screen already contain group with identifier: $groupIdentifier")
+      throw IllegalArgumentException("Settings screen already contains group with identifier: $groupIdentifier")
+    }
+
+    if (groupsBuilderMap.containsKey(groupIdentifier)) {
+      throw IllegalArgumentException("Settings screen already contains group builder with identifier: $groupIdentifier")
     }
 
     groupsBuilderMap[groupIdentifier] = groupBuildFunction
   }
 
-  fun iterateGroupsIndexed(iterator: (Int, SettingsGroup) -> Unit) {
-    groupsMap.values.forEachIndexed { index, settingsGroup -> iterator(index, settingsGroup) }
+  fun iterateGroups(iterator: (SettingsGroup) -> Unit) {
+    groupsMap.values.forEach { settingsGroup -> iterator(settingsGroup) }
   }
 
   fun rebuildGroups() {

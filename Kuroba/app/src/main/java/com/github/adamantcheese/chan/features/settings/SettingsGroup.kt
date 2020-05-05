@@ -16,25 +16,27 @@ class SettingsGroup(
     val settingBuildFunction = linkSettingV2Builder.buildFunction
 
     if (settingsMap.containsKey(settingIdentifier)) {
-      throw IllegalArgumentException("Settings group already contain setting with " +
+      throw IllegalArgumentException("Settings group already contains setting with " +
+        "identifier: ${settingIdentifier.getIdentifier()}")
+    }
+
+    if (settingsBuilderMap.containsKey(settingIdentifier)) {
+      throw IllegalArgumentException("Settings group already contains setting builder with " +
         "identifier: ${settingIdentifier.getIdentifier()}")
     }
 
     settingsBuilderMap[settingIdentifier] = settingBuildFunction
   }
 
-  fun iterateGroupsIndexed(iterator: (Int, SettingV2) -> Unit) {
-    settingsMap.values.forEachIndexed { index, settingV2 -> iterator(index, settingV2) }
+  fun iterateGroups(iterator: (SettingV2) -> Unit) {
+    settingsMap.values.forEach { settingV2 -> iterator(settingV2) }
   }
 
-  fun iterateSettingsIndexedFilteredByQuery(query: String, iterator: (Int, SettingV2) -> Unit) {
-    var index = 0
-
+  fun iterateSettingsFilteredByQuery(query: String, iterator: (SettingV2) -> Unit) {
     settingsMap.values.forEach { settingV2 ->
       if (settingV2.topDescription.contains(query, true)
         || settingV2.bottomDescription?.contains(query, true) == true) {
-        iterator(index, settingV2)
-        ++index
+        iterator(settingV2)
       }
     }
   }

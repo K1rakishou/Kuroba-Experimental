@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.features.settings.setting
 import android.content.Context
 import com.github.adamantcheese.chan.features.settings.SettingClickAction
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
+import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 
 open class LinkSettingV2 protected constructor() : SettingV2() {
   private var updateCounter = 0
@@ -12,6 +13,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
   override lateinit var settingsIdentifier: SettingsIdentifier
   override lateinit var topDescription: String
   override var bottomDescription: String? = null
+  override var notificationType: SettingNotificationType? = null
 
   private var _callback: (() -> SettingClickAction)? = null
   var callback: () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
@@ -67,7 +69,8 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
       bottomDescriptionIdFunc: (() -> Int)? = null,
       bottomDescriptionStringFunc: (() -> String)? = null,
       requiresRestart: Boolean = false,
-      requiresUiRefresh: Boolean = false
+      requiresUiRefresh: Boolean = false,
+      notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
       return SettingV2Builder(
         settingsIdentifier = identifier,
@@ -115,6 +118,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
 
           settingV2.requiresRestart = requiresRestart
           settingV2.requiresUiRefresh = requiresUiRefresh
+          settingV2.notificationType = notificationType
 
           val clickCallback = listOfNotNull(
             callback,

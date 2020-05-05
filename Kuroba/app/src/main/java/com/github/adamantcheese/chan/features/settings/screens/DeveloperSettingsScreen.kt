@@ -11,9 +11,10 @@ import com.github.adamantcheese.chan.core.manager.FilterWatchManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
+import com.github.adamantcheese.chan.features.settings.DatabaseSummaryScreen
+import com.github.adamantcheese.chan.features.settings.DeveloperScreen
 import com.github.adamantcheese.chan.features.settings.SettingClickAction
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
-import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.ui.controller.LogsController
 import com.github.adamantcheese.chan.utils.AndroidUtils
@@ -28,7 +29,7 @@ class DeveloperSettingsScreen(
   private val wakeManager: WakeManager
 ) : BaseSettingsScreen(
   context,
-  SettingsIdentifier.DeveloperScreen,
+  DeveloperScreen,
   R.string.settings_developer
 ) {
 
@@ -39,7 +40,7 @@ class DeveloperSettingsScreen(
   }
 
   private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = SettingsIdentifier.DeveloperScreen.MainGroup
+    val identifier = DeveloperScreen.MainGroup
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
@@ -50,7 +51,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ViewLogs,
+          identifier = DeveloperScreen.MainGroup.ViewLogs,
           topDescriptionIdFunc = {
             R.string.settings_open_logs
           },
@@ -61,7 +62,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.EnableDisableVerboseLogs,
+          identifier = DeveloperScreen.MainGroup.EnableDisableVerboseLogs,
           topDescriptionIdFunc = {
             if (ChanSettings.verboseLogs.get()) {
               R.string.settings_disable_verbose_logs
@@ -77,7 +78,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.CrashApp,
+          identifier = DeveloperScreen.MainGroup.CrashApp,
           topDescriptionIdFunc = {
             R.string.settings_crash_app
           },
@@ -88,7 +89,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ClearFileCache,
+          identifier = DeveloperScreen.MainGroup.ClearFileCache,
           topDescriptionStringFunc = {
             context.getString(R.string.settings_clear_file_cache)
           },
@@ -104,18 +105,18 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ShowDatabaseSummary,
+          identifier = DeveloperScreen.MainGroup.ShowDatabaseSummary,
           topDescriptionIdFunc = {
             R.string.settings_database_summary
           },
           callbackWithClickAction = {
-            SettingClickAction.OpenScreen(SettingsIdentifier.DatabaseSummaryScreen)
+            SettingClickAction.OpenScreen(DatabaseSummaryScreen)
           }
         )
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.FilterWatchIgnoreReset,
+          identifier = DeveloperScreen.MainGroup.FilterWatchIgnoreReset,
           topDescriptionIdFunc = {
             R.string.settings_clear_ignored_filter_watches
           },
@@ -127,7 +128,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.DumpThreadStack,
+          identifier = DeveloperScreen.MainGroup.DumpThreadStack,
           topDescriptionIdFunc = {
             R.string.settings_dump_thread_stack
           },
@@ -139,7 +140,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ForceAwakeWakeables,
+          identifier = DeveloperScreen.MainGroup.ForceAwakeWakeables,
           topDescriptionIdFunc = {
             R.string.settings_force_wake_manager_wake
           },
@@ -151,7 +152,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.ResetThreadOpenCounter,
+          identifier = DeveloperScreen.MainGroup.ResetThreadOpenCounter,
           topDescriptionIdFunc = {
             R.string.settings_reset_thread_open_counter
           },
@@ -163,7 +164,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.CrashOnSafeThrow,
+          identifier = DeveloperScreen.MainGroup.CrashOnSafeThrow,
           topDescriptionIdFunc = {
             if (ChanSettings.crashOnSafeThrow.get()) {
               R.string.settings_crash_on_safe_throw_enabled
@@ -178,7 +179,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.SimulateAppUpdated,
+          identifier = DeveloperScreen.MainGroup.SimulateAppUpdated,
           topDescriptionIdFunc = {
             R.string.settings_simulate_app_updated
           },
@@ -195,7 +196,7 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = SettingsIdentifier.DeveloperScreen.MainGroup.SimulateAppNotUpdated,
+          identifier = DeveloperScreen.MainGroup.SimulateAppNotUpdated,
           topDescriptionIdFunc = {
             R.string.settings_simulate_app_not_updated
           },

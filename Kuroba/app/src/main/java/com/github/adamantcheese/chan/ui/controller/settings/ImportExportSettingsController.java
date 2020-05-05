@@ -20,8 +20,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.github.adamantcheese.chan.R;
@@ -65,18 +63,13 @@ public class ImportExportSettingsController
     DatabaseManager databaseManager;
 
     private ImportExportSettingsPresenter presenter;
-
-    @Nullable
-    private OnExportSuccessCallbacks callbacks;
-
     private LoadingViewController loadingViewController;
 
-    public ImportExportSettingsController(Context context, @NonNull OnExportSuccessCallbacks callbacks) {
+    public ImportExportSettingsController(Context context) {
         super(context);
 
         inject(this);
 
-        this.callbacks = callbacks;
         this.loadingViewController = new LoadingViewController(context, true);
     }
 
@@ -99,8 +92,6 @@ public class ImportExportSettingsController
         if (presenter != null) {
             presenter.onDestroy();
         }
-
-        callbacks = null;
     }
 
     protected void setupLayout() {
@@ -297,8 +288,8 @@ public class ImportExportSettingsController
                     loadingViewController.stopPresenting();
                     showToast(context, R.string.successfully_exported_text, Toast.LENGTH_LONG);
 
-                    if (callbacks != null) {
-                        callbacks.finish();
+                    if (navigationController != null) {
+                        navigationController.popController();
                     }
                 }
             });
