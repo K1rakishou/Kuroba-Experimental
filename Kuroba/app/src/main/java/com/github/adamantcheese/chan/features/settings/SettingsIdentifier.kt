@@ -1,3 +1,5 @@
+@file:Suppress("RemoveRedundantQualifierName")
+
 package com.github.adamantcheese.chan.features.settings
 
 import java.util.*
@@ -7,22 +9,35 @@ inline class SettingIdentifier(val id: String)
 inline class ScreenIdentifier(val id: String)
 inline class GroupIdentifier(val id: String)
 
-interface IIdentifiable {
-  fun getIdentifier(): Identifier
+interface IScreen
+interface IGroup
+
+abstract class IIdentifiable {
+  abstract fun getIdentifier(): Identifier
+
+  override fun hashCode(): Int {
+    return getIdentifier().hashCode()
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return getIdentifier().id == (other as? IIdentifiable)?.getIdentifier()?.id
+  }
+
+  override fun toString(): String {
+    return getIdentifier().id
+  }
 }
 
-interface IScreen
-interface IScreenIdentifier : IIdentifiable {
-  fun getScreenIdentifier(): ScreenIdentifier
+abstract class IScreenIdentifier : IIdentifiable() {
+  abstract fun getScreenIdentifier(): ScreenIdentifier
 
   override fun getIdentifier(): Identifier {
     return Identifier(getScreenIdentifier().id)
   }
 }
 
-interface IGroup
-interface IGroupIdentifier : IScreenIdentifier {
-  fun getGroupIdentifier(): GroupIdentifier
+abstract class IGroupIdentifier : IScreenIdentifier() {
+  abstract fun getGroupIdentifier(): GroupIdentifier
 
   override fun getIdentifier(): Identifier {
     val id = String.format(
@@ -40,7 +55,7 @@ sealed class SettingsIdentifier(
   private val screenIdentifier: ScreenIdentifier,
   private val groupIdentifier: GroupIdentifier,
   private val settingsIdentifier: SettingIdentifier
-) : IIdentifiable {
+) : IIdentifiable() {
 
   override fun getIdentifier(): Identifier {
     val id = String.format(
@@ -63,7 +78,7 @@ sealed class SettingsIdentifier(
 sealed class MainScreen(
   groupIdentifier: GroupIdentifier,
   settingsIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = MainScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = MainScreen.getScreenIdentifier()
 ) : IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingsIdentifier) {
 
@@ -83,7 +98,7 @@ sealed class MainScreen(
     object Filters : MainGroup("filters")
     object Experimental : MainGroup("experimental")
 
-    companion object : IGroupIdentifier {
+    companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MainScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
     }
@@ -100,16 +115,17 @@ sealed class MainScreen(
     object Reports : AboutAppGroup("reports")
     object CollectCrashReport : AboutAppGroup("collect_crash_reports")
     object FindAppOnGithub : AboutAppGroup("find_app_on_github")
+    object AppLicense : AboutAppGroup("app_license")
     object AppLicenses : AboutAppGroup("app_licenses")
     object DeveloperSettings : AboutAppGroup("developer_settings")
 
-    companion object : IGroupIdentifier {
+    companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MainScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("about_app_group")
     }
   }
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("main_screen")
   }
 }
@@ -117,13 +133,13 @@ sealed class MainScreen(
 sealed class DeveloperScreen(
   groupIdentifier: GroupIdentifier,
   settingsIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
 ) : IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingsIdentifier) {
 
   sealed class MainGroup(
     settingsId: String,
-    private val groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
   ) : IGroup,
     DeveloperScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -140,13 +156,13 @@ sealed class DeveloperScreen(
     object SimulateAppUpdated : MainGroup("simulate_app_updated")
     object SimulateAppNotUpdated : MainGroup("simulate_app_not_updated")
 
-    companion object : IGroupIdentifier {
+    companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
     }
   }
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("developer_settings_screen")
   }
 }
@@ -154,14 +170,14 @@ sealed class DeveloperScreen(
 sealed class DatabaseSummaryScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = DatabaseSummaryScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = DatabaseSummaryScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
   sealed class MainGroup(
     settingsId: String,
-    private val groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
   ) :
     IGroup,
     DatabaseSummaryScreen(groupIdentifier, SettingIdentifier(settingsId)) {
@@ -170,13 +186,13 @@ sealed class DatabaseSummaryScreen(
     object ClearLinkExtraInfoTable : MainGroup("clear_link_info_table")
     object ClearSeenPostsTable : MainGroup("clear_seen_posts_table")
 
-    companion object : IGroupIdentifier {
+    companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DatabaseSummaryScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
     }
   }
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("database_summary_screen")
   }
 }
@@ -184,12 +200,12 @@ sealed class DatabaseSummaryScreen(
 sealed class ThreadWatcherScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = ThreadWatcherScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = ThreadWatcherScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("thread_watcher_screen")
   }
 }
@@ -197,12 +213,12 @@ sealed class ThreadWatcherScreen(
 sealed class SitesSetupScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = SitesSetupScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = SitesSetupScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("sites_setup_screen")
   }
 }
@@ -210,12 +226,12 @@ sealed class SitesSetupScreen(
 sealed class AppearanceScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("appearance_screen")
   }
 }
@@ -223,12 +239,12 @@ sealed class AppearanceScreen(
 sealed class BehaviorScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("behavior_screen")
   }
 }
@@ -236,12 +252,12 @@ sealed class BehaviorScreen(
 sealed class MediaScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = MediaScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = MediaScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("media_screen")
   }
 }
@@ -249,12 +265,12 @@ sealed class MediaScreen(
 sealed class ImportExportScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = ImportExportScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = ImportExportScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("import_export_screen")
   }
 }
@@ -262,12 +278,12 @@ sealed class ImportExportScreen(
 sealed class FiltersExportScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = FiltersExportScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = FiltersExportScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("filters_screen")
   }
 }
@@ -275,12 +291,12 @@ sealed class FiltersExportScreen(
 sealed class ExperimentalSettingsScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  private val screenIdentifier: ScreenIdentifier = ExperimentalSettingsScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = ExperimentalSettingsScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  companion object : IScreenIdentifier {
+  companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("experimental_settings_screen")
   }
 }

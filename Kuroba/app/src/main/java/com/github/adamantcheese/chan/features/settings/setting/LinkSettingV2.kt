@@ -75,6 +75,10 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
       return SettingV2Builder(
         settingsIdentifier = identifier,
         buildFunction = fun(updateCounter: Int): LinkSettingV2 {
+          require(notificationType != SettingNotificationType.Default) {
+            "Can't use default notification type here"
+          }
+
           if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
             throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
           }

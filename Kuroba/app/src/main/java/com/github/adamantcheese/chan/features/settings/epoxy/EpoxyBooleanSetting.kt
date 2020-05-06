@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.settings.epoxy
 
 import android.content.Context
+import android.graphics.PorterDuff
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -12,6 +13,9 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
+import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyBooleanSetting @JvmOverloads constructor(
@@ -56,6 +60,19 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
   @ModelProp
   fun setChecked(isChecked: Boolean) {
     switcher.isChecked = isChecked
+  }
+
+  @ModelProp
+  fun bindNotificationIcon(settingNotificationType: SettingNotificationType) {
+    if (settingNotificationType !== SettingNotificationType.Default) {
+      val tintColor = context.resources.getColor(settingNotificationType.notificationIconTintColor)
+
+      AndroidUtils.updatePaddings(notificationIcon, dp(16f), dp(16f), -1, -1)
+      notificationIcon.setColorFilter(tintColor, PorterDuff.Mode.SRC_IN)
+      notificationIcon.visibility = View.VISIBLE
+    } else {
+      notificationIcon.visibility = View.GONE
+    }
   }
 
   @CallbackProp

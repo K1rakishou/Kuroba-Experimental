@@ -89,6 +89,21 @@ class MainSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
+          identifier = MainScreen.AboutAppGroup.AppLicense,
+          topDescriptionIdFunc = { R.string.settings_about_license },
+          bottomDescriptionIdFunc = { R.string.settings_about_license_description },
+          callback = {
+            navigationController.pushController(
+              LicensesController(context,
+                getString(R.string.settings_about_license),
+                "file:///android_asset/html/license.html"
+              )
+            )
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
           identifier = MainScreen.AboutAppGroup.AppLicenses,
           topDescriptionIdFunc = { R.string.settings_about_licenses },
           bottomDescriptionIdFunc = { R.string.settings_about_licenses_description },

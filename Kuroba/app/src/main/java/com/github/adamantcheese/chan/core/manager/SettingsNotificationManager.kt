@@ -44,10 +44,6 @@ class SettingsNotificationManager {
         return null
     }
 
-    @Synchronized
-    fun hasNotifications(notificationType: SettingNotificationType): Boolean {
-        return contains(notificationType)
-    }
 
     @Synchronized
     fun notificationsCount(): Int = notifications.count()
@@ -65,7 +61,11 @@ class SettingsNotificationManager {
     fun count(): Int = notifications.size
 
     @Synchronized
-    fun contains(notificationType: SettingNotificationType): Boolean {
+    fun contains(notificationType: SettingNotificationType?): Boolean {
+        if (notificationType == null) {
+            return false
+        }
+
         return notifications.contains(notificationType)
     }
 

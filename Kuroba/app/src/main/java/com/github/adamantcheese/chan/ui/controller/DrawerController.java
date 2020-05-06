@@ -40,8 +40,8 @@ import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2;
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter;
-import com.github.adamantcheese.chan.ui.controller.settings.MainSettingsController;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -286,7 +286,7 @@ public class DrawerController
 
     @Override
     public void openSettings() {
-        openController(new MainSettingsController(context));
+        openController(new MainSettingsControllerV2(context));
     }
 
     @Override

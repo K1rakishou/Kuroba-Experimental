@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.ui.settings
 
-import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import com.github.adamantcheese.chan.R
 
-enum class SettingNotificationType(@ColorInt val notificationIconTintColor: Int) {
+enum class SettingNotificationType(@ColorRes val notificationIconTintColor: Int) {
     /**
      * No active notification
      * */

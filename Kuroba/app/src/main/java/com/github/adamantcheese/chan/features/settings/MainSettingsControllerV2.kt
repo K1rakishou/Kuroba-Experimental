@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.features.settings.setting.SettingV2
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
+import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.exhaustive
@@ -43,7 +44,7 @@ import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 
-class DeveloperSettingsControllerV2(context: Context) : Controller(context), ToolbarSearchCallback {
+class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarSearchCallback {
 
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -125,7 +126,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
         .debounce(DEBOUNCE_TIME_MS)
         .collect { query ->
           if (query.length < MIN_QUERY_LENGTH) {
-            rebuildTopStackScreen()
+            rebuildCurrentScreen()
             return@collect
           }
 
@@ -139,7 +140,9 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
         .catch { error ->
           Logger.e(TAG, "Unknown error received from SettingsNotificationManager", error)
         }
-        .collect { onNotificationsChanged() }
+        .collect {
+          rebuildCurrentScreen()
+        }
     }
 
     rebuildDefaultScreen()
@@ -150,11 +153,12 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
 
     normalSettingsGraph.clear()
     searchSettingsGraph.clear()
+    screenStack.clear()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
     if (!visible) {
-      rebuildTopStackScreen()
+      rebuildCurrentScreen()
     }
   }
 
@@ -176,44 +180,12 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     return true
   }
 
-  private fun onNotificationsChanged() {
-    Logger.d(TAG, "onNotificationsChanged called")
-
-    // TODO(archives):
-//    updateSettingNotificationIcon(settingsNotificationManager.getOrDefault(SettingNotificationType.ApkUpdate),
-//      getViewGroupOrThrow(updateSettingView)
-//    )
-//    updateSettingNotificationIcon(settingsNotificationManager.getOrDefault(SettingNotificationType.CrashLog),
-//      getViewGroupOrThrow(reportSettingView)
-//    )
-  }
-
-//  protected fun updateSettingNotificationIcon(
-//    settingNotificationType: SettingNotificationType, preferenceView: ViewGroup
-//  ) {
-//    val notificationIcon: AppCompatImageView = preferenceView.findViewById(R.id.setting_notification_icon)
-//    if (notificationIcon != null) {
-//      AndroidUtils.updatePaddings(notificationIcon, AndroidUtils.dp(16f), AndroidUtils.dp(16f), -1, -1)
-//    } else {
-//      Logger.e(TAG, "Notification icon is null, can't update setting notification for this view.")
-//      return
-//    }
-//    val hasNotifications = settingsNotificationManager.hasNotifications(settingNotificationType)
-//    if (settingNotificationType !== SettingNotificationType.Default && hasNotifications) {
-//      val tintColor = AndroidUtils.getRes().getColor(settingNotificationType.notificationIconTintColor)
-//      notificationIcon.setColorFilter(tintColor, PorterDuff.Mode.SRC_IN)
-//      notificationIcon.visibility = View.VISIBLE
-//    } else {
-//      notificationIcon.visibility = View.GONE
-//    }
-//  }
-
   private fun rebuildDefaultScreen() {
     pushScreen(defaultScreen)
     rebuildScreen(defaultScreen)
   }
 
-  private fun rebuildTopStackScreen() {
+  private fun rebuildCurrentScreen() {
     require(screenStack.isNotEmpty()) { "Stack is empty" }
 
     val screenIdentifier = screenStack.peek()
@@ -325,12 +297,19 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
     settingIndex: Int,
     searchMode: Boolean
   ) {
+    val notificationType = if (settingsNotificationManager.contains(settingV2.notificationType)) {
+      settingV2.notificationType!!
+    } else {
+      SettingNotificationType.Default
+    }
+
     when (settingV2) {
       is LinkSettingV2 -> {
         epoxyLinkSetting {
           id("epoxy_link_setting_${settingV2.settingsIdentifier.getIdentifier()}")
           topDescription(settingV2.topDescription)
           bottomDescription(settingV2.bottomDescription)
+          bindNotificationIcon(notificationType)
 
           clickListener {
             when (val clickAction = settingV2.callback.invoke()) {
@@ -356,6 +335,7 @@ class DeveloperSettingsControllerV2(context: Context) : Controller(context), Too
           topDescription(settingV2.topDescription)
           bottomDescription(settingV2.bottomDescription)
           checked(settingV2.isChecked)
+          bindNotificationIcon(notificationType)
 
           clickListener {
             settingV2.callback?.invoke()

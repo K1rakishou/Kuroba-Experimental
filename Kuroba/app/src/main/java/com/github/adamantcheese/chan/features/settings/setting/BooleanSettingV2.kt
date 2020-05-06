@@ -95,6 +95,10 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
       return SettingV2Builder(
         settingsIdentifier = identifier,
         buildFunction = fun(updateCounter: Int): BooleanSettingV2 {
+          require(notificationType != SettingNotificationType.Default) {
+            "Can't use default notification type here"
+          }
+
           if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
             throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
           }
