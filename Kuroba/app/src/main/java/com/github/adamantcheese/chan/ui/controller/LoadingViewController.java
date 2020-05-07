@@ -9,8 +9,7 @@ import com.github.adamantcheese.chan.R;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 
-public class LoadingViewController
-        extends BaseFloatingController {
+public class LoadingViewController extends BaseFloatingController {
     private TextView textView;
     private ProgressBar progressBar;
     private boolean indeterminate;

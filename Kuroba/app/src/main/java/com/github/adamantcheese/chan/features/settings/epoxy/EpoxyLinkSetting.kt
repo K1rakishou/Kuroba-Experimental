@@ -65,12 +65,12 @@ class EpoxyLinkSetting @JvmOverloads constructor(
   }
 
   @CallbackProp
-  fun setClickListener(callback: (() -> Unit)?) {
+  fun setClickListener(callback: ((View) -> Unit)?) {
     if (callback == null) {
       settingViewHolder.setOnClickListener(null)
       return
     }
 
-    settingViewHolder.setOnClickListener { callback.invoke() }
+    settingViewHolder.setOnClickListener { view -> callback.invoke(view) }
   }
 }

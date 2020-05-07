@@ -21,13 +21,17 @@ import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupT
 import com.github.adamantcheese.chan.features.settings.screens.DatabaseSettingsSummaryScreen
 import com.github.adamantcheese.chan.features.settings.screens.DeveloperSettingsScreen
 import com.github.adamantcheese.chan.features.settings.screens.MainSettingsScreen
+import com.github.adamantcheese.chan.features.settings.screens.ThreadWatcherSettingsScreen
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
+import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.SettingV2
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.exhaustive
@@ -76,6 +80,12 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
       (context as StartActivity).updateManager,
       reportManager,
       navigationController!!
+    )
+  }
+
+  private val threadWatcherSettingsScreen by lazy {
+    ThreadWatcherSettingsScreen(
+      context
     )
   }
 
@@ -200,17 +210,9 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     }
   }
 
-  private fun rebuildScreen(
-    screen: IScreenIdentifier,
-    searchMode: Boolean = false
-  ) {
-    val settingsScreen = if (searchMode) {
-      searchSettingsGraph.rebuildScreen(screen)
-      searchSettingsGraph[screen]
-    } else {
-      normalSettingsGraph.rebuildScreen(screen)
-      normalSettingsGraph[screen]
-    }
+  private fun rebuildScreen(screen: IScreenIdentifier) {
+    normalSettingsGraph.rebuildScreen(screen)
+    val settingsScreen = normalSettingsGraph[screen]
 
     recyclerView.withModels {
       navigation.title = settingsScreen.title
@@ -222,14 +224,9 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   private fun rebuildSetting(
     screen: IScreenIdentifier,
     group: IGroupIdentifier,
-    setting: SettingsIdentifier,
-    searchMode: Boolean = false
+    setting: SettingsIdentifier
   ) {
-    val settingsScreen = if (searchMode) {
-      searchSettingsGraph[screen].apply { rebuildSetting(group, setting) }
-    } else {
-      normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
-    }
+    val settingsScreen = normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
 
     recyclerView.withModels {
       navigation.title = settingsScreen.title
@@ -262,7 +259,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
       settingsScreen.iterateGroups { settingsGroup ->
         settingsGroup.iterateSettingsFilteredByQuery(query) { setting ->
           foundSomething = true
-          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, true)
+          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, query)
         }
       }
     }
@@ -285,7 +282,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
       }
 
       settingsGroup.iterateGroups { setting ->
-        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, false)
+        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, null)
       }
     }
   }
@@ -295,7 +292,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     settingsScreen: SettingsScreen,
     settingsGroup: SettingsGroup,
     settingIndex: Int,
-    searchMode: Boolean
+    query: String?
   ) {
     val notificationType = if (settingsNotificationManager.contains(settingV2.notificationType)) {
       settingV2.notificationType!!
@@ -314,16 +311,19 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
           clickListener {
             when (val clickAction = settingV2.callback.invoke()) {
               SettingClickAction.RefreshClickedSetting -> {
-                rebuildSetting(
-                  settingsScreen.screenIdentifier,
-                  settingsGroup.groupIdentifier,
-                  settingV2.settingsIdentifier,
-                  searchMode
-                )
+                if (!query.isNullOrEmpty()) {
+                  rebuildScreenWithSearchQuery(query)
+                } else {
+                  rebuildSetting(
+                    settingsScreen.screenIdentifier,
+                    settingsGroup.groupIdentifier,
+                    settingV2.settingsIdentifier
+                  )
+                }
               }
               is SettingClickAction.OpenScreen -> {
                 pushScreen(clickAction.screenIdentifier)
-                rebuildScreen(clickAction.screenIdentifier, searchMode)
+                rebuildScreen(clickAction.screenIdentifier)
               }
             }.exhaustive
           }
@@ -343,9 +343,22 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
             rebuildSetting(
               settingsScreen.screenIdentifier,
               settingsGroup.groupIdentifier,
-              settingV2.settingsIdentifier,
-              searchMode
+              settingV2.settingsIdentifier
             )
+          }
+        }
+      }
+      is ListSettingV2<*> -> {
+        epoxyLinkSetting {
+          id("epoxy_list_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          bindNotificationIcon(notificationType)
+
+          clickListener {
+            showListDialog(settingV2) {
+              rebuildCurrentScreen()
+            }
           }
         }
       }
@@ -356,6 +369,29 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
         id("epoxy_divider_${settingIndex}")
       }
     }
+  }
+
+  private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: () -> Unit) {
+    val items = settingV2.items.mapIndexed { index, item ->
+      return@mapIndexed FloatingListMenu.FloatingListMenuItem(
+        index,
+        settingV2.itemNameMapper(item),
+        item
+      )
+    }
+
+    val controller = FloatingListMenuController(
+      context,
+      items
+    ) { clickedItem ->
+      settingV2.updateSetting(clickedItem.value)
+      onItemClicked()
+    }
+
+    navigationController!!.presentController(
+      controller,
+      true
+    )
   }
 
   private fun pushScreen(screenIdentifier: IScreenIdentifier) {
@@ -375,6 +411,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     graph += mainSettingsScreen.build()
     graph += developerSettingsScreen.build()
     graph += databaseSummaryScreen.build()
+    graph += threadWatcherSettingsScreen.build()
 
     return graph
   }

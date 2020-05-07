@@ -205,6 +205,21 @@ sealed class ThreadWatcherScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MainGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+  ) : IGroup,
+    ThreadWatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ShortPinInfo : MainGroup("short_pin_info")
+    object ThreadWatcherTimeout : MainGroup("thread_watcher_timeout")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("thread_watcher_screen")
   }

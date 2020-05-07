@@ -4,9 +4,10 @@ import android.content.Context
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
+import com.github.adamantcheese.chan.utils.Logger
 
-class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
-  private var setting: Setting<Boolean>? = null
+class ListSettingV2<T : Any> : SettingV2() {
+  private var setting: Setting<T>? = null
 
   override var requiresRestart: Boolean = false
   override var requiresUiRefresh: Boolean = false
@@ -15,26 +16,13 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
   override var bottomDescription: String? = null
   override var notificationType: SettingNotificationType? = null
 
-  var isChecked = false
+  var items: List<T> = emptyList()
     private set
-  var callback: (() -> Unit)? = null
+  lateinit var itemNameMapper: (T: Any?) -> String
     private set
 
-  private val defaultCallback: () -> Unit = {
-    val prev = setting?.get()
-
-    if (prev != null) {
-      setting?.set(!prev)
-      isChecked = !prev
-    }
-  }
-
-  override fun onValueChange(setting: Setting<*>?, isChecked: Boolean) {
-    onCheckedChanged(isChecked)
-  }
-
-  private fun onCheckedChanged(isChecked: Boolean) {
-    this.isChecked = isChecked
+  fun updateSetting(value: Any) {
+    setting?.set(value as T)
   }
 
   override fun update(): Int {
@@ -42,58 +30,61 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
   }
 
   override fun dispose() {
-    setting?.removeCallback(this)
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is BooleanSettingV2) return false
+    if (other !is ListSettingV2<*>) return false
 
-    if (isChecked != other.isChecked) return false
     if (requiresRestart != other.requiresRestart) return false
     if (requiresUiRefresh != other.requiresUiRefresh) return false
     if (settingsIdentifier != other.settingsIdentifier) return false
     if (topDescription != other.topDescription) return false
     if (bottomDescription != other.bottomDescription) return false
+    if (notificationType != other.notificationType) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = isChecked.hashCode()
-    result = 31 * result + requiresRestart.hashCode()
+    var result = requiresRestart.hashCode()
     result = 31 * result + requiresUiRefresh.hashCode()
     result = 31 * result + settingsIdentifier.hashCode()
     result = 31 * result + topDescription.hashCode()
     result = 31 * result + (bottomDescription?.hashCode() ?: 0)
+    result = 31 * result + (notificationType?.hashCode() ?: 0)
     return result
   }
 
   override fun toString(): String {
-    val currentValue = setting?.get() ?: "<null>"
-
-    return "BooleanSettingV2(isChecked=$isChecked, requiresRestart=$requiresRestart, " +
-      "requiresUiRefresh=$requiresUiRefresh, settingsIdentifier=$settingsIdentifier, " +
-      "topDescription='$topDescription', bottomDescription=$bottomDescription, settingValue=$currentValue)"
+    return "ListSettingV2(requiresRestart=$requiresRestart, requiresUiRefresh=$requiresUiRefresh, " +
+      "settingsIdentifier=$settingsIdentifier, topDescription='$topDescription', " +
+      "bottomDescription=$bottomDescription, notificationType=$notificationType)"
   }
 
   companion object {
-    fun createBuilder(
+    private const val TAG = "ListSettingV2"
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> createBuilder(
       context: Context,
       identifier: SettingsIdentifier,
-      setting: Setting<Boolean>,
+      setting: Setting<T>,
+      items: List<T>,
+      itemNameMapper: (T) -> String,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,
-      bottomDescriptionIdFunc: (() -> Int)? = null,
-      bottomDescriptionStringFunc: (() -> String)? = null,
-      checkChangedCallback: ((Boolean) -> Unit)? = null,
+      bottomDescriptionIdFunc: ((name: String) -> Int)? = null,
+      bottomDescriptionStringFunc: ((name: String) -> String)? = null,
       requiresRestart: Boolean = false,
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(updateCounter: Int): BooleanSettingV2 {
+        buildFunction = fun(_: Int): ListSettingV2<T> {
+          require(items.isNotEmpty()) { "Items are empty" }
+
           require(notificationType != SettingNotificationType.Default) {
             "Can't use default notification type here"
           }
@@ -106,7 +97,7 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
             throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
           }
 
-          val booleanSettingV2 = BooleanSettingV2()
+          val listSettingV2 = ListSettingV2<T>()
 
           val topDescResult = listOf(
             topDescriptionIdFunc,
@@ -114,7 +105,7 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
           ).mapNotNull { func -> func?.invoke() }
             .lastOrNull()
 
-          booleanSettingV2.topDescription = when (topDescResult) {
+          listSettingV2.topDescription = when (topDescResult) {
             is Int -> context.getString(topDescResult as Int)
             is String -> topDescResult as String
             null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
@@ -124,39 +115,38 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
           val bottomDescResult = listOf(
             bottomDescriptionIdFunc,
             bottomDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
+          ).mapNotNull { func ->
+            val settingValue = setting.get()
 
-          booleanSettingV2.bottomDescription = when (bottomDescResult) {
+            val item = items.firstOrNull { item -> item == settingValue }
+            if (item == null) {
+              Logger.e(TAG, "Couldn't find item with value $settingValue resetting to default: ${setting.default}")
+
+              setting.set(setting.default)
+              return@mapNotNull func?.invoke(itemNameMapper(setting.default))
+            }
+
+            func?.invoke(itemNameMapper(item))
+          }.lastOrNull()
+
+          listSettingV2.bottomDescription = when (bottomDescResult) {
             is Int -> context.getString(bottomDescResult as Int)
             is String -> bottomDescResult as String
             null -> null
             else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
           }
 
-          booleanSettingV2.requiresRestart = requiresRestart
-          booleanSettingV2.requiresUiRefresh = requiresUiRefresh
-          booleanSettingV2.notificationType = notificationType
+          listSettingV2.requiresRestart = requiresRestart
+          listSettingV2.requiresUiRefresh = requiresUiRefresh
+          listSettingV2.notificationType = notificationType
+          listSettingV2.settingsIdentifier = identifier
+          listSettingV2.setting = setting
+          listSettingV2.items = items
+          listSettingV2.itemNameMapper = itemNameMapper as (T: Any?) -> String
 
-          booleanSettingV2.isChecked = setting.get()
-          booleanSettingV2.settingsIdentifier = identifier
-
-          booleanSettingV2.setting = setting.apply {
-            addCallback(booleanSettingV2)
-          }
-
-          checkChangedCallback?.let { callback ->
-            booleanSettingV2.callback = fun() {
-              booleanSettingV2.defaultCallback.invoke()
-
-              callback.invoke(booleanSettingV2.isChecked)
-            }
-          }
-
-          return booleanSettingV2
+          return listSettingV2
         }
       )
     }
   }
-
 }

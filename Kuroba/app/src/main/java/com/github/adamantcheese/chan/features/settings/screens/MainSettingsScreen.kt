@@ -188,7 +188,9 @@ class MainSettingsScreen(
           identifier = MainScreen.MainGroup.ImportExport,
           topDescriptionIdFunc = { R.string.settings_import_export },
           bottomDescriptionIdFunc = { R.string.settings_import_export_description },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(ImportExportScreen) }
+          callbackWithClickAction = {
+            SettingClickAction.OpenScreen(ImportExportScreen)
+          }
         )
 
         group += LinkSettingV2.createBuilder(

@@ -105,6 +105,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="success">Success</string>
     <string name="error">Error</string>
     <string name="help">Help</string>
+    <string name="more">More</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
 
