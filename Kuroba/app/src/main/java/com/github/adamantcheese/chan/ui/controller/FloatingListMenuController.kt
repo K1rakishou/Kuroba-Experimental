@@ -34,5 +34,10 @@ class FloatingListMenuController(
     floatingListMenu.setClickListener(null)
   }
 
+  override fun onBack(): Boolean {
+    stopPresenting(true)
+    return true
+  }
+
   override fun getLayoutId(): Int = R.layout.controller_floating_list_menu
 }
