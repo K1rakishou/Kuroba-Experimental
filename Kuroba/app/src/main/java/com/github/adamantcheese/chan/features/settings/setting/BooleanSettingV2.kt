@@ -1,24 +1,21 @@
 package com.github.adamantcheese.chan.features.settings.setting
 
 import android.content.Context
+import com.github.adamantcheese.chan.core.settings.BooleanSetting
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.plusAssign
 
 class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
-  private var setting: Setting<Boolean>? = null
-
   override var requiresRestart: Boolean = false
   override var requiresUiRefresh: Boolean = false
   override lateinit var settingsIdentifier: SettingsIdentifier
   override lateinit var topDescription: String
   override var bottomDescription: String? = null
   override var notificationType: SettingNotificationType? = null
-
-  var isChecked = false
-    private set
-  var callback: (() -> Unit)? = null
-    private set
+  private var setting: Setting<Boolean>? = null
 
   private val defaultCallback: () -> Unit = {
     val prev = setting?.get()
@@ -29,12 +26,19 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
     }
   }
 
-  override fun onValueChange(setting: Setting<*>?, isChecked: Boolean) {
-    onCheckedChanged(isChecked)
+  var dependsOnSetting: BooleanSetting? = null
+    private set
+  var isChecked = false
+    private set
+  var callback: (() -> Unit)? = defaultCallback
+    private set
+
+  override fun isEnabled(): Boolean {
+    return dependsOnSetting?.get() ?: true
   }
 
-  private fun onCheckedChanged(isChecked: Boolean) {
-    this.isChecked = isChecked
+  override fun onValueChange(setting: Setting<*>?, isChecked: Boolean) {
+    onCheckedChanged(isChecked)
   }
 
   override fun update(): Int {
@@ -42,7 +46,26 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
   }
 
   override fun dispose() {
+    super.dispose()
     setting?.removeCallback(this)
+  }
+
+  private fun subscribeToChanges(dependsOnSetting: BooleanSetting) {
+    this.dependsOnSetting = dependsOnSetting
+
+    compositeDisposable += this.dependsOnSetting!!.listenForChanges()
+      .subscribe({ isChecked ->
+        if (!isChecked) {
+          this.setting?.set(false)
+          this.isChecked = false
+        }
+      }, { error ->
+        Logger.e("BooleanSettingV2", "Error while listening for dependsOnSetting changes", error)
+      })
+  }
+
+  private fun onCheckedChanged(isChecked: Boolean) {
+    this.isChecked = isChecked
   }
 
   override fun equals(other: Any?): Boolean {
@@ -82,6 +105,7 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
       context: Context,
       identifier: SettingsIdentifier,
       setting: Setting<Boolean>,
+      dependsOnSetting: BooleanSetting? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,
       bottomDescriptionIdFunc: (() -> Int)? = null,
@@ -143,6 +167,10 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
 
           booleanSettingV2.setting = setting.apply {
             addCallback(booleanSettingV2)
+          }
+
+          dependsOnSetting?.let { setting ->
+            booleanSettingV2.subscribeToChanges(setting)
           }
 
           checkChangedCallback?.let { callback ->

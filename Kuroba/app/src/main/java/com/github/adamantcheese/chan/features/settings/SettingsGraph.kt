@@ -53,6 +53,8 @@ class SettingsGraph(
   }
 
   fun clear() {
+    screenMap.values.forEach { screen -> screen.clear() }
+
     screenMap.clear()
     screensBuilderMap.clear()
   }

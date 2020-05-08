@@ -64,6 +64,10 @@ class SettingsGroup(
     settingsMap[settingsIdentifier] = settingsBuilderMap[settingsIdentifier]!!.invoke(newUpdateCounter)
   }
 
+  fun clear() {
+    settingsMap.values.forEach { setting -> setting.dispose() }
+  }
+
   class SettingsGroupBuilder(
     val groupIdentifier: IGroupIdentifier,
     val buildFunction: () -> SettingsGroup

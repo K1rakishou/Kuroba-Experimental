@@ -63,6 +63,27 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
   }
 
   @ModelProp
+  fun setSettingEnabled(isEnabled: Boolean) {
+    if (isEnabled) {
+      topDescriptor.alpha = 1f
+      bottomDescription.alpha = 1f
+      switcher.alpha = 1f
+      notificationIcon.alpha = 1f
+
+      settingViewHolder.isClickable = true
+      settingViewHolder.isFocusable = true
+    } else {
+      topDescriptor.alpha = .5f
+      bottomDescription.alpha = .5f
+      switcher.alpha = .5f
+      notificationIcon.alpha = .5f
+
+      settingViewHolder.isClickable = false
+      settingViewHolder.isFocusable = false
+    }
+  }
+
+  @ModelProp
   fun bindNotificationIcon(settingNotificationType: SettingNotificationType) {
     if (settingNotificationType !== SettingNotificationType.Default) {
       val tintColor = context.resources.getColor(settingNotificationType.notificationIconTintColor)

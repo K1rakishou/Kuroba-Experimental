@@ -431,8 +431,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_screen_watch">Thread watcher settings</string>
     <string name="settings_group_watch">Settings</string>
     <string name="setting_watch_info">To watch bookmarks for new posts, turn the thread watcher on.</string>
-    <string name="setting_watch_enable_background">Enable in background</string>
-    <string name="setting_watch_enable_background_description">Watch bookmarks when app is in the background</string>
+    <string name="setting_watch_enable_watcher">Enable thread watcher</string>
+    <string name="setting_watch_enable_watcher_description">Watch bookmarks when app is in the foreground</string>
+    <string name="setting_watch_enable_background">Enable background thread watcher</string>
+    <string name="setting_watch_enable_background_description">Watch bookmarks when app is either in foreground or background</string>
     <string name="setting_watch_background_timeout">Background update interval</string>
     <string name="setting_watch_background_timeout_description">The interval between updates when placed in the background</string>
     <string name="setting_thread_page_limit_notify">Last page notifications</string>
@@ -799,10 +801,10 @@ Don't have a 4chan Pass?<br>
     <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
     <string name="could_not_create_base_local_threads_dir">Could not create base local threads directory</string>
-    <string-array name="setting_watch_notify_modes">
-        <item>All posts</item>
-        <item>Only posts quoting you</item>
-    </string-array>
+    <string name="setting_watch_notify_mode_all_posts">All posts</string>
+    <string name="setting_watch_notify_mode_only_quotes">Only posts quoting you</string>
+    <string name="setting_watch_notify_sound_all_posts">All posts</string>
+    <string name="setting_watch_notify_sound_only_quotes">Only posts quoting you</string>
 
     <string name="import_or_export_dialog_title">Overwrite existing file or create a new one?</string>
     <string name="import_or_export_dialog_positive_button_text">Overwrite</string>

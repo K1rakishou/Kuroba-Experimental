@@ -48,6 +48,10 @@ class SettingsScreen(
     }.rebuildSetting(settingIdentifier)
   }
 
+  fun clear() {
+    groupsMap.values.forEach { group -> group.clear() }
+  }
+
   class SettingsScreenBuilder(
     val screenIdentifier: IScreenIdentifier,
     val buildFunction: () -> SettingsScreen

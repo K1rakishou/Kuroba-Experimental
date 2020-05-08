@@ -211,8 +211,15 @@ sealed class ThreadWatcherScreen(
   ) : IGroup,
     ThreadWatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
+    object EnableThreadWatcher : MainGroup("enable_thread_watcher")
     object ShortPinInfo : MainGroup("short_pin_info")
+    object EnableBackgroundThreadWatcher : MainGroup("enable_background_thread_watcher")
     object ThreadWatcherTimeout : MainGroup("thread_watcher_timeout")
+    object RemoveWatchedThreadsFromCatalog : MainGroup("remove_watched_threads_from_catalog")
+    object WatchLastPageNotify : MainGroup("watch_last_page_notify")
+    object WatchNotifyMode : MainGroup("watch_notify_mode")
+    object WatchSound : MainGroup("watch_sound")
+    object WatchHeadsup : MainGroup("watch_headsup")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

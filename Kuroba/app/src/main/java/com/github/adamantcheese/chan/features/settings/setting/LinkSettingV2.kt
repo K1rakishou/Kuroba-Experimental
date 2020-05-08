@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.settings.setting
 
 import android.content.Context
+import com.github.adamantcheese.chan.core.settings.BooleanSetting
 import com.github.adamantcheese.chan.features.settings.SettingClickAction
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
@@ -15,17 +16,30 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
   override var bottomDescription: String? = null
   override var notificationType: SettingNotificationType? = null
 
+  var dependsOnSetting: BooleanSetting? = null
+    private set
   private var _callback: (() -> SettingClickAction)? = null
   var callback: () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
     get() = _callback!!
     private set
+
+  override fun isEnabled(): Boolean {
+    return dependsOnSetting?.get() ?: true
+  }
 
   override fun update(): Int {
     return ++updateCounter
   }
 
   override fun dispose() {
+    super.dispose()
+
     _callback = null
+  }
+
+  private fun setDependsOnSetting(dependsOnSetting: BooleanSetting) {
+    this.dependsOnSetting = dependsOnSetting
+    ++updateCounter
   }
 
   override fun equals(other: Any?): Boolean {
@@ -62,6 +76,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
     fun createBuilder(
       context: Context,
       identifier: SettingsIdentifier,
+      dependsOnSetting: BooleanSetting? = null,
       callback: (() -> Unit)? = null,
       callbackWithClickAction: (() -> SettingClickAction)? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
@@ -119,6 +134,8 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
             null -> null
             else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
           }
+
+          dependsOnSetting?.let { setting -> settingV2.setDependsOnSetting(setting) }
 
           settingV2.requiresRestart = requiresRestart
           settingV2.requiresUiRefresh = requiresUiRefresh

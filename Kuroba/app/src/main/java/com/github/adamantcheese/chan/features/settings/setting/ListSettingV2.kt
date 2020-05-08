@@ -1,12 +1,14 @@
 package com.github.adamantcheese.chan.features.settings.setting
 
 import android.content.Context
+import com.github.adamantcheese.chan.core.settings.BooleanSetting
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.Logger
 
 class ListSettingV2<T : Any> : SettingV2() {
+  private var updateCounter = 0
   private var setting: Setting<T>? = null
 
   override var requiresRestart: Boolean = false
@@ -16,6 +18,8 @@ class ListSettingV2<T : Any> : SettingV2() {
   override var bottomDescription: String? = null
   override var notificationType: SettingNotificationType? = null
 
+  var dependsOnSetting: BooleanSetting? = null
+    private set
   var items: List<T> = emptyList()
     private set
   lateinit var itemNameMapper: (T: Any?) -> String
@@ -25,17 +29,24 @@ class ListSettingV2<T : Any> : SettingV2() {
     setting?.set(value as T)
   }
 
-  override fun update(): Int {
-    return 0
+  override fun isEnabled(): Boolean {
+    return dependsOnSetting?.get() ?: true
   }
 
-  override fun dispose() {
+  override fun update(): Int {
+    return ++updateCounter
+  }
+
+  private fun setDependsOnSetting(dependsOnSetting: BooleanSetting) {
+    this.dependsOnSetting = dependsOnSetting
+    ++updateCounter
   }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ListSettingV2<*>) return false
 
+    if (updateCounter != other.updateCounter) return false
     if (requiresRestart != other.requiresRestart) return false
     if (requiresUiRefresh != other.requiresUiRefresh) return false
     if (settingsIdentifier != other.settingsIdentifier) return false
@@ -48,6 +59,7 @@ class ListSettingV2<T : Any> : SettingV2() {
 
   override fun hashCode(): Int {
     var result = requiresRestart.hashCode()
+    result = 31 * result + updateCounter.hashCode()
     result = 31 * result + requiresUiRefresh.hashCode()
     result = 31 * result + settingsIdentifier.hashCode()
     result = 31 * result + topDescription.hashCode()
@@ -57,9 +69,10 @@ class ListSettingV2<T : Any> : SettingV2() {
   }
 
   override fun toString(): String {
-    return "ListSettingV2(requiresRestart=$requiresRestart, requiresUiRefresh=$requiresUiRefresh, " +
-      "settingsIdentifier=$settingsIdentifier, topDescription='$topDescription', " +
-      "bottomDescription=$bottomDescription, notificationType=$notificationType)"
+    return "ListSettingV2(updateCounter=$updateCounter, requiresRestart=$requiresRestart, " +
+      "requiresUiRefresh=$requiresUiRefresh, settingsIdentifier=$settingsIdentifier, " +
+      "topDescription='$topDescription', bottomDescription=$bottomDescription, " +
+      "notificationType=$notificationType)"
   }
 
   companion object {
@@ -70,6 +83,7 @@ class ListSettingV2<T : Any> : SettingV2() {
       context: Context,
       identifier: SettingsIdentifier,
       setting: Setting<T>,
+      dependsOnSetting: BooleanSetting? = null,
       items: List<T>,
       itemNameMapper: (T) -> String,
       topDescriptionIdFunc: (() -> Int)? = null,
@@ -136,6 +150,7 @@ class ListSettingV2<T : Any> : SettingV2() {
             else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
           }
 
+          dependsOnSetting?.let { setting -> listSettingV2.setDependsOnSetting(setting) }
           listSettingV2.requiresRestart = requiresRestart
           listSettingV2.requiresUiRefresh = requiresUiRefresh
           listSettingV2.notificationType = notificationType

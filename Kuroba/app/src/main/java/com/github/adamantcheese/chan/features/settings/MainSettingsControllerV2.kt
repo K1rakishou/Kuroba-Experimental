@@ -215,7 +215,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     val settingsScreen = normalSettingsGraph[screen]
 
     recyclerView.withModels {
-      navigation.title = settingsScreen.title
+      updateTitle(settingsScreen)
 
       renderScreen(settingsScreen)
     }
@@ -229,10 +229,15 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     val settingsScreen = normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
 
     recyclerView.withModels {
-      navigation.title = settingsScreen.title
+      updateTitle(settingsScreen)
 
       renderScreen(settingsScreen)
     }
+  }
+
+  private fun updateTitle(settingsScreen: SettingsScreen) {
+    navigation.title = settingsScreen.title
+    (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
   }
 
   private fun EpoxyController.renderSearchScreen(graph: SettingsGraph, query: String) {
@@ -308,24 +313,31 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
           bottomDescription(settingV2.bottomDescription)
           bindNotificationIcon(notificationType)
 
-          clickListener {
-            when (val clickAction = settingV2.callback.invoke()) {
-              SettingClickAction.RefreshClickedSetting -> {
-                if (!query.isNullOrEmpty()) {
-                  rebuildScreenWithSearchQuery(query)
-                } else {
-                  rebuildSetting(
-                    settingsScreen.screenIdentifier,
-                    settingsGroup.groupIdentifier,
-                    settingV2.settingsIdentifier
-                  )
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
+
+            clickListener {
+              when (val clickAction = settingV2.callback.invoke()) {
+                SettingClickAction.RefreshClickedSetting -> {
+                  if (!query.isNullOrEmpty()) {
+                    rebuildScreenWithSearchQuery(query)
+                  } else {
+                    rebuildSetting(
+                      settingsScreen.screenIdentifier,
+                      settingsGroup.groupIdentifier,
+                      settingV2.settingsIdentifier
+                    )
+                  }
                 }
-              }
-              is SettingClickAction.OpenScreen -> {
-                pushScreen(clickAction.screenIdentifier)
-                rebuildScreen(clickAction.screenIdentifier)
-              }
-            }.exhaustive
+                is SettingClickAction.OpenScreen -> {
+                  pushScreen(clickAction.screenIdentifier)
+                  rebuildScreen(clickAction.screenIdentifier)
+                }
+              }.exhaustive
+            }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
           }
         }
       }
@@ -337,14 +349,21 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
           checked(settingV2.isChecked)
           bindNotificationIcon(notificationType)
 
-          clickListener {
-            settingV2.callback?.invoke()
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
 
-            rebuildSetting(
-              settingsScreen.screenIdentifier,
-              settingsGroup.groupIdentifier,
-              settingV2.settingsIdentifier
-            )
+            clickListener {
+              settingV2.callback?.invoke()
+
+              rebuildSetting(
+                settingsScreen.screenIdentifier,
+                settingsGroup.groupIdentifier,
+                settingV2.settingsIdentifier
+              )
+            }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
           }
         }
       }
@@ -355,10 +374,17 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
           bottomDescription(settingV2.bottomDescription)
           bindNotificationIcon(notificationType)
 
-          clickListener {
-            showListDialog(settingV2) {
-              rebuildCurrentScreen()
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
+
+            clickListener {
+              showListDialog(settingV2) {
+                rebuildCurrentScreen()
+              }
             }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
           }
         }
       }
