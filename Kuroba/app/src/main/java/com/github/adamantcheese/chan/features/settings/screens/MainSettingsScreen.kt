@@ -201,7 +201,7 @@ class MainSettingsScreen(
             val filtersCount = databaseManager.runTask(databaseManager.databaseFilterManager.count).toInt()
             getQuantityString(R.plurals.filter, filtersCount, filtersCount)
           },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(FiltersExportScreen) }
+          callbackWithClickAction = { SettingClickAction.OpenScreen(FiltersScreen) }
         )
 
         group += LinkSettingV2.createBuilder(

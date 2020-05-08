@@ -217,7 +217,7 @@ public class ChanSettings {
     // Images
     public static final BooleanSetting hideImages;
     public static final BooleanSetting removeImageSpoilers;
-    public static final BooleanSetting revealimageSpoilers;
+    public static final BooleanSetting revealImageSpoilers;
     public static final BooleanSetting highResCells;
     public static final BooleanSetting parsePostImageLinks;
     public static final BooleanSetting fetchInlinedFileSizes;
@@ -375,7 +375,7 @@ public class ChanSettings {
             // Images
             hideImages = new BooleanSetting(p, "preference_hide_images", false);
             removeImageSpoilers = new BooleanSetting(p, "preference_reveal_image_spoilers", false);
-            revealimageSpoilers = new BooleanSetting(p, "preference_auto_unspoil_images", true);
+            revealImageSpoilers = new BooleanSetting(p, "preference_auto_unspoil_images", true);
             highResCells = new BooleanSetting(p, "high_res_cells", false);
             parsePostImageLinks = new BooleanSetting(p, "parse_post_image_links", true);
             fetchInlinedFileSizes = new BooleanSetting(p, "fetch_inlined_file_size", false);

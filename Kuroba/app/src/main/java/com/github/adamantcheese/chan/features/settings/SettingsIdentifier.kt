@@ -75,6 +75,10 @@ sealed class SettingsIdentifier(
 
 }
 
+// ======================================================
+// ================= MainScreen =========================
+// ======================================================
+
 sealed class MainScreen(
   groupIdentifier: GroupIdentifier,
   settingsIdentifier: SettingIdentifier,
@@ -130,6 +134,10 @@ sealed class MainScreen(
   }
 }
 
+// ======================================================
+// ================= DeveloperScreen ====================
+// ======================================================
+
 sealed class DeveloperScreen(
   groupIdentifier: GroupIdentifier,
   settingsIdentifier: SettingIdentifier,
@@ -167,6 +175,10 @@ sealed class DeveloperScreen(
   }
 }
 
+// ===========================================================
+// ================= DatabaseSummaryScreen ===================
+// ===========================================================
+
 sealed class DatabaseSummaryScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
@@ -196,6 +208,10 @@ sealed class DatabaseSummaryScreen(
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("database_summary_screen")
   }
 }
+
+// =========================================================
+// ================= ThreadWatcherScreen ===================
+// =========================================================
 
 sealed class ThreadWatcherScreen(
   groupIdentifier: GroupIdentifier,
@@ -232,6 +248,10 @@ sealed class ThreadWatcherScreen(
   }
 }
 
+// ======================================================
+// ================= SitesSetupScreen ===================
+// ======================================================
+
 sealed class SitesSetupScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
@@ -245,6 +265,10 @@ sealed class SitesSetupScreen(
   }
 }
 
+// ======================================================
+// ================= AppearanceScreen ===================
+// ======================================================
+
 sealed class AppearanceScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
@@ -253,10 +277,100 @@ sealed class AppearanceScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MainGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+  ) : IGroup,
+    AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ThemeCustomization : MainGroup("theme_customization")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
+    }
+  }
+
+  sealed class LayoutGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+  ) : IGroup,
+    AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object LayoutMode : LayoutGroup("layout_mode")
+    object CatalogColumnsCount : LayoutGroup("catalog_columns_count")
+    object NeverHideToolbar : LayoutGroup("never_hide_toolbar")
+    object EnableReplyFAB : LayoutGroup("enable_reply_fab")
+    object MoveInputToBottom : LayoutGroup("move_input_to_bottom")
+    object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
+    object UseImmersiveModeForGallery : LayoutGroup("use_immersive_mode_for_gallery")
+    object MoveSortToToolbar : LayoutGroup("move_sort_to_toolbar")
+    object NeverShowPages : LayoutGroup("never_show_pages")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("layout_group")
+    }
+  }
+
+  sealed class PostGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+  ) : IGroup,
+    AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object FontSize : PostGroup("font_size")
+    object FontAlternate : PostGroup("font_alternate")
+    object ShiftPostFormat : PostGroup("shift_post_format")
+    object AccessiblePostInfo : PostGroup("accessible_post_info")
+    object PostFullDate : PostGroup("post_full_date")
+    object PostFileInfo : PostGroup("post_file_info")
+    object PostFileName : PostGroup("post_file_name")
+    object TextOnly : PostGroup("text_only")
+    object RevealTextSpoilers : PostGroup("reveal_text_spoilers")
+    object Anonymize : PostGroup("anonymize")
+    object ShowAnonymousName : PostGroup("show_anonymous_name")
+    object AnonymizeIds : PostGroup("anonymize_ids")
+    object AddDubs : PostGroup("add_dubs")
+    object ParseYoutubeTitlesAndDuration : PostGroup("parse_youtube_titles_and_duration")
+    object ShowYoutubeLinkAlongWithTitleAndDuration : PostGroup("show_youtube_links_along_with_title_and_duration")
+    object EnableEmoji : PostGroup("enable_emoji")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("post_group")
+    }
+  }
+
+  sealed class ImagesGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+  ) : IGroup,
+    AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object HideImages : ImagesGroup("hide_images")
+    object RemoveImageSpoilers : ImagesGroup("remove_image_spoilers")
+    object RevealImageSpoilers : ImagesGroup("reveal_image_spoilers")
+    object HighResCells : ImagesGroup("high_res_cells")
+    object ParsePostImageLinks : ImagesGroup("parse_post_image_links")
+    object FetchInlinedFileSizes : ImagesGroup("fetch_inlined_file_sizes")
+    object TransparencyOn : ImagesGroup("transparency_on")
+    object NeverShowWebmControls : ImagesGroup("never_show_webm_controls")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("images_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("appearance_screen")
   }
 }
+
+// ====================================================
+// ================= BehaviorScreen ===================
+// ====================================================
 
 sealed class BehaviorScreen(
   groupIdentifier: GroupIdentifier,
@@ -271,6 +385,10 @@ sealed class BehaviorScreen(
   }
 }
 
+// =================================================
+// ================= MediaScreen ===================
+// =================================================
+
 sealed class MediaScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
@@ -283,6 +401,10 @@ sealed class MediaScreen(
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("media_screen")
   }
 }
+
+// ========================================================
+// ================= ImportExportScreen ===================
+// ========================================================
 
 sealed class ImportExportScreen(
   groupIdentifier: GroupIdentifier,
@@ -297,10 +419,14 @@ sealed class ImportExportScreen(
   }
 }
 
-sealed class FiltersExportScreen(
+// ===================================================
+// ================= FiltersScreen ===================
+// ===================================================
+
+sealed class FiltersScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  screenIdentifier: ScreenIdentifier = FiltersExportScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = FiltersScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
@@ -309,6 +435,10 @@ sealed class FiltersExportScreen(
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("filters_screen")
   }
 }
+
+// ================================================================
+// ================= ExperimentalSettingsScreen ===================
+// ================================================================
 
 sealed class ExperimentalSettingsScreen(
   groupIdentifier: GroupIdentifier,

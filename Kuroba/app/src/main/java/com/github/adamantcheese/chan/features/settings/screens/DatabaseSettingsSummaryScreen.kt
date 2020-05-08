@@ -42,9 +42,7 @@ class DatabaseSettingsSummaryScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ClearInlinedFilesTable,
-          topDescriptionIdFunc = {
-            R.string.settings_clear_inlined_files_table
-          },
+          topDescriptionIdFunc = { R.string.settings_clear_inlined_files_table },
           bottomDescriptionStringFunc = {
             val count = runBlocking { inlinedFileInfoRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores file size info for inlined files.\n\n" +
@@ -59,9 +57,7 @@ class DatabaseSettingsSummaryScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ClearLinkExtraInfoTable,
-          topDescriptionIdFunc = {
-            R.string.settings_clear_link_info_table
-          },
+          topDescriptionIdFunc = { R.string.settings_clear_link_info_table },
           bottomDescriptionStringFunc = {
             val count = runBlocking { mediaServiceLinkExtraContentRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores title and durations for youtube (and not only) like.\n\n" +
@@ -76,9 +72,7 @@ class DatabaseSettingsSummaryScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ClearSeenPostsTable,
-          topDescriptionIdFunc = {
-            R.string.settings_clear_seen_posts_table
-          },
+          topDescriptionIdFunc = { R.string.settings_clear_seen_posts_table },
           bottomDescriptionStringFunc = {
             val count = runBlocking { seenPostRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores ids of already seen posts.\n\n" +

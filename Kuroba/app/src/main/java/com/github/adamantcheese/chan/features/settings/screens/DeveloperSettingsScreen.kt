@@ -52,9 +52,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ViewLogs,
-          topDescriptionIdFunc = {
-            R.string.settings_open_logs
-          },
+          topDescriptionIdFunc = { R.string.settings_open_logs },
           callback = {
             navigationController.pushController(LogsController(context))
           }
@@ -79,9 +77,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.CrashApp,
-          topDescriptionIdFunc = {
-            R.string.settings_crash_app
-          },
+          topDescriptionIdFunc = { R.string.settings_crash_app },
           callback = {
             throw RuntimeException("Debug crash")
           }
@@ -90,9 +86,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ClearFileCache,
-          topDescriptionStringFunc = {
-            context.getString(R.string.settings_clear_file_cache)
-          },
+          topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache) },
           bottomDescriptionStringFunc = {
             val cacheSize = cacheHandler.getSize() / 1024 / 1024
             context.getString(R.string.settings_clear_file_cache_bottom_description, cacheSize)
@@ -106,9 +100,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ShowDatabaseSummary,
-          topDescriptionIdFunc = {
-            R.string.settings_database_summary
-          },
+          topDescriptionIdFunc = { R.string.settings_database_summary },
           callbackWithClickAction = {
             SettingClickAction.OpenScreen(DatabaseSummaryScreen)
           }
@@ -117,9 +109,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.FilterWatchIgnoreReset,
-          topDescriptionIdFunc = {
-            R.string.settings_clear_ignored_filter_watches
-          },
+          topDescriptionIdFunc = { R.string.settings_clear_ignored_filter_watches },
           callback = {
             filterWatchManager.clearFilterWatchIgnores()
             AndroidUtils.showToast(context, "Cleared ignores")
@@ -129,9 +119,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.DumpThreadStack,
-          topDescriptionIdFunc = {
-            R.string.settings_dump_thread_stack
-          },
+          topDescriptionIdFunc = { R.string.settings_dump_thread_stack },
           callback = {
             dumpThreadStack()
             AndroidUtils.showToast(context, "Thread stack dumped")
@@ -141,9 +129,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ForceAwakeWakeables,
-          topDescriptionIdFunc = {
-            R.string.settings_force_wake_manager_wake
-          },
+          topDescriptionIdFunc = { R.string.settings_force_wake_manager_wake },
           callback = {
             wakeManager.forceWake()
             AndroidUtils.showToast(context, "Woke all wakeables")
@@ -153,9 +139,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ResetThreadOpenCounter,
-          topDescriptionIdFunc = {
-            R.string.settings_reset_thread_open_counter
-          },
+          topDescriptionIdFunc = { R.string.settings_reset_thread_open_counter },
           callback = {
             ChanSettings.threadOpenCounter.reset()
             AndroidUtils.showToast(context, "Done")

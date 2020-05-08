@@ -18,10 +18,7 @@ import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupTitle
-import com.github.adamantcheese.chan.features.settings.screens.DatabaseSettingsSummaryScreen
-import com.github.adamantcheese.chan.features.settings.screens.DeveloperSettingsScreen
-import com.github.adamantcheese.chan.features.settings.screens.MainSettingsScreen
-import com.github.adamantcheese.chan.features.settings.screens.ThreadWatcherSettingsScreen
+import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
@@ -31,6 +28,7 @@ import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
@@ -70,6 +68,8 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   lateinit var reportManager: ReportManager
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
+  @Inject
+  lateinit var themeHelper: ThemeHelper
 
   lateinit var recyclerView: EpoxyRecyclerView
 
@@ -86,6 +86,14 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   private val threadWatcherSettingsScreen by lazy {
     ThreadWatcherSettingsScreen(
       context
+    )
+  }
+
+  private val appearanceSettingsScreen by lazy {
+    AppearanceSettingsScreen(
+      context,
+      navigationController!!,
+      themeHelper
     )
   }
 
@@ -248,7 +256,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     }
 
     var foundSomething = false
-    var settingIndex = 0
+    var globalSettingIndex = 0
 
     val isDefaultScreen = (topScreenIdentifier != null
       && topScreenIdentifier.getScreenIdentifier() == defaultScreen.getScreenIdentifier())
@@ -261,10 +269,19 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
         return@iterateScreens
       }
 
+      var groupSettingIndex = 0
+
       settingsScreen.iterateGroups { settingsGroup ->
         settingsGroup.iterateSettingsFilteredByQuery(query) { setting ->
           foundSomething = true
-          renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, query)
+          renderSettingInternal(
+            setting,
+            settingsScreen,
+            settingsGroup,
+            groupSettingIndex++,
+            globalSettingIndex++,
+            query
+          )
         }
       }
     }
@@ -278,7 +295,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   }
 
   private fun EpoxyController.renderScreen(settingsScreen: SettingsScreen) {
-    var settingIndex = 0
+    var globalSettingIndex = 0
 
     settingsScreen.iterateGroups { settingsGroup ->
       epoxySettingsGroupTitle {
@@ -286,8 +303,17 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
         groupTitle(settingsGroup.groupTitle)
       }
 
+      var groupSettingIndex = 0
+
       settingsGroup.iterateGroups { setting ->
-        renderSettingInternal(setting, settingsScreen, settingsGroup, settingIndex++, null)
+        renderSettingInternal(
+          setting,
+          settingsScreen,
+          settingsGroup,
+          groupSettingIndex++,
+          globalSettingIndex++,
+          null
+        )
       }
     }
   }
@@ -296,7 +322,8 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     settingV2: SettingV2,
     settingsScreen: SettingsScreen,
     settingsGroup: SettingsGroup,
-    settingIndex: Int,
+    groupSettingIndex: Int,
+    globalSettingIndex: Int,
     query: String?
   ) {
     val notificationType = if (settingsNotificationManager.contains(settingV2.notificationType)) {
@@ -390,18 +417,24 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
       }
     }
 
-    if (settingIndex != settingsGroup.lastIndex()) {
+    if (groupSettingIndex != settingsGroup.lastIndex()) {
       epoxyDividerView {
-        id("epoxy_divider_${settingIndex}")
+        id("epoxy_divider_${globalSettingIndex}")
       }
     }
   }
 
   private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: () -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
+      val name = if (settingV2.isCurrent(item)) {
+        settingV2.itemNameMapper(item) + "  " + CHECKMARK_SYMBOL
+      } else {
+        settingV2.itemNameMapper(item)
+      }
+
       return@mapIndexed FloatingListMenu.FloatingListMenuItem(
         index,
-        settingV2.itemNameMapper(item),
+        name,
         item
       )
     }
@@ -438,6 +471,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     graph += developerSettingsScreen.build()
     graph += databaseSummaryScreen.build()
     graph += threadWatcherSettingsScreen.build()
+    graph += appearanceSettingsScreen.build()
 
     return graph
   }
@@ -446,5 +480,6 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     private const val TAG = "DeveloperSettingsControllerV2"
     private const val MIN_QUERY_LENGTH = 3
     private const val DEBOUNCE_TIME_MS = 350L
+    private const val CHECKMARK_SYMBOL = "✓"
   }
 }

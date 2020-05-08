@@ -295,7 +295,7 @@ public class ImageViewerPresenter
         PostImage postImage = images.get(selectedPosition);
 
         if (imageAutoLoad(loadable, postImage)
-                && (!postImage.spoiler() || ChanSettings.revealimageSpoilers.get())) {
+                && (!postImage.spoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.type == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
             } else if (postImage.type == ChanPostImageType.GIF) {

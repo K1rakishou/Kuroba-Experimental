@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.image
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.lifecycle.Lifecycle
@@ -34,11 +35,14 @@ class ImageLoaderV2(
     private val mainDispatcher = Dispatchers.Main
 
     private fun getLifecycleFromContext(context: Context): Lifecycle {
-        check(context is StartActivity) {
-            "Bad context type! Must be StartActivity, actual: " + context::class.java.simpleName
+        return when (context) {
+            is StartActivity -> context.lifecycle
+            is ContextWrapper -> (context.baseContext as? StartActivity)?.lifecycle
+              ?: throw IllegalArgumentException("context.baseContext is not StartActivity context, " +
+                "actual: " + context::class.java.simpleName)
+            else -> throw IllegalArgumentException("Bad context type! Must be either StartActivity " +
+              "or ContextThemeWrapper, actual: " + context::class.java.simpleName)
         }
-
-        return context.lifecycle
     }
 
     fun loadFromNetwork(
