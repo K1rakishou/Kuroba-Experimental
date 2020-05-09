@@ -22,6 +22,7 @@ import com.github.adamantcheese.chan.core.manager.FilterWatchManager
 import com.github.adamantcheese.chan.core.manager.ReportManager
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WakeManager
+import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
@@ -76,6 +77,8 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
 
   lateinit var recyclerView: EpoxyRecyclerView
 
@@ -108,6 +111,14 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
       context,
       navigationController!!,
       databaseManager
+    )
+  }
+
+  private val experimentalSettingsScreen by lazy {
+    ExperimentalSettingsScreen(
+      context,
+      navigationController!!,
+      exclusionZonesHolder
     )
   }
 
@@ -589,6 +600,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     graph += threadWatcherSettingsScreen.build()
     graph += appearanceSettingsScreen.build()
     graph += behaviorSettingsScreen.build()
+    graph += experimentalSettingsScreen.build()
 
     return graph
   }

@@ -18,13 +18,15 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
 
   var dependsOnSetting: BooleanSetting? = null
     private set
+
+  private var isEnabledFunc: (() -> Boolean)? = null
   private var _callback: (() -> SettingClickAction)? = null
   var callback: () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
     get() = _callback!!
     private set
 
   override fun isEnabled(): Boolean {
-    return dependsOnSetting?.get() ?: true
+    return (dependsOnSetting?.get() ?: true) && (isEnabledFunc?.invoke() ?: true)
   }
 
   override fun update(): Int {
@@ -77,6 +79,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
       context: Context,
       identifier: SettingsIdentifier,
       dependsOnSetting: BooleanSetting? = null,
+      isEnabledFunc: (() -> Boolean)? = null,
       callback: (() -> Unit)? = null,
       callbackWithClickAction: (() -> SettingClickAction)? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
@@ -159,6 +162,8 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
           }
 
           settingV2.updateCounter = updateCounter
+          settingV2.isEnabledFunc = isEnabledFunc
+
           return settingV2
         }
       )

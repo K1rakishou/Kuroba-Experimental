@@ -474,7 +474,7 @@ public class ChanSettings {
             );
             androidTenGestureZones = new StringSetting(p, "android_ten_gesture_zones", EMPTY_JSON);
             okHttpAllowHttp2 = new BooleanSetting(p, "ok_http_allow_http_2", true);
-            okHttpAllowIpv6 = new BooleanSetting(p, "ok_http_allow_ipv6", true);
+            okHttpAllowIpv6 = new BooleanSetting(p, "ok_http_allow_ipv6", false);
             //endregion
 
             //region OTHER

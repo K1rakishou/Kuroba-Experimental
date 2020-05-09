@@ -530,15 +530,33 @@ sealed class FiltersScreen(
 // ================= ExperimentalSettingsScreen ===================
 // ================================================================
 
-sealed class ExperimentalSettingsScreen(
+sealed class ExperimentalScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  screenIdentifier: ScreenIdentifier = ExperimentalSettingsScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MainSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainSettingsGroup.getGroupIdentifier()
+  ) : IGroup,
+    ExperimentalScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ConcurrentDownloadChunkCount : MainSettingsGroup("concurrent_download_chunk_count")
+    object GesturesExclusionZonesEditor : MainSettingsGroup("gestures_exclusion_zones_editor")
+    object ResetExclusionZones : MainSettingsGroup("reset_exclusion_zones")
+    object OkHttpAllowHttp2 : MainSettingsGroup("ok_http_allow_http_2")
+    object OkHttpAllowIpv6 : MainSettingsGroup("ok_http_allow_ipv6")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_settings_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
-    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("experimental_settings_screen")
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("experimental_screen")
   }
 }

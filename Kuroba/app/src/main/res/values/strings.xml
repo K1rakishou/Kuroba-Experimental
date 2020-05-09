@@ -591,7 +591,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
     <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
-
     <!-- Behavior proxy group -->
     <string name="setting_proxy_port">Proxy server port</string>
     <string name="settings_group_proxy">HTTP Proxy</string>
@@ -681,6 +680,19 @@ Tap the toolbar menu to change its color."
     <string name="settings_simulate_app_updated_bottom">Makes the app think it\'s updated to the latest version. This will be reset the next time you manually check for updates</string>
     <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
     <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
+
+    <!-- Experimental setting -->
+    <string name="experimental_settings_group">Experimental settings</string>
+    <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
+    <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
+    <string name="setting_exclusion_zones_editor">Android 10 gesture exclusion zones</string>
+    <string name="setting_exclusion_zones_editor_description">Adjust zones where Android 10 gestures will be disabled. \n\nYou will have to rotate your phone/tablet to set zones for different orientations. \nYou will have to restart the app for the changes to be applied!</string>
+    <string name="setting_exclusion_zones_reset_zones">Reset exclusion zones</string>
+    <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
+    <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
+    <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
+    <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
+
 
     <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
     <string name="settings_screen_pass">4chan pass</string>
@@ -826,7 +838,6 @@ Don't have a 4chan Pass?<br>
     <string name="image_url_get_failed">Failed to get image from clipboard, reason = %1$s</string>
     <string name="image_url_get_success">Got image from clipboard</string>
 
-    <string name="experimental_settings_group">Experimental settings</string>
     <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
     <string name="warning">Warning</string>
 
@@ -893,8 +904,6 @@ Don't have a 4chan Pass?<br>
     <string name="files_base_dir_does_not_exist"><![CDATA[Base directory for files does not exist! Set it manually in the settings (Media -> Save location)]]></string>
     <string name="local_threads_base_dir_does_not_exist"><![CDATA[Base directory for local threads does not exist! Set it manually in the settings (Media -> Local threads location). All active download has been stopped! Resume them manually after setting the base directory.]]></string>
     <string name="image_saver_could_not_figure_out_save_location">Couldn\'t figure out save location</string>
-    <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
-    <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
     <string name="image_saver_canceled_by_user_message">Canceled by user</string>
     <string name="image_saver_unknown_location_message">Unknown location</string>
     <string name="image_saver_failed_to_save_image">Failed to save the image. Reason: %s</string>
@@ -967,21 +976,13 @@ Don't have a 4chan Pass?<br>
     <string name="setting_exclusion_zones_right_zone_portrait">Right zone (Portrait orientation)</string>
     <string name="setting_exclusion_zones_left_zone_landscape">Left zone (Landscape orientation)</string>
     <string name="setting_exclusion_zones_right_zone_landscape">Right zone (Landscape orientation)</string>
-    <string name="setting_exclusion_zones_reset_zones">Reset exclusion zones</string>
-    <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
-    <string name="setting_exclusion_zones_editor">Android 10 gesture exclusion zones</string>
-    <string name="setting_exclusion_zones_editor_description">Adjust zones where Android 10 gestures will be disabled. \n\nYou will have to rotate your phone/tablet to set zones for different orientations. \nYou will have to restart the app for the changes to be applied!</string>
     <string name="setting_exclusion_zones_actions_dialog_title">Android 10 exclusion zones actions</string>
     <string name="setting_exclusion_zones_wrong_phone_orientation">Wrong phone orientation, you need to rotate your phone 90 degrees to any side before using this option.</string>
     <string name="setting_exclusion_zones_edit_or_remove_zone_title">Edit or remove zone?</string>
     <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
     <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
 
-    <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
-    <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
-    <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
-
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive"> (From archive)</string>
     <string name="epoxy_archive_setting_row_working">WORKING</string>

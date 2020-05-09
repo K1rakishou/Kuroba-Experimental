@@ -209,7 +209,7 @@ class MainSettingsScreen(
           identifier = MainScreen.MainGroup.Experimental,
           topDescriptionIdFunc = { R.string.settings_experimental_settings_title },
           bottomDescriptionIdFunc = { R.string.settings_experimental_settings_description },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(ExperimentalSettingsScreen) }
+          callbackWithClickAction = { SettingClickAction.OpenScreen(ExperimentalScreen) }
         )
 
         return group
