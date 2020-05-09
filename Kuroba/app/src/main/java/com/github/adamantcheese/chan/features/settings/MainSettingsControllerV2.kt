@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
@@ -36,6 +37,7 @@ import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
@@ -181,6 +183,7 @@ class MainSettingsControllerV2(context: Context)
   private val normalSettingsGraph by lazy { buildSettingsGraph() }
   private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
 
+  private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, Int>()
   private val screenStack = Stack<IScreenIdentifier>()
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val defaultScreen = MainScreen
@@ -271,11 +274,7 @@ class MainSettingsControllerV2(context: Context)
       return false
     }
 
-    screenStack.pop()
-    val screenIdentifier = screenStack.peek()
-    Logger.d(TAG, "onBack() switching to ${screenIdentifier} screen")
-
-    rebuildScreen(screenIdentifier)
+    rebuildScreen(popScreen())
     return true
   }
 
@@ -296,6 +295,11 @@ class MainSettingsControllerV2(context: Context)
     val graph = searchSettingsGraph
 
     recyclerView.withModels {
+      addOneshotModelBuildListener {
+        // Always reset to 0th item when opening a screen in search mode
+        recyclerView.scrollToPosition(0)
+      }
+
       renderSearchScreen(graph, query)
     }
   }
@@ -305,8 +309,13 @@ class MainSettingsControllerV2(context: Context)
     val settingsScreen = normalSettingsGraph[screen]
 
     recyclerView.withModels {
-      updateTitle(settingsScreen)
+      addOneshotModelBuildListener {
+        // Scroll to last known position when opening a screen normally
+        val position = scrollPositionsPerScreen[screen] ?: 0
+        (recyclerView.layoutManager as LinearLayoutManager).scrollToPosition(position)
+      }
 
+      updateTitle(settingsScreen)
       renderScreen(settingsScreen)
     }
   }
@@ -646,13 +655,32 @@ class MainSettingsControllerV2(context: Context)
     rebuildScreenFunc()
   }
 
+  private fun popScreen(): IScreenIdentifier {
+    val currentScreen = screenStack.peek()
+    scrollPositionsPerScreen.remove(currentScreen)
+
+    screenStack.pop()
+    return screenStack.peek()
+  }
+
   private fun pushScreen(screenIdentifier: IScreenIdentifier) {
     val stackAlreadyContainsScreen = screenStack.any { screenIdentifierInStack ->
       screenIdentifierInStack == screenIdentifier
     }
 
+    val currentPosition =
+      (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+    val currentScreen = if (screenStack.isEmpty()) {
+      null
+    } else {
+      screenStack.peek()
+    }
+
+    if (currentScreen != null) {
+      scrollPositionsPerScreen[currentScreen] = currentPosition.coerceAtLeast(0)
+    }
+
     if (!stackAlreadyContainsScreen) {
-      Logger.d(TAG, "Pushing $screenIdentifier screen onto the stack")
       screenStack.push(screenIdentifier)
     }
   }

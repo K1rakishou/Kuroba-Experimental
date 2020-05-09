@@ -1,8 +1,6 @@
 package com.github.adamantcheese.chan.utils
 
-import com.airbnb.epoxy.AsyncEpoxyController
-import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
+import com.airbnb.epoxy.*
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 
@@ -65,4 +63,14 @@ fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
 
     setController(controller)
     controller.requestModelBuild()
+}
+
+fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
+    addModelBuildListener(object : OnModelBuildFinishedListener {
+        override fun onModelBuildFinished(result: DiffResult) {
+            callback()
+
+            removeModelBuildListener(this)
+        }
+    })
 }
