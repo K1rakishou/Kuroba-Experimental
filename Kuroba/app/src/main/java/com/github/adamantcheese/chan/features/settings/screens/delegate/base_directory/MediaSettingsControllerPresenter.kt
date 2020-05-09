@@ -35,7 +35,7 @@ class MediaSettingsControllerPresenter(
     }
 
     fun onDestroy() {
-        check(!initialized) { "Already destroyed!" }
+        check(initialized) { "Already destroyed!" }
 
         callbacks = null
         fileCopyingExecutor.shutdown()

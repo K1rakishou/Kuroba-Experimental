@@ -86,7 +86,10 @@ public class Theme {
     private static final Typeface ROBOTO_CONDENSED = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
 
     public Theme(
-            String displayName, String name, int resValue, ThemeHelper.PrimaryColor primaryColor
+            String displayName,
+            String name,
+            int resValue,
+            ThemeHelper.PrimaryColor primaryColor
     ) {
         this.displayName = displayName;
         this.name = name;

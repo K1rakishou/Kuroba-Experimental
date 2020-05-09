@@ -77,7 +77,7 @@ class MediaSettingsDelegate(
   }
 
   fun onDestroy() {
-    check(!initialized) { "Already destroyed!" }
+    check(initialized) { "Already destroyed!" }
     presenter.onDestroy()
 
     initialized = false

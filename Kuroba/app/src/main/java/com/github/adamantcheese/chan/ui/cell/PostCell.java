@@ -43,6 +43,7 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -110,7 +111,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.isTablet;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openIntent;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
 import static com.github.adamantcheese.chan.utils.BitmapUtils.bitmapToDrawable;
@@ -223,9 +223,6 @@ public class PostCell
         replies.setTextSize(textSizeSp);
         replies.setPadding(paddingPx, 0, paddingPx, paddingPx);
 
-        setRoundItemBackground(replies);
-        setRoundItemBackground(options);
-
         RelativeLayout.LayoutParams dividerParams = (RelativeLayout.LayoutParams) divider.getLayoutParams();
         dividerParams.leftMargin = paddingPx;
         dividerParams.rightMargin = paddingPx;
@@ -269,7 +266,10 @@ public class PostCell
     }
 
     private void showOptions(
-            View anchor, List<FloatingMenuItem> items, List<FloatingMenuItem> extraItems, Object extraOption
+            View anchor,
+            List<FloatingMenuItem> items,
+            List<FloatingMenuItem> extraItems,
+            Object extraOption
     ) {
         FloatingMenu menu = new FloatingMenu(getContext(), anchor, items);
         menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
@@ -389,8 +389,9 @@ public class PostCell
         threadMode = callback.getLoadable() == null || callback.getLoadable().isThreadMode();
 
         setPostLinkableListener(post, true);
-
         options.setColorFilter(theme.textSecondary);
+
+        applyRippleEffect();
 
         replies.setClickable(threadMode);
         repliesAdditionalArea.setClickable(threadMode);
@@ -431,6 +432,18 @@ public class PostCell
         if (callback != null) {
             callback.onPostBind(post);
         }
+    }
+
+    private void applyRippleEffect() {
+        TypedValue outValue = new TypedValue();
+        getContext().getTheme().resolveAttribute(
+                android.R.attr.selectableItemBackgroundBorderless,
+                outValue,
+                true
+        );
+
+        replies.setBackgroundResource(outValue.resourceId);
+        options.setBackgroundResource(outValue.resourceId);
     }
 
     private void startAttentionLabelFadeOutAnimation() {
