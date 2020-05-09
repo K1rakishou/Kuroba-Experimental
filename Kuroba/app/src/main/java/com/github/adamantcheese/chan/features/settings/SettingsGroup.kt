@@ -34,8 +34,7 @@ class SettingsGroup(
 
   fun iterateSettingsFilteredByQuery(query: String, iterator: (SettingV2) -> Unit) {
     settingsMap.values.forEach { settingV2 ->
-      if (settingV2.topDescription.contains(query, true)
-        || settingV2.bottomDescription?.contains(query, true) == true) {
+      if (settingV2.topDescription.contains(query, true)) {
         iterator(settingV2)
       }
     }

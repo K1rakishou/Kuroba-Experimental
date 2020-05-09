@@ -292,6 +292,7 @@ class MainSettingsControllerV2(context: Context)
   }
 
   private fun rebuildScreenWithSearchQuery(query: String) {
+    searchSettingsGraph.rebuildScreens()
     val graph = searchSettingsGraph
 
     recyclerView.withModels {
@@ -464,7 +465,11 @@ class MainSettingsControllerV2(context: Context)
             clickListener {
               settingV2.callback?.invoke()
 
-              rebuildCurrentScreen()
+              if (!query.isNullOrEmpty()) {
+                rebuildScreenWithSearchQuery(query)
+              } else {
+                rebuildCurrentScreen()
+              }
             }
           } else {
             settingEnabled(false)
@@ -484,7 +489,11 @@ class MainSettingsControllerV2(context: Context)
 
             clickListener {
               showListDialog(settingV2) {
-                rebuildCurrentScreen()
+                if (!query.isNullOrEmpty()) {
+                  rebuildScreenWithSearchQuery(query)
+                } else {
+                  rebuildCurrentScreen()
+                }
               }
             }
           } else {
@@ -505,7 +514,11 @@ class MainSettingsControllerV2(context: Context)
 
             clickListener { view ->
               showInputDialog(view, settingV2) {
-                rebuildCurrentScreen()
+                if (!query.isNullOrEmpty()) {
+                  rebuildScreenWithSearchQuery(query)
+                } else {
+                  rebuildCurrentScreen()
+                }
               }
             }
           } else {
