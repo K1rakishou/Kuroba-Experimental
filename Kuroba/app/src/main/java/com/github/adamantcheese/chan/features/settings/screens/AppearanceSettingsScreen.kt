@@ -318,7 +318,7 @@ class AppearanceSettingsScreen(
           itemNameMapper = { columnsCount ->
             when (columnsCount) {
               AUTO_COLUMN -> context.getString(R.string.setting_board_grid_span_count_default)
-              in ALL_COLUMNS_WITHOUT_AUTO -> {
+              in ALL_COLUMNS_EXCLUDING_AUTO -> {
                 context.getString(R.string.setting_board_grid_span_count_item, columnsCount)
               }
               else -> throw IllegalArgumentException("Bad columns count: $columnsCount")
@@ -415,6 +415,6 @@ class AppearanceSettingsScreen(
     private val SUPPORTED_FONT_SIZES = (10..19)
     private const val AUTO_COLUMN = 0
     private val ALL_COLUMNS = listOf(AUTO_COLUMN, 2, 3, 4, 5)
-    private val ALL_COLUMNS_WITHOUT_AUTO = setOf(2, 3, 4, 5)
+    private val ALL_COLUMNS_EXCLUDING_AUTO = setOf(2, 3, 4, 5)
   }
 }

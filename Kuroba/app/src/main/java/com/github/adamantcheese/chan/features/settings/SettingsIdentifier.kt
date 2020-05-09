@@ -380,6 +380,96 @@ sealed class BehaviorScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class GeneralGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object AutoRefreshThread : GeneralGroup("auto_refresh_thread")
+    object ControllerSwipeable : GeneralGroup("controller_swipeable")
+    object OpenLinkConfirmation : GeneralGroup("open_link_confirmation")
+    object OpenLinkBrowser : GeneralGroup("open_link_browser")
+    object ImageViewerGestures : GeneralGroup("image_viewer_gestures")
+    object AlwaysOpenDrawer : GeneralGroup("always_open_drawer")
+    object CaptchaSetup : GeneralGroup("catpcha_setup")
+    object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")
+    object ClearThreadHides : GeneralGroup("clear_thread_hides")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("general_group")
+    }
+  }
+
+  sealed class RepliesGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object PostPinThread : RepliesGroup("post_pin_thread")
+    object PostDefaultName : RepliesGroup("post_default_name")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("replies_group")
+    }
+  }
+
+  sealed class PostGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object RepliesButtonsBottom : PostGroup("replies_buttons_bottom")
+    object VolumeKeysScrolling : PostGroup("volume_keys_scrolling")
+    object TapNoReply : PostGroup("tap_no_reply")
+    object EnableLongPressURLCopy : PostGroup("enable_long_press_url_copy")
+    object ShareUrl : PostGroup("share_url")
+    object MarkUnseenPosts : PostGroup("mark_unseen_posts")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("post_group")
+    }
+  }
+
+  sealed class OtherSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ParseYoutubeAPIKey : OtherSettingsGroup("parse_youtube_api_key")
+    object FullUserRotationEnable : OtherSettingsGroup("full_user_rotation")
+    object AllowFilePickChooser : OtherSettingsGroup("allow_file_pick_chooser")
+    object AllowMediaScannerToScanLocalThreads : OtherSettingsGroup("allow_media_scanner_to_scan_local_threads")
+    object ShowCopyApkUpdateDialog : OtherSettingsGroup("show_copy_apk_update_dialog")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("other_settings_group")
+    }
+  }
+
+  sealed class ProxySettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ProxyEnabled : ProxySettingsGroup("proxy_enabled")
+    object ProxyAddress : ProxySettingsGroup("proxy_address")
+    object ProxyPort : ProxySettingsGroup("proxy_port")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("proxy_settings_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("behavior_screen")
   }

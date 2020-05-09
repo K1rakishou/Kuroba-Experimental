@@ -844,6 +844,9 @@ public class PostCell
                 // third-party archive then set it. If the file already exists in cache let it
                 // through as well.
                 boolean cacheFileAlreadyExists = image.imageUrl != null
+                        // TODO(archives): It is a really bad idea to call this method on a main
+                        //  thread in a class that gets instantiated in a RecyclerView. Should
+                        //  probably only leave this check inside the click handler (onThumbnailClicked)
                         && cacheHandler.cacheFileExists(image.imageUrl.toString());
 
                 boolean setCallback = (!post.deleted.get() || image.isFromArchive)

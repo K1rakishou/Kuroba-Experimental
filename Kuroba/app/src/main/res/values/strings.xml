@@ -492,7 +492,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_bottom_js_captcha_description">Makes the JS captcha float to the bottom of the screen</string>
     <string name="setting_enable_reply_fab_description">Disabling replaces the round button with a menu option</string>
     <string name="setting_enable_reply_count">Enable the reply counter</string>
-    <string name="settings_group_post">Post</string>
     <string name="setting_font_size">Font size</string>
     <string name="setting_font_size_default">(default)</string>
     <string name="setting_move_sort_to_toolbar">Sort option in toolbar</string>
@@ -548,37 +547,59 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_fetch_never_show_webm_controls_description">Treats WEBMs like GIFs; tap to close, double tap to play/pause, always automatically loops.</string>
     <string name="setting_images_immersive_mode_title">Use immersive mode for image gallery</string>
     <string name="setting_images_immersive_mode_description">This will make image gallery view be fullscreen with statusbar/navbar hidden</string>
-    <string name="settings_screen_behavior">Behavior</string>
-    <string name="settings_group_general">General</string>
-    <string name="setting_auto_refresh_thread">Auto refresh threads</string>
-
-    <!-- Behavior -->
-    <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
 
     <!-- Behavior general group -->
+    <string name="settings_screen_behavior">Behavior</string>
+    <string name="settings_group_general">General</string>
     <string name="setting_clear_thread_hides">Clear all thread hides</string>
     <string name="setting_cleared_thread_hides">Cleared all thread hides</string>
     <string name="settings_group_reply">Reply</string>
     <string name="setting_post_pin">Bookmark thread on post</string>
     <string name="setting_post_default_name">Default post name</string>
+    <string name="setting_auto_refresh_thread">Auto refresh threads</string>
+    <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
+    <string name="setting_open_link_confirmation">Ask before opening links</string>
+    <string name="setting_open_link_browser">Always open links in external browser</string>
+    <string name="setting_image_viewer_gestures">Image Viewer gestures</string>
+    <string name="setting_image_viewer_gestures_description">Adds ability to use gestures to close (swipe-up) and save (swipe-bottom) an image/gif/webm when viewing them in gallery</string>
+    <string name="settings_always_open_drawer">Always open the drawer when a thread is bookmarked</string>
+    <string name="settings_captcha_setup">Captcha Settings</string>
+    <string name="settings_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
+    <string name="settings_js_captcha_cookies_title">JS captcha cookies</string>
+    <string name="settings_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
 
     <!-- Behavior post group -->
+    <string name="settings_group_post">Post</string>
     <string name="setting_buttons_bottom">Reply buttons on the bottom</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
     <string name="setting_tap_no_rely">Tap the post number to reply</string>
-    <string name="setting_open_link_confirmation">Ask before opening links</string>
-    <string name="setting_open_link_browser">Always open links in external browser</string>
-    <string name="settings_group_proxy">HTTP Proxy</string>
-    <string name="setting_proxy_enabled">Enable proxy</string>
-    <string name="setting_proxy_address">Proxy server address</string>
+    <string name="settings_image_long_url">Enable long-press image URL copy</string>
+    <string name="settings_image_long_url_description">Makes long-pressing on post images copy the image URL to the clipboard</string>
+    <string name="setting_share_url">Share URL to image</string>
+    <string name="setting_share_url_description">Share the URL to the image instead of the image itself</string>
+    <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
+    <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
+
+    <!-- Other settings group -->
+    <string name="setting_other_settings_group">Other Options</string>
+    <string name="setting_youtube_api_key">Youtube API Key</string>
+    <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
+    <string name="setting_allow_alternate_file_pickers">Allow alternate file pickers</string>
+    <string name="setting_allow_alternate_file_pickers_description">If you\'d prefer to use a different file chooser, turn this on</string>
+    <string name="settings_allow_media_scanner_scan_local_threads_title">Allow the Android media scanner to scan images from locally saved threads</string>
+    <string name="settings_allow_media_scanner_scan_local_threads_description">If enabled, images that were downloaded along with threads will appear in other applications, like galleries, messengers, etc. You may have to restart your phone or wait for the changes to kick in.</string>
+    <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
+    <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
 
     <!-- Behavior proxy group -->
     <string name="setting_proxy_port">Proxy server port</string>
+    <string name="settings_group_proxy">HTTP Proxy</string>
+    <string name="setting_proxy_enabled">Enable proxy</string>
+    <string name="setting_proxy_address">Proxy server address</string>
     <string name="settings_screen_media">Media</string>
     <string name="settings_group_saving">Media saving</string>
     <string name="setting_save_board_folder">Save images in board folders</string>
-
 
     <!-- Media -->
     <string name="setting_save_board_folder_description">Create a folder for each board when saving</string>
@@ -597,10 +618,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_headset_default_muted_description">Mute the video even if a wired headset is connected</string>
     <string name="setting_video_open_external">Play videos with external player</string>
     <string name="setting_video_open_external_description">Play videos in an external media player app</string>
-    <string name="setting_share_url">Share URL to image</string>
-    <string name="setting_share_url_description">Share the URL to the image instead of the image itself</string>
-    <string name="settings_allow_media_scanner_scan_local_threads_title">Allow the Android media scanner to scan images from locally saved threads</string>
-    <string name="settings_allow_media_scanner_scan_local_threads_description">If enabled, images that were downloaded along with threads will appear in other applications, like galleries, messengers, etc. You may have to restart your phone or wait for the changes to kick in.</string>
     <string name="settings_group_media_loading">Media loading</string>
     <string name="setting_image_auto_load">Automatically load images</string>
     <string name="setting_image_auto_load_all">Always</string>
@@ -825,10 +842,6 @@ Don't have a 4chan Pass?<br>
     <string name="view_local_version">View local version</string>
     <string name="view_view_version">View live version</string>
     <string name="local_thread_text">Local thread</string>
-    <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
-    <string name="settings_always_open_drawer">Always open the drawer when a thread is bookmarked</string>
-    <string name="settings_image_long_url">Enable long-press image URL copy</string>
-    <string name="settings_image_long_url_description">Makes long-pressing on post images copy the image URL to the clipboard</string>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
     <string name="could_not_create_base_local_threads_dir">Could not create base local threads directory</string>
 
@@ -880,8 +893,6 @@ Don't have a 4chan Pass?<br>
     <string name="files_base_dir_does_not_exist"><![CDATA[Base directory for files does not exist! Set it manually in the settings (Media -> Save location)]]></string>
     <string name="local_threads_base_dir_does_not_exist"><![CDATA[Base directory for local threads does not exist! Set it manually in the settings (Media -> Local threads location). All active download has been stopped! Resume them manually after setting the base directory.]]></string>
     <string name="image_saver_could_not_figure_out_save_location">Couldn\'t figure out save location</string>
-    <string name="settings_captcha_setup">Captcha Settings</string>
-    <string name="settings_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
     <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
     <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
     <string name="image_saver_canceled_by_user_message">Canceled by user</string>
@@ -891,8 +902,6 @@ Don't have a 4chan Pass?<br>
     <string name="album_download_batch_image_processed_message">Downloaded %1$d out of %2$d (%3$d failed)</string>
     <string name="media_settings_image_click_preload_strategy_name">Image preload strategy</string>
     <string name="media_settings_image_click_preload_strategy_description">When opening up an image pager, determines what image(s) should be preloaded next.</string>
-    <string name="setting_image_viewer_gestures">Image Viewer gestures</string>
-    <string name="setting_image_viewer_gestures_description">Adds ability to use gestures to close (swipe-up) and save (swipe-bottom) an image/gif/webm when viewing them in gallery</string>
 
     <string name="lorem_ipsum">
         The standard Lorem Ipsum passage, used since the 1500s
@@ -920,8 +929,6 @@ Don't have a 4chan Pass?<br>
     <string name="js_captcha_cookies_editor_make_sure_to_double_check_all_the_parameters_message">Make sure to double check all parameters! (And symbols like periods)</string>
     <string name="js_captcha_cookies_editor_format_hint_message">Enter the values. No need to prepend them with \"HSID=…\", \"SSID=…\" etc.</string>
     <string name="js_captcha_cookies_editor_controller_title">JS Captcha cookies editor</string>
-    <string name="settings_js_captcha_cookies_title">JS captcha cookies</string>
-    <string name="settings_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
     <string name="cookies_editor_bad_cookie">%1$s cookie is not set!</string>
     <string name="cookies_editor_failed_parse">Failed to parse cookies, re-enter them correctly!</string>
 
@@ -947,8 +954,6 @@ Don't have a 4chan Pass?<br>
     <string name="update_manager_output_file_does_not_exist">Output file (%1$s) does not exist</string>
     <string name="update_manager_could_not_copy_apk">Couldn\'t copy file contents from file (%1$s) into (%2$s)</string>
     <string name="update_manager_apk_copied">Apk successfully copied</string>
-    <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
-    <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
     <string name="could_not_initialized_captcha">Couldn\'t initialize captcha, reason: %1$s</string>
     <string name="fail_reason_webview_is_not_installed">WebView is not installed</string>
@@ -975,8 +980,6 @@ Don't have a 4chan Pass?<br>
     <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
-    <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
-    <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
 
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>

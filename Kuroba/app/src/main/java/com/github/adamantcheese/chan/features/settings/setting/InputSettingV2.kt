@@ -5,9 +5,8 @@ import com.github.adamantcheese.chan.core.settings.BooleanSetting
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.features.settings.SettingsIdentifier
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
-import com.github.adamantcheese.chan.utils.Logger
 
-class ListSettingV2<T : Any> : SettingV2() {
+class InputSettingV2<T : Any> : SettingV2() {
   private var updateCounter = 0
   private var setting: Setting<T>? = null
 
@@ -20,14 +19,12 @@ class ListSettingV2<T : Any> : SettingV2() {
 
   var dependsOnSetting: BooleanSetting? = null
     private set
-  var items: List<T> = emptyList()
-    private set
-  lateinit var itemNameMapper: (T: Any?) -> String
+
+  var inputType: InputType? = null
     private set
 
-  fun isCurrent(value: Any): Boolean {
-    return setting?.get() == (value as T)
-  }
+  fun getCurrent(): T? = setting?.get()
+  fun getDefault(): T? = setting?.default
 
   fun updateSetting(value: Any) {
     update()
@@ -49,7 +46,7 @@ class ListSettingV2<T : Any> : SettingV2() {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (other !is ListSettingV2<*>) return false
+    if (other !is InputSettingV2<*>) return false
 
     if (updateCounter != other.updateCounter) return false
     if (requiresRestart != other.requiresRestart) return false
@@ -63,8 +60,8 @@ class ListSettingV2<T : Any> : SettingV2() {
   }
 
   override fun hashCode(): Int {
-    var result = requiresRestart.hashCode()
-    result = 31 * result + updateCounter.hashCode()
+    var result = updateCounter
+    result = 31 * result + requiresRestart.hashCode()
     result = 31 * result + requiresUiRefresh.hashCode()
     result = 31 * result + settingsIdentifier.hashCode()
     result = 31 * result + topDescription.hashCode()
@@ -74,36 +71,38 @@ class ListSettingV2<T : Any> : SettingV2() {
   }
 
   override fun toString(): String {
-    return "ListSettingV2(updateCounter=$updateCounter, requiresRestart=$requiresRestart, " +
+    return "StringSettingV2(updateCounter=$updateCounter, requiresRestart=$requiresRestart, " +
       "requiresUiRefresh=$requiresUiRefresh, settingsIdentifier=$settingsIdentifier, " +
       "topDescription='$topDescription', bottomDescription=$bottomDescription, " +
       "notificationType=$notificationType)"
   }
 
+  enum class InputType {
+    String,
+    Integer
+  }
+
   companion object {
-    private const val TAG = "ListSettingV2"
+    private const val TAG = "StringSettingV2"
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Any> createBuilder(
       context: Context,
       identifier: SettingsIdentifier,
       setting: Setting<T>,
+      inputType: InputType,
       dependsOnSetting: BooleanSetting? = null,
-      items: List<T>,
-      itemNameMapper: (T) -> String,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,
-      bottomDescriptionIdFunc: ((name: String) -> Int)? = null,
-      bottomDescriptionStringFunc: ((name: String) -> String)? = null,
+      bottomDescriptionIdFunc: (() -> Int)? = null,
+      bottomDescriptionStringFunc: (() -> String)? = null,
       requiresRestart: Boolean = false,
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(_: Int): ListSettingV2<T> {
-          require(items.isNotEmpty()) { "Items are empty" }
-
+        buildFunction = fun(_: Int): InputSettingV2<T> {
           require(notificationType != SettingNotificationType.Default) {
             "Can't use default notification type here"
           }
@@ -116,7 +115,7 @@ class ListSettingV2<T : Any> : SettingV2() {
             throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
           }
 
-          val listSettingV2 = ListSettingV2<T>()
+          val inputSettingV2 = InputSettingV2<T>()
 
           val topDescResult = listOf(
             topDescriptionIdFunc,
@@ -124,7 +123,7 @@ class ListSettingV2<T : Any> : SettingV2() {
           ).mapNotNull { func -> func?.invoke() }
             .lastOrNull()
 
-          listSettingV2.topDescription = when (topDescResult) {
+          inputSettingV2.topDescription = when (topDescResult) {
             is Int -> context.getString(topDescResult as Int)
             is String -> topDescResult as String
             null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
@@ -134,39 +133,35 @@ class ListSettingV2<T : Any> : SettingV2() {
           val bottomDescResult = listOf(
             bottomDescriptionIdFunc,
             bottomDescriptionStringFunc
-          ).mapNotNull { func ->
-            val settingValue = setting.get()
+          ).mapNotNull { func -> func?.invoke() }
+            .lastOrNull()
 
-            val item = items.firstOrNull { item -> item == settingValue }
-            if (item == null) {
-              Logger.e(TAG, "Couldn't find item with value $settingValue resetting to default: ${setting.default}")
-
-              setting.set(setting.default)
-              return@mapNotNull func?.invoke(itemNameMapper(setting.default))
-            }
-
-            func?.invoke(itemNameMapper(item))
-          }.lastOrNull()
-
-          listSettingV2.bottomDescription = when (bottomDescResult) {
+          inputSettingV2.bottomDescription = when (bottomDescResult) {
             is Int -> context.getString(bottomDescResult as Int)
             is String -> bottomDescResult as String
             null -> null
             else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
           }
 
-          dependsOnSetting?.let { setting -> listSettingV2.setDependsOnSetting(setting) }
-          listSettingV2.requiresRestart = requiresRestart
-          listSettingV2.requiresUiRefresh = requiresUiRefresh
-          listSettingV2.notificationType = notificationType
-          listSettingV2.settingsIdentifier = identifier
-          listSettingV2.setting = setting
-          listSettingV2.items = items
-          listSettingV2.itemNameMapper = itemNameMapper as (T: Any?) -> String
+          inputSettingV2.bottomDescription = when (bottomDescResult) {
+            is Int -> context.getString(bottomDescResult as Int)
+            is String -> bottomDescResult as String
+            null -> null
+            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+          }
 
-          return listSettingV2
+          dependsOnSetting?.let { setting -> inputSettingV2.setDependsOnSetting(setting) }
+          inputSettingV2.requiresRestart = requiresRestart
+          inputSettingV2.requiresUiRefresh = requiresUiRefresh
+          inputSettingV2.notificationType = notificationType
+          inputSettingV2.settingsIdentifier = identifier
+          inputSettingV2.setting = setting
+          inputSettingV2.inputType = inputType
+
+          return inputSettingV2
         }
       )
     }
   }
+
 }

@@ -41,7 +41,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 /**
  * A simple implementation of a TextView that caches the used StaticLayouts for performance.<br>
- * This view was made for {@link com.github.adamantcheese.chan.ui.cell.PostCell} and {@link com.github.adamantcheese.chan.ui.cell.CardPostCell} and may have untested behaviour with other layouts.
+ * This view was made for {@link com.github.adamantcheese.chan.ui.cell.PostCell} and
+ * {@link com.github.adamantcheese.chan.ui.cell.CardPostCell} and may have untested behaviour with
+ * other layouts.
  */
 public class FastTextView
         extends View {
