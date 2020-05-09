@@ -249,23 +249,6 @@ sealed class ThreadWatcherScreen(
 }
 
 // ======================================================
-// ================= SitesSetupScreen ===================
-// ======================================================
-
-sealed class SitesSetupScreen(
-  groupIdentifier: GroupIdentifier,
-  settingIdentifier: SettingIdentifier,
-  screenIdentifier: ScreenIdentifier = SitesSetupScreen.getScreenIdentifier()
-) :
-  IScreen,
-  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
-
-  companion object : IScreenIdentifier() {
-    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("sites_setup_screen")
-  }
-}
-
-// ======================================================
 // ================= AppearanceScreen ===================
 // ======================================================
 
@@ -487,6 +470,61 @@ sealed class MediaScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MediaSavingGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
+  ) : IGroup,
+    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object MediaSaveLocation : MediaSavingGroup("media_save_location")
+    object ThreadDownloadEnabled : MediaSavingGroup("thread_download_enabled")
+    object ThreadSaveLocation : MediaSavingGroup("thread_save_location")
+    object SaveBoardFolder : MediaSavingGroup("save_board_folder")
+    object SaveThreadFolder : MediaSavingGroup("save_thread_folder")
+    object SaveServerFilename : MediaSavingGroup("save_server_file_name")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("media_saving_group")
+    }
+  }
+
+  sealed class VideoGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
+  ) : IGroup,
+    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object VideoAutoLoop : VideoGroup("video_auto_loop")
+    object VideoDefaultMuted : VideoGroup("video_default_muted")
+    object HeadsetDefaultMuted : VideoGroup("headset_default_muted")
+    object VideoOpenExternal : VideoGroup("video_open_external")
+    object VideoStream : VideoGroup("video_stream")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("video_group")
+    }
+  }
+
+  sealed class LoadingGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
+  ) : IGroup,
+    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ImageAutoLoadNetwork : LoadingGroup("image_auto_load_network")
+    object VideoAutoLoadNetwork : LoadingGroup("video_auto_load_network")
+    object ImageClickPreloadStrategy : LoadingGroup("image_click_preloading_strategy")
+    object AutoLoadThreadImages : LoadingGroup("auto_load_thread_images")
+    object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("loading_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("media_screen")
   }
@@ -524,22 +562,6 @@ sealed class ImportExportScreen(
   }
 }
 
-// ===================================================
-// ================= FiltersScreen ===================
-// ===================================================
-
-sealed class FiltersScreen(
-  groupIdentifier: GroupIdentifier,
-  settingIdentifier: SettingIdentifier,
-  screenIdentifier: ScreenIdentifier = FiltersScreen.getScreenIdentifier()
-) :
-  IScreen,
-  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
-
-  companion object : IScreenIdentifier() {
-    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("filters_screen")
-  }
-}
 
 // ================================================================
 // ================= ExperimentalSettingsScreen ===================

@@ -1,11 +1,10 @@
-package com.github.adamantcheese.chan.core.presenter
+package com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.ui.controller.settings.base_directory.SharedLocationSetupDelegateCallbacks
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
@@ -26,14 +25,21 @@ class MediaSettingsControllerPresenter(
 ) {
     private val fileCopyingExecutor = Executors.newSingleThreadExecutor()
     private var callbacks: SharedLocationSetupDelegateCallbacks? = null
+    private var initialized = false
 
     fun onCreate(callbacks: SharedLocationSetupDelegateCallbacks) {
+        check(!initialized) { "Already initialized!" }
+
         this.callbacks = callbacks
+        initialized = true
     }
 
     fun onDestroy() {
+        check(!initialized) { "Already destroyed!" }
+
         callbacks = null
         fileCopyingExecutor.shutdown()
+        initialized = false
     }
 
     /**
@@ -91,6 +97,10 @@ class MediaSettingsControllerPresenter(
 
         Logger.d(TAG, "onLocalThreadsLocationChosen dir = $dirPath")
         ChanSettings.localThreadLocation.setFileBaseDir(dirPath)
+
+        withCallbacks {
+            updateLocalThreadsLocation(dirPath)
+        }
 
         if (oldLocalThreadsDirectory == null) {
             showToast(context, R.string.done)
@@ -169,6 +179,10 @@ class MediaSettingsControllerPresenter(
 
         Logger.d(TAG, "onSaveLocationChosen dir = $dirPath")
         ChanSettings.saveLocation.setFileBaseDir(dirPath)
+
+        withCallbacks {
+            updateSaveLocationViewText(dirPath)
+        }
 
         if (oldSaveFilesDirectory == null) {
             showToast(context, R.string.done)

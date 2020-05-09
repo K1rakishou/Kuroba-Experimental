@@ -1,10 +1,9 @@
-package com.github.adamantcheese.chan.ui.controller.settings.base_directory
+package com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.presenter.MediaSettingsControllerPresenter
 import com.github.adamantcheese.chan.ui.controller.LoadingViewController
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
@@ -14,16 +13,16 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile
 
 class SharedLocationSetupDelegate(
-        private val context: Context,
-        private val callbacks: SaveLocationSetupDelegate.MediaControllerCallbacks,
-        private val presenter: MediaSettingsControllerPresenter,
-        private val fileManager: FileManager
+  private val context: Context,
+  private val callbacks: SaveLocationSetupDelegate.MediaControllerCallbacks,
+  private val presenter: MediaSettingsControllerPresenter,
+  private val fileManager: FileManager
 ) : SharedLocationSetupDelegateCallbacks {
     private var loadingViewController: LoadingViewController? = null
 
     override fun updateLocalThreadsLocation(newLocation: String) {
         BackgroundUtils.ensureMainThread()
-        callbacks.setDescription(newLocation)
+        callbacks.updateThreadsLocationViewText(newLocation)
     }
 
     override fun askUserIfTheyWantToMoveOldThreadsToTheNewDirectory(

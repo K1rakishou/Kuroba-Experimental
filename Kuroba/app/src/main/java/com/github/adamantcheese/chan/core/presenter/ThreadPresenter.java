@@ -687,7 +687,7 @@ public class ThreadPresenter
         if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory.class)) {
             Logger.d(TAG, "storeNewPostsIfThreadIsBeingDownloaded() LocalThreadsBaseDirectory does not exist");
 
-            watchManager.stopSavingAllThread();
+            watchManager.stopSavingAllThreads();
             return;
         }
 

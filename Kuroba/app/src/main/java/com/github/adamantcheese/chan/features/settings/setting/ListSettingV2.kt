@@ -88,9 +88,9 @@ class ListSettingV2<T : Any> : SettingV2() {
       context: Context,
       identifier: SettingsIdentifier,
       setting: Setting<T>,
-      dependsOnSetting: BooleanSetting? = null,
       items: List<T>,
       itemNameMapper: (T) -> String,
+      dependsOnSetting: BooleanSetting? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,
       bottomDescriptionIdFunc: ((name: String) -> Int)? = null,
@@ -139,7 +139,8 @@ class ListSettingV2<T : Any> : SettingV2() {
 
             val item = items.firstOrNull { item -> item == settingValue }
             if (item == null) {
-              Logger.e(TAG, "Couldn't find item with value $settingValue resetting to default: ${setting.default}")
+              Logger.e(TAG, "Couldn't find item with value $settingValue " +
+                "resetting to default: ${setting.default}")
 
               setting.set(setting.default)
               return@mapNotNull func?.invoke(itemNameMapper(setting.default))

@@ -272,7 +272,7 @@ public class WatchNotification
         if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory.class)) {
             Logger.d(TAG, "updateSavedThreads() LocalThreadsBaseDirectory does not exist");
 
-            watchManager.stopSavingAllThread();
+            watchManager.stopSavingAllThreads();
             return;
         }
 

@@ -1,9 +1,11 @@
-package com.github.adamantcheese.chan.ui.controller.settings.base_directory
+package com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory
 
 import com.github.k1rakishou.fsaf.file.AbstractFile
 
 interface SharedLocationSetupDelegateCallbacks {
     fun updateLocalThreadsLocation(newLocation: String)
+    fun updateSaveLocationViewText(newLocation: String)
+
     fun askUserIfTheyWantToMoveOldThreadsToTheNewDirectory(
             oldBaseDirectory: AbstractFile?,
             newBaseDirectory: AbstractFile
@@ -15,7 +17,6 @@ interface SharedLocationSetupDelegateCallbacks {
     )
 
     fun updateLoadingViewText(text: String)
-    fun updateSaveLocationViewText(newLocation: String)
     fun showCopyFilesDialog(
             filesCount: Int,
             oldBaseDirectory: AbstractFile,

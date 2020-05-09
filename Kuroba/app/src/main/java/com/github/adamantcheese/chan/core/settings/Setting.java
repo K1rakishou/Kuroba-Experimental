@@ -16,8 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
-import com.github.adamantcheese.chan.utils.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,9 +54,6 @@ public abstract class Setting<T> {
     }
 
     protected final void onValueChanged() {
-        // TODO(archives): remove me after all settings have been refactored and tested
-        Logger.d("Setting", "onValueChanged key = " + getKey() + ", value = " + get());
-
         for (SettingCallback<T> callback : callbacks) {
             callback.onValueChange(this, get());
         }

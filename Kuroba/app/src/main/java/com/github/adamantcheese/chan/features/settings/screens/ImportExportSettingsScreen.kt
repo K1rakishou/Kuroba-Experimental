@@ -25,7 +25,8 @@ class ImportExportSettingsScreen(
   private val importExportSettingsDelegate by lazy {
     ImportExportSettingsDelegate(
       context,
-      navigationController, fileChooser,
+      navigationController,
+      fileChooser,
       fileManager,
       databaseManager
     )

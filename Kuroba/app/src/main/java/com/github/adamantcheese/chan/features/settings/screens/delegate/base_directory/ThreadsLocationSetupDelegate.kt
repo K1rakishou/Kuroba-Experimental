@@ -1,11 +1,10 @@
-package com.github.adamantcheese.chan.ui.controller.settings.base_directory
+package com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
-import com.github.adamantcheese.chan.core.presenter.MediaSettingsControllerPresenter
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.SaveLocationController
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
@@ -13,11 +12,11 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import java.io.File
 
 class ThreadsLocationSetupDelegate(
-        private val context: Context,
-        private val callbacks: MediaControllerCallbacks,
-        private val presenter: MediaSettingsControllerPresenter,
-        private val databaseManager: DatabaseManager,
-        private val threadSaveManager: ThreadSaveManager
+  private val context: Context,
+  private val callbacks: MediaControllerCallbacks,
+  private val presenter: MediaSettingsControllerPresenter,
+  private val databaseManager: DatabaseManager,
+  private val threadSaveManager: ThreadSaveManager
 ) {
 
     fun getLocalThreadsLocation(): String {
@@ -64,6 +63,7 @@ class ThreadsLocationSetupDelegate(
                             return@setNeutralButton
                         }
 
+                        callbacks.updateThreadsLocationViewText(ChanSettings.localThreadLocation.fileApiBaseDir.get())
                         callbacks.onLocalThreadsBaseDirectoryReset()
                     }
                     .setNegativeButton(R.string.media_settings_use_saf_dialog_negative_button_text) { _, _ ->
@@ -122,6 +122,7 @@ class ThreadsLocationSetupDelegate(
         fun runWithWritePermissionsOrShowErrorToast(func: Runnable)
         fun pushController(saveLocationController: SaveLocationController)
         fun onLocalThreadsBaseDirectoryReset()
+        fun updateThreadsLocationViewText(newLocation: String)
         fun onCouldNotCreateDefaultBaseDir(path: String)
     }
 }

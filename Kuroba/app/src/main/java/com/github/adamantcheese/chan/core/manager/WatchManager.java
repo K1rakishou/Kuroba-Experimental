@@ -271,7 +271,7 @@ public class WatchManager
         if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory.class)) {
             Logger.d(TAG, "startSavingThread() LocalThreadsBaseDirectory does not exist");
 
-            stopSavingAllThread();
+            stopSavingAllThreads();
             return false;
         }
 
@@ -321,7 +321,7 @@ public class WatchManager
         threadSaveManager.stopDownloading(loadable);
     }
 
-    public void stopSavingAllThread() {
+    public void stopSavingAllThreads() {
         boolean hasDownloadingPins = false;
 
         for (Pin pin : pins) {

@@ -12,8 +12,10 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.*
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
+import com.github.adamantcheese.chan.ui.controller.FiltersController
 import com.github.adamantcheese.chan.ui.controller.LicensesController
 import com.github.adamantcheese.chan.ui.controller.ReportProblemController
+import com.github.adamantcheese.chan.ui.controller.SitesSetupController
 import com.github.adamantcheese.chan.ui.controller.crashlogs.ReviewCrashLogsController
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
@@ -156,7 +158,7 @@ class MainSettingsScreen(
             val sitesCount = databaseManager.runTask(databaseManager.databaseSiteManager.count).toInt()
             getQuantityString(R.plurals.site, sitesCount, sitesCount)
           },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(SitesSetupScreen) }
+          callback = { navigationController.pushController(SitesSetupController(context)) }
         )
 
         group += LinkSettingV2.createBuilder(
@@ -201,7 +203,7 @@ class MainSettingsScreen(
             val filtersCount = databaseManager.runTask(databaseManager.databaseFilterManager.count).toInt()
             getQuantityString(R.plurals.filter, filtersCount, filtersCount)
           },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(FiltersScreen) }
+          callback = { navigationController.pushController(FiltersController(context)) }
         )
 
         group += LinkSettingV2.createBuilder(

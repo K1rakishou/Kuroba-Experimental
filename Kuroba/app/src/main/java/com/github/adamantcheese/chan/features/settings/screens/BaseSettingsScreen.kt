@@ -6,22 +6,14 @@ import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.features.settings.IScreenIdentifier
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.SettingsScreen
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlin.coroutines.CoroutineContext
 
 abstract class BaseSettingsScreen(
   protected val context: Context,
   protected val identifier: IScreenIdentifier,
   @StringRes
   private val screenTitle: Int
-) : CoroutineScope {
-  private val supervisorJob = SupervisorJob()
-
-  override val coroutineContext: CoroutineContext
-    get() = Dispatchers.Main + supervisorJob + CoroutineName("BaseSettingsScreen")
+) {
+  private var initialized = false
 
   fun build(): SettingsScreen.SettingsScreenBuilder {
     return SettingsScreen.SettingsScreenBuilder(
@@ -42,8 +34,15 @@ abstract class BaseSettingsScreen(
   }
 
   @CallSuper
+  open fun onCreate() {
+    check(!initialized) { "Already initialized" }
+    initialized = true
+  }
+
+  @CallSuper
   open fun onDestroy() {
-    supervisorJob.cancel()
+    check(initialized) { "Already destroyed" }
+    initialized = false
   }
 
   abstract fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder>

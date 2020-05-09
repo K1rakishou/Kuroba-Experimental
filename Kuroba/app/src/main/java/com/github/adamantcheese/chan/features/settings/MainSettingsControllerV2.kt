@@ -18,10 +18,7 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.FilterWatchManager
-import com.github.adamantcheese.chan.core.manager.ReportManager
-import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
-import com.github.adamantcheese.chan.core.manager.WakeManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
@@ -55,7 +52,10 @@ import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 
-class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarSearchCallback {
+class MainSettingsControllerV2(context: Context)
+  : Controller(context),
+  ToolbarSearchCallback,
+  MainSettingsControllerV2RebuildCallbacks {
 
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -85,6 +85,10 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var fileManager: FileManager
+  @Inject
+  lateinit var threadSaveManager: ThreadSaveManager
+  @Inject
+  lateinit var watchManager: WatchManager
 
   lateinit var recyclerView: EpoxyRecyclerView
 
@@ -158,6 +162,22 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     )
   }
 
+  private val mediaSettingsScreen by lazy {
+    val runtimePermissionsHelper = (context as StartActivity).runtimePermissionsHelper
+
+    MediaSettingsScreen(
+      context,
+      this,
+      navigationController!!,
+      fileManager,
+      fileChooser,
+      databaseManager,
+      threadSaveManager,
+      watchManager,
+      runtimePermissionsHelper
+    )
+  }
+
   private val normalSettingsGraph by lazy { buildSettingsGraph() }
   private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
 
@@ -204,6 +224,16 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
         }
     }
 
+    mainSettingsScreen.onCreate()
+    developerSettingsScreen.onCreate()
+    databaseSummaryScreen.onCreate()
+    threadWatcherSettingsScreen.onCreate()
+    appearanceSettingsScreen.onCreate()
+    behaviorSettingsScreen.onCreate()
+    experimentalSettingsScreen.onCreate()
+    importExportSettingsScreen.onCreate()
+    mediaSettingsScreen.onCreate()
+
     rebuildDefaultScreen()
   }
 
@@ -218,6 +248,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     behaviorSettingsScreen.onDestroy()
     experimentalSettingsScreen.onDestroy()
     importExportSettingsScreen.onDestroy()
+    mediaSettingsScreen.onDestroy()
 
     normalSettingsGraph.clear()
     searchSettingsGraph.clear()
@@ -279,12 +310,13 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     }
   }
 
-  private fun rebuildSetting(
-    screen: IScreenIdentifier,
-    group: IGroupIdentifier,
-    setting: SettingsIdentifier
+  override fun rebuildSetting(
+    screenIdentifier: IScreenIdentifier,
+    groupIdentifier: IGroupIdentifier,
+    settingIdentifier: SettingsIdentifier
   ) {
-    val settingsScreen = normalSettingsGraph[screen].apply { rebuildSetting(group, setting) }
+    val settingsScreen = normalSettingsGraph[screenIdentifier]
+      .apply { rebuildSetting(groupIdentifier, settingIdentifier) }
 
     recyclerView.withModels {
       updateTitle(settingsScreen)
@@ -432,11 +464,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
             clickListener {
               settingV2.callback?.invoke()
 
-              rebuildSetting(
-                settingsScreen.screenIdentifier,
-                settingsGroup.groupIdentifier,
-                settingV2.settingsIdentifier
-              )
+              rebuildCurrentScreen()
             }
           } else {
             settingEnabled(false)
@@ -627,6 +655,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     graph += behaviorSettingsScreen.build()
     graph += experimentalSettingsScreen.build()
     graph += importExportSettingsScreen.build()
+    graph += mediaSettingsScreen.build()
 
     return graph
   }

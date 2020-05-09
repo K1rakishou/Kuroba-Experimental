@@ -17,20 +17,20 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
   override var notificationType: SettingNotificationType? = null
   private var setting: Setting<Boolean>? = null
 
-  private val defaultCallback: () -> Unit = {
-    val prev = setting?.get()
+  private val defaultCallback: () -> Boolean = {
+    val newValue = !setting!!.get()
 
-    if (prev != null) {
-      setting?.set(!prev)
-      isChecked = !prev
-    }
+    setting?.set(newValue)
+    isChecked = newValue
+
+    newValue
   }
 
   var dependsOnSetting: BooleanSetting? = null
     private set
   var isChecked = false
     private set
-  var callback: (() -> Unit)? = defaultCallback
+  var callback: (() -> Boolean)? = defaultCallback
     private set
 
   override fun isEnabled(): Boolean {
@@ -65,6 +65,7 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
   }
 
   private fun onCheckedChanged(isChecked: Boolean) {
+    this.setting?.set(isChecked)
     this.isChecked = isChecked
   }
 
@@ -174,10 +175,11 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
           }
 
           checkChangedCallback?.let { callback ->
-            booleanSettingV2.callback = fun() {
-              booleanSettingV2.defaultCallback.invoke()
+            booleanSettingV2.callback = fun(): Boolean {
+              val newValue = booleanSettingV2.defaultCallback.invoke()
+              callback.invoke(newValue)
 
-              callback.invoke(booleanSettingV2.isChecked)
+              return newValue
             }
           }
 

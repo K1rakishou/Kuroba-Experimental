@@ -1,9 +1,8 @@
-package com.github.adamantcheese.chan.ui.controller.settings.base_directory
+package com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.presenter.MediaSettingsControllerPresenter
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.LoadingViewController
 import com.github.adamantcheese.chan.ui.controller.SaveLocationController
@@ -46,6 +45,7 @@ class SaveLocationSetupDelegate(
                             return@setNeutralButton
                         }
 
+                        callbacks.updateSaveLocationViewText(ChanSettings.saveLocation.fileApiBaseDir.get())
                         callbacks.onFilesBaseDirectoryReset()
                     }
                     .setNegativeButton(R.string.media_settings_use_saf_dialog_negative_button_text) { _, _ ->
@@ -75,7 +75,7 @@ class SaveLocationSetupDelegate(
     interface MediaControllerCallbacks {
         fun runWithWritePermissionsOrShowErrorToast(func: Runnable)
         fun pushController(saveLocationController: SaveLocationController)
-        fun setDescription(newLocation: String)
+        fun updateThreadsLocationViewText(newLocation: String)
         fun updateSaveLocationViewText(newLocation: String)
         fun presentController(loadingViewController: LoadingViewController)
         fun onFilesBaseDirectoryReset()
