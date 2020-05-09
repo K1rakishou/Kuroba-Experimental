@@ -43,6 +43,8 @@ import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.FileManager
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.catch
@@ -79,6 +81,10 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
+  @Inject
+  lateinit var fileChooser: FileChooser
+  @Inject
+  lateinit var fileManager: FileManager
 
   lateinit var recyclerView: EpoxyRecyclerView
 
@@ -142,6 +148,16 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     )
   }
 
+  private val importExportSettingsScreen by lazy {
+    ImportExportSettingsScreen(
+      context,
+      navigationController!!,
+      fileChooser,
+      fileManager,
+      databaseManager
+    )
+  }
+
   private val normalSettingsGraph by lazy { buildSettingsGraph() }
   private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
 
@@ -193,6 +209,15 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
 
   override fun onDestroy() {
     super.onDestroy()
+
+    mainSettingsScreen.onDestroy()
+    developerSettingsScreen.onDestroy()
+    databaseSummaryScreen.onDestroy()
+    threadWatcherSettingsScreen.onDestroy()
+    appearanceSettingsScreen.onDestroy()
+    behaviorSettingsScreen.onDestroy()
+    experimentalSettingsScreen.onDestroy()
+    importExportSettingsScreen.onDestroy()
 
     normalSettingsGraph.clear()
     searchSettingsGraph.clear()
@@ -601,6 +626,7 @@ class MainSettingsControllerV2(context: Context) : Controller(context), ToolbarS
     graph += appearanceSettingsScreen.build()
     graph += behaviorSettingsScreen.build()
     graph += experimentalSettingsScreen.build()
+    graph += importExportSettingsScreen.build()
 
     return graph
   }

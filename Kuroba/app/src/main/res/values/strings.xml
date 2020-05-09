@@ -681,7 +681,7 @@ Tap the toolbar menu to change its color."
     <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
     <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
 
-    <!-- Experimental setting -->
+    <!-- Experimental settings -->
     <string name="experimental_settings_group">Experimental settings</string>
     <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
     <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
@@ -693,6 +693,21 @@ Tap the toolbar menu to change its color."
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
 
+    <!-- Import/Export settings -->
+    <string name="import_or_export_settings">Import/export settings</string>
+    <string name="import_or_export_dialog_title">Overwrite existing file or create a new one?</string>
+    <string name="import_or_export_dialog_positive_button_text">Overwrite</string>
+    <string name="import_or_export_dialog_negative_button_text">Create new</string>
+    <string name="import_or_export_warning">Warning!</string>
+    <string name="import_or_export_warning_super_long_message_part_one">You have %1$s %2$s %3$s set to be located in a directory that uses the Storage Access Framework. These directory locations cannot be exported; THEY WILL BE RESET TO DEFAULT in the exported settings file! Once you import them you will have to manually set those locations in Media Settings again.</string>
+    <string name="import_or_export_warning_super_long_message_part_two">You also have some actively downloading local threads which are located at some SAF directory. They will be marked as stopped in the exported settings too. So you will have to resume them manually after importing the settings file.</string>
+    <string name="import_or_export_warning_local_threads_base_dir">\"local threads base directory\"</string>
+    <string name="import_or_export_warning_and">and</string>
+    <string name="import_or_export_warning_saved_files_base_dir">\"saved files base directory\"</string>
+    <string name="export_settings">Export settings</string>
+    <string name="export_settings_to_a_file">Export settings to a file</string>
+    <string name="import_settings">Import settings</string>
+    <string name="import_settings_from_a_file">Import settings from a file</string>
 
     <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
     <string name="settings_screen_pass">4chan pass</string>
@@ -775,11 +790,6 @@ Don't have a 4chan Pass?<br>
     <string name="reencode_image_reduce_default_text">Reduce: 0%</string>
     <string name="click_image_for_extra_options">Click image for extra options</string>
 
-    <string name="import_or_export_settings">Import/export settings</string>
-    <string name="export_settings">Export settings</string>
-    <string name="export_settings_to_a_file">Export settings to a file</string>
-    <string name="import_settings">Import settings</string>
-    <string name="import_settings_from_a_file">Import settings from a file</string>
     <string name="successfully_exported_text">Exported successfully"</string>
     <string name="import_warning_title">Warning</string>
     <string name="import_warning_text">You are about to import settings/saved pins/filters/hidden posts from a file.
@@ -856,15 +866,6 @@ Don't have a 4chan Pass?<br>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
     <string name="could_not_create_base_local_threads_dir">Could not create base local threads directory</string>
 
-    <string name="import_or_export_dialog_title">Overwrite existing file or create a new one?</string>
-    <string name="import_or_export_dialog_positive_button_text">Overwrite</string>
-    <string name="import_or_export_dialog_negative_button_text">Create new</string>
-    <string name="import_or_export_warning">Warning!</string>
-    <string name="import_or_export_warning_super_long_message_part_one">You have %1$s %2$s %3$s set to be located in a directory that uses the Storage Access Framework. These directory locations cannot be exported; THEY WILL BE RESET TO DEFAULT in the exported settings file! Once you import them you will have to manually set those locations in Media Settings again.</string>
-    <string name="import_or_export_warning_super_long_message_part_two">You also have some actively downloading local threads which are located at some SAF directory. They will be marked as stopped in the exported settings too. So you will have to resume them manually after importing the settings file.</string>
-    <string name="import_or_export_warning_local_threads_base_dir">\"local threads base directory\"</string>
-    <string name="import_or_export_warning_and">and</string>
-    <string name="import_or_export_warning_saved_files_base_dir">\"saved files base directory\"</string>
 
     <string name="media_settings_use_saf_for_save_location_dialog_title">Use the new Storage Access Framework API to choose images download directory?</string>
     <string name="media_settings_use_saf_for_local_threads_location_dialog_title">Use the new Storage Access Framework API to choose local threads download directory?</string>

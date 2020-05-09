@@ -504,6 +504,21 @@ sealed class ImportExportScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MainSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainSettingsGroup.getGroupIdentifier()
+  ) : IGroup,
+    ImportExportScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ExportSetting : MainSettingsGroup("export_settings")
+    object ImportSetting : MainSettingsGroup("import_settings")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_settings_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("import_export_screen")
   }

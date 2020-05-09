@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
+import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.features.settings.IScreenIdentifier
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
@@ -38,6 +39,11 @@ abstract class BaseSettingsScreen(
         return screen
       }
     )
+  }
+
+  @CallSuper
+  open fun onDestroy() {
+    supervisorJob.cancel()
   }
 
   abstract fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder>

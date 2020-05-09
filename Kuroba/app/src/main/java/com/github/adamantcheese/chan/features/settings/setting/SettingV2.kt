@@ -6,7 +6,7 @@ import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import io.reactivex.disposables.CompositeDisposable
 
 abstract class SettingV2 {
-  protected  val compositeDisposable = CompositeDisposable()
+  protected val compositeDisposable = CompositeDisposable()
 
   abstract var requiresRestart: Boolean
     protected set
