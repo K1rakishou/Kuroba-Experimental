@@ -51,6 +51,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.helper.PostPopupHelper;
 import com.github.adamantcheese.chan.ui.helper.RemovedPostsHelper;
@@ -616,6 +617,11 @@ public class ThreadLayout
     }
 
     @Override
+    public void presentController(FloatingListMenuController floatingListMenuController, boolean animate) {
+        callback.presentController(floatingListMenuController, animate);
+    }
+
+    @Override
     public void showNewPostsNotification(boolean show, int more) {
         if (show) {
             if (!threadListLayout.scrolledToBottom() && BackgroundUtils.isInForeground()) {
@@ -819,6 +825,7 @@ public class ThreadLayout
         void showAlbum(List<PostImage> images, int index);
         void onShowPosts();
         void presentController(Controller controller);
+        void presentController(Controller controller, boolean animate);
         void openReportController(Post post);
         void hideSwipeRefreshLayout();
         Toolbar getToolbar();

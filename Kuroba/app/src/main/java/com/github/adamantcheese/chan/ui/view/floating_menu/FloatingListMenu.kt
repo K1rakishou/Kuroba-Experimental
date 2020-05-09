@@ -57,10 +57,10 @@ class FloatingListMenu @JvmOverloads constructor(
     }
   }
 
-  data class FloatingListMenuItem(
+  data class FloatingListMenuItem @JvmOverloads constructor(
     val id: Int,
     val name: String,
-    val value: Any
+    val value: Any? = null
   )
 
 }

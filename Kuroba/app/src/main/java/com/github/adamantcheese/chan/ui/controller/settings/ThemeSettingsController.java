@@ -55,6 +55,7 @@ import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Pag
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -64,6 +65,7 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ViewPagerAdapter;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -133,9 +135,11 @@ public class ThemeSettingsController
         }
 
         @Override
-        public Object onPopulatePostOptions(Post post, List<FloatingMenuItem> menu, List<FloatingMenuItem> extraMenu) {
-            menu.add(new FloatingMenuItem(1, "Option"));
-            return 0;
+        public void onPopulatePostOptions(Post post, List<FloatingListMenu.FloatingListMenuItem> menu) {
+        }
+
+        @Override
+        public void presentController(FloatingListMenuController floatingListMenuController, boolean animate) {
         }
 
         @Override

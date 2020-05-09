@@ -68,7 +68,7 @@ class ImageLoaderV2(
             data(url)
             lifecycle(lifecycle)
 
-            if (width != null && height != null) {
+            if ((width != null && width > 0) && (height != null && height > 0)) {
                 size(width, height)
             }
 

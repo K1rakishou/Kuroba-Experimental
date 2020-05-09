@@ -31,19 +31,21 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
@@ -63,6 +65,7 @@ public class CardPostCell
     private Loadable loadable;
     private PostCellInterface.PostCellCallback callback;
     private boolean compact = false;
+    private boolean inPopup = false;
 
     private PostImageThumbnailView thumbView;
     private TextView title;
@@ -110,32 +113,37 @@ public class CardPostCell
         setCompact(compact);
 
         options.setOnClickListener(v -> {
-            List<FloatingMenuItem> items = new ArrayList<>();
-            List<FloatingMenuItem> extraItems = new ArrayList<>();
-            Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
-            showOptions(v, items, extraItems, extraOption);
+            List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
+
+            if (callback != null) {
+                callback.onPopulatePostOptions(post, items);
+
+                if (items.size() > 0) {
+                    showOptions(items);
+                }
+            }
         });
     }
 
-    private void showOptions(
-            View anchor, List<FloatingMenuItem> items, List<FloatingMenuItem> extraItems, Object extraOption
-    ) {
-        FloatingMenu menu = new FloatingMenu(getContext(), anchor, items);
-        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-            @Override
-            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                if (item.getId() == extraOption) {
-                    showOptions(anchor, extraItems, null, null);
+    private void showOptions(List<FloatingListMenu.FloatingListMenuItem> items) {
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                getContext(),
+                items,
+                item -> {
+                    if (callback != null) {
+                        callback.onPostOptionClicked(post, item.getId(), inPopup);
+                    }
+
+                    return Unit.INSTANCE;
                 }
+        );
 
-                callback.onPostOptionClicked(post, item.getId(), false);
-            }
-
-            @Override
-            public void onFloatingMenuDismissed(FloatingMenu menu) {
-            }
-        });
-        menu.show();
+        if (callback != null) {
+            callback.presentController(
+                    floatingListMenuController,
+                    true
+            );
+        }
     }
 
     @Override
@@ -164,6 +172,7 @@ public class CardPostCell
             return;
         }
 
+        this.inPopup = inPopup;
         this.loadable = loadable;
         this.post = post;
         this.callback = callback;
@@ -218,16 +227,21 @@ public class CardPostCell
         PostImage firstPostImage = post.firstImage();
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
+
+            int width = ChanSettings.autoLoadThreadImages.get()
+                    ? Math.max(500, thumbView.getWidth())
+                    : thumbView.getWidth();
+
+            int height =  ChanSettings.autoLoadThreadImages.get()
+                    ? Math.max(500, thumbView.getHeight())
+                    : thumbView.getHeight();
+
             thumbView.bindPostImage(
                     loadable,
                     firstPostImage,
                     true,
-                    ChanSettings.autoLoadThreadImages.get()
-                            ? Math.max(500, thumbView.getWidth())
-                            : thumbView.getWidth(),
-                    ChanSettings.autoLoadThreadImages.get()
-                            ? Math.max(500, thumbView.getHeight())
-                            : thumbView.getHeight()
+                    width,
+                    height
             );
         } else {
             thumbView.setVisibility(GONE);

@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
@@ -62,12 +63,13 @@ import com.github.adamantcheese.chan.ui.adapter.PostAdapter;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.PostUtils;
@@ -93,8 +95,10 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 import static com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize;
 
 public class ThreadPresenter
-        implements ChanThreadLoader.ChanLoaderCallback, PostAdapter.PostAdapterCallback,
-        PostCellInterface.PostCellCallback, ThreadStatusCell.Callback,
+        implements ChanThreadLoader.ChanLoaderCallback,
+        PostAdapter.PostAdapterCallback,
+        PostCellInterface.PostCellCallback,
+        ThreadStatusCell.Callback,
         ThreadListLayout.ThreadListLayoutPresenterCallback {
     //region Private Variables
     private static final String TAG = "ThreadPresenter";
@@ -115,9 +119,8 @@ public class ThreadPresenter
     private static final int POST_OPTION_OPEN_BROWSER = 13;
     private static final int POST_OPTION_FILTER_TRIPCODE = 14;
     private static final int POST_OPTION_FILTER_IMAGE_HASH = 15;
-    private static final int POST_OPTION_EXTRA = 16;
-    private static final int POST_OPTION_REMOVE = 17;
-    private static final int POST_OPTION_MOCK_REPLY = 18;
+    private static final int POST_OPTION_REMOVE = 16;
+    private static final int POST_OPTION_MOCK_REPLY = 17;
 
     private final WatchManager watchManager;
     private final CacheHandler cacheHandler;
@@ -894,71 +897,88 @@ public class ThreadPresenter
     }
 
     @Override
-    public Object onPopulatePostOptions(Post post, List<FloatingMenuItem> menu, List<FloatingMenuItem> extraMenu) {
-        if (!isBound()) return null;
+    public void onPopulatePostOptions(Post post, List<FloatingListMenu.FloatingListMenuItem> menu) {
+        if (!isBound()) {
+            return;
+        }
+
         if (loadable.isCatalogMode()) {
-            menu.add(new FloatingMenuItem(POST_OPTION_PIN, R.string.action_pin));
+            menu.add(createMenuItem(POST_OPTION_PIN, R.string.action_pin));
         } else if (!loadable.isLocal()) {
-            menu.add(new FloatingMenuItem(POST_OPTION_QUOTE, R.string.post_quote));
-            menu.add(new FloatingMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text));
+            menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote));
+            menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text));
         }
 
         if (loadable.getSite().siteFeature(Site.SiteFeature.POST_REPORT) && !loadable.isLocal()) {
-            menu.add(new FloatingMenuItem(POST_OPTION_REPORT, R.string.post_report));
+            menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report));
         }
 
         if ((loadable.isCatalogMode() || (loadable.isThreadMode() && !post.isOP)) && !loadable.isLocal()) {
             if (!post.getPostFilter().getFilterStub()) {
-                menu.add(new FloatingMenuItem(POST_OPTION_HIDE, R.string.post_hide));
+                menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide));
             }
-            menu.add(new FloatingMenuItem(POST_OPTION_REMOVE, R.string.post_remove));
+            menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove));
         }
 
         if (loadable.isThreadMode()) {
             if (!TextUtils.isEmpty(post.posterId)) {
-                menu.add(new FloatingMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id));
+                menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id));
             }
 
             if (!TextUtils.isEmpty(post.tripcode)) {
-                menu.add(new FloatingMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode));
-                menu.add(new FloatingMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode));
+                menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode));
+                menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode));
             }
 
-            if (loadable.site.siteFeature(Site.SiteFeature.IMAGE_FILE_HASH) && !post.getPostImages().isEmpty()) {
-                menu.add(new FloatingMenuItem(POST_OPTION_FILTER_IMAGE_HASH, R.string.post_filter_image_hash));
+            if (loadable.site.siteFeature(Site.SiteFeature.IMAGE_FILE_HASH)
+                    && !post.getPostImages().isEmpty()) {
+                menu.add(createMenuItem(POST_OPTION_FILTER_IMAGE_HASH, R.string.post_filter_image_hash));
             }
         }
 
-        if (loadable.site.siteFeature(Site.SiteFeature.POST_DELETE) && databaseManager.getDatabaseSavedReplyManager()
-                .isSaved(post.board, post.no) && !loadable.isLocal()) {
-            menu.add(new FloatingMenuItem(POST_OPTION_DELETE, R.string.post_delete));
+        if (loadable.site.siteFeature(Site.SiteFeature.POST_DELETE)) {
+            boolean isSaved = databaseManager.getDatabaseSavedReplyManager().isSaved(
+                    post.board,
+                    post.no
+            );
+
+            if (isSaved && !loadable.isLocal()) {
+                menu.add(createMenuItem(POST_OPTION_DELETE, R.string.post_delete));
+            }
         }
 
-        if (ChanSettings.accessibleInfo.get()) {
-            menu.add(new FloatingMenuItem(POST_OPTION_INFO, R.string.post_info));
-        } else {
-            extraMenu.add(new FloatingMenuItem(POST_OPTION_INFO, R.string.post_info));
+        if (post.getLinkables().size() > 0) {
+            menu.add(createMenuItem(POST_OPTION_LINKS, R.string.post_show_links));
         }
 
-        menu.add(new FloatingMenuItem(POST_OPTION_EXTRA, R.string.post_more));
-
-        extraMenu.add(new FloatingMenuItem(POST_OPTION_LINKS, R.string.post_show_links));
-        extraMenu.add(new FloatingMenuItem(POST_OPTION_OPEN_BROWSER, R.string.action_open_browser));
-        extraMenu.add(new FloatingMenuItem(POST_OPTION_SHARE, R.string.post_share));
-        extraMenu.add(new FloatingMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text));
+        menu.add(createMenuItem(POST_OPTION_OPEN_BROWSER, R.string.action_open_browser));
+        menu.add(createMenuItem(POST_OPTION_SHARE, R.string.post_share));
+        menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text));
+        menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info));
 
         if (!loadable.isLocal()) {
-            boolean isSaved = databaseManager.getDatabaseSavedReplyManager().isSaved(post.board, post.no);
-            extraMenu.add(new FloatingMenuItem(POST_OPTION_SAVE,
-                    isSaved ? R.string.unmark_as_my_post : R.string.mark_as_my_post
-            ));
+            boolean isSaved = databaseManager.getDatabaseSavedReplyManager().isSaved(
+                    post.board,
+                    post.no
+            );
+
+            int stringId = isSaved ? R.string.unmark_as_my_post : R.string.mark_as_my_post;
+            menu.add(createMenuItem(POST_OPTION_SAVE, stringId));
 
             if (BuildConfig.DEV_BUILD && loadable.no > 0) {
-                extraMenu.add(new FloatingMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply));
+                menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply));
             }
         }
+    }
 
-        return POST_OPTION_EXTRA;
+    private FloatingListMenu.FloatingListMenuItem createMenuItem(
+            int postOptionPin,
+            @StringRes int stringId
+    ) {
+        return new FloatingListMenu.FloatingListMenuItem(
+                postOptionPin,
+                context.getString(stringId)
+        );
     }
 
     public void onPostOptionClicked(Post post, Object id, boolean inPopup) {
@@ -1125,6 +1145,11 @@ public class ThreadPresenter
     @Override
     public void onPostSelectionQuoted(Post post, CharSequence quoted) {
         threadPresenterCallback.quote(post, quoted);
+    }
+
+    @Override
+    public void presentController(FloatingListMenuController floatingListMenuController, boolean animate) {
+        threadPresenterCallback.presentController(floatingListMenuController, animate);
     }
 
     @Override
@@ -1453,5 +1478,6 @@ public class ThreadPresenter
         void viewRemovedPostsForTheThread(List<Post> threadPosts, long threadNo);
         void onRestoreRemovedPostsClicked(Loadable threadLoadable, List<Long> selectedPosts);
         void onPostUpdated(Post post);
+        void presentController(FloatingListMenuController floatingListMenuController, boolean animate);
     }
 }

@@ -669,7 +669,7 @@ class MainSettingsControllerV2(context: Context)
     }
 
     val currentPosition =
-      (recyclerView.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+      (recyclerView.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
     val currentScreen = if (screenStack.isEmpty()) {
       null
     } else {

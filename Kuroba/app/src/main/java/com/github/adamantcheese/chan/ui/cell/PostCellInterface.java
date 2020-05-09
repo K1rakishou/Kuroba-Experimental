@@ -21,10 +21,11 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import java.util.List;
 
@@ -49,40 +50,26 @@ public interface PostCellInterface {
      *                            offscreen and not because we called notifyItemChanged.
      * */
     void onPostRecycled(boolean isActuallyRecycling);
-
     Post getPost();
-
     ThumbnailView getThumbnailView(PostImage postImage);
 
     interface PostCellCallback {
         Loadable getLoadable();
-
         // Only used in PostCell and CardPostCell, no need to use in stubs
         void onPostBind(Post post);
-
         // Only used in PostCell and CardPostCell, no need to use in stubs
         void onPostUnbind(Post post, boolean isActuallyRecycling);
-
         void onPostClicked(Post post);
-
         void onPostDoubleClicked(Post post);
-
         void onThumbnailClicked(PostImage image, ThumbnailView thumbnail);
-
         void onShowPostReplies(Post post);
-
-        Object onPopulatePostOptions(Post post, List<FloatingMenuItem> menu, List<FloatingMenuItem> extraMenu);
-
+        void onPopulatePostOptions(Post post, List<FloatingListMenu.FloatingListMenuItem> menu);
         void onPostOptionClicked(Post post, Object id, boolean inPopup);
-
         void onPostLinkableClicked(Post post, PostLinkable linkable);
-
         void onPostNoClicked(Post post);
-
         void onPostSelectionQuoted(Post post, CharSequence quoted);
-
         Page getPage(Post op);
-
         boolean hasAlreadySeenPost(Post post);
+        void presentController(FloatingListMenuController floatingListMenuController, boolean animate);
     }
 }

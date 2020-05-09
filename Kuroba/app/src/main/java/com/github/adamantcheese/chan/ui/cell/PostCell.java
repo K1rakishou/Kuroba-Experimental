@@ -70,6 +70,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod;
@@ -78,10 +79,9 @@ import com.github.adamantcheese.chan.ui.text.span.ClearableSpan;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -93,6 +93,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import coil.request.RequestDisposable;
+import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 import static android.text.TextUtils.isEmpty;
@@ -243,12 +244,14 @@ public class PostCell
         repliesAdditionalArea.setOnClickListener(repliesClickListener);
 
         options.setOnClickListener(v -> {
-            List<FloatingMenuItem> items = new ArrayList<>();
-            List<FloatingMenuItem> extraItems = new ArrayList<>();
+            List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
 
             if (callback != null) {
-                Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
-                showOptions(v, items, extraItems, extraOption);
+                callback.onPopulatePostOptions(post, items);
+
+                if (items.size() > 0) {
+                    showOptions(items);
+                }
             }
         });
 
@@ -265,30 +268,25 @@ public class PostCell
         gestureDetector = new GestureDetector(getContext(), new DoubleTapGestureListener());
     }
 
-    private void showOptions(
-            View anchor,
-            List<FloatingMenuItem> items,
-            List<FloatingMenuItem> extraItems,
-            Object extraOption
-    ) {
-        FloatingMenu menu = new FloatingMenu(getContext(), anchor, items);
-        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-            @Override
-            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                if (item.getId() == extraOption) {
-                    showOptions(anchor, extraItems, null, null);
-                }
+    private void showOptions(List<FloatingListMenu.FloatingListMenuItem> items) {
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                getContext(),
+                items,
+                item -> {
+                    if (callback != null) {
+                        callback.onPostOptionClicked(post, item.getId(), inPopup);
+                    }
 
-                if (callback != null) {
-                    callback.onPostOptionClicked(post, item.getId(), inPopup);
+                    return Unit.INSTANCE;
                 }
-            }
+        );
 
-            @Override
-            public void onFloatingMenuDismissed(FloatingMenu menu) {
-            }
-        });
-        menu.show();
+        if (callback != null) {
+            callback.presentController(
+                    floatingListMenuController,
+                    true
+            );
+        }
     }
 
     @Override

@@ -164,15 +164,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.AccessiblePostInfo,
-          topDescriptionIdFunc = { R.string.setting_accessible_post_info },
-          bottomDescriptionIdFunc = { R.string.setting_accessible_post_info_description },
-          setting = ChanSettings.accessibleInfo,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.PostGroup.PostFullDate,
           topDescriptionIdFunc = { R.string.setting_post_full_date },
           setting = ChanSettings.postFullDate,

@@ -29,7 +29,11 @@ class ListSettingV2<T : Any> : SettingV2() {
     return setting?.get() == (value as T)
   }
 
-  fun updateSetting(value: Any) {
+  fun updateSetting(value: Any?) {
+    if (value == null) {
+      return
+    }
+
     update()
     setting?.set(value as T)
   }

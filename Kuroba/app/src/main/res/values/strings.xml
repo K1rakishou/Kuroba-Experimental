@@ -347,7 +347,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="thread_hidden">Thread hidden</string>
     <string name="thread_removed">Thread removed</string>
     <string name="post_delete">Delete</string>
-    <string name="post_more">More…</string>
     <string name="reply_name">Name</string>
     <string name="reply_options">Options</string>
     <string name="reply_subject">Subject</string>
@@ -508,8 +507,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_group_images">Images</string>
     <string name="setting_shift_post">Shift post format</string>
     <string name="setting_shift_post_description">Shift the comment of long posts to start below the thumbnail</string>
-    <string name="setting_accessible_post_info">Enable accessible post info</string>
-    <string name="setting_accessible_post_info_description">Enabling places info in the first post option menu</string>
     <string name="setting_text_only">Text-only mode</string>
     <string name="setting_text_only_description">Remove images when in board and thread view</string>
     <string name="settings_reveal_text_spoilers">Reveal text spoilers</string>

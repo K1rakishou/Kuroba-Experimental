@@ -200,7 +200,6 @@ public class ChanSettings {
     public static final StringSetting fontSize;
     public static final BooleanSetting fontAlternate;
     public static final BooleanSetting shiftPostFormat;
-    public static final BooleanSetting accessibleInfo;
     public static final BooleanSetting postFullDate;
     public static final BooleanSetting postFileInfo;
     public static final BooleanSetting postFilename;
@@ -358,7 +357,6 @@ public class ChanSettings {
             fontSize = new StringSetting(p, "preference_font", getRes().getBoolean(R.bool.is_tablet) ? "16" : "14");
             fontAlternate = new BooleanSetting(p, "preference_font_alternate", false);
             shiftPostFormat = new BooleanSetting(p, "shift_post_format", true);
-            accessibleInfo = new BooleanSetting(p, "preference_enable_accessible_info", false);
             postFullDate = new BooleanSetting(p, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(p, "preference_post_file_info", true);
             postFilename = new BooleanSetting(p, "preference_post_filename", true);

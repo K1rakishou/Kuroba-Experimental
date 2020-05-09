@@ -31,13 +31,15 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
@@ -55,6 +57,7 @@ public class PostStubCell
 
     private TextView title;
     private View divider;
+    private boolean inPopup;
 
     public PostStubCell(Context context) {
         super(context);
@@ -91,37 +94,37 @@ public class PostStubCell
         setOnClickListener(this);
 
         options.setOnClickListener(v -> {
-            List<FloatingMenuItem> items = new ArrayList<>();
-            List<FloatingMenuItem> extraItems = new ArrayList<>();
+            List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
 
             if (callback != null) {
-                Object extraOption = callback.onPopulatePostOptions(post, items, extraItems);
-                showOptions(v, items, extraItems, extraOption);
+                callback.onPopulatePostOptions(post, items);
+
+                if (items.size() > 0) {
+                    showOptions(items);
+                }
             }
         });
     }
 
-    private void showOptions(
-            View anchor, List<FloatingMenuItem> items, List<FloatingMenuItem> extraItems, Object extraOption
-    ) {
-        FloatingMenu menu = new FloatingMenu(getContext(), anchor, items);
-        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-            @Override
-            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                if (item.getId() == extraOption) {
-                    showOptions(anchor, extraItems, null, null);
-                }
+    private void showOptions(List<FloatingListMenu.FloatingListMenuItem> items) {
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                getContext(),
+                items,
+                item -> {
+                    if (callback != null) {
+                        callback.onPostOptionClicked(post, item.getId(), inPopup);
+                    }
 
-                if (callback != null) {
-                    callback.onPostOptionClicked(post, item.getId(), false);
+                    return Unit.INSTANCE;
                 }
-            }
+        );
 
-            @Override
-            public void onFloatingMenuDismissed(FloatingMenu menu) {
-            }
-        });
-        menu.show();
+        if (callback != null) {
+            callback.presentController(
+                    floatingListMenuController,
+                    true
+            );
+        }
     }
 
     @Override
@@ -164,6 +167,7 @@ public class PostStubCell
         }
 
         this.post = post;
+        this.inPopup = inPopup;
         this.callback = callback;
         this.postViewMode = postViewMode;
         this.showDivider = showDivider;
@@ -201,7 +205,9 @@ public class PostStubCell
             title.setText(titleText);
         }
 
-        divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD ? GONE : (showDivider ? VISIBLE : GONE));
+        divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD
+                ? GONE :
+                (showDivider ? VISIBLE : GONE));
 
         if (callback != null) {
             callback.onPostBind(post);
