@@ -100,7 +100,13 @@ public class ImageViewerController
 
     private static final int VOLUME_ID = 1;
     private static final int SAVE_ID = 2;
-    private static final int ROTATE_ID = 3;
+    private static final int ACTION_OPEN_BROWSER = 3;
+    private static final int ACTION_SHARE = 4;
+    private static final int ACTION_SEARCH_IMAGE = 5;
+    private static final int ACTION_DOWNLOAD_ALBUM = 6;
+    private static final int ACTION_TRANSPARENCY_TOGGLE = 7;
+    private static final int ACTION_IMAGE_ROTATE = 8;
+    private static final int ACTION_RELOAD = 9;
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -157,19 +163,50 @@ public class ImageViewerController
                 this
         );
 
-        overflowBuilder.withSubItem(R.string.action_open_browser, this::openBrowserClicked);
+        overflowBuilder.withSubItem(
+                ACTION_OPEN_BROWSER,
+                R.string.action_open_browser,
+                this::openBrowserClicked
+        );
         if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(R.string.action_share, this::shareClicked);
+            overflowBuilder.withSubItem(
+                    ACTION_SHARE,
+                    R.string.action_share,
+                    this::shareClicked
+            );
         }
-        overflowBuilder.withSubItem(R.string.action_search_image, this::searchClicked);
-        if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(R.string.action_download_album, this::downloadAlbumClicked);
-        }
-        overflowBuilder.withSubItem(R.string.action_transparency_toggle, this::toggleTransparency);
-        overflowBuilder.withSubItem(ROTATE_ID, R.string.action_image_rotate, this::rotateImage);
+
+        overflowBuilder.withSubItem(
+                ACTION_SEARCH_IMAGE,
+                R.string.action_search_image,
+                this::searchClicked
+        );
 
         if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(R.string.action_reload, this::forceReload);
+            overflowBuilder.withSubItem(
+                    ACTION_DOWNLOAD_ALBUM,
+                    R.string.action_download_album,
+                    this::downloadAlbumClicked
+            );
+        }
+
+        overflowBuilder.withSubItem(
+                ACTION_TRANSPARENCY_TOGGLE,
+                R.string.action_transparency_toggle,
+                this::toggleTransparency
+        );
+        overflowBuilder.withSubItem(
+                ACTION_IMAGE_ROTATE,
+                R.string.action_image_rotate,
+                this::rotateImage
+        );
+
+        if (!loadable.isLocal()) {
+            overflowBuilder.withSubItem(
+                    ACTION_RELOAD,
+                    R.string.action_reload,
+                    this::forceReload
+            );
         }
 
         overflowBuilder.build().build();
@@ -428,7 +465,7 @@ public class ImageViewerController
         navigation.subtitle = (index + 1) + "/" + count;
         ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
 
-        ToolbarMenuSubItem rotate = navigation.findSubItem(ROTATE_ID);
+        ToolbarMenuSubItem rotate = navigation.findSubItem(ACTION_IMAGE_ROTATE);
         rotate.enabled = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;
     }
 

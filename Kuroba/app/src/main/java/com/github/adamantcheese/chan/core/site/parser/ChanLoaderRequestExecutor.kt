@@ -64,6 +64,14 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
+/**
+ * This class is kinda over complicated right now. It does way too much stuff. It tries to load the
+ * catalog/thread json from the network as well as thread json from third-party archives (only
+ * for 4chan). It automatically redirects you to an archived thread in case of original thread getting
+ * 404ed. It automatically loads cached posts from the database when it was impossible to load posts
+ * from the network. All of that stuff should be separated into their own classes some time in the
+ * future. For now it will stay the way it is.
+ * */
 class ChanLoaderRequestExecutor(
         private val gson: Gson,
         private val okHttpClient: NetModule.ProxiedOkHttpClient,
@@ -88,64 +96,124 @@ class ChanLoaderRequestExecutor(
             resultCallback: (ModularResult<ChanLoaderResponse>) -> Unit
     ): Job {
         return launch {
-            val result = Try {
-                val request = Request.Builder()
-                        .url(url)
-                        .get()
-                        .build()
-
-                val chanReaderProcessor = ChanReaderProcessor(chanPostRepository, requestParams.loadable)
-                val response = okHttpClient.suspendCall(request)
-
-                if (!response.isSuccessful) {
-                    if (response.code == 404) {
-                        if (requestParams.loadable.isDownloadingOrDownloaded) {
-                            // Thread is being downloaded or has been already downloaded, so use
-                            // local copy.
-                            throw ServerException(response.code)
-                        }
-
-                        // Thread is not being downloading/downloaded so fetch posts from an archive
-                        val chanLoaderResponse = tryLoadFromArchivesOrLocalCopyIfPossible(
-                                chanReaderProcessor,
-                                requestParams
-                        )
-
-                        if (chanLoaderResponse == null) {
-                            // Couldn't load neither posts from an archive nor posts cached in the
-                            // database
-                            throw ServerException(response.code)
-                        }
-
-                        return@Try chanLoaderResponse!!
-                    }
-
-                    throw ServerException(response.code)
-                }
-
-                val body = response.body
-                        ?: throw IOException("Response has no body")
-
-                return@Try body.byteStream().use { inputStream ->
-                    return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-                            .use { jsonReader -> readJson(chanReaderProcessor, requestParams, jsonReader).unwrap() }
-                }
-            }.mapError { error -> ChanLoaderException(error) }
+            val result = Try { loadPostsInternal(url, requestParams) }
+              .mapError { error -> ChanLoaderException(error) }
 
             resultCallback.invoke(result)
         }
+    }
+
+    private suspend fun loadPostsInternal(
+      url: String,
+      requestParams: ChanLoaderRequestParams
+    ): ChanLoaderResponse {
+        val request = Request.Builder()
+          .url(url)
+          .get()
+          .build()
+
+        val chanReaderProcessor = ChanReaderProcessor(
+          chanPostRepository,
+          requestParams.loadable
+        )
+
+        val response = try {
+            okHttpClient.suspendCall(request)
+        } catch (error: IOException) {
+            // An IOException occurred during the network request. This is probably a network problem
+            // or maybe even a server issue. Instead of showing the error we can try to load whatever
+            // there is in the database cache.
+            if (requestParams.loadable.isDownloadingOrDownloaded) {
+                // Thread is being downloaded or has been already downloaded, so use
+                // local copy instead.
+                throw error
+            }
+
+            val chanLoaderResponse = tryLoadFromDiskCache(requestParams)
+              ?: throw error
+
+            Logger.d(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
+            return chanLoaderResponse!!
+        }
+
+        if (!response.isSuccessful) {
+            if (response.code == 404) {
+                if (requestParams.loadable.isDownloadingOrDownloaded) {
+                    // Thread is being downloaded or has been already downloaded, so use
+                    // local copy.
+                    throw ServerException(response.code)
+                }
+
+                // Thread is not being downloading/downloaded so fetch posts from an archive
+                val chanLoaderResponse = tryLoadFromArchivesOrLocalCopyIfPossible(
+                  chanReaderProcessor,
+                  requestParams
+                )
+
+                if (chanLoaderResponse == null) {
+                    // Couldn't load neither posts from an archive nor posts cached in the
+                    // database
+                    throw ServerException(response.code)
+                }
+
+                Logger.d(TAG, "Successfully recovered from 404 error")
+                return chanLoaderResponse!!
+            }
+
+            throw ServerException(response.code)
+        }
+
+        val body = response.body
+          ?: throw IOException("Response has no body")
+
+        return body.byteStream().use { inputStream ->
+            return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
+              .use { jsonReader ->
+                  return@use readJson(
+                    chanReaderProcessor,
+                    requestParams,
+                    jsonReader
+                  ).unwrap()
+              }
+        }
+    }
+
+    private suspend fun tryLoadFromDiskCache(requestParams: ChanLoaderRequestParams): ChanLoaderResponse? {
+        val reloadedPosts = reloadPostsFromRepository(
+          getDescriptor(requestParams.loadable),
+          requestParams.loadable
+        )
+
+        if (reloadedPosts.isEmpty()) {
+            Logger.d(TAG, "tryLoadFromDiskCache() returned empty list")
+            return null
+        }
+
+        val originalPost = reloadedPosts.firstOrNull { post -> post.isOP }
+        if (originalPost == null) {
+            Logger.e(TAG, "tryLoadFromDiskCache() Reloaded from the database posts have no OP")
+            return null
+        }
+
+        return ChanLoaderResponse(originalPost.toPostBuilder(null), reloadedPosts)
     }
 
     private suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(
             chanReaderProcessor: ChanReaderProcessor,
             requestParams: ChanLoaderRequestParams
     ): ChanLoaderResponse? {
+        if (requestParams.loadable.isCatalogMode) {
+            // We don't support catalog loading from archives
+            return null
+        }
+
         val postsFromArchive = getPostsFromArchiveIfNecessary(
                 chanReaderProcessor.getToParse(),
                 requestParams.loadable,
                 requestParams.forceLoading
         ).safeUnwrap { error ->
-            Logger.e(TAG, "Error while trying to get posts from archive", error)
+            Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
+              "posts from archive", error)
             return null
         }
 
@@ -166,13 +234,14 @@ class ChanLoaderRequestExecutor(
         )
 
         if (reloadedPosts.isEmpty()) {
-            Logger.d(TAG, "reloadPostsFromRepository() returned empty list")
+            Logger.d(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() returned empty list")
             return null
         }
 
         val originalPost = reloadedPosts.firstOrNull { post -> post.isOP }
         if (originalPost == null) {
-            Logger.e(TAG, "Reloaded from the database posts have no OP")
+            Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Reloaded from the database " +
+              "posts have no OP")
             return null
         }
 
@@ -181,7 +250,8 @@ class ChanLoaderRequestExecutor(
                 threadDescriptor,
                 requestParams.forceLoading
         ).safeUnwrap { error ->
-            Logger.e(TAG, "Error while trying to get archive descriptor", error)
+            Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
+              "archive descriptor", error)
             return null
         }
 
@@ -450,6 +520,26 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 chanPosts,
                 isCatalog
         ).unwrap()
+    }
+
+    private suspend fun reloadPostsFromRepository(
+      chanDescriptor: ChanDescriptor,
+      loadable: Loadable
+    ): List<Post> {
+        return when (chanDescriptor) {
+            is ChanDescriptor.ThreadDescriptor -> {
+                chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
+                  .unwrap()
+                  .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
+            }
+            is ChanDescriptor.CatalogDescriptor -> {
+                val postsToLoadCount = loadable.board.pages * loadable.board.perPage
+
+                chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount)
+                  .unwrap()
+                  .sortedByDescending { chanPost -> chanPost.lastModified }
+            }
+        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post, currentTheme) }
     }
 
     private suspend fun reloadPostsFromRepository(

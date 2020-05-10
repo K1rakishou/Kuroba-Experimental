@@ -160,6 +160,30 @@ class ChanPostLocalSource(
     }
 
     suspend fun getCatalogOriginalPosts(
+      descriptor: ChanDescriptor.CatalogDescriptor,
+      count: Int
+    ): List<ChanPost> {
+        ensureInTransaction()
+        require(count > 0) { "Bad count param: $count" }
+
+        // Load catalog descriptor's board
+        val chanBoardEntity = chanBoardDao.select(descriptor.siteName(), descriptor.boardCode())
+          ?: return emptyList()
+
+        // Load catalog descriptor's latest threads
+        val chanThreadEntityList = chanThreadDao.selectLatestThreads(
+          chanBoardEntity.boardId,
+          count
+        )
+
+        if (chanThreadEntityList.isEmpty()) {
+            return emptyList()
+        }
+
+        return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
+    }
+
+    suspend fun getCatalogOriginalPosts(
             descriptor: ChanDescriptor.CatalogDescriptor,
             originalPostNoList: List<Long>
     ): List<ChanPost> {
@@ -184,12 +208,19 @@ class ChanPostLocalSource(
             return emptyList()
         }
 
+        return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
+    }
+
+    private suspend fun loadOriginalPostsInternal(
+      chanThreadEntityList: List<ChanThreadEntity>,
+      descriptor: ChanDescriptor.CatalogDescriptor
+    ): List<ChanPost> {
         // Load threads' original posts
         val chanPostEntityMap = chanThreadEntityList
-                .map { chanThreadEntity -> chanThreadEntity.threadId }
-                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
-                .associateBy { chanPostEntity -> chanPostEntity.ownerThreadId }
+          .map { chanThreadEntity -> chanThreadEntity.threadId }
+          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
+          .associateBy { chanPostEntity -> chanPostEntity.ownerThreadId }
 
         if (chanPostEntityMap.isEmpty()) {
             return emptyList()
@@ -201,9 +232,9 @@ class ChanPostLocalSource(
 
         // Load posts' comments/subjects/tripcodes and other Spannables
         val textSpansGroupedByPostId = postIdList
-                .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
-                .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
+          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
+          .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
         val posts = chanThreadEntityList.map { chanThreadEntity ->
             val chanPostEntity = checkNotNull(chanPostEntityMap[chanThreadEntity.threadId]) {
@@ -213,14 +244,13 @@ class ChanPostLocalSource(
             val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
 
             return@map ChanThreadMapper.fromEntity(
-                    gson,
-                    descriptor,
-                    chanThreadEntity,
-                    chanPostEntity,
-                    postTextSnapEntityList
+              gson,
+              descriptor,
+              chanThreadEntity,
+              chanPostEntity,
+              postTextSnapEntityList
             )
         }
-
 
         return getPostsAdditionalData(postIdList, posts)
     }

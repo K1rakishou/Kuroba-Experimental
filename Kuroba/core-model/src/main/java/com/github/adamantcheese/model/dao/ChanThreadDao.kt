@@ -66,6 +66,15 @@ abstract class ChanThreadDao {
     @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        ORDER BY ${ChanThreadEntity.LAST_MODIFIED_COLUMN_NAME} DESC
+        LIMIT :count
+    """)
+    abstract suspend fun selectLatestThreads(ownerBoardId: Long, count: Int): List<ChanThreadEntity>
+
+    @Query("""
+        SELECT *
+        FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} IN (:chanThreadIdList)
     """)
     abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>

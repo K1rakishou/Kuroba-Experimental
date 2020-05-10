@@ -74,6 +74,19 @@ class PostsCache(private val maxValueCount: Int) {
         }
     }
 
+    suspend fun getLatestOriginalPostsFromCache(
+      descriptor: ChanDescriptor.CatalogDescriptor,
+      count: Int
+    ): List<ChanPost> {
+        return mutex.withLock {
+            accessTimes.entries
+              .filter { (threadDescriptor, _) -> threadDescriptor.boardDescriptor == descriptor.boardDescriptor }
+              .sortedByDescending { (_, accessTime) -> accessTime }
+              .take(count)
+              .mapNotNull { (threadDescriptor, _) -> originalPostsCache[threadDescriptor] }
+        }
+    }
+
     suspend fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanPost? {
         return mutex.withLock {
             accessTimes[threadDescriptor] = System.currentTimeMillis()

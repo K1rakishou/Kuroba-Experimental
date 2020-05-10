@@ -43,6 +43,8 @@ public class LogsController
     private static final String TAG = "LogsController";
     private static final int DEFAULT_LINES_COUNT = 250;
 
+    private static final int ACTION_LOGS_COPY = 1;
+
     private TextView logTextView;
     private String logText;
 
@@ -58,7 +60,11 @@ public class LogsController
 
         navigation.buildMenu()
                 .withOverflow(navigationController)
-                .withSubItem(R.string.settings_logs_copy, this::copyLogsClicked)
+                .withSubItem(
+                        ACTION_LOGS_COPY,
+                        R.string.settings_logs_copy,
+                        this::copyLogsClicked
+                )
                 .build()
                 .build();
 

@@ -149,20 +149,6 @@ public class NavigationItem {
         }
 
         public MenuOverflowBuilder withSubItem(
-                int text,
-                ToolbarMenuSubItem.ClickCallback clicked
-        ) {
-            return withSubItem(-1, getString(text), true, clicked);
-        }
-
-        public MenuOverflowBuilder withSubItem(
-                String text,
-                ToolbarMenuSubItem.ClickCallback clicked
-        ) {
-            return withSubItem(-1, text, true, clicked);
-        }
-
-        public MenuOverflowBuilder withSubItem(
                 int id,
                 int text,
                 ToolbarMenuSubItem.ClickCallback clicked
@@ -196,7 +182,7 @@ public class NavigationItem {
          * was no need for more than one level of depth.
          * @see ToolbarMenuItem#showSubmenu()
          *
-         * Note2: all menu ids have to be unique. Only MenuItems without id at all (-1) are allowed.
+         * Note2: all menu ids have to be unique. MenuItems without id at all (-1) are not allowed too.
          * Otherwise this will crash in
          * @see ToolbarMenuItem#showSubmenu()
          * */

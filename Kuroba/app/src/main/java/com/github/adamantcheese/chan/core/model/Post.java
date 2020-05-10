@@ -383,7 +383,7 @@ public class Post
                 '}';
     }
 
-    public Post.Builder toPostBuilder(ArchiveDescriptor archiveDescriptor) {
+    public Post.Builder toPostBuilder(@Nullable ArchiveDescriptor archiveDescriptor) {
         Post.Builder postBuilder = new Post.Builder()
                 .board(board)
                 .id(no)

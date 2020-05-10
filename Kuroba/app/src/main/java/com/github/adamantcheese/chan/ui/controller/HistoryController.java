@@ -58,6 +58,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 public class HistoryController
         extends Controller
         implements CompoundButton.OnCheckedChangeListener, ToolbarNavigationController.ToolbarSearchCallback {
+    private static final int ACTION_HISTORY_CLEAR = 1;
+    private static final int ACTION_SAVED_REPLY_CLEAR = 2;
+
     @Inject
     DatabaseManager databaseManager;
     @Inject
@@ -90,8 +93,16 @@ public class HistoryController
         navigation.buildMenu()
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
                 .withOverflow(navigationController)
-                .withSubItem(R.string.history_clear, this::clearHistoryClicked)
-                .withSubItem(R.string.saved_reply_clear, this::clearSavedReplyClicked)
+                .withSubItem(
+                        ACTION_HISTORY_CLEAR,
+                        R.string.history_clear,
+                        this::clearHistoryClicked
+                )
+                .withSubItem(
+                        ACTION_SAVED_REPLY_CLEAR,
+                        R.string.saved_reply_clear,
+                        this::clearSavedReplyClicked
+                )
                 .build()
                 .build();
 

@@ -58,16 +58,21 @@ public class BrowseController
         extends ThreadController
         implements ThreadLayout.ThreadLayoutCallback, BrowsePresenter.Callback, BrowseBoardsFloatingMenu.ClickCallback,
         ThreadSlideController.SlideChangeListener {
-    private static final int VIEW_MODE_ID = 1;
-    private static final int SORT_ACTION_ID = 3;
+    private static final int ACTION_CHANGE_VIEW_MODE = 1;
+    private static final int ACTION_SORT = 2;
+    private static final int ACTION_REPLY = 3;
+    private static final int ACTION_OPEN_BROWSER = 4;
+    private static final int ACTION_SHARE = 5;
+    private static final int ACTION_SCROLL_TO_TOP = 6;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 7;
 
-    private static final int SORT_MODE_BUMP = 4;
-    private static final int SORT_MODE_REPLY = 5;
-    private static final int SORT_MODE_IMAGE = 6;
-    private static final int SORT_MODE_NEWEST = 7;
-    private static final int SORT_MODE_OLDEST = 8;
-    private static final int SORT_MODE_MODIFIED = 9;
-    private static final int SORT_MODE_ACTIVITY = 10;
+    private static final int SORT_MODE_BUMP = 100;
+    private static final int SORT_MODE_REPLY = 101;
+    private static final int SORT_MODE_IMAGE = 102;
+    private static final int SORT_MODE_NEWEST = 103;
+    private static final int SORT_MODE_OLDEST = 104;
+    private static final int SORT_MODE_MODIFIED = 105;
+    private static final int SORT_MODE_ACTIVITY = 106;
 
     @Inject
     BrowsePresenter presenter;
@@ -165,7 +170,7 @@ public class BrowseController
         NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(navigationController);
 
         if (!ChanSettings.enableReplyFab.get()) {
-            overflowBuilder.withSubItem(R.string.action_reply, this::replyClicked);
+            overflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply, this::replyClicked);
         }
 
         int modeStringId = ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.LIST
@@ -178,8 +183,8 @@ public class BrowseController
         }
 
         overflowBuilder
-                .withSubItem(VIEW_MODE_ID, modeStringId, this::viewModeClicked)
-                .withNestedOverflow(SORT_ACTION_ID, R.string.action_sort, true)
+                .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId, this::viewModeClicked)
+                .withNestedOverflow(ACTION_SORT, R.string.action_sort, true)
                 .addNestedItem(
                         SORT_MODE_BUMP,
                         R.string.order_bump,
@@ -237,10 +242,10 @@ public class BrowseController
                         this::onSortItemClicked
                 )
                 .build()
-                .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
-                .withSubItem(R.string.action_share, this::shareClicked)
-                .withSubItem(R.string.action_scroll_to_top, this::upClicked)
-                .withSubItem(R.string.action_scroll_to_bottom, this::downClicked)
+                .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, this::openBrowserClicked)
+                .withSubItem(ACTION_SHARE, R.string.action_share, this::shareClicked)
+                .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, this::upClicked)
+                .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, this::downClicked)
                 .build()
                 .build();
     }
@@ -250,7 +255,7 @@ public class BrowseController
         ChanSettings.boardOrder.set(order.name);
         BrowseController.this.order = order;
 
-        ToolbarMenuSubItem sortSubItem = navigation.findSubItem(SORT_ACTION_ID);
+        ToolbarMenuSubItem sortSubItem = navigation.findSubItem(ACTION_SORT);
         resetSelectedSortOrderItem(sortSubItem);
         subItem.isCurrentlySelected = true;
 

@@ -251,7 +251,7 @@ public class ToolbarMenuItem {
             }
 
             if (subItem.id < 0) {
-                continue;
+                throw new IllegalStateException("-1 is not allowed as a menu item id");
             }
 
             if (!duplicateIdCheckerSet.add(subItem.id)) {

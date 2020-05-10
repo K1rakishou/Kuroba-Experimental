@@ -66,6 +66,35 @@ class ChanPostRepository(
     }
 
     suspend fun getCatalogOriginalPosts(
+      descriptor: ChanDescriptor.CatalogDescriptor,
+      count: Int
+    ): ModularResult<List<ChanPost>> {
+        require(count > 0) { "Bad count param: $count" }
+
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized tryWithTransaction {
+                val originalPostsFromCache = postCache.getLatestOriginalPostsFromCache(descriptor, count)
+                if (originalPostsFromCache.size == count) {
+                    return@tryWithTransaction originalPostsFromCache
+                }
+
+                val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+                  descriptor,
+                  count
+                )
+
+                if (originalPostsFromDatabase.isNotEmpty()) {
+                    originalPostsFromDatabase.forEach { post ->
+                        postCache.putIntoCache(post.postDescriptor, post)
+                    }
+                }
+
+                return@tryWithTransaction originalPostsFromDatabase
+            }
+        }
+    }
+
+    suspend fun getCatalogOriginalPosts(
             descriptor: ChanDescriptor.CatalogDescriptor,
             threadNoList: List<Long>
     ): ModularResult<List<ChanPost>> {

@@ -81,11 +81,21 @@ public class ViewThreadController
         ToolbarMenuItem.ToobarThreedotMenuCallback {
     private static final String TAG = "ViewThreadController";
 
-    private static final int PIN_ID = 1;
-    private static final int SAVE_THREAD_ID = 2;
+    private static final int ACTION_PIN = 1;
+    private static final int ACTION_ALBUM = 2;
+    private static final int ACTION_SAVE_THREAD = 3;
 
-    private static final int VIEW_LOCAL_COPY_SUBMENU_ID = 1000;
-    private static final int VIEW_LIVE_COPY_SUBMENU_ID = 1001;
+    private static final int ACTION_REPLY = 100;
+    private static final int ACTION_SEARCH = 101;
+    private static final int ACTION_RELOAD = 102;
+    private static final int ACTION_VIEW_REMOVED_POSTS = 103;
+    private static final int ACTION_OPEN_BROWSER = 104;
+    private static final int ACTION_SHARE = 105;
+    private static final int ACTION_SCROLL_TO_TOP = 106;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 107;
+
+    private static final int ACTION_VIEW_LOCAL_COPY = 1000;
+    private static final int ACTION_VIEW_LIVE_COPY = 1001;
 
     @Inject
     WatchManager watchManager;
@@ -153,13 +163,26 @@ public class ViewThreadController
             // This method recreates the menu (and if there was the download animation running it
             // will be reset to the default icon). We need to reset the prev state as well so that
             // we can start animation again
-            menuBuilder.withItem(SAVE_THREAD_ID, downloadIconOutline, this::saveClicked);
+            menuBuilder.withItem(
+                    ACTION_SAVE_THREAD,
+                    downloadIconOutline,
+                    this::saveClicked
+            );
         }
 
         if (!ChanSettings.textOnly.get()) {
-            menuBuilder.withItem(R.drawable.ic_image_white_24dp, this::albumClicked);
+            menuBuilder.withItem(
+                    ACTION_ALBUM,
+                    R.drawable.ic_image_white_24dp,
+                    this::albumClicked
+            );
         }
-        menuBuilder.withItem(PIN_ID, R.drawable.ic_bookmark_border_white_24dp, this::pinClicked);
+
+        menuBuilder.withItem(
+                ACTION_PIN,
+                R.drawable.ic_bookmark_border_white_24dp,
+                this::pinClicked
+        );
 
         NavigationItem.MenuOverflowBuilder menuOverflowBuilder = menuBuilder.withOverflow(
                 navigationController,
@@ -167,28 +190,62 @@ public class ViewThreadController
         );
 
         if (!ChanSettings.enableReplyFab.get()) {
-            menuOverflowBuilder.withSubItem(R.string.action_reply, this::replyClicked);
+            menuOverflowBuilder.withSubItem(
+                    ACTION_REPLY,
+                    R.string.action_reply,
+                    this::replyClicked
+            );
         }
 
         menuOverflowBuilder
-                .withSubItem(R.string.action_search, this::searchClicked)
-                .withSubItem(R.string.action_reload, this::reloadClicked)
-                .withSubItem(R.string.view_removed_posts, this::showRemovedPostsDialog)
-                .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
-                .withSubItem(R.string.action_share, this::shareClicked)
-                .withSubItem(R.string.action_scroll_to_top, this::upClicked)
-                .withSubItem(R.string.action_scroll_to_bottom, this::downClicked);
+                .withSubItem(
+                        ACTION_SEARCH,
+                        R.string.action_search,
+                        this::searchClicked
+                )
+                .withSubItem(
+                        ACTION_RELOAD,
+                        R.string.action_reload,
+                        this::reloadClicked
+                )
+                .withSubItem(
+                        ACTION_VIEW_REMOVED_POSTS,
+                        R.string.view_removed_posts,
+                        this::showRemovedPostsDialog
+                )
+                .withSubItem(
+                        ACTION_OPEN_BROWSER,
+                        R.string.action_open_browser,
+                        this::openBrowserClicked
+                )
+                .withSubItem(
+                        ACTION_SHARE,
+                        R.string.action_share,
+                        this::shareClicked
+                )
+                .withSubItem(
+                        ACTION_SCROLL_TO_TOP,
+                        R.string.action_scroll_to_top,
+                        this::upClicked
+                )
+                .withSubItem(
+                        ACTION_SCROLL_TO_BOTTOM,
+                        R.string.action_scroll_to_bottom,
+                        this::downClicked
+                );
 
         // These items are dynamic; create them here by default if settings permit
         if (ChanSettings.incrementalThreadDownloadingEnabled.get()
                 && getThreadDownloadState() != DownloadThreadState.Default) {
-            menuOverflowBuilder.withSubItem(VIEW_LOCAL_COPY_SUBMENU_ID,
+            menuOverflowBuilder.withSubItem(
+                    ACTION_VIEW_LOCAL_COPY,
                     R.string.view_local_version,
                     false,
                     this::handleClickViewLocalVersion
             );
 
-            menuOverflowBuilder.withSubItem(VIEW_LIVE_COPY_SUBMENU_ID,
+            menuOverflowBuilder.withSubItem(
+                    ACTION_VIEW_LIVE_COPY,
                     R.string.view_view_version,
                     false,
                     this::handleClickViewLiveVersion
@@ -510,14 +567,14 @@ public class ViewThreadController
         if (ChanSettings.incrementalThreadDownloadingEnabled.get()
                 && getThreadDownloadState() != DownloadThreadState.Default) {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
-            if (navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID) == null
-                    && navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID) == null) {
-                overflowMenu.addSubItem(new ToolbarMenuSubItem(VIEW_LOCAL_COPY_SUBMENU_ID,
+            if (navigation.findSubItem(ACTION_VIEW_LIVE_COPY) == null
+                    && navigation.findSubItem(ACTION_VIEW_LOCAL_COPY) == null) {
+                overflowMenu.addSubItem(new ToolbarMenuSubItem(ACTION_VIEW_LOCAL_COPY,
                         R.string.view_local_version,
                         true,
                         this::handleClickViewLocalVersion
                 ));
-                overflowMenu.addSubItem(new ToolbarMenuSubItem(VIEW_LIVE_COPY_SUBMENU_ID,
+                overflowMenu.addSubItem(new ToolbarMenuSubItem(ACTION_VIEW_LIVE_COPY,
                         R.string.view_view_version,
                         true,
                         this::handleClickViewLiveVersion
@@ -525,8 +582,8 @@ public class ViewThreadController
             }
         } else {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
-            overflowMenu.removeSubItem(navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID));
-            overflowMenu.removeSubItem(navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID));
+            overflowMenu.removeSubItem(navigation.findSubItem(ACTION_VIEW_LOCAL_COPY));
+            overflowMenu.removeSubItem(navigation.findSubItem(ACTION_VIEW_LIVE_COPY));
         }
 
         try {
@@ -535,8 +592,8 @@ public class ViewThreadController
                 // No pin for this loadable we are probably not downloading this thread.
                 // Pin has no downloading flag.
                 // Disable menu items.
-                navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = false;
-                navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
                 return;
             }
 
@@ -549,17 +606,17 @@ public class ViewThreadController
                 // Saved thread fully downloaded.
                 // Not downloading thread currently.
                 // Disable menu items.
-                navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = false;
-                navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
                 return;
             }
 
             if (loadable.getLoadableDownloadingState() == DownloadingAndNotViewable) {
-                navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = true;
-                navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = true;
+                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
             } else if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
-                navigation.findSubItem(VIEW_LOCAL_COPY_SUBMENU_ID).enabled = false;
-                navigation.findSubItem(VIEW_LIVE_COPY_SUBMENU_ID).enabled = true;
+                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
+                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = true;
             }
         } catch (NullPointerException ignored) {
             // Ignore NPE because the menu ID doesn't exist for the subitem
@@ -578,7 +635,7 @@ public class ViewThreadController
             }, 600);
         } else if (counter == 3) {
             view.postDelayed(() -> {
-                View view = navigation.findItem(PIN_ID).getView();
+                View view = navigation.findItem(ACTION_PIN).getView();
                 if (view != null) {
                     dismissHintPopup();
                     hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -dp(1), 0);
@@ -586,7 +643,7 @@ public class ViewThreadController
             }, 600);
         } else if (counter == 4) {
             view.postDelayed(() -> {
-                ToolbarMenuItem saveThreadItem = navigation.findItem(SAVE_THREAD_ID);
+                ToolbarMenuItem saveThreadItem = navigation.findItem(ACTION_SAVE_THREAD);
                 if (saveThreadItem != null) {
                     View view = saveThreadItem.getView();
                     if (view != null) {
@@ -691,7 +748,7 @@ public class ViewThreadController
             return;
         }
 
-        ToolbarMenuItem menuItem = navigation.findItem(SAVE_THREAD_ID);
+        ToolbarMenuItem menuItem = navigation.findItem(ACTION_SAVE_THREAD);
         if (menuItem == null) {
             return;
         }
@@ -726,7 +783,7 @@ public class ViewThreadController
         if (pinned == pinItemPinned) {
             return;
         }
-        ToolbarMenuItem menuItem = navigation.findItem(PIN_ID);
+        ToolbarMenuItem menuItem = navigation.findItem(ACTION_PIN);
         if (menuItem == null) {
             return;
         }
