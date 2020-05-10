@@ -43,14 +43,8 @@ import com.github.adamantcheese.chan.ui.layout.BrowseBoardsFloatingMenu;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -65,7 +59,6 @@ public class BrowseController
         implements ThreadLayout.ThreadLayoutCallback, BrowsePresenter.Callback, BrowseBoardsFloatingMenu.ClickCallback,
         ThreadSlideController.SlideChangeListener {
     private static final int VIEW_MODE_ID = 1;
-    private static final int ARCHIVE_ID = 2;
     private static final int SORT_ACTION_ID = 3;
 
     private static final int SORT_MODE_BUMP = 4;
@@ -158,6 +151,13 @@ public class BrowseController
         navigation.title = "App Setup";
         navigation.subtitle = "Tap for site/board setup";
 
+        buildMenu();
+
+        // Presenter
+        presenter.create(this);
+    }
+
+    private void buildMenu() {
         NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu()
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
                 .withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked);
@@ -237,16 +237,12 @@ public class BrowseController
                         this::onSortItemClicked
                 )
                 .build()
-                .withSubItem(ARCHIVE_ID, R.string.thread_view_archive, this::archiveClicked)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
                 .withSubItem(R.string.action_scroll_to_top, this::upClicked)
                 .withSubItem(R.string.action_scroll_to_bottom, this::downClicked)
                 .build()
                 .build();
-
-        // Presenter
-        presenter.create(this);
     }
 
     private void onSortItemClicked(ToolbarMenuSubItem subItem) {
@@ -336,18 +332,6 @@ public class BrowseController
         handleViewMode(item);
     }
 
-    private void archiveClicked(ToolbarMenuSubItem item) {
-        openArchive();
-    }
-
-    private void orderClicked(ToolbarMenuItem item) {
-        handleSorting(item);
-    }
-
-    private void orderClicked(ToolbarMenuSubItem item) {
-        handleSorting(null);
-    }
-
     private void openBrowserClicked(ToolbarMenuSubItem item) {
         handleShareAndOpenInBrowser(false);
     }
@@ -376,22 +360,6 @@ public class BrowseController
             doubleNavigationController.pushController(setupController);
         } else {
             navigationController.pushController(setupController);
-        }
-    }
-
-    private void openArchive() {
-        Board board = presenter.currentBoard();
-        if (board == null) {
-            return;
-        }
-
-        ArchiveController archiveController = new ArchiveController(context);
-        archiveController.setBoard(board);
-
-        if (doubleNavigationController != null) {
-            doubleNavigationController.pushController(archiveController);
-        } else {
-            navigationController.pushController(archiveController);
         }
     }
 
@@ -431,65 +399,6 @@ public class BrowseController
         threadLayout.setPostViewMode(postViewMode);
     }
 
-    private void handleSorting(ToolbarMenuItem item) {
-        final ThreadPresenter presenter = threadLayout.getPresenter();
-        List<FloatingMenuItem> items = new ArrayList<>();
-        for (PostsFilter.Order order : PostsFilter.Order.values()) {
-            int nameId = 0;
-            switch (order) {
-                case BUMP:
-                    nameId = R.string.order_bump;
-                    break;
-                case REPLY:
-                    nameId = R.string.order_reply;
-                    break;
-                case IMAGE:
-                    nameId = R.string.order_image;
-                    break;
-                case NEWEST:
-                    nameId = R.string.order_newest;
-                    break;
-                case OLDEST:
-                    nameId = R.string.order_oldest;
-                    break;
-                case MODIFIED:
-                    nameId = R.string.order_modified;
-                    break;
-                case ACTIVITY:
-                    nameId = R.string.order_activity;
-                    break;
-            }
-
-            String name = getString(nameId);
-            if (order == this.order) {
-                name = "\u2713 " + name; // Checkmark
-            }
-
-            items.add(new FloatingMenuItem(order, name));
-        }
-        ToolbarMenuItem overflow = navigation.findItem(ToolbarMenu.OVERFLOW_ID);
-        FloatingMenu menu;
-        if (item != null) {
-            menu = new FloatingMenu(context, item.getView(), items);
-        } else {
-            menu = new FloatingMenu(context, overflow.getView(), items);
-        }
-        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-            @Override
-            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                PostsFilter.Order order = (PostsFilter.Order) item.getId();
-                ChanSettings.boardOrder.set(order.name);
-                BrowseController.this.order = order;
-                presenter.setOrder(order);
-            }
-
-            @Override
-            public void onFloatingMenuDismissed(FloatingMenu menu) {
-            }
-        });
-        menu.show();
-    }
-
     @Override
     public void loadBoard(Loadable loadable) {
         loadable.title = BoardHelper.getName(loadable.board);
@@ -501,8 +410,6 @@ public class BrowseController
         presenter.requestData();
 
         ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
-        ToolbarMenuSubItem archive = navigation.findSubItem(ARCHIVE_ID);
-        archive.enabled = loadable.board.site.boardFeature(Site.BoardFeature.ARCHIVE, loadable.board);
     }
 
     @Override
