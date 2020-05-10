@@ -36,16 +36,6 @@ class FoolFuukaCommentParser : CommentParser() {
         return super.handleTag(callback, theme, post, newTag, text, newElement)
     }
 
-    override fun matchBoardSearch(href: String, post: Post.Builder): Matcher {
-        // TODO(archives)
-        return super.matchBoardSearch(href, post)
-    }
-
-    override fun matchBoardLink(href: String, post: Post.Builder): Matcher {
-        // TODO(archives)
-        return super.matchBoardLink(href, post)
-    }
-
     override fun matchInternalQuote(href: String, post: Post.Builder): Matcher {
         return FULL_QUOTE_PATTERN.matcher(href)
     }
@@ -82,8 +72,10 @@ class FoolFuukaCommentParser : CommentParser() {
             ArchiveDescriptor.ArchiveType.Fireden -> FIREDEN_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
-            ArchiveDescriptor.ArchiveType.TheBarchive -> THE_B_ARCHIVE_DEFAULT_QUOTE_PATTERN
             ArchiveDescriptor.ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
+
+            // See ArchivesManager.disabledArchives
+            ArchiveDescriptor.ArchiveType.TheBarchive,
             ArchiveDescriptor.ArchiveType.Warosu,
             ArchiveDescriptor.ArchiveType.Bstats -> null
         }

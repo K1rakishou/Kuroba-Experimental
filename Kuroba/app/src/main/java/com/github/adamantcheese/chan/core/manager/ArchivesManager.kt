@@ -408,9 +408,11 @@ class ArchivesManager(
         private val disabledArchives = setOf(
                 // Disabled because it's weird as hell. I can't even say whether it's working or not.
                 "archive.b-stats.org",
+
                 // Disabled because it requires Cloudflare authentication which is not supported for
                 // now.
                 "warosu.org",
+
                 // Disable because it always returns 403 when sending requests via the OkHttpClient,
                 // but works normally when opening in the browser. Apparently some kind of
                 // authentication is required.
@@ -423,8 +425,8 @@ class ArchivesManager(
 
         // We can forcefully fetch posts from an archive no more than once in 5 minutes
         private val FORCED_ARCHIVE_UPDATE_INTERVAL = Duration.standardMinutes(5)
-        // We can normally fetch posts from an archive no more than once in two hours
-        private val NORMAL_ARCHIVE_UPDATE_INTERVAL = Duration.standardHours(2)
+        // We can normally fetch posts from an archive no more than once in four hours
+        private val NORMAL_ARCHIVE_UPDATE_INTERVAL = Duration.standardHours(4)
 
         private const val TAG = "ArchivesManager"
         private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
