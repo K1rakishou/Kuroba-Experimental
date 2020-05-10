@@ -111,14 +111,10 @@ class FoolFuukaCommentParser : CommentParser() {
                 Pattern.compile("(https://)?archive\\.nyafuu\\.org/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
         private val REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN =
                 Pattern.compile("(https://)?archive\\.rebeccablacktech\\.com/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-        private val WASORU_BLACK_TECH_DEFAULT_QUOTE_PATTERN =
-                Pattern.compile("(https://)?warosu\\.org/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
         private val FIREDEN_DEFAULT_QUOTE_PATTERN =
                 Pattern.compile("(https://)?boards\\.fireden\\.net/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
         private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN =
                 Pattern.compile("(https://)?archived\\.moe/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-        private val THE_B_ARCHIVE_DEFAULT_QUOTE_PATTERN =
-                Pattern.compile("(https://)?thebarchive\\.com/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
         private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN =
                 Pattern.compile("(https://)?archiveofsins\\.com/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
 
