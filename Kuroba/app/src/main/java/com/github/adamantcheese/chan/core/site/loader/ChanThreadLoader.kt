@@ -433,6 +433,7 @@ class ChanThreadLoader(
             }
 
             thread!!.setNewPosts(response.posts)
+            thread!!.postPreloadedInfoHolder = response.postPreloadedInfoHolder
         }
 
         onResponseInternalNext(response.op)

@@ -37,7 +37,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ClickableSpan;
@@ -62,6 +61,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -71,7 +71,6 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
-import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
@@ -177,6 +176,7 @@ public class PostCell
     private PostViewFastMovementMethod titleMovementMethod = new PostViewFastMovementMethod();
     private PostCellAnimator.UnseenPostIndicatorFadeAnimation unseenPostIndicatorFadeOutAnimation =
             PostCellAnimator.createUnseenPostIndicatorFadeAnimation();
+    private PostPreloadedInfoHolder postPreloadedInfoHolder;
 
 
     public PostCell(Context context) {
@@ -300,6 +300,7 @@ public class PostCell
             Loadable loadable,
             final Post post,
             PostCellInterface.PostCellCallback callback,
+            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,
@@ -322,6 +323,7 @@ public class PostCell
         this.loadable = loadable;
         this.post = post;
         this.callback = callback;
+        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
         this.inPopup = inPopup;
         this.highlighted = highlighted;
         this.selected = selected;
@@ -507,17 +509,6 @@ public class PostCell
             titleParts.add(post.tripcode);
         }
 
-        CharSequence time;
-        if (ChanSettings.postFullDate.get()) {
-            time = PostHelper.getLocalDate(post);
-        } else {
-            time = DateUtils.getRelativeTimeSpanString(post.time * 1000L,
-                    System.currentTimeMillis(),
-                    DateUtils.SECOND_IN_MILLIS,
-                    0
-            );
-        }
-
         String noText = "No. " + post.no;
         if (ChanSettings.addDubs.get()) {
             String repeat = CommentParserHelper.getRepeatDigits(post.no);
@@ -525,7 +516,10 @@ public class PostCell
                 noText += " (" + repeat + ")";
             }
         }
+
+        CharSequence time = postPreloadedInfoHolder.getPostTime(post);
         SpannableString date = new SpannableString(noText + " " + time);
+
         date.setSpan(new ForegroundColorSpanHashed(theme.detailsColor), 0, date.length(), 0);
         date.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length(), 0);
 

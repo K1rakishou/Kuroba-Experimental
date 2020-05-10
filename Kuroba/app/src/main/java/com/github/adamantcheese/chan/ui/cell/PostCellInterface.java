@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.ui.cell;
 
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -34,6 +35,7 @@ public interface PostCellInterface {
             Loadable loadable,
             Post post,
             PostCellCallback callback,
+            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,

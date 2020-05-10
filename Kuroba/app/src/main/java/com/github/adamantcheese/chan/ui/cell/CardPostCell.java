@@ -26,6 +26,7 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -64,6 +65,7 @@ public class CardPostCell
     private Post post;
     private Loadable loadable;
     private PostCellInterface.PostCellCallback callback;
+    PostPreloadedInfoHolder postPreloadedInfoHolder;
     private boolean compact = false;
     private boolean inPopup = false;
 
@@ -159,6 +161,7 @@ public class CardPostCell
             Loadable loadable,
             final Post post,
             PostCellInterface.PostCellCallback callback,
+            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,
@@ -176,6 +179,7 @@ public class CardPostCell
         this.loadable = loadable;
         this.post = post;
         this.callback = callback;
+        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 
         bindPost(post);
 

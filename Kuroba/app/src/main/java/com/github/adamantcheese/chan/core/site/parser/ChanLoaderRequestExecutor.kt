@@ -32,11 +32,8 @@ import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.core.site.loader.ServerException
 import com.github.adamantcheese.chan.ui.theme.Theme
-import com.github.adamantcheese.chan.utils.DescriptorUtils
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.PostUtils
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
@@ -107,6 +104,8 @@ class ChanLoaderRequestExecutor(
       url: String,
       requestParams: ChanLoaderRequestParams
     ): ChanLoaderResponse {
+        BackgroundUtils.ensureBackgroundThread()
+
         val request = Request.Builder()
           .url(url)
           .get()
@@ -179,6 +178,8 @@ class ChanLoaderRequestExecutor(
     }
 
     private suspend fun tryLoadFromDiskCache(requestParams: ChanLoaderRequestParams): ChanLoaderResponse? {
+        BackgroundUtils.ensureBackgroundThread()
+
         val reloadedPosts = reloadPostsFromRepository(
           getDescriptor(requestParams.loadable),
           requestParams.loadable
@@ -195,13 +196,17 @@ class ChanLoaderRequestExecutor(
             return null
         }
 
-        return ChanLoaderResponse(originalPost.toPostBuilder(null), reloadedPosts)
+        return ChanLoaderResponse(originalPost.toPostBuilder(null), reloadedPosts).apply {
+            preloadPostsInfo()
+        }
     }
 
     private suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(
             chanReaderProcessor: ChanReaderProcessor,
             requestParams: ChanLoaderRequestParams
     ): ChanLoaderResponse? {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (requestParams.loadable.isCatalogMode) {
             // We don't support catalog loading from archives
             return null
@@ -255,7 +260,9 @@ class ChanLoaderRequestExecutor(
             return null
         }
 
-        return ChanLoaderResponse(originalPost.toPostBuilder(archiveDescriptor), reloadedPosts)
+        return ChanLoaderResponse(originalPost.toPostBuilder(archiveDescriptor), reloadedPosts).apply {
+            preloadPostsInfo()
+        }
     }
 
     @OptIn(ExperimentalTime::class)
@@ -264,6 +271,8 @@ class ChanLoaderRequestExecutor(
             requestParams: ChanLoaderRequestParams,
             jsonReader: JsonReader
     ): ModularResult<ChanLoaderResponse> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return Try {
             val loadable = requestParams.loadable
             val reader = requestParams.chanReader
@@ -332,6 +341,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             postsFromServer: List<Post.Builder>,
             postsFromArchive: List<Post.Builder>
     ): List<Post.Builder> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val resultList = mutableListOf<Post.Builder>()
         val archivePostsMap = postsFromArchive.associateBy { archivePost -> archivePost.id }
 
@@ -354,6 +365,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             loadable: Loadable,
             forceLoading: Boolean
     ): ModularResult<List<Post.Builder>> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return Try<List<Post.Builder>> {
             if (loadable.isCatalogMode) {
                 return@Try emptyList()
@@ -473,6 +486,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             freshPostNoSet: Set<Long>,
             cachedArchivePostsMap: Map<Long, ChanPost>
     ): Boolean {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (archivePost.postNo !in freshPostNoSet) {
             // Post does not exist in the post list we got from the server. We need to update this
             // post in the database.
@@ -500,6 +515,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             posts: List<Post>,
             isCatalog: Boolean
     ): List<Long> {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (posts.isEmpty()) {
             return emptyList()
         }
@@ -526,6 +543,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
       chanDescriptor: ChanDescriptor,
       loadable: Loadable
     ): List<Post> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return when (chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> {
                 chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
@@ -547,6 +566,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             chanDescriptor: ChanDescriptor,
             loadable: Loadable
     ): List<Post> {
+        BackgroundUtils.ensureBackgroundThread()
+
         val posts = when (chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> {
                 var maxCount = chanReaderProcessor.op?.stickyCap ?: Int.MAX_VALUE
@@ -583,6 +604,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             chanReader: ChanReader,
             postBuildersToParse: List<Post.Builder>
     ): List<Post> {
+        BackgroundUtils.ensureBackgroundThread()
+
         if (verboseLogsEnabled) {
             Logger.d(TAG, "parseNewPostsPosts(loadable=${loadable.toShortString()}, " +
                     "postsToParseSize=${postBuildersToParse.size})")
@@ -614,6 +637,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     }
 
     private fun loadFilters(loadable: Loadable): List<Filter> {
+        BackgroundUtils.ensureBackgroundThread()
+
         return filterEngine.enabledFilters
                 .filter { filter -> filterEngine.matchesBoard(filter, loadable.board) }
                 // copy the filter because it will get used on other threads
@@ -625,7 +650,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             allPosts: List<Post>,
             requestParams: ChanLoaderRequestParams
     ): ChanLoaderResponse {
-        val response = ChanLoaderResponse(op, ArrayList(allPosts.size))
+        BackgroundUtils.ensureBackgroundThread()
+
         val cachedPosts = ArrayList<Post>()
         val newPosts = ArrayList<Post>()
         val loadable = requestParams.loadable
@@ -701,7 +727,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             }
         }
 
-        response.posts.addAll(totalPosts)
+        val response = ChanLoaderResponse(op, totalPosts.toList())
+        response.preloadPostsInfo()
+
         return response
     }
 

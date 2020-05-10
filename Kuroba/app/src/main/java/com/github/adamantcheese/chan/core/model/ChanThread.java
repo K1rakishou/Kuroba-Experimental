@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.model;
 
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 
 import java.util.ArrayList;
@@ -29,12 +30,22 @@ public class ChanThread {
     // there is no easy way to fix them right now) and to avoid copying the whole list of posts
     // every time it is needed somewhere.
     private List<Post> posts;
+    private PostPreloadedInfoHolder postPreloadedInfoHolder;
+
     private boolean closed = false;
     private boolean archived = false;
 
     public ChanThread(Loadable loadable, List<Post> posts) {
         this.loadable = loadable;
         this.posts = Collections.unmodifiableList(new ArrayList<>(posts));
+    }
+
+    public synchronized void setPostPreloadedInfoHolder(PostPreloadedInfoHolder postPreloadedInfoHolder) {
+        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
+    }
+
+    public synchronized PostPreloadedInfoHolder getPostPreloadedInfoHolder() {
+        return postPreloadedInfoHolder;
     }
 
     public synchronized int getPostsCount() {

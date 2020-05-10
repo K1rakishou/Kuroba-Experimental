@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -62,6 +63,7 @@ public class PostAdapter
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
      */
     private final Set<Long> updatingPosts = new HashSet<>(64);
+    private PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private Loadable loadable = null;
     private String error = null;
@@ -141,14 +143,13 @@ public class PostAdapter
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
                 Post post = displayList.get(getPostPosition(position));
-                boolean highlight = post == highlightedPost
-                        || post.posterId.equals(highlightedPostId)
-                        || post.no == highlightedPostNo
-                        || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
+                boolean highlight = shouldHighlightPost(post);
+
                 ((PostCellInterface) postViewHolder.itemView).setPost(
                         loadable,
                         post,
                         postCellCallback,
+                        postPreloadedInfoHolder,
                         false,
                         highlight,
                         post.no == selectedPost,
@@ -169,6 +170,13 @@ public class PostAdapter
             case TYPE_LAST_SEEN:
                 break;
         }
+    }
+
+    private boolean shouldHighlightPost(Post post) {
+        return post == highlightedPost
+                || post.posterId.equals(highlightedPostId)
+                || post.no == highlightedPostNo
+                || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
     }
 
     @Override
@@ -263,6 +271,7 @@ public class PostAdapter
 
     public void setThread(
             Loadable threadLoadable,
+            PostPreloadedInfoHolder postPreloadedInfoHolder,
             List<Post> posts,
             boolean refreshAfterHideOrRemovePosts
     ) {
@@ -271,7 +280,9 @@ public class PostAdapter
         // changed threads, update
         boolean changed = (this.loadable != null && !this.loadable.equals(threadLoadable));
         int lastLastSeenIndicator = lastSeenIndicatorPosition;
+
         this.loadable = threadLoadable;
+        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 
         showError(null);
 

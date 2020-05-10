@@ -27,6 +27,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -54,6 +55,7 @@ public class PostStubCell
     private boolean showDivider;
     @Nullable
     private PostCellInterface.PostCellCallback callback;
+    PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private TextView title;
     private View divider;
@@ -153,6 +155,7 @@ public class PostStubCell
             Loadable loadable,
             final Post post,
             PostCellInterface.PostCellCallback callback,
+            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,
@@ -169,6 +172,7 @@ public class PostStubCell
         this.post = post;
         this.inPopup = inPopup;
         this.callback = callback;
+        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
         this.postViewMode = postViewMode;
         this.showDivider = showDivider;
 

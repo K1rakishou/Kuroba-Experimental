@@ -65,11 +65,16 @@ public class BoardRepository
     }
 
     public void updateAvailableBoardsForSite(Site site, List<Board> availableBoards) {
-        boolean changed = databaseManager.runTask(databaseBoardManager.createAll(site, availableBoards));
-        Logger.d(TAG, "updateAvailableBoardsForSite changed = " + changed);
-        if (changed) {
-            updateObservablesAsync();
-        }
+        databaseManager.runTaskAsync(() -> {
+            boolean changed = databaseBoardManager.createAll(site, availableBoards).call();
+            Logger.d(TAG, "updateAvailableBoardsForSite changed = " + changed);
+
+            if (changed) {
+                updateObservablesAsync();
+            }
+
+            return null;
+        });
     }
 
     public Board getFromCode(Site site, String code) {
@@ -138,7 +143,8 @@ public class BoardRepository
     }
 
     private void updateObservablesAsync() {
-        databaseManager.runTaskAsync(databaseBoardManager.getBoardsForAllSitesOrdered(allSites.getAll()),
+        databaseManager.runTaskAsync(
+                databaseBoardManager.getBoardsForAllSitesOrdered(allSites.getAll()),
                 this::updateWith
         );
     }

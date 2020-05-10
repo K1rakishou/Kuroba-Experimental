@@ -14,20 +14,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.loader;
+package com.github.adamantcheese.chan.core.site.loader
 
-import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder
+import com.github.adamantcheese.chan.core.model.Post
 
-import java.util.List;
+class ChanLoaderResponse(
+  // Op Post that is created new each time.
+  // Used to later copy members like image count to the real op on the main thread.
+  val op: Post.Builder,
+  val posts: List<Post>
+) {
+  lateinit var postPreloadedInfoHolder: PostPreloadedInfoHolder
 
-public class ChanLoaderResponse {
-    // Op Post that is created new each time.
-    // Used to later copy members like image count to the real op on the main thread.
-    public final Post.Builder op;
-    public final List<Post> posts;
-
-    public ChanLoaderResponse(Post.Builder op, List<Post> posts) {
-        this.op = op;
-        this.posts = posts;
-    }
+  /**
+   * When construction ChanLoaderResponse don't forget to call this method AFTER the posts are added.
+   * */
+  fun preloadPostsInfo() {
+    val holder = PostPreloadedInfoHolder()
+    holder.preloadPostsInfo(posts)
+    postPreloadedInfoHolder = holder
+  }
 }

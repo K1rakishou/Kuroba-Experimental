@@ -42,6 +42,7 @@ import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -397,7 +398,10 @@ public class ThemeSettingsController
                 }
             }, theme);
 
-            adapter.setThread(dummyLoadable, posts, false);
+            PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
+            postPreloadedInfoHolder.preloadPostsInfo(posts);
+
+            adapter.setThread(dummyLoadable, postPreloadedInfoHolder, posts, false);
             adapter.setPostViewMode(ChanSettings.PostViewMode.LIST);
             postsView.setAdapter(adapter);
 

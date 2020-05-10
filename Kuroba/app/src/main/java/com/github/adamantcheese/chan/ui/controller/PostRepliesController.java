@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -157,7 +158,16 @@ public class PostRepliesController
         repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
         repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
 
-        RepliesAdapter repliesAdapter = new RepliesAdapter(themeHelper, presenter, loadable);
+        PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
+        postPreloadedInfoHolder.preloadPostsInfo(data.posts);
+
+        RepliesAdapter repliesAdapter = new RepliesAdapter(
+                themeHelper,
+                presenter,
+                postPreloadedInfoHolder,
+                loadable
+        );
+
         repliesAdapter.setHasStableIds(true);
         repliesView.setLayoutManager(new LinearLayoutManager(context));
         repliesView.setAdapter(repliesAdapter);
@@ -219,12 +229,19 @@ public class PostRepliesController
 
         private ThemeHelper themeHelper;
         private ThreadPresenter presenter;
+        private PostPreloadedInfoHolder postPreloadedInfoHolder;
         private Loadable loadable;
         private PostPopupHelper.RepliesData data;
 
-        public RepliesAdapter(ThemeHelper themeHelper, ThreadPresenter presenter, Loadable loadable) {
+        public RepliesAdapter(
+                ThemeHelper themeHelper,
+                ThreadPresenter presenter,
+                PostPreloadedInfoHolder postPreloadedInfoHolder,
+                Loadable loadable
+        ) {
             this.themeHelper = themeHelper;
             this.presenter = presenter;
+            this.postPreloadedInfoHolder = postPreloadedInfoHolder;
             this.loadable = loadable;
         }
 
@@ -240,6 +257,7 @@ public class PostRepliesController
         public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
             holder.onBind(
                     presenter,
+                    postPreloadedInfoHolder,
                     loadable,
                     data.posts.get(position),
                     data.forPost.no,
@@ -296,6 +314,7 @@ public class PostRepliesController
 
         public void onBind(
                 ThreadPresenter presenter,
+                PostPreloadedInfoHolder postPreloadedInfoHolder,
                 Loadable loadable,
                 Post post,
                 long markedNo,
@@ -308,6 +327,7 @@ public class PostRepliesController
                     loadable,
                     post,
                     presenter,
+                    postPreloadedInfoHolder,
                     true,
                     false,
                     false,

@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.mapper;
 
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.SerializableThread;
@@ -43,7 +44,11 @@ public class ThreadMapper {
 
         Collections.sort(posts, POST_COMPARATOR);
 
+        PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
+        postPreloadedInfoHolder.preloadPostsInfo(posts);
+
         ChanThread chanThread = new ChanThread(loadable, posts);
+        chanThread.setPostPreloadedInfoHolder(postPreloadedInfoHolder);
         chanThread.setArchived(true);
 
         return chanThread;
