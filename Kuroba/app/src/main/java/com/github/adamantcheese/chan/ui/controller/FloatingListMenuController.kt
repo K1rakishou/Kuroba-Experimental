@@ -5,10 +5,11 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 
-class FloatingListMenuController(
+class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
   private val items: List<FloatingListMenu.FloatingListMenuItem>,
-  private val listener: (item: FloatingListMenu.FloatingListMenuItem) -> Unit
+  private val itemClickListener: (item: FloatingListMenu.FloatingListMenuItem) -> Unit,
+  private val menuDismissListener: (() -> Unit)? = null
 ) : BaseFloatingController(context) {
   private lateinit var floatingListMenu: FloatingListMenu
   private lateinit var clickableArea: ConstraintLayout
@@ -24,13 +25,14 @@ class FloatingListMenuController(
     floatingListMenu.setItems(items)
     floatingListMenu.setClickListener { clickedItem ->
       stopPresenting(true)
-      listener.invoke(clickedItem)
+      itemClickListener.invoke(clickedItem)
     }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    menuDismissListener?.invoke()
     floatingListMenu.setClickListener(null)
   }
 

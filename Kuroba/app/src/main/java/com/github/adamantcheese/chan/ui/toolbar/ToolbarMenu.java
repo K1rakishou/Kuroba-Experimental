@@ -30,7 +30,7 @@ public class ToolbarMenu {
 
     public ToolbarMenuItem findItem(int id) {
         for (ToolbarMenuItem item : items) {
-            if (item.id.equals(id)) {
+            if (item.id == id) {
                 return item;
             }
         }

@@ -60,7 +60,6 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.ui.view.CustomScaleImageView;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.LoadingBar;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.OptionalSwipeViewPager;
@@ -153,7 +152,11 @@ public class ImageViewerController
         menuBuilder.withItem(VOLUME_ID, R.drawable.ic_volume_off_white_24dp, this::volumeClicked);
         menuBuilder.withItem(SAVE_ID, R.drawable.ic_file_download_white_24dp, this::saveClicked);
 
-        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(this);
+        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(
+                navigationController,
+                this
+        );
+
         overflowBuilder.withSubItem(R.string.action_open_browser, this::openBrowserClicked);
         if (!loadable.isLocal()) {
             overflowBuilder.withSubItem(R.string.action_share, this::shareClicked);
@@ -497,7 +500,7 @@ public class ImageViewerController
     }
 
     @Override
-    public void onMenuShown(FloatingMenu menu) {
+    public void onMenuShown() {
         showSystemUI();
     }
 

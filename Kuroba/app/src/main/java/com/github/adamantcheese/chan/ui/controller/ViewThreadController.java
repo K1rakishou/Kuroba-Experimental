@@ -52,7 +52,6 @@ import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -107,7 +106,6 @@ public class ViewThreadController
     private AnimatedVectorDrawableCompat downloadAnimation;
     @Nullable
     private HintPopup hintPopup = null;
-    private FloatingMenu floatingMenu;
 
     private Animatable2Compat.AnimationCallback downloadAnimationCallback = new Animatable2Compat.AnimationCallback() {
         @Override
@@ -163,15 +161,19 @@ public class ViewThreadController
         }
         menuBuilder.withItem(PIN_ID, R.drawable.ic_bookmark_border_white_24dp, this::pinClicked);
 
-        NavigationItem.MenuOverflowBuilder menuOverflowBuilder = menuBuilder.withOverflow(this);
+        NavigationItem.MenuOverflowBuilder menuOverflowBuilder = menuBuilder.withOverflow(
+                navigationController,
+                this
+        );
 
         if (!ChanSettings.enableReplyFab.get()) {
             menuOverflowBuilder.withSubItem(R.string.action_reply, this::replyClicked);
         }
 
-        menuOverflowBuilder.withSubItem(R.string.action_search, this::searchClicked)
-                .withSubItem(R.string.action_reload, this::reloadClicked);
-        menuOverflowBuilder.withSubItem(R.string.view_removed_posts, this::showRemovedPostsDialog)
+        menuOverflowBuilder
+                .withSubItem(R.string.action_search, this::searchClicked)
+                .withSubItem(R.string.action_reload, this::reloadClicked)
+                .withSubItem(R.string.view_removed_posts, this::showRemovedPostsDialog)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
                 .withSubItem(R.string.action_scroll_to_top, this::upClicked)
@@ -197,12 +199,10 @@ public class ViewThreadController
     }
 
     private void albumClicked(ToolbarMenuItem item) {
-        dismissFloatingMenu();
         threadLayout.getPresenter().showAlbum();
     }
 
     private void pinClicked(ToolbarMenuItem item) {
-        dismissFloatingMenu();
         if (threadLayout.getPresenter().pin()) {
             setPinIconState(true);
             setSaveIconState(true);
@@ -506,7 +506,7 @@ public class ViewThreadController
     }
 
     private void populateLocalOrLiveVersionMenu() {
-        //setup the extra items if they're needed, or remove as necessary
+        // setup the extra items if they're needed, or remove as necessary
         if (ChanSettings.incrementalThreadDownloadingEnabled.get()
                 && getThreadDownloadState() != DownloadThreadState.Default) {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
@@ -541,7 +541,8 @@ public class ViewThreadController
             }
 
             SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
-            if (savedThread == null || savedThread.isFullyDownloaded
+            if (savedThread == null
+                    || savedThread.isFullyDownloaded
                     || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
                     || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading) {
                 // No saved thread.
@@ -601,13 +602,6 @@ public class ViewThreadController
         if (hintPopup != null) {
             hintPopup.dismiss();
             hintPopup = null;
-        }
-    }
-
-    private void dismissFloatingMenu() {
-        if (floatingMenu != null) {
-            floatingMenu.dismiss();
-            floatingMenu = null;
         }
     }
 
@@ -768,9 +762,7 @@ public class ViewThreadController
     }
 
     @Override
-    public void onMenuShown(FloatingMenu menu) {
-        dismissFloatingMenu();
-        floatingMenu = menu;
+    public void onMenuShown() {
     }
 
     @Override

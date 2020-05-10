@@ -32,6 +32,23 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
     title.text = text
   }
 
+  @ModelProp
+  fun setSettingEnabled(isEnabled: Boolean) {
+    if (isEnabled) {
+      holder.alpha = 1f
+      title.alpha = 1f
+
+      holder.isClickable = true
+      holder.isFocusable = true
+    } else {
+      holder.alpha = .5f
+      title.alpha = .5f
+
+      holder.isClickable = false
+      holder.isFocusable = false
+    }
+  }
+
   @CallbackProp
   fun setCallback(callback: (() -> Unit)?) {
     if (callback == null) {

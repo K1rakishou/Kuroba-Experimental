@@ -57,7 +57,7 @@ public class LogsController
         navigation.setTitle(R.string.settings_logs_screen);
 
         navigation.buildMenu()
-                .withOverflow()
+                .withOverflow(navigationController)
                 .withSubItem(R.string.settings_logs_copy, this::copyLogsClicked)
                 .build()
                 .build();

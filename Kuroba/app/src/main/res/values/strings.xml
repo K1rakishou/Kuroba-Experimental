@@ -493,8 +493,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_enable_reply_count">Enable the reply counter</string>
     <string name="setting_font_size">Font size</string>
     <string name="setting_font_size_default">(default)</string>
-    <string name="setting_move_sort_to_toolbar">Sort option in toolbar</string>
-    <string name="setting_move_sort_to_toolbar_description">Move board sort option from submenu to toolbar</string>
     <string name="setting_never_show_pages">Never show page number</string>
     <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
 

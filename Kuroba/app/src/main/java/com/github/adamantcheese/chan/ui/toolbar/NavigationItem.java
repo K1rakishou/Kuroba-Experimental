@@ -20,6 +20,10 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.controller.NavigationController;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
@@ -27,7 +31,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
  * The navigation properties for a Controller. Controls common properties that parent controllers
  * need to know, such as the title of the controller.
  * <p>
- * This is also used to set up the toolbar menu, see {@link #buildMenu()}.
+ * This is also used to set up the toolbar menu, see {@link #buildMenu()}}.
  */
 public class NavigationItem {
     public String title = "";
@@ -103,21 +107,30 @@ public class NavigationItem {
             return this;
         }
 
-        public MenuOverflowBuilder withOverflow() {
+        public MenuOverflowBuilder withOverflow(NavigationController navigationController) {
             return new MenuOverflowBuilder(this,
-                    new ToolbarMenuItem(ToolbarMenu.OVERFLOW_ID,
+                    new ToolbarMenuItem(
+                            ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            ToolbarMenuItem::showSubmenu
+                            ToolbarMenuItem::showSubmenu,
+                            navigationController,
+                            null
                     )
             );
         }
 
-        public MenuOverflowBuilder withOverflow(ToolbarMenuItem.ToobarThreedotMenuCallback threedotMenuCallback) {
-            return new MenuOverflowBuilder(this, new ToolbarMenuItem(ToolbarMenu.OVERFLOW_ID,
-                    R.drawable.ic_more_vert_white_24dp,
-                    ToolbarMenuItem::showSubmenu,
-                    threedotMenuCallback
-            ));
+        public MenuOverflowBuilder withOverflow(
+                NavigationController navigationController,
+                ToolbarMenuItem.ToobarThreedotMenuCallback threedotMenuCallback
+        ) {
+            return new MenuOverflowBuilder(this,
+                    new ToolbarMenuItem(
+                            ToolbarMenu.OVERFLOW_ID,
+                            R.drawable.ic_more_vert_white_24dp,
+                            ToolbarMenuItem::showSubmenu,
+                            navigationController,
+                            threedotMenuCallback
+                    ));
         }
 
         public ToolbarMenu build() {
@@ -135,34 +148,139 @@ public class NavigationItem {
             this.menuItem = menuItem;
         }
 
-        public MenuOverflowBuilder withSubItem(int text, ToolbarMenuSubItem.ClickCallback clicked) {
+        public MenuOverflowBuilder withSubItem(
+                int text,
+                ToolbarMenuSubItem.ClickCallback clicked
+        ) {
             return withSubItem(-1, getString(text), true, clicked);
         }
 
-        public MenuOverflowBuilder withSubItem(String text, ToolbarMenuSubItem.ClickCallback clicked) {
+        public MenuOverflowBuilder withSubItem(
+                String text,
+                ToolbarMenuSubItem.ClickCallback clicked
+        ) {
             return withSubItem(-1, text, true, clicked);
         }
 
-        public MenuOverflowBuilder withSubItem(int id, int text, ToolbarMenuSubItem.ClickCallback clicked) {
+        public MenuOverflowBuilder withSubItem(
+                int id,
+                int text,
+                ToolbarMenuSubItem.ClickCallback clicked
+        ) {
             return withSubItem(id, getString(text), true, clicked);
         }
 
         public MenuOverflowBuilder withSubItem(
-                int id, int text, boolean enabled, ToolbarMenuSubItem.ClickCallback clicked
+                int id,
+                int text,
+                boolean enabled,
+                ToolbarMenuSubItem.ClickCallback clicked
         ) {
             return withSubItem(id, getString(text), enabled, clicked);
         }
 
         public MenuOverflowBuilder withSubItem(
-                int id, String text, boolean enabled, ToolbarMenuSubItem.ClickCallback clicked
+                int id,
+                String text,
+                boolean enabled,
+                ToolbarMenuSubItem.ClickCallback clicked
         ) {
             menuItem.addSubItem(new ToolbarMenuSubItem(id, text, enabled, clicked));
 
             return this;
         }
 
+        /**
+         * Note: this method only supports one level of depth. If you need more you will have to
+         * implement it yourself. The reason for that is that at the time of writing this there
+         * was no need for more than one level of depth.
+         * @see ToolbarMenuItem#showSubmenu()
+         *
+         * Note2: all menu ids have to be unique. Only MenuItems without id at all (-1) are allowed.
+         * Otherwise this will crash in
+         * @see ToolbarMenuItem#showSubmenu()
+         * */
+        public MenuNestedOverflowBuilder withNestedOverflow(
+                int id,
+                int textId,
+                boolean enabled
+        ) {
+            return new MenuNestedOverflowBuilder(this,
+                    new ToolbarMenuSubItem(
+                            id,
+                            textId,
+                            enabled
+                    ));
+        }
+
+        public MenuOverflowBuilder addNestedItemsTo(
+                int ownerMenuItem,
+                List<ToolbarMenuSubItem> nestedMenuItems
+        ) {
+            for (ToolbarMenuSubItem subItem : menuItem.subItems) {
+                if (subItem.id == ownerMenuItem) {
+                    for (ToolbarMenuSubItem nestedItem : nestedMenuItems) {
+                        subItem.addNestedItem(nestedItem);
+                    }
+
+                    break;
+                }
+            }
+
+
+            return this;
+        }
+
         public MenuBuilder build() {
             return menuBuilder.withItem(menuItem);
+        }
+    }
+
+    public static class MenuNestedOverflowBuilder {
+        private final MenuOverflowBuilder menuOverflowBuilder;
+        private final ToolbarMenuSubItem menuSubItem;
+        private final List<ToolbarMenuSubItem> nestedMenuItems = new ArrayList<>();
+
+        public MenuNestedOverflowBuilder(
+                MenuOverflowBuilder menuOverflowBuilder,
+                ToolbarMenuSubItem menuSubItem
+        ) {
+            this.menuOverflowBuilder = menuOverflowBuilder;
+            this.menuSubItem = menuSubItem;
+        }
+
+        public MenuNestedOverflowBuilder addNestedItem(
+                int itemId,
+                int text,
+                boolean enabled,
+                boolean isCurrentlySelected,
+                Object value,
+                ToolbarMenuSubItem.ClickCallback clickCallback
+        ) {
+            for (ToolbarMenuSubItem subItem : menuSubItem.moreItems) {
+                if (subItem.id == itemId) {
+                    throw new IllegalArgumentException("Menu item with id " + itemId + " was already added");
+                }
+            }
+
+            nestedMenuItems.add(
+                    new ToolbarMenuSubItem(
+                            itemId,
+                            text,
+                            enabled,
+                            isCurrentlySelected,
+                            value,
+                            clickCallback
+                    )
+            );
+
+            return this;
+        }
+
+        public MenuOverflowBuilder build() {
+            return menuOverflowBuilder
+                    .withSubItem(menuSubItem.id, menuSubItem.text, menuSubItem.enabled, null)
+                    .addNestedItemsTo(menuSubItem.id, nestedMenuItems);
         }
     }
 }

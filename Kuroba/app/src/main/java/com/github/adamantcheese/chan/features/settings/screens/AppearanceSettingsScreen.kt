@@ -359,14 +359,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.LayoutGroup.MoveSortToToolbar,
-          topDescriptionIdFunc = { R.string.setting_move_sort_to_toolbar },
-          bottomDescriptionIdFunc = { R.string.setting_move_sort_to_toolbar_description },
-          setting = ChanSettings.moveSortToToolbar
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.LayoutGroup.NeverShowPages,
           topDescriptionIdFunc = { R.string.setting_never_show_pages },
           bottomDescriptionIdFunc = { R.string.setting_never_show_pages_bottom },

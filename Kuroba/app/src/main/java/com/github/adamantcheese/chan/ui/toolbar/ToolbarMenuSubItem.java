@@ -16,6 +16,9 @@
  */
 package com.github.adamantcheese.chan.ui.toolbar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 /**
@@ -26,7 +29,10 @@ public class ToolbarMenuSubItem {
     public int id;
     public String text;
     public boolean enabled;
+    public boolean isCurrentlySelected;
     public ClickCallback clicked;
+    public Object value;
+    public List<ToolbarMenuSubItem> moreItems = new ArrayList<>();
 
     public ToolbarMenuSubItem(int id, int text, ClickCallback clicked) {
         this(id, getString(text), clicked);
@@ -56,6 +62,26 @@ public class ToolbarMenuSubItem {
         this.text = getString(text);
         this.enabled = enabled;
         this.clicked = clicked;
+    }
+
+    public ToolbarMenuSubItem(
+            int id,
+            int text,
+            boolean enabled,
+            boolean isCurrentlySelected,
+            Object value,
+            ClickCallback clicked
+    ) {
+        this.id = id;
+        this.text = getString(text);
+        this.enabled = enabled;
+        this.isCurrentlySelected = isCurrentlySelected;
+        this.value = value;
+        this.clicked = clicked;
+    }
+
+    public void addNestedItem(ToolbarMenuSubItem subItem) {
+        moreItems.add(subItem);
     }
 
     public void performClick() {

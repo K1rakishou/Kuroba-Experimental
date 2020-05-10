@@ -287,7 +287,6 @@ sealed class AppearanceScreen(
     object MoveInputToBottom : LayoutGroup("move_input_to_bottom")
     object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
     object UseImmersiveModeForGallery : LayoutGroup("use_immersive_mode_for_gallery")
-    object MoveSortToToolbar : LayoutGroup("move_sort_to_toolbar")
     object NeverShowPages : LayoutGroup("never_show_pages")
 
     companion object : IGroupIdentifier() {

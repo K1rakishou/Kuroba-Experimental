@@ -63,9 +63,18 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 public class BrowseController
         extends ThreadController
         implements ThreadLayout.ThreadLayoutCallback, BrowsePresenter.Callback, BrowseBoardsFloatingMenu.ClickCallback,
-                   ThreadSlideController.SlideChangeListener {
+        ThreadSlideController.SlideChangeListener {
     private static final int VIEW_MODE_ID = 1;
     private static final int ARCHIVE_ID = 2;
+    private static final int SORT_ACTION_ID = 3;
+
+    private static final int SORT_MODE_BUMP = 4;
+    private static final int SORT_MODE_REPLY = 5;
+    private static final int SORT_MODE_IMAGE = 6;
+    private static final int SORT_MODE_NEWEST = 7;
+    private static final int SORT_MODE_OLDEST = 8;
+    private static final int SORT_MODE_MODIFIED = 9;
+    private static final int SORT_MODE_ACTIVITY = 10;
 
     @Inject
     BrowsePresenter presenter;
@@ -149,31 +158,85 @@ public class BrowseController
         navigation.title = "App Setup";
         navigation.subtitle = "Tap for site/board setup";
 
-        NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu();
-        if (ChanSettings.moveSortToToolbar.get()) {
-            menuBuilder.withItem(R.drawable.ic_sort_white_24dp, this::orderClicked);
-        }
-        menuBuilder.withItem(R.drawable.ic_search_white_24dp, this::searchClicked);
-        menuBuilder.withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked);
+        NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu()
+                .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
+                .withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked);
 
-        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow();
+        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(navigationController);
 
         if (!ChanSettings.enableReplyFab.get()) {
             overflowBuilder.withSubItem(R.string.action_reply, this::replyClicked);
         }
 
-        overflowBuilder.withSubItem(VIEW_MODE_ID,
-                ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.LIST
-                        ? R.string.action_switch_catalog
-                        : R.string.action_switch_board,
-                this::viewModeClicked
-        );
+        int modeStringId = ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.LIST
+                ? R.string.action_switch_catalog
+                : R.string.action_switch_board;
 
-        if (!ChanSettings.moveSortToToolbar.get()) {
-            overflowBuilder.withSubItem(R.string.action_sort, this::orderClicked);
+        PostsFilter.Order currentOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get());
+        if (currentOrder == null) {
+            currentOrder = PostsFilter.Order.BUMP;
         }
 
         overflowBuilder
+                .withSubItem(VIEW_MODE_ID, modeStringId, this::viewModeClicked)
+                .withNestedOverflow(SORT_ACTION_ID, R.string.action_sort, true)
+                .addNestedItem(
+                        SORT_MODE_BUMP,
+                        R.string.order_bump,
+                        true,
+                        currentOrder == PostsFilter.Order.BUMP,
+                        PostsFilter.Order.BUMP,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_REPLY,
+                        R.string.order_reply,
+                        true,
+                        currentOrder == PostsFilter.Order.REPLY,
+                        PostsFilter.Order.REPLY,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_IMAGE,
+                        R.string.order_image,
+                        true,
+                        currentOrder == PostsFilter.Order.IMAGE,
+                        PostsFilter.Order.IMAGE,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_NEWEST,
+                        R.string.order_newest,
+                        true,
+                        currentOrder == PostsFilter.Order.IMAGE,
+                        PostsFilter.Order.NEWEST,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_OLDEST,
+                        R.string.order_oldest,
+                        true,
+                        currentOrder == PostsFilter.Order.OLDEST,
+                        PostsFilter.Order.OLDEST,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_MODIFIED,
+                        R.string.order_modified,
+                        true,
+                        currentOrder == PostsFilter.Order.MODIFIED,
+                        PostsFilter.Order.MODIFIED,
+                        this::onSortItemClicked
+                )
+                .addNestedItem(
+                        SORT_MODE_ACTIVITY,
+                        R.string.order_activity,
+                        true,
+                        currentOrder == PostsFilter.Order.ACTIVITY,
+                        PostsFilter.Order.ACTIVITY,
+                        this::onSortItemClicked
+                )
+                .build()
                 .withSubItem(ARCHIVE_ID, R.string.thread_view_archive, this::archiveClicked)
                 .withSubItem(R.string.action_open_browser, this::openBrowserClicked)
                 .withSubItem(R.string.action_share, this::shareClicked)
@@ -184,6 +247,27 @@ public class BrowseController
 
         // Presenter
         presenter.create(this);
+    }
+
+    private void onSortItemClicked(ToolbarMenuSubItem subItem) {
+        PostsFilter.Order order = (PostsFilter.Order) subItem.value;
+        ChanSettings.boardOrder.set(order.name);
+        BrowseController.this.order = order;
+
+        ToolbarMenuSubItem sortSubItem = navigation.findSubItem(SORT_ACTION_ID);
+        resetSelectedSortOrderItem(sortSubItem);
+        subItem.isCurrentlySelected = true;
+
+        final ThreadPresenter presenter = threadLayout.getPresenter();
+        presenter.setOrder(order);
+    }
+
+    private void resetSelectedSortOrderItem(ToolbarMenuSubItem sortSubItem) {
+        sortSubItem.isCurrentlySelected = false;
+
+        for (ToolbarMenuSubItem nestedItem : sortSubItem.moreItems) {
+            resetSelectedSortOrderItem(nestedItem);
+        }
     }
 
     private void searchClicked(ToolbarMenuItem item) {

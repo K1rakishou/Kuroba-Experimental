@@ -193,7 +193,6 @@ public class ChanSettings {
     public static final BooleanSetting moveInputToBottom;
     public static final BooleanSetting captchaOnBottom;
     public static final BooleanSetting useImmersiveModeForGallery;
-    public static final BooleanSetting moveSortToToolbar;
     public static final BooleanSetting neverShowPages;
 
     //Post
@@ -350,7 +349,6 @@ public class ChanSettings {
             moveInputToBottom = new BooleanSetting(p, "move_input_bottom", false);
             captchaOnBottom = new BooleanSetting(p, "captcha_on_bottom", true);
             useImmersiveModeForGallery = new BooleanSetting(p, "use_immersive_mode_for_gallery", false);
-            moveSortToToolbar = new BooleanSetting(p, "move_sort_to_toolbar", false);
             neverShowPages = new BooleanSetting(p, "never_show_page_number", false);
 
             // Post

@@ -547,26 +547,21 @@ class MainSettingsControllerV2(context: Context)
 
   private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: () -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
-      val name = if (settingV2.isCurrent(item)) {
-        settingV2.itemNameMapper(item) + "  " + CHECKMARK_SYMBOL
-      } else {
-        settingV2.itemNameMapper(item)
-      }
-
       return@mapIndexed FloatingListMenu.FloatingListMenuItem(
-        index,
-        name,
-        item
+        id = index,
+        name = settingV2.itemNameMapper(item),
+        value = item,
+        isCurrentlySelected = settingV2.isCurrent(item)
       )
     }
 
     val controller = FloatingListMenuController(
-      context,
-      items
-    ) { clickedItem ->
-      settingV2.updateSetting(clickedItem.value)
-      onItemClicked()
-    }
+      context = context,
+      items = items,
+      itemClickListener = { clickedItem ->
+        settingV2.updateSetting(clickedItem.value)
+        onItemClicked()
+      })
 
     navigationController!!.presentController(
       controller,
@@ -705,6 +700,5 @@ class MainSettingsControllerV2(context: Context)
     private const val TAG = "DeveloperSettingsControllerV2"
     private const val MIN_QUERY_LENGTH = 3
     private const val DEBOUNCE_TIME_MS = 350L
-    private const val CHECKMARK_SYMBOL = "✓"
   }
 }

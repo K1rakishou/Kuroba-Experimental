@@ -89,7 +89,7 @@ public class HistoryController
 
         navigation.buildMenu()
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
-                .withOverflow()
+                .withOverflow(navigationController)
                 .withSubItem(R.string.history_clear, this::clearHistoryClicked)
                 .withSubItem(R.string.saved_reply_clear, this::clearSavedReplyClicked)
                 .build()

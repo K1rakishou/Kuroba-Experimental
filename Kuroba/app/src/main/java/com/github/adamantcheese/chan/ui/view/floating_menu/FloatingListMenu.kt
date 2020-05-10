@@ -15,7 +15,7 @@ class FloatingListMenu @JvmOverloads constructor(
   private val recycler: EpoxyRecyclerView
   private val menuItems = mutableListOf<FloatingListMenuItem>()
 
-  private var listener: ((item: FloatingListMenuItem) -> Unit)? = null
+  private var itemClickListener: ((item: FloatingListMenuItem) -> Unit)? = null
 
   init {
     inflate(context, R.layout.floating_list_menu, this)
@@ -24,7 +24,7 @@ class FloatingListMenu @JvmOverloads constructor(
   }
 
   fun setClickListener(listener: ((item: FloatingListMenuItem) -> Unit)?) {
-    this.listener = listener
+    this.itemClickListener = listener
   }
 
   fun setItems(newItems: List<FloatingListMenuItem>) {
@@ -39,12 +39,29 @@ class FloatingListMenu @JvmOverloads constructor(
   private fun rebuild(items: List<FloatingListMenuItem>) {
     recycler.withModels {
       items.forEachIndexed { index, item ->
+        val itemName = if (item.isCurrentlySelected) {
+          item.name + "  " + CHECKMARK_SYMBOL
+        } else {
+          item.name
+        }
+
         epoxyFloatingListMenuRow {
           id("epoxy_floating_list_menu_row_${item.id}")
-          title(item.name)
+          title(itemName)
 
-          callback {
-            listener?.invoke(item)
+          if (item.enabled) {
+            settingEnabled(true)
+
+            callback {
+              if (item.more.isNotEmpty()) {
+                rebuild(item.more)
+              } else {
+                itemClickListener?.invoke(item)
+              }
+            }
+          } else {
+            settingEnabled(false)
+            callback(null)
           }
         }
 
@@ -60,7 +77,13 @@ class FloatingListMenu @JvmOverloads constructor(
   data class FloatingListMenuItem @JvmOverloads constructor(
     val id: Int,
     val name: String,
-    val value: Any? = null
+    val value: Any? = null,
+    val enabled: Boolean = true,
+    val isCurrentlySelected: Boolean = false,
+    val more: MutableList<FloatingListMenuItem> = mutableListOf()
   )
 
+  companion object {
+    private const val CHECKMARK_SYMBOL = "✓"
+  }
 }
