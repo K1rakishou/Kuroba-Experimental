@@ -12,7 +12,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
  * background thread as possible. This holder contains results of those calculations which can then
  * be used directly inside the PostCell, CardPostCell and PostStubCell classes.
  * Method [preloadPostInfo] "should" be called on a background thread (even though it's not always
- * possible).
+ * possible
  * */
 class PostPreloadedInfoHolder {
   private val postPreloadedTimeMap = hashMapOf<Long, CharSequence>()

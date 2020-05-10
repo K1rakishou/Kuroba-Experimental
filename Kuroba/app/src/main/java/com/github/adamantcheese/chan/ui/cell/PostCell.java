@@ -835,42 +835,36 @@ public class PostCell
 
                 thumbnailView.setId(idToSet);
 
-                RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(size, size);
-                p.alignWithParent = true;
+                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(size, size);
+                layoutParams.alignWithParent = true;
 
                 if (!first) {
-                    p.addRule(RelativeLayout.BELOW, lastId);
+                    layoutParams.addRule(RelativeLayout.BELOW, lastId);
                 }
 
                 thumbnailView.bindPostImage(loadable, image, false, size, size);
                 thumbnailView.setClickable(true);
 
-                // Don't set a callback if the post is deleted but if the image is from a
-                // third-party archive then set it. If the file already exists in cache let it
-                // through as well.
-                boolean cacheFileAlreadyExists = image.imageUrl != null
-                        // TODO(archives): It is a really bad idea to call this method on a main
-                        //  thread in a class that gets instantiated in a RecyclerView. Should
-                        //  probably only leave this check inside the click handler (onThumbnailClicked)
-                        && cacheHandler.cacheFileExists(image.imageUrl.toString());
+                // Always set the click listener to avoid check the file cache (which will touch the
+                // disk and if you are not lucky enough it may freeze for quite a while). We do all
+                // the necessary checks when clicking an image anyway, so no point in doing them
+                // twice and more importantly inside RecyclerView bind call
+                thumbnailView.setOnClickListener(v2 -> {
+                    if (callback != null) {
+                        callback.onThumbnailClicked(image, thumbnailView);
+                    }
+                });
 
-                boolean setCallback = (!post.deleted.get() || image.isFromArchive)
-                        || cacheFileAlreadyExists;
-
-                if (setCallback) {
-                    thumbnailView.setOnClickListener(v2 -> {
-                        if (callback != null) {
-                            callback.onThumbnailClicked(image, thumbnailView);
-                        }
-                    });
-                }
                 thumbnailView.setRounding(dp(2));
-                p.setMargins(dp(4), first ? dp(4) : 0, 0,
-                        //1 extra for bottom divider
+                layoutParams.setMargins(
+                        dp(4),
+                        first ? dp(4) : 0,
+                        0,
+                        // 1 extra for bottom divider
                         i + 1 == post.getPostImagesCount() ? dp(1) + dp(4) : 0
                 );
 
-                relativeLayoutContainer.addView(thumbnailView, p);
+                relativeLayoutContainer.addView(thumbnailView, layoutParams);
                 thumbnailViews.add(thumbnailView);
 
                 lastId = idToSet;

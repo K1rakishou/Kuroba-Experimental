@@ -180,8 +180,11 @@ class MainSettingsControllerV2(context: Context)
     )
   }
 
-  private val normalSettingsGraph by lazy { buildSettingsGraph() }
-  private val searchSettingsGraph by lazy { buildSettingsGraph().apply { rebuildScreens() } }
+
+  private val normalSettingsGraphDelegate = lazy { buildSettingsGraph() }
+  private val normalSettingsGraph by normalSettingsGraphDelegate
+  private val searchSettingsGraphDelegate = lazy { buildSettingsGraph().apply { rebuildScreens() } }
+  private val searchSettingsGraph by searchSettingsGraphDelegate
 
   private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, Int>()
   private val screenStack = Stack<IScreenIdentifier>()
@@ -253,8 +256,14 @@ class MainSettingsControllerV2(context: Context)
     importExportSettingsScreen.onDestroy()
     mediaSettingsScreen.onDestroy()
 
-    normalSettingsGraph.clear()
-    searchSettingsGraph.clear()
+    if (normalSettingsGraphDelegate.isInitialized()) {
+      normalSettingsGraph.clear()
+    }
+
+    if (searchSettingsGraphDelegate.isInitialized()) {
+      searchSettingsGraph.clear()
+    }
+
     screenStack.clear()
   }
 
