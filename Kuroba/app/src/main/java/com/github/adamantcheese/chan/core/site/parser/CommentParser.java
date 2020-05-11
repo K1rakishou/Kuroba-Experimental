@@ -51,16 +51,11 @@ import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.site.parser.StyleRule.tagRule;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 @AnyThread
 public class CommentParser {
     private static final String TAG = "CommentParser";
-    private static final Typeface mona = Typeface.createFromAsset(
-            getAppContext().getAssets(),
-            "font/mona.ttf"
-    );
 
     private static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
     private static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
@@ -117,7 +112,6 @@ public class CommentParser {
         );
 
         rule(tagRule("span").cssClass("abbr").nullify());
-        rule(tagRule("span").cssClass("sjis").typeface(mona));
         rule(tagRule("span").foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE).linkify());
 
         rule(tagRule("strong").bold());
