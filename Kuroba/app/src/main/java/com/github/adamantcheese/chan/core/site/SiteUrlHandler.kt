@@ -14,26 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site;
+package com.github.adamantcheese.chan.core.site
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.adamantcheese.chan.core.model.orm.Loadable
+import okhttp3.HttpUrl
 
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
-
-import okhttp3.HttpUrl;
-
-public interface SiteUrlHandler {
-    Class<? extends Site> getSiteClass();
-
-    boolean matchesName(String value);
-
-    boolean respondsTo(HttpUrl url);
-
-    boolean matchesMediaHost(@NonNull HttpUrl url);
-
-    String desktopUrl(Loadable loadable, long postNo);
-
-    @Nullable
-    Loadable resolveLoadable(Site site, HttpUrl url);
+interface SiteUrlHandler {
+  fun getSiteClass(): Class<out Site>
+  fun matchesName(value: String): Boolean
+  fun respondsTo(url: HttpUrl): Boolean
+  fun matchesMediaHost(url: HttpUrl): Boolean
+  fun desktopUrl(loadable: Loadable, postNo: Long?): String
+  fun resolveLoadable(site: Site, url: HttpUrl): Loadable?
 }

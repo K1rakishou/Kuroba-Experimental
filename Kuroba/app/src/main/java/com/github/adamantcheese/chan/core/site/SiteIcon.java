@@ -26,6 +26,8 @@ import com.github.adamantcheese.chan.utils.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+
 import coil.request.RequestDisposable;
 import okhttp3.HttpUrl;
 
@@ -76,6 +78,11 @@ public class SiteIcon {
                         @Override
                         public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                             result.onSiteIcon(SiteIcon.this, drawable);
+                        }
+
+                        @Override
+                        public void onNotFound() {
+                            onResponseError(new IOException("Not found"));
                         }
 
                         @Override

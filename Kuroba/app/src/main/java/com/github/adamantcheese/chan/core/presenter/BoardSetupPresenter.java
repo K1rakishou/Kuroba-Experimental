@@ -43,9 +43,7 @@ public class BoardSetupPresenter
     private AddCallback addCallback;
 
     private Site site;
-
     private List<Board> savedBoards;
-
     private BoardRepository.SitesBoards allBoardsObservable;
 
     private Executor executor = Executors.newSingleThreadExecutor();
@@ -131,7 +129,7 @@ public class BoardSetupPresenter
 
         List<Board> boardsToSave = new ArrayList<>();
 
-        if (site.boardsType().canList) {
+        if (site.boardsType().getCanList()) {
             List<Board> siteBoards = boardManager.getSiteBoards(site);
             Map<String, Board> siteBoardsByCode = new HashMap<>();
             for (Board siteBoard : siteBoards) {
@@ -199,7 +197,7 @@ public class BoardSetupPresenter
         final String query = suggestionsQuery == null ? null : suggestionsQuery.replace("/", "").replace("\\", "");
         suggestionCall = BackgroundUtils.runWithExecutor(executor, () -> {
             List<BoardSuggestion> suggestions = new ArrayList<>();
-            if (site.boardsType().canList) {
+            if (site.boardsType().getCanList()) {
                 List<Board> siteBoards = boardManager.getSiteBoards(site);
                 List<Board> allUnsavedBoards = new ArrayList<>();
                 for (Board siteBoard : siteBoards) {

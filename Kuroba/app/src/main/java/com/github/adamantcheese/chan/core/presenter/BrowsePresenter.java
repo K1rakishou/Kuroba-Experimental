@@ -120,7 +120,6 @@ public class BrowsePresenter
 
     public interface Callback {
         void loadBoard(Loadable loadable);
-
         void loadSiteSetup(Site site);
     }
 }

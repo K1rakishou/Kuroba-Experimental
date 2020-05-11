@@ -13,7 +13,7 @@ import java.io.IOException
 import java.util.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class VichanApi(commonSite: CommonSite?) : CommonApi(commonSite) {
+class VichanApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
     @Throws(Exception::class)
     override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {

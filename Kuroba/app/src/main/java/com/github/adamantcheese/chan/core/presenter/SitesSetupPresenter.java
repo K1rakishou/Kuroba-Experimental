@@ -176,19 +176,14 @@ public class SitesSetupPresenter
 
     public interface Callback {
         void setSites(List<SiteBoardCount> sites);
-
         void showHint();
-
         void showAddDialog();
-
         void openSiteConfiguration(Site site);
-
         void onSiteDeleted(Site site);
     }
 
     public interface AddCallback {
         void showAddError(String error);
-
         void dismissDialog();
     }
 }

@@ -59,7 +59,7 @@ public class Lainchan
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, long postNo) {
+        public String desktopUrl(Loadable loadable, Long postNo) {
             if (loadable.isCatalogMode()) {
                 return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
             } else if (loadable.isThreadMode()) {
@@ -81,7 +81,7 @@ public class Lainchan
     @Override
     public void setup() {
         setName("Lainchan");
-        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://lainchan.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://lainchan.org/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "Programming", "λ"),
@@ -114,7 +114,7 @@ public class Lainchan
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this, okHttpClient));
+        setActions(new VichanActions(this, getOkHttpClient()));
         setApi(new VichanApi(this));
         setParser(new VichanCommentParser());
     }

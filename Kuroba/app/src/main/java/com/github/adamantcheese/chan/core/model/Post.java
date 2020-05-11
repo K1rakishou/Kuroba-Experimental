@@ -44,8 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Contains all data needed to represent a single post.<br>
  * All {@code final} fields are thread-safe.
  */
-public class Post
-        implements Comparable<Post> {
+public class Post implements Comparable<Post> {
     public final String boardId;
     public final Board board;
     public final long no;

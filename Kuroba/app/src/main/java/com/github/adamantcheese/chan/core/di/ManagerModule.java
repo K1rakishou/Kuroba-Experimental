@@ -41,6 +41,7 @@ import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
+import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -106,7 +107,8 @@ public class ManagerModule {
             FileManager fileManager
     ) {
         Logger.d(AppModule.DI_TAG, "Watch manager");
-        return new WatchManager(databaseManager,
+        return new WatchManager(
+                databaseManager,
                 chanLoaderManager,
                 wakeManager,
                 pageRequestManager,
@@ -147,9 +149,16 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public PageRequestManager providePageRequestManager() {
+    public PageRequestManager providePageRequestManager(
+            DatabaseManager databaseManager,
+            SiteRepository siteRepository
+    ) {
         Logger.d(AppModule.DI_TAG, "Page request manager");
-        return new PageRequestManager();
+        return new PageRequestManager(
+                databaseManager,
+                databaseManager.getDatabaseBoardManager(),
+                siteRepository
+        );
     }
 
     @Provides

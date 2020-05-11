@@ -101,7 +101,7 @@ public abstract class ThreadController
     }
 
     public void showSitesNotSetup() {
-        threadLayout.getPresenter().showNoContent();
+        threadLayout.presenter.showNoContent();
     }
 
     public abstract void openPin(Pin pin);
@@ -110,11 +110,11 @@ public abstract class ThreadController
      * Used to save instance state
      */
     public Loadable getLoadable() {
-        return threadLayout.getPresenter().getLoadable();
+        return threadLayout.presenter.getLoadable();
     }
 
     public void selectPost(int post) {
-        threadLayout.getPresenter().selectPost(post);
+        threadLayout.presenter.selectPost(post);
     }
 
     @Override
@@ -129,12 +129,12 @@ public abstract class ThreadController
 
     @Subscribe
     public void onEvent(Chan.ForegroundChangedMessage message) {
-        threadLayout.getPresenter().onForegroundChanged(message.inForeground);
+        threadLayout.presenter.onForegroundChanged(message.inForeground);
     }
 
     @Subscribe
     public void onEvent(RefreshUIMessage message) {
-        threadLayout.getPresenter().requestData();
+        threadLayout.presenter.requestData();
     }
 
     @Override
@@ -144,7 +144,7 @@ public abstract class ThreadController
 
     @Override
     public NdefMessage createNdefMessage(NfcEvent event) {
-        if (threadLayout.getPresenter().getChanThread() == null) {
+        if (threadLayout.presenter.getChanThread() == null) {
             showToast(context, R.string.cannot_send_thread_via_nfc_already_deleted);
             return null;
         }
@@ -176,7 +176,7 @@ public abstract class ThreadController
     }
 
     public void selectPostImage(PostImage postImage) {
-        threadLayout.getPresenter().selectPostImage(postImage);
+        threadLayout.presenter.selectPostImage(postImage);
     }
 
     @Override
@@ -204,12 +204,12 @@ public abstract class ThreadController
 
     @Override
     public void scrollToImage(PostImage postImage) {
-        threadLayout.getPresenter().scrollToImage(postImage, true);
+        threadLayout.presenter.scrollToImage(postImage, true);
     }
 
     @Override
     public void showAlbum(List<PostImage> images, int index) {
-        if (threadLayout.getPresenter().getChanThread() != null) {
+        if (threadLayout.presenter.getChanThread() != null) {
             AlbumViewController albumViewController = new AlbumViewController(context);
             albumViewController.setImages(getLoadable(), images, index, navigation.title);
 
@@ -245,12 +245,12 @@ public abstract class ThreadController
 
     @Override
     public void onSearchVisibilityChanged(boolean visible) {
-        threadLayout.getPresenter().onSearchVisibilityChanged(visible);
+        threadLayout.presenter.onSearchVisibilityChanged(visible);
     }
 
     @Override
     public void onSearchEntered(String entered) {
-        threadLayout.getPresenter().onSearchEntered(entered);
+        threadLayout.presenter.onSearchEntered(entered);
     }
 
     @Override

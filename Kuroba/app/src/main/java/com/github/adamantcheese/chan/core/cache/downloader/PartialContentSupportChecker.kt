@@ -56,7 +56,7 @@ internal class PartialContentSupportChecker(
             // supports partial content or not
             if (host != null && hostAlreadyChecked) {
                 val siteSendsFileSizeInBytes = siteResolver.findSiteForUrl(host)
-                        ?.chunkDownloaderSiteProperties
+                        ?.getChunkDownloaderSiteProperties()
                         ?.siteSendsCorrectFileSizeInBytes
                         ?: false
 
@@ -298,7 +298,7 @@ internal class PartialContentSupportChecker(
         }
 
         return siteResolver.findSiteForUrl(host)
-                ?.chunkDownloaderSiteProperties
+                ?.getChunkDownloaderSiteProperties()
                 ?.siteSendsCorrectFileSizeInBytes
                 ?: false
     }

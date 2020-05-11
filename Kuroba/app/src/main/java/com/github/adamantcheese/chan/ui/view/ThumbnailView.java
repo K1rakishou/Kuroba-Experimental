@@ -38,10 +38,6 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkError;
-import com.android.volley.ParseError;
-import com.android.volley.TimeoutError;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -213,17 +209,18 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     }
 
     @Override
+    public void onNotFound() {
+        this.error = true;
+        errorText = getString(R.string.thumbnail_load_failed_404);
+
+        onImageSet(false);
+        invalidate();
+    }
+
+    @Override
     public void onResponseError(@NotNull Throwable error) {
         this.error = true;
-
-        if (error instanceof NetworkError
-                || error instanceof TimeoutError
-                || error instanceof ParseError
-                || error instanceof AuthFailureError) {
-            errorText = getString(R.string.thumbnail_load_failed_network);
-        } else {
-            errorText = getString(R.string.thumbnail_load_failed_404);
-        }
+        errorText = getString(R.string.thumbnail_load_failed_network);
 
         onImageSet(false);
         invalidate();

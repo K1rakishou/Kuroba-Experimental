@@ -29,15 +29,15 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 
-public class Chan4ReplyCall
-        extends CommonReplyHttpCall {
+public class Chan4ReplyCall extends CommonReplyHttpCall {
     public Chan4ReplyCall(Site site, Reply reply) {
         super(site, reply);
     }
 
     @Override
     public void addParameters(
-            MultipartBody.Builder formBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            MultipartBody.Builder formBuilder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
         formBuilder.addFormDataPart("mode", "regist");
         formBuilder.addFormDataPart("pwd", replyResponse.password);
@@ -64,11 +64,13 @@ public class Chan4ReplyCall
             }
         }
 
+        Site site = getSite();
+
         if (site instanceof Chan4 && reply.loadable.boardCode.equals("pol")) {
             if (!reply.flag.isEmpty()) {
                 formBuilder.addFormDataPart("flag", reply.flag);
             } else {
-                formBuilder.addFormDataPart("flag", Chan4.flagType.get());
+                formBuilder.addFormDataPart("flag", ((Chan4) site).getFlagType().get());
             }
         }
 

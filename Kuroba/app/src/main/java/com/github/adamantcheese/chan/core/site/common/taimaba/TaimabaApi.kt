@@ -13,7 +13,7 @@ import java.io.IOException
 import java.util.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class TaimabaApi(commonSite: CommonSite?) : CommonApi(commonSite) {
+class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
     @Throws(Exception::class)
     override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {

@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -195,6 +196,10 @@ public class Board
 
     public boolean siteCodeEquals(Board other) {
         return code.equals(other.code) && other.siteId == siteId;
+    }
+
+    public BoardDescriptor boardDescriptor() {
+        return new BoardDescriptor(site.siteDescriptor(), code);
     }
 
     /**

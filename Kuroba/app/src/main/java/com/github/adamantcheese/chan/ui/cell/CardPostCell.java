@@ -279,9 +279,9 @@ public class CardPostCell
 
         String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
-            Chan4PagesRequest.Page p = callback.getPage(post);
-            if (p != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
-                status += " Pg " + p.page;
+            Chan4PagesRequest.BoardPage boardPage = callback.getPage(post);
+            if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
+                status += " Pg " + boardPage.getPage();
             }
         }
 

@@ -525,9 +525,7 @@ public class BrowseBoardsFloatingMenu
 
     public interface ClickCallback {
         void setBoard(Board item);
-
         void onSiteClicked(Site site);
-
         void openSetup();
     }
 }

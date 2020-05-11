@@ -18,14 +18,11 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.net.ConnectivityManager;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingSource;
-import com.github.adamantcheese.chan.core.net.ProxiedHurlStack;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteResolver;
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager;
@@ -43,7 +40,6 @@ import okhttp3.Dns;
 import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -53,13 +49,6 @@ public class NetModule {
     public static final String DOWNLOADER_OKHTTP_CLIENT_NAME = "downloader_okhttp_client";
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
-
-    @Provides
-    @Singleton
-    public RequestQueue provideRequestQueue() {
-        Logger.d(AppModule.DI_TAG, "Request queue");
-        return Volley.newRequestQueue(getAppContext(), new ProxiedHurlStack());
-    }
 
     @Provides
     @Singleton

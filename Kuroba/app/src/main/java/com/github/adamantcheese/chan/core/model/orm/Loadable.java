@@ -296,7 +296,7 @@ public class Loadable
     }
 
     public String desktopUrl() {
-        return site.resolvable().desktopUrl(this, no);
+        return site.resolvable().desktopUrl(this, (long) no);
     }
 
     public boolean isSuitableForPrefetch() {

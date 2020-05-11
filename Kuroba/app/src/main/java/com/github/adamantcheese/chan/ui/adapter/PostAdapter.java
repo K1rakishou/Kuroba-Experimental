@@ -36,6 +36,8 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.PostUtils;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -488,8 +490,7 @@ public class PostAdapter
     //endregion
 
     public interface PostAdapterCallback {
-        Loadable getLoadable();
-
+        @Nullable Loadable getLoadable();
         void onUnhidePostClick(Post post);
     }
 }

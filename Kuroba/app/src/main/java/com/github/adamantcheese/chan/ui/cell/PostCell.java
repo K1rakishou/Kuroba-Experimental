@@ -68,7 +68,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.text.FastTextView;
@@ -84,6 +84,7 @@ import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -658,9 +659,9 @@ public class PostCell
         }
 
         if (callback != null && !ChanSettings.neverShowPages.get()) {
-            Page p = callback.getPage(post);
-            if (p != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
-                text += ", page " + p.page;
+            Chan4PagesRequest.BoardPage boardPage = callback.getPage(post);
+            if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
+                text += ", page " + boardPage.getPage();
             }
         }
 
@@ -1311,6 +1312,11 @@ public class PostCell
         public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
             this.drawable = drawable;
             postIcons.invalidate();
+        }
+
+        @Override
+        public void onNotFound() {
+            onResponseError(new IOException("Not found"));
         }
 
         @Override

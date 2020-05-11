@@ -33,8 +33,7 @@ import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class Chan4DeleteHttpCall
-        extends HttpCall {
+public class Chan4DeleteHttpCall extends HttpCall {
     private static final Pattern ERROR_MESSAGE = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span");
 
     private final DeleteRequest deleteRequest;
@@ -47,7 +46,8 @@ public class Chan4DeleteHttpCall
 
     @Override
     public void setup(
-            Request.Builder requestBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            Request.Builder requestBuilder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
         FormBody.Builder formBuilder = new FormBody.Builder();
         formBuilder.add(Long.toString(deleteRequest.post.no), "delete");
@@ -57,13 +57,14 @@ public class Chan4DeleteHttpCall
         formBuilder.add("mode", "usrdel");
         formBuilder.add("pwd", deleteRequest.savedReply.password);
 
-        requestBuilder.url(site.endpoints().delete(deleteRequest.post));
+        requestBuilder.url(getSite().endpoints().delete(deleteRequest.post));
         requestBuilder.post(formBuilder.build());
     }
 
     @Override
     public void process(Response response, String result) {
         Matcher errorMessageMatcher = ERROR_MESSAGE.matcher(result);
+
         if (errorMessageMatcher.find()) {
             deleteResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().ownText();
         } else {

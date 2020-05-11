@@ -64,6 +64,8 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -898,23 +900,16 @@ public class ThreadListLayout
         }
     }
     public interface ThreadListLayoutPresenterCallback {
-
         void showThread(Loadable loadable);
-
         void requestNewPostLoad();
-
         void onListScrolledToBottom();
     }
 
     public interface ThreadListLayoutCallback {
         void replyLayoutOpen(boolean open);
-
         Toolbar getToolbar();
-
         void showImageReencodingWindow(boolean supportsReencode);
-
         boolean threadBackPressed();
-
-        Loadable getLoadable();
+        @Nullable Loadable getLoadable();
     }
 }

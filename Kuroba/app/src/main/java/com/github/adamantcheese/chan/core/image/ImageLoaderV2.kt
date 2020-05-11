@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.lifecycle.Lifecycle
 import coil.ImageLoader
+import coil.network.HttpException
 import coil.request.*
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
@@ -74,7 +75,12 @@ class ImageLoaderV2(
 
             listener(
                     onError = { _, throwable ->
-                        localListener.get()?.onResponseError(throwable)
+                        if (throwable is HttpException && throwable.response.code == 404) {
+                            localListener.get()?.onNotFound()
+                        } else {
+                            localListener.get()?.onResponseError(throwable)
+                        }
+
                         localListener.set(null)
                     },
                     onCancel = {
@@ -281,7 +287,16 @@ class ImageLoaderV2(
 
                 when (result) {
                     is SuccessResult -> listener.onResponse(result.drawable as BitmapDrawable, true)
-                    is ErrorResult -> listener.onResponseError(result.throwable)
+                    is ErrorResult -> {
+                        val throwable = result.throwable
+
+                        if (throwable is HttpException && throwable.response.code == 404) {
+                            listener.onNotFound()
+                        } else {
+                            listener.onResponseError(result.throwable)
+                        }
+
+                    }
                 }
             }
         }
@@ -333,6 +348,7 @@ class ImageLoaderV2(
 
     interface ImageListener {
         fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean)
+        fun onNotFound()
         fun onResponseError(error: Throwable)
     }
 

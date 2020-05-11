@@ -67,7 +67,12 @@ class PostParseCallable implements Callable<Post> {
         // Process the filters before finish, because parsing the html is dependent on filter matches
         processPostFilter(post);
 
-        return reader.getParser().parse(currentTheme, post, new PostParser.Callback() {
+        PostParser parser = reader.getParser();
+        if (parser == null) {
+            throw new NullPointerException("PostParser cannot be null!");
+        }
+
+        return parser.parse(currentTheme, post, new PostParser.Callback() {
             @Override
             public boolean isSaved(int postNo) {
                 return savedReplyManager.isSaved(post.board, postNo);

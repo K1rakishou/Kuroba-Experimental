@@ -18,9 +18,11 @@ package com.github.adamantcheese.chan.core.site.http;
 
 import com.github.adamantcheese.chan.core.site.SiteActions;
 
+import kotlin.coroutines.Continuation;
+
 /**
  * Generic response for
- * {@link com.github.adamantcheese.chan.core.site.SiteActions#post(Reply, SiteActions.PostListener)} that the
+ * {@link SiteActions#post(Reply, Continuation)}  that the
  * reply layout uses.
  */
 public class ReplyResponse {

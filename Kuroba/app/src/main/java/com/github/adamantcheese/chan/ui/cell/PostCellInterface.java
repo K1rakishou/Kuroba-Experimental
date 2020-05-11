@@ -21,12 +21,14 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -56,7 +58,7 @@ public interface PostCellInterface {
     ThumbnailView getThumbnailView(PostImage postImage);
 
     interface PostCellCallback {
-        Loadable getLoadable();
+        @Nullable Loadable getLoadable();
         // Only used in PostCell and CardPostCell, no need to use in stubs
         void onPostBind(Post post);
         // Only used in PostCell and CardPostCell, no need to use in stubs
@@ -70,7 +72,7 @@ public interface PostCellInterface {
         void onPostLinkableClicked(Post post, PostLinkable linkable);
         void onPostNoClicked(Post post);
         void onPostSelectionQuoted(Post post, CharSequence quoted);
-        Page getPage(Post op);
+        @Nullable Chan4PagesRequest.BoardPage getPage(Post op);
         boolean hasAlreadySeenPost(Post post);
         void presentController(FloatingListMenuController floatingListMenuController, boolean animate);
     }

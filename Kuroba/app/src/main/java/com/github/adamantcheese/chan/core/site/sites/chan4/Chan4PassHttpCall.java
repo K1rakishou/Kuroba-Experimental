@@ -31,8 +31,7 @@ import okhttp3.FormBody;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class Chan4PassHttpCall
-        extends HttpCall {
+public class Chan4PassHttpCall extends HttpCall {
     private final LoginRequest loginRequest;
     public final LoginResponse loginResponse = new LoginResponse();
 
@@ -43,7 +42,8 @@ public class Chan4PassHttpCall
 
     @Override
     public void setup(
-            Request.Builder requestBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            Request.Builder requestBuilder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
         FormBody.Builder formBuilder = new FormBody.Builder();
 
@@ -52,7 +52,7 @@ public class Chan4PassHttpCall
         formBuilder.add("id", loginRequest.user);
         formBuilder.add("pin", loginRequest.pass);
 
-        requestBuilder.url(site.endpoints().login());
+        requestBuilder.url(getSite().endpoints().login());
         requestBuilder.post(formBuilder.build());
     }
 

@@ -105,7 +105,7 @@ internal class ChunkMerger(
         }
 
         return siteResolver.findSiteForUrl(host)
-                ?.chunkDownloaderSiteProperties
+                ?.getChunkDownloaderSiteProperties()
                 ?.canFileHashBeTrusted
                 ?: false
     }

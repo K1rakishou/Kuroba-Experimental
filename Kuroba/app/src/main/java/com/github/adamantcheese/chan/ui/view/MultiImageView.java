@@ -360,6 +360,11 @@ public class MultiImageView
                     }
 
                     @Override
+                    public void onNotFound() {
+                        onResponseError(new IOException("Not found"));
+                    }
+
+                    @Override
                     public void onResponseError(@NotNull Throwable error) {
                         thumbnailRequestDisposable = null;
 

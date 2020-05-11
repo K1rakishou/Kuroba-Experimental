@@ -26,8 +26,6 @@ import android.os.PersistableBundle;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
-import com.android.volley.NetworkResponse;
-import com.android.volley.ServerError;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.base.Debouncer;
@@ -45,18 +43,20 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
 import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.fsaf.FileManager;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
+import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -1144,8 +1144,7 @@ public class WatchManager
         }
     }
 
-    public class PinWatcher
-            implements ChanThreadLoader.ChanLoaderCallback, PageRequestManager.PageCallback {
+    public class PinWatcher implements ChanThreadLoader.ChanLoaderCallback, PageRequestManager.PageCallback {
         private static final String TAG = "PinWatcher";
 
         private final Pin pin;
@@ -1227,25 +1226,38 @@ public class WatchManager
         }
 
         private boolean update(boolean fromBackground) {
-            if (!pin.isError && pin.watching) {
-                //check last page stuff, get the page for the OP and notify in the onPages method
-                Page page = pageRequestManager.getPage(chanLoader.getLoadable());
-                if (page != null) {
-                    latestKnownPage = page.page;
-                    doPageNotification(page);
-                }
-                if (fromBackground) {
-                    // Always load regardless of timer, since the time left is not accurate for 15min+ intervals
-                    chanLoader.clearTimer();
-                    chanLoader.requestMoreData(false);
-                    return true;
-                } else {
-                    // true if a load was started
-                    return chanLoader.loadMoreIfTime();
-                }
-            } else {
+            if (pin.isError || !pin.watching) {
                 return false;
             }
+
+            Loadable loadable = chanLoader.getLoadable();
+            if (!loadable.isThreadMode()) {
+                Logger.e(TAG, "PinWatcher.update() called with a not thread loadable");
+                return false;
+            }
+
+            // check last page stuff, get the page for the OP and notify in the onPages method
+            ChanDescriptor.ThreadDescriptor threadDescriptor = new ChanDescriptor.ThreadDescriptor(
+                    loadable.board.boardDescriptor(),
+                    loadable.no
+            );
+
+            Chan4PagesRequest.BoardPage page = pageRequestManager.getPage(threadDescriptor);
+            if (page != null) {
+                latestKnownPage = page.getPage();
+                doPageNotification(page);
+            }
+
+            if (fromBackground) {
+                // Always load regardless of timer, since the time left is not accurate for 15min+ intervals
+                chanLoader.clearTimer();
+                chanLoader.requestMoreData(false);
+                return true;
+            } else {
+                // true if a load was started
+                return chanLoader.loadMoreIfTime();
+            }
+
         }
 
         @Override
@@ -1279,14 +1291,12 @@ public class WatchManager
                     // is AlreadyDownloaded
                     && pin.loadable.getLoadableDownloadingState() != DownloadingAndViewable && (thread.isArchived()
                     || thread.isClosed())) {
-                NetworkResponse networkResponse =
-                        new NetworkResponse(503, EMPTY_BYTE_ARRAY, true, 1, Collections.emptyList());
-                ServerError serverError = new ServerError(networkResponse);
-
                 pin.isError = true;
                 pin.watching = false;
 
-                onChanLoaderError(new ChanLoaderException(serverError));
+                // We need to pass something into onChanLoaderError it doesn't matter what.
+                Exception dummyException = new IOException("Dummy exception");
+                onChanLoaderError(new ChanLoaderException(dummyException));
                 return;
             }
 
@@ -1386,21 +1396,34 @@ public class WatchManager
 
         @Override
         public void onPagesReceived() {
-            //this call will return the proper value now, but if it returns null just skip everything
-            Page p = pageRequestManager.getPage(chanLoader.getLoadable());
-            if (p != null) {
-                latestKnownPage = p.page;
+            Loadable loadable = chanLoader.getLoadable();
+            if (!loadable.isThreadMode()) {
+                Logger.e(TAG, "PinWatcher.onPagesReceived() called with a not thread loadable");
+                return;
             }
+
+            // check last page stuff, get the page for the OP and notify in the onPages method
+            ChanDescriptor.ThreadDescriptor threadDescriptor = new ChanDescriptor.ThreadDescriptor(
+                    loadable.board.boardDescriptor(),
+                    loadable.no
+            );
+
+            //this call will return the proper value now, but if it returns null just skip everything
+            Chan4PagesRequest.BoardPage p = pageRequestManager.getPage(threadDescriptor);
+            if (p != null) {
+                latestKnownPage = p.getPage();
+            }
+
             doPageNotification(p);
         }
 
-        private void doPageNotification(Page page) {
+        private void doPageNotification(Chan4PagesRequest.BoardPage page) {
             if (ChanSettings.watchEnabled.get() && ChanSettings.watchLastPageNotify.get()
                     && ChanSettings.watchBackground.get()) {
-                if (page != null && page.page >= pin.loadable.board.pages && !notified) {
+                if (page != null && page.getPage() >= pin.loadable.board.pages && !notified) {
                     lastPageNotify(true); //schedules a job to notify the user of a last page
                     notified = true;
-                } else if (page != null && page.page < pin.loadable.board.pages) {
+                } else if (page != null && page.getPage() < pin.loadable.board.pages) {
                     lastPageNotify(false); //schedules a job to cancel the notification; don't use cancel!
                     notified = false;
                 }

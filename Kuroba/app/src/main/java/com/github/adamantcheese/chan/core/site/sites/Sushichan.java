@@ -59,7 +59,7 @@ public class Sushichan
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, long postNo) {
+        public String desktopUrl(Loadable loadable, Long postNo) {
             if (loadable.isCatalogMode()) {
                 return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
             } else if (loadable.isThreadMode()) {
@@ -81,7 +81,7 @@ public class Sushichan
     @Override
     public void setup() {
         setName("Sushichan");
-        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://sushigirl.us/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "artsy", "wildcard"),
@@ -107,7 +107,7 @@ public class Sushichan
         });
 
         setEndpoints(new VichanEndpoints(this, "https://sushigirl.us/", "https://sushigirl.us/"));
-        setActions(new VichanActions(this, okHttpClient));
+        setActions(new VichanActions(this, getOkHttpClient()));
         setApi(new VichanApi(this));
         setParser(new VichanCommentParser());
     }

@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.repository;
 
-import androidx.core.util.Pair;
+import android.util.Pair;
 
 import com.github.adamantcheese.chan.core.database.DatabaseBoardManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
@@ -46,7 +46,7 @@ public class BoardRepository
     @Inject
     public BoardRepository(DatabaseManager databaseManager, SiteRepository siteRepository) {
         this.databaseManager = databaseManager;
-        databaseBoardManager = databaseManager.getDatabaseBoardManager();
+        this.databaseBoardManager = databaseManager.getDatabaseBoardManager();
 
         allSites = siteRepository.all();
     }
@@ -139,7 +139,11 @@ public class BoardRepository
     }
 
     private void updateObservablesSync() {
-        updateWith(databaseManager.runTask(databaseBoardManager.getBoardsForAllSitesOrdered(allSites.getAll())));
+        List<Pair<Site, List<Board>>> result = databaseManager.runTask(
+                databaseBoardManager.getBoardsForAllSitesOrdered(allSites.getAll())
+        );
+
+        updateWith(result);
     }
 
     private void updateObservablesAsync() {
@@ -169,8 +173,7 @@ public class BoardRepository
         savedBoards.notifyObservers();
     }
 
-    public class SitesBoards
-            extends Observable {
+    public static class SitesBoards extends Observable {
         private List<SiteBoards> siteBoards = new ArrayList<>();
 
         public void set(List<SiteBoards> siteBoards) {
@@ -183,7 +186,7 @@ public class BoardRepository
         }
     }
 
-    public class SiteBoards {
+    public static class SiteBoards {
         public final Site site;
         public final List<Board> boards;
 

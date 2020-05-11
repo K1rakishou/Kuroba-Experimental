@@ -29,6 +29,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -237,6 +238,11 @@ public class RemovedPostsController
                             @Override
                             public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                                 postImage.setImageBitmap(drawable.getBitmap());
+                            }
+
+                            @Override
+                            public void onNotFound() {
+                                onResponseError(new IOException("Not found"));
                             }
 
                             @Override

@@ -48,7 +48,7 @@ public class Kun8
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, long postNo) {
+        public String desktopUrl(Loadable loadable, Long postNo) {
             if (loadable.isCatalogMode()) {
                 return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
             } else if (loadable.isThreadMode()) {
@@ -70,7 +70,7 @@ public class Kun8
     @Override
     public void setup() {
         setName("8kun");
-        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://8kun.top/static/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://8kun.top/static/favicon.ico")));
         setBoardsType(BoardsType.INFINITE);
         setResolvable(URL_HANDLER);
 
@@ -85,8 +85,7 @@ public class Kun8
         setEndpoints(new VichanEndpoints(this, "https://8kun.top", "https://sys.8kun.top") {
             @Override
             public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
-                return HttpUrl.parse(
-                        "https://media.8kun.top/" + "file_store/" + (arg.get("tim") + "." + arg.get("ext")));
+                return HttpUrl.parse("https://media.8kun.top/" + "file_store/" + (arg.get("tim") + "." + arg.get("ext")));
             }
 
             @Override
@@ -104,12 +103,11 @@ public class Kun8
                         break;
                 }
 
-                return HttpUrl.parse(
-                        "https://media.8kun.top/" + "file_store/" + "thumb/" + (arg.get("tim") + "." + ext));
+                return HttpUrl.parse("https://media.8kun.top/" + "file_store/" + "thumb/" + (arg.get("tim") + "." + ext));
             }
         });
 
-        setActions(new VichanActions(this, okHttpClient) {
+        setActions(new VichanActions(this, getOkHttpClient()) {
             @Override
             public void setupPost(Reply reply, MultipartHttpCall call) {
                 super.setupPost(reply, call);

@@ -47,7 +47,7 @@ public class Wired7
         extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
 
-    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
+    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSite.CommonSiteUrlHandler() {
         private static final String ROOT = "https://wired-7.org/";
 
         @Override
@@ -71,7 +71,7 @@ public class Wired7
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, long postNo) {
+        public String desktopUrl(Loadable loadable, Long postNo) {
             if (loadable.isCatalogMode()) {
                 return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
             } else if (loadable.isThreadMode()) {
@@ -97,7 +97,7 @@ public class Wired7
     @Override
     public void setup() {
         setName("Wired-7");
-        setIcon(SiteIcon.fromFavicon(imageLoaderV2, HttpUrl.parse("https://wired-7.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://wired-7.org/favicon.ico")));
 
         setBoards(
                 Board.fromSiteNameCode(this, "Random", "b"),
@@ -126,7 +126,7 @@ public class Wired7
         });
 
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
-        setActions(new Wired7Actions(this, okHttpClient));
+        setActions(new Wired7Actions(this, getOkHttpClient()));
         setApi(new VichanApi(this));
         setParser(new VichanCommentParser());
     }

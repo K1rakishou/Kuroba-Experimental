@@ -419,7 +419,15 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
             val archiveThread = when (archiveThreadResult) {
                 is ModularResult.Error -> {
-                    Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
+                    if (archiveThreadResult.error is CancellationException) {
+                        Logger.e(
+                          TAG,
+                          "Error while fetching archive posts",
+                          archiveThreadResult.error.errorMessageOrClassName()
+                        )
+                    } else {
+                        Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
+                    }
 
                     val fetchResult = ThirdPartyArchiveFetchResult.error(
                             archiveDescriptor,

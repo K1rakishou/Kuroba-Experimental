@@ -71,6 +71,7 @@ import com.github.adamantcheese.chan.utils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
@@ -489,6 +490,11 @@ public class ImageViewerController
                     }
 
                     @Override
+                    public void onNotFound() {
+                        onResponseError(new IOException("Not found"));
+                    }
+
+                    @Override
                     public void onResponseError(@NotNull Throwable error) {
                         // the preview image will just remain as the last successful response;
                         // good enough
@@ -594,6 +600,11 @@ public class ImageViewerController
                     public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                         previewImage.setBitmap(drawable.getBitmap());
                         startAnimation.start();
+                    }
+
+                    @Override
+                    public void onNotFound() {
+                        onResponseError(new IOException("Not found"));
                     }
 
                     @Override

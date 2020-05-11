@@ -5,6 +5,8 @@ class BoardDescriptor(
         val boardCode: String
 ) {
 
+    fun siteName(): String = siteDescriptor.siteName
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is BoardDescriptor) return false

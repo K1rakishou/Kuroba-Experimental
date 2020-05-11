@@ -35,8 +35,7 @@ import okhttp3.MultipartBody;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public abstract class CommonReplyHttpCall
-        extends HttpCall {
+public abstract class CommonReplyHttpCall extends HttpCall {
     private static final String TAG = "CommonReplyHttpCall";
     private static final Random RANDOM = new Random();
     private static final Pattern THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->");
@@ -48,6 +47,7 @@ public abstract class CommonReplyHttpCall
 
     public CommonReplyHttpCall(Site site, Reply reply) {
         super(site);
+
         this.reply = reply;
         replyResponse.siteId = reply.loadable.siteId;
         replyResponse.boardCode = reply.loadable.boardCode;
@@ -55,7 +55,8 @@ public abstract class CommonReplyHttpCall
 
     @Override
     public void setup(
-            Request.Builder requestBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            Request.Builder requestBuilder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
         replyResponse.password = Long.toHexString(RANDOM.nextLong());
 
@@ -64,7 +65,7 @@ public abstract class CommonReplyHttpCall
 
         addParameters(formBuilder, progressListener);
 
-        HttpUrl replyUrl = site.endpoints().reply(this.reply.loadable);
+        HttpUrl replyUrl = getSite().endpoints().reply(this.reply.loadable);
         requestBuilder.url(replyUrl);
         requestBuilder.addHeader("Referer", replyUrl.toString());
         requestBuilder.post(formBuilder.build());

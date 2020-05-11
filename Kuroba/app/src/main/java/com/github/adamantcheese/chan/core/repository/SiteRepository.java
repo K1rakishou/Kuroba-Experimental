@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.repository;
 import android.text.TextUtils;
 import android.util.SparseArray;
 
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
@@ -13,6 +14,7 @@ import com.github.adamantcheese.chan.core.model.orm.SiteModel;
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +47,17 @@ public class SiteRepository {
 
     public SiteModel byId(int id) {
         return databaseManager.runTask(databaseManager.getDatabaseSiteManager().byId(id));
+    }
+
+    @Nullable
+    public Site bySiteDescriptor(SiteDescriptor siteDescriptor) {
+        for (Site site : all().sites) {
+            if (site.siteDescriptor().equals(siteDescriptor)) {
+                return site;
+            }
+        }
+
+        return null;
     }
 
     public void setId(SiteModel siteModel, int id) {
@@ -115,13 +128,10 @@ public class SiteRepository {
         config.external = false;
 
         SiteModel model = createFromClass(config, settings);
-
         site.initialize(model.id, config, settings);
-
         sitesObservable.add(site);
 
         site.postInitialize();
-
         sitesObservable.notifyObservers();
 
         return site;

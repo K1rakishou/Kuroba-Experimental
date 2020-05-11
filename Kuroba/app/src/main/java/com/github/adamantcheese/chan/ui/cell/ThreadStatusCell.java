@@ -34,7 +34,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Page;
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
 import javax.inject.Inject;
@@ -172,10 +172,10 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
                     }
 
                     if (!chanThread.getLoadable().isLocal()) {
-                        Page p = callback.getPage(op);
-                        if (p != null) {
-                            SpannableString page = new SpannableString(String.valueOf(p.page));
-                            if (p.page >= board.pages) {
+                        Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
+                        if (boardPage != null) {
+                            SpannableString page = new SpannableString(String.valueOf(boardPage.getPage()));
+                            if (boardPage.getPage() >= board.pages) {
                                 page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
                             }
                             builder.append(" / ").append(getString(R.string.thread_page_no)).append(' ').append(page);
@@ -243,7 +243,8 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         @Nullable
         ChanThread getChanThread();
 
-        Page getPage(Post op);
+        @Nullable
+        Chan4PagesRequest.BoardPage getPage(Post op);
 
         void onListStatusClicked();
     }

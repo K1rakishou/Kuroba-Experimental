@@ -145,8 +145,7 @@ class SiteSetupController(context: Context) : SettingsController(context), SiteS
                 getString(R.string.setup_site_login),
                 "",
                 View.OnClickListener {
-                    val loginController = LoginController(context)
-                    loginController.setSite(site)
+                    val loginController = LoginController(context, site!!)
                     navigationController!!.pushController(loginController)
                 })
 

@@ -256,11 +256,11 @@ public class ViewThreadController
     }
 
     private void albumClicked(ToolbarMenuItem item) {
-        threadLayout.getPresenter().showAlbum();
+        threadLayout.presenter.showAlbum();
     }
 
     private void pinClicked(ToolbarMenuItem item) {
-        if (threadLayout.getPresenter().pin()) {
+        if (threadLayout.presenter.pin()) {
             setPinIconState(true);
             setSaveIconState(true);
 
@@ -313,7 +313,7 @@ public class ViewThreadController
             return;
         }
 
-        if (threadLayout.getPresenter().save()) {
+        if (threadLayout.presenter.save()) {
             updateDrawerHighlighting(loadable);
             populateLocalOrLiveVersionMenu();
 
@@ -331,30 +331,30 @@ public class ViewThreadController
     }
 
     private void reloadClicked(ToolbarMenuSubItem item) {
-        threadLayout.getPresenter().requestData(true);
+        threadLayout.presenter.requestData(true);
     }
 
     public void showRemovedPostsDialog(ToolbarMenuSubItem item) {
-        threadLayout.getPresenter().showRemovedPostsDialog();
+        threadLayout.presenter.showRemovedPostsDialog();
     }
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {
-        if (threadLayout.getPresenter().getChanThread() == null) {
+        if (threadLayout.presenter.getChanThread() == null) {
             showToast(context, R.string.cannot_open_in_browser_already_deleted);
             return;
         }
 
-        Loadable loadable = threadLayout.getPresenter().getLoadable();
+        Loadable loadable = threadLayout.presenter.getLoadable();
         openLinkInBrowser(context, loadable.desktopUrl(), themeHelper.getTheme());
     }
 
     private void shareClicked(ToolbarMenuSubItem item) {
-        if (threadLayout.getPresenter().getChanThread() == null) {
+        if (threadLayout.presenter.getChanThread() == null) {
             showToast(context, R.string.cannot_shared_thread_already_deleted);
             return;
         }
 
-        Loadable loadable = threadLayout.getPresenter().getLoadable();
+        Loadable loadable = threadLayout.presenter.getLoadable();
         shareLink(loadable.desktopUrl());
     }
 
@@ -382,7 +382,7 @@ public class ViewThreadController
             watchManager.updatePin(pin);
         }
 
-        threadLayout.getPresenter().requestData();
+        threadLayout.presenter.requestData();
     }
 
     /**
@@ -401,14 +401,14 @@ public class ViewThreadController
             watchManager.updatePin(pin);
         }
 
-        threadLayout.getPresenter().requestData();
+        threadLayout.presenter.requestData();
     }
 
     @Override
     public void onShow() {
         super.onShow();
 
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter != null) {
             setPinIconState(false);
             setSaveIconState(false);
@@ -532,7 +532,7 @@ public class ViewThreadController
     }
 
     public void loadThread(Loadable loadable, boolean addToLocalBackHistory) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (!loadable.equals(presenter.getLoadable())) {
             loadThreadInternal(loadable, addToLocalBackHistory);
             return;
@@ -543,7 +543,7 @@ public class ViewThreadController
     }
 
     private void loadThreadInternal(Loadable loadable, boolean addToLocalBackHistory) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
 
         presenter.bindLoadable(loadable, addToLocalBackHistory);
         this.loadable = loadable;
@@ -710,14 +710,14 @@ public class ViewThreadController
     }
 
     private void setPinIconState(boolean animated) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter != null) {
             setPinIconStateDrawable(presenter.isPinned(), animated);
         }
     }
 
     private void setSaveIconState(boolean animated) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter != null) {
             setSaveIconStateDrawable(getThreadDownloadState(), animated);
         }
@@ -815,7 +815,7 @@ public class ViewThreadController
 
     @Override
     public Post getPostForPostImage(PostImage postImage) {
-        return threadLayout.getPresenter().getPostFromPostImage(postImage);
+        return threadLayout.presenter.getPostFromPostImage(postImage);
     }
 
     @Override

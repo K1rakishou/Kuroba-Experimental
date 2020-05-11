@@ -96,7 +96,7 @@ public class BrowseController
         // Initialization
         order = PostsFilter.Order.find(ChanSettings.boardOrder.get());
         threadLayout.setPostViewMode(ChanSettings.boardViewMode.get());
-        threadLayout.getPresenter().setOrder(order);
+        threadLayout.presenter.setOrder(order);
 
         // Navigation
         initNavigation();
@@ -259,7 +259,7 @@ public class BrowseController
         resetSelectedSortOrderItem(sortSubItem);
         subItem.isCurrentlySelected = true;
 
-        final ThreadPresenter presenter = threadLayout.getPresenter();
+        final ThreadPresenter presenter = threadLayout.presenter;
         presenter.setOrder(order);
     }
 
@@ -272,7 +272,7 @@ public class BrowseController
     }
 
     private void searchClicked(ToolbarMenuItem item) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter.isBound()) {
             View refreshView = item.getView();
             refreshView.setScaleX(1f);
@@ -295,7 +295,7 @@ public class BrowseController
     }
 
     private void reloadClicked(ToolbarMenuItem item) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter.isBound()) {
             presenter.requestData();
 
@@ -346,11 +346,11 @@ public class BrowseController
     }
 
     private void upClicked(ToolbarMenuSubItem item) {
-        threadLayout.getPresenter().scrollTo(0, false);
+        threadLayout.presenter.scrollTo(0, false);
     }
 
     private void downClicked(ToolbarMenuSubItem item) {
-        threadLayout.getPresenter().scrollTo(-1, false);
+        threadLayout.presenter.scrollTo(-1, false);
     }
 
     @Override
@@ -369,7 +369,7 @@ public class BrowseController
     }
 
     private void handleShareAndOpenInBrowser(boolean share) {
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         if (presenter.isBound()) {
             if (presenter.getChanThread() == null) {
                 showToast(context, R.string.cannot_open_in_browser_already_deleted);
@@ -410,7 +410,7 @@ public class BrowseController
         navigation.title = "/" + loadable.boardCode + "/";
         navigation.subtitle = loadable.board.name;
 
-        ThreadPresenter presenter = threadLayout.getPresenter();
+        ThreadPresenter presenter = threadLayout.presenter;
         presenter.bindLoadable(loadable);
         presenter.requestData();
 
@@ -518,6 +518,6 @@ public class BrowseController
 
     @Override
     public Post getPostForPostImage(PostImage postImage) {
-        return threadLayout.getPresenter().getPostFromPostImage(postImage);
+        return threadLayout.presenter.getPostFromPostImage(postImage);
     }
 }
