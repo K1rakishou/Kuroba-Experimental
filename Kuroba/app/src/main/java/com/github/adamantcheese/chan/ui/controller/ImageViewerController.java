@@ -629,6 +629,11 @@ public class ImageViewerController
         // Find translation and scale if the current displayed image was a bigimage
         MultiImageView multiImageView = ((ImageViewerAdapter) pager.getAdapter()).find(postImage);
         View activeView = multiImageView.getActiveView();
+        if (activeView == null) {
+            previewOutAnimationEnded();
+            return;
+        }
+
         if (activeView instanceof CustomScaleImageView) {
             CustomScaleImageView scaleImageView = (CustomScaleImageView) activeView;
             ImageViewState state = scaleImageView.getState();

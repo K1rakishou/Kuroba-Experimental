@@ -20,6 +20,8 @@ class MultiImageViewGestureDetector(
 
     override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
         val activeView = callbacks.getActiveView()
+          ?: return false
+
         if (activeView is PlayerView && !ChanSettings.neverShowWebmControls.get()) {
             if (activeView.player != null) {
                 if (activeView.isControllerVisible) {
@@ -41,6 +43,8 @@ class MultiImageViewGestureDetector(
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
         val activeView = callbacks.getActiveView()
+          ?: return false
+
         if (activeView is GifImageView) {
             val gifImageViewDrawable = activeView.drawable as GifDrawable
             if (gifImageViewDrawable.isPlaying) {
@@ -93,6 +97,8 @@ class MultiImageViewGestureDetector(
         // big image is visible and the viewport is touching image bottom then use
         // close-to-swipe gesture
         val activeView = callbacks.getActiveView()
+          ?: return false
+
         if (activeView !is CustomScaleImageView || activeView.imageViewportTouchSide.isTouchingBottom) {
             callbacks.onSwipeToCloseImage()
             return true
@@ -103,6 +109,8 @@ class MultiImageViewGestureDetector(
 
     private fun onSwipedBottom(): Boolean {
         val activeView = callbacks.getActiveView()
+          ?: return false
+
         if (activeView is CustomScaleImageView) {
             val imageViewportTouchSide = activeView.imageViewportTouchSide
 
@@ -155,7 +163,7 @@ class MultiImageViewGestureDetector(
     }
 
     interface MultiImageViewGestureDetectorCallbacks {
-        fun getActiveView(): View
+        fun getActiveView(): View?
         fun isImageAlreadySaved(): Boolean
         fun setImageAlreadySaved()
         fun onTap()
