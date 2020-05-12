@@ -63,25 +63,6 @@ abstract class BasePresenter<V> {
         }
     }
 
-    /**
-     * Allows you to call withView function from a non-suspend method. This blocks the caller thread
-     * so the code inside the lambda should be light-weight so the app does not ANR (like updating
-     * the UI for example)
-     * */
-    @Suppress("ConstantConditionIf")
-    fun withViewBlocking(func: suspend V.() -> Unit) {
-        if (!initialized.get()) {
-            throw RuntimeException("Not initialized!")
-        }
-
-        view?.let { v ->
-            runBlocking {
-                val result = ModularResult.Try { func(v) }
-                handleResult(result)
-            }
-        }
-    }
-
     private fun handleResult(result: ModularResult<Unit>) {
         if (result is ModularResult.Error) {
             when (result.error) {
