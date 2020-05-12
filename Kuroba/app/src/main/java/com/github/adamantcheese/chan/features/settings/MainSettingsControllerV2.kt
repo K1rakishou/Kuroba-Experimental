@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
@@ -327,6 +328,16 @@ class MainSettingsControllerV2(context: Context)
       updateTitle(settingsScreen)
       renderScreen(settingsScreen)
     }
+
+    recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+
+        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+          storeRecyclerPositionForCurrentScreen()
+        }
+      }
+    })
   }
 
   override fun rebuildSetting(
@@ -672,6 +683,14 @@ class MainSettingsControllerV2(context: Context)
       screenIdentifierInStack == screenIdentifier
     }
 
+    storeRecyclerPositionForCurrentScreen()
+
+    if (!stackAlreadyContainsScreen) {
+      screenStack.push(screenIdentifier)
+    }
+  }
+
+  private fun storeRecyclerPositionForCurrentScreen() {
     val currentPosition =
       (recyclerView.layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
     val currentScreen = if (screenStack.isEmpty()) {
@@ -682,10 +701,6 @@ class MainSettingsControllerV2(context: Context)
 
     if (currentScreen != null) {
       scrollPositionsPerScreen[currentScreen] = currentPosition.coerceAtLeast(0)
-    }
-
-    if (!stackAlreadyContainsScreen) {
-      screenStack.push(screenIdentifier)
     }
   }
 
