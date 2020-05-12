@@ -835,9 +835,7 @@ class MultiImageView @JvmOverloads constructor(
   private fun setBitImageFileInternal(file: File, tiling: Boolean, isSpoiler: Boolean) {
     val prevActiveView = findView(ThumbnailImageView::class.java)
     val image = CustomScaleImageView(context)
-
     image.setImage(ImageSource.uri(file.absolutePath).tiling(tiling))
-    image.alpha = 0f
 
     val layoutParams = LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT,
@@ -912,13 +910,26 @@ class MultiImageView @JvmOverloads constructor(
     animatorSet.addListener(object : AnimatorListenerAdapter() {
       override fun onAnimationStart(animation: Animator) {
         super.onAnimationStart(animation)
+
         prevActiveView.alpha = 1f
         activeView.alpha = 0f
       }
 
       override fun onAnimationEnd(animation: Animator) {
         super.onAnimationEnd(animation)
+
         prevActiveView.visibility = View.INVISIBLE
+        activeView.alpha = 1f
+
+        onAnimationEnd.invoke()
+      }
+
+      override fun onAnimationCancel(animation: Animator?) {
+        super.onAnimationCancel(animation)
+
+        prevActiveView.visibility = View.INVISIBLE
+        activeView.alpha = 1f
+
         onAnimationEnd.invoke()
       }
     })
