@@ -56,6 +56,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+import javax.net.ssl.SSLException
 import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
@@ -419,7 +420,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
             val archiveThread = when (archiveThreadResult) {
                 is ModularResult.Error -> {
-                    if (archiveThreadResult.error is CancellationException) {
+                    if (archiveThreadResult.error is CancellationException ||
+                      archiveThreadResult.error is SSLException
+                    ) {
                         Logger.e(
                           TAG,
                           "Error while fetching archive posts",
@@ -742,7 +745,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     }
 
     companion object {
-        private const val TAG = "ChanReaderRequest"
+        private const val TAG = "ChanLoaderRequestExecutor"
         private const val threadFactoryName = "post_parser_thread_%d"
 
         private var THREAD_COUNT = 0

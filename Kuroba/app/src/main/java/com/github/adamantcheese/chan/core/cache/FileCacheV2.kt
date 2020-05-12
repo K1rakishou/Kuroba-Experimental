@@ -43,7 +43,7 @@ class FileCacheV2(
 ) {
     private val activeDownloads = ActiveDownloads()
 
-    private val normalRequestQueue = PublishProcessor.create<String>()
+    private val normalRequestQueue = PublishProcessor.create<String>().toSerialized()
     private val chunksCount = ChanSettings.concurrentDownloadChunkCount.get().toInt()
     private val threadsCount = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(4)
     private val requestCancellationThread = Executors.newSingleThreadExecutor()

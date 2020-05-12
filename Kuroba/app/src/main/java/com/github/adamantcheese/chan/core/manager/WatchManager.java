@@ -1396,7 +1396,9 @@ public class WatchManager
 
         @Override
         public void onPagesReceived() {
+            BackgroundUtils.ensureMainThread();
             Loadable loadable = chanLoader.getLoadable();
+
             if (!loadable.isThreadMode()) {
                 Logger.e(TAG, "PinWatcher.onPagesReceived() called with a not thread loadable");
                 return;
@@ -1418,8 +1420,10 @@ public class WatchManager
         }
 
         private void doPageNotification(Chan4PagesRequest.BoardPage page) {
-            if (ChanSettings.watchEnabled.get() && ChanSettings.watchLastPageNotify.get()
-                    && ChanSettings.watchBackground.get()) {
+            if (ChanSettings.watchEnabled.get()
+                    && ChanSettings.watchLastPageNotify.get()
+                    && ChanSettings.watchBackground.get()
+            ) {
                 if (page != null && page.getPage() >= pin.loadable.board.pages && !notified) {
                     lastPageNotify(true); //schedules a job to notify the user of a last page
                     notified = true;

@@ -92,7 +92,7 @@ class PageRequestManager(
     if (savedBoards.contains(boardDescriptor.boardCode)) {
       // If we have it stored already, return the pages for it
       // also issue a new request if 3 minutes have passed
-      runBlocking { shouldUpdate(boardDescriptor) }
+      shouldUpdate(boardDescriptor)
       return boardPagesMap[boardDescriptor.boardCode]
     }
   
@@ -105,27 +105,29 @@ class PageRequestManager(
     return null
   }
 
-  private suspend fun shouldUpdate(boardDescriptor: BoardDescriptor) {
-    val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
-    if (site == null) {
-      Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
-      return
-    }
+  private fun shouldUpdate(boardDescriptor: BoardDescriptor) {
+    launch {
+      val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      if (site == null) {
+        Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
+        return@launch
+      }
 
-    val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
-    if (board == null) {
-      Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
-        "and boardCode (${boardDescriptor.boardCode})")
-      return
-    }
-  
-    // Had some null issues for some reason? arisuchan in particular?
-    val lastUpdate = boardTimeMap[board.code]
-    val lastUpdateTime = lastUpdate ?: 0L
-    
-    if (lastUpdateTime + TimeUnit.MINUTES.toMillis(3) <= System.currentTimeMillis()) {
-      Logger.d(TAG, "Requesting existing board pages for /" + board.code + "/, timeout")
-      requestBoard(boardDescriptor)
+      val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
+      if (board == null) {
+        Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
+          "and boardCode (${boardDescriptor.boardCode})")
+        return@launch
+      }
+
+      // Had some null issues for some reason? arisuchan in particular?
+      val lastUpdate = boardTimeMap[board.code]
+      val lastUpdateTime = lastUpdate ?: 0L
+
+      if (lastUpdateTime + TimeUnit.MINUTES.toMillis(3) <= System.currentTimeMillis()) {
+        Logger.d(TAG, "Requesting existing board pages for /" + board.code + "/, timeout")
+        requestBoard(boardDescriptor)
+      }
     }
   }
 
@@ -193,9 +195,13 @@ class PageRequestManager(
     requestedBoards.remove(boardDescriptor.boardCode)
     boardTimeMap[boardDescriptor.boardCode] = System.currentTimeMillis()
     boardPagesMap[boardDescriptor.boardCode] = pages
-    
-    for (callback in callbackList) {
-      callback.onPagesReceived()
+
+    coroutineScope {
+      launch(Dispatchers.Main) {
+        for (callback in callbackList) {
+          callback.onPagesReceived()
+        }
+      }
     }
   }
 
