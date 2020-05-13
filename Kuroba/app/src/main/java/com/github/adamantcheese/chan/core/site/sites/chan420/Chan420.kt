@@ -59,7 +59,7 @@ class Chan420 : CommonSite() {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()
-              .url(site.endpoints().boards().toString())
+              .url(site!!.endpoints().boards().toString())
               .get()
               .build()
             

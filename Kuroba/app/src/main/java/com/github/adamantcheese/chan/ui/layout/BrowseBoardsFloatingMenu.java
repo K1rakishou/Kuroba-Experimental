@@ -165,11 +165,13 @@ public class BrowseBoardsFloatingMenu
                             return null;
                         }
 
+                        @NonNull
                         @Override
                         public String[] getMediaHosts() {
                             return new String[0];
                         }
 
+                        @NonNull
                         @Override
                         public String[] getNames() {
                             return new String[0];

@@ -203,7 +203,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonSiteUrlHandler : SiteUrlHandler {
-    abstract val url: HttpUrl
+    abstract val url: HttpUrl?
     abstract val mediaHosts: Array<String>
     abstract val names: Array<String>
     
@@ -228,10 +228,10 @@ abstract class CommonSite : SiteBase() {
     override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
       return when {
         loadable.isCatalogMode -> {
-          url.newBuilder().addPathSegment(loadable.boardCode).toString()
+          url!!.newBuilder().addPathSegment(loadable.boardCode).toString()
         }
         loadable.isThreadMode -> {
-          url.newBuilder()
+          url!!.newBuilder()
             .addPathSegment(loadable.boardCode)
             .addPathSegment("res")
             .addPathSegment(loadable.no.toString())
@@ -289,7 +289,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonEndpoints(
-    protected var site: CommonSite
+    protected var site: CommonSite?
   ) : SiteEndpoints {
     
     fun from(url: String): SimpleHttpUrl {
@@ -370,13 +370,13 @@ abstract class CommonSite : SiteBase() {
     }
   }
   
-  abstract class CommonActions(protected var site: CommonSite) : SiteActions {
+  abstract class CommonActions(protected var site: CommonSite?) : SiteActions {
     
     override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
       val loadable = reply.loadable!!
       
-      reply.password = java.lang.Long.toHexString(site.secureRandom.nextLong())
+      reply.password = java.lang.Long.toHexString(site!!.secureRandom.nextLong())
       replyResponse.password = reply.password
       replyResponse.siteId = loadable.siteId
       replyResponse.boardCode = loadable.boardCode
@@ -387,7 +387,7 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints().reply(loadable))
+      call.url(site!!.endpoints().reply(loadable))
       
       return flow {
         if (requirePrepare()) {
@@ -419,7 +419,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
-      return when (val result = site.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.PostResult.PostComplete(result.httpCall, replyResponse)
         }
@@ -446,10 +446,10 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints().delete(deleteRequest.post))
+      call.url(site!!.endpoints().delete(deleteRequest.post))
       setupDelete(deleteRequest, call)
       
-      return when (val result = site.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.DeleteResult.DeleteComplete(result.httpCall, deleteResponse)
         }
@@ -469,7 +469,7 @@ abstract class CommonSite : SiteBase() {
     
     override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
       return JsonReaderRequest.JsonReaderResponse.Success(
-        BoardRepository.SiteBoards(site, site.staticBoards)
+        BoardRepository.SiteBoards(site, site!!.staticBoards)
       )
     }
     
@@ -497,7 +497,7 @@ abstract class CommonSite : SiteBase() {
             is JsonReaderRequest.JsonReaderResponse.ParsingError -> result.error
           }
           
-          Logger.e(TAG, "Error while trying to get board for site ${site.name}", error)
+          Logger.e(TAG, "Error while trying to get board for site ${site!!.name}", error)
           
           return JsonReaderRequest.JsonReaderResponse.Success(
             BoardRepository.SiteBoards(site, defaultBoardsProvider())

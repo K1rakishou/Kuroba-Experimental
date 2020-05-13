@@ -52,7 +52,10 @@ public class SitesSetupPresenter
 
     @Inject
     public SitesSetupPresenter(
-            Context context, SiteService siteService, SiteRepository siteRepository, BoardManager boardManager
+            Context context,
+            SiteService siteService,
+            SiteRepository siteRepository,
+            BoardManager boardManager
     ) {
         this.context = context;
         this.siteService = siteService;

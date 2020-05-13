@@ -116,20 +116,18 @@ class Chan4 : SiteBase() {
     }
 
     override fun icon(icon: String, arg: Map<String, String>?): HttpUrl? {
-      if (arg == null) {
-        return null
-      }
-
       val b = s.newBuilder().addPathSegment("image")
-      val countryCode = arg["country_code"]!!
-      val trollCountryCode = arg["troll_country_code"]!!
 
       when (icon) {
         "country" -> {
+          val countryCode = requireNotNull(arg?.get("country_code")) { "Bad arg map: $arg" }
+
           b.addPathSegment("country")
           b.addPathSegment(countryCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
         "troll_country" -> {
+          val trollCountryCode = requireNotNull(arg?.get("troll_country_code")) { "Bad arg map: $arg" }
+
           b.addPathSegment("country")
           b.addPathSegment("troll")
           b.addPathSegment(trollCountryCode.toLowerCase(Locale.ENGLISH) + ".gif")

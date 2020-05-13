@@ -79,12 +79,15 @@ public class BoardSetupController
     private Site site;
 
     private ItemTouchHelper.SimpleCallback touchHelperCallback =
-            new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+            new ItemTouchHelper.SimpleCallback(
+                    ItemTouchHelper.UP | ItemTouchHelper.DOWN,
                     ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT
             ) {
                 @Override
                 public boolean onMove(
-                        RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target
+                        RecyclerView recyclerView,
+                        RecyclerView.ViewHolder viewHolder,
+                        RecyclerView.ViewHolder target
                 ) {
                     int from = viewHolder.getAdapterPosition();
                     int to = target.getAdapterPosition();
@@ -171,7 +174,8 @@ public class BoardSetupController
 
         boardAddLayout.setPresenter(presenter);
 
-        AlertDialog dialog = new AlertDialog.Builder(context).setView(boardAddLayout)
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(boardAddLayout)
                 .setPositiveButton(R.string.add, (dialog1, which) -> boardAddLayout.onPositiveClicked())
                 .setNegativeButton(R.string.cancel, null)
                 .create();

@@ -302,4 +302,15 @@ public class Board
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "Board{" +
+                "id=" + id +
+                ", siteId=" + siteId +
+                ", saved=" + saved +
+                ", order=" + order +
+                ", code='" + code + '\'' +
+                '}';
+    }
 }

@@ -17,16 +17,13 @@
 package com.github.adamantcheese.chan.core.site
 
 import com.github.adamantcheese.chan.Chan.instance
-import com.github.adamantcheese.chan.core.database.DatabaseBoardManager
-import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.SettingProvider
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
@@ -43,16 +40,13 @@ abstract class SiteBase : Site, CoroutineScope {
   private var siteConfig: SiteConfig? = null
   private val job = SupervisorJob()
 
-  protected val databaseManager: DatabaseManager
   protected val httpCallManager: HttpCallManager
   protected val okHttpClient: NetModule.ProxiedOkHttpClient
-  protected val savedReplyManager: DatabaseSavedReplyManager
   protected val siteService: SiteService
   protected val siteRepository: SiteRepository
-  protected val boardRepository: BoardRepository
-  protected val databaseBoardManager: DatabaseBoardManager
   protected val imageLoaderV2: ImageLoaderV2
   protected val archivesManager: ArchivesManager
+  protected val boardManager: BoardManager
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -63,17 +57,13 @@ abstract class SiteBase : Site, CoroutineScope {
   private var initialized = false
 
   init {
-    databaseManager = instance(DatabaseManager::class.java)
     httpCallManager = instance(HttpCallManager::class.java)
     okHttpClient = instance(NetModule.ProxiedOkHttpClient::class.java)
     siteService = instance(SiteService::class.java)
     siteRepository = instance(SiteRepository::class.java)
-    boardRepository = instance(BoardRepository::class.java)
     imageLoaderV2 = instance(ImageLoaderV2::class.java)
     archivesManager = instance(ArchivesManager::class.java)
-
-    databaseBoardManager = databaseManager.databaseBoardManager
-    savedReplyManager = databaseManager.databaseSavedReplyManager
+    boardManager = instance(BoardManager::class.java)
   }
 
   override fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings) {
@@ -104,8 +94,14 @@ abstract class SiteBase : Site, CoroutineScope {
 
         when (val readerResponse = actions().boards()) {
           is JsonReaderRequest.JsonReaderResponse.Success -> {
-            Logger.d(TAG, "Got the boards for site ${name()}")
-            databaseBoardManager.createAll(readerResponse.result.site, readerResponse.result.boards)
+            val createAllResult = boardManager.updateAvailableBoardsForSite(
+              readerResponse.result.site,
+              readerResponse.result.boards
+            )
+
+            Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
+              "boards count = ${readerResponse.result.boards.size}, " +
+              "createAllResult = $createAllResult")
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
             Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
@@ -126,7 +122,7 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   override fun board(code: String): Board? {
-    return databaseManager.runTask(databaseBoardManager.getBoard(this, code))
+    return boardManager.getBoard(this, code)
   }
 
   override fun settings(): List<SiteSetting> {
@@ -143,12 +139,8 @@ abstract class SiteBase : Site, CoroutineScope {
       return existing
     }
 
-    val board = Board()
-    board.site = this
-    board.name = boardName
-    board.code = boardCode
-
-    databaseBoardManager.createOrUpdate(board)
+    val board = Board.fromSiteNameCode(this, boardName, boardCode)
+    boardManager.updateAvailableBoardsForSite(this, listOf(board))
 
     return board
   }

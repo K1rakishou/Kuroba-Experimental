@@ -31,8 +31,7 @@ import java.util.Observer;
 
 import javax.inject.Inject;
 
-public class BoardRepository
-        implements Observer {
+public class BoardRepository implements Observer {
     private static final String TAG = "BoardRepository";
 
     private final DatabaseManager databaseManager;
@@ -119,12 +118,17 @@ public class BoardRepository
     }
 
     public void updateBoardOrders(List<Board> boards) {
-        databaseManager.runTaskAsync(databaseBoardManager.updateOrders(boards), (e) -> updateObservablesAsync());
+        databaseManager.runTaskAsync(
+                databaseBoardManager.updateOrders(boards),
+                (e) -> updateObservablesAsync()
+        );
     }
 
     public void setSaved(Board board, boolean saved) {
         board.saved = saved;
-        databaseManager.runTaskAsync(databaseBoardManager.updateIncludingUserFields(board),
+
+        databaseManager.runTaskAsync(
+                databaseBoardManager.updateIncludingUserFields(board),
                 (e) -> updateObservablesAsync()
         );
     }
@@ -133,7 +137,9 @@ public class BoardRepository
         for (Board board : boards) {
             board.saved = saved;
         }
-        databaseManager.runTaskAsync(databaseBoardManager.updateIncludingUserFields(boards),
+
+        databaseManager.runTaskAsync
+                (databaseBoardManager.updateIncludingUserFields(boards),
                 (e) -> updateObservablesAsync()
         );
     }

@@ -20,7 +20,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import okhttp3.HttpUrl
 
 interface SiteUrlHandler {
-  fun getSiteClass(): Class<out Site>
+  fun getSiteClass(): Class<out Site>?
   fun matchesName(value: String): Boolean
   fun respondsTo(url: HttpUrl): Boolean
   fun matchesMediaHost(url: HttpUrl): Boolean
