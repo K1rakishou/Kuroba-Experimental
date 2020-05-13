@@ -294,8 +294,8 @@ class ReplyPresenter @Inject constructor(
 
   override fun onAuthenticationComplete(
     authenticationLayout: AuthenticationLayoutInterface,
-    challenge: String,
-    response: String,
+    challenge: String?,
+    response: String?,
     autoReply: Boolean
   ) {
     draft.captchaChallenge = challenge

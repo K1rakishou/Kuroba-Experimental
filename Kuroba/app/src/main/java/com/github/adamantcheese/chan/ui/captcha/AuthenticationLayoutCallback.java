@@ -16,9 +16,14 @@
  */
 package com.github.adamantcheese.chan.ui.captcha;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface AuthenticationLayoutCallback {
     void onAuthenticationComplete(
-            AuthenticationLayoutInterface authenticationLayout, String challenge, String response, boolean autoReply
+            AuthenticationLayoutInterface authenticationLayout,
+            @Nullable String challenge,
+            @Nullable String response,
+            boolean autoReply
     );
 
     void onAuthenticationFailed(Throwable error);

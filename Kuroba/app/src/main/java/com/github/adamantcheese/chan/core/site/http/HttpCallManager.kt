@@ -21,9 +21,9 @@ import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.channelFlow
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
@@ -38,24 +38,25 @@ class HttpCallManager @Inject constructor(
   /**
    * Use this one when you want to send a Post request and want to show some progress indicator
    * */
+  @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun <T : HttpCall> makePostHttpCallWithProgress(
     httpCall: T
   ): Flow<HttpCall.HttpCallWithProgressResult<T>> {
-    return flow {
+    return channelFlow {
       val requestBuilder = Request.Builder()
       
       httpCall.setup(requestBuilder, ProgressRequestBody.ProgressRequestListener { percent ->
-        runBlocking { emit(HttpCall.HttpCallWithProgressResult.Progress(percent)) }
+        offer(HttpCall.HttpCallWithProgressResult.Progress(percent))
       })
       
       httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
       
       when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
         is HttpCall.HttpCallResult.Success -> {
-          emit(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))
+          send(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))
         }
         is HttpCall.HttpCallResult.Fail -> {
-          emit(HttpCall.HttpCallWithProgressResult.Fail(httpCallResult.httpCall, httpCallResult.error))
+          send(HttpCall.HttpCallWithProgressResult.Fail(httpCallResult.httpCall, httpCallResult.error))
         }
       }
     }

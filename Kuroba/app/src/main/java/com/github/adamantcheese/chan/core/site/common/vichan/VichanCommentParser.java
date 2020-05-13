@@ -21,8 +21,8 @@ import com.github.adamantcheese.chan.core.site.parser.StyleRule;
 
 import java.util.regex.Pattern;
 
-public class VichanCommentParser
-        extends CommentParser {
+public class VichanCommentParser extends CommentParser {
+
     public VichanCommentParser() {
         addDefaultRules();
         setQuotePattern(Pattern.compile(".*#(\\d+)"));

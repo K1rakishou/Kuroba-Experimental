@@ -531,7 +531,8 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonApi(protected var site: CommonSite) : ChanReader {
-    override val parser: PostParser? = site.postParser
+    override val parser: PostParser?
+      get() = site.postParser
   }
   
   abstract inner class CommonRequestModifier : SiteRequestModifier {
