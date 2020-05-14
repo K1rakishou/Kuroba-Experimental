@@ -112,6 +112,7 @@ class MultiImageView @JvmOverloads constructor(
   private var gifRequest = AtomicReference<CancelableDownload>(null)
   private var videoRequest = AtomicReference<CancelableDownload>(null)
 
+  private var webmStreamSourceInitJob: Job? = null
   private var thumbnailRequestDisposable: RequestDisposable? = null
   private var callback: Callback? = null
   private var op = false
@@ -173,6 +174,11 @@ class MultiImageView @JvmOverloads constructor(
     if (thumbnailRequestDisposable != null) {
       thumbnailRequestDisposable?.dispose()
       thumbnailRequestDisposable = null
+    }
+
+    if (webmStreamSourceInitJob != null) {
+      webmStreamSourceInitJob?.cancel()
+      webmStreamSourceInitJob = null
     }
 
     bigImageRequest.get()?.cancel()
@@ -549,76 +555,6 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  @SuppressLint("ClickableViewAccessibility")
-  private fun openVideoInternalStream(loadable: Loadable, postImage: PostImage?) {
-    if (postImage == null) {
-      return
-    }
-
-    webmStreamingSource.createMediaSource(loadable, postImage, object : MediaSourceCallback {
-      override fun onMediaSourceReady(source: MediaSource?) {
-        BackgroundUtils.ensureMainThread()
-
-        if (source == null) {
-          onError(IllegalArgumentException("Source is null"))
-          return
-        }
-
-        synchronized(this@MultiImageView) {
-          if (mediaSourceCancel) {
-            return
-          }
-
-          if (!hasContent || mode == Mode.VIDEO) {
-            val exoVideoView = PlayerView(context)
-            val _repeatMode = if (ChanSettings.videoAutoLoop.get()) {
-              Player.REPEAT_MODE_ALL
-            } else {
-              Player.REPEAT_MODE_OFF
-            }
-
-            exoPlayer = SimpleExoPlayer.Builder(context).build().apply {
-              repeatMode = _repeatMode
-              prepare(source)
-              volume = 0f
-              addAudioListener(this@MultiImageView)
-              volume = if (defaultMuteState) 0f else 1f
-              playWhenReady = true
-            }
-
-            exoVideoView.player = exoPlayer
-            exoVideoView.setOnClickListener(null)
-            exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
-            exoVideoView.useController = false
-            exoVideoView.controllerHideOnTouch = false
-            exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-            exoVideoView.useArtwork = true
-            exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
-              AndroidUtils.getRes(),
-              R.drawable.ic_volume_up_white_24dp,
-              null
-            )
-
-            onModeLoaded(Mode.VIDEO, exoVideoView)
-
-            callback?.onVideoLoaded(this@MultiImageView)
-            callback?.onDownloaded(postImage)
-          }
-        }
-      }
-
-      override fun onError(error: Throwable) {
-        BackgroundUtils.ensureMainThread()
-        Logger.e(TAG, "Error while trying to stream a webm", error)
-
-        AndroidUtils.showToast(
-          context,
-          "Couldn't open webm in streaming mode, error = " + error.message
-        )
-      }
-    })
-  }
-
   private fun openVideoExternal(loadable: Loadable, postImage: PostImage?) {
     BackgroundUtils.ensureMainThread()
 
@@ -651,9 +587,11 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onSuccess(file: RawFile) {
             BackgroundUtils.ensureMainThread()
+
             if (!hasContent || mode == Mode.VIDEO) {
               setVideoFile(File(file.getFullPath()))
             }
+
             callback?.onDownloaded(postImage)
           }
 
@@ -702,31 +640,12 @@ class MultiImageView @JvmOverloads constructor(
       val userAgent = Util.getUserAgent(AndroidUtils.getAppContext(), NetModule.USER_AGENT)
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
-
       val videoSource = progressiveFactory.createMediaSource(Uri.fromFile(file))
-      val _repeatMode = if (ChanSettings.videoAutoLoop.get()) {
-        Player.REPEAT_MODE_ALL
-      } else {
-        Player.REPEAT_MODE_OFF
-      }
 
-      val volume = if (defaultMuteState) {
-        0f
-      } else {
-        1f
-      }
+      exoPlayer = createExoPlayer(videoSource)
 
       val exoVideoView = PlayerView(context)
-      exoPlayer = SimpleExoPlayer.Builder(context).build().apply {
-        repeatMode = _repeatMode
-        prepare(videoSource)
-        addAudioListener(this@MultiImageView)
-        setVolume(volume)
-        playWhenReady = true
-      }
-
       exoVideoView.player = exoPlayer
-
 
       exoVideoView.setOnClickListener(null)
       exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
@@ -742,6 +661,93 @@ class MultiImageView @JvmOverloads constructor(
 
       onModeLoaded(Mode.VIDEO, exoVideoView)
       callback?.onVideoLoaded(this)
+    }
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  private fun openVideoInternalStream(loadable: Loadable, postImage: PostImage?) {
+    if (postImage == null) {
+      return
+    }
+
+    if (webmStreamSourceInitJob != null) {
+      return
+    }
+
+    webmStreamSourceInitJob = mainScope.launch(MEDIA_LOADING_DISPATCHER) {
+      webmStreamingSource.createMediaSource(loadable, postImage, object : MediaSourceCallback {
+        override fun onMediaSourceReady(source: MediaSource?) {
+          BackgroundUtils.ensureMainThread()
+          webmStreamSourceInitJob = null
+
+          if (source == null) {
+            onError(IllegalArgumentException("Source is null"))
+            return
+          }
+
+          synchronized(this@MultiImageView) {
+            if (mediaSourceCancel) {
+              return
+            }
+
+            if (!hasContent || mode == Mode.VIDEO) {
+              exoPlayer = createExoPlayer(source)
+
+              val exoVideoView = PlayerView(context)
+              exoVideoView.player = exoPlayer
+              exoVideoView.setOnClickListener(null)
+              exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
+              exoVideoView.useController = false
+              exoVideoView.controllerHideOnTouch = false
+              exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+              exoVideoView.useArtwork = true
+              exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
+                AndroidUtils.getRes(),
+                R.drawable.ic_volume_up_white_24dp,
+                null
+              )
+
+              onModeLoaded(Mode.VIDEO, exoVideoView)
+
+              callback?.onVideoLoaded(this@MultiImageView)
+              callback?.onDownloaded(postImage)
+            }
+          }
+        }
+
+        override fun onError(error: Throwable) {
+          BackgroundUtils.ensureMainThread()
+          Logger.e(TAG, "Error while trying to stream a webm", error)
+
+          webmStreamSourceInitJob = null
+
+          AndroidUtils.showToast(
+            context,
+            "Couldn't open webm in streaming mode, error = " + error.message
+          )
+        }
+      })
+    }
+  }
+
+  private fun createExoPlayer(source: MediaSource): SimpleExoPlayer {
+    return SimpleExoPlayer.Builder(context).build().apply {
+      prepare(source)
+
+      repeatMode = if (ChanSettings.videoAutoLoop.get()) {
+        Player.REPEAT_MODE_ALL
+      } else {
+        Player.REPEAT_MODE_OFF
+      }
+
+      volume = if (defaultMuteState) {
+        0f
+      } else {
+        1f
+      }
+
+      addAudioListener(this@MultiImageView)
+      playWhenReady = true
     }
   }
 

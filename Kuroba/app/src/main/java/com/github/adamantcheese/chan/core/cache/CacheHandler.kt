@@ -108,12 +108,14 @@ class CacheHandler(
         var cacheFile = getCacheFileInternal(url)
 
         try {
-            if (!fileManager.exists(cacheFile)) {
-                val createdFile = fileManager.create(cacheFile) as RawFile?
-                        ?: throw IOException(
-                                "Couldn't create cache file, path = ${cacheFile.getFullPath()}")
+            synchronized(this) {
+                if (!fileManager.exists(cacheFile)) {
+                    val createdFile = fileManager.create(cacheFile) as RawFile?
+                      ?: throw IOException(
+                        "Couldn't create cache file, path = ${cacheFile.getFullPath()}")
 
-                cacheFile = createdFile
+                    cacheFile = createdFile
+                }
             }
 
             val cacheFileMeta = getCacheFileMetaInternal(url)
@@ -142,6 +144,7 @@ class CacheHandler(
         }
     }
 
+    @Synchronized
     fun getChunkCacheFileOrNull(chunkStart: Long, chunkEnd: Long, url: String): RawFile? {
         val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
 
@@ -152,6 +155,7 @@ class CacheHandler(
         return null
     }
 
+    @Synchronized
     fun getOrCreateChunkCacheFile(chunkStart: Long, chunkEnd: Long, url: String): RawFile? {
         val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
 
@@ -164,6 +168,7 @@ class CacheHandler(
         return fileManager.create(chunkCacheFile) as RawFile?
     }
 
+    @Synchronized
     fun cacheFileExists(fileUrl: String): Boolean {
         return fileManager.exists(getCacheFileInternal(fileUrl))
     }
@@ -417,9 +422,9 @@ class CacheHandler(
             return null
         }
 
-        return cacheDirFile.clone(
-                FileSegment(formatCacheFileMetaName(originalFileName))
-        )
+        return synchronized(this) {
+            cacheDirFile.clone(FileSegment(formatCacheFileMetaName(originalFileName)))
+        }
     }
 
     @Throws(IOException::class)
@@ -565,14 +570,14 @@ class CacheHandler(
         createDirectories()
 
         val fileName = formatCacheFileName(hashUrl(url))
-        return cacheDirFile.clone(FileSegment(fileName)) as RawFile
+        return synchronized(this) { cacheDirFile.clone(FileSegment(fileName)) as RawFile }
     }
 
     private fun getChunkCacheFileInternal(chunkStart: Long, chunkEnd: Long, url: String): RawFile {
         createDirectories()
 
         val fileName = formatChunkCacheFileName(chunkStart, chunkEnd, hashUrl(url))
-        return chunksCacheDirFile.clone(FileSegment(fileName)) as RawFile
+        return synchronized(this) { chunksCacheDirFile.clone(FileSegment(fileName)) as RawFile }
     }
 
     internal fun getCacheFileMetaInternal(url: String): RawFile {
@@ -580,7 +585,7 @@ class CacheHandler(
 
         // AbstractFile expects all file names to have extensions
         val fileName = formatCacheFileMetaName(hashUrl(url))
-        return cacheDirFile.clone(FileSegment(fileName)) as RawFile
+        return synchronized(this) { cacheDirFile.clone(FileSegment(fileName)) as RawFile }
     }
 
     internal fun hashUrl(url: String): String {
@@ -623,6 +628,7 @@ class CacheHandler(
         )
     }
 
+    @Synchronized
     private fun createDirectories() {
         if (!fileManager.exists(cacheDirFile) && fileManager.create(cacheDirFile) == null) {
             val rawFile = File(cacheDirFile.getFullPath())

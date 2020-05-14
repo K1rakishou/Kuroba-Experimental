@@ -9,6 +9,7 @@ import com.github.adamantcheese.chan.core.cache.MediaSourceCallback
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
@@ -27,9 +28,11 @@ class WebmStreamingSource(
 ) {
 
     fun createMediaSource(loadable: Loadable, postImage: PostImage, callback: MediaSourceCallback) {
+        BackgroundUtils.ensureBackgroundThread()
+
         val imageUrl = postImage.imageUrl
         if (imageUrl == null) {
-            callback.onError(IOException("PostImage has no imageUrl"))
+            runOnMainThread { callback.onError(IOException("PostImage has no imageUrl")) }
             return
         }
 
@@ -47,7 +50,7 @@ class WebmStreamingSource(
         if (alreadyExists && rawFile != null && cacheHandler.isAlreadyDownloaded(rawFile)) {
             Logger.d(TAG, "Loaded from file cache")
 
-            loadFromCacheFile(rawFile, callback)
+            runOnMainThread { loadFromCacheFile(rawFile, callback) }
             return
         }
 
