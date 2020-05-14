@@ -162,7 +162,7 @@ class ChanPostRepository(
                 return@tryWithTransaction fromCache + postsFromDatabase
             }
         }
-        }
+    }
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,

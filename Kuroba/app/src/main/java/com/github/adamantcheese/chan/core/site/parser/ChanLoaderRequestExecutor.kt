@@ -467,10 +467,10 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 return@Try emptyList()
             }
 
-            val freshPostNoSet = freshPostsFromServer.map { postBuilder -> postBuilder.id }.toSet()
             val archivePostsNoList = archiveThread.posts.map { archivePost -> archivePost.postNo }.toSet()
+            val freshPostsMap = freshPostsFromServer.associateBy { postBuilder -> postBuilder.id }
 
-            val cachedArchivePostsMap = chanPostRepository.getThreadPosts(
+            val cachedPostsMap = chanPostRepository.getThreadPosts(
                     threadDescriptor,
                     archivePostsNoList
             ).unwrap().associateBy { chanPost -> chanPost.postDescriptor.postNo }
@@ -478,8 +478,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             val archivePostsThatWereDeleted = archiveThread.posts.filter { archivePost ->
                 return@filter retainDeletedOrUpdatedPosts(
                         archivePost,
-                        freshPostNoSet,
-                        cachedArchivePostsMap
+                        freshPostsMap,
+                        cachedPostsMap
                 )
             }
 
@@ -500,33 +500,47 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         }
     }
 
+    /**
+     * Returns true (thus not filtering out this [archivePost]) if either both of the maps
+     * [freshPostsMap] and [cachedPostsMap] does not contain this post or if it differs enough from
+     * either the freshPost or the cachedPost.
+     * */
     private fun retainDeletedOrUpdatedPosts(
-            archivePost: ArchivesRemoteSource.ArchivePost,
-            freshPostNoSet: Set<Long>,
-            cachedArchivePostsMap: Map<Long, ChanPost>
+      archivePost: ArchivesRemoteSource.ArchivePost,
+      freshPostsMap: Map<Long, Post.Builder>,
+      cachedPostsMap: Map<Long, ChanPost>
     ): Boolean {
         BackgroundUtils.ensureBackgroundThread()
 
-        if (archivePost.postNo !in freshPostNoSet) {
-            // Post does not exist in the post list we got from the server. We need to update this
-            // post in the database.
+        if (freshPostsMap.containsKey(archivePost.postNo)) {
+            // Post already exists in the fresh posts list we got from the server.
+            // We don't need this archived post.
+            return false
+        }
+
+        if (cachedPostsMap.containsKey(archivePost.postNo)) {
+            // Post already exists in the cache/database. We don't need this post.
             return true
         }
 
-        if (!cachedArchivePostsMap.containsKey(archivePost.postNo)) {
-            // Post is not cached in the database/cache. We need to update this post in the database.
+        val freshPost = freshPostsMap[archivePost.postNo]
+        val cachedPost = cachedPostsMap[archivePost.postNo]
+
+        if (freshPost == null && cachedPost == null) {
+            // Neither of the map have this post meaning it was deleted from the server and we need
+            // to use hte archived post.
             return true
         }
 
-        // Post was deleted and we already have it in the cache. We need to check whether it's the
-        // same as in the cache or maybe it was changed somehow (user was banned/post image was
-        // deleted etc.)
-        val cachedArchivePost = requireNotNull(cachedArchivePostsMap[archivePost.postNo]) {
-            "Wtf? Post does not exist in notCachedArchivePostNoSet but it also does not exist in " +
-                    "cachedArchivePostsMap and it's not a fresh post! This shouldn't happen."
+        if (freshPost != null && PostUtils.shouldRetainPostFromArchive(archivePost, freshPost)) {
+            return true
         }
 
-        return PostUtils.shouldRetainPostFromArchive(archivePost, cachedArchivePost)
+        if (cachedPost != null && PostUtils.shouldRetainPostFromArchive(archivePost, cachedPost)) {
+            return true
+        }
+
+        return false
     }
 
     @OptIn(ExperimentalTime::class)

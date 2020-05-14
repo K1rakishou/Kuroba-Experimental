@@ -283,6 +283,37 @@ object PostUtils {
         return false
     }
 
+    /**
+     * Same as above but for Post.Builder
+     * */
+    fun shouldRetainPostFromArchive(
+      archivePost: ArchivesRemoteSource.ArchivePost,
+      freshPost: Post.Builder
+    ): Boolean {
+        if (archivePost.archivePostMediaList.size != freshPost.postImages.size) {
+            return true
+        }
+
+        repeat(archivePost.archivePostMediaList.size) { index ->
+            val archiveImage = archivePost.archivePostMediaList[index]
+            val freshImage = freshPost.postImages[index]
+
+            // If archived post has an original image and cached post has no original image - retain
+            // the archived post.
+            if (archiveImage.imageUrl != null && freshImage.imageUrl == null) {
+                return true
+            }
+
+            // If archived post has a thumbnail image and cached post has no thumbnail image - retain
+            // the archived post.
+            if (archiveImage.thumbnailUrl != null && freshImage.thumbnailUrl == null) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     @JvmStatic
     fun postsDiffer(displayedPost: Post, newPost: Post): Boolean {
         if (displayedPost.no != newPost.no) {
