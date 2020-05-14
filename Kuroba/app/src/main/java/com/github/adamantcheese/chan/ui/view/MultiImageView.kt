@@ -112,10 +112,11 @@ class MultiImageView @JvmOverloads constructor(
   private var gifRequest = AtomicReference<CancelableDownload>(null)
   private var videoRequest = AtomicReference<CancelableDownload>(null)
 
+  private var thumbnailRequestDisposable: RequestDisposable? = null
   private var callback: Callback? = null
   private var op = false
-  private var thumbnailRequestDisposable: RequestDisposable? = null
   private var exoPlayer: SimpleExoPlayer? = null
+
   private val cancellableToast: CancellableToast
   private var hasContent = false
   private var mediaSourceCancel = false
@@ -309,10 +310,6 @@ class MultiImageView @JvmOverloads constructor(
   private fun setThumbnail(loadable: Loadable, postImage: PostImage?, center: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    if (thumbnailRequestDisposable != null) {
-      return
-    }
-
     thumbnailRequestDisposable = imageLoaderV2.load(
       context,
       true,
@@ -324,6 +321,7 @@ class MultiImageView @JvmOverloads constructor(
         @SuppressLint("ClickableViewAccessibility")
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
           thumbnailRequestDisposable = null
+
           if (!hasContent || mode == Mode.LOWRES) {
             val thumbnail = ThumbnailImageView(context)
             thumbnail.setType(postImage.type)
@@ -340,6 +338,7 @@ class MultiImageView @JvmOverloads constructor(
 
         override fun onResponseError(error: Throwable) {
           thumbnailRequestDisposable = null
+
           if (center) {
             onError(error)
           }
