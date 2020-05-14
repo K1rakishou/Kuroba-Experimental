@@ -448,9 +448,11 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onSuccess(file: RawFile) {
             BackgroundUtils.ensureMainThread()
+
             if (!hasContent || mode == Mode.GIFIMAGE) {
               setGifFile(File(file.getFullPath()), postImage.spoiler())
             }
+
             callback?.onDownloaded(postImage)
           }
 
@@ -512,13 +514,29 @@ class MultiImageView @JvmOverloads constructor(
       return
     }
 
-    val view = GifImageView(context)
-    view.setImageDrawable(drawable)
-    view.setOnClickListener(null)
-    view.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
+    val prevActiveView = findView(ThumbnailImageView::class.java)
 
-    onModeLoaded(Mode.GIFIMAGE, view)
-    toggleTransparency()
+    val gifImageView = GifImageView(context)
+    gifImageView.setImageDrawable(drawable)
+
+    if (isSpoiler) {
+      // If the image is a spoiler image we don't want to show the crossfade animation because it
+      // will look ugly due to preview and original having different dimensions (because preview is
+      // the spoiler image)
+      addView(gifImageView, 0, layoutParams)
+    } else {
+      addView(gifImageView, layoutParams)
+    }
+
+    runAppearAnimation(prevActiveView, findView(GifImageView::class.java), isSpoiler) {
+      callback?.hideProgress(this@MultiImageView)
+
+      onModeLoaded(Mode.GIFIMAGE, gifImageView)
+      toggleTransparency()
+    }
+
+    gifImageView.setOnClickListener(null)
+    gifImageView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
   }
 
   private fun setVideo(loadable: Loadable, postImage: PostImage?) {
