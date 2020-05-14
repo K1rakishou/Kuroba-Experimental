@@ -408,7 +408,7 @@ class ChanPostLocalSource(
         return posts
     }
 
-    suspend fun containsPostBlocking(descriptor: ChanDescriptor, postNo: Long): Boolean {
+    suspend fun containsPost(descriptor: ChanDescriptor, postNo: Long): Boolean {
         ensureInTransaction()
 
         when (descriptor) {

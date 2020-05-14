@@ -307,10 +307,11 @@ class ChanLoaderRequestExecutor(
                 )
             }
 
+            val descriptor = getDescriptor(requestParams.loadable)
             val (reloadedPosts, reloadingDuration) = measureTimedValue {
                 return@measureTimedValue reloadPostsFromRepository(
                         chanReaderProcessor,
-                        getDescriptor(requestParams.loadable),
+                        descriptor,
                         requestParams.loadable
                 )
             }
@@ -345,7 +346,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         BackgroundUtils.ensureBackgroundThread()
 
         val resultList = mutableListOf<Post.Builder>()
-        val archivePostsMap = postsFromArchive.associateBy { archivePost -> archivePost.id }
+        val archivePostsMap = postsFromArchive
+          .associateBy { archivePost -> archivePost.id }
+          .toMutableMap()
 
         postsFromServer.forEach { freshPost ->
             // If we have two posts with the same postNo in both fresh posts and posts from archives
@@ -355,7 +358,12 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 resultList += freshPost
             } else {
                 resultList += requireNotNull(archivePostsMap[freshPost.id])
+                archivePostsMap.remove(freshPost.id)
             }
+        }
+
+        archivePostsMap.values.forEach { actuallyDeletedPost ->
+            resultList += actuallyDeletedPost
         }
 
         return resultList
@@ -518,7 +526,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                     "cachedArchivePostsMap and it's not a fresh post! This shouldn't happen."
         }
 
-        return PostUtils.postsDifferFast(archivePost, cachedArchivePost)
+        return PostUtils.shouldRetainPostFromArchive(archivePost, cachedArchivePost)
     }
 
     @OptIn(ExperimentalTime::class)

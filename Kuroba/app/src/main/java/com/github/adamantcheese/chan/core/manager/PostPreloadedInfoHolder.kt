@@ -43,7 +43,8 @@ class PostPreloadedInfoHolder {
     return if (ChanSettings.postFullDate.get()) {
       PostHelper.getLocalDate(post)
     } else {
-      DateUtils.getRelativeTimeSpanString(post.time * 1000L,
+      DateUtils.getRelativeTimeSpanString(
+        post.time * 1000L,
         System.currentTimeMillis(),
         DateUtils.SECOND_IN_MILLIS,
         0

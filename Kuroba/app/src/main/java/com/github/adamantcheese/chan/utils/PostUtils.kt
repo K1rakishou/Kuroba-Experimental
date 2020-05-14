@@ -255,7 +255,10 @@ object PostUtils {
      * because at this point [archivePost]'s comment is still unparsed so it contains stuff like HTMl
      * tags etc.
      * */
-    fun postsDifferFast(archivePost: ArchivesRemoteSource.ArchivePost, cachedArchivePost: ChanPost): Boolean {
+    fun shouldRetainPostFromArchive(
+      archivePost: ArchivesRemoteSource.ArchivePost,
+      cachedArchivePost: ChanPost
+    ): Boolean {
         if (archivePost.archivePostMediaList.size != cachedArchivePost.postImages.size) {
             return true
         }
@@ -264,11 +267,15 @@ object PostUtils {
             val archiveImage = archivePost.archivePostMediaList[index]
             val cachedArchiveImage = cachedArchivePost.postImages[index]
 
-            if (archiveImage.imageUrl != cachedArchiveImage.imageUrl?.toString()) {
+            // If archived post has an original image and cached post has no original image - retain
+            // the archived post.
+            if (archiveImage.imageUrl != null && cachedArchiveImage.imageUrl == null) {
                 return true
             }
 
-            if (archiveImage.thumbnailUrl != cachedArchiveImage.thumbnailUrl?.toString()) {
+            // If archived post has a thumbnail image and cached post has no thumbnail image - retain
+            // the archived post.
+            if (archiveImage.thumbnailUrl != null && cachedArchiveImage.thumbnailUrl == null) {
                 return true
             }
         }

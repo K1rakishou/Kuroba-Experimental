@@ -186,19 +186,34 @@ class ChanPostRepository(
         }
     }
 
-    suspend fun containsPostBlocking(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
+    suspend fun containsPostInCache(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized Try {
+                return@Try postCache.getPostFromCache(postDescriptor, isOP) != null
+            }
+        }
+    }
+
+    suspend fun containsPostInLocalSource(postDescriptor: PostDescriptor): ModularResult<Boolean> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
-                val containsInCache = postCache.getPostFromCache(
-                        postDescriptor,
-                        isOP
-                ) != null
+                return@tryWithTransaction localSource.containsPost(
+                  postDescriptor.descriptor,
+                  postDescriptor.postNo
+                )
+            }
+        }
+    }
 
+    suspend fun containsPost(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
+        return suspendableInitializer.invokeWhenInitialized {
+            return@invokeWhenInitialized tryWithTransaction {
+                val containsInCache = postCache.getPostFromCache(postDescriptor, isOP) != null
                 if (containsInCache) {
                     return@tryWithTransaction true
                 }
 
-                return@tryWithTransaction localSource.containsPostBlocking(
+                return@tryWithTransaction localSource.containsPost(
                         postDescriptor.descriptor,
                         postDescriptor.postNo
                 )
@@ -212,7 +227,7 @@ class ChanPostRepository(
     ): ModularResult<Boolean> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
-                return@tryWithTransaction localSource.containsPostBlocking(descriptor, postNo)
+                return@tryWithTransaction localSource.containsPost(descriptor, postNo)
             }
         }
     }
@@ -281,6 +296,10 @@ class ChanPostRepository(
         // database
         posts.forEach { chanPost ->
             val differsFromCached = postDiffersFromCached(chanPost)
+            if (chanPost.postDescriptor.postNo == 291835180L) {
+                println("insertOrUpdateThreadPosts differsFromCached = $differsFromCached")
+            }
+
             if (differsFromCached) {
                 if (chanPost.isOp) {
                     if (originalPost != null) {
