@@ -6,13 +6,17 @@ import org.joda.time.Period
 class PeriodTypeConverter {
 
     @TypeConverter
-    fun toPeriod(periodStr: String): Period {
+    fun toPeriod(periodStr: String?): Period? {
+        if (periodStr == null) {
+            return null
+        }
+
         return Period.parse(periodStr)
     }
 
     @TypeConverter
-    fun fromPeriod(period: Period): String {
-        return period.toString()
+    fun fromPeriod(period: Period?): String? {
+        return period?.toString()
     }
 
 }

@@ -42,4 +42,8 @@ open class MediaServiceLinkExtraContent(
                 "videoTitle=$videoTitle, videoDuration=$videoDuration)"
     }
 
+    fun isValid(): Boolean {
+        return videoDuration != null || videoTitle != null
+    }
+
 }

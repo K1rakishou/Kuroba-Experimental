@@ -51,8 +51,12 @@ class MediaServiceLinkExtraContentRepository(
         cache.store(requestUrl, mediaServiceLinkExtraContent)
       },
       storeIntoLocalSourceFunc = { mediaServiceLinkExtraContent ->
-        tryWithTransaction {
-          mediaServiceLinkExtraContentLocalSource.insert(mediaServiceLinkExtraContent)
+        if (mediaServiceLinkExtraContent.isValid()) {
+          tryWithTransaction {
+            mediaServiceLinkExtraContentLocalSource.insert(mediaServiceLinkExtraContent)
+          }
+        } else {
+          ModularResult.value(Unit)
         }
       },
       tag = TAG
