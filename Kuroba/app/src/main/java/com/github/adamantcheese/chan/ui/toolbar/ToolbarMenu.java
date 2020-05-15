@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ToolbarMenu {
-    public static final int OVERFLOW_ID = 1000;
+    public static final int OVERFLOW_ID = 1000000;
 
     public final List<ToolbarMenuItem> items = new ArrayList<>();
 

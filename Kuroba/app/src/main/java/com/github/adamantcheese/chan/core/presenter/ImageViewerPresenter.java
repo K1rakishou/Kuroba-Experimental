@@ -421,7 +421,10 @@ public class ImageViewerPresenter
             };
 
             if (loadChunked) {
-                DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(postImage.getSize(), postImage.fileHash);
+                DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(
+                        postImage.getSize(),
+                        postImage.fileHash
+                );
 
                 preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
                         loadable,
@@ -430,8 +433,12 @@ public class ImageViewerPresenter
                         fileCacheListener
                 );
             } else {
-                preloadDownload[0] =
-                        fileCacheV2.enqueueNormalDownloadFileRequest(loadable, postImage, false, fileCacheListener);
+                preloadDownload[0] = fileCacheV2.enqueueNormalDownloadFileRequest(
+                        loadable,
+                        postImage,
+                        false,
+                        fileCacheListener
+                );
             }
 
             if (preloadDownload[0] != null) {

@@ -135,12 +135,16 @@ internal class ChunkMerger(
             "Active downloads does not have url: ${url} even though it was just downloaded"
         }
 
-        if (!cacheHandler.markFileDownloaded(request.output)) {
+        val outputFile = requireNotNull(request.getOutputFile()) {
+            "Output file is null at the final stage of merging"
+        }
+
+        if (!cacheHandler.markFileDownloaded(outputFile)) {
             if (!request.cancelableDownload.isRunning()) {
                 activeDownloads.throwCancellationException(url)
             }
 
-            throw FileCacheException.CouldNotMarkFileAsDownloaded(request.output)
+            throw FileCacheException.CouldNotMarkFileAsDownloaded(outputFile)
         }
     }
 

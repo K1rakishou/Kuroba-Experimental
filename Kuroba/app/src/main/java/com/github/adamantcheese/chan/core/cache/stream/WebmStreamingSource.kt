@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheListener
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.cache.MediaSourceCallback
+import com.github.adamantcheese.chan.core.cache.downloader.LocalThreadInfo
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -64,7 +65,7 @@ class WebmStreamingSource(
         val cancelableDownload = fileCacheV2.enqueueNormalDownloadFileRequest(
                 videoUrl,
                 object : FileCacheListener() {
-                    override fun onSuccess(file: RawFile?) {
+                    override fun onSuccess(file: RawFile) {
                         Logger.d(TAG, "createMediaSource() Loading just downloaded file after stop()")
                         BackgroundUtils.ensureMainThread()
 
@@ -75,7 +76,7 @@ class WebmStreamingSource(
                         )
                     }
 
-                    override fun onStop(file: AbstractFile) {
+                    override fun onStop(file: AbstractFile?) {
                         BackgroundUtils.ensureMainThread()
 
                         startLoadingFromNetwork(file, fileCacheSource, callback, uri)
@@ -113,7 +114,7 @@ class WebmStreamingSource(
         // Not the best solution but should be fine
         val weakCallback = WeakReference(callback)
 
-        fileCacheV2.loadLocalThreadFile(loadable, postImage)
+        fileCacheV2.loadLocalThreadFile(LocalThreadInfo.create(loadable, postImage))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({ destination ->
                     BackgroundUtils.ensureMainThread()
@@ -130,29 +131,31 @@ class WebmStreamingSource(
     }
 
     private fun startLoadingFromNetwork(
-            file: AbstractFile,
+            file: AbstractFile?,
             fileCacheSource: WebmStreamingDataSource,
             callback: MediaSourceCallback,
             uri: Uri
     ) {
-        // The webm file is either partially downloaded or is not downloaded at all.
-        // We take whatever there is and load it into the WebmStreamingDataSource so
-        // we don't need to redownload the bytes that have already been downloaded
-        val exists = fileManager.exists(file)
-        val fileLength = fileManager.getLength(file)
+        if (file != null) {
+            // The webm file is either partially downloaded or is not downloaded at all.
+            // We take whatever there is and load it into the WebmStreamingDataSource so
+            // we don't need to redownload the bytes that have already been downloaded
+            val exists = fileManager.exists(file)
+            val fileLength = fileManager.getLength(file)
 
-        Logger.d(TAG,
-                "createMediaSource() Loading partially downloaded file after stop(), " +
-                        "fileLength = $fileLength")
+            Logger.d(TAG,
+              "createMediaSource() Loading partially downloaded file after stop(), " +
+                "fileLength = $fileLength")
 
-        if (exists && fileLength > 0L) {
-            try {
-                fileManager.getInputStream(file)?.use { inputStream ->
-                    fileCacheSource.fillCache(fileLength, inputStream)
-                } ?: throw IOException("Couldn't get input stream for file " +
-                        "(${file.getFullPath()})")
-            } catch (error: IOException) {
-                Logger.e(TAG, "createMediaSource() Failed to fill cache!", error)
+            if (exists && fileLength > 0L) {
+                try {
+                    fileManager.getInputStream(file)?.use { inputStream ->
+                        fileCacheSource.fillCache(fileLength, inputStream)
+                    } ?: throw IOException("Couldn't get input stream for file " +
+                      "(${file.getFullPath()})")
+                } catch (error: IOException) {
+                    Logger.e(TAG, "createMediaSource() Failed to fill cache!", error)
+                }
             }
         }
 

@@ -30,7 +30,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
             chunked: Boolean
     ): Flowable<FileDownloadResult> {
         val output = activeDownloads.get(url)
-                ?.output
+                ?.getOutputFile()
                 ?: activeDownloads.throwCancellationException(url)
 
         if (!fileManager.exists(output)) {

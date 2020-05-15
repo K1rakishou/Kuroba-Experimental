@@ -103,19 +103,18 @@ class CacheHandler(
      * Either returns already downloaded file or creates an empty new one on the disk (also creates
      * cache file meta with default parameters)
      * */
+    @Synchronized
     fun getOrCreateCacheFile(url: String): RawFile? {
         createDirectories()
         var cacheFile = getCacheFileInternal(url)
 
         try {
-            synchronized(this) {
-                if (!fileManager.exists(cacheFile)) {
-                    val createdFile = fileManager.create(cacheFile) as RawFile?
-                      ?: throw IOException(
-                        "Couldn't create cache file, path = ${cacheFile.getFullPath()}")
+            if (!fileManager.exists(cacheFile)) {
+                val createdFile = fileManager.create(cacheFile) as RawFile?
+                  ?: throw IOException(
+                    "Couldn't create cache file, path = ${cacheFile.getFullPath()}")
 
-                    cacheFile = createdFile
-                }
+                cacheFile = createdFile
             }
 
             val cacheFileMeta = getCacheFileMetaInternal(url)

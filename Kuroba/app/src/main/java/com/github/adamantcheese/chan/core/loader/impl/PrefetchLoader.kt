@@ -64,7 +64,7 @@ class PrefetchLoader(
             }
 
             cancelableDownload.addCallback(object : FileCacheListener() {
-                override fun onSuccess(file: RawFile?) {
+                override fun onSuccess(file: RawFile) {
                     postLoaderData.post.setContentLoadedForLoader(loaderType)
                     onPrefetchEnded(prefetch.postImage)
                 }

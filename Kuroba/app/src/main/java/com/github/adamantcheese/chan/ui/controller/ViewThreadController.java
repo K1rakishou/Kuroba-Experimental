@@ -565,20 +565,27 @@ public class ViewThreadController
     private void populateLocalOrLiveVersionMenu() {
         // setup the extra items if they're needed, or remove as necessary
         if (ChanSettings.incrementalThreadDownloadingEnabled.get()
-                && getThreadDownloadState() != DownloadThreadState.Default) {
+                && getThreadDownloadState() != DownloadThreadState.Default
+        ) {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
+
             if (navigation.findSubItem(ACTION_VIEW_LIVE_COPY) == null
-                    && navigation.findSubItem(ACTION_VIEW_LOCAL_COPY) == null) {
-                overflowMenu.addSubItem(new ToolbarMenuSubItem(ACTION_VIEW_LOCAL_COPY,
-                        R.string.view_local_version,
-                        true,
-                        this::handleClickViewLocalVersion
-                ));
-                overflowMenu.addSubItem(new ToolbarMenuSubItem(ACTION_VIEW_LIVE_COPY,
-                        R.string.view_view_version,
-                        true,
-                        this::handleClickViewLiveVersion
-                ));
+                    && navigation.findSubItem(ACTION_VIEW_LOCAL_COPY) == null
+            ) {
+                overflowMenu.addSubItem(
+                        new ToolbarMenuSubItem(ACTION_VIEW_LOCAL_COPY,
+                                R.string.view_local_version,
+                                true,
+                                this::handleClickViewLocalVersion
+                        )
+                );
+                overflowMenu.addSubItem(
+                        new ToolbarMenuSubItem(ACTION_VIEW_LIVE_COPY,
+                                R.string.view_view_version,
+                                true,
+                                this::handleClickViewLiveVersion
+                        )
+                );
             }
         } else {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
@@ -598,8 +605,7 @@ public class ViewThreadController
             }
 
             SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
-            if (savedThread == null
-                    || savedThread.isFullyDownloaded
+            if (savedThread == null || savedThread.isFullyDownloaded
                     || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
                     || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading) {
                 // No saved thread.

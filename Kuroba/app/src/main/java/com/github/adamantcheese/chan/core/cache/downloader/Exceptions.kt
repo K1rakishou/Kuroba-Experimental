@@ -19,8 +19,8 @@ internal sealed class FileCacheException(message: String) : Exception(message) {
     internal class NoResponseBodyException
         : FileCacheException("NoResponseBodyException")
 
-    internal class CouldNotCreateOutputFileException(val filePath: String)
-        : FileCacheException("Could not create output file, path = ${filePath}")
+    internal class CouldNotCreateOutputCacheFile(url: String)
+        : FileCacheException("Could not create output cache file, url = $url")
 
     internal class CouldNotGetInputStreamException(
             val path: String,
@@ -75,12 +75,22 @@ internal fun logErrorsAndExtractErrorMessage(tag: String, prefix: String, error:
         }
 
         val result = sb.toString()
-        logError(tag, result)
+
+        if (error is FileCacheException) {
+            logError(tag, result)
+        } else {
+            logError(tag, result, error)
+        }
 
         result
     } else {
         val msg = "$prefix, class = ${error.javaClass.simpleName}, message = ${error.message}"
-        logError(tag, msg)
+
+        if (error is FileCacheException) {
+            logError(tag, msg)
+        } else {
+            logError(tag, msg, error)
+        }
 
         msg
     }
