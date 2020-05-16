@@ -135,20 +135,20 @@ public class DrawerController
         Insetter.setOnApplyInsetsListener(container, (view, insets, initialState) -> {
             AndroidUtils.updatePaddings(
                     view,
-                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.systemWindowInsetLeft(),
-                    initialState.getPaddings().getRight() + globalWindowInsetsManager.systemWindowInsetRight(),
-                    initialState.getPaddings().getTop() + globalWindowInsetsManager.systemWindowInsetTop(),
-                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.systemWindowInsetBottom()
+                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.left(),
+                    initialState.getPaddings().getRight() + globalWindowInsetsManager.right(),
+                    initialState.getPaddings().getTop() + globalWindowInsetsManager.top(),
+                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.bottom()
             );
         });
 
         Insetter.setOnApplyInsetsListener(drawer, (view, insets, initialState) -> {
             AndroidUtils.updatePaddings(
                     view,
-                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.systemWindowInsetLeft(),
-                    initialState.getPaddings().getRight() + globalWindowInsetsManager.systemWindowInsetRight(),
-                    initialState.getPaddings().getTop() + globalWindowInsetsManager.systemWindowInsetTop(),
-                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.systemWindowInsetBottom()
+                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.left(),
+                    initialState.getPaddings().getRight() + globalWindowInsetsManager.right(),
+                    initialState.getPaddings().getTop() + globalWindowInsetsManager.top(),
+                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.bottom()
             );
         });
 

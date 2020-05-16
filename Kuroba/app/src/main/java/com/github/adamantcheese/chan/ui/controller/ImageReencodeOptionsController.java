@@ -15,7 +15,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -24,15 +23,11 @@ import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getWindow;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AnimationUtils.animateStatusBar;
 
 public class ImageReencodeOptionsController
-        extends Controller
+        extends BaseFloatingController
         implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
     private final static String TAG = "ImageReencodeOptionsController";
-    private static final int TRANSITION_DURATION = 200;
 
     @Inject
     ThemeHelper themeHelper;
@@ -52,7 +47,6 @@ public class ImageReencodeOptionsController
     private AppCompatButton ok;
     private AppCompatRadioButton reencodeImageAsIs;
 
-    private int statusBarColorPrevious;
     private ImageReencodingPresenter.ReencodeSettings lastSettings;
     private boolean ignoreSetup;
 
@@ -109,10 +103,13 @@ public class ImageReencodeOptionsController
     }
 
     @Override
+    protected int getLayoutId() {
+        return R.layout.layout_image_reencoding;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
-
-        view = inflate(context, R.layout.layout_image_reencoding);
 
         viewHolder = view.findViewById(R.id.reencode_image_view_holder);
         radioGroup = view.findViewById(R.id.reencode_image_radio_group);
@@ -145,11 +142,6 @@ public class ImageReencodeOptionsController
             reencodeImageAsJpeg.setEnabled(false);
             reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
             reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
-        }
-
-        statusBarColorPrevious = getWindow(context).getStatusBarColor();
-        if (statusBarColorPrevious != 0) {
-            animateStatusBar(getWindow(context), true, statusBarColorPrevious, TRANSITION_DURATION);
         }
 
         currentImageReduce.setText(getString(R.string.scale_reduce,
@@ -192,15 +184,6 @@ public class ImageReencodeOptionsController
         }
 
         reencodeImageAsIs.setText(getString(R.string.reencode_image_as_is, format));
-    }
-
-    @Override
-    public void stopPresenting() {
-        super.stopPresenting();
-
-        if (statusBarColorPrevious != 0) {
-            animateStatusBar(getWindow(context), false, statusBarColorPrevious, TRANSITION_DURATION);
-        }
     }
 
     @Override

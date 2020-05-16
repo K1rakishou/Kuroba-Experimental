@@ -1,5 +1,7 @@
 package com.github.adamantcheese.chan.utils;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
@@ -16,21 +18,53 @@ import com.github.adamantcheese.chan.R;
 
 public class AnimationUtils {
 
-    public static void animateStatusBar(Window window, boolean in, final int originalColor, int duration) {
-        ValueAnimator statusBar = ValueAnimator.ofFloat(in ? 0f : 0.5f, in ? 0.5f : 0f);
+    public static void animateStatusBar(
+            Window window,
+            boolean in,
+            final int originalColor,
+            final int duration
+    ) {
+        final int targetColor = calculateTargetColor(in, originalColor);
+
+        ValueAnimator statusBar = ValueAnimator.ofArgb(
+                originalColor,
+                targetColor
+        );
+
         statusBar.addUpdateListener(animation -> {
-            float progress = (float) animation.getAnimatedValue();
-            if (progress == 0f) {
+            int color = (int) animation.getAnimatedValue();
+            window.setStatusBarColor(color);
+        });
+        statusBar.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+
                 window.setStatusBarColor(originalColor);
-            } else {
-                int r = (int) ((1f - progress) * Color.red(originalColor));
-                int g = (int) ((1f - progress) * Color.green(originalColor));
-                int b = (int) ((1f - progress) * Color.blue(originalColor));
-                window.setStatusBarColor(Color.argb(255, r, g, b));
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+
+                window.setStatusBarColor(targetColor);
             }
         });
-        statusBar.setDuration(duration).setInterpolator(new LinearInterpolator());
+        statusBar
+                .setDuration(duration)
+                .setInterpolator(new LinearInterpolator());
+
         statusBar.start();
+    }
+
+    private static int calculateTargetColor(boolean in, int originalColor) {
+        float progress = in ? 0.5f : 0f;
+
+        int r = (int) ((1f - progress) * Color.red(originalColor));
+        int g = (int) ((1f - progress) * Color.green(originalColor));
+        int b = (int) ((1f - progress) * Color.blue(originalColor));
+
+        return Color.argb(255, r, g, b);
     }
 
     public static void animateViewScale(View view, boolean zoomOut, int duration) {

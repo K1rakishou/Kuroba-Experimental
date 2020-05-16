@@ -183,9 +183,9 @@ public class ImageViewerController
                 return;
             }
 
-            toolbar.setTranslationY(globalWindowInsetsManager.systemWindowInsetTop());
-            toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.systemWindowInsetLeft());
-            toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.systemWindowInsetRight());
+            toolbar.setTranslationY(globalWindowInsetsManager.top());
+            toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
+            toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
         });
 
         // Sanity check

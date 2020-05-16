@@ -33,7 +33,6 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.core.site.http.Reply;
@@ -51,16 +50,12 @@ import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDisplaySize;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getWindow;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AnimationUtils.animateStatusBar;
 
 public class ImageOptionsController
-        extends Controller
+        extends BaseFloatingController
         implements View.OnClickListener, CompoundButton.OnCheckedChangeListener,
                    ImageReencodingPresenter.ImageReencodingPresenterCallback {
     private final static String TAG = "ImageOptionsController";
-    private static final int TRANSITION_DURATION = 200;
 
     @Inject
     ThemeHelper themeHelper;
@@ -81,7 +76,6 @@ public class ImageOptionsController
     private AppCompatButton cancel;
     private AppCompatButton ok;
 
-    private int statusBarColorPrevious;
     private ImageReencodingPresenter.ImageOptions lastSettings;
     private boolean ignoreSetup;
     private boolean reencodeEnabled;
@@ -106,10 +100,13 @@ public class ImageOptionsController
     }
 
     @Override
+    protected int getLayoutId() {
+        return R.layout.layout_image_options;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
-
-        view = inflate(context, R.layout.layout_image_options);
 
         viewHolder = view.findViewById(R.id.image_options_view_holder);
         container = view.findViewById(R.id.container);
@@ -190,20 +187,6 @@ public class ImageOptionsController
         ok.setOnClickListener(this);
 
         presenter.loadImagePreview();
-
-        statusBarColorPrevious = getWindow(context).getStatusBarColor();
-        if (statusBarColorPrevious != 0) {
-            animateStatusBar(getWindow(context), true, statusBarColorPrevious, TRANSITION_DURATION);
-        }
-    }
-
-    @Override
-    public void stopPresenting() {
-        super.stopPresenting();
-
-        if (statusBarColorPrevious != 0) {
-            animateStatusBar(getWindow(context), false, statusBarColorPrevious, TRANSITION_DURATION);
-        }
     }
 
     @Override

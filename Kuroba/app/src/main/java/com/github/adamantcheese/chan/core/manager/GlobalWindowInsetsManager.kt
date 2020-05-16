@@ -15,8 +15,8 @@ class GlobalWindowInsetsManager {
     )
   }
 
-  fun systemWindowInsetLeft() = currentInsets.left
-  fun systemWindowInsetRight() = currentInsets.right
-  fun systemWindowInsetTop() = currentInsets.top
-  fun systemWindowInsetBottom() = currentInsets.bottom
+  fun left() = currentInsets.left
+  fun right() = currentInsets.right
+  fun top() = currentInsets.top
+  fun bottom() = currentInsets.bottom
 }
