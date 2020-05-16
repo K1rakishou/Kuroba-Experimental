@@ -1,9 +1,10 @@
 package com.github.adamantcheese.chan.utils
 
+import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
 import com.airbnb.epoxy.*
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
-
 import java.util.regex.Matcher
 
 /**
@@ -73,4 +74,38 @@ fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
             removeModelBuildListener(this)
         }
     })
+}
+
+fun View.updateMargins(
+  start: Int? = null,
+  end: Int? = null,
+  top: Int? = null,
+  bottom: Int? = null
+) {
+    val layoutParams = layoutParams as? MarginLayoutParams
+      ?: return
+
+    val newStart = start ?: layoutParams.marginStart
+    val newEnd = end ?: layoutParams.marginEnd
+    val newTop = top ?: layoutParams.topMargin
+    val newBottom = bottom ?: layoutParams.bottomMargin
+
+    layoutParams.setMargins(
+      layoutParams.leftMargin,
+      newTop,
+      layoutParams.rightMargin,
+      newBottom
+    )
+
+    layoutParams.marginStart = newStart
+    layoutParams.marginEnd = newEnd
+}
+
+fun View.updatePaddings(
+  left: Int = paddingLeft,
+  right: Int = paddingRight,
+  top: Int = paddingTop,
+  bottom: Int = paddingBottom
+) {
+    setPadding(left, top, right, bottom)
 }

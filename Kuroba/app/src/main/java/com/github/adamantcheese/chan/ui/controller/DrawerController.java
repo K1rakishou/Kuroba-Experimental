@@ -24,6 +24,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.view.ViewCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.NavigationController;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages;
@@ -84,6 +86,8 @@ public class DrawerController
     WatchManager watchManager;
     @Inject
     SettingsNotificationManager settingsNotificationManager;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public DrawerController(Context context) {
         super(context);
@@ -114,23 +118,37 @@ public class DrawerController
 
         updateBadge();
 
+        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+            globalWindowInsetsManager.updateInsets(insets);
+
+            // Hack! We need to remove all insets here because otherwise they will break all the
+            // app's snackbars because they use insets to adjust their position automatically and
+            // it cannot be turned off. To fix that we store the actual insets and then manually
+            // remove all insets from WindowInsets class. If you ever need to use actual insets then
+            // you need to register insets listener (Insetter.setOnApplyInsetsListener) BUT do not
+            // use insets that are provided to the labmda. Use insets stored in
+            // GlobalWindowInsetsManager!!! Otherwise expect funny bugs.
+            return insets.replaceSystemWindowInsets(0, 0, 0, 0);
+        });
+        ViewCompat.requestApplyInsets(view);
+
         Insetter.setOnApplyInsetsListener(container, (view, insets, initialState) -> {
             AndroidUtils.updatePaddings(
                     view,
-                    initialState.getPaddings().getLeft() + insets.getSystemWindowInsetLeft(),
-                    initialState.getPaddings().getRight() + insets.getSystemWindowInsetRight(),
-                    initialState.getPaddings().getTop() + insets.getSystemWindowInsetTop(),
-                    initialState.getPaddings().getBottom() + insets.getSystemWindowInsetBottom()
+                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.systemWindowInsetLeft(),
+                    initialState.getPaddings().getRight() + globalWindowInsetsManager.systemWindowInsetRight(),
+                    initialState.getPaddings().getTop() + globalWindowInsetsManager.systemWindowInsetTop(),
+                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.systemWindowInsetBottom()
             );
         });
 
         Insetter.setOnApplyInsetsListener(drawer, (view, insets, initialState) -> {
             AndroidUtils.updatePaddings(
                     view,
-                    initialState.getPaddings().getLeft() + insets.getSystemWindowInsetLeft(),
-                    initialState.getPaddings().getRight() + insets.getSystemWindowInsetRight(),
-                    initialState.getPaddings().getTop() + insets.getSystemWindowInsetTop(),
-                    initialState.getPaddings().getBottom() + insets.getSystemWindowInsetBottom()
+                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.systemWindowInsetLeft(),
+                    initialState.getPaddings().getRight() + globalWindowInsetsManager.systemWindowInsetRight(),
+                    initialState.getPaddings().getTop() + globalWindowInsetsManager.systemWindowInsetTop(),
+                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.systemWindowInsetBottom()
             );
         });
 

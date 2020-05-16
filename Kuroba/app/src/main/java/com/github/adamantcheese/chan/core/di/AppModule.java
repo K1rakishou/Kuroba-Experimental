@@ -22,6 +22,7 @@ import android.net.ConnectivityManager;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
@@ -214,5 +215,13 @@ public class AppModule {
         Logger.d(DI_TAG, "Android10GesturesExclusionZonesHolder");
 
         return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
+    }
+
+    @Provides
+    @Singleton
+    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
+        Logger.d(DI_TAG, "GlobalWindowInsetsManager");
+
+        return new GlobalWindowInsetsManager();
     }
 }

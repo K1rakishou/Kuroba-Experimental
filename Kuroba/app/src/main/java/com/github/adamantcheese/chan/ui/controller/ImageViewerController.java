@@ -26,7 +26,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.os.Looper;
@@ -47,6 +46,7 @@ import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -121,6 +121,8 @@ public class ImageViewerController
     ImageSaver imageSaver;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private int statusBarColorPrevious;
     private AnimatorSet startAnimation;
@@ -135,7 +137,6 @@ public class ImageViewerController
     private TransitionImageView previewImage;
     private OptionalSwipeViewPager pager;
     private LoadingBar loadingBar;
-    private Rect insetsRect = new Rect(0, 0, 0, 0);
 
     private boolean isInImmersiveMode = false;
     private Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -173,9 +174,6 @@ public class ImageViewerController
         showVolumeMenuItem(false, true);
 
         Insetter.setOnApplyInsetsListener(view, (view, insets, initialState) -> {
-            insetsRect.top = insets.getSystemWindowInsetTop();
-            insetsRect.bottom = insets.getSystemWindowInsetBottom();
-
             if (navigationController == null) {
                 return;
             }
@@ -185,9 +183,9 @@ public class ImageViewerController
                 return;
             }
 
-            toolbar.setTranslationY(insets.getSystemWindowInsetTop());
-            toolbar.updateToolbarMenuStartPadding(insets.getSystemWindowInsetLeft());
-            toolbar.updateToolbarMenuEndPadding(insets.getSystemWindowInsetRight());
+            toolbar.setTranslationY(globalWindowInsetsManager.systemWindowInsetTop());
+            toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.systemWindowInsetLeft());
+            toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.systemWindowInsetRight());
         });
 
         // Sanity check
