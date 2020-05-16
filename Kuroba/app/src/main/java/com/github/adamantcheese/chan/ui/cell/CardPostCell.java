@@ -40,6 +40,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,6 @@ import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 
 public class CardPostCell
         extends CardView
@@ -108,7 +108,7 @@ public class CardPostCell
         comment = findViewById(R.id.comment);
         replies = findViewById(R.id.replies);
         options = findViewById(R.id.options);
-        setRoundItemBackground(options);
+        AndroidUtils.setBoundlessRoundRippleBackground(options);
         filterMatchColor = findViewById(R.id.filter_match_color);
 
         setOnClickListener(this);

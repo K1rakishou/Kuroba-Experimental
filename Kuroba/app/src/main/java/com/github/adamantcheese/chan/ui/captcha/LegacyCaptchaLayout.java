@@ -35,6 +35,7 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.FixedRatioThumbnailView;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.IOUtils;
 
@@ -42,7 +43,6 @@ import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 
 public class LegacyCaptchaLayout
         extends LinearLayout
@@ -100,7 +100,7 @@ public class LegacyCaptchaLayout
 
         submit = findViewById(R.id.submit);
         themeHelper.getTheme().sendDrawable.apply(submit);
-        setRoundItemBackground(submit);
+        AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
 
         // This captcha layout uses a webview in the background

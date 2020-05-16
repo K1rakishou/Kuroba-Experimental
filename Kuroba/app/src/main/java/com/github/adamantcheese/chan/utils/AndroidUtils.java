@@ -45,6 +45,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -461,8 +462,15 @@ public class AndroidUtils {
         }
     }
 
-    public static void setRoundItemBackground(View view) {
-        view.setBackgroundResource(R.drawable.item_background);
+    public static void setBoundlessRoundRippleBackground(View view) {
+        TypedValue outValue = new TypedValue();
+        view.getContext().getTheme().resolveAttribute(
+                android.R.attr.selectableItemBackgroundBorderless,
+                outValue,
+                true
+        );
+
+        view.setBackgroundResource(outValue.resourceId);
     }
 
     public static List<View> findViewsById(ViewGroup root, int id) {

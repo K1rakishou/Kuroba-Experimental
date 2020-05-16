@@ -50,7 +50,6 @@ import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 
 public class Toolbar
         extends LinearLayout
@@ -118,7 +117,7 @@ public class Toolbar
         arrowMenuDrawable = new ArrowMenuDrawable();
         arrowMenuView.setImageDrawable(arrowMenuDrawable);
 
-        setRoundItemBackground(arrowMenuView);
+        AndroidUtils.setBoundlessRoundRippleBackground(arrowMenuView);
 
         int toolbarSize = getDimen(R.dimen.toolbar_height);
         FrameLayout.LayoutParams leftButtonContainerLp =

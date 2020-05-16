@@ -94,7 +94,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.requestViewAndKeyboardFocus;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class ReplyLayout
@@ -255,11 +254,11 @@ public class ReplyLayout
                 getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
         );
         more.setImageDrawable(moreDropdown);
-        setRoundItemBackground(more);
+        AndroidUtils.setBoundlessRoundRippleBackground(more);
         more.setOnClickListener(this);
 
         themeHelper.getTheme().imageDrawable.apply(attach);
-        setRoundItemBackground(attach);
+        AndroidUtils.setBoundlessRoundRippleBackground(attach);
         attach.setOnClickListener(this);
         attach.setOnLongClickListener(v -> {
             presenter.onAttachClicked(true);
@@ -267,11 +266,11 @@ public class ReplyLayout
         });
 
         ImageView captchaImage = replyInputLayout.findViewById(R.id.captcha);
-        setRoundItemBackground(captchaImage);
+        AndroidUtils.setBoundlessRoundRippleBackground(captchaImage);
         captcha.setOnClickListener(this);
 
         themeHelper.getTheme().sendDrawable.apply(submit);
-        setRoundItemBackground(submit);
+        AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
         submit.setOnLongClickListener(v -> {
             presenter.onSubmitClicked(true);
@@ -286,7 +285,7 @@ public class ReplyLayout
         captchaContainer.setLayoutParams(new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
         themeHelper.getTheme().refreshDrawable.apply(captchaHardReset);
-        setRoundItemBackground(captchaHardReset);
+        AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset);
         captchaHardReset.setOnClickListener(this);
 
         setView(replyInputLayout);

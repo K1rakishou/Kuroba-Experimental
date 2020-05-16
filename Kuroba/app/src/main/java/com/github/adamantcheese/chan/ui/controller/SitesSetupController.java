@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.ui.layout.SiteAddLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.CrossfadeView;
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -56,7 +57,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 
 public class SitesSetupController
         extends StyledToolbarNavigationController
@@ -297,8 +297,8 @@ public class SitesSetupController
             itemView.setOnClickListener(this);
             removeSite.setOnClickListener(this);
 
-            setRoundItemBackground(settings);
-            setRoundItemBackground(removeSite);
+            AndroidUtils.setBoundlessRoundRippleBackground(settings);
+            AndroidUtils.setBoundlessRoundRippleBackground(removeSite);
             themeHelper.getTheme().settingsDrawable.apply(settings);
             themeHelper.getTheme().clearDrawable.apply(removeSite);
 

@@ -42,7 +42,6 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ClickableSpan;
 import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
-import android.util.TypedValue;
 import android.view.ActionMode;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -81,6 +80,7 @@ import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -390,12 +390,13 @@ public class PostCell
         threadMode = callback.getLoadable() == null || callback.getLoadable().isThreadMode();
 
         setPostLinkableListener(post, true);
-        options.setColorFilter(theme.textSecondary);
-
-        applyRippleEffect();
-
-        replies.setClickable(threadMode);
         repliesAdditionalArea.setClickable(threadMode);
+
+        options.setColorFilter(theme.textSecondary);
+        replies.setClickable(threadMode);
+
+        AndroidUtils.setBoundlessRoundRippleBackground(replies);
+        AndroidUtils.setBoundlessRoundRippleBackground(options);
 
         if (!threadMode) {
             replies.setBackgroundResource(0);
@@ -433,18 +434,6 @@ public class PostCell
         if (callback != null) {
             callback.onPostBind(post);
         }
-    }
-
-    private void applyRippleEffect() {
-        TypedValue outValue = new TypedValue();
-        getContext().getTheme().resolveAttribute(
-                android.R.attr.selectableItemBackgroundBorderless,
-                outValue,
-                true
-        );
-
-        replies.setBackgroundResource(outValue.resourceId);
-        options.setBackgroundResource(outValue.resourceId);
     }
 
     private void startAttentionLabelFadeOutAnimation() {

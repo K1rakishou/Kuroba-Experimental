@@ -49,6 +49,7 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -64,7 +65,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrDrawable;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setRoundItemBackground;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
 
@@ -501,7 +501,7 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             watchCountText.setTypeface(themeHelper.getTheme().mainFont);
             threadDownloadIcon = itemView.findViewById(R.id.thread_download_icon);
 
-            setRoundItemBackground(watchCountText);
+            AndroidUtils.setBoundlessRoundRippleBackground(watchCountText);
 
             image.setOnClickListener(v -> {
                 int pos = getAdapterPosition() - PIN_OFFSET;
@@ -533,10 +533,12 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
         private HeaderHolder(View itemView) {
             super(itemView);
+
             text = itemView.findViewById(R.id.text);
             text.setTypeface(themeHelper.getTheme().mainFont);
+
             clear = itemView.findViewById(R.id.clear);
-            setRoundItemBackground(clear);
+            AndroidUtils.setBoundlessRoundRippleBackground(clear);
             clear.setOnClickListener(v -> callback.onHeaderClicked(HeaderAction.CLEAR));
             clear.setOnLongClickListener(v -> {
                 callback.onHeaderClicked(HeaderAction.CLEAR_ALL);
