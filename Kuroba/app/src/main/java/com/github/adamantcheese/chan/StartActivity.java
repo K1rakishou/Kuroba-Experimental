@@ -60,6 +60,7 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
+import com.github.adamantcheese.chan.utils.FullScreenUtilsKt;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks;
@@ -147,6 +148,7 @@ public class StartActivity
         updateManager = new UpdateManager(this);
 
         contentView = findViewById(android.R.id.content);
+        FullScreenUtilsKt.setupFullscreen(this);
 
         // Setup base controllers, and decide if to use the split layout for tablets
         drawerController = new DrawerController(this);

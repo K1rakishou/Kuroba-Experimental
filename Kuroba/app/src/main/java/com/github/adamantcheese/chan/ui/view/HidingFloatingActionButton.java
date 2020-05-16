@@ -79,16 +79,20 @@ public class HidingFloatingActionButton
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         attachedToWindow = false;
+
         if (attachedToToolbar) {
             toolbar.removeCollapseCallback(this);
             attachedToToolbar = false;
         }
+
         coordinatorLayout = null;
     }
 
     @Override
     public void onCollapseTranslation(float offset) {
-        if (isSnackbarShowing()) return;
+        if (isSnackbarShowing()) {
+            return;
+        }
 
         int translation = (int) (getTotalHeight() * offset);
         if (translation != currentCollapseTranslation) {

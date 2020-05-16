@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -133,6 +134,26 @@ public class Toolbar
         if (getElevation() == 0f) {
             setElevation(dp(4f));
         }
+    }
+
+    public void updateToolbarMenuStartPadding(int newPadding) {
+        AndroidUtils.updatePaddings(
+                this,
+                newPadding,
+                -1,
+                -1,
+                -1
+        );
+    }
+
+    public void updateToolbarMenuEndPadding(int newPadding) {
+        AndroidUtils.updatePaddings(
+                this,
+                -1,
+                newPadding,
+                -1,
+                -1
+        );
     }
 
     @Override

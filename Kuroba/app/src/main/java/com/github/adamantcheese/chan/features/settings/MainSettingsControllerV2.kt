@@ -181,6 +181,8 @@ class MainSettingsControllerV2(context: Context)
     )
   }
 
+  // TODO(KurobaEx): MainSettingsControllerV2 never checks whether we have selected any settings that
+  //  require app restart/ui refresh.
 
   private val normalSettingsGraphDelegate = lazy { buildSettingsGraph() }
   private val normalSettingsGraph by normalSettingsGraphDelegate

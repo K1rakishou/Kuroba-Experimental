@@ -85,6 +85,7 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import kotlin.random.Random
 
 class MultiImageView @JvmOverloads constructor(
   context: Context,
@@ -112,6 +113,7 @@ class MultiImageView @JvmOverloads constructor(
   private var gifRequest = AtomicReference<CancelableDownload>(null)
   private var videoRequest = AtomicReference<CancelableDownload>(null)
 
+  private var imageNotFoundPlaceholderLoadJob: Job? = null
   private var webmStreamSourceInitJob: Job? = null
   private var thumbnailRequestDisposable: RequestDisposable? = null
   private var callback: Callback? = null
@@ -179,6 +181,11 @@ class MultiImageView @JvmOverloads constructor(
     if (webmStreamSourceInitJob != null) {
       webmStreamSourceInitJob?.cancel()
       webmStreamSourceInitJob = null
+    }
+
+    if (imageNotFoundPlaceholderLoadJob != null) {
+      imageNotFoundPlaceholderLoadJob?.cancel()
+      imageNotFoundPlaceholderLoadJob = null
     }
 
     bigImageRequest.get()?.cancel()
@@ -385,7 +392,7 @@ class MultiImageView @JvmOverloads constructor(
           override fun onSuccess(file: RawFile) {
             BackgroundUtils.ensureMainThread()
 
-            setBitImageFileInternal(
+            setBigImageFromFile(
               file = File(file.getFullPath()),
               tiling = true,
               isSpoiler = postImage.spoiler()
@@ -396,7 +403,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundError()
+            onNotFoundTryToFallback()
           }
 
           override fun onFail(exception: Exception) {
@@ -464,7 +471,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundError()
+            onNotFoundTryToFallback()
           }
 
           override fun onFail(exception: Exception) {
@@ -500,7 +507,7 @@ class MultiImageView @JvmOverloads constructor(
       if (gisDrawable.numberOfFrames == 1) {
         gisDrawable.recycle()
 
-        setBitImageFileInternal(
+        setBigImageFromFile(
           file = file,
           tiling = false,
           isSpoiler = isSpoiler
@@ -597,7 +604,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundError()
+            onNotFoundTryToFallback()
           }
 
           override fun onFail(exception: Exception) {
@@ -854,11 +861,26 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
+  private fun setBigImageFromFile(file: File, tiling: Boolean, isSpoiler: Boolean) {
+    setBigImageFromImageSource(
+      ImageSource.uri(file.absolutePath).tiling(tiling),
+      isSpoiler
+    )
+  }
+
+  private fun setBigImageFromBitmapDrawable(bitmapDrawable: BitmapDrawable) {
+    setBigImageFromImageSource(
+      ImageSource.bitmap(bitmapDrawable.bitmap),
+      false
+    )
+  }
+
   @SuppressLint("ClickableViewAccessibility")
-  private fun setBitImageFileInternal(file: File, tiling: Boolean, isSpoiler: Boolean) {
+  private fun setBigImageFromImageSource(imageSource: ImageSource, isSpoiler: Boolean) {
     val prevActiveView = findView(ThumbnailImageView::class.java)
+
     val image = CustomScaleImageView(context)
-    image.setImage(ImageSource.uri(file.absolutePath).tiling(tiling))
+    image.setImage(imageSource)
 
     val layoutParams = LayoutParams(
       ViewGroup.LayoutParams.MATCH_PARENT,
@@ -961,6 +983,39 @@ class MultiImageView @JvmOverloads constructor(
     animatorSet.interpolator = interpolator
     animatorSet.duration = 200
     animatorSet.start()
+  }
+
+  private fun onNotFoundTryToFallback() {
+    if (imageNotFoundPlaceholderLoadJob != null) {
+      return
+    }
+
+    cancellableToast.showToast(R.string.image_not_found)
+    callback?.hideProgress(this@MultiImageView)
+
+    imageNotFoundPlaceholderLoadJob = mainScope.launch {
+      imageLoaderV2.loadFromNetwork(
+        context,
+        CHAN4_404_IMAGE_LINKS.random(random),
+        object : ImageListener {
+          override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+            imageNotFoundPlaceholderLoadJob = null
+
+            setBigImageFromBitmapDrawable(drawable)
+          }
+
+          override fun onNotFound() {
+            imageNotFoundPlaceholderLoadJob = null
+            onNotFoundError()
+          }
+
+          override fun onResponseError(error: Throwable) {
+            imageNotFoundPlaceholderLoadJob = null
+            onError(error)
+          }
+        }
+      )
+    }
   }
 
   private fun onError(exception: Throwable) {
@@ -1102,6 +1157,24 @@ class MultiImageView @JvmOverloads constructor(
     private val BACKGROUND_COLOR_SFW_OP = Color.argb(255, 238, 242, 255)
     private val BACKGROUND_COLOR_NSFW = Color.argb(255, 240, 224, 214)
     private val BACKGROUND_COLOR_NSFW_OP = Color.argb(255, 255, 255, 238)
+
+    private val random = Random(System.currentTimeMillis())
+
+    private val CHAN4_404_IMAGE_LINKS = listOf(
+      "https://sys.4chan.org/image/error/404/rid.php",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-5.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-4.png",
+      "https://s.4cdn.org/image/error/404/404-anonymouse.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous.jpg",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-3.jpg",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-7.png",
+      "https://s.4cdn.org/image/error/404/404-Kobayen.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-8.png",
+      "https://s.4cdn.org/image/error/404/404-Ragathol.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-3.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png"
+    )
 
     private val MEDIA_LOADING_DISPATCHER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   }

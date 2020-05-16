@@ -573,7 +573,11 @@ class FileCacheV2(
                     val message = "Exception for request ${request}, " +
                             "network class = $networkClass, downloads = $activeDownloadsCount"
 
-                    logError(TAG, message, result.fileCacheException)
+                    if (verboseLogs) {
+                        logError(TAG, message, result.fileCacheException)
+                    } else {
+                        logError(TAG, message)
+                    }
 
                     resultHandler(url, request, true) {
                         when (result.fileCacheException) {

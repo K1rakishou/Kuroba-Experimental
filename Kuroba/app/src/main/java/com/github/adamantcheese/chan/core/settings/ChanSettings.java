@@ -192,7 +192,6 @@ public class ChanSettings {
     public static final BooleanSetting enableReplyFab;
     public static final BooleanSetting moveInputToBottom;
     public static final BooleanSetting captchaOnBottom;
-    public static final BooleanSetting useImmersiveModeForGallery;
     public static final BooleanSetting neverShowPages;
 
     //Post
@@ -348,7 +347,6 @@ public class ChanSettings {
             enableReplyFab = new BooleanSetting(p, "preference_enable_reply_fab", true);
             moveInputToBottom = new BooleanSetting(p, "move_input_bottom", false);
             captchaOnBottom = new BooleanSetting(p, "captcha_on_bottom", true);
-            useImmersiveModeForGallery = new BooleanSetting(p, "use_immersive_mode_for_gallery", false);
             neverShowPages = new BooleanSetting(p, "never_show_page_number", false);
 
             // Post

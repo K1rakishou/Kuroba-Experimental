@@ -26,12 +26,14 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
@@ -65,6 +67,7 @@ import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.OptionalSwipeViewPager;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.TransitionImageView;
+import com.github.adamantcheese.chan.utils.FullScreenUtilsKt;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
 
@@ -76,6 +79,8 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.inject.Inject;
+
+import dev.chrisbanes.insetter.Insetter;
 
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
@@ -98,6 +103,7 @@ public class ImageViewerController
     private static final String TAG = "ImageViewerController";
     private static final int TRANSITION_DURATION = 300;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;
+    private static final int DISAPPEARANCE_DELAY_MS = 3000;
 
     private static final int VOLUME_ID = 1;
     private static final int SAVE_ID = 2;
@@ -129,6 +135,7 @@ public class ImageViewerController
     private TransitionImageView previewImage;
     private OptionalSwipeViewPager pager;
     private LoadingBar loadingBar;
+    private Rect insetsRect = new Rect(0, 0, 0, 0);
 
     private boolean isInImmersiveMode = false;
     private Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -151,6 +158,55 @@ public class ImageViewerController
         // Navigation
         navigation.subtitle = "0";
 
+        buildMenu();
+        hideSystemUI();
+
+        // View setup
+        getWindow(context).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        view = inflate(context, R.layout.controller_image_viewer);
+        previewImage = view.findViewById(R.id.preview_image);
+        pager = view.findViewById(R.id.pager);
+        pager.addOnPageChangeListener(presenter);
+        loadingBar = view.findViewById(R.id.loading_bar);
+
+        showVolumeMenuItem(false, true);
+
+        Insetter.setOnApplyInsetsListener(view, (view, insets, initialState) -> {
+            insetsRect.top = insets.getSystemWindowInsetTop();
+            insetsRect.bottom = insets.getSystemWindowInsetBottom();
+
+            if (navigationController == null) {
+                return;
+            }
+
+            Toolbar toolbar = navigationController.getToolbar();
+            if (toolbar == null) {
+                return;
+            }
+
+            toolbar.setTranslationY(insets.getSystemWindowInsetTop());
+            toolbar.updateToolbarMenuStartPadding(insets.getSystemWindowInsetLeft());
+            toolbar.updateToolbarMenuEndPadding(insets.getSystemWindowInsetRight());
+        });
+
+        // Sanity check
+        if (parentController.view.getWindowToken() == null) {
+            throw new IllegalArgumentException("parentController.view not attached");
+        }
+
+        waitForLayout(parentController.view.getViewTreeObserver(), view, view -> {
+            ToolbarMenuItem saveMenuItem = navigation.findItem(SAVE_ID);
+            if (saveMenuItem != null) {
+                saveMenuItem.setEnabled(false);
+            }
+
+            presenter.onViewMeasured();
+            return true;
+        });
+    }
+
+    private void buildMenu() {
         NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu();
         if (goPostCallback != null) {
             menuBuilder.withItem(R.drawable.ic_subdirectory_arrow_left_white_24dp, this::goPostClicked);
@@ -211,34 +267,6 @@ public class ImageViewerController
         }
 
         overflowBuilder.build().build();
-
-        hideSystemUI();
-
-        // View setup
-        getWindow(context).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        view = inflate(context, R.layout.controller_image_viewer);
-        previewImage = view.findViewById(R.id.preview_image);
-        pager = view.findViewById(R.id.pager);
-        pager.addOnPageChangeListener(presenter);
-        loadingBar = view.findViewById(R.id.loading_bar);
-
-        showVolumeMenuItem(false, true);
-
-        // Sanity check
-        if (parentController.view.getWindowToken() == null) {
-            throw new IllegalArgumentException("parentController.view not attached");
-        }
-
-        waitForLayout(parentController.view.getViewTreeObserver(), view, view -> {
-            ToolbarMenuItem saveMenuItem = navigation.findItem(SAVE_ID);
-            if (saveMenuItem != null) {
-                saveMenuItem.setEnabled(false);
-            }
-
-            presenter.onViewMeasured();
-            return true;
-        });
     }
 
     private void goPostClicked(ToolbarMenuItem item) {
@@ -409,8 +437,12 @@ public class ImageViewerController
 
     @Override
     public boolean onBack() {
-        if (presenter.isTransitioning()) return false;
+        if (presenter.isTransitioning()) {
+            return false;
+        }
+
         showSystemUI();
+
         mainHandler.removeCallbacks(uiHideCall);
         presenter.onExit();
         return true;
@@ -554,21 +586,19 @@ public class ImageViewerController
 
     @Override
     public boolean isImmersive() {
-        return ChanSettings.useImmersiveModeForGallery.get() && isInImmersiveMode;
+        return isInImmersiveMode;
     }
 
     public void startPreviewInTransition(Loadable loadable, PostImage postImage) {
         ThumbnailView startImageView = getTransitionImageView(postImage);
 
         if (!setTransitionViewData(startImageView)) {
-            Logger.test("Oops");
-            return; // TODO
+            presenter.onInTransitionEnd();
+            return;
         }
 
         statusBarColorPrevious = getWindow(context).getStatusBarColor();
-
         setBackgroundAlpha(0f);
-
         startAnimation = new AnimatorSet();
 
         ValueAnimator progress = ValueAnimator.ofFloat(0f, 1f);
@@ -725,53 +755,51 @@ public class ImageViewerController
         return imageViewerCallback.getPreviewImageTransitionView(postImage);
     }
 
-    private void hideSystemUI() {
-        if (!ChanSettings.useImmersiveModeForGallery.get() || isInImmersiveMode) {
-            return;
-        }
-
-        isInImmersiveMode = true;
-
-        View decorView = getWindow(context).getDecorView();
-        decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN);
-
-        decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
-            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
-                showSystemUI();
-                mainHandler.postDelayed(uiHideCall, 2500);
-            }
-        });
-
-        //setting this to 0 because GONE doesn't seem to work?
-        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
-        params.height = 0;
-        navigationController.getToolbar().setLayoutParams(params);
-    }
-
     @Override
     public void showSystemUI(boolean show) {
         if (show) {
             showSystemUI();
-            mainHandler.postDelayed(uiHideCall, 2500);
+            mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
         } else {
             hideSystemUI();
         }
     }
 
+    private void hideSystemUI() {
+        if (isInImmersiveMode) {
+            return;
+        }
+
+        isInImmersiveMode = true;
+
+        Window window = getWindow(context);
+        FullScreenUtilsKt.hideSystemUI(window);
+
+        window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
+            if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
+                FullScreenUtilsKt.showSystemUI(window);
+                mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
+            }
+        });
+
+        // setting this to 0 because GONE doesn't seem to work?
+        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
+        params.height = 0;
+        navigationController.getToolbar().setLayoutParams(params);
+    }
+
     private void showSystemUI() {
-        if (!ChanSettings.useImmersiveModeForGallery.get() || !isInImmersiveMode) {
+        if (!isInImmersiveMode) {
             return;
         }
 
         isInImmersiveMode = false;
 
-        View decorView = getWindow(context).getDecorView();
-        decorView.setOnSystemUiVisibilityChangeListener(null);
-        decorView.setSystemUiVisibility(0);
+        Window window = getWindow(context);
+        window.getDecorView().setOnSystemUiVisibilityChangeListener(null);
+        FullScreenUtilsKt.showSystemUI(window);
 
-        //setting this to the toolbar height because VISIBLE doesn't seem to work?
+        // setting this to the toolbar height because VISIBLE doesn't seem to work?
         ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
         params.height = getDimen(R.dimen.toolbar_height);
         navigationController.getToolbar().setLayoutParams(params);

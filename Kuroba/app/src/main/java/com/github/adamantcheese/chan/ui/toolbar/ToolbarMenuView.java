@@ -88,6 +88,7 @@ public class ToolbarMenuView
         }
     }
 
+
     private void handleClick(ToolbarMenuItem item) {
         item.performClick();
     }

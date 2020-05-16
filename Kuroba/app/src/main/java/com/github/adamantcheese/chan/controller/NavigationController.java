@@ -23,8 +23,7 @@ import android.view.ViewGroup;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 
-public abstract class NavigationController
-        extends Controller {
+public abstract class NavigationController extends Controller {
     protected ViewGroup container;
 
     protected ControllerTransition controllerTransition;

@@ -297,6 +297,7 @@ class AppearanceSettingsScreen(
               ChanSettings.LayoutMode.SPLIT -> context.getString(R.string.setting_layout_mode_split)
             }
           },
+          requiresRestart = true,
           setting = ChanSettings.layoutMode
         )
 
@@ -315,6 +316,7 @@ class AppearanceSettingsScreen(
               else -> throw IllegalArgumentException("Bad columns count: $columnsCount")
             }
           },
+          requiresUiRefresh = true,
           setting = ChanSettings.boardGridSpanCount
         )
 
@@ -347,14 +349,6 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_bottom_js_captcha },
           bottomDescriptionIdFunc = { R.string.setting_bottom_js_captcha_description },
           setting = ChanSettings.captchaOnBottom
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.LayoutGroup.UseImmersiveModeForGallery,
-          topDescriptionIdFunc = { R.string.setting_images_immersive_mode_title },
-          bottomDescriptionIdFunc = { R.string.setting_images_immersive_mode_description },
-          setting = ChanSettings.useImmersiveModeForGallery
         )
 
         group += BooleanSettingV2.createBuilder(

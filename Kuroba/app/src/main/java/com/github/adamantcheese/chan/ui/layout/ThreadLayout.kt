@@ -288,7 +288,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   @Suppress("MoveLambdaOutsideParentheses")
   override fun showPostLinkables(post: Post) {
-    val linkables = post!!.linkables
+    val linkables = post.linkables
     val keys = arrayOfNulls<String>(linkables.size)
 
     for (i in linkables.indices) {
@@ -301,7 +301,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun clipboardPost(post: Post) {
-    AndroidUtils.setClipboardContent("Post text", post!!.comment.toString())
+    AndroidUtils.setClipboardContent("Post text", post.comment.toString())
     AndroidUtils.showToast(context, R.string.post_text_copied)
   }
 

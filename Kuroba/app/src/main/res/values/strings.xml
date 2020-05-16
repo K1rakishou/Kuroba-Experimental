@@ -539,8 +539,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_fetch_image_opacity_description">Default state for image transparency in the viewer</string>
     <string name="setting_fetch_never_show_webm_controls">Never show WEBM controls</string>
     <string name="setting_fetch_never_show_webm_controls_description">Treats WEBMs like GIFs; tap to close, double tap to play/pause, always automatically loops.</string>
-    <string name="setting_images_immersive_mode_title">Use immersive mode for image gallery</string>
-    <string name="setting_images_immersive_mode_description">This will make image gallery view be fullscreen with statusbar/navbar hidden</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

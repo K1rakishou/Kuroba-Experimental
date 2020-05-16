@@ -273,6 +273,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
     implementation "io.coil-kt:coil-base:0.10.1"
+    implementation "dev.chrisbanes:insetter-ktx:0.2.2"
 
     implementation 'com.github.K1rakishou:Feather2:ec21592613'
     // noinspection GradleDependency wants to upgrade to older version

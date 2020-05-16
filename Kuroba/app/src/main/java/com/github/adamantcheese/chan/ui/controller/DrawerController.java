@@ -42,6 +42,7 @@ import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2;
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -52,6 +53,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import dev.chrisbanes.insetter.Insetter;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
@@ -111,6 +113,26 @@ public class DrawerController
         itemTouchHelper.attachToRecyclerView(recyclerView);
 
         updateBadge();
+
+        Insetter.setOnApplyInsetsListener(container, (view, insets, initialState) -> {
+            AndroidUtils.updatePaddings(
+                    view,
+                    initialState.getPaddings().getLeft() + insets.getSystemWindowInsetLeft(),
+                    initialState.getPaddings().getRight() + insets.getSystemWindowInsetRight(),
+                    initialState.getPaddings().getTop() + insets.getSystemWindowInsetTop(),
+                    initialState.getPaddings().getBottom() + insets.getSystemWindowInsetBottom()
+            );
+        });
+
+        Insetter.setOnApplyInsetsListener(drawer, (view, insets, initialState) -> {
+            AndroidUtils.updatePaddings(
+                    view,
+                    initialState.getPaddings().getLeft() + insets.getSystemWindowInsetLeft(),
+                    initialState.getPaddings().getRight() + insets.getSystemWindowInsetRight(),
+                    initialState.getPaddings().getTop() + insets.getSystemWindowInsetTop(),
+                    initialState.getPaddings().getBottom() + insets.getSystemWindowInsetBottom()
+            );
+        });
 
         Disposable disposable = settingsNotificationManager.listenForNotificationUpdates()
                 .subscribe(activeNotifications -> {
