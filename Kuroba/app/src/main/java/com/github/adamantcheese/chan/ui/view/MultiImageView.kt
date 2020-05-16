@@ -770,11 +770,11 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     if (image.type === ChanPostImageType.PDF) {
-      cancellableToast.showToast(R.string.pdf_not_viewable)
+      cancellableToast.showToast(context, R.string.pdf_not_viewable)
       // this lets the user download the PDF, even though we haven't actually downloaded anything
       callback?.onDownloaded(image)
     } else if (image.type === ChanPostImageType.SWF) {
-      cancellableToast.showToast(R.string.swf_not_viewable)
+      cancellableToast.showToast(context, R.string.swf_not_viewable)
       callback?.onDownloaded(image)
     }
   }
@@ -990,7 +990,7 @@ class MultiImageView @JvmOverloads constructor(
       return
     }
 
-    cancellableToast.showToast(R.string.image_not_found)
+    cancellableToast.showToast(context, R.string.image_not_found)
     callback?.hideProgress(this@MultiImageView)
 
     imageNotFoundPlaceholderLoadJob = mainScope.launch {
@@ -1025,23 +1025,23 @@ class MultiImageView @JvmOverloads constructor(
       exception.message
     )
 
-    cancellableToast.showToast(message)
+    cancellableToast.showToast(context, message)
     callback?.hideProgress(this@MultiImageView)
   }
 
   private fun onNotFoundError() {
-    cancellableToast.showToast(R.string.image_not_found)
+    cancellableToast.showToast(context, R.string.image_not_found)
     callback?.hideProgress(this@MultiImageView)
   }
 
   private fun onOutOfMemoryError() {
-    cancellableToast.showToast(R.string.image_preview_failed_oom)
+    cancellableToast.showToast(context, R.string.image_preview_failed_oom)
     callback?.hideProgress(this@MultiImageView)
   }
 
   private fun onBigImageError(wasInitial: Boolean) {
     if (wasInitial) {
-      cancellableToast.showToast(R.string.image_failed_big_image)
+      cancellableToast.showToast(context, R.string.image_failed_big_image)
       callback?.hideProgress(this@MultiImageView)
     }
   }

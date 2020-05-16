@@ -25,6 +25,8 @@ class ListSettingV2<T : Any> : SettingV2() {
   lateinit var itemNameMapper: (T: Any?) -> String
     private set
 
+  fun getValue(): Any? = setting?.get()
+
   fun isCurrent(value: Any): Boolean {
     return setting?.get() == (value as T)
   }

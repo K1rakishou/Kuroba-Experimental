@@ -83,7 +83,7 @@ class ArchivesSettingsController(context: Context)
             }
         }.exhaustive
 
-        cancellableToast.showToast(messageText)
+        cancellableToast.showToast(context, messageText)
     }
 
     override fun onHistoryLoaded(history: List<ThirdPartyArchiveFetchResult>) {

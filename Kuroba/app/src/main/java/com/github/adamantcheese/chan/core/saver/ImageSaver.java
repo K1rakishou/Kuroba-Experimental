@@ -325,7 +325,10 @@ public class ImageSaver {
         Logger.e(TAG, "imageSaveTaskFailed imageUrl = " + maskImageUrl(task.getPostImageUrl()));
 
         String errorMessage = getString(R.string.image_saver_failed_to_save_image, error.getMessage());
-        cancellableToast.showToast(errorMessage, Toast.LENGTH_LONG);
+        cancellableToast.showToast(
+                getAppContext(),
+                errorMessage, Toast.LENGTH_LONG
+        );
     }
 
     private void imageSaveTaskFinished(ImageSaveTask task, BundledDownloadResult result) {
@@ -353,9 +356,17 @@ public class ImageSaver {
         // Do not show the toast when image download has failed; we will show it in imageSaveTaskFailed
         if (result == BundledDownloadResult.Success && !task.getShare()) {
             String text = getText(task, wasAlbumSave);
-            cancellableToast.showToast(text, Toast.LENGTH_LONG);
+            cancellableToast.showToast(
+                    getAppContext(),
+                    text,
+                    Toast.LENGTH_LONG
+            );
         } else if (result == BundledDownloadResult.Canceled) {
-            cancellableToast.showToast(R.string.image_saver_canceled_by_user_message, Toast.LENGTH_LONG);
+            cancellableToast.showToast(
+                    getAppContext(),
+                    R.string.image_saver_canceled_by_user_message,
+                    Toast.LENGTH_LONG
+            );
         }
     }
 
@@ -437,7 +448,11 @@ public class ImageSaver {
         }
 
         updateNotification();
-        cancellableToast.showToast(R.string.image_saver_canceled_by_user_message, Toast.LENGTH_LONG);
+        cancellableToast.showToast(
+                getAppContext(),
+                R.string.image_saver_canceled_by_user_message,
+                Toast.LENGTH_LONG
+        );
     }
 
     private void updateNotification() {

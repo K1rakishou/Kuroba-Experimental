@@ -145,13 +145,17 @@ public class ImagePickDelegate {
 
     private void pickRemoteFile(ImagePickCallback callback) {
         CancellableToast toast = new CancellableToast();
-        toast.showToast(R.string.image_url_get_attempt);
+        toast.showToast(getAppContext(), R.string.image_url_get_attempt);
         HttpUrl clipboardURL;
         try {
             //this is converted to a string again later, but this is an easy way of catching if the clipboard item is a URL
             clipboardURL = HttpUrl.get(getClipboardContent());
         } catch (Exception exception) {
-            toast.showToast(getString(R.string.image_url_get_failed, exception.getMessage()));
+            toast.showToast(
+                    getAppContext(),
+                    getString(R.string.image_url_get_failed, exception.getMessage())
+            );
+
             callback.onFilePickError(true);
             reset();
 
@@ -168,7 +172,7 @@ public class ImagePickDelegate {
                 fileCacheV2.enqueueNormalDownloadFileRequest(clipboardURL.toString(), new FileCacheListener() {
                     @Override
                     public void onSuccess(RawFile file) {
-                        toast.showToast(R.string.image_url_get_success);
+                        toast.showToast(getAppContext(), R.string.image_url_get_success);
                         Uri imageURL = Uri.parse(finalClipboardURL.toString());
                         callback.onFilePicked(imageURL.getLastPathSegment(), new File(file.getFullPath()));
                     }
@@ -182,7 +186,7 @@ public class ImagePickDelegate {
                     public void onFail(Exception exception) {
                         String message = getString(R.string.image_url_get_failed, exception.getMessage());
 
-                        toast.showToast(message);
+                        toast.showToast(getAppContext(), message);
                         callback.onFilePickError(true);
                     }
 

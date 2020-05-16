@@ -983,5 +983,7 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
+    <string name="setting_click_to_restart">Setting will be applied after app restart. Click the apply button to restart the app</string>
+    <string name="setting_click_to_refresh_ui">Setting will be applied after UI refresh. Click the apply button to refresh the UI</string>
 
 </resources>

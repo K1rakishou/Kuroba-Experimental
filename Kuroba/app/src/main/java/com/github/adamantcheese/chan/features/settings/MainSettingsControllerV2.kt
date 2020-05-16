@@ -32,11 +32,12 @@ import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
+import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
-import com.github.adamantcheese.chan.utils.AndroidUtils.dp
-import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
+import com.github.adamantcheese.chan.ui.widget.CancellableToast
+import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
@@ -194,6 +195,10 @@ class MainSettingsControllerV2(context: Context)
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val defaultScreen = MainScreen
 
+  private val cancellableToast = CancellableToast()
+  private var hasPendingRestart = false
+  private var hasPendingUiRefresh = false
+
   @OptIn(FlowPreview::class)
   override fun onCreate() {
     super.onCreate()
@@ -205,6 +210,9 @@ class MainSettingsControllerV2(context: Context)
     navigation.buildMenu()
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
+      }
+      .withItem(ACTION_RESTART_OR_REFRESH_UI, R.drawable.ic_check_24dp) {
+        onApplyClicked()
       }
       .build()
 
@@ -233,6 +241,11 @@ class MainSettingsControllerV2(context: Context)
         }
     }
 
+    waitForLayout(view) {
+      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.setEnabled(false)
+      return@waitForLayout true
+    }
+
     mainSettingsScreen.onCreate()
     developerSettingsScreen.onCreate()
     databaseSummaryScreen.onCreate()
@@ -244,6 +257,18 @@ class MainSettingsControllerV2(context: Context)
     mediaSettingsScreen.onCreate()
 
     rebuildDefaultScreen()
+  }
+
+  private fun onApplyClicked() {
+    if (hasPendingRestart) {
+      (context as StartActivity).restartApp()
+    } else if (hasPendingUiRefresh) {
+      postToEventBus(RefreshUIMessage("SettingsController refresh"))
+      hasPendingUiRefresh = false
+      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.setEnabled(false)
+
+      cancellableToast.showToast(context, "UI refreshed")
+    }
   }
 
   override fun onDestroy() {
@@ -268,6 +293,7 @@ class MainSettingsControllerV2(context: Context)
     }
 
     screenStack.clear()
+    onApplyClicked()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -494,7 +520,12 @@ class MainSettingsControllerV2(context: Context)
             settingEnabled(true)
 
             clickListener {
-              settingV2.callback?.invoke()
+              val prev = settingV2.isChecked
+              val curr = settingV2.callback?.invoke()
+
+              if (prev != curr) {
+                updateRestartRefreshButton(settingV2)
+              }
 
               if (!query.isNullOrEmpty()) {
                 rebuildScreenWithSearchQuery(query)
@@ -519,7 +550,13 @@ class MainSettingsControllerV2(context: Context)
             settingEnabled(true)
 
             clickListener {
-              showListDialog(settingV2) {
+              val prev = settingV2.getValue()
+
+              showListDialog(settingV2) { curr ->
+                if (prev != curr) {
+                  updateRestartRefreshButton(settingV2)
+                }
+
                 if (!query.isNullOrEmpty()) {
                   rebuildScreenWithSearchQuery(query)
                 } else {
@@ -544,7 +581,13 @@ class MainSettingsControllerV2(context: Context)
             settingEnabled(true)
 
             clickListener { view ->
-              showInputDialog(view, settingV2) {
+              val prev = settingV2.getCurrent()
+
+              showInputDialog(view, settingV2) { curr ->
+                if (prev != curr) {
+                  updateRestartRefreshButton(settingV2)
+                }
+
                 if (!query.isNullOrEmpty()) {
                   rebuildScreenWithSearchQuery(query)
                 } else {
@@ -567,7 +610,28 @@ class MainSettingsControllerV2(context: Context)
     }
   }
 
-  private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: () -> Unit) {
+  private fun updateRestartRefreshButton(settingV2: SettingV2) {
+    if (settingV2.requiresRestart) {
+      hasPendingRestart = true
+      cancellableToast.showToast(context, context.getString(R.string.setting_click_to_restart))
+    } else if (settingV2.requiresUiRefresh) {
+      hasPendingUiRefresh = true
+      cancellableToast.showToast(context, context.getString(R.string.setting_click_to_refresh_ui))
+    }
+
+    if (hasPendingUiRefresh || hasPendingRestart) {
+      val isEnabled = navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.enabled
+        ?: return
+
+      if (isEnabled) {
+        return
+      }
+
+      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)!!.setEnabled(true)
+    }
+  }
+
+  private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
       return@mapIndexed FloatingListMenu.FloatingListMenuItem(
         id = index,
@@ -582,7 +646,7 @@ class MainSettingsControllerV2(context: Context)
       items = items,
       itemClickListener = { clickedItem ->
         settingV2.updateSetting(clickedItem.value)
-        onItemClicked()
+        onItemClicked(clickedItem.value)
       })
 
     navigationController!!.presentController(
@@ -591,7 +655,7 @@ class MainSettingsControllerV2(context: Context)
     )
   }
 
-  private fun showInputDialog(view: View, inputSettingV2: InputSettingV2<*>, rebuildScreenFunc: () -> Unit) {
+  private fun showInputDialog(view: View, inputSettingV2: InputSettingV2<*>, rebuildScreenFunc: (Any?) -> Unit) {
     val container = LinearLayout(view.context)
     container.setPadding(dp(24f), dp(8f), dp(24f), 0)
 
@@ -633,7 +697,7 @@ class MainSettingsControllerV2(context: Context)
   private fun onInputValueEntered(
     inputSettingV2: InputSettingV2<*>,
     editText: EditText,
-    rebuildScreenFunc: () -> Unit
+    rebuildScreenFunc: (Any?) -> Unit
   ) {
     when (inputSettingV2.inputType) {
       InputSettingV2.InputType.String -> {
@@ -669,7 +733,7 @@ class MainSettingsControllerV2(context: Context)
       null -> throw IllegalStateException("InputType is null")
     }.exhaustive
 
-    rebuildScreenFunc()
+    rebuildScreenFunc(inputSettingV2.getCurrent())
   }
 
   private fun popScreen(): IScreenIdentifier {
@@ -726,5 +790,7 @@ class MainSettingsControllerV2(context: Context)
     private const val TAG = "DeveloperSettingsControllerV2"
     private const val MIN_QUERY_LENGTH = 3
     private const val DEBOUNCE_TIME_MS = 350L
+
+    private const val ACTION_RESTART_OR_REFRESH_UI = 100
   }
 }
