@@ -103,14 +103,6 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.transparencyOn
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.ImagesGroup.NeverShowWebmControls,
-          topDescriptionIdFunc = { R.string.setting_fetch_never_show_webm_controls },
-          bottomDescriptionIdFunc = { R.string.setting_fetch_never_show_webm_controls_description },
-          setting = ChanSettings.neverShowWebmControls
-        )
-
         return group
       }
     )

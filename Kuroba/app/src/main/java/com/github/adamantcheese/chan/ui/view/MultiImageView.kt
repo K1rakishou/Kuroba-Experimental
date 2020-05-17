@@ -30,7 +30,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnTouchListener
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.content.FileProvider
@@ -103,10 +105,13 @@ class MultiImageView @JvmOverloads constructor(
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
+
   @Inject
   lateinit var webmStreamingSource: WebmStreamingSource
+
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -129,7 +134,26 @@ class MultiImageView @JvmOverloads constructor(
   private var transparentBackground = ChanSettings.transparencyOn.get()
   private var imageAlreadySaved = false
   private val gestureDetector: GestureDetector
-  private val exoClickHandler: View
+
+  private val childrenToInterceptClicks = setOf(
+    R.id.exo_controls_view_root,
+    R.id.exo_prev,
+    R.id.exo_rew,
+    R.id.exo_play,
+    R.id.exo_progress,
+    R.id.exo_pause,
+    R.id.exo_ffwd,
+    R.id.exo_next
+  )
+
+  private val exoControlsTouchListener = OnTouchListener { v, event ->
+    if (event.actionMasked == MotionEvent.ACTION_DOWN
+      || event.actionMasked == MotionEvent.ACTION_UP) {
+      callback?.resetImmersive()
+    }
+
+    return@OnTouchListener false
+  }
 
   private val defaultMuteState: Boolean
     private get() = (ChanSettings.videoDefaultMuted.get() &&
@@ -145,11 +169,6 @@ class MultiImageView @JvmOverloads constructor(
 
     cancellableToast = CancellableToast()
     gestureDetector = GestureDetector(context, MultiImageViewGestureDetector(this))
-
-    exoClickHandler = View(getContext())
-    exoClickHandler.setOnClickListener(null)
-    exoClickHandler.id = Int.MAX_VALUE
-    exoClickHandler.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
 
     setOnClickListener(null)
 
@@ -184,6 +203,16 @@ class MultiImageView @JvmOverloads constructor(
           }
         }
     }
+  }
+
+  fun unbindPostImage() {
+    cancelLoad()
+
+    if (context is StartActivity) {
+      (context as StartActivity).lifecycle.removeObserver(this)
+    }
+
+    callback = null
   }
 
   private fun cancelLoad() {
@@ -297,12 +326,8 @@ class MultiImageView @JvmOverloads constructor(
     callback?.checkImmersive()
   }
 
-  override fun setClickHandler(set: Boolean) {
-    if (set) {
-      addView(exoClickHandler)
-    } else {
-      removeView(exoClickHandler)
-    }
+  override fun resetImmersive() {
+    callback?.resetImmersive()
   }
 
   override fun togglePlayState() {
@@ -322,6 +347,15 @@ class MultiImageView @JvmOverloads constructor(
   fun setVolume(muted: Boolean) {
     if (exoPlayer != null) {
       exoPlayer?.volume = if (muted) 0f else 1f
+    }
+  }
+
+  fun onSystemUiVisibilityChange(visible: Boolean) {
+    if (!visible) {
+      val playerView = findView(PlayerView::class.java) as? PlayerView
+        ?: return
+
+      playerView.useController = false
     }
   }
 
@@ -669,7 +703,10 @@ class MultiImageView @JvmOverloads constructor(
       exoVideoView.player = exoPlayer
 
       exoVideoView.setOnClickListener(null)
-      exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
+      exoVideoView.setOnTouchListener { _, motionEvent ->
+        gestureDetector.onTouchEvent(motionEvent)
+        return@setOnTouchListener true
+      }
       exoVideoView.useController = false
       exoVideoView.controllerHideOnTouch = false
       exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
@@ -681,6 +718,7 @@ class MultiImageView @JvmOverloads constructor(
         null
       )
 
+      setExoControlsViewGlobalTouchListener(exoVideoView)
       updatePlayerControlsInsets(exoVideoView)
       onModeLoaded(Mode.VIDEO, exoVideoView)
 
@@ -720,7 +758,10 @@ class MultiImageView @JvmOverloads constructor(
               val exoVideoView = PlayerView(context)
               exoVideoView.player = exoPlayer
               exoVideoView.setOnClickListener(null)
-              exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
+              exoVideoView.setOnTouchListener { _, motionEvent ->
+                gestureDetector.onTouchEvent(motionEvent)
+                return@setOnTouchListener true
+              }
               exoVideoView.useController = false
               exoVideoView.controllerHideOnTouch = false
               exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
@@ -732,6 +773,7 @@ class MultiImageView @JvmOverloads constructor(
                 null
               )
 
+              setExoControlsViewGlobalTouchListener(exoVideoView)
               updatePlayerControlsInsets(exoVideoView)
               onModeLoaded(Mode.VIDEO, exoVideoView)
 
@@ -756,6 +798,23 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
+  /**
+   * When any button of the exoPlayer's controls is pressed we want to reset image gallery's
+   * immersion state (more precisely we want to postpone automatic UI hide handler)
+   * */
+  @SuppressLint("ClickableViewAccessibility")
+  private fun setExoControlsViewGlobalTouchListener(exoVideoView: PlayerView) {
+    val views = exoVideoView.findChildren { childView ->
+      childView.id in childrenToInterceptClicks
+    }
+
+    views.forEach { view -> view.setOnTouchListener(exoControlsTouchListener) }
+  }
+
+  /**
+   * Updates a height of a view that we use to make the player controls appear higher to avoid
+   * controls getting blocked by navbar or some other Android UI element.
+   * */
   private fun updatePlayerControlsInsets(exoVideoView: PlayerView) {
     val insetsView = exoVideoView.findChild { childView ->
       childView.id == R.id.exo_controls_insets_view
@@ -786,8 +845,8 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   override fun onAudioSessionId(audioSessionId: Int) {
-    if (exoPlayer != null && exoPlayer!!.audioFormat != null) {
-      callback!!.onAudioLoaded(this)
+    if (exoPlayer != null && exoPlayer?.audioFormat != null) {
+      callback?.onAudioLoaded(this)
     }
   }
 
@@ -930,7 +989,7 @@ class MultiImageView @JvmOverloads constructor(
       override fun onReady() {
         if (!hasContent || mode == Mode.BIGIMAGE) {
           runAppearAnimation(prevActiveView, findView(CustomScaleImageView::class.java), isSpoiler) {
-            callback!!.hideProgress(this@MultiImageView)
+            callback?.hideProgress(this@MultiImageView)
             onModeLoaded(Mode.BIGIMAGE, image)
             toggleTransparency()
           }
@@ -1097,9 +1156,6 @@ class MultiImageView @JvmOverloads constructor(
         )
 
         addView(view, 0, layoutParams)
-        if (view is PlayerView) {
-          addView(exoClickHandler)
-        }
       }
     }
 
@@ -1164,6 +1220,7 @@ class MultiImageView @JvmOverloads constructor(
 
     fun onTap()
     fun checkImmersive()
+    fun resetImmersive()
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()
     fun onStartDownload(multiImageView: MultiImageView?, chunksCount: Int)

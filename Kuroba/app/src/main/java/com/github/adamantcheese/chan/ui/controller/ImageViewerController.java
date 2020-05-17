@@ -40,6 +40,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
@@ -474,16 +475,52 @@ public class ImageViewerController
     }
 
     public void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center) {
-        ((ImageViewerAdapter) pager.getAdapter()).setMode(postImage, mode, center);
+        ImageViewerAdapter adapter = getImageViewerAdapter();
+        if (adapter == null) return;
+
+        adapter.setMode(postImage, mode, center);
     }
 
     @Override
     public void setVolume(PostImage postImage, boolean muted) {
-        ((ImageViewerAdapter) pager.getAdapter()).setVolume(postImage, muted);
+        ImageViewerAdapter adapter = getImageViewerAdapter();
+        if (adapter == null) {
+            return;
+        }
+
+        adapter.setVolume(postImage, muted);
     }
 
     public MultiImageView.Mode getImageMode(PostImage postImage) {
-        return ((ImageViewerAdapter) pager.getAdapter()).getMode(postImage);
+        ImageViewerAdapter adapter = getImageViewerAdapter();
+        if (adapter == null) {
+            return MultiImageView.Mode.UNLOADED;
+        }
+
+        return adapter.getMode(postImage);
+    }
+
+    public void onSystemUiVisibilityChange(boolean visible) {
+        ImageViewerAdapter adapter = getImageViewerAdapter();
+        if (adapter == null) {
+            return;
+        }
+
+        adapter.onSystemUiVisibilityChange(visible);
+    }
+
+    @Nullable
+    private ImageViewerAdapter getImageViewerAdapter() {
+        if (pager == null) {
+            return null;
+        }
+
+        ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
+        if (adapter == null) {
+            return null;
+        }
+
+        return adapter;
     }
 
     public void setTitle(PostImage postImage, int index, int count, boolean spoiler) {
@@ -493,6 +530,7 @@ public class ImageViewerController
         } else {
             navigation.title = postImage.filename + "." + postImage.extension;
         }
+
         navigation.subtitle = (index + 1) + "/" + count;
         ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
 
@@ -730,11 +768,8 @@ public class ImageViewerController
     }
 
     private void setBackgroundAlpha(float alpha) {
-        navigationController.view.setBackgroundColor(Color.argb((int) (alpha * TRANSITION_FINAL_ALPHA * 255f),
-                0,
-                0,
-                0
-        ));
+        int color = Color.argb((int) (alpha * TRANSITION_FINAL_ALPHA * 255f), 0, 0, 0);
+        navigationController.view.setBackgroundColor(color);
 
         if (alpha == 0f) {
             getWindow(context).setStatusBarColor(statusBarColorPrevious);
@@ -751,6 +786,12 @@ public class ImageViewerController
 
     private ThumbnailView getTransitionImageView(PostImage postImage) {
         return imageViewerCallback.getPreviewImageTransitionView(postImage);
+    }
+
+    @Override
+    public void resetImmersive() {
+        mainHandler.removeCallbacks(uiHideCall);
+        mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
     }
 
     @Override
@@ -784,6 +825,8 @@ public class ImageViewerController
         ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
         params.height = 0;
         navigationController.getToolbar().setLayoutParams(params);
+
+        onSystemUiVisibilityChange(false);
     }
 
     private void showSystemUI() {
@@ -801,6 +844,8 @@ public class ImageViewerController
         ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
         params.height = getDimen(R.dimen.toolbar_height);
         navigationController.getToolbar().setLayoutParams(params);
+
+        onSystemUiVisibilityChange(true);
     }
 
     public interface ImageViewerCallback {

@@ -537,8 +537,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_fetch_inlined_file_sizes_description">A HEAD request will be sent for inlined files to try to get the Content-Length header which value will be used as the file size.\n\n⚠⚠⚠ WARNING ⚠⚠⚠\n\nBy enabling this setting you may accidentally leak your IP address to IP logger site. Only enable this if you don\'t care about leaking your IP address.</string>
     <string name="setting_fetch_image_opacity">Image opacity</string>
     <string name="setting_fetch_image_opacity_description">Default state for image transparency in the viewer</string>
-    <string name="setting_fetch_never_show_webm_controls">Never show WEBM controls</string>
-    <string name="setting_fetch_never_show_webm_controls_description">Treats WEBMs like GIFs; tap to close, double tap to play/pause, always automatically loops.</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

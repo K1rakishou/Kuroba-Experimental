@@ -219,7 +219,6 @@ public class ChanSettings {
     public static final BooleanSetting parsePostImageLinks;
     public static final BooleanSetting fetchInlinedFileSizes;
     public static final BooleanSetting transparencyOn;
-    public static final BooleanSetting neverShowWebmControls;
 
     // Set elsewhere in the application
     public static final OptionsSetting<PostViewMode> boardViewMode;
@@ -374,7 +373,6 @@ public class ChanSettings {
             parsePostImageLinks = new BooleanSetting(p, "parse_post_image_links", true);
             fetchInlinedFileSizes = new BooleanSetting(p, "fetch_inlined_file_size", false);
             transparencyOn = new BooleanSetting(p, "image_transparency_on", false);
-            neverShowWebmControls = new BooleanSetting(p, "never_show_webm_controls", false);
 
             //Elsewhere
             boardViewMode =

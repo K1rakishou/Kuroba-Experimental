@@ -22,15 +22,13 @@ class MultiImageViewGestureDetector(
         val activeView = callbacks.getActiveView()
           ?: return false
 
-        if (activeView is PlayerView && !ChanSettings.neverShowWebmControls.get()) {
+        if (activeView is PlayerView) {
             if (activeView.player != null) {
                 if (activeView.isControllerVisible) {
-                    activeView.useController = false
-                    callbacks.setClickHandler(true)
+                    callbacks.resetImmersive()
                 } else {
                     activeView.useController = true
                     activeView.showController()
-                    callbacks.setClickHandler(false)
                     callbacks.checkImmersive()
                 }
                 return true
@@ -57,6 +55,7 @@ class MultiImageViewGestureDetector(
 
         if (activeView is PlayerView) {
             callbacks.togglePlayState()
+            callbacks.resetImmersive()
             return true
         }
 
@@ -168,7 +167,7 @@ class MultiImageViewGestureDetector(
         fun setImageAlreadySaved()
         fun onTap()
         fun checkImmersive()
-        fun setClickHandler(set: Boolean)
+        fun resetImmersive()
         fun togglePlayState()
         fun onSwipeToCloseImage()
         fun onSwipeToSaveImage()

@@ -141,6 +141,30 @@ private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Bool
     return null
 }
 
+fun ViewGroup.findChildren(predicate: (View) -> Boolean): Set<View> {
+    val children = hashSetOf<View>()
+
+    if (predicate(this)) {
+        children += this
+    }
+
+    findChildrenRecursively(children, this, predicate)
+    return children
+}
+
+fun findChildrenRecursively(children: HashSet<View>, viewGroup: ViewGroup, predicate: (View) -> Boolean) {
+    for (index in 0 until viewGroup.childCount) {
+        val child = viewGroup.getChildAt(index)
+        if (predicate(child)) {
+            children += child
+        }
+
+        if (child is ViewGroup) {
+            findChildrenRecursively(children, child, predicate)
+        }
+    }
+}
+
 fun View.updateHeight(newHeight: Int) {
     val updatedLayoutParams = layoutParams
     updatedLayoutParams.height = newHeight

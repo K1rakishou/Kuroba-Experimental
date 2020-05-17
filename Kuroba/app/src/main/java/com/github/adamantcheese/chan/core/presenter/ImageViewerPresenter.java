@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import androidx.viewpager.widget.ViewPager;
 
 import com.github.adamantcheese.chan.controller.Controller;
+import com.github.adamantcheese.chan.core.base.Debouncer;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.cache.FileCacheListener;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
@@ -94,6 +95,7 @@ public class ImageViewerPresenter
     private Loadable loadable;
     private Set<CancelableDownload> preloadingImages = new HashSet<>();
     private final Set<String> nonCancelableImages = new HashSet<>();
+    private Debouncer motionEventDebouncer = new Debouncer(false);
 
     // Disables swiping until the view pager is visible
     private boolean viewPagerVisible = false;
@@ -534,6 +536,11 @@ public class ImageViewerPresenter
     }
 
     @Override
+    public void resetImmersive() {
+        motionEventDebouncer.post(callback::resetImmersive, 300);
+    }
+
+    @Override
     public void onSwipeToCloseImage() {
         onExit();
     }
@@ -777,6 +784,7 @@ public class ImageViewerPresenter
         void showVolumeMenuItem(boolean show, boolean muted);
         void showDownloadMenuItem(boolean show);
         boolean isImmersive();
+        void resetImmersive();
         void showSystemUI(boolean show);
         void presentController(Controller controller, boolean animated);
     }

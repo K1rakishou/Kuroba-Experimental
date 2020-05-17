@@ -335,7 +335,6 @@ sealed class AppearanceScreen(
     object ParsePostImageLinks : ImagesGroup("parse_post_image_links")
     object FetchInlinedFileSizes : ImagesGroup("fetch_inlined_file_sizes")
     object TransparencyOn : ImagesGroup("transparency_on")
-    object NeverShowWebmControls : ImagesGroup("never_show_webm_controls")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

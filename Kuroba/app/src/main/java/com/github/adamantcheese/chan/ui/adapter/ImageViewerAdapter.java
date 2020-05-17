@@ -51,10 +51,15 @@ public class ImageViewerAdapter
     public View getView(int position, ViewGroup parent) {
         PostImage postImage = images.get(position);
         MultiImageView view = new MultiImageView(parent.getContext());
-        view.bindPostImage(postImage, multiImageViewCallback, images.get(0) == postImage); // hacky but good enough
+
+        // hacky but good enough
+        view.bindPostImage(
+                postImage,
+                multiImageViewCallback,
+                images.get(0) == postImage
+        );
 
         loadedViews.add(view);
-
         return view;
     }
 
@@ -62,6 +67,7 @@ public class ImageViewerAdapter
     public void destroyItem(ViewGroup container, int position, Object object) {
         super.destroyItem(container, position, object);
 
+        ((MultiImageView) object).unbindPostImage();
         loadedViews.remove(object);
     }
 
@@ -116,6 +122,12 @@ public class ImageViewerAdapter
             return null;
         } else {
             return view.getMode();
+        }
+    }
+
+    public void onSystemUiVisibilityChange(boolean visible) {
+        for (MultiImageView view : loadedViews) {
+            view.onSystemUiVisibilityChange(visible);
         }
     }
 
