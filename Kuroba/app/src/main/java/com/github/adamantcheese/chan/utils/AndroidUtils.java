@@ -61,6 +61,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -502,6 +503,22 @@ public class AndroidUtils {
     public static void fixSnackbarText(Context context, Snackbar snackbar) {
         ((TextView) snackbar.getView().findViewById(R.id.snackbar_text)).setTextColor(Color.WHITE);
         snackbar.setActionTextColor(getAttrColor(context, R.attr.colorAccent));
+    }
+
+    /**
+     * We only need to use this method in DrawerController. Snackbar "should" work normally in all
+     * other places.
+     * */
+    public static void fixSnackbarInsets(
+            @NonNull Snackbar snackbar,
+            @NonNull GlobalWindowInsetsManager globalWindowInsetsManager
+    ) {
+        snackbar.getView().setPadding(
+                globalWindowInsetsManager.left(),
+                0,
+                0,
+                globalWindowInsetsManager.bottom()
+        );
     }
 
     public static boolean isConnected(int type) {

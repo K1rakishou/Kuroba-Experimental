@@ -44,7 +44,7 @@ import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2;
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter;
-import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.chan.utils.KtExtensionsKt;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -55,7 +55,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import dev.chrisbanes.insetter.Insetter;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
@@ -63,6 +62,7 @@ import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
 import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
 import static com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.TYPE_PIN;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.fixSnackbarInsets;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.fixSnackbarText;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -75,6 +75,7 @@ public class DrawerController
         implements DrawerAdapter.Callback, View.OnClickListener {
     private static final String TAG = "DrawerController";
 
+    protected FrameLayout rootLayout;
     protected FrameLayout container;
     protected DrawerLayout drawerLayout;
     protected LinearLayout drawer;
@@ -101,6 +102,7 @@ public class DrawerController
         EventBus.getDefault().register(this);
 
         view = inflate(context, R.layout.controller_navigation_drawer);
+        rootLayout = view.findViewById(R.id.root_layout);
         container = view.findViewById(R.id.container);
         drawerLayout = view.findViewById(R.id.drawer_layout);
         drawerLayout.setDrawerShadow(R.drawable.panel_shadow, Gravity.LEFT);
@@ -118,39 +120,28 @@ public class DrawerController
 
         updateBadge();
 
-        ViewCompat.setOnApplyWindowInsetsListener(view, (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout, (v, insets) -> {
             globalWindowInsetsManager.updateInsets(insets);
+
+            KtExtensionsKt.updateMargins(
+                    v,
+                    globalWindowInsetsManager.left(),
+                    globalWindowInsetsManager.right(),
+                    globalWindowInsetsManager.left(),
+                    globalWindowInsetsManager.right(),
+                    globalWindowInsetsManager.top(),
+                    globalWindowInsetsManager.bottom()
+            );
 
             // Hack! We need to remove all insets here because otherwise they will break all the
             // app's snackbars because they use insets to adjust their position automatically and
             // it cannot be turned off. To fix that we store the actual insets and then manually
             // remove all insets from WindowInsets class. If you ever need to use actual insets then
             // you need to register insets listener (Insetter.setOnApplyInsetsListener) BUT do not
-            // use insets that are provided to the labmda. Use insets stored in
-            // GlobalWindowInsetsManager!!! Otherwise expect funny bugs.
+            // use insets that are provided to the labmda. Use insets stored in GlobalWindowInsetsManager!!!
             return insets.replaceSystemWindowInsets(0, 0, 0, 0);
         });
-        ViewCompat.requestApplyInsets(view);
-
-        Insetter.setOnApplyInsetsListener(container, (view, insets, initialState) -> {
-            AndroidUtils.updatePaddings(
-                    view,
-                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.left(),
-                    initialState.getPaddings().getRight() + globalWindowInsetsManager.right(),
-                    initialState.getPaddings().getTop() + globalWindowInsetsManager.top(),
-                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.bottom()
-            );
-        });
-
-        Insetter.setOnApplyInsetsListener(drawer, (view, insets, initialState) -> {
-            AndroidUtils.updatePaddings(
-                    view,
-                    initialState.getPaddings().getLeft() + globalWindowInsetsManager.left(),
-                    initialState.getPaddings().getRight() + globalWindowInsetsManager.right(),
-                    initialState.getPaddings().getTop() + globalWindowInsetsManager.top(),
-                    initialState.getPaddings().getBottom() + globalWindowInsetsManager.bottom()
-            );
-        });
+        ViewCompat.requestApplyInsets(rootLayout);
 
         Disposable disposable = settingsNotificationManager.listenForNotificationUpdates()
                 .subscribe(activeNotifications -> {
@@ -183,7 +174,12 @@ public class DrawerController
     }
 
     public void onMenuClicked() {
-        if (getMainToolbarNavigationController().getTop().navigation.hasDrawer) {
+        Controller topController = getMainToolbarNavigationController().getTop();
+        if (topController == null) {
+            return;
+        }
+
+        if (topController.navigation.hasDrawer) {
             drawerLayout.openDrawer(drawer);
         }
     }
@@ -282,9 +278,15 @@ public class DrawerController
                 // because we will be deleting files from the disk. We don't want to warn the user
                 // every time he deletes one pin.
                 String text = getQuantityString(R.plurals.bookmark, pins.size(), pins.size());
-                Snackbar snackbar = Snackbar.make(drawerLayout, getString(R.string.drawer_pins_cleared, text), 4000);
+                Snackbar snackbar = Snackbar.make(
+                        drawerLayout,
+                        getString(R.string.drawer_pins_cleared, text),
+                        4000
+                );
+
                 snackbar.setGestureInsetBottomIgnored(true);
                 fixSnackbarText(context, snackbar);
+                fixSnackbarInsets(snackbar, globalWindowInsetsManager);
                 snackbar.setAction(R.string.undo, v -> watchManager.addAll(pins));
                 snackbar.show();
             }
@@ -295,6 +297,7 @@ public class DrawerController
             Snackbar snackbar = Snackbar.make(drawerLayout, text, Snackbar.LENGTH_LONG);
             snackbar.setGestureInsetBottomIgnored(true);
             fixSnackbarText(context, snackbar);
+            fixSnackbarInsets(snackbar, globalWindowInsetsManager);
             snackbar.show();
         }
     }
@@ -321,6 +324,7 @@ public class DrawerController
         }
         snackbar.setGestureInsetBottomIgnored(true);
         fixSnackbarText(context, snackbar);
+        fixSnackbarInsets(snackbar, globalWindowInsetsManager);
         snackbar.show();
     }
 

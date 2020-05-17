@@ -77,6 +77,8 @@ fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
 }
 
 fun View.updateMargins(
+  left: Int? = null,
+  right: Int? = null,
   start: Int? = null,
   end: Int? = null,
   top: Int? = null,
@@ -85,15 +87,17 @@ fun View.updateMargins(
     val layoutParams = layoutParams as? MarginLayoutParams
       ?: return
 
+    val newLeft = left ?: layoutParams.leftMargin
+    val newRight = right ?: layoutParams.rightMargin
     val newStart = start ?: layoutParams.marginStart
     val newEnd = end ?: layoutParams.marginEnd
     val newTop = top ?: layoutParams.topMargin
     val newBottom = bottom ?: layoutParams.bottomMargin
 
     layoutParams.setMargins(
-      layoutParams.leftMargin,
+      newLeft,
       newTop,
-      layoutParams.rightMargin,
+      newRight,
       newBottom
     )
 
