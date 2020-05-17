@@ -103,7 +103,7 @@ public class ImageViewerController
     private static final String TAG = "ImageViewerController";
     private static final int TRANSITION_DURATION = 300;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;
-    private static final int DISAPPEARANCE_DELAY_MS = 3000;
+    public static final int DISAPPEARANCE_DELAY_MS = 3000;
 
     private static final int VOLUME_ID = 1;
     private static final int SAVE_ID = 2;

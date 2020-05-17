@@ -59,6 +59,7 @@ import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.ui.controller.ImageViewerController
 import com.github.adamantcheese.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.*
@@ -671,6 +672,7 @@ class MultiImageView @JvmOverloads constructor(
       exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
       exoVideoView.useController = false
       exoVideoView.controllerHideOnTouch = false
+      exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
       exoVideoView.useArtwork = true
       exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
@@ -721,6 +723,7 @@ class MultiImageView @JvmOverloads constructor(
               exoVideoView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
               exoVideoView.useController = false
               exoVideoView.controllerHideOnTouch = false
+              exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
               exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
