@@ -1185,19 +1185,19 @@ class MultiImageView @JvmOverloads constructor(
     private val random = Random(System.currentTimeMillis())
 
     private val CHAN4_404_IMAGE_LINKS = listOf(
-      "https://sys.4chan.org/image/error/404/rid.php",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-5.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-4.png",
-      "https://s.4cdn.org/image/error/404/404-anonymouse.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous.png",
       "https://s.4cdn.org/image/error/404/404-Anonymous.jpg",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-2.png",
       "https://s.4cdn.org/image/error/404/404-Anonymous-3.jpg",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-7.png",
-      "https://s.4cdn.org/image/error/404/404-Kobayen.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-8.png",
-      "https://s.4cdn.org/image/error/404/404-Ragathol.png",
       "https://s.4cdn.org/image/error/404/404-Anonymous-3.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png"
+      "https://s.4cdn.org/image/error/404/404-Anonymous-4.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-5.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-7.png",
+      "https://s.4cdn.org/image/error/404/404-Anonymous-8.png",
+      "https://s.4cdn.org/image/error/404/404-anonymouse.png",
+      "https://s.4cdn.org/image/error/404/404-Kobayen.png",
+      "https://s.4cdn.org/image/error/404/404-Ragathol.png"
     )
 
     private val MEDIA_LOADING_DISPATCHER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
