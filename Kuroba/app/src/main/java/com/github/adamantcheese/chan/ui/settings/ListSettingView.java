@@ -16,29 +16,27 @@
  */
 package com.github.adamantcheese.chan.ui.settings;
 
-import android.view.Gravity;
 import android.view.View;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.Setting;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
+import kotlin.Unit;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class ListSettingView<T>
         extends SettingView
-        implements FloatingMenu.FloatingMenuCallback, View.OnClickListener {
+        implements View.OnClickListener {
     public final List<Item> items;
-
     public int selected;
-
     private Setting<T> setting;
 
     public ListSettingView(
@@ -106,31 +104,34 @@ public class ListSettingView<T>
         }
     }
 
-    @Override
-    public void onClick(View v) {
-        List<FloatingMenuItem> menuItems = new ArrayList<>(items.size());
-        for (Item item : items) {
-            menuItems.add(new FloatingMenuItem(item.key, item.name, item.enabled));
-        }
-
-        FloatingMenu menu = new FloatingMenu(v.getContext());
-        menu.setAnchor(v, Gravity.LEFT, dp(5), dp(5));
-        menu.setCallback(this);
-        menu.setItems(menuItems);
-        menu.show();
-    }
-
     @SuppressWarnings("unchecked")
     @Override
-    public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-        T selectedKey = (T) item.getId();
-        setting.set(selectedKey);
-        updateSelection();
-        settingsController.onPreferenceChange(this);
-    }
+    public void onClick(View v) {
+        List<FloatingListMenu.FloatingListMenuItem> menuItems = new ArrayList<>(items.size());
+        for (Item item : items) {
+            FloatingListMenu.FloatingListMenuItem menuItem = new FloatingListMenu.FloatingListMenuItem(
+                    item.key,
+                    item.name,
+                    item.enabled
+            );
 
-    @Override
-    public void onFloatingMenuDismissed(FloatingMenu menu) {
+            menuItems.add(menuItem);
+        }
+
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                v.getContext(),
+                menuItems,
+                item -> {
+                    T selectedKey = (T) item.getKey();
+                    setting.set(selectedKey);
+                    updateSelection();
+                    settingsController.onPreferenceChange(this);
+
+                    return Unit.INSTANCE;
+                }
+        );
+
+        settingsController.presentController(floatingListMenuController, true);
     }
 
     public void updateSelection() {

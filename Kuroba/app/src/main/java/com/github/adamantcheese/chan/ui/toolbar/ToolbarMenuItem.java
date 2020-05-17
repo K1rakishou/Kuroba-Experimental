@@ -209,7 +209,7 @@ public class ToolbarMenuItem {
                 view.getContext(),
                 floatingListMenuItems,
                 item -> {
-                    ToolbarMenuSubItem subItem = findMenuSubItem(subItems, item.getId());
+                    ToolbarMenuSubItem subItem = findMenuSubItem(subItems, (Integer) item.getKey());
                     if (subItem != null) {
                         subItem.performClick();
                     }

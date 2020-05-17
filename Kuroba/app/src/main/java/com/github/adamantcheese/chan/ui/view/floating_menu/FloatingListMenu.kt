@@ -46,7 +46,7 @@ class FloatingListMenu @JvmOverloads constructor(
         }
 
         epoxyFloatingListMenuRow {
-          id("epoxy_floating_list_menu_row_${item.id}")
+          id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
           title(itemName)
 
           if (item.enabled) {
@@ -75,7 +75,7 @@ class FloatingListMenu @JvmOverloads constructor(
   }
 
   data class FloatingListMenuItem @JvmOverloads constructor(
-    val id: Int,
+    val key: Any,
     val name: String,
     val value: Any? = null,
     val enabled: Boolean = true,

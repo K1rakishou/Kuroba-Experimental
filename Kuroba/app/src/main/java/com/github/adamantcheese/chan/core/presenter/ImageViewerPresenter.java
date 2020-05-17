@@ -713,7 +713,9 @@ public class ImageViewerPresenter
                 items,
                 item -> {
                     for (ImageSearch imageSearch : ImageSearch.engines) {
-                        if (item.getId() == imageSearch.getId()) {
+                        Integer id = (Integer) item.getKey();
+
+                        if (id == imageSearch.getId()) {
                             final HttpUrl searchImageUrl = getSearchImageUrl(getCurrentPostImage());
                             if (searchImageUrl == null) {
                                 Logger.e(TAG, "onFloatingMenuItemClicked() searchImageUrl == null");

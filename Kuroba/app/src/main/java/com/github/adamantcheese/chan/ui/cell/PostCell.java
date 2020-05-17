@@ -275,7 +275,7 @@ public class PostCell
                 items,
                 item -> {
                     if (callback != null) {
-                        callback.onPostOptionClicked(post, item.getId(), inPopup);
+                        callback.onPostOptionClicked(post, (Integer) item.getKey(), inPopup);
                     }
 
                     return Unit.INSTANCE;

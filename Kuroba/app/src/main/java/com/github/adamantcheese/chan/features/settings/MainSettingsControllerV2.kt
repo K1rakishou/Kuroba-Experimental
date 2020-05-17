@@ -634,7 +634,7 @@ class MainSettingsControllerV2(context: Context)
   private fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
       return@mapIndexed FloatingListMenu.FloatingListMenuItem(
-        id = index,
+        key = index,
         name = settingV2.itemNameMapper(item),
         value = item,
         isCurrentlySelected = settingV2.isCurrent(item)
