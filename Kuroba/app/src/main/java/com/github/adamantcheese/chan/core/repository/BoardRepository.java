@@ -63,17 +63,13 @@ public class BoardRepository implements Observer {
         }
     }
 
+
     public void updateAvailableBoardsForSite(Site site, List<Board> availableBoards) {
-        databaseManager.runTaskAsync(() -> {
-            boolean changed = databaseBoardManager.createAll(site, availableBoards).call();
-            Logger.d(TAG, "updateAvailableBoardsForSite changed = " + changed);
-
-            if (changed) {
-                updateObservablesAsync();
-            }
-
-            return null;
-        });
+        boolean changed = databaseManager.runTask(databaseBoardManager.createAll(site, availableBoards));
+        Logger.d(TAG, "updateAvailableBoardsForSite changed = " + changed);
+        if (changed) {
+            updateObservablesAsync();
+        }
     }
 
     public Board getFromCode(Site site, String code) {
