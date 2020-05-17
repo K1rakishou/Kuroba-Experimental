@@ -49,7 +49,6 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteResolver;
 import com.github.adamantcheese.chan.core.site.SiteService;
-import com.github.adamantcheese.chan.ui.controller.BaseFloatingController;
 import com.github.adamantcheese.chan.ui.controller.BrowseController;
 import com.github.adamantcheese.chan.ui.controller.DoubleNavigationController;
 import com.github.adamantcheese.chan.ui.controller.DrawerController;
@@ -100,8 +99,6 @@ public class StartActivity
     private RuntimePermissionsHelper runtimePermissionsHelper;
     private UpdateManager updateManager;
 
-    private int originalStatusBarColor = 0;
-
     private boolean intentMismatchWorkaroundActive = false;
     private boolean exitFlag = false;
 
@@ -133,22 +130,6 @@ public class StartActivity
         Logger.d(TAG, "StartActivity initialization took " + diff + "ms");
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        int currentStatusBarColor = getWindow().getStatusBarColor();
-        if (currentStatusBarColor != originalStatusBarColor) {
-            boolean hasFloatingController = isControllerAdded(
-                    (controller) -> controller instanceof BaseFloatingController
-            );
-
-            if (!hasFloatingController) {
-                getWindow().setStatusBarColor(originalStatusBarColor);
-            }
-        }
-    }
-
     private void onCreateInternal(Bundle savedInstanceState) {
         if (intentMismatchWorkaround()) {
             return;
@@ -166,7 +147,6 @@ public class StartActivity
         runtimePermissionsHelper = new RuntimePermissionsHelper(this);
         updateManager = new UpdateManager(this);
 
-        originalStatusBarColor = getWindow().getStatusBarColor();
         contentView = findViewById(android.R.id.content);
         FullScreenUtilsKt.setupFullscreen(this);
 

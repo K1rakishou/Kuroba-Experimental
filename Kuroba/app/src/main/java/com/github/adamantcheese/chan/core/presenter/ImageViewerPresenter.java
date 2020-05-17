@@ -22,6 +22,7 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.viewpager.widget.ViewPager;
 
+import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.cache.FileCacheListener;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
@@ -31,13 +32,10 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ImageSearch;
+import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu;
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.adamantcheese.chan.ui.view.FloatingMenu;
-import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
@@ -52,6 +50,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -698,44 +697,49 @@ public class ImageViewerPresenter
         return true;
     }
 
-    public void showImageSearchOptions(NavigationItem navigation) {
-        List<FloatingMenuItem> items = new ArrayList<>();
+    public void showImageSearchOptions() {
+        List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
         for (ImageSearch imageSearch : ImageSearch.engines) {
-            items.add(new FloatingMenuItem(imageSearch.getId(), imageSearch.getName()));
+            FloatingListMenu.FloatingListMenuItem item = new FloatingListMenu.FloatingListMenuItem(
+                    imageSearch.getId(),
+                    imageSearch.getName()
+            );
+
+            items.add(item);
         }
-        ToolbarMenuItem overflowMenuItem = navigation.findItem(ToolbarMenu.OVERFLOW_ID);
-        FloatingMenu menu = new FloatingMenu(context, overflowMenuItem.getView(), items);
-        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-            @Override
-            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                for (ImageSearch imageSearch : ImageSearch.engines) {
-                    if (((Integer) item.getId()) == imageSearch.getId()) {
-                        final HttpUrl searchImageUrl = getSearchImageUrl(getCurrentPostImage());
-                        if (searchImageUrl == null) {
-                            Logger.e(TAG, "onFloatingMenuItemClicked() searchImageUrl == null");
+
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                context,
+                items,
+                item -> {
+                    for (ImageSearch imageSearch : ImageSearch.engines) {
+                        if (item.getId() == imageSearch.getId()) {
+                            final HttpUrl searchImageUrl = getSearchImageUrl(getCurrentPostImage());
+                            if (searchImageUrl == null) {
+                                Logger.e(TAG, "onFloatingMenuItemClicked() searchImageUrl == null");
+                                break;
+                            }
+
+                            openLinkInBrowser(
+                                    context,
+                                    imageSearch.getUrl(searchImageUrl.toString()),
+                                    themeHelper.getTheme()
+                            );
+
                             break;
                         }
-
-                        openLinkInBrowser(
-                                context,
-                                imageSearch.getUrl(searchImageUrl.toString()),
-                                themeHelper.getTheme()
-                        );
-
-                        break;
                     }
-                }
-            }
 
-            @Override
-            public void onFloatingMenuDismissed(FloatingMenu menu) {
-            }
-        });
-        menu.show();
+                    return Unit.INSTANCE;
+                }
+        );
+
+        callback.presentController(floatingListMenuController, true);
     }
 
     /**
-     * Send thumbnail image of movie posts because none of the image search providers support movies (such as webm) directly
+     * Send thumbnail image of movie posts because none of the image search providers support movies
+     * (such as webm) directly
      *
      * @param postImage the post image
      * @return url of an image to be searched
@@ -772,5 +776,6 @@ public class ImageViewerPresenter
         void showDownloadMenuItem(boolean show);
         boolean isImmersive();
         void showSystemUI(boolean show);
+        void presentController(Controller controller, boolean animated);
     }
 }

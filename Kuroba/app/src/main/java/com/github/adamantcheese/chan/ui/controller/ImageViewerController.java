@@ -318,7 +318,7 @@ public class ImageViewerController
     }
 
     private void searchClicked(ToolbarMenuSubItem item) {
-        presenter.showImageSearchOptions(navigation);
+        presenter.showImageSearchOptions();
     }
 
     private void downloadAlbumClicked(ToolbarMenuSubItem item) {
