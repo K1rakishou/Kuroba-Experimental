@@ -55,16 +55,14 @@ import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingSource
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
-import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.Player
@@ -77,6 +75,8 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.reactive.asFlow
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.File
@@ -106,6 +106,8 @@ class MultiImageView @JvmOverloads constructor(
   lateinit var webmStreamingSource: WebmStreamingSource
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var mainScope: CoroutineScope
 
@@ -170,6 +172,17 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     mainScope = MainScope()
+
+    mainScope.launch {
+      globalWindowInsetsManager.listenForInsetsChanges()
+        .asFlow()
+        .collect {
+          val activeView = getActiveView()
+          if (activeView is PlayerView) {
+            updatePlayerControlsInsets(activeView)
+          }
+        }
+    }
   }
 
   private fun cancelLoad() {
@@ -666,7 +679,9 @@ class MultiImageView @JvmOverloads constructor(
         null
       )
 
+      updatePlayerControlsInsets(exoVideoView)
       onModeLoaded(Mode.VIDEO, exoVideoView)
+
       callback?.onVideoLoaded(this)
     }
   }
@@ -714,6 +729,7 @@ class MultiImageView @JvmOverloads constructor(
                 null
               )
 
+              updatePlayerControlsInsets(exoVideoView)
               onModeLoaded(Mode.VIDEO, exoVideoView)
 
               callback?.onVideoLoaded(this@MultiImageView)
@@ -735,6 +751,14 @@ class MultiImageView @JvmOverloads constructor(
         }
       })
     }
+  }
+
+  private fun updatePlayerControlsInsets(exoVideoView: PlayerView) {
+    val insetsView = exoVideoView.findChild { childView ->
+      childView.id == R.id.exo_controls_insets_view
+    } as FrameLayout
+
+    insetsView.updateHeight(globalWindowInsetsManager.bottom())
   }
 
   private fun createExoPlayer(source: MediaSource): SimpleExoPlayer {

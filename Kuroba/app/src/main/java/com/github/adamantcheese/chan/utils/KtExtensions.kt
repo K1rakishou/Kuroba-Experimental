@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.utils
 
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
 import com.airbnb.epoxy.*
 import io.reactivex.disposables.CompositeDisposable
@@ -112,4 +113,36 @@ fun View.updatePaddings(
   bottom: Int = paddingBottom
 ) {
     setPadding(left, top, right, bottom)
+}
+
+fun ViewGroup.findChild(predicate: (View) -> Boolean): View? {
+    if (predicate(this)) {
+        return this
+    }
+
+    return findChildRecursively(this, predicate)
+}
+
+private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Boolean): View? {
+    for (index in 0 until viewGroup.childCount) {
+        val child = viewGroup.getChildAt(index)
+        if (predicate(child)) {
+            return child
+        }
+
+        if (child is ViewGroup) {
+            val result = findChildRecursively(child, predicate)
+            if (result != null) {
+                return result
+            }
+        }
+    }
+
+    return null
+}
+
+fun View.updateHeight(newHeight: Int) {
+    val updatedLayoutParams = layoutParams
+    updatedLayoutParams.height = newHeight
+    layoutParams = updatedLayoutParams
 }

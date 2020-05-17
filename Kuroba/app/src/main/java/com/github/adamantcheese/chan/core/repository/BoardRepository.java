@@ -134,8 +134,8 @@ public class BoardRepository implements Observer {
             board.saved = saved;
         }
 
-        databaseManager.runTaskAsync
-                (databaseBoardManager.updateIncludingUserFields(boards),
+        databaseManager.runTaskAsync(
+                databaseBoardManager.updateIncludingUserFields(boards),
                 (e) -> updateObservablesAsync()
         );
     }
