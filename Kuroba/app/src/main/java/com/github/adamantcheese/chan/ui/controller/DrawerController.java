@@ -133,12 +133,14 @@ public class DrawerController
                     globalWindowInsetsManager.bottom()
             );
 
-            // Hack! We need to remove all insets here because otherwise they will break all the
-            // app's snackbars because they use insets to adjust their position automatically and
-            // it cannot be turned off. To fix that we store the actual insets and then manually
-            // remove all insets from WindowInsets class. If you ever need to use actual insets then
-            // you need to register insets listener (Insetter.setOnApplyInsetsListener) BUT do not
-            // use insets that are provided to the labmda. Use insets stored in GlobalWindowInsetsManager!!!
+            // Hack! We need to get rid of all insets from here on out because otherwise they will
+            // break all the app's snackbars because snackbars use insets to adjust their position
+            // internally and it cannot be disabled. To fix that, we have to store the actual insets
+            // somewhere, and then remove the real insets that are stored in WindowInsets class.
+            // If, after this point, you ever need to use the real window insets then you need to
+            // register insets listener (Insetter.setOnApplyInsetsListener) BUT instead of using
+            // insets provided into that lambda you have to use insets stored in
+            // GlobalWindowInsetsManager.
             return insets.replaceSystemWindowInsets(0, 0, 0, 0);
         });
         ViewCompat.requestApplyInsets(rootLayout);
