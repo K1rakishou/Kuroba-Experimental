@@ -182,9 +182,6 @@ class MainSettingsControllerV2(context: Context)
     )
   }
 
-  // TODO(KurobaEx): MainSettingsControllerV2 never checks whether we have selected any settings that
-  //  require app restart/ui refresh.
-
   private val normalSettingsGraphDelegate = lazy { buildSettingsGraph() }
   private val normalSettingsGraph by normalSettingsGraphDelegate
   private val searchSettingsGraphDelegate = lazy { buildSettingsGraph().apply { rebuildScreens() } }
@@ -210,9 +207,6 @@ class MainSettingsControllerV2(context: Context)
     navigation.buildMenu()
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
-      }
-      .withItem(ACTION_RESTART_OR_REFRESH_UI, R.drawable.ic_check_24dp) {
-        onApplyClicked()
       }
       .build()
 
@@ -241,11 +235,6 @@ class MainSettingsControllerV2(context: Context)
         }
     }
 
-    waitForLayout(view) {
-      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.setEnabled(false)
-      return@waitForLayout true
-    }
-
     mainSettingsScreen.onCreate()
     developerSettingsScreen.onCreate()
     databaseSummaryScreen.onCreate()
@@ -259,14 +248,12 @@ class MainSettingsControllerV2(context: Context)
     rebuildDefaultScreen()
   }
 
-  private fun onApplyClicked() {
+  private fun restartAppOrRefreshUiIfNecessary() {
     if (hasPendingRestart) {
       (context as StartActivity).restartApp()
     } else if (hasPendingUiRefresh) {
       postToEventBus(RefreshUIMessage("SettingsController refresh"))
       hasPendingUiRefresh = false
-      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.setEnabled(false)
-
       cancellableToast.showToast(context, "UI refreshed")
     }
   }
@@ -293,7 +280,7 @@ class MainSettingsControllerV2(context: Context)
     }
 
     screenStack.clear()
-    onApplyClicked()
+    restartAppOrRefreshUiIfNecessary()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -613,21 +600,8 @@ class MainSettingsControllerV2(context: Context)
   private fun updateRestartRefreshButton(settingV2: SettingV2) {
     if (settingV2.requiresRestart) {
       hasPendingRestart = true
-      cancellableToast.showToast(context, context.getString(R.string.setting_click_to_restart))
     } else if (settingV2.requiresUiRefresh) {
       hasPendingUiRefresh = true
-      cancellableToast.showToast(context, context.getString(R.string.setting_click_to_refresh_ui))
-    }
-
-    if (hasPendingUiRefresh || hasPendingRestart) {
-      val isEnabled = navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)?.enabled
-        ?: return
-
-      if (isEnabled) {
-        return
-      }
-
-      navigation.findItem(ACTION_RESTART_OR_REFRESH_UI)!!.setEnabled(true)
     }
   }
 
@@ -790,7 +764,5 @@ class MainSettingsControllerV2(context: Context)
     private const val TAG = "DeveloperSettingsControllerV2"
     private const val MIN_QUERY_LENGTH = 3
     private const val DEBOUNCE_TIME_MS = 350L
-
-    private const val ACTION_RESTART_OR_REFRESH_UI = 100
   }
 }

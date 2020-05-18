@@ -9,6 +9,7 @@ import com.github.adamantcheese.chan.core.cache.MediaSourceCallback
 import com.github.adamantcheese.chan.core.cache.downloader.LocalThreadInfo
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.adamantcheese.chan.utils.Logger
@@ -41,7 +42,13 @@ class WebmStreamingSource(
         val uri = Uri.parse(videoUrl)
         val alreadyExists = cacheHandler.cacheFileExists(videoUrl)
         val rawFile = cacheHandler.getOrCreateCacheFile(videoUrl)
-        val fileCacheSource = WebmStreamingDataSource(uri, rawFile, fileManager)
+
+        val fileCacheSource = WebmStreamingDataSource(
+          uri,
+          rawFile,
+          fileManager,
+          ChanSettings.verboseLogs.get()
+        )
 
         fileCacheSource.addListener { file ->
             BackgroundUtils.ensureMainThread()

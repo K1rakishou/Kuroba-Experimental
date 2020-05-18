@@ -27,8 +27,7 @@ import java.util.List;
 /**
  * Original implementation by https://github.com/ekisu
  */
-public class WebmStreamingDataSource
-        extends BaseDataSource {
+public class WebmStreamingDataSource extends BaseDataSource {
     private final String TAG = "WebmStreamingDataSource";
 
     class PartialFileCache {
@@ -224,34 +223,41 @@ public class WebmStreamingDataSource
     private Range<Long> httpActiveRange;
     private List<Callback> listeners = new ArrayList<>();
 
+    private boolean verboseLogs;
     private RawFile file;
     @Nullable
     private Uri uri;
 
     private long pos;
     private long end;
-
     private long fileLength = C.LENGTH_UNSET;
 
     private boolean prepared = false;
     private boolean opened = false;
 
-    public WebmStreamingDataSource(@Nullable Uri uri, RawFile file, FileManager fileManager) {
+    public WebmStreamingDataSource(
+            @Nullable Uri uri,
+            RawFile file,
+            FileManager fileManager,
+            boolean verboseLogs
+    ) {
         super(/* isNetwork= */ true);
-        Logger.i(TAG, "WebmStreamingDataSource");
+        Logger.d(TAG, "WebmStreamingDataSource");
 
         this.dataSource = new DefaultHttpDataSourceFactory(NetModule.USER_AGENT).createDataSource();
 
+        this.verboseLogs = verboseLogs;
         this.fileManager = fileManager;
         this.file = file;
         this.uri = uri;
     }
 
-    private void detectLength()
-            throws HttpDataSource.HttpDataSourceException {
+    private void detectLength() throws HttpDataSource.HttpDataSourceException {
         this.fileLength = dataSource.open(new DataSpec(uri, 0, C.LENGTH_UNSET, null));
 
-        Logger.i(TAG, "detectLength: " + this.fileLength);
+        if (verboseLogs) {
+            Logger.i(TAG, "detectLength: " + this.fileLength);
+        }
     }
 
     private void prepare()
@@ -270,8 +276,7 @@ public class WebmStreamingDataSource
         prepared = true;
     }
 
-    public void fillCache(long length, InputStream inputStream)
-            throws IOException {
+    public void fillCache(long length, InputStream inputStream) throws IOException {
         dataToFillCache = new byte[(int) length];
         dataToFillCacheLength = inputStream.read(dataToFillCache);
         // If it's null, this means we're not prepared yet (i.e. we don't know the real size
@@ -299,10 +304,15 @@ public class WebmStreamingDataSource
 
         transferInitializing(dataSpec);
 
-        Logger.i(TAG, "opening, position: " + dataSpec.position + " length: " + dataSpec.length);
+        if (verboseLogs) {
+            Logger.i(TAG, "opening, position: " + dataSpec.position + " length: " + dataSpec.length);
+        }
+
         partialFileCache.seek(dataSpec.position);
 
-        long bytesRemaining = dataSpec.length == C.LENGTH_UNSET ? fileLength - dataSpec.position : dataSpec.length;
+        long bytesRemaining = dataSpec.length == C.LENGTH_UNSET
+                ? fileLength - dataSpec.position
+                : dataSpec.length;
 
         pos = dataSpec.position;
         end = pos + bytesRemaining - 1;
@@ -320,14 +330,18 @@ public class WebmStreamingDataSource
         return bytesRemaining;
     }
 
-    private void activateHttpRange(Range<Long> range)
-            throws HttpDataSource.HttpDataSourceException {
+    private void activateHttpRange(Range<Long> range) throws HttpDataSource.HttpDataSourceException {
         if (httpActiveRange == null || !httpActiveRange.equals(range)) {
             // As this is reading sequentially, and our ranges are limited to the region
             // our DataSpec was supposed to read, it's okay to assume we will read the entirety
             // of our missing ranges, and we won't need to seek inside them.
 
-            DataSpec dataSpec = new DataSpec(uri, range.getLower(), range.getUpper() - range.getLower() + 1, null);
+            DataSpec dataSpec = new DataSpec(
+                    uri,
+                    range.getLower(),
+                    range.getUpper() - range.getLower() + 1,
+                    null
+            );
 
             dataSource.open(dataSpec);
             httpActiveRange = range;
@@ -415,9 +429,11 @@ public class WebmStreamingDataSource
     }
 
     @Override
-    public void close()
-            throws IOException {
-        Logger.i(TAG, "close");
+    public void close() throws IOException {
+        if (verboseLogs) {
+            Logger.i(TAG, "close");
+        }
+
         try {
             if (dataSource != null) {
                 dataSource.close();
