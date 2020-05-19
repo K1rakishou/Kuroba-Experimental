@@ -86,13 +86,13 @@ class Chan4 : SiteBase() {
       val imageFile = arg["tim"].toString() + "." + arg["ext"]
 
       return i.newBuilder()
-        .addPathSegment(post.board.code)
+        .addPathSegment(post.board!!.code)
         .addPathSegment(imageFile)
         .build()
     }
 
     override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, arg: Map<String, String>): HttpUrl {
-      val board = post.board
+      val board = post.board!!
 
       return if (spoiler) {
         val image = s.newBuilder().addPathSegment("image")

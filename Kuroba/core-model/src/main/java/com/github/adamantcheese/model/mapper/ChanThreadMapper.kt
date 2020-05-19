@@ -76,6 +76,8 @@ object ChanThreadMapper {
                 lastModified = chanThreadEntity.lastModified,
                 sticky = chanThreadEntity.sticky,
                 closed = chanThreadEntity.closed,
+                deleted = chanPostEntity.deleted,
+                archiveId = chanPostEntity.archiveId,
                 archived = chanThreadEntity.archived,
                 timestamp = chanPostEntity.timestamp,
                 name = chanPostEntity.name,

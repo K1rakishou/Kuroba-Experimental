@@ -28,8 +28,10 @@ class ThirdPartyArchiveInfoRepository(
     private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
     private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
 
-    suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>) {
+    suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {
         val result = tryWithTransaction {
+            val resultList = mutableListOf<ThirdPartyArchiveInfo>()
+
             val thirdPartyArchiveInfoList = allArchiveDescriptors.map { archiveDescriptor ->
                 ThirdPartyArchiveInfo(
                         databaseId = 0L,
@@ -59,6 +61,11 @@ class ThirdPartyArchiveInfoRepository(
                     }
                 }
 
+                require(archiveInfo.databaseId > 0L) {
+                    "Bad archiveInfo.databaseId: ${archiveInfo.databaseId}"
+                }
+
+                resultList += archiveInfo
                 thirdPartyArchiveInfoCache.putThirdPartyArchiveInfo(archiveInfo)
             }
 
@@ -89,10 +96,22 @@ class ThirdPartyArchiveInfoRepository(
 
             logger.log(TAG, "Loaded ${thirdPartyArchiveInfoList.size} archives, " +
                     "fetchHistoryDebugInfo = $fetchHistoryDebugInfo")
-            return@tryWithTransaction
+
+            return@tryWithTransaction resultList
         }
 
-        suspendableInitializer.initWithModularResult(result)
+        when (result) {
+            is ModularResult.Value -> suspendableInitializer.initWithValue(Unit)
+            is ModularResult.Error -> suspendableInitializer.initWithError(result.error)
+        }
+
+        if (result is ModularResult.Error) {
+            throw result.error
+        }
+
+        return (result as ModularResult.Value).value.associateBy { archiveInfo ->
+            archiveInfo.archiveDescriptor.domain
+        }
     }
 
     suspend fun insertFetchResult(

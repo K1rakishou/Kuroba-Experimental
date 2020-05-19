@@ -909,8 +909,7 @@ public class PostCell
         public boolean onTouchEvent(@NonNull TextView widget, @NonNull Spannable buffer, @NonNull MotionEvent event) {
             int action = event.getActionMasked();
 
-            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL
-                    || action == MotionEvent.ACTION_DOWN) {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_DOWN) {
                 int x = (int) event.getX();
                 int y = (int) event.getY();
 
@@ -929,68 +928,7 @@ public class PostCell
                 Collections.addAll(link, links);
 
                 if (link.size() > 0) {
-                    ClickableSpan clickableSpan1 = link.get(0);
-                    ClickableSpan clickableSpan2 = link.size() > 1 ? link.get(1) : null;
-                    PostLinkable linkable1 =
-                            clickableSpan1 instanceof PostLinkable ? (PostLinkable) clickableSpan1 : null;
-                    PostLinkable linkable2 =
-                            clickableSpan2 instanceof PostLinkable ? (PostLinkable) clickableSpan2 : null;
-                    if (action == MotionEvent.ACTION_UP) {
-                        ignoreNextOnClick = true;
-
-                        if (linkable2 == null && linkable1 != null) {
-                            //regular, non-spoilered link
-                            if (callback != null) {
-                                callback.onPostLinkableClicked(post, linkable1);
-                            }
-                        } else if (linkable2 != null && linkable1 != null) {
-                            //spoilered link, figure out which span is the spoiler
-                            if (linkable1.type == PostLinkable.Type.SPOILER) {
-                                if (linkable1.isSpoilerVisible()) {
-                                    //linkable2 is the link and we're unspoilered
-                                    if (callback != null) {
-                                        callback.onPostLinkableClicked(post, linkable2);
-                                    }
-                                } else {
-                                    //linkable2 is the link and we're spoilered; don't do the click event on the link yet
-                                    link.remove(linkable2);
-                                }
-                            } else if (linkable2.type == PostLinkable.Type.SPOILER) {
-                                if (linkable2.isSpoilerVisible()) {
-                                    //linkable 1 is the link and we're unspoilered
-                                    if (callback != null) {
-                                        callback.onPostLinkableClicked(post, linkable1);
-                                    }
-                                } else {
-                                    //linkable1 is the link and we're spoilered; don't do the click event on the link yet
-                                    link.remove(linkable1);
-                                }
-                            } else {
-                                //weird case where a double stack of linkables, but isn't spoilered (some 4chan stickied posts)
-                                if (callback != null) {
-                                    callback.onPostLinkableClicked(post, linkable1);
-                                }
-                            }
-                        }
-
-                        //do onclick on all spoiler postlinkables afterwards, so that we don't update the spoiler state early
-                        for (ClickableSpan s : link) {
-                            if (s instanceof PostLinkable && ((PostLinkable) s).type == PostLinkable.Type.SPOILER) {
-                                s.onClick(widget);
-                            }
-                        }
-
-                        buffer.removeSpan(BACKGROUND_SPAN);
-                    } else if (action == MotionEvent.ACTION_DOWN && clickableSpan1 instanceof PostLinkable) {
-                        buffer.setSpan(BACKGROUND_SPAN,
-                                buffer.getSpanStart(clickableSpan1),
-                                buffer.getSpanEnd(clickableSpan1),
-                                0
-                        );
-                    } else if (action == MotionEvent.ACTION_CANCEL) {
-                        buffer.removeSpan(BACKGROUND_SPAN);
-                    }
-
+                    onClickableSpanClicked(widget, buffer, action, link);
                     return true;
                 } else {
                     buffer.removeSpan(BACKGROUND_SPAN);
@@ -998,6 +936,95 @@ public class PostCell
             }
 
             return true;
+        }
+
+        private void onClickableSpanClicked(
+                @NonNull TextView widget,
+                @NonNull Spannable buffer,
+                int action,
+                List<ClickableSpan> link
+        ) {
+            ClickableSpan clickableSpan1 = link.get(0);
+            ClickableSpan clickableSpan2 = link.size() > 1
+                    ? link.get(1)
+                    : null;
+
+            PostLinkable linkable1 = clickableSpan1 instanceof PostLinkable
+                    ? (PostLinkable) clickableSpan1
+                    : null;
+            PostLinkable linkable2 = clickableSpan2 instanceof PostLinkable
+                    ? (PostLinkable) clickableSpan2
+                    : null;
+
+            if (action == MotionEvent.ACTION_UP) {
+                ignoreNextOnClick = true;
+
+                if (linkable2 == null && linkable1 != null) {
+                    // regular, non-spoilered link
+                    if (callback != null) {
+                        callback.onPostLinkableClicked(post, linkable1);
+                    }
+                } else if (linkable2 != null && linkable1 != null) {
+                    // spoilered link, figure out which span is the spoiler
+                    if (linkable1.getType() == PostLinkable.Type.SPOILER) {
+                        if (linkable1.isSpoilerVisible()) {
+                            // linkable2 is the link and we're unspoilered
+                            if (callback != null) {
+                                callback.onPostLinkableClicked(post, linkable2);
+                            }
+                        } else {
+                            // linkable2 is the link and we're spoilered; don't do the click event
+                            // on the link yet
+                            link.remove(linkable2);
+                        }
+                    } else if (linkable2.getType() == PostLinkable.Type.SPOILER) {
+                        if (linkable2.isSpoilerVisible()) {
+                            // linkable 1 is the link and we're unspoilered
+                            if (callback != null) {
+                                callback.onPostLinkableClicked(post, linkable1);
+                            }
+                        } else {
+                            // linkable1 is the link and we're spoilered; don't do the click event
+                            // on the link yet
+                            link.remove(linkable1);
+                        }
+                    } else {
+                        // weird case where a double stack of linkables, but isn't spoilered
+                        // (some 4chan stickied posts)
+                        if (callback != null) {
+                            callback.onPostLinkableClicked(post, linkable1);
+                        }
+                    }
+                }
+
+                // do onclick on all spoiler postlinkables afterwards, so that we don't update the
+                // spoiler state early
+                for (ClickableSpan clickableSpan : link) {
+                    if (!(clickableSpan instanceof PostLinkable)) {
+                        continue;
+                    }
+
+                    if (((PostLinkable) clickableSpan).getType() == PostLinkable.Type.SPOILER) {
+                        clickableSpan.onClick(widget);
+                    }
+                }
+
+                buffer.removeSpan(BACKGROUND_SPAN);
+                return;
+            }
+
+            if (action == MotionEvent.ACTION_DOWN && clickableSpan1 instanceof PostLinkable) {
+                buffer.setSpan(BACKGROUND_SPAN,
+                        buffer.getSpanStart(clickableSpan1),
+                        buffer.getSpanEnd(clickableSpan1),
+                        0
+                );
+                return;
+            }
+
+            if (action == MotionEvent.ACTION_CANCEL) {
+                buffer.removeSpan(BACKGROUND_SPAN);
+            }
         }
     }
 

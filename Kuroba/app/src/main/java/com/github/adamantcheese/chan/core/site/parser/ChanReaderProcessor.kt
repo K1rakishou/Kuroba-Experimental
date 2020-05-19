@@ -42,14 +42,14 @@ class ChanReaderProcessor(
     private suspend fun differsFromCached(builder: Post.Builder): Boolean {
         val postDescriptor = if (builder.op) {
             PostDescriptor.create(
-                    builder.board.site.name(),
-                    builder.board.code,
+                    builder.board!!.site.name(),
+                    builder.board!!.code,
                     builder.id
             )
         } else {
             PostDescriptor.create(
-                    builder.board.site.name(),
-                    builder.board.code,
+                    builder.board!!.site.name(),
+                    builder.board!!.code,
                     builder.opId,
                     builder.id
             )

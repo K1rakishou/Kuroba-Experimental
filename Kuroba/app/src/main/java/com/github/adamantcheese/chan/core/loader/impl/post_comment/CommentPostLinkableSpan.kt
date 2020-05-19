@@ -10,7 +10,7 @@ internal data class CommentPostLinkableSpan(
     override fun toString(): String {
         val postLinkableString = when {
             postLinkable.key != null -> postLinkable.key.toString()
-            postLinkable.value != null -> postLinkable.value.toString()
+            postLinkable.linkableValue != null -> postLinkable.linkableValue.toString()
             else -> "<unknown>"
         }
 

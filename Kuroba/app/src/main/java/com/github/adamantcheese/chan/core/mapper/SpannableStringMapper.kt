@@ -5,8 +5,6 @@ import android.text.style.CharacterStyle
 import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
-import com.github.adamantcheese.chan.core.site.parser.CommentParser.SearchLink
-import com.github.adamantcheese.chan.core.site.parser.CommentParser.ThreadLink
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.BackgroundColorSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
@@ -138,26 +136,34 @@ object SpannableStringMapper {
                 flags
         )
         val serializablePostLinkableSpan = SerializablePostLinkableSpan(postLinkable.key.toString())
-        val postLinkableValueJson: String
+        var postLinkableValueJson: String? = null
+
         when (postLinkable.type) {
             PostLinkable.Type.QUOTE -> {
-                postLinkableValueJson = gson.toJson(
+                val postId = postLinkable.linkableValue.extractLongOrNull()
+
+                if (postId != null) {
+                    postLinkableValueJson = gson.toJson(
                         PostLinkableQuoteValue(
-                                PostLinkableType.Quote,
-                                postLinkable.value as Int
+                            PostLinkableType.Quote,
+                            postId
                         )
-                )
-                serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Quote.typeValue)
+                    )
+                    serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Quote.typeValue)
+                }
             }
             PostLinkable.Type.LINK -> {
-                postLinkableValueJson = gson.toJson(
-                        PostLinkableLinkValue(
-                                PostLinkableType.Link,
-                                postLinkable.value as String
-                        )
-                )
+                val link = (postLinkable.linkableValue as? PostLinkable.Value.StringValue)?.value
 
-                serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Link.typeValue)
+                if (link != null) {
+                    postLinkableValueJson = gson.toJson(
+                      PostLinkableLinkValue(
+                        PostLinkableType.Link,
+                        link.toString()
+                      )
+                    )
+                    serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Link.typeValue)
+                }
             }
             PostLinkable.Type.SPOILER -> {
                 postLinkableValueJson = gson.toJson(
@@ -167,13 +173,15 @@ object SpannableStringMapper {
                 serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Spoiler.typeValue)
             }
             PostLinkable.Type.THREAD -> {
-                if (postLinkable.value !is ThreadLink) {
+                if (postLinkable.linkableValue !is PostLinkable.Value.ThreadLink) {
                     throw RuntimeException(
                             "PostLinkable value is not of ThreadLink type, key = "
                                     + postLinkable.key + ", type = "
                                     + postLinkable.type.name)
                 }
-                val threadLink = postLinkable.value
+
+                val threadLink = postLinkable.linkableValue
+
                 postLinkableValueJson = gson.toJson(
                         PostLinkThreadLinkValue(
                                 PostLinkableType.Thread,
@@ -185,21 +193,30 @@ object SpannableStringMapper {
                 serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Thread.typeValue)
             }
             PostLinkable.Type.BOARD -> {
-                postLinkableValueJson = gson.toJson(PostLinkableBoardLinkValue(
+                if (postLinkable.linkableValue !is PostLinkable.Value.StringValue) {
+                    throw RuntimeException(
+                      "PostLinkable value is not of StringValue type, key = "
+                        + postLinkable.key + ", type = "
+                        + postLinkable.type.name)
+                }
+
+                postLinkableValueJson = gson.toJson(
+                    PostLinkableBoardLinkValue(
                         PostLinkableType.Board,
-                        postLinkable.value as String
-                ))
+                        postLinkable.linkableValue.value.toString()
+                    )
+                )
                 serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Board.typeValue)
             }
             PostLinkable.Type.SEARCH -> {
-                if (postLinkable.value !is SearchLink) {
+                if (postLinkable.linkableValue !is PostLinkable.Value.SearchLink) {
                     throw RuntimeException(
                             "PostLinkable value is not of SearchLink type, key = "
                                     + postLinkable.key + ", type = "
                                     + postLinkable.type.name)
                 }
 
-                val searchLink = postLinkable.value
+                val searchLink = postLinkable.linkableValue
                 postLinkableValueJson = gson.toJson(
                         PostLinkableSearchLinkValue(
                                 PostLinkableType.Search,
@@ -328,7 +345,7 @@ object SpannableStringMapper {
                 PostLinkable(
                         currentTheme,
                         serializablePostLinkableSpan.key,
-                        postLinkableQuoteValue.postId,
+                        PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
                         PostLinkable.Type.QUOTE
                 )
             }
@@ -341,13 +358,14 @@ object SpannableStringMapper {
                 PostLinkable(
                         currentTheme,
                         serializablePostLinkableSpan.key,
-                        postLinkableLinkValue.link,
+                        PostLinkable.Value.StringValue(postLinkableLinkValue.link),
                         PostLinkable.Type.LINK
                 )
             }
-            PostLinkableType.Spoiler -> PostLinkable(currentTheme,
+            PostLinkableType.Spoiler -> PostLinkable(
+                    currentTheme,
                     serializablePostLinkableSpan.key,
-                    currentTheme.spoilerColor,
+                    PostLinkable.Value.IntegerValue(currentTheme.spoilerColor),
                     PostLinkable.Type.SPOILER
             )
             PostLinkableType.Thread -> {
@@ -359,10 +377,10 @@ object SpannableStringMapper {
                 PostLinkable(
                         currentTheme,
                         serializablePostLinkableSpan.key,
-                        ThreadLink(
-                                postLinkThreadLinkValue.board,
-                                postLinkThreadLinkValue.threadId,
-                                postLinkThreadLinkValue.postId
+                        PostLinkable.Value.ThreadLink(
+                            postLinkThreadLinkValue.board,
+                            postLinkThreadLinkValue.threadId,
+                            postLinkThreadLinkValue.postId
                         ),
                         PostLinkable.Type.THREAD
                 )
@@ -375,7 +393,7 @@ object SpannableStringMapper {
                 PostLinkable(
                         currentTheme,
                         serializablePostLinkableSpan.key,
-                        postLinkableBoardLinkValue.boardLink,
+                        PostLinkable.Value.StringValue(postLinkableBoardLinkValue.boardLink),
                         PostLinkable.Type.BOARD
                 )
             }
@@ -386,9 +404,9 @@ object SpannableStringMapper {
                 )
                 PostLinkable(currentTheme,
                         serializablePostLinkableSpan.key,
-                        SearchLink(
-                                postLinkableSearchLinkValue.board,
-                                postLinkableSearchLinkValue.search
+                        PostLinkable.Value.SearchLink(
+                            postLinkableSearchLinkValue.board,
+                            postLinkableSearchLinkValue.search
                         ),
                         PostLinkable.Type.SEARCH
                 )

@@ -85,7 +85,12 @@ public class CommentParserHelper {
 
         for (final LinkSpan link : links) {
             final String linkText = text.substring(link.getBeginIndex(), link.getEndIndex());
-            final PostLinkable pl = new PostLinkable(theme, linkText, linkText, PostLinkable.Type.LINK);
+            final PostLinkable pl = new PostLinkable(
+                    theme,
+                    linkText,
+                    new PostLinkable.Value.StringValue(linkText),
+                    PostLinkable.Type.LINK
+            );
 
             // priority is 0 by default which is maximum above all else; higher priority is like
             // higher layers, i.e. 2 is above 1, 3 is above 2, etc.
@@ -111,21 +116,29 @@ public class CommentParserHelper {
                 return;
             }
 
-            if (linkable.type != PostLinkable.Type.LINK) {
+            if (linkable.getType() != PostLinkable.Type.LINK) {
                 break;
             }
 
-            Matcher matcher = imageUrlPattern.matcher(((String) linkable.value));
+            PostLinkable.Value linkableValue = linkable.getLinkableValue();
+            if (!(linkableValue instanceof PostLinkable.Value.StringValue)) {
+                Logger.e(TAG, "Bad linkableValue type: " + linkableValue.getClass().getSimpleName());
+                continue;
+            }
+
+            CharSequence link = ((PostLinkable.Value.StringValue) linkableValue).getValue();
+            Matcher matcher = imageUrlPattern.matcher(link);
             if (!matcher.matches()) {
                 break;
             }
 
-            boolean noThumbnail = StringUtils.endsWithAny((String) linkable.value, noThumbLinkSuffixes);
+            String linkStr = link.toString();
+            boolean noThumbnail = StringUtils.endsWithAny(linkStr, noThumbLinkSuffixes);
             String spoilerThumbnail = BuildConfig.RESOURCES_ENDPOINT + "internal_spoiler.png";
-            HttpUrl imageUrl = HttpUrl.parse((String) linkable.value);
+            HttpUrl imageUrl = HttpUrl.parse(linkStr);
 
             if (imageUrl == null) {
-                Logger.e(TAG, "addPostImages() couldn't parse linkable.value (" + linkable.value + ")");
+                Logger.e(TAG, "addPostImages() couldn't parse linkable.value (" + linkStr + ")");
                 continue;
             }
 
@@ -134,7 +147,7 @@ public class CommentParserHelper {
             HttpUrl thumbnailUrl = HttpUrl.parse(
                     noThumbnail
                             ? spoilerThumbnail
-                            : (String) linkable.value
+                            : linkStr
             );
 
             HttpUrl spoilerThumbnailUrl = HttpUrl.parse(spoilerThumbnail);

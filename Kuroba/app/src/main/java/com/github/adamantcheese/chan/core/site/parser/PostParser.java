@@ -25,7 +25,7 @@ public interface PostParser {
     Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback);
 
     interface Callback {
-        boolean isSaved(int postNo);
+        boolean isSaved(long postNo);
 
         /**
          * Is the post id from this thread.

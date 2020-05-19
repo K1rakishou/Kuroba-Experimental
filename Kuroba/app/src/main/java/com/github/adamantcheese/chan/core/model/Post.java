@@ -92,6 +92,10 @@ public class Post implements Comparable<Post> {
     @NonNull
     private final List<PostImage> postImages;
 
+    @Nullable
+    private ArchiveDescriptor archiveDescriptor = null;
+    private boolean isFromCache = false;
+
     // These members may only mutate on the main thread.
     private boolean sticky;
     private boolean closed;
@@ -167,8 +171,19 @@ public class Post implements Comparable<Post> {
         );
 
         isSavedReply = builder.isSavedReply;
-
         repliesTo = Collections.unmodifiableSet(builder.repliesToIds);
+
+        archiveDescriptor = builder.archiveDescriptor;
+        isFromCache = builder.isFromCache;
+    }
+
+    public boolean isFromCache() {
+        return isFromCache;
+    }
+
+    @Nullable
+    public synchronized ArchiveDescriptor getArchiveDescriptor() {
+        return archiveDescriptor;
     }
 
     public synchronized List<PostLinkable> getLinkables() {
@@ -424,6 +439,7 @@ public class Post implements Comparable<Post> {
     }
 
     public static final class Builder {
+        @Nullable
         public Board board;
         public long id = -1;
         public long opId = -1;
@@ -470,6 +486,8 @@ public class Post implements Comparable<Post> {
         public boolean filterReplies;
         public boolean filterOnlyOP;
         public boolean filterSaved;
+
+        private boolean isFromCache = false;
 
         @Nullable
         public ArchiveDescriptor archiveDescriptor = null;
@@ -686,6 +704,11 @@ public class Post implements Comparable<Post> {
 
         public Builder repliesTo(Set<Long> repliesToIds) {
             this.repliesToIds = repliesToIds;
+            return this;
+        }
+
+        public Builder fromCache(boolean isFromCache) {
+            this.isFromCache = isFromCache;
             return this;
         }
 

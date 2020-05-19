@@ -16,22 +16,21 @@ import java.util.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class FutabaChanReader(archivesManager: ArchivesManager) : ChanReader {
-    private val postParser: DefaultPostParser
 
-    override val parser: PostParser
-        get() = postParser
-
-    init {
+    private val postParser: DefaultPostParser by lazy {
         val commentParser = CommentParser().addDefaultRules()
         val foolFuukaCommentParser = FoolFuukaCommentParser()
-
-        postParser = DefaultPostParser(commentParser)
+        val parser = DefaultPostParser(commentParser)
 
         for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
-            postParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)
+            parser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)
         }
+
+        return@lazy parser
     }
 
+    override val parser: PostParser?
+        get() = postParser
 
     @Throws(Exception::class)
     override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {

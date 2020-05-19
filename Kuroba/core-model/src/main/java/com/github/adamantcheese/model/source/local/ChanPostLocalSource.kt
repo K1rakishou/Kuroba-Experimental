@@ -305,6 +305,7 @@ class ChanPostLocalSource(
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
+            postsNoToIgnore: Set<Long>,
             maxCount: Int
     ): List<ChanPost> {
         ensureInTransaction()
@@ -319,13 +320,22 @@ class ChanPostLocalSource(
 
         // Load thread's posts. We need to sort them because we sort them right in the SQL query in
         // order to trim everything after [maxCount]
-        val chanPostEntityList = chanPostDao.selectAllByThreadId(
-                chanThreadEntity.threadId,
-                maxCount
-        ).sortedBy { chanPostEntity -> chanPostEntity.postNo }.toMutableList()
 
-        // Insert the original post at the beginning of the list
-        chanPostEntityList.add(0, originalPost)
+        val chanPostEntityList = postsNoToIgnore
+          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .flatMap { chunk ->
+              return@flatMap chanPostDao.selectAllByThreadId(
+                chanThreadEntity.threadId,
+                chunk,
+                maxCount
+              )
+          }.sortedBy { chanPostEntity -> chanPostEntity.postNo }.toMutableList()
+
+        if (!postsNoToIgnore.contains(originalPost.postNo)) {
+            // Insert the original post at the beginning of the list but only if we don't already
+            // have it in the postsNoToIgnore
+            chanPostEntityList.add(0, originalPost)
+        }
 
         if (chanPostEntityList.isEmpty()) {
             return emptyList()

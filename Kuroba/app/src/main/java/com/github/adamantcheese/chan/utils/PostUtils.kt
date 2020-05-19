@@ -145,10 +145,10 @@ object PostUtils {
     }
 
     fun postsDiffer(postBuilder: Post.Builder, chanPost: ChanPost): Boolean {
-        if (postBuilder.board.site.name() != chanPost.postDescriptor.descriptor.siteName()) {
+        if (postBuilder.board!!.site.name() != chanPost.postDescriptor.descriptor.siteName()) {
             return true
         }
-        if (postBuilder.board.code != chanPost.postDescriptor.descriptor.boardCode()) {
+        if (postBuilder.board!!.code != chanPost.postDescriptor.descriptor.boardCode()) {
             return true
         }
         if (postBuilder.op != chanPost.isOp) {
@@ -259,7 +259,8 @@ object PostUtils {
       archivePost: ArchivesRemoteSource.ArchivePost,
       cachedArchivePost: ChanPost
     ): Boolean {
-        if (archivePost.archivePostMediaList.size != cachedArchivePost.postImages.size) {
+        if (archivePost.archivePostMediaList.size > cachedArchivePost.postImages.size) {
+            // Archived post has more images than the cached post
             return true
         }
 
@@ -290,7 +291,8 @@ object PostUtils {
       archivePost: ArchivesRemoteSource.ArchivePost,
       freshPost: Post.Builder
     ): Boolean {
-        if (archivePost.archivePostMediaList.size != freshPost.postImages.size) {
+        if (archivePost.archivePostMediaList.size > freshPost.postImages.size) {
+            // Archived post has more images than the fresh post
             return true
         }
 

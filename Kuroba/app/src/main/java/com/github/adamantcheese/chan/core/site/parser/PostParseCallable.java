@@ -74,7 +74,7 @@ class PostParseCallable implements Callable<Post> {
 
         return parser.parse(currentTheme, post, new PostParser.Callback() {
             @Override
-            public boolean isSaved(int postNo) {
+            public boolean isSaved(long postNo) {
                 return savedReplyManager.isSaved(post.board, postNo);
             }
 

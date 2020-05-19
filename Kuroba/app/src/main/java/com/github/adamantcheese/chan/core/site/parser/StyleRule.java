@@ -251,7 +251,13 @@ public class StyleRule {
         }
 
         if (link != null) {
-            PostLinkable pl = new PostLinkable(theme, result, result, link);
+            PostLinkable pl = new PostLinkable(
+                    theme,
+                    result,
+                    new PostLinkable.Value.StringValue(result),
+                    link
+            );
+
             post.addLinkable(pl);
             spansToApply.add(pl);
         }

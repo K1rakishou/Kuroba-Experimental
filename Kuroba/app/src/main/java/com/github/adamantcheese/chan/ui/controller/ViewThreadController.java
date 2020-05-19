@@ -20,6 +20,7 @@ import android.Manifest;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Toast;
 
@@ -29,6 +30,7 @@ import androidx.core.util.Pair;
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
+import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
@@ -53,6 +55,7 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
+import com.github.adamantcheese.chan.utils.DialogUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
@@ -63,6 +66,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
@@ -91,8 +96,9 @@ public class ViewThreadController
     private static final int ACTION_VIEW_REMOVED_POSTS = 103;
     private static final int ACTION_OPEN_BROWSER = 104;
     private static final int ACTION_SHARE = 105;
-    private static final int ACTION_SCROLL_TO_TOP = 106;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 107;
+    private static final int ACTION_GO_TO_POST = 106;
+    private static final int ACTION_SCROLL_TO_TOP = 107;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 108;
 
     private static final int ACTION_VIEW_LOCAL_COPY = 1000;
     private static final int ACTION_VIEW_LIVE_COPY = 1001;
@@ -222,6 +228,12 @@ public class ViewThreadController
                         ACTION_SHARE,
                         R.string.action_share,
                         this::shareClicked
+                )
+                .withSubItem(
+                        ACTION_GO_TO_POST,
+                        R.string.action_go_to_post,
+                        this::onGoToPostClicked,
+                        () -> BuildConfig.DEV_BUILD
                 )
                 .withSubItem(
                         ACTION_SCROLL_TO_TOP,
@@ -356,6 +368,24 @@ public class ViewThreadController
 
         Loadable loadable = threadLayout.presenter.getLoadable();
         shareLink(loadable.desktopUrl());
+    }
+
+    private void onGoToPostClicked(ToolbarMenuSubItem item) {
+        DialogUtils.createSimpleDialogWithInput(
+                context,
+                R.string.view_thread_controller_enter_post_id,
+                (input) -> {
+                    try {
+                        int postNo = Integer.parseInt(input);
+                        threadLayout.presenter.scrollToPostByPostNo(postNo);
+                    } catch (NumberFormatException e) {
+                        //ignored
+                    }
+
+                    return Unit.INSTANCE;
+                },
+                InputType.TYPE_CLASS_NUMBER
+        ).show();
     }
 
     private void upClicked(ToolbarMenuSubItem item) {

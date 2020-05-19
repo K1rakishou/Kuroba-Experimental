@@ -28,6 +28,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -233,6 +234,10 @@ public class Toolbar
 
     public void openSearch() {
         presenter.openSearch();
+    }
+
+    public void openSearch(@Nullable String input) {
+        presenter.openSearch(input);
     }
 
     public boolean closeSearch() {

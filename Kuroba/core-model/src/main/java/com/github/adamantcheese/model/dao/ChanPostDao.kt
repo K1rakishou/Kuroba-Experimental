@@ -43,10 +43,16 @@ abstract class ChanPostDao {
             ${ChanPostEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND 
             ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+        AND 
+            ${ChanPostEntity.POST_NO_COLUMN_NAME} NOT IN (:postsToIgnore)
         ORDER BY ${ChanPostEntity.POST_NO_COLUMN_NAME} DESC
         LIMIT :maxCount
     """)
-    abstract suspend fun selectAllByThreadId(ownerThreadId: Long, maxCount: Int): List<ChanPostEntity>
+    abstract suspend fun selectAllByThreadId(
+      ownerThreadId: Long,
+      postsToIgnore: Collection<Long>,
+      maxCount: Int
+    ): List<ChanPostEntity>
 
     @Query("""
         SELECT *

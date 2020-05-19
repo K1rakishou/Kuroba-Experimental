@@ -349,7 +349,7 @@ public class WatchNotification
                 Editable toFix = new SpannableStringBuilder(comment);
                 PostLinkable[] spans = toFix.getSpans(0, comment.length(), PostLinkable.class);
                 for (PostLinkable span : spans) {
-                    if (span.type == PostLinkable.Type.SPOILER) {
+                    if (span.getType() == PostLinkable.Type.SPOILER) {
                         int start = toFix.getSpanStart(span);
                         int end = toFix.getSpanEnd(span);
 

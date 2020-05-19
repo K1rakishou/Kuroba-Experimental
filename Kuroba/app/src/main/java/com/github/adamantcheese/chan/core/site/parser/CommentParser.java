@@ -171,22 +171,23 @@ public class CommentParser {
             CharSequence text,
             Element anchor
     ) {
-        CommentParser.Link handlerLink = matchAnchor(post, text, anchor, callback);
+        PostLinkable.Link handlerLink = matchAnchor(post, text, anchor, callback);
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
         Board board = post.board;
-        Site site = post.board.site;
+        if (board != null) {
+            Site site = post.board.site;
+            if (site != null) {
+                long mockReplyPostNo = mockReplyManager.getLastMockReply(
+                        post.board.site.name(),
+                        post.board.code,
+                        post.opId
+                );
 
-        if (board != null && site != null) {
-            long mockReplyPostNo = mockReplyManager.getLastMockReply(
-                    post.board.site.name(),
-                    post.board.code,
-                    post.opId
-            );
 
-
-            if (mockReplyPostNo >= 0) {
-                addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
+                if (mockReplyPostNo >= 0) {
+                    addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
+                }
             }
         }
 
@@ -201,40 +202,54 @@ public class CommentParser {
             Theme theme,
             PostParser.Callback callback,
             Post.Builder post,
-            Link handlerLink,
+            PostLinkable.Link handlerLink,
             SpannableStringBuilder spannableStringBuilder
     ) {
-        if (handlerLink.type == PostLinkable.Type.THREAD) {
-            handlerLink.key = TextUtils.concat(handlerLink.key, EXTERN_THREAD_LINK_SUFFIX);
+        if (handlerLink.getType() == PostLinkable.Type.THREAD) {
+            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERN_THREAD_LINK_SUFFIX));
         }
 
-        if (handlerLink.type == PostLinkable.Type.QUOTE) {
-            int postNo = (int) handlerLink.value;
-            post.addReplyTo(postNo);
+        if (handlerLink.getType() == PostLinkable.Type.QUOTE) {
+            Long postNo = handlerLink.getLinkValue().extractLongOrNull();
+            if (postNo != null) {
+                post.addReplyTo(postNo);
 
-            // Append (OP) when it's a reply to OP
-            if (postNo == post.opId) {
-                handlerLink.key = TextUtils.concat(handlerLink.key, OP_REPLY_SUFFIX);
-            }
+                // Append (OP) when it's a reply to OP
+                if (postNo == post.opId) {
+                    handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), OP_REPLY_SUFFIX));
+                }
 
-            // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-            if (callback.isSaved(postNo)) {
-                if (post.isSavedReply) {
-                    handlerLink.key = TextUtils.concat(handlerLink.key, SAVED_REPLY_SELF_SUFFIX);
-                } else {
-                    handlerLink.key = TextUtils.concat(handlerLink.key, SAVED_REPLY_OTHER_SUFFIX);
+                // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
+                if (callback.isSaved(postNo)) {
+                    if (post.isSavedReply) {
+                        handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_SELF_SUFFIX));
+                    } else {
+                        handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_OTHER_SUFFIX));
+                    }
                 }
             }
         }
 
-        SpannableString res = new SpannableString(handlerLink.key);
+        SpannableString res = new SpannableString(handlerLink.getKey());
 
         // Fix for some sites (like 2ch.hk) having the same link spans encountered twice (This
         // breaks video title and duration spans for youtube links since we process the same spans
         // twice)
-        if (!isPostLinkableAlreadyAdded(res, handlerLink.key)) {
-            PostLinkable pl = new PostLinkable(theme, handlerLink.key, handlerLink.value, handlerLink.type);
-            res.setSpan(pl, 0, res.length(), (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY);
+        if (!isPostLinkableAlreadyAdded(res, handlerLink.getKey())) {
+            PostLinkable pl = new PostLinkable(
+                    theme,
+                    handlerLink.getKey(),
+                    handlerLink.getLinkValue(),
+                    handlerLink.getType()
+            );
+
+            res.setSpan(
+                    pl,
+                    0,
+                    res.length(),
+                    (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
+            );
+
             post.addLinkable(pl);
         }
 
@@ -248,7 +263,7 @@ public class CommentParser {
         }
 
         for (PostLinkable postLinkable : alreadySetPostLinkables) {
-            if (handlerLinkKey.toString().equals(postLinkable.key.toString())) {
+            if (handlerLinkKey.toString().equals(postLinkable.getKey().toString())) {
                 return true;
             }
         }
@@ -267,8 +282,21 @@ public class CommentParser {
 
         CharSequence replyText = ">>" + mockReplyPostNo + " (MOCK)";
         SpannableString res = new SpannableString(replyText);
-        PostLinkable pl = new PostLinkable(theme, replyText, mockReplyPostNo, PostLinkable.Type.QUOTE);
-        res.setSpan(pl, 0, res.length(), (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY);
+
+        PostLinkable pl = new PostLinkable(
+                theme,
+                replyText,
+                new PostLinkable.Value.LongValue(mockReplyPostNo),
+                PostLinkable.Type.QUOTE
+        );
+
+        res.setSpan(
+                pl,
+                0,
+                res.length(),
+                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY)
+        ;
+
         post.addLinkable(pl);
 
         spannableStringBuilder.append(res).append('\n');
@@ -314,40 +342,41 @@ public class CommentParser {
 
         for (int i = 0; i < tableRows.size(); i++) {
             Element tableRow = tableRows.get(i);
+            if (tableRow.text().length() <= 0) {
+                continue;
+            }
 
-            if (tableRow.text().length() > 0) {
-                Elements tableDatas = tableRow.getElementsByTag("td");
+            Elements tableDatas = tableRow.getElementsByTag("td");
 
-                for (int j = 0; j < tableDatas.size(); j++) {
-                    Element tableData = tableDatas.get(j);
-                    SpannableString tableDataPart = new SpannableString(tableData.text());
+            for (int j = 0; j < tableDatas.size(); j++) {
+                Element tableData = tableDatas.get(j);
+                SpannableString tableDataPart = new SpannableString(tableData.text());
 
-                    if (tableData.getElementsByTag("b").size() > 0) {
-                        tableDataPart.setSpan(
-                                new StyleSpan(Typeface.BOLD),
-                                0,
-                                tableDataPart.length(),
-                                0
-                        );
+                if (tableData.getElementsByTag("b").size() > 0) {
+                    tableDataPart.setSpan(
+                            new StyleSpan(Typeface.BOLD),
+                            0,
+                            tableDataPart.length(),
+                            0
+                    );
 
-                        tableDataPart.setSpan(
-                                new UnderlineSpan(),
-                                0,
-                                tableDataPart.length(),
-                                0
-                        );
-                    }
-
-                    parts.add(tableDataPart);
-
-                    if (j < tableDatas.size() - 1) {
-                        parts.add(": ");
-                    }
+                    tableDataPart.setSpan(
+                            new UnderlineSpan(),
+                            0,
+                            tableDataPart.length(),
+                            0
+                    );
                 }
 
-                if (i < tableRows.size() - 1) {
-                    parts.add("\n");
+                parts.add(tableDataPart);
+
+                if (j < tableDatas.size() - 1) {
+                    parts.add(": ");
                 }
+            }
+
+            if (i < tableRows.size() - 1) {
+                parts.add("\n");
             }
         }
 
@@ -359,14 +388,14 @@ public class CommentParser {
         );
     }
 
-    public Link matchAnchor(
+    public PostLinkable.Link matchAnchor(
             Post.Builder post,
             CharSequence text,
             Element anchor,
             PostParser.Callback callback
     ) {
         PostLinkable.Type type;
-        Object value;
+        PostLinkable.Value value;
 
         String href = extractQuote(anchor.attr("href"), post);
         Matcher externalMatcher = matchExternalQuote(href, post);
@@ -379,18 +408,18 @@ public class CommentParser {
             if (board.equals(post.board.code) && callback.isInternal(postId)) {
                 // link to post in same thread with post number (>>post)
                 type = PostLinkable.Type.QUOTE;
-                value = postId;
+                value = new PostLinkable.Value.IntegerValue(postId);
             } else {
                 // link to post not in same thread with post number (>>post or >>>/board/post)
                 type = PostLinkable.Type.THREAD;
-                value = new ThreadLink(board, threadId, postId);
+                value = new PostLinkable.Value.ThreadLink(board, threadId, postId);
             }
         } else {
             Matcher quoteMatcher = matchInternalQuote(href, post);
             if (quoteMatcher.matches()) {
                 // link to post backup???
                 type = PostLinkable.Type.QUOTE;
-                value = Integer.parseInt(quoteMatcher.group(1));
+                value = new PostLinkable.Value.IntegerValue(Integer.parseInt(quoteMatcher.group(1)));
             } else {
                 Matcher boardLinkMatcher = matchBoardLink(href, post);
                 Matcher boardSearchMatcher = matchBoardSearch(href, post);
@@ -398,7 +427,7 @@ public class CommentParser {
                 if (boardLinkMatcher.matches()) {
                     // board link
                     type = PostLinkable.Type.BOARD;
-                    value = boardLinkMatcher.group(1);
+                    value = new PostLinkable.Value.StringValue(boardLinkMatcher.group(1));
                 } else if (boardSearchMatcher.matches()) {
                     // search link
                     String board = boardSearchMatcher.group(1);
@@ -411,20 +440,20 @@ public class CommentParser {
                     }
 
                     type = PostLinkable.Type.SEARCH;
-                    value = new SearchLink(board, search);
+                    value = new PostLinkable.Value.SearchLink(board, search);
                 } else {
                     // normal link
                     type = PostLinkable.Type.LINK;
-                    value = href;
+                    value = new PostLinkable.Value.StringValue(href);
                 }
             }
         }
 
-        Link link = new Link();
-        link.type = type;
-        link.key = text;
-        link.value = value;
-        return link;
+        return new PostLinkable.Link(
+                type,
+                text,
+                value
+        );
     }
 
     protected Matcher matchBoardSearch(String href, Post.Builder post) {
@@ -473,31 +502,4 @@ public class CommentParser {
         return result;
     }
 
-    public class Link {
-        public PostLinkable.Type type;
-        public CharSequence key;
-        public Object value;
-    }
-
-    public static class ThreadLink {
-        public String board;
-        public int threadId;
-        public int postId;
-
-        public ThreadLink(String board, int threadId, int postId) {
-            this.board = board;
-            this.threadId = threadId;
-            this.postId = postId;
-        }
-    }
-
-    public static class SearchLink {
-        public String board;
-        public String search;
-
-        public SearchLink(String board, String search) {
-            this.board = board;
-            this.search = search;
-        }
-    }
 }

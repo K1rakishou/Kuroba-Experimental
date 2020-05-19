@@ -1,10 +1,26 @@
 package com.github.adamantcheese.model.data.descriptor
 
 class ArchiveDescriptor(
+        private var databaseId: Long = -1,
         val name: String,
         val domain: String,
         val archiveType: ArchiveType
 ) {
+
+    @Synchronized
+    fun setArchiveDatabaseId(archiveDbId: Long) {
+        this.databaseId = archiveDbId
+    }
+
+    @Synchronized
+    fun getArchiveDatabaseId(): Long {
+        require(databaseId != -1L) {
+            "Attempt to access ArchiveDescriptor.databaseId before it was fully initialized"
+        }
+
+        return databaseId
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ArchiveDescriptor) return false
@@ -19,7 +35,7 @@ class ArchiveDescriptor(
     }
 
     override fun toString(): String {
-        return "ArchiveDescriptor(name='$name', domain='$domain')"
+        return "ArchiveDescriptor(databaseId='$databaseId', name='$name', domain='$domain')"
     }
 
     enum class ArchiveType(val domain: String) {

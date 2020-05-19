@@ -761,7 +761,7 @@ class MainSettingsControllerV2(context: Context)
   }
 
   companion object {
-    private const val TAG = "DeveloperSettingsControllerV2"
+    private const val TAG = "MainSettingsControllerV2"
     private const val MIN_QUERY_LENGTH = 3
     private const val DEBOUNCE_TIME_MS = 350L
   }

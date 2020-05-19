@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.ui.toolbar;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
@@ -93,10 +95,17 @@ public class ToolbarPresenter {
     }
 
     void openSearch() {
-        if (item == null || item.search) return;
+        openSearch(null);
+    }
+
+    void openSearch(@Nullable String input) {
+        if (item == null || item.search) {
+            return;
+        }
 
         cancelTransitionIfNeeded();
 
+        item.searchText = input;
         item.search = true;
 
         callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);

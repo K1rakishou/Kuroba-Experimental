@@ -6,15 +6,18 @@ import com.google.gson.annotations.SerializedName;
 public class PostLinkableQuoteValue
         extends PostLinkableValue {
     @SerializedName("post_id")
-    private int postId;
+    private long postId;
 
-    public PostLinkableQuoteValue(SerializablePostLinkableSpan.PostLinkableType type, int postId) {
+    public PostLinkableQuoteValue(
+            SerializablePostLinkableSpan.PostLinkableType type,
+            long postId
+    ) {
         super(type);
 
         this.postId = postId;
     }
 
-    public int getPostId() {
+    public long getPostId() {
         return postId;
     }
 }

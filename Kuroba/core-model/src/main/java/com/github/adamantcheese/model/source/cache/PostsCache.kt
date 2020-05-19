@@ -6,6 +6,7 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class PostsCache(private val maxValueCount: Int) {
@@ -13,7 +14,7 @@ class PostsCache(private val maxValueCount: Int) {
     private val currentValuesCount = AtomicInteger(0)
 
     @GuardedBy("mutex")
-    private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, ChanPost>>()
+    private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, NavigableMap<PostDescriptor, ChanPost>>()
     @GuardedBy("mutex")
     private val originalPostsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
     @GuardedBy("mutex")
@@ -24,7 +25,7 @@ class PostsCache(private val maxValueCount: Int) {
             val threadDescriptor = post.postDescriptor.getThreadDescriptor()
 
             if (!postsCache.containsKey(threadDescriptor)) {
-                postsCache[threadDescriptor] = mutableMapOf()
+                postsCache[threadDescriptor] = TreeMap(POST_COMPARATOR)
             }
 
             val count = if (!postsCache[threadDescriptor]!!.containsKey(postDescriptor)) {
@@ -71,6 +72,7 @@ class PostsCache(private val maxValueCount: Int) {
             }
 
             return@withLock post
+              .apply { isFromCache = true }
         }
     }
 
@@ -80,10 +82,13 @@ class PostsCache(private val maxValueCount: Int) {
     ): List<ChanPost> {
         return mutex.withLock {
             accessTimes.entries
+              .asSequence()
               .filter { (threadDescriptor, _) -> threadDescriptor.boardDescriptor == descriptor.boardDescriptor }
               .sortedByDescending { (_, accessTime) -> accessTime }
               .take(count)
-              .mapNotNull { (threadDescriptor, _) -> originalPostsCache[threadDescriptor] }
+              .mapNotNull { (threadDescriptor, _) ->  originalPostsCache[threadDescriptor] }
+              .onEach { post -> post.isFromCache = true }
+              .toList()
         }
     }
 
@@ -99,6 +104,7 @@ class PostsCache(private val maxValueCount: Int) {
             }
 
             return@withLock merge(post, originalPost)
+              ?.apply { isFromCache = true }
         }
     }
 
@@ -127,20 +133,53 @@ class PostsCache(private val maxValueCount: Int) {
             }
 
             return@withLock resultList
+              .onEach { post -> post.isFromCache = true }
         }
     }
 
-    suspend fun getPostsFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    suspend fun getLatest(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
         return mutex.withLock {
             accessTimes[threadDescriptor] = System.currentTimeMillis()
-            return@withLock postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
+
+            val navigableMap = postsCache[threadDescriptor]
+              ?: return@withLock emptyList()
+
+            val navigableKeySet = postsCache[threadDescriptor]?.navigableKeySet()
+              ?: return@withLock emptyList()
+
+            val resultList = mutableListOf<ChanPost>()
+            var count = 0
+
+            for (postDescriptor in navigableKeySet.iterator()) {
+                if (count >= maxCount) {
+                    break
+                }
+
+                ++count
+
+                val chanPost = navigableMap[postDescriptor]
+                  ?: continue
+
+                chanPost.isFromCache = true
+                resultList += chanPost
+            }
+
+            return@withLock resultList
         }
     }
 
     suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
         return mutex.withLock {
             accessTimes[threadDescriptor] = System.currentTimeMillis()
-            return@withLock postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
+            val posts = postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
+
+            return@withLock posts.onEach { post -> post.isFromCache = true }
+        }
+    }
+
+    suspend fun getCachedValuesCount(): Int {
+        return mutex.withLock {
+            return@withLock currentValuesCount.get()
         }
     }
 
@@ -182,12 +221,6 @@ class PostsCache(private val maxValueCount: Int) {
         }
     }
 
-    suspend fun getCachedValuesCount(): Int {
-        return mutex.withLock {
-            return@withLock currentValuesCount.get()
-        }
-    }
-
     private fun merge(post: ChanPost, originalPost: ChanPost): ChanPost? {
         require(originalPost.isOp) { "originalPost is not OP" }
         require(post.isOp) { "post is not OP" }
@@ -217,5 +250,11 @@ class PostsCache(private val maxValueCount: Int) {
                 isOp = post.isOp,
                 isSavedReply = post.isSavedReply
         )
+    }
+
+    companion object {
+        private val POST_COMPARATOR = kotlin.Comparator<PostDescriptor> { desc1, desc2 ->
+            return@Comparator desc1.postNo.compareTo(desc2.postNo)
+        }
     }
 }

@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.model;
 
+import androidx.annotation.NonNull;
+
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 
@@ -109,5 +111,15 @@ public class ChanThread {
      */
     public Loadable getLoadable() {
         return loadable;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "ChanThread{" +
+                "loadable=" + loadable +
+                ", closed=" + closed +
+                ", archived=" + archived +
+                '}';
     }
 }

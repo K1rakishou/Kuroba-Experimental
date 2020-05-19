@@ -170,8 +170,16 @@ class ChanPostRepository(
     ): ModularResult<List<ChanPost>> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
+                val fromCache = postCache.getLatest(descriptor, maxCount)
+                if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
+                    return@tryWithTransaction fromCache
+                }
+
+                val postsNoToIgnore = fromCache.map { post -> post.postDescriptor.postNo }.toSet()
+
                 val postsFromDatabase = localSource.getThreadPosts(
                         descriptor,
+                        postsNoToIgnore,
                         maxCount
                 )
 
@@ -181,7 +189,7 @@ class ChanPostRepository(
                     }
                 }
 
-                return@tryWithTransaction postsFromDatabase
+                return@tryWithTransaction fromCache + postsFromDatabase
             }
         }
     }
@@ -296,10 +304,6 @@ class ChanPostRepository(
         // database
         posts.forEach { chanPost ->
             val differsFromCached = postDiffersFromCached(chanPost)
-            if (chanPost.postDescriptor.postNo == 291835180L) {
-                println("insertOrUpdateThreadPosts differsFromCached = $differsFromCached")
-            }
-
             if (differsFromCached) {
                 if (chanPost.isOp) {
                     if (originalPost != null) {

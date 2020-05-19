@@ -172,7 +172,7 @@ public class ThemeSettingsController
 
     private PostParser.Callback parserCallback = new PostParser.Callback() {
         @Override
-        public boolean isSaved(int postNo) {
+        public boolean isSaved(long postNo) {
             return false;
         }
 

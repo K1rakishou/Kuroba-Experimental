@@ -137,6 +137,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_pin">Bookmark</string>
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_share">Share</string>
+    <string name="action_go_to_post">Go to post</string>
     <string name="action_download_album">Download album</string>
     <string name="action_transparency_toggle">Toggle opacity</string>
     <string name="action_image_rotate">Rotate image</string>
@@ -837,15 +838,16 @@ Don't have a 4chan Pass?<br>
     <string name="image_url_get_success">Got image from clipboard</string>
 
     <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
+    <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
     <string name="warning">Warning</string>
 
     <string name="drawer_controller_at_least_one_pin_has_download_flag">At least one pin has the \"Download\" flag, which makes this delete operation irreversible (because this operation will delete all of the saved thread\'s files from the disk). Do you really want to delete all pins?</string>
     <string name="drawer_controller_do_not_delete">Do not delete</string>
     <string name="drawer_controller_delete_all_pins">Delete all pins</string>
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
-    <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in your browser, it\'s probably already been deleted</string>
-    <string name="cannot_send_thread_via_nfc_already_deleted">Can\'t send thread via NFC, it\'s already been deleted</string>
-    <string name="cannot_shared_thread_already_deleted">Can\'t share this thread, it\'s already been deleted</string>
+    <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
+    <string name="cannot_send_thread_via_nfc_already_deleted">Can\'t send thread via NFC</string>
+    <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
     <string name="view_local_version">View local version</string>
     <string name="view_view_version">View live version</string>
     <string name="local_thread_text">Local thread</string>

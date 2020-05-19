@@ -510,7 +510,7 @@ public class BrowseController
     public void onSlideChanged() {
         super.onSlideChanged();
         if (getToolbar() != null && searchQuery != null) {
-            getToolbar().openSearch();
+            getToolbar().openSearch(searchQuery);
             getToolbar().searchInput(searchQuery);
             searchQuery = null;
         }

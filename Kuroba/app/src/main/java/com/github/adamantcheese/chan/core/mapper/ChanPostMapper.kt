@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.mapper
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.ui.theme.Theme
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
@@ -47,6 +48,7 @@ object ChanPostMapper {
                 postIcons = postIcons,
                 repliesTo = post.repliesTo,
                 replies = post.totalRepliesCount,
+                archiveId = post.archiveDescriptor?.getArchiveDatabaseId(),
                 threadImagesCount = post.threadImagesCount,
                 uniqueIps = post.uniqueIps,
                 lastModified = post.lastModified,
@@ -71,7 +73,8 @@ object ChanPostMapper {
             gson: Gson,
             board: Board,
             chanPost: ChanPost,
-            currentTheme: Theme
+            currentTheme: Theme,
+            archiveDescriptor: ArchiveDescriptor?
     ): Post {
         val opId = chanPost.postDescriptor.getThreadNo()
 
@@ -127,8 +130,11 @@ object ChanPostMapper {
                 .moderatorCapcode(chanPost.moderatorCapcode)
                 .isSavedReply(chanPost.isSavedReply)
                 .repliesTo(chanPost.repliesTo)
+                .fromCache(chanPost.isFromCache)
 
         postBuilder.postCommentBuilder.setComment(postComment)
+        postBuilder.setArchiveDescriptor(archiveDescriptor)
+
         return postBuilder.build()
     }
 

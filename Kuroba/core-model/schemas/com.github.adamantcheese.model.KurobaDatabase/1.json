@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "9823adcda88bc1342b36871bab9e54f4",
+    "identityHash": "89d3f5fc5f899b1f06a1c31e4dc07409",
     "entities": [
       {
         "tableName": "chan_board",
@@ -176,7 +176,7 @@
       },
       {
         "tableName": "chan_post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `is_from_archive` INTEGER NOT NULL, `timestamp_seconds` INTEGER NOT NULL, `name` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `is_op` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`post_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `post_no` INTEGER NOT NULL, `owner_thread_id` INTEGER NOT NULL, `deleted` INTEGER NOT NULL, `archive_id` INTEGER, `timestamp_seconds` INTEGER NOT NULL, `name` TEXT, `poster_id` TEXT, `moderator_capcode` TEXT, `is_op` INTEGER NOT NULL, `is_saved_reply` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postId",
@@ -197,10 +197,16 @@
             "notNull": true
           },
           {
-            "fieldPath": "isFromArchive",
-            "columnName": "is_from_archive",
+            "fieldPath": "deleted",
+            "columnName": "deleted",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "archiveId",
+            "columnName": "archive_id",
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
             "fieldPath": "timestamp",
@@ -938,12 +944,12 @@
     "views": [
       {
         "viewName": "chan_threads_with_posts",
-        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT \n                chan_thread.thread_id,\n                chan_thread.last_modified,\n            FROM \n                chan_thread chan_thread, \n                chan_post chan_post\n            WHERE \n                chan_thread.thread_id = chan_post.owner_thread_id\n            AND\n                (SELECT COUNT(*) \n                FROM chan_post \n                WHERE chan_post.is_op = 0) > 0\n            ORDER BY chan_thread.last_modified ASC"
+        "createSql": "CREATE VIEW `${VIEW_NAME}` AS SELECT\n                threads.thread_id,\n                threads.thread_no,\n                threads.last_modified,\n                COUNT(posts.post_id) as posts_count\n            FROM\n                chan_post posts\n            LEFT JOIN chan_thread threads \n                ON posts.owner_thread_id = threads.thread_id\n            WHERE \n                posts.is_op = 0\n            AND \n                threads.last_modified > 0\n            GROUP BY threads.thread_id\n            HAVING posts_count >= 0\n            ORDER BY threads.last_modified ASC"
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9823adcda88bc1342b36871bab9e54f4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '89d3f5fc5f899b1f06a1c31e4dc07409')"
     ]
   }
 }

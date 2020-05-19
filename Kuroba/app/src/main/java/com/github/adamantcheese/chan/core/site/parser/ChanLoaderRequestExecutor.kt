@@ -267,7 +267,7 @@ class ChanLoaderRequestExecutor(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun readJson(
+    suspend fun readJson(
             chanReaderProcessor: ChanReaderProcessor,
             requestParams: ChanLoaderRequestParams,
             jsonReader: JsonReader
@@ -317,11 +317,12 @@ class ChanLoaderRequestExecutor(
             }
 
             val cachedPostsCount = chanPostRepository.getCachedValuesCount()
+            val postsFromCache = reloadedPosts.count { post -> post.isFromCache }
 
             val logMsg = """
 ChanReaderRequest.readJson() stats:
 Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).
-Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts).
+Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).
 Parse posts took = $parsingDuration.
 Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).
 Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).
@@ -512,32 +513,20 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     ): Boolean {
         BackgroundUtils.ensureBackgroundThread()
 
-        if (freshPostsMap.containsKey(archivePost.postNo)) {
-            // Post already exists in the fresh posts list we got from the server.
-            // We don't need this archived post.
-            return false
-        }
-
-        if (cachedPostsMap.containsKey(archivePost.postNo)) {
-            // Post already exists in the cache/database. We don't need this post.
-            return true
-        }
-
         val freshPost = freshPostsMap[archivePost.postNo]
+        if (freshPost != null) {
+            // Post already exists in the fresh posts list we got from the server. We need to check
+            // whether the archive post is more valuable to us than the fresh post (e.g. archived
+            // post has more images than fresh post)
+            return PostUtils.shouldRetainPostFromArchive(archivePost, freshPost)
+        }
+
         val cachedPost = cachedPostsMap[archivePost.postNo]
-
-        if (freshPost == null && cachedPost == null) {
-            // Neither of the map have this post meaning it was deleted from the server and we need
-            // to use hte archived post.
-            return true
-        }
-
-        if (freshPost != null && PostUtils.shouldRetainPostFromArchive(archivePost, freshPost)) {
-            return true
-        }
-
-        if (cachedPost != null && PostUtils.shouldRetainPostFromArchive(archivePost, cachedPost)) {
-            return true
+        if (cachedPost != null) {
+            // Post already exists in the cache/database.  We need to check whether the archive post
+            // is more valuable to us than the fresh post (e.g. archived post has more images than
+            // cached post)
+            return PostUtils.shouldRetainPostFromArchive(archivePost, cachedPost)
         }
 
         return false
@@ -591,7 +580,17 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                   .unwrap()
                   .sortedByDescending { chanPost -> chanPost.lastModified }
             }
-        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post, currentTheme) }
+        }.map { post ->
+            val archiveDescriptor = archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)
+
+            return@map ChanPostMapper.toPost(
+              gson,
+              loadable.board,
+              post,
+              currentTheme,
+              archiveDescriptor
+            )
+        }
     }
 
     private suspend fun reloadPostsFromRepository(
@@ -624,7 +623,17 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 // them.
                 chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
             }
-        }.map { post -> ChanPostMapper.toPost(gson, loadable.board, post, currentTheme) }
+        }.map { post ->
+            val archiveDescriptor = archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)
+
+            return@map ChanPostMapper.toPost(
+              gson,
+              loadable.board,
+              post,
+              currentTheme,
+              archiveDescriptor
+            )
+        }
 
         return when (chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> posts

@@ -12,6 +12,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
+import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import io.reactivex.Flowable
@@ -41,24 +42,60 @@ class ArchivesManager(
 
     private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
 
-    private val allArchivesData by lazy {
-        return@lazy loadArchives()
-    }
-
-    private val allArchiveDescriptors by lazy {
-        return@lazy allArchivesData.map { it.getArchiveDescriptor() }
-    }
+    private lateinit var allArchivesData: List<ArchiveData>
+    private lateinit var allArchiveDescriptors: List<ArchiveDescriptor>
 
     init {
-        launch { thirdPartyArchiveInfoRepository.init(allArchiveDescriptors) }
+        launch {
+            val allArchives = loadArchives()
+
+            val archiveDescriptors = allArchives.map { archive ->
+                return@map ArchiveDescriptor(
+                    -1L,
+                    archive.name,
+                    archive.domain,
+                    ArchiveDescriptor.ArchiveType.byDomain(archive.domain)
+                )
+            }
+
+            val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
+
+            archiveDescriptors.forEach { descriptor ->
+              descriptor.setArchiveDatabaseId(archiveInfoMap[descriptor.domain]!!.databaseId)
+
+              for (archive in allArchives) {
+                if (descriptor.domain == archive.domain) {
+                  archive.setArchiveDescriptor(descriptor)
+                  break
+                }
+              }
+            }
+
+            allArchivesData = allArchives
+            allArchiveDescriptors = archiveDescriptors
+        }
     }
 
     fun getAllArchiveData(): List<ArchiveData> {
+        require(::allArchivesData.isInitialized) { "allArchivesData was not initialized yet" }
+
         return allArchivesData
     }
 
     fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
+        require(::allArchiveDescriptors.isInitialized) { "allArchiveDescriptors was not initialized yet" }
+
         return allArchiveDescriptors
+    }
+
+    fun getArchiveDescriptorByDatabaseId(archiveId: Long?): ArchiveDescriptor? {
+        if (archiveId == null) {
+          return null
+        }
+
+        return allArchiveDescriptors.firstOrNull { descriptor ->
+          descriptor.getArchiveDatabaseId() == archiveId
+        }
     }
 
     /**
@@ -141,6 +178,7 @@ class ArchivesManager(
 
         val fetchIsFreshTimeThreshold = if (forced) {
             DateTime.now().minus(FORCED_ARCHIVE_UPDATE_INTERVAL)
+            DateTime.now()
         } else {
             DateTime.now().minus(NORMAL_ARCHIVE_UPDATE_INTERVAL)
         }
@@ -373,7 +411,11 @@ class ArchivesManager(
                 }
     }
 
-    data class ArchiveData(
+
+
+  data class ArchiveData(
+            @Expose(serialize = false, deserialize = false)
+            private var archiveDescriptor: ArchiveDescriptor? = null,
             @SerializedName("name")
             val name: String,
             @SerializedName("domain")
@@ -385,11 +427,17 @@ class ArchivesManager(
     ) {
         fun isEnabled(): Boolean = domain !in disabledArchives
 
-        fun getArchiveDescriptor(): ArchiveDescriptor = ArchiveDescriptor(
-                name,
-                domain,
-                ArchiveDescriptor.ArchiveType.byDomain(domain)
-        )
+        fun setArchiveDescriptor(archiveDescriptor: ArchiveDescriptor) {
+          require(this.archiveDescriptor == null) { "Double initialization!" }
+
+          this.archiveDescriptor = archiveDescriptor
+        }
+
+        fun getArchiveDescriptor(): ArchiveDescriptor {
+            return requireNotNull(archiveDescriptor) {
+                "Attempt to access archiveDescriptor before ArchiveData was fully initialized"
+            }
+        }
     }
 
     data class FetchHistoryChange(

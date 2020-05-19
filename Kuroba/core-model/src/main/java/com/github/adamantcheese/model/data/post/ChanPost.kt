@@ -17,6 +17,7 @@ class ChanPost(
         var closed: Boolean = false,
         var archived: Boolean = false,
         var deleted: Boolean = false,
+        var archiveId: Long? = null,
         var timestamp: Long = -1L,
         var postComment: SerializableSpannableString = SerializableSpannableString(),
         var subject: SerializableSpannableString = SerializableSpannableString(),
@@ -25,7 +26,8 @@ class ChanPost(
         var posterId: String? = null,
         var moderatorCapcode: String? = null,
         var isOp: Boolean = false,
-        var isSavedReply: Boolean = false
+        var isSavedReply: Boolean = false,
+        var isFromCache: Boolean = false
 ) {
 
     override fun equals(other: Any?): Boolean {
