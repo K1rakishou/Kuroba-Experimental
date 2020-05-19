@@ -33,6 +33,7 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -100,98 +101,150 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         if (error != null) {
             text.setText(error + "\n" + getString(R.string.thread_refresh_bar_inactive));
             return false;
-        } else {
-            ChanThread chanThread = callback.getChanThread();
-            if (chanThread == null) {
-                // Recyclerview not clearing immediately or view didn't receive
-                // onDetachedFromWindow.
-                return false;
-            }
-
-            boolean update = false;
-
-            SpannableStringBuilder builder = new SpannableStringBuilder();
-
-            if (chanThread.getLoadable().isLocal()) {
-                builder.append(getString(R.string.local_thread_text));
-            } else {
-                if (chanThread.isArchived()) {
-                    builder.append(getString(R.string.thread_archived));
-                } else if (chanThread.isClosed()) {
-                    builder.append(getString(R.string.thread_closed));
-                }
-            }
-
-            if (!chanThread.isArchived() && !chanThread.isClosed()
-                    && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
-                if (chanThread.getLoadable().isLocal()
-                        && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
-                    // To split Local Thread and (Loading Time | Loading) rows
-                    builder.append('\n');
-                }
-
-                long time = callback.getTimeUntilLoadMore() / 1000L;
-                if (!callback.isWatching()) {
-                    builder.append(getString(R.string.thread_refresh_bar_inactive));
-                } else if (time <= 0) {
-                    builder.append(getString(R.string.thread_refresh_now));
-                } else {
-                    builder.append(getString(R.string.thread_refresh_countdown, time));
-                }
-                update = true;
-            }
-
-            builder.append('\n'); //to split up the cell into the top and bottom rows
-
-            Post op = chanThread.getOp();
-            Board board = op.board;
-            if (board != null) {
-                boolean hasReplies = op.getTotalRepliesCount() >= 0 || chanThread.getPostsCount() - 1 > 0;
-                boolean hasImages = op.getThreadImagesCount() >= 0 || chanThread.getImagesCount() > 0;
-                if (hasReplies && hasImages) {
-                    boolean hasBumpLimit = board.bumpLimit > 0;
-                    boolean hasImageLimit = board.imageLimit > 0;
-
-                    SpannableString replies = new SpannableString(
-                            (op.getTotalRepliesCount() >= 0 ? op.getTotalRepliesCount() : chanThread.getPostsCount() - 1) + "R");
-                    if (hasBumpLimit && op.getTotalRepliesCount() >= board.bumpLimit) {
-                        replies.setSpan(new StyleSpan(Typeface.ITALIC), 0, replies.length(), 0);
-                    }
-
-                    SpannableString images = new SpannableString(
-                            (op.getThreadImagesCount() >= 0 ? op.getThreadImagesCount() : chanThread.getImagesCount()) + "I");
-                    if (hasImageLimit && op.getThreadImagesCount() >= board.imageLimit) {
-                        images.setSpan(new StyleSpan(Typeface.ITALIC), 0, images.length(), 0);
-                    }
-
-                    builder.append(replies).append(" / ").append(images);
-
-                    if (op.getUniqueIps() >= 0) {
-                        String ips = op.getUniqueIps() + "P";
-                        builder.append(" / ").append(ips);
-                    }
-
-                    if (!chanThread.getLoadable().isLocal()) {
-                        Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
-                        if (boardPage != null) {
-                            SpannableString page = new SpannableString(String.valueOf(boardPage.getPage()));
-                            if (boardPage.getPage() >= board.pages) {
-                                page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
-                            }
-                            builder.append(" / ").append(getString(R.string.thread_page_no)).append(' ').append(page);
-                        }
-                    }
-                }
-            }
-
-            text.setText(builder);
-
-            return update;
         }
+
+        ChanThread chanThread = callback.getChanThread();
+        if (chanThread == null) {
+            // Recyclerview not clearing immediately or view didn't receive
+            // onDetachedFromWindow.
+            return false;
+        }
+
+        boolean update = false;
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+
+        if (!chanThread.isArchived() && !chanThread.isClosed()
+                && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
+            update = true;
+        }
+
+        boolean isNotDownloadedLocalThread = appendThreadStatusPart(chanThread, builder);
+        if (isNotDownloadedLocalThread) {
+            // To split Local Thread and (Loading Time | Loading) rows
+            builder.append('\n');
+        }
+
+        appendThreadRefreshPart(chanThread, builder);
+
+        // to split up the cell into the top and bottom rows
+        builder.append('\n');
+
+        Post op = chanThread.getOp();
+        Board board = op.board;
+
+        if (board != null) {
+            appendThreadStatisticsPart(chanThread, builder, op, board);
+        }
+
+        appendArchiveStatisticsPart(chanThread, builder);
+
+        text.setText(builder);
+        return update;
+    }
+
+    private void appendArchiveStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder) {
+        int archivePosts = 0;
+        int archiveImages = 0;
+
+        for (Post post : chanThread.getPosts()) {
+            if (post.getArchiveDescriptor() != null) {
+                ++archivePosts;
+            }
+
+            for (PostImage postImage : post.getPostImages()) {
+                if (postImage.isFromArchive) {
+                    ++archiveImages;
+                }
+            }
+        }
+
+        if (archivePosts == 0 && archiveImages == 0) {
+            return;
+        }
+
+        builder.append("\n")
+                .append("Restored posts: ").append(String.valueOf(archivePosts))
+                .append(", ")
+                .append("Restored images: ").append(String.valueOf(archiveImages));
+
+    }
+
+    private void appendThreadStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder, Post op, Board board) {
+        boolean hasReplies = op.getTotalRepliesCount() >= 0 || chanThread.getPostsCount() - 1 > 0;
+        boolean hasImages = op.getThreadImagesCount() >= 0 || chanThread.getImagesCount() > 0;
+
+        if (hasReplies && hasImages) {
+            boolean hasBumpLimit = board.bumpLimit > 0;
+            boolean hasImageLimit = board.imageLimit > 0;
+
+            SpannableString replies = new SpannableString(
+                    (op.getTotalRepliesCount() >= 0 ? op.getTotalRepliesCount() : chanThread.getPostsCount() - 1) + "R");
+            if (hasBumpLimit && op.getTotalRepliesCount() >= board.bumpLimit) {
+                replies.setSpan(new StyleSpan(Typeface.ITALIC), 0, replies.length(), 0);
+            }
+
+            SpannableString images = new SpannableString(
+                    (op.getThreadImagesCount() >= 0 ? op.getThreadImagesCount() : chanThread.getImagesCount()) + "I");
+            if (hasImageLimit && op.getThreadImagesCount() >= board.imageLimit) {
+                images.setSpan(new StyleSpan(Typeface.ITALIC), 0, images.length(), 0);
+            }
+
+            builder.append(replies).append(" / ").append(images);
+
+            if (op.getUniqueIps() >= 0) {
+                String ips = op.getUniqueIps() + "P";
+                builder.append(" / ").append(ips);
+            }
+        }
+
+        if (!chanThread.getLoadable().isLocal()) {
+            Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
+            if (boardPage != null) {
+                SpannableString page = new SpannableString(String.valueOf(boardPage.getPage()));
+                if (boardPage.getPage() >= board.pages) {
+                    page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
+                }
+
+                builder.append(" / ").append(getString(R.string.thread_page_no)).append(' ').append(page);
+            }
+        }
+    }
+
+    private void appendThreadRefreshPart(ChanThread chanThread, SpannableStringBuilder builder) {
+        if (!chanThread.isArchived() && !chanThread.isClosed()
+                && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
+            long time = callback.getTimeUntilLoadMore() / 1000L;
+            if (!callback.isWatching()) {
+                builder.append(getString(R.string.thread_refresh_bar_inactive));
+            } else if (time <= 0) {
+                builder.append(getString(R.string.thread_refresh_now));
+            } else {
+                builder.append(getString(R.string.thread_refresh_countdown, time));
+            }
+        }
+    }
+
+    private boolean appendThreadStatusPart(ChanThread chanThread, SpannableStringBuilder builder) {
+        if (chanThread.getLoadable().isLocal()) {
+            builder.append(getString(R.string.local_thread_text));
+
+            if (chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
+                return true;
+            }
+        } else {
+            if (chanThread.isArchived()) {
+                builder.append(getString(R.string.thread_archived));
+            } else if (chanThread.isClosed()) {
+                builder.append(getString(R.string.thread_closed));
+            }
+        }
+
+        return false;
     }
 
     private void schedule() {
         running = true;
+
         if (!handler.hasMessages(MESSAGE_INVALIDATE)) {
             handler.sendMessageDelayed(handler.obtainMessage(MESSAGE_INVALIDATE), UPDATE_INTERVAL);
         }

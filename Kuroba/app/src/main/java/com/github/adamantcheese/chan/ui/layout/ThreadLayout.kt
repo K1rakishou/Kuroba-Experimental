@@ -617,7 +617,7 @@ class ThreadLayout @JvmOverloads constructor(
     imageReencodingHelper.showController(loadable, supportsReencode)
   }
 
-  fun getThumbnail(postImage: PostImage?): ThumbnailView {
+  fun getThumbnail(postImage: PostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {
       postPopupHelper.getThumbnail(postImage)
     } else {
