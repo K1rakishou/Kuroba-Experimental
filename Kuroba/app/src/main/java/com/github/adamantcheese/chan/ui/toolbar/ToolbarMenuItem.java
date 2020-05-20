@@ -55,7 +55,7 @@ public class ToolbarMenuItem {
     public boolean enabled = true;
     public Drawable drawable;
     public final List<ToolbarMenuSubItem> subItems = new ArrayList<>();
-    private ClickCallback clicked;
+    private ClickCallback clickCallback;
 
     @Nullable
     private ToobarThreedotMenuCallback threedotMenuCallback;
@@ -68,31 +68,31 @@ public class ToolbarMenuItem {
     public ToolbarMenuItem(
             int id,
             int drawable,
-            ClickCallback clicked
+            ClickCallback clickCallback
     ) {
-        this(id, ResourcesCompat.getDrawable(getRes(), drawable, null), clicked);
+        this(id, ResourcesCompat.getDrawable(getRes(), drawable, null), clickCallback);
     }
 
     public ToolbarMenuItem(
             int id,
             Drawable drawable,
-            ClickCallback clicked
+            ClickCallback clickCallback
     ) {
         this.id = id;
         this.drawable = drawable;
-        this.clicked = clicked;
+        this.clickCallback = clickCallback;
     }
 
     public ToolbarMenuItem(
             int id,
             int drawable,
-            ClickCallback clicked,
+            ClickCallback clickCallback,
             @NonNull NavigationController navigationController,
             @Nullable ToobarThreedotMenuCallback threedotMenuCallback
     ) {
         this.id = id;
         this.drawable = ResourcesCompat.getDrawable(getRes(), drawable, null);
-        this.clicked = clicked;
+        this.clickCallback = clickCallback;
         this.navigationController = navigationController;
         this.threedotMenuCallback = threedotMenuCallback;
     }
@@ -202,7 +202,9 @@ public class ToolbarMenuItem {
         }
 
         for (ToolbarMenuSubItem subItem : subItems) {
-            floatingListMenuItems.add(mapToolbarSubItemToFloatingMenuItem(subItem));
+            if (subItem.visible) {
+                floatingListMenuItems.add(mapToolbarSubItemToFloatingMenuItem(subItem));
+            }
         }
 
         FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
@@ -282,7 +284,7 @@ public class ToolbarMenuItem {
                 subItem.id,
                 subItem.text,
                 null,
-                subItem.enabled,
+                subItem.visible,
                 subItem.isCurrentlySelected
         );
 
@@ -300,13 +302,13 @@ public class ToolbarMenuItem {
     }
 
     public void performClick() {
-        if (clicked != null) {
-            clicked.clicked(this);
+        if (clickCallback != null) {
+            clickCallback.clicked(this);
         }
     }
 
     public void setCallback(ClickCallback callback) {
-        clicked = callback;
+        clickCallback = callback;
     }
 
     public interface ClickCallback {

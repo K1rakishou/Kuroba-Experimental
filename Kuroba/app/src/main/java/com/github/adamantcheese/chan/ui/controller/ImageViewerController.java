@@ -535,7 +535,7 @@ public class ImageViewerController
         ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
 
         ToolbarMenuSubItem rotate = navigation.findSubItem(ACTION_IMAGE_ROTATE);
-        rotate.enabled = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;
+        rotate.visible = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;
     }
 
     public void scrollToImage(PostImage postImage) {

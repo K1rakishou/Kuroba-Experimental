@@ -252,14 +252,14 @@ public class ViewThreadController
             menuOverflowBuilder.withSubItem(
                     ACTION_VIEW_LOCAL_COPY,
                     R.string.view_local_version,
-                    false,
+                    true,
                     this::handleClickViewLocalVersion
             );
 
             menuOverflowBuilder.withSubItem(
                     ACTION_VIEW_LIVE_COPY,
                     R.string.view_view_version,
-                    false,
+                    true,
                     this::handleClickViewLiveVersion
             );
         }
@@ -515,44 +515,58 @@ public class ViewThreadController
     private void showBoardInternal(Loadable catalogLoadable, String searchQuery) {
         if (doubleNavigationController != null
                 && doubleNavigationController.getLeftController() instanceof BrowseController) {
-            //slide layout
+            // slide layout
             doubleNavigationController.switchToController(true);
-            ((BrowseController) doubleNavigationController.getLeftController()).setBoard(catalogLoadable.board);
+            BrowseController browseController =
+                    ((BrowseController) doubleNavigationController.getLeftController());
+
+            browseController.setBoard(catalogLoadable.board);
             if (searchQuery != null) {
-                ((BrowseController) doubleNavigationController.getLeftController()).searchQuery = searchQuery;
+                browseController.searchQuery = searchQuery;
             }
-        } else if (doubleNavigationController != null
+
+            return;
+        }
+
+        if (doubleNavigationController != null
                 && doubleNavigationController.getLeftController() instanceof StyledToolbarNavigationController) {
-            //split layout
-            ((BrowseController) doubleNavigationController.getLeftController().childControllers.get(0)).setBoard(
-                    catalogLoadable.board);
+            // split layout
+            BrowseController browseController =
+                    ((BrowseController) doubleNavigationController.getLeftController().childControllers.get(0));
+
+            browseController.setBoard(catalogLoadable.board);
             if (searchQuery != null) {
-                Toolbar toolbar = doubleNavigationController.getLeftController().childControllers.get(0).getToolbar();
-                if (toolbar != null) {
-                    toolbar.openSearch();
-                    toolbar.searchInput(searchQuery);
-                }
-            }
-        } else {
-            //phone layout
-            BrowseController browseController = null;
-            for (Controller c : navigationController.childControllers) {
-                if (c instanceof BrowseController) {
-                    browseController = (BrowseController) c;
-                    break;
-                }
-            }
-            if (browseController != null) {
-                browseController.setBoard(catalogLoadable.board);
-            }
-            navigationController.popController(false);
-            //search after we're at the browse controller
-            if (searchQuery != null && browseController != null) {
                 Toolbar toolbar = browseController.getToolbar();
                 if (toolbar != null) {
                     toolbar.openSearch();
                     toolbar.searchInput(searchQuery);
                 }
+            }
+
+            return;
+        }
+
+        // phone layout
+        BrowseController browseController = null;
+        for (Controller c : navigationController.childControllers) {
+            if (c instanceof BrowseController) {
+                browseController = (BrowseController) c;
+                break;
+            }
+        }
+
+        if (browseController != null) {
+            browseController.setBoard(catalogLoadable.board);
+        }
+
+        navigationController.popController(false);
+
+        // search after we're at the browse controller
+        if (searchQuery != null && browseController != null) {
+            Toolbar toolbar = browseController.getToolbar();
+            if (toolbar != null) {
+                toolbar.openSearch();
+                toolbar.searchInput(searchQuery);
             }
         }
     }
@@ -568,7 +582,7 @@ public class ViewThreadController
             return;
         }
 
-        //if we're toggling local/live we need to rebuild the menu
+        // if we're toggling local/live we need to rebuild the menu
         populateLocalOrLiveVersionMenu();
     }
 
@@ -594,68 +608,89 @@ public class ViewThreadController
 
     private void populateLocalOrLiveVersionMenu() {
         // setup the extra items if they're needed, or remove as necessary
+        ToolbarMenuSubItem viewLocalCopyItem = navigation.findSubItem(ACTION_VIEW_LOCAL_COPY);
+        ToolbarMenuSubItem viewLiveCopyItem = navigation.findSubItem(ACTION_VIEW_LIVE_COPY);
+
         if (ChanSettings.incrementalThreadDownloadingEnabled.get()
-                && getThreadDownloadState() != DownloadThreadState.Default
-        ) {
+                && getThreadDownloadState() != DownloadThreadState.Default) {
             ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
 
-            if (navigation.findSubItem(ACTION_VIEW_LIVE_COPY) == null
-                    && navigation.findSubItem(ACTION_VIEW_LOCAL_COPY) == null
-            ) {
+            if (viewLiveCopyItem == null && viewLocalCopyItem == null) {
                 overflowMenu.addSubItem(
-                        new ToolbarMenuSubItem(ACTION_VIEW_LOCAL_COPY,
+                        new ToolbarMenuSubItem(
+                                ACTION_VIEW_LOCAL_COPY,
                                 R.string.view_local_version,
-                                true,
                                 this::handleClickViewLocalVersion
                         )
                 );
                 overflowMenu.addSubItem(
-                        new ToolbarMenuSubItem(ACTION_VIEW_LIVE_COPY,
+                        new ToolbarMenuSubItem(
+                                ACTION_VIEW_LIVE_COPY,
                                 R.string.view_view_version,
-                                true,
                                 this::handleClickViewLiveVersion
                         )
                 );
             }
         } else {
-            ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
-            overflowMenu.removeSubItem(navigation.findSubItem(ACTION_VIEW_LOCAL_COPY));
-            overflowMenu.removeSubItem(navigation.findSubItem(ACTION_VIEW_LIVE_COPY));
+            if (viewLocalCopyItem != null) {
+                viewLocalCopyItem.visible = false;
+            }
+
+            if (viewLiveCopyItem != null) {
+                viewLiveCopyItem.visible = false;
+            }
         }
 
-        try {
-            Pin pin = watchManager.findPinByLoadableId(loadable.id);
-            if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-                // No pin for this loadable we are probably not downloading this thread.
-                // Pin has no downloading flag.
-                // Disable menu items.
-                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
-                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
-                return;
+        Pin pin = watchManager.findPinByLoadableId(loadable.id);
+        if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
+            // No pin for this loadable we are probably not downloading this thread.
+            // Pin has no downloading flag.
+            // Disable menu items.
+
+            if (viewLocalCopyItem != null) {
+                viewLocalCopyItem.visible = false;
+            }
+            if (viewLiveCopyItem != null) {
+                viewLiveCopyItem.visible = false;
             }
 
-            SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
-            if (savedThread == null || savedThread.isFullyDownloaded
-                    || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
-                    || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading) {
-                // No saved thread.
-                // Saved thread fully downloaded.
-                // Not downloading thread currently.
-                // Disable menu items.
-                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
-                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
-                return;
+            return;
+        }
+
+        SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
+        if (savedThread == null
+                || savedThread.isFullyDownloaded
+                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
+                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading) {
+            // No saved thread.
+            // Saved thread fully downloaded.
+            // Not downloading thread currently.
+            // Disable menu items.
+
+            if (viewLocalCopyItem != null) {
+                viewLocalCopyItem.visible = false;
+            }
+            if (viewLiveCopyItem != null) {
+                viewLiveCopyItem.visible = false;
             }
 
-            if (loadable.getLoadableDownloadingState() == DownloadingAndNotViewable) {
-                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = true;
-                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = false;
-            } else if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
-                navigation.findSubItem(ACTION_VIEW_LOCAL_COPY).enabled = false;
-                navigation.findSubItem(ACTION_VIEW_LIVE_COPY).enabled = true;
+            return;
+        }
+
+        if (loadable.getLoadableDownloadingState() == DownloadingAndNotViewable) {
+            if (viewLocalCopyItem != null) {
+                viewLocalCopyItem.visible = true;
             }
-        } catch (NullPointerException ignored) {
-            // Ignore NPE because the menu ID doesn't exist for the subitem
+            if (viewLiveCopyItem != null) {
+                viewLiveCopyItem.visible = false;
+            }
+        } else if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
+            if (viewLocalCopyItem != null) {
+                viewLocalCopyItem.visible = false;
+            }
+            if (viewLiveCopyItem != null) {
+                viewLiveCopyItem.visible = true;
+            }
         }
     }
 

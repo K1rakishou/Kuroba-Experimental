@@ -91,16 +91,16 @@ public class NavigationItem {
             menu = new ToolbarMenu();
         }
 
-        public MenuBuilder withItem(int drawable, ToolbarMenuItem.ClickCallback clicked) {
-            return withItem(-1, drawable, clicked);
+        public MenuBuilder withItem(int drawable, ToolbarMenuItem.ClickCallback clickCallback) {
+            return withItem(-1, drawable, clickCallback);
         }
 
-        public MenuBuilder withItem(int id, int drawable, ToolbarMenuItem.ClickCallback clicked) {
-            return withItem(new ToolbarMenuItem(id, drawable, clicked));
+        public MenuBuilder withItem(int id, int drawable, ToolbarMenuItem.ClickCallback clickCallback) {
+            return withItem(new ToolbarMenuItem(id, drawable, clickCallback));
         }
 
-        public MenuBuilder withItem(int id, Drawable drawable, ToolbarMenuItem.ClickCallback clicked) {
-            return withItem(new ToolbarMenuItem(id, drawable, clicked));
+        public MenuBuilder withItem(int id, Drawable drawable, ToolbarMenuItem.ClickCallback clickCallback) {
+            return withItem(new ToolbarMenuItem(id, drawable, clickCallback));
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
@@ -152,9 +152,9 @@ public class NavigationItem {
         public MenuOverflowBuilder withSubItem(
                 int id,
                 int text,
-                ToolbarMenuSubItem.ClickCallback clicked
+                ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
-            return withSubItem(id, getString(text), true, clicked);
+            return withSubItem(id, getString(text), true, clickCallback);
         }
 
         public MenuOverflowBuilder withSubItem(
@@ -173,19 +173,19 @@ public class NavigationItem {
         public MenuOverflowBuilder withSubItem(
                 int id,
                 int text,
-                boolean enabled,
-                ToolbarMenuSubItem.ClickCallback clicked
+                boolean visible,
+                ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
-            return withSubItem(id, getString(text), enabled, clicked);
+            return withSubItem(id, getString(text), visible, clickCallback);
         }
 
         public MenuOverflowBuilder withSubItem(
                 int id,
                 String text,
-                boolean enabled,
-                ToolbarMenuSubItem.ClickCallback clicked
+                boolean visible,
+                ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
-            menuItem.addSubItem(new ToolbarMenuSubItem(id, text, enabled, clicked));
+            menuItem.addSubItem(new ToolbarMenuSubItem(id, text, clickCallback, visible));
 
             return this;
         }
@@ -203,13 +203,14 @@ public class NavigationItem {
         public MenuNestedOverflowBuilder withNestedOverflow(
                 int id,
                 int textId,
-                boolean enabled
+                boolean visible
         ) {
             return new MenuNestedOverflowBuilder(this,
                     new ToolbarMenuSubItem(
                             id,
                             textId,
-                            enabled
+                            null,
+                            visible
                     ));
         }
 
@@ -252,7 +253,7 @@ public class NavigationItem {
         public MenuNestedOverflowBuilder addNestedItem(
                 int itemId,
                 int text,
-                boolean enabled,
+                boolean visible,
                 boolean isCurrentlySelected,
                 Object value,
                 ToolbarMenuSubItem.ClickCallback clickCallback
@@ -267,10 +268,10 @@ public class NavigationItem {
                     new ToolbarMenuSubItem(
                             itemId,
                             text,
-                            enabled,
+                            clickCallback,
+                            visible,
                             isCurrentlySelected,
-                            value,
-                            clickCallback
+                            value
                     )
             );
 
@@ -279,7 +280,7 @@ public class NavigationItem {
 
         public MenuOverflowBuilder build() {
             return menuOverflowBuilder
-                    .withSubItem(menuSubItem.id, menuSubItem.text, menuSubItem.enabled, null)
+                    .withSubItem(menuSubItem.id, menuSubItem.text, menuSubItem.visible, null)
                     .addNestedItemsTo(menuSubItem.id, nestedMenuItems);
         }
     }

@@ -972,7 +972,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
-    <string name="image_from_archive"> (From archive)</string>
+    <string name="image_from_archive">(From archive)</string>
     <string name="epoxy_archive_setting_row_working">WORKING</string>
     <string name="epoxy_archive_setting_row_experiencing_problems">EXPERIENCING PROBLEMS</string>
     <string name="epoxy_archive_setting_row_not_working">NOT WORKING</string>

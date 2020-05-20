@@ -538,7 +538,12 @@ public class PostCell
                 fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
             }
 
-            fileInfo.append(getIsFromArchive(image));
+            if (image.isFromArchive) {
+                fileInfo
+                        .append(" ")
+                        .append(getString(R.string.image_from_archive));
+            }
+
             titleParts.add(fileInfo);
 
             if (postFileName) {
@@ -554,14 +559,6 @@ public class PostCell
         }
 
         title.setText(TextUtils.concat(titleParts.toArray(new CharSequence[0])));
-    }
-
-    private String getIsFromArchive(PostImage image) {
-        if (image.isFromArchive) {
-            return getString(R.string.image_from_archive);
-        }
-
-        return "";
     }
 
     private String getFilename(PostImage image) {

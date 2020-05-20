@@ -45,11 +45,10 @@ class FloatingListMenu @JvmOverloads constructor(
           item.name
         }
 
-        epoxyFloatingListMenuRow {
-          id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
-          title(itemName)
-
-          if (item.enabled) {
+        if (item.visible) {
+          epoxyFloatingListMenuRow {
+            id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
+            title(itemName)
             settingEnabled(true)
 
             callback {
@@ -59,9 +58,6 @@ class FloatingListMenu @JvmOverloads constructor(
                 itemClickListener?.invoke(item)
               }
             }
-          } else {
-            settingEnabled(false)
-            callback(null)
           }
         }
 
@@ -78,7 +74,7 @@ class FloatingListMenu @JvmOverloads constructor(
     val key: Any,
     val name: String,
     val value: Any? = null,
-    val enabled: Boolean = true,
+    val visible: Boolean = true,
     val isCurrentlySelected: Boolean = false,
     val more: MutableList<FloatingListMenuItem> = mutableListOf()
   )
