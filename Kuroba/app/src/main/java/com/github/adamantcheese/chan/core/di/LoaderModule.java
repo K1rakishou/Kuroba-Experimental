@@ -7,7 +7,7 @@ import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.adamantcheese.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
-import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationManager;
+import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
@@ -29,7 +29,7 @@ public class LoaderModule {
     public PrefetchLoader providePrefetchLoader(
             FileCacheV2 fileCacheV2,
             CacheHandler cacheHandler,
-            PrefetchIndicatorAnimationManager prefetchIndicatorAnimationManager,
+            PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "PrefetchLoader");
@@ -38,7 +38,7 @@ public class LoaderModule {
                 Schedulers.from(onDemandContentLoaderExecutor),
                 fileCacheV2,
                 cacheHandler,
-                prefetchIndicatorAnimationManager
+                prefetchImageDownloadIndicatorManager
         );
     }
 

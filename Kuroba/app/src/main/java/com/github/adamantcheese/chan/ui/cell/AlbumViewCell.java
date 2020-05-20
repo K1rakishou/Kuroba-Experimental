@@ -75,10 +75,12 @@ public class AlbumViewCell
                 ChanSettings.autoLoadThreadImages.get() ? 500 : thumbnailSize
         );
 
-        String details =
-                postImage.extension.toUpperCase() + " " + postImage.imageWidth + "x" + postImage.imageHeight + " "
-                        + getReadableFileSize(postImage.getSize());
-        text.setText(postImage.isInlined ? postImage.extension.toUpperCase() : details); //if -1, linked image, no info
+        String details = postImage.extension.toUpperCase() +
+                " " + postImage.imageWidth + "x" + postImage.imageHeight +
+                " " + getReadableFileSize(postImage.getSize());
+
+        // if -1, linked image, no info
+        text.setText(postImage.isInlined ? postImage.extension.toUpperCase() : details);
     }
 
     public PostImage getPostImage() {
@@ -92,10 +94,11 @@ public class AlbumViewCell
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY && (heightMode == MeasureSpec.UNSPECIFIED
+
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+                && (heightMode == MeasureSpec.UNSPECIFIED
                 || heightMode == MeasureSpec.AT_MOST)) {
             int width = MeasureSpec.getSize(widthMeasureSpec);
-
             int height = width + dp(32);
 
             super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));

@@ -628,7 +628,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_video_auto_loop_description">Automatically loop video content</string>
-    <string name="setting_auto_load_thread_images">Enable media pre-fetching</string>
+    <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately (subject to the settings above). Increases the filecache size to 1GB.</string>
 
     <!-- Save location settings -->

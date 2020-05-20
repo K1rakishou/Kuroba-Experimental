@@ -24,15 +24,14 @@ import android.util.AttributeSet;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationManager;
+import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
+import com.github.adamantcheese.chan.core.manager.PrefetchState;
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.ui.animation.PostImageThumbnailViewAnimator;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
@@ -54,23 +53,22 @@ public class PostImageThumbnailView
     private static final String TAG = "PostImageThumbnailView";
 
     @Inject
-    PrefetchIndicatorAnimationManager prefetchIndicatorAnimationManager;
+    PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager;
     @Inject
     ThemeHelper themeHelper;
 
     private PostImage postImage;
     private Drawable playIcon;
     private float ratio = 0f;
-    private boolean showPrefetchLoadingIndicator;
+    private boolean showPrefetchLoadingIndicator = false;
+    private boolean prefetching = false;
     private final float prefetchIndicatorMargin = dp(4);
     private final int prefetchIndicatorSize = dp(16);
     private Rect bounds = new Rect();
     private Rect circularProgressDrawableBounds = new Rect();
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
-    private CircularProgressDrawable circularProgressDrawable = new CircularProgressDrawable(getContext());
-    private PostImageThumbnailViewAnimator.ThumbnailPrefetchProgressIndicatorAnimation animation =
-            PostImageThumbnailViewAnimator.createThumbnailPrefetchProgressIndicatorAnimation();
+    private SegmentedCircleDrawable segmentedCircleDrawable = new SegmentedCircleDrawable();
 
     public PostImageThumbnailView(Context context) {
         this(context, null);
@@ -90,31 +88,39 @@ public class PostImageThumbnailView
 
         playIcon = context.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
 
-        circularProgressDrawable.setStrokeWidth(5f);
-        circularProgressDrawable.setColorSchemeColors(themeHelper.getTheme().accentColor.color);
+        segmentedCircleDrawable.setColor(themeHelper.getTheme().accentColor.color);
+        segmentedCircleDrawable.setAlpha(192);
+        segmentedCircleDrawable.percentage(.0f);
 
-        Disposable disposable = prefetchIndicatorAnimationManager.listenForPrefetchStateUpdates()
-                .filter((prefetchStateData) -> showPrefetchLoadingIndicator && postImage != null)
-                .filter((prefetchStateData) -> prefetchStateData.getPostImage().equalUrl(postImage))
-                .subscribe(
-                        (prefetchStateData) -> endPrefetchProgressIndicatorAnimation(),
-                        (e) -> Logger.e(TAG, "Error while listening for prefetch state updates", e)
-                );
+        if (showPrefetchLoadingIndicator) {
+            Disposable disposable = prefetchImageDownloadIndicatorManager.listenForPrefetchStateUpdates()
+                    .filter((prefetchState) -> showPrefetchLoadingIndicator && postImage != null)
+                    .filter((prefetchState) -> prefetchState.getPostImage().equalUrl(postImage))
+                    .subscribe(
+                            this::onPrefetchStateChanged,
+                            (e) -> Logger.e(TAG, "Error while listening for prefetch state updates", e)
+                    );
 
-        compositeDisposable.add(disposable);
+            compositeDisposable.add(disposable);
+        }
     }
 
     public void overrideShowPrefetchLoadingIndicator(boolean value) {
         this.showPrefetchLoadingIndicator = value;
     }
 
-    public void bindPostImage(Loadable loadable, @NonNull PostImage postImage, boolean useHiRes, int width, int height) {
+    public void bindPostImage(
+            Loadable loadable,
+            @NonNull PostImage postImage,
+            boolean useHiRes,
+            int width,
+            int height
+    ) {
         if (this.postImage == postImage) {
             return;
         }
 
         this.postImage = postImage;
-        startPrefetchProgressIndicatorAnimation(loadable, postImage);
 
         if (!loadable.isLocal() || postImage.isInlined) {
             String url = getUrl(postImage, useHiRes);
@@ -148,36 +154,35 @@ public class PostImageThumbnailView
 
         setUrl(null);
         compositeDisposable.clear();
-        endPrefetchProgressIndicatorAnimation();
     }
 
-    private void startPrefetchProgressIndicatorAnimation(Loadable loadable, PostImage postImage) {
-        if (loadable.isLocal() || loadable.isDownloading()) {
+    private void onPrefetchStateChanged(PrefetchState prefetchState) {
+        if (!showPrefetchLoadingIndicator) {
             return;
         }
 
-        if (postImage.isInlined || postImage.isPrefetched()) {
+        if (prefetchState instanceof PrefetchState.PrefetchStarted) {
+            prefetching = true;
             return;
         }
 
-        if (showPrefetchLoadingIndicator && !animation.isRunning()) {
-            circularProgressDrawable.start();
+        if (prefetchState instanceof PrefetchState.PrefetchProgress) {
+            if (!prefetching) {
+                return;
+            }
 
-            animation.start((rotation) -> {
-                circularProgressDrawable.setProgressRotation(rotation);
-                invalidate();
-            });
+            float progress = ((PrefetchState.PrefetchProgress) prefetchState).getProgress();
+
+            segmentedCircleDrawable.percentage(progress);
+            invalidate();
+
+            return;
         }
-    }
 
-    private void endPrefetchProgressIndicatorAnimation() {
-        if (showPrefetchLoadingIndicator && animation.isRunning()) {
-            circularProgressDrawable.stop();
-            animation.end();
+        if (prefetchState instanceof PrefetchState.PrefetchCompleted) {
+            prefetching = false;
             invalidate();
         }
-
-        compositeDisposable.clear();
     }
 
     private String getUrl(PostImage postImage, boolean useHiRes) {
@@ -221,13 +226,14 @@ public class PostImageThumbnailView
             playIcon.draw(canvas);
         }
 
-        if (showPrefetchLoadingIndicator && !error && animation.isRunning()) {
+        if (showPrefetchLoadingIndicator && !error && prefetching) {
             canvas.save();
             canvas.translate(prefetchIndicatorMargin, prefetchIndicatorMargin);
 
             circularProgressDrawableBounds.set(0, 0, prefetchIndicatorSize, prefetchIndicatorSize);
-            circularProgressDrawable.setBounds(circularProgressDrawableBounds);
-            circularProgressDrawable.draw(canvas);
+
+            segmentedCircleDrawable.setBounds(circularProgressDrawableBounds);
+            segmentedCircleDrawable.draw(canvas);
 
             canvas.restore();
         }

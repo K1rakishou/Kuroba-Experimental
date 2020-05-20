@@ -7,7 +7,7 @@ import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.LoaderType
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
-import com.github.adamantcheese.chan.core.manager.PrefetchIndicatorAnimationManager
+import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
@@ -21,7 +21,7 @@ class PrefetchLoader(
         private val scheduler: Scheduler,
         private val fileCacheV2: FileCacheV2,
         private val cacheHandler: CacheHandler,
-        private val prefetchIndicatorAnimationManager: PrefetchIndicatorAnimationManager
+        private val prefetchImageDownloadIndicatorManager: PrefetchImageDownloadIndicatorManager
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
     override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
@@ -47,7 +47,7 @@ class PrefetchLoader(
 
         val prefetchList = tryGetPrefetchBatch(loadable, post)
         if (prefetchList.isEmpty()) {
-            postLoaderData.post.postImages.forEach { postImage -> onPrefetchEnded(postImage, true) }
+            postLoaderData.post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, true) }
             return rejected()
         }
 
@@ -59,20 +59,41 @@ class PrefetchLoader(
 
             if (cancelableDownload == null) {
                 // Already cached or something like that
-                onPrefetchEnded(prefetch.postImage)
+                onPrefetchCompleted(prefetch.postImage)
                 return@forEach
             }
 
             cancelableDownload.addCallback(object : FileCacheListener() {
-                override fun onSuccess(file: RawFile) {
-                    postLoaderData.post.setContentLoadedForLoader(loaderType)
-                    onPrefetchEnded(prefetch.postImage)
+
+                override fun onStart(chunksCount: Int) {
+                    super.onStart(chunksCount)
+                    require(chunksCount == 1) { "Bad chunksCount for prefetch: $chunksCount" }
+
+                    onPrefetchStarted(prefetch.postImage)
                 }
 
-                override fun onFail(exception: Exception?) = onPrefetchEnded(prefetch.postImage)
-                override fun onNotFound() = onPrefetchEnded(prefetch.postImage)
-                override fun onStop(file: AbstractFile?) = onPrefetchEnded(prefetch.postImage)
-                override fun onCancel() = onPrefetchEnded(prefetch.postImage, false)
+                override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
+                    super.onProgress(chunkIndex, downloaded, total)
+                    require(chunkIndex == 0) { "Bad chunkIndex for prefetch: $chunkIndex" }
+
+                    val progress = if (total != 0L) {
+                        downloaded.toFloat() / total.toFloat()
+                    } else {
+                        0f
+                    }
+
+                    onPrefetchProgress(prefetch.postImage, progress)
+                }
+
+                override fun onSuccess(file: RawFile) {
+                    postLoaderData.post.setContentLoadedForLoader(loaderType)
+                    onPrefetchCompleted(prefetch.postImage)
+                }
+
+                override fun onFail(exception: Exception?) = onPrefetchCompleted(prefetch.postImage)
+                override fun onNotFound() = onPrefetchCompleted(prefetch.postImage)
+                override fun onStop(file: AbstractFile?) = onPrefetchCompleted(prefetch.postImage)
+                override fun onCancel() = onPrefetchCompleted(prefetch.postImage, false)
             })
             postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
         }
@@ -116,12 +137,20 @@ class PrefetchLoader(
         }
     }
 
-    private fun onPrefetchEnded(postImage: PostImage, success: Boolean = true) {
+    private fun onPrefetchStarted(postImage: PostImage) {
+        prefetchImageDownloadIndicatorManager.onPrefetchStarted(postImage)
+    }
+
+    private fun onPrefetchProgress(postImage: PostImage, progress: Float) {
+        prefetchImageDownloadIndicatorManager.onPrefetchProgress(postImage, progress)
+    }
+
+    private fun onPrefetchCompleted(postImage: PostImage, success: Boolean = true) {
         if (success) {
             postImage.setPrefetched()
         }
 
-        prefetchIndicatorAnimationManager.onPrefetchDone(postImage)
+        prefetchImageDownloadIndicatorManager.onPrefetchCompleted(postImage)
     }
 
     private data class Prefetch(

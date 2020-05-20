@@ -58,7 +58,6 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
-import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -141,8 +140,6 @@ public class PostCell
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
-    @Inject
-    CacheHandler cacheHandler;
 
     private List<PostImageThumbnailView> thumbnailViews = new ArrayList<>(1);
     private RelativeLayout relativeLayoutContainer;
