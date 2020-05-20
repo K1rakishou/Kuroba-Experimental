@@ -8,12 +8,16 @@ import android.graphics.drawable.Drawable
 
 class SegmentedCircleDrawable : Drawable() {
   private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-  private var currentPercent: Float = 0f
+  private var currentPercent: Float = .1f
 
   fun percentage(percent: Float) {
     require(percent in 0f..1f)
 
     currentPercent = percent
+    
+    if (currentPercent < .1f) {
+      currentPercent = .1f
+    }
   }
 
   fun setColor(color: Int) {
