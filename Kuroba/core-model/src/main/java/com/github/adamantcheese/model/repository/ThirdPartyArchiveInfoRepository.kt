@@ -6,6 +6,7 @@ import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.archive.ArchiveThread
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -256,18 +257,11 @@ class ThirdPartyArchiveInfoRepository(
 
     suspend fun fetchThreadFromNetwork(
             threadArchiveRequestLink: String,
-            threadNo: Long,
-            supportsMediaThumbnails: Boolean,
-            supportsMedia: Boolean
-    ): ModularResult<ArchivesRemoteSource.ArchiveThread> {
+            threadNo: Long
+    ): ModularResult<ArchiveThread> {
         // We don't need to use SuspendableInitializer here
         return Try {
-            return@Try remoteSource.fetchThreadFromNetwork(
-                    threadArchiveRequestLink,
-                    threadNo,
-                    supportsMediaThumbnails,
-                    supportsMedia
-            )
+            return@Try remoteSource.fetchThreadFromNetwork(threadArchiveRequestLink, threadNo)
         }
     }
 

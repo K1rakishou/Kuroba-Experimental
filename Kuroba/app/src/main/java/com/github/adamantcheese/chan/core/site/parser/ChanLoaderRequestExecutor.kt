@@ -38,13 +38,14 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
+import com.github.adamantcheese.model.data.archive.ArchivePost
+import com.github.adamantcheese.model.data.archive.ArchiveThread
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
-import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
@@ -323,7 +324,7 @@ class ChanLoaderRequestExecutor(
 ChanReaderRequest.readJson() stats:
 Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).
 Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).
-Parse posts took = $parsingDuration.
+Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).
 Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).
 Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).
 """
@@ -415,16 +416,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                 return@Try emptyList()
             }
 
-            val supportsMedia = archivesManager.doesArchiveStoreMedia(
-                    archiveDescriptor,
-                    loadable.boardDescriptor
-            )
-
             val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetwork(
                     threadArchiveRequestLink,
-                    threadDescriptor.opNo,
-                    archivesManager.archiveStoresThumbnails(archiveDescriptor),
-                    supportsMedia
+                    threadDescriptor.opNo
             )
 
             val archiveThread = when (archiveThreadResult) {
@@ -448,7 +442,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
                     )
 
                     archivesManager.insertFetchHistory(fetchResult).unwrap()
-                    ArchivesRemoteSource.ArchiveThread(emptyList())
+                    ArchiveThread(emptyList())
                 }
                 is ModularResult.Value -> {
                     Logger.d(TAG, "Successfully fetched ${archiveThreadResult.value.posts.size} " +
@@ -490,7 +484,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
             val mappedArchivePosts = ArchiveThreadMapper.fromThread(
                     loadable.board,
-                    ArchivesRemoteSource.ArchiveThread(archivePostsThatWereDeleted)
+                    ArchiveThread(archivePostsThatWereDeleted)
             )
 
             mappedArchivePosts.forEach { postBuilder ->
@@ -507,7 +501,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
      * either the freshPost or the cachedPost.
      * */
     private fun retainDeletedOrUpdatedPosts(
-      archivePost: ArchivesRemoteSource.ArchivePost,
+      archivePost: ArchivePost,
       freshPostsMap: Map<Long, Post.Builder>,
       cachedPostsMap: Map<Long, ChanPost>
     ): Boolean {

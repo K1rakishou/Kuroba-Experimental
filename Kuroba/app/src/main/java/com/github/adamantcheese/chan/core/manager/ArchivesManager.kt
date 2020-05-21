@@ -343,10 +343,6 @@ class ArchivesManager(
         return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
     }
 
-    fun archiveStoresThumbnails(archiveDescriptor: ArchiveDescriptor): Boolean {
-        return archiveDescriptor.domain in archivesThatOnlyStoreThumbnails
-    }
-
     private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
         return allArchivesData.firstOrNull { archiveData ->
             return@firstOrNull archiveData.name == archiveDescriptor.name
@@ -465,10 +461,6 @@ class ArchivesManager(
                 // but works normally when opening in the browser. Apparently some kind of
                 // authentication is required.
                 "thebarchive.com"
-        )
-
-        private val archivesThatOnlyStoreThumbnails = setOf(
-                "archived.moe"
         )
 
         // We can forcefully fetch posts from an archive no more than once in 5 minutes

@@ -7,6 +7,7 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.AppCoroutineScope
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
+import com.github.adamantcheese.model.parser.ArchivesJsonParser
 import com.github.adamantcheese.model.repository.*
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.*
@@ -39,6 +40,19 @@ class ModelMainModule {
     @Provides
     fun provideGson(): Gson {
         return Gson().newBuilder().create()
+    }
+
+    /**
+     * Parsers
+     * */
+
+    @Singleton
+    @Provides
+    fun provideArchivesJsonParser(
+      @LoggerTagPrefix loggerTag: String,
+      logger: Logger
+    ): ArchivesJsonParser {
+        return ArchivesJsonParser(loggerTag, logger)
     }
 
     /**
@@ -146,9 +160,10 @@ class ModelMainModule {
     fun provideArchivesRemoteSource(
             logger: Logger,
             okHttpClient: OkHttpClient,
-            @LoggerTagPrefix loggerTag: String
+            @LoggerTagPrefix loggerTag: String,
+            archivesJsonParser: ArchivesJsonParser
     ): ArchivesRemoteSource {
-        return ArchivesRemoteSource(okHttpClient, loggerTag, logger)
+        return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser)
     }
 
     /**

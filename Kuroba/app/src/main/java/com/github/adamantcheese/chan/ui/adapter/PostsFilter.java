@@ -35,11 +35,8 @@ import static com.github.adamantcheese.chan.Chan.inject;
 
 public class PostsFilter {
     private static final Comparator<Post> IMAGE_COMPARATOR = (lhs, rhs) -> rhs.getThreadImagesCount() - lhs.getThreadImagesCount();
-
     private static final Comparator<Post> REPLY_COMPARATOR = (lhs, rhs) -> rhs.getTotalRepliesCount() - lhs.getTotalRepliesCount();
-
     private static final Comparator<Post> NEWEST_COMPARATOR = (lhs, rhs) -> (int) (rhs.time - lhs.time);
-
     private static final Comparator<Post> OLDEST_COMPARATOR = (lhs, rhs) -> (int) (lhs.time - rhs.time);
 
     private static final Comparator<Post> MODIFIED_COMPARATOR =

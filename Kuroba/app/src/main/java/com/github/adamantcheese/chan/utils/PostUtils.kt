@@ -6,9 +6,9 @@ import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.PostHide
+import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
-import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import java.util.*
 import kotlin.math.abs
 
@@ -255,10 +255,7 @@ object PostUtils {
      * because at this point [archivePost]'s comment is still unparsed so it contains stuff like HTMl
      * tags etc.
      * */
-    fun shouldRetainPostFromArchive(
-      archivePost: ArchivesRemoteSource.ArchivePost,
-      cachedArchivePost: ChanPost
-    ): Boolean {
+    fun shouldRetainPostFromArchive(archivePost: ArchivePost, cachedArchivePost: ChanPost): Boolean {
         if (archivePost.archivePostMediaList.size > cachedArchivePost.postImages.size) {
             // Archived post has more images than the cached post
             return true
@@ -287,10 +284,7 @@ object PostUtils {
     /**
      * Same as above but for Post.Builder
      * */
-    fun shouldRetainPostFromArchive(
-      archivePost: ArchivesRemoteSource.ArchivePost,
-      freshPost: Post.Builder
-    ): Boolean {
+    fun shouldRetainPostFromArchive(archivePost: ArchivePost, freshPost: Post.Builder): Boolean {
         if (archivePost.archivePostMediaList.size > freshPost.postImages.size) {
             // Archived post has more images than the fresh post
             return true

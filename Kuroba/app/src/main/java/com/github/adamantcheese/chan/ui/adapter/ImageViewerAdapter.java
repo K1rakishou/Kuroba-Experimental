@@ -40,7 +40,9 @@ public class ImageViewerAdapter
     private List<ModeChange> pendingModeChanges = new ArrayList<>();
 
     public ImageViewerAdapter(
-            List<PostImage> images, Loadable loadable, MultiImageView.Callback multiImageViewCallback
+            List<PostImage> images,
+            Loadable loadable,
+            MultiImageView.Callback multiImageViewCallback
     ) {
         this.images = images;
         this.loadable = loadable;

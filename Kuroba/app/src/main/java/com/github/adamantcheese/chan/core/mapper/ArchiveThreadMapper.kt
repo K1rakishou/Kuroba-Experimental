@@ -5,7 +5,9 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
+import com.github.adamantcheese.model.data.archive.ArchivePost
+import com.github.adamantcheese.model.data.archive.ArchivePostMedia
+import com.github.adamantcheese.model.data.archive.ArchiveThread
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 object ArchiveThreadMapper {
@@ -13,7 +15,7 @@ object ArchiveThreadMapper {
 
     fun fromThread(
             board: Board,
-            archiveThread: ArchivesRemoteSource.ArchiveThread
+            archiveThread: ArchiveThread
     ): List<Post.Builder> {
         val repliesCount = archiveThread.posts.filter { post -> !post.isOP }.count()
         val imagesCount = archiveThread.posts.sumBy { post -> post.archivePostMediaList.size }
@@ -32,7 +34,7 @@ object ArchiveThreadMapper {
             board: Board,
             repliesCount: Int,
             imagesCount: Int,
-            archivePost: ArchivesRemoteSource.ArchivePost
+            archivePost: ArchivePost
     ): Post.Builder {
         val images = archivePost.archivePostMediaList.mapNotNull { archivePostMedia ->
             return@mapNotNull Try {
@@ -68,9 +70,7 @@ object ArchiveThreadMapper {
         return postBuilder
     }
 
-    private fun fromPostMedia(
-            archivePostMedia: ArchivesRemoteSource.ArchivePostMedia
-    ): PostImage? {
+    private fun fromPostMedia(archivePostMedia: ArchivePostMedia): PostImage? {
         val imageUrl = archivePostMedia.imageUrl?.toHttpUrl()
 
         return PostImage.Builder()
