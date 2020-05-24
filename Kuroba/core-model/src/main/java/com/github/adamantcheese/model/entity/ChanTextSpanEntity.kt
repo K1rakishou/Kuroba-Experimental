@@ -7,7 +7,7 @@ import androidx.room.*
         foreignKeys = [
             ForeignKey(
                     entity = ChanPostEntity::class,
-                    parentColumns = [ChanPostEntity.POST_ID_COLUMN_NAME],
+                    parentColumns = [ChanPostEntity.CHAN_POST_ID_COLUMN_NAME],
                     childColumns = [ChanTextSpanEntity.OWNER_POST_ID_COLUMN_NAME],
                     onDelete = ForeignKey.CASCADE,
                     onUpdate = ForeignKey.CASCADE

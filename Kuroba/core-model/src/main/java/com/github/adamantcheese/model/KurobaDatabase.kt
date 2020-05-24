@@ -10,11 +10,13 @@ import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.*
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
+import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 
 @Database(
   entities = [
     ChanBoardEntity::class,
     ChanThreadEntity::class,
+    ChanPostIdEntity::class,
     ChanPostEntity::class,
     ChanPostImageEntity::class,
     ChanPostHttpIconEntity::class,

@@ -9,7 +9,7 @@ import okhttp3.HttpUrl
         foreignKeys = [
             ForeignKey(
                     entity = ChanPostEntity::class,
-                    parentColumns = [ChanPostEntity.POST_ID_COLUMN_NAME],
+                    parentColumns = [ChanPostEntity.CHAN_POST_ID_COLUMN_NAME],
                     childColumns = [ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME],
                     onDelete = ForeignKey.CASCADE,
                     onUpdate = ForeignKey.CASCADE
@@ -19,6 +19,13 @@ import okhttp3.HttpUrl
             Index(
                     name = ChanPostImageEntity.OWNER_POST_ID_INDEX_NAME,
                     value = [ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME]
+            ),
+            Index(
+                    name = ChanPostImageEntity.OWNER_POST_ID_ARCHIVE_ID_INDEX_NAME,
+                    value = [
+                      ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME,
+                      ChanPostImageEntity.OWNER_ARCHIVE_ID_COLUMN_NAME
+                    ]
             ),
             Index(
                     name = ChanPostImageEntity.IMAGE_URL_INDEX_NAME,
@@ -36,8 +43,8 @@ data class ChanPostImageEntity(
         var postImageId: Long = 0L,
         @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
         val ownerPostId: Long,
-        @ColumnInfo(name = IS_FROM_ARCHIVE_COLUMN_NAME)
-        val isFromArchive: Boolean,
+        @ColumnInfo(name = OWNER_ARCHIVE_ID_COLUMN_NAME)
+        val ownerArchiveId: Long = 0L,
         @ColumnInfo(name = SERVER_FILENAME_COLUMN_NAME)
         val serverFilename: String,
         @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
@@ -71,7 +78,7 @@ data class ChanPostImageEntity(
 
         const val POST_IMAGE_ID_COLUMN_NAME = "post_image_id"
         const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
-        const val IS_FROM_ARCHIVE_COLUMN_NAME = "is_from_archive"
+        const val OWNER_ARCHIVE_ID_COLUMN_NAME = "owner_archive_id"
         const val SERVER_FILENAME_COLUMN_NAME = "server_filename"
         const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
         const val SPOILER_THUMBNAIL_URL_COLUMN_NAME = "spoiler_thumbnail_url"
@@ -87,6 +94,7 @@ data class ChanPostImageEntity(
         const val TYPE_COLUMN_NAME = "type"
 
         const val OWNER_POST_ID_INDEX_NAME = "${TABLE_NAME}_owner_post_id_idx"
+        const val OWNER_POST_ID_ARCHIVE_ID_INDEX_NAME = "${TABLE_NAME}_owner_post_id_archive_id_idx"
         const val IMAGE_URL_INDEX_NAME = "${TABLE_NAME}_image_url_idx"
         const val IMAGE_THUMBNAIL_URL_INDEX_NAME = "${TABLE_NAME}_image_thumbnail_url_idx"
     }

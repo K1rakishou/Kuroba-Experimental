@@ -13,7 +13,7 @@ object ChanPostImageMapper {
 
         return ChanPostImage(
                 serverFilename = postImage.serverFilename,
-                isFromArchive = postImage.isFromArchive,
+                archiveId = postImage.archiveId,
                 thumbnailUrl = postImage.thumbnailUrl,
                 spoilerThumbnailUrl = postImage.spoilerThumbnailUrl,
                 imageUrl = postImage.imageUrl,
@@ -42,7 +42,7 @@ object ChanPostImageMapper {
                 .imageHeight(chanPostImage.imageHeight)
                 .spoiler(chanPostImage.spoiler)
                 .isInlined(chanPostImage.isInlined)
-                .isFromArchive(chanPostImage.isFromArchive)
+                .archiveId(chanPostImage.archiveId)
                 .size(chanPostImage.size)
                 .fileHash(chanPostImage.fileHash, false)
                 .build()

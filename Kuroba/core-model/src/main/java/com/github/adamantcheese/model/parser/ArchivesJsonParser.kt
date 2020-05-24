@@ -5,6 +5,10 @@ import android.util.JsonToken
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchivePostMedia
+import com.github.adamantcheese.model.util.extractFileNameExtension
+import com.github.adamantcheese.model.util.jsonObject
+import com.github.adamantcheese.model.util.nextStringOrNull
+import com.github.adamantcheese.model.util.removeExtensionIfPresent
 
 class ArchivesJsonParser(
   loggerTag: String,
@@ -187,48 +191,6 @@ class ArchivesJsonParser(
     }
 
     return archivePostMedia
-  }
-
-  private fun removeExtensionIfPresent(filename: String): String {
-    val index = filename.lastIndexOf('.')
-    if (index < 0) {
-      return filename
-    }
-
-    return filename.substring(0, index)
-  }
-
-  private fun extractFileNameExtension(filename: String): String? {
-    val index = filename.lastIndexOf('.')
-    return if (index == -1) {
-      null
-    } else {
-      filename.substring(index + 1)
-    }
-  }
-
-  private fun JsonReader.nextStringOrNull(): String? {
-    if (peek() == JsonToken.NULL) {
-      skipValue()
-      return null
-    }
-
-    val value = nextString()
-    if (value.isNullOrEmpty()) {
-      return null
-    }
-
-    return value
-  }
-
-  private fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
-    beginObject()
-
-    try {
-      return func(this)
-    } finally {
-      endObject()
-    }
   }
 
 }

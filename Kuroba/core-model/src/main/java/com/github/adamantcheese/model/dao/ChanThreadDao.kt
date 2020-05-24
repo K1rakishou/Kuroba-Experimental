@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.adamantcheese.model.entity.ChanThreadEntity
-import com.github.adamantcheese.model.entity.ChanThreadsWithPosts
+import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 
 @Dao
 abstract class ChanThreadDao {

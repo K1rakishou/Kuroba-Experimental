@@ -31,7 +31,7 @@ class InlinedFileInfoRepositoryTest {
         remoteSource = mock()
 
         repository = InlinedFileInfoRepository(
-                testDatabaseModuleComponent.provideKurobaDatabase(),
+                testDatabaseModuleComponent.provideInMemoryKurobaDatabase(),
                 "",
                 testDatabaseModuleComponent.provideLogger(),
                 cache,

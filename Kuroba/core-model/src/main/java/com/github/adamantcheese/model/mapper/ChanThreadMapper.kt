@@ -4,7 +4,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
-import com.github.adamantcheese.model.entity.ChanPostEntity
+import com.github.adamantcheese.model.entity.ChanPostFull
 import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.google.gson.Gson
@@ -30,7 +30,7 @@ object ChanThreadMapper {
             gson: Gson,
             chanDescriptor: ChanDescriptor,
             chanThreadEntity: ChanThreadEntity,
-            chanPostEntity: ChanPostEntity,
+            chanPostFull: ChanPostFull,
             chanTextSpanEntityList: List<ChanTextSpanEntity>?
     ): ChanPost {
         val postComment = TextSpanMapper.fromEntity(
@@ -56,17 +56,17 @@ object ChanThreadMapper {
                     chanDescriptor.siteName(),
                     chanDescriptor.boardCode(),
                     chanDescriptor.opNo,
-                    chanPostEntity.postNo
+                    chanPostFull.chanPostIdEntity.postNo
             )
             is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(
                     chanDescriptor.siteName(),
                     chanDescriptor.boardCode(),
-                    chanPostEntity.postNo
+                    chanPostFull.chanPostIdEntity.postNo
             )
         }
 
         return ChanPost(
-                databasePostId = chanPostEntity.postId,
+                chanPostId = chanPostFull.chanPostIdEntity.postId,
                 postDescriptor = postDescriptor,
                 postImages = mutableListOf(),
                 postIcons = mutableListOf(),
@@ -76,18 +76,18 @@ object ChanThreadMapper {
                 lastModified = chanThreadEntity.lastModified,
                 sticky = chanThreadEntity.sticky,
                 closed = chanThreadEntity.closed,
-                deleted = chanPostEntity.deleted,
-                archiveId = chanPostEntity.archiveId,
+                deleted = chanPostFull.chanPostEntity.deleted,
+                archiveId = chanPostFull.chanPostIdEntity.ownerArchiveId,
                 archived = chanThreadEntity.archived,
-                timestamp = chanPostEntity.timestamp,
-                name = chanPostEntity.name,
+                timestamp = chanPostFull.chanPostEntity.timestamp,
+                name = chanPostFull.chanPostEntity.name,
                 postComment = postComment,
                 subject = subject,
                 tripcode = tripcode,
-                posterId = chanPostEntity.posterId,
-                moderatorCapcode = chanPostEntity.moderatorCapcode,
-                isOp = chanPostEntity.isOp,
-                isSavedReply = chanPostEntity.isSavedReply
+                posterId = chanPostFull.chanPostEntity.posterId,
+                moderatorCapcode = chanPostFull.chanPostEntity.moderatorCapcode,
+                isOp = chanPostFull.chanPostEntity.isOp,
+                isSavedReply = chanPostFull.chanPostEntity.isSavedReply
         )
     }
 

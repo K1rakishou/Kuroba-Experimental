@@ -16,7 +16,8 @@ object ChanPostMapper {
     fun fromPost(
             gson: Gson,
             postDescriptor: PostDescriptor,
-            post: Post
+            post: Post,
+            archiveId: Long
     ): ChanPost {
         val postComment = SpannableStringMapper.serializeSpannableString(
                 gson,
@@ -42,13 +43,13 @@ object ChanPostMapper {
         }?.toMutableList() ?: mutableListOf()
 
         return ChanPost(
-                databasePostId = 0L,
+                chanPostId = 0L,
                 postDescriptor = postDescriptor,
                 postImages = postImages,
                 postIcons = postIcons,
                 repliesTo = post.repliesTo,
                 replies = post.totalRepliesCount,
-                archiveId = post.archiveDescriptor?.getArchiveDatabaseId(),
+                archiveId = archiveId,
                 threadImagesCount = post.threadImagesCount,
                 uniqueIps = post.uniqueIps,
                 lastModified = post.lastModified,

@@ -3,8 +3,8 @@ package com.github.adamantcheese.model.data.post
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 
-class ChanPost(
-        val databasePostId: Long,
+data class ChanPost(
+        val chanPostId: Long,
         val postDescriptor: PostDescriptor,
         val postImages: MutableList<ChanPostImage> = mutableListOf(),
         val postIcons: MutableList<ChanPostHttpIcon> = mutableListOf(),
@@ -17,7 +17,7 @@ class ChanPost(
         var closed: Boolean = false,
         var archived: Boolean = false,
         var deleted: Boolean = false,
-        var archiveId: Long? = null,
+        var archiveId: Long = 0L,
         var timestamp: Long = -1L,
         var postComment: SerializableSpannableString = SerializableSpannableString(),
         var subject: SerializableSpannableString = SerializableSpannableString(),
@@ -34,10 +34,13 @@ class ChanPost(
         if (this === other) return true
         if (other !is ChanPost) return false
 
-        if (databasePostId != other.databasePostId) {
+        if (chanPostId != other.chanPostId) {
             return false
         }
         if (postDescriptor != other.postDescriptor) {
+            return false
+        }
+        if (archiveId != other.archiveId) {
             return false
         }
 
@@ -119,8 +122,9 @@ class ChanPost(
     }
 
     override fun hashCode(): Int {
-        var result = databasePostId.hashCode()
+        var result = chanPostId.hashCode()
         result = 31 * result + postDescriptor.hashCode()
+        result = 31 * result + archiveId.hashCode()
         result = 31 * result + sticky.hashCode()
         result = 31 * result + closed.hashCode()
         result = 31 * result + archived.hashCode()
@@ -140,8 +144,9 @@ class ChanPost(
     }
 
     override fun toString(): String {
-        return "Builder{" +
-                "databasePostId=" + databasePostId +
+        return "ChanPost{" +
+                "chanPostId=" + chanPostId +
+                ", archiveId=" + archiveId +
                 ", postDescriptor=" + postDescriptor +
                 ", postImages=" + postImages.size +
                 ", archived=" + archived +

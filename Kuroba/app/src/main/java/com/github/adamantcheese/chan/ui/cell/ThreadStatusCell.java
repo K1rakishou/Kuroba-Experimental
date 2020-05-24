@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 
 import javax.inject.Inject;
 
@@ -152,7 +153,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             }
 
             for (PostImage postImage : post.getPostImages()) {
-                if (postImage.isFromArchive) {
+                if (ArchiveDescriptor.isActualArchive(postImage.archiveId)) {
                     ++archiveImages;
                 }
             }

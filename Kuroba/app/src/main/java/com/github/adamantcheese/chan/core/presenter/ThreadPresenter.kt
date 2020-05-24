@@ -62,6 +62,7 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.fsaf.FileManager
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
@@ -859,7 +860,7 @@ class ThreadPresenter @Inject constructor(
 
         val imageUrl = image.imageUrl
         val setCallback = (!post.deleted.get()
-          || image.isFromArchive
+          || ArchiveDescriptor.isActualArchive(image.archiveId)
           || imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
 
         if (setCallback) {

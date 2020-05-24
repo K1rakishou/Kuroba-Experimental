@@ -6,6 +6,7 @@ import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
@@ -67,9 +68,11 @@ class ChanPostRepository(
 
     suspend fun getCatalogOriginalPosts(
       descriptor: ChanDescriptor.CatalogDescriptor,
+      archiveId: Long,
       count: Int
     ): ModularResult<List<ChanPost>> {
         require(count > 0) { "Bad count param: $count" }
+        val archiveIds = toArchiveIdsSet(archiveId)
 
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
@@ -80,6 +83,7 @@ class ChanPostRepository(
 
                 val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
                   descriptor,
+                  archiveIds,
                   count
                 )
 
@@ -96,8 +100,11 @@ class ChanPostRepository(
 
     suspend fun getCatalogOriginalPosts(
             descriptor: ChanDescriptor.CatalogDescriptor,
+            archiveId: Long,
             threadNoList: List<Long>
     ): ModularResult<List<ChanPost>> {
+        val archiveIds = toArchiveIdsSet(archiveId)
+
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
                 val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
@@ -119,6 +126,7 @@ class ChanPostRepository(
 
                 val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
                         descriptor,
+                        archiveIds,
                         originalPostNoListToGetFromDatabase
                 )
 
@@ -135,8 +143,11 @@ class ChanPostRepository(
 
     suspend fun getThreadPosts(
             threadDescriptor: ChanDescriptor.ThreadDescriptor,
+            archiveId: Long,
             postNoSet: Set<Long>
     ): ModularResult<List<ChanPost>> {
+        val archiveIds = toArchiveIdsSet(archiveId)
+
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
                 val fromCache = postCache.getPostsFromCache(threadDescriptor, postNoSet)
@@ -150,6 +161,7 @@ class ChanPostRepository(
 
                 val postsFromDatabase = localSource.getThreadPosts(
                         threadDescriptor,
+                        archiveIds,
                         getFromDatabasePostList
                 )
 
@@ -166,8 +178,11 @@ class ChanPostRepository(
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
+            archiveId: Long,
             maxCount: Int
     ): ModularResult<List<ChanPost>> {
+        val archiveIds = toArchiveIdsSet(archiveId)
+
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
                 val fromCache = postCache.getLatest(descriptor, maxCount)
@@ -179,6 +194,7 @@ class ChanPostRepository(
 
                 val postsFromDatabase = localSource.getThreadPosts(
                         descriptor,
+                        archiveIds,
                         postsNoToIgnore,
                         maxCount
                 )
@@ -194,79 +210,6 @@ class ChanPostRepository(
         }
     }
 
-    suspend fun containsPostInCache(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized Try {
-                return@Try postCache.getPostFromCache(postDescriptor, isOP) != null
-            }
-        }
-    }
-
-    suspend fun containsPostInLocalSource(postDescriptor: PostDescriptor): ModularResult<Boolean> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                return@tryWithTransaction localSource.containsPost(
-                  postDescriptor.descriptor,
-                  postDescriptor.postNo
-                )
-            }
-        }
-    }
-
-    suspend fun containsPost(postDescriptor: PostDescriptor, isOP: Boolean): ModularResult<Boolean> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                val containsInCache = postCache.getPostFromCache(postDescriptor, isOP) != null
-                if (containsInCache) {
-                    return@tryWithTransaction true
-                }
-
-                return@tryWithTransaction localSource.containsPost(
-                        postDescriptor.descriptor,
-                        postDescriptor.postNo
-                )
-            }
-        }
-    }
-
-    suspend fun containsPost(
-            descriptor: ChanDescriptor,
-            postNo: Long
-    ): ModularResult<Boolean> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                return@tryWithTransaction localSource.containsPost(descriptor, postNo)
-            }
-        }
-    }
-
-    suspend fun filterAlreadyCachedPostNo(
-            threadDescriptor: ChanDescriptor.ThreadDescriptor,
-            archivePostsNoList: List<Long>
-    ): ModularResult<List<Long>> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                val cachedInMemorySet = postCache.getAll(threadDescriptor)
-                        .map { post -> post.postDescriptor.postNo }.toSet()
-
-                val notInMemoryCached = archivePostsNoList.filter { archivePostNo ->
-                    archivePostNo !in cachedInMemorySet
-                }
-
-                if (notInMemoryCached.isEmpty()) {
-                    return@tryWithTransaction emptyList<Long>()
-                }
-
-                val cachedInDatabase = localSource.getThreadPostNoList(threadDescriptor)
-                        .toSet()
-
-                return@tryWithTransaction notInMemoryCached.filter { archivePostNo ->
-                    archivePostNo !in cachedInDatabase
-                }
-            }
-        }
-    }
-
     suspend fun deleteAll(): ModularResult<Int> {
         return suspendableInitializer.invokeWhenInitialized {
             return@invokeWhenInitialized tryWithTransaction {
@@ -275,9 +218,20 @@ class ChanPostRepository(
         }
     }
 
-    private suspend fun insertOrUpdateCatalogOriginalPosts(
-            posts: MutableList<ChanPost>
-    ): List<Long> {
+    /**
+     * Every post has it's own archiveId. If a post was not fetched from any archive it's archiveId
+     * will be [ArchiveDescriptor.NO_ARCHIVE_ID]. Otherwise a real archive id will be used. When
+     * loading posts from the database we want to get the archived posts for a thread as well as the
+     * original posts. So that's why we use two archive ids: the currently chosen archive's id (it
+     * may be [ArchiveDescriptor.NO_ARCHIVE_ID] too!) to load archived posts and
+     * [ArchiveDescriptor.NO_ARCHIVE_ID] to load the regular posts. If both of them are
+     * [ArchiveDescriptor.NO_ARCHIVE_ID] then the set will remove duplicates so only one id will be
+     * left.
+     * */
+    private fun toArchiveIdsSet(archiveId: Long) =
+      setOf(archiveId, ArchiveDescriptor.NO_ARCHIVE_ID)
+
+    private suspend fun insertOrUpdateCatalogOriginalPosts(posts: MutableList<ChanPost>): List<Long> {
         if (posts.isEmpty()) {
             return emptyList()
         }
@@ -294,9 +248,7 @@ class ChanPostRepository(
         return posts.map { it.postDescriptor.postNo }
     }
 
-    private suspend fun insertOrUpdateThreadPosts(
-            posts: MutableList<ChanPost>
-    ): List<Long> {
+    private suspend fun insertOrUpdateThreadPosts(posts: MutableList<ChanPost>): List<Long> {
         var originalPost: ChanPost? = null
         val postsThatDifferWithCache = ArrayList<ChanPost>()
 

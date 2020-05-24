@@ -1,12 +1,13 @@
 package com.github.adamantcheese.model.data.descriptor
 
-class PostDescriptor private constructor(
+open class PostDescriptor protected constructor(
         /**
          * A post may belong to a thread or to a catalog (OP) that's why we use abstract
          * ChanDescriptor here and not a concrete Thread/Catalog descriptor
          * */
         val descriptor: ChanDescriptor,
-        val postNo: Long
+        val postNo: Long,
+        open val postSubNo: Long = 0L
 ) {
 
     fun getThreadDescriptor(): ChanDescriptor.ThreadDescriptor {
@@ -32,6 +33,7 @@ class PostDescriptor private constructor(
 
         if (descriptor != other.descriptor) return false
         if (postNo != other.postNo) return false
+        if (postSubNo != other.postSubNo) return false
 
         return true
     }
@@ -39,6 +41,7 @@ class PostDescriptor private constructor(
     override fun hashCode(): Int {
         var result = descriptor.hashCode()
         result = 31 * result + postNo.hashCode()
+        result = 31 * result + postSubNo.hashCode()
         return result
     }
 
@@ -50,7 +53,7 @@ class PostDescriptor private constructor(
         }
 
         return "PostDescriptor(siteName='${descriptor.siteName()}', " +
-                "boardCode='${descriptor.boardCode()}', opNo=$opNo, postNo=$postNo)"
+                "boardCode='${descriptor.boardCode()}', opNo=$opNo, postNo=$postNo, postSubNo=$postSubNo)"
     }
 
     companion object {

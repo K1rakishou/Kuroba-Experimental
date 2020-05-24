@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 import com.github.adamantcheese.model.entity.ChanPostEntity
+import com.github.adamantcheese.model.entity.ChanPostIdEntity
 import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
 import com.google.gson.Gson
@@ -12,14 +13,11 @@ import com.google.gson.Gson
 object ChanPostMapper {
 
     fun toEntity(
-            ownerThreadId: Long,
+            chanPostId: Long,
             chanPost: ChanPost
     ): ChanPostEntity {
         return ChanPostEntity(
-                postId = 0L,
-                postNo = chanPost.postDescriptor.postNo,
-                ownerThreadId = ownerThreadId,
-                archiveId = chanPost.archiveId,
+                chanPostId = chanPostId,
                 deleted = chanPost.deleted,
                 timestamp = chanPost.timestamp,
                 name = chanPost.name,
@@ -34,6 +32,7 @@ object ChanPostMapper {
             gson: Gson,
             chanDescriptor: ChanDescriptor,
             chanThreadEntity: ChanThreadEntity,
+            chanPostIdEntity: ChanPostIdEntity,
             chanPostEntity: ChanPostEntity?,
             chanTextSpanEntityList: List<ChanTextSpanEntity>?
     ): ChanPost? {
@@ -64,18 +63,18 @@ object ChanPostMapper {
                     chanDescriptor.siteName(),
                     chanDescriptor.boardCode(),
                     chanDescriptor.opNo,
-                    chanPostEntity.postNo
+                    chanPostIdEntity.postNo
             )
             is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(
                     chanDescriptor.siteName(),
                     chanDescriptor.boardCode(),
-                    chanPostEntity.postNo
+                    chanPostIdEntity.postNo
             )
         }
 
         if (chanPostEntity.isOp) {
             return ChanPost(
-                    databasePostId = chanPostEntity.postId,
+                    chanPostId = chanPostEntity.chanPostId,
                     postDescriptor = postDescriptor,
                     postImages = mutableListOf(),
                     postIcons = mutableListOf(),
@@ -87,7 +86,7 @@ object ChanPostMapper {
                     closed = chanThreadEntity.closed,
                     archived = chanThreadEntity.archived,
                     deleted = chanPostEntity.deleted,
-                    archiveId = chanPostEntity.archiveId,
+                    archiveId = chanPostIdEntity.ownerArchiveId,
                     timestamp = chanPostEntity.timestamp,
                     name = chanPostEntity.name,
                     postComment = postComment,
@@ -100,14 +99,14 @@ object ChanPostMapper {
             )
         } else {
             return ChanPost(
-                    databasePostId = chanPostEntity.postId,
+                    chanPostId = chanPostEntity.chanPostId,
                     postDescriptor = postDescriptor,
                     postImages = mutableListOf(),
                     postIcons = mutableListOf(),
                     timestamp = chanPostEntity.timestamp,
                     name = chanPostEntity.name,
                     deleted = chanPostEntity.deleted,
-                    archiveId = chanPostEntity.archiveId,
+                    archiveId = chanPostIdEntity.ownerArchiveId,
                     postComment = postComment,
                     subject = subject,
                     tripcode = tripcode,

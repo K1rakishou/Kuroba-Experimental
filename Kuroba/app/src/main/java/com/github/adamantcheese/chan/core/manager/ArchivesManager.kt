@@ -22,6 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import java.io.InputStreamReader
@@ -41,9 +43,11 @@ class ArchivesManager(
         get() = Dispatchers.Default + supervisorJob
 
     private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
+    private val mutex = Mutex()
 
     private lateinit var allArchivesData: List<ArchiveData>
     private lateinit var allArchiveDescriptors: List<ArchiveDescriptor>
+    private lateinit var allArchiveDescriptorsMap: Map<Long, ArchiveDescriptor>
 
     init {
         launch {
@@ -73,28 +77,37 @@ class ArchivesManager(
 
             allArchivesData = allArchives
             allArchiveDescriptors = archiveDescriptors
+            allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveDatabaseId() }
         }
     }
 
     fun getAllArchiveData(): List<ArchiveData> {
-        require(::allArchivesData.isInitialized) { "allArchivesData was not initialized yet" }
+        require(::allArchivesData.isInitialized) {
+            "allArchivesData was not initialized yet"
+        }
 
         return allArchivesData
     }
 
     fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
-        require(::allArchiveDescriptors.isInitialized) { "allArchiveDescriptors was not initialized yet" }
+        require(::allArchiveDescriptors.isInitialized) {
+            "allArchiveDescriptors was not initialized yet"
+        }
 
         return allArchiveDescriptors
     }
 
-    fun getArchiveDescriptorByDatabaseId(archiveId: Long?): ArchiveDescriptor? {
-        if (archiveId == null) {
-          return null
-        }
+    suspend fun getArchiveDescriptorByDatabaseId(archiveId: Long?): ArchiveDescriptor? {
+        return mutex.withLock {
+            if (archiveId == null) {
+                return@withLock null
+            }
 
-        return allArchiveDescriptors.firstOrNull { descriptor ->
-          descriptor.getArchiveDatabaseId() == archiveId
+            require(::allArchiveDescriptorsMap.isInitialized) {
+                "allArchiveDescriptorsMap was not initialized yet"
+            }
+
+            return@withLock allArchiveDescriptorsMap[archiveId]
         }
     }
 
@@ -106,6 +119,14 @@ class ArchivesManager(
         return archiveFetchHistoryChangeSubject
                 .observeOn(AndroidSchedulers.mainThread())
                 .hide()
+    }
+
+    fun getArchiveDescriptorId(archiveDescriptor: ArchiveDescriptor?): Long {
+        if (archiveDescriptor == null) {
+            return ArchiveDescriptor.NO_ARCHIVE_ID
+        }
+
+        return archiveDescriptor.getArchiveDatabaseId()
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -407,9 +428,7 @@ class ArchivesManager(
                 }
     }
 
-
-
-  data class ArchiveData(
+    data class ArchiveData(
             @Expose(serialize = false, deserialize = false)
             private var archiveDescriptor: ArchiveDescriptor? = null,
             @SerializedName("name")

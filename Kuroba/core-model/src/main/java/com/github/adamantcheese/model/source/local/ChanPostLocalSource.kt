@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
+import com.github.adamantcheese.model.entity.ChanPostIdEntity
 import com.github.adamantcheese.model.entity.ChanPostReplyEntity
 import com.github.adamantcheese.model.entity.ChanTextSpanEntity
 import com.github.adamantcheese.model.entity.ChanThreadEntity
@@ -87,10 +88,19 @@ class ChanPostLocalSource(
     private suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
         ensureInTransaction()
 
+        val chanPostIdEntity = chanPostDao.insertOrIgnore(
+          ChanPostIdEntity(
+            postId = 0L,
+            ownerArchiveId = chanPost.archiveId,
+            ownerThreadId = chanThreadId,
+            postNo = chanPost.postDescriptor.postNo,
+            postSubNo = chanPost.postDescriptor.postSubNo
+          )
+        )
+
         val chanPostEntityId = chanPostDao.insertOrUpdate(
-                chanThreadId,
-                chanPost.postDescriptor.postNo,
-                ChanPostMapper.toEntity(chanThreadId, chanPost)
+          chanPostIdEntity.postId,
+          ChanPostMapper.toEntity(chanPostIdEntity.postId, chanPost)
         )
 
         insertPostSpannables(chanPostEntityId, chanPost)
@@ -161,6 +171,7 @@ class ChanPostLocalSource(
 
     suspend fun getCatalogOriginalPosts(
       descriptor: ChanDescriptor.CatalogDescriptor,
+      archiveIds: Set<Long>,
       count: Int
     ): List<ChanPost> {
         ensureInTransaction()
@@ -180,12 +191,13 @@ class ChanPostLocalSource(
             return emptyList()
         }
 
-        return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
+        return loadOriginalPostsInternal(chanThreadEntityList, descriptor, archiveIds)
     }
 
     suspend fun getCatalogOriginalPosts(
-            descriptor: ChanDescriptor.CatalogDescriptor,
-            originalPostNoList: List<Long>
+        descriptor: ChanDescriptor.CatalogDescriptor,
+        archiveIds: Set<Long>,
+        originalPostNoList: List<Long>
     ): List<ChanPost> {
         ensureInTransaction()
 
@@ -208,26 +220,27 @@ class ChanPostLocalSource(
             return emptyList()
         }
 
-        return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
+        return loadOriginalPostsInternal(chanThreadEntityList, descriptor, archiveIds)
     }
 
     private suspend fun loadOriginalPostsInternal(
       chanThreadEntityList: List<ChanThreadEntity>,
-      descriptor: ChanDescriptor.CatalogDescriptor
+      descriptor: ChanDescriptor.CatalogDescriptor,
+      archiveIds: Set<Long>
     ): List<ChanPost> {
         // Load threads' original posts
-        val chanPostEntityMap = chanThreadEntityList
+        val chanPostFullMap = chanThreadEntityList
           .map { chanThreadEntity -> chanThreadEntity.threadId }
           .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-          .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
-          .associateBy { chanPostEntity -> chanPostEntity.ownerThreadId }
+          .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk, archiveIds) }
+          .associateBy { chanPostEntity -> chanPostEntity.chanPostIdEntity.ownerThreadId }
 
-        if (chanPostEntityMap.isEmpty()) {
+        if (chanPostFullMap.isEmpty()) {
             return emptyList()
         }
 
-        val postIdList = chanPostEntityMap.values.map { chanPostEntity ->
-            chanPostEntity.postId
+        val postIdList = chanPostFullMap.values.map { chanPostFull ->
+            chanPostFull.chanPostIdEntity.postId
         }
 
         // Load posts' comments/subjects/tripcodes and other Spannables
@@ -237,11 +250,11 @@ class ChanPostLocalSource(
           .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
         val posts = chanThreadEntityList.map { chanThreadEntity ->
-            val chanPostEntity = checkNotNull(chanPostEntityMap[chanThreadEntity.threadId]) {
+            val chanPostEntity = checkNotNull(chanPostFullMap[chanThreadEntity.threadId]) {
                 "Couldn't find post info for original post with id (${chanThreadEntity.threadId})"
             }
 
-            val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+            val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.chanPostIdEntity.postId]
 
             return@map ChanThreadMapper.fromEntity(
               gson,
@@ -255,17 +268,9 @@ class ChanPostLocalSource(
         return getPostsAdditionalData(postIdList, posts)
     }
 
-    suspend fun getThreadPostNoList(descriptor: ChanDescriptor.ThreadDescriptor): List<Long> {
-        ensureInTransaction()
-
-        val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
-                ?: return emptyList()
-
-        return chanPostDao.selectManyPostNoByThreadId(chanThreadEntity.threadId)
-    }
-
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
+            archiveIds: Set<Long>,
             postNoCollection: Collection<Long>
     ): List<ChanPost> {
         ensureInTransaction()
@@ -274,12 +279,17 @@ class ChanPostLocalSource(
         val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
                 ?: return emptyList()
 
-        val chanPostEntityList = chanPostDao.selectMany(chanThreadEntity.threadId, postNoCollection)
-        if (chanPostEntityList.isEmpty()) {
+        val chanPostFullList = chanPostDao.selectMany(
+          chanThreadEntity.threadId,
+          archiveIds,
+          postNoCollection
+        )
+
+        if (chanPostFullList.isEmpty()) {
             return emptyList()
         }
 
-        val postIdList = chanPostEntityList.map { it.postId }
+        val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
 
         // Load posts' comments/subjects/tripcodes and other Spannables
         val textSpansGroupedByPostId = postIdList
@@ -287,15 +297,17 @@ class ChanPostLocalSource(
                 .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
                 .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
-        val posts = chanPostEntityList
-                .mapNotNull { chanPostEntity ->
-                    val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+        val posts = chanPostFullList
+                .mapNotNull { chanPostFull ->
+                    val postTextSnapEntityList =
+                      textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
 
                     return@mapNotNull ChanPostMapper.fromEntity(
                             gson,
                             descriptor,
                             chanThreadEntity,
-                            chanPostEntity,
+                            chanPostFull.chanPostIdEntity,
+                            chanPostFull.chanPostEntity,
                             postTextSnapEntityList
                     )
                 }
@@ -305,6 +317,7 @@ class ChanPostLocalSource(
 
     suspend fun getThreadPosts(
             descriptor: ChanDescriptor.ThreadDescriptor,
+            archiveIds: Set<Long>,
             postsNoToIgnore: Set<Long>,
             maxCount: Int
     ): List<ChanPost> {
@@ -315,33 +328,42 @@ class ChanPostLocalSource(
         val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
                 ?: return emptyList()
 
-        val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId)
+        val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId, archiveIds)
                 ?: return emptyList()
 
         // Load thread's posts. We need to sort them because we sort them right in the SQL query in
         // order to trim everything after [maxCount]
-
-        val chanPostEntityList = postsNoToIgnore
-          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-          .flatMap { chunk ->
-              return@flatMap chanPostDao.selectAllByThreadId(
-                chanThreadEntity.threadId,
-                chunk,
-                maxCount
-              )
-          }.sortedBy { chanPostEntity -> chanPostEntity.postNo }.toMutableList()
-
-        if (!postsNoToIgnore.contains(originalPost.postNo)) {
-            // Insert the original post at the beginning of the list but only if we don't already
-            // have it in the postsNoToIgnore
-            chanPostEntityList.add(0, originalPost)
+        val chanPostFullList = if (postsNoToIgnore.isNotEmpty()) {
+            postsNoToIgnore
+              .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+              .flatMap { chunk ->
+                  return@flatMap chanPostDao.selectAllByThreadId(
+                    chanThreadEntity.threadId,
+                    archiveIds,
+                    chunk,
+                    maxCount
+                  )
+              }.toMutableList()
+        } else {
+            chanPostDao.selectAllByThreadId(
+              chanThreadEntity.threadId,
+              archiveIds,
+              emptyList(),
+              maxCount
+            ).toMutableList()
         }
 
-        if (chanPostEntityList.isEmpty()) {
+        if (!postsNoToIgnore.contains(originalPost.chanPostIdEntity.postNo)) {
+            // Insert the original post at the beginning of the list but only if we don't already
+            // have it in the postsNoToIgnore
+            chanPostFullList.add(0, originalPost)
+        }
+
+        if (chanPostFullList.isEmpty()) {
             return emptyList()
         }
 
-        val postIdList = chanPostEntityList.map { it.postId }
+        val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
 
         // Load posts' comments/subjects/tripcodes and other Spannables
         val textSpansGroupedByPostId = postIdList
@@ -349,15 +371,17 @@ class ChanPostLocalSource(
                 .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
                 .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
-        val posts = chanPostEntityList
-                .mapNotNull { chanPostEntity ->
-                    val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.postId]
+        val posts = chanPostFullList
+                .mapNotNull { chanPostFull ->
+                    val postTextSnapEntityList =
+                      textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
 
                     return@mapNotNull ChanPostMapper.fromEntity(
                             gson,
                             descriptor,
                             chanThreadEntity,
-                            chanPostEntity,
+                            chanPostFull.chanPostIdEntity,
+                            chanPostFull.chanPostEntity,
                             postTextSnapEntityList
                     )
                 }
@@ -395,52 +419,27 @@ class ChanPostLocalSource(
                 .groupBy { chanPostReplyEntity -> chanPostReplyEntity.ownerPostId }
 
         posts.forEach { post ->
-            val postImages = postImageByPostIdMap[post.databasePostId]
+            val postImages = postImageByPostIdMap[post.chanPostId]
             if (postImages != null && postImages.isNotEmpty()) {
                 postImages.forEach { postImage ->
                     post.postImages.add(ChanPostImageMapper.fromEntity(postImage))
                 }
             }
 
-            val postIcons = postIconsByPostIdMap[post.databasePostId]
+            val postIcons = postIconsByPostIdMap[post.chanPostId]
             if (postIcons != null && postIcons.isNotEmpty()) {
                 postIcons.forEach { postIcon ->
                     post.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
                 }
             }
 
-            val replyToList = postReplyToByPostIdMap[post.databasePostId]
+            val replyToList = postReplyToByPostIdMap[post.chanPostId]
             if (replyToList != null && replyToList.isNotEmpty()) {
                 post.repliesTo.addAll(replyToList.map { it.replyNo })
             }
         }
 
         return posts
-    }
-
-    suspend fun containsPost(descriptor: ChanDescriptor, postNo: Long): Boolean {
-        ensureInTransaction()
-
-        when (descriptor) {
-            is ChanDescriptor.ThreadDescriptor -> {
-                val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
-                        ?: return false
-
-                return chanPostDao.select(chanThreadEntity.threadId, postNo) != null
-            }
-            is ChanDescriptor.CatalogDescriptor -> {
-                val chanBoardEntity = chanBoardDao.select(
-                        descriptor.siteName(),
-                        descriptor.boardCode()
-                )
-
-                if (chanBoardEntity == null) {
-                    return false
-                }
-
-                return chanThreadDao.select(chanBoardEntity.boardId, postNo) != null
-            }
-        }
     }
 
     suspend fun getThreadIdByPostDescriptor(postDescriptor: PostDescriptor): Long? {

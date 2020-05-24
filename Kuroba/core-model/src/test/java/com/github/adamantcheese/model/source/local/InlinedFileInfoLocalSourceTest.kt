@@ -28,8 +28,8 @@ class InlinedFileInfoLocalSourceTest {
         ShadowLog.stream = System.out
         val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
-        database = testDatabaseModuleComponent.provideKurobaDatabase()
-        dao = testDatabaseModuleComponent.provideKurobaDatabase().inlinedFileDao()
+        database = testDatabaseModuleComponent.provideInMemoryKurobaDatabase()
+        dao = testDatabaseModuleComponent.provideInMemoryKurobaDatabase().inlinedFileDao()
         localSource = testDatabaseModuleComponent.provideInlinedFileInfoLocalSource()
     }
 

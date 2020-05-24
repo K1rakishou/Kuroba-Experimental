@@ -80,6 +80,7 @@ import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -535,7 +536,7 @@ public class PostCell
                 fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
             }
 
-            if (image.isFromArchive) {
+            if (ArchiveDescriptor.isActualArchive(image.archiveId)) {
                 fileInfo
                         .append(" ")
                         .append(getString(R.string.image_from_archive));

@@ -29,8 +29,8 @@ class MediaServiceLinkExtraContentLocalSourceTest {
         ShadowLog.stream = System.out
         val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
-        database = testDatabaseModuleComponent.provideKurobaDatabase()
-        dao = testDatabaseModuleComponent.provideKurobaDatabase().mediaServiceLinkExtraContentDao()
+        database = testDatabaseModuleComponent.provideInMemoryKurobaDatabase()
+        dao = testDatabaseModuleComponent.provideInMemoryKurobaDatabase().mediaServiceLinkExtraContentDao()
         localSource = testDatabaseModuleComponent.provideMediaServiceLinkExtraContentLocalSource()
     }
 

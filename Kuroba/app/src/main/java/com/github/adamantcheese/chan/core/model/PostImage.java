@@ -45,7 +45,7 @@ public class PostImage {
     public final int imageHeight;
     private final boolean spoiler;
     public final boolean isInlined;
-    public final boolean isFromArchive;
+    public final long archiveId;
     private boolean isPrefetched = false;
     @Nullable
     public final String fileHash;
@@ -71,7 +71,7 @@ public class PostImage {
         this.imageHeight = builder.imageHeight;
         this.spoiler = builder.spoiler;
         this.isInlined = builder.isInlined;
-        this.isFromArchive = builder.isFromArchive;
+        this.archiveId = builder.archiveId;
         this.size = builder.size;
         this.fileHash = builder.fileHash;
 
@@ -170,9 +170,8 @@ public class PostImage {
         private int imageHeight;
         private boolean spoiler;
         private boolean isInlined = false;
-        private boolean isFromArchive = false;
+        private long archiveId = 0L;
         private long size;
-        private boolean deleted = false;
         @Nullable
         private String fileHash;
 
@@ -235,8 +234,8 @@ public class PostImage {
             return this;
         }
 
-        public Builder isFromArchive(boolean fromArchive) {
-            this.isFromArchive = fromArchive;
+        public Builder archiveId(long archiveId) {
+            this.archiveId = archiveId;
             return this;
         }
 
@@ -254,11 +253,6 @@ public class PostImage {
                 }
             }
 
-            return this;
-        }
-
-        public Builder deleted(boolean deleted) {
-            this.deleted = deleted;
             return this;
         }
 

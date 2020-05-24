@@ -34,7 +34,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
         remoteSource = mock()
 
         repository = MediaServiceLinkExtraContentRepository(
-                testDatabaseModuleComponent.provideKurobaDatabase(),
+                testDatabaseModuleComponent.provideInMemoryKurobaDatabase(),
                 "",
                 testDatabaseModuleComponent.provideLogger(),
                 cache,

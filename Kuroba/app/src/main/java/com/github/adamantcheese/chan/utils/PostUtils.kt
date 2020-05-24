@@ -231,7 +231,7 @@ object PostUtils {
             val postImage = postImages[i]
             val chanPostImage = chanPostImages[i]
 
-            if (postImage.isFromArchive != chanPostImage.isFromArchive) {
+            if (postImage.archiveId != chanPostImage.archiveId) {
                 return true
             }
             if (postImage.type != chanPostImage.type) {
@@ -398,7 +398,7 @@ object PostUtils {
             val displayedPostImage = displayedPostImages[i]
             val newPostImage = newPostImages[i]
 
-            if (displayedPostImage.isFromArchive != newPostImage.isFromArchive) {
+            if (displayedPostImage.archiveId != newPostImage.archiveId) {
                 return true
             }
             if (displayedPostImage.type != newPostImage.type) {
