@@ -3,8 +3,7 @@ package com.github.adamantcheese.model.source.local
 import androidx.room.withTransaction
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.TestDatabaseModuleComponent
-import com.github.adamantcheese.model.dao.ChanPostDao
-import com.github.adamantcheese.model.dao.ChanPostImageDao
+import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
@@ -32,6 +31,9 @@ class ChanPostLocalSourceTest {
   lateinit var localSource: ChanPostLocalSource
   lateinit var chanPostDao: ChanPostDao
   lateinit var chanPostImageDao: ChanPostImageDao
+  lateinit var chanPostHttpIconDao: ChanPostHttpIconDao
+  lateinit var chanPostReplyDao: ChanPostReplyDao
+  lateinit var chanTextSpanDao: ChanTextSpanDao
 
   private val testSiteName = "test.com"
   private val testBoardCode = "test"
@@ -56,7 +58,44 @@ class ChanPostLocalSourceTest {
     database = testDatabaseModuleComponent.provideInMemoryKurobaDatabase()
     chanPostDao = database.chanPostDao()
     chanPostImageDao = database.chanPostImageDao()
+    chanPostHttpIconDao = database.chanPostHttpIconDao()
+    chanPostReplyDao = database.chanPostReplyDao()
+    chanTextSpanDao = database.chanTextSpanDao()
     localSource = testDatabaseModuleComponent.provideChanPostLocalSource(database)
+  }
+
+  @Test
+  fun `test insert the same post twice ensure no tables have duplicates`() {
+    withTransaction {
+      repeat(9) { index ->
+        insertOriginalPost(
+          createChanPost(
+            123L,
+            123L,
+            archiveId0,
+            true,
+            createPostImages(2, archiveId0),
+            createChanPostIcons(3),
+            createReplies(4),
+            (100500 + index).toLong()
+          )
+        )
+
+        assertEquals(1, chanPostDao.testGetAll().size)
+        assertEquals(2, chanPostImageDao.testGetAll().size)
+        assertEquals(3, chanPostHttpIconDao.testGetAll().size)
+        assertEquals(4, chanPostReplyDao.testGetAll().size)
+        assertEquals(3, chanTextSpanDao.testGetAll().size)
+
+        kotlin.run {
+          val allSpans = chanTextSpanDao.testGetAll().map { it.originalText }.toSet()
+
+          assertTrue("test text 10050$index" in allSpans)
+          assertTrue("test subject 10050$index" in allSpans)
+          assertTrue("test tripcode 10050$index" in allSpans)
+        }
+      }
+    }
   }
 
   @Test
@@ -425,7 +464,8 @@ class ChanPostLocalSourceTest {
     isOp: Boolean,
     images: List<ChanPostImage>,
     icons: List<ChanPostHttpIcon> = createChanPostIcons(),
-    replies: Set<Long> = createReplies()
+    replies: Set<Long> = createReplies(),
+    textId: Long = postNo
   ): ChanPost {
     return ChanPost(
       0L,
@@ -448,9 +488,9 @@ class ChanPostLocalSourceTest {
       false,
       archiveId,
       System.currentTimeMillis(),
-      SerializableSpannableString(emptyList(), "test text $postNo"),
-      SerializableSpannableString(emptyList(), "test subject $postNo"),
-      SerializableSpannableString(emptyList(), "test tripcode $postNo"),
+      SerializableSpannableString(emptyList(), "test text $textId"),
+      SerializableSpannableString(emptyList(), "test subject $textId"),
+      SerializableSpannableString(emptyList(), "test tripcode $textId"),
       "Anonymous",
       null,
       null,

@@ -27,4 +27,6 @@ abstract class ChanPostHttpIconDao {
     """)
   abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostHttpIconEntity>
 
+  @Query("SELECT * FROM ${ChanPostHttpIconEntity.TABLE_NAME}")
+  abstract suspend fun testGetAll(): List<ChanPostHttpIconEntity>
 }

@@ -9,10 +9,10 @@ import com.github.adamantcheese.model.entity.ChanPostReplyEntity
 @Dao
 abstract class ChanPostReplyDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    abstract suspend fun insertManyOrIgnore(chanPostReplyEntityList: List<ChanPostReplyEntity>)
+  @Insert(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun insertManyOrIgnore(chanPostReplyEntityList: List<ChanPostReplyEntity>)
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanPostReplyEntity.TABLE_NAME}
         WHERE 
@@ -20,9 +20,11 @@ abstract class ChanPostReplyDao {
         AND
             ${ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME} = :replyType
     """)
-    abstract suspend fun selectByOwnerPostIdList(
-            ownerPostIdList: List<Long>,
-            replyType: ChanPostReplyEntity.ReplyType
-    ): List<ChanPostReplyEntity>
+  abstract suspend fun selectByOwnerPostIdList(
+    ownerPostIdList: List<Long>,
+    replyType: ChanPostReplyEntity.ReplyType
+  ): List<ChanPostReplyEntity>
 
+  @Query("SELECT * FROM ${ChanPostReplyEntity.TABLE_NAME}")
+  abstract suspend fun testGetAll(): List<ChanPostReplyEntity>
 }

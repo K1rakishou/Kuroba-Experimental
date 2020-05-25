@@ -21,4 +21,6 @@ abstract class ChanTextSpanDao {
     ownerPostIdList: List<Long>
   ): List<ChanTextSpanEntity>
 
+  @Query("SELECT * FROM ${ChanTextSpanEntity.TABLE_NAME}")
+  abstract suspend fun testGetAll(): List<ChanTextSpanEntity>
 }
