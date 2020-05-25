@@ -524,7 +524,7 @@ class ChanPostLocalSource(
     return chanPostDao.count()
   }
 
-  open suspend fun deleteAll(): Int {
+  suspend fun deleteAll(): Int {
     ensureInTransaction()
 
     return chanPostDao.deleteAll()
