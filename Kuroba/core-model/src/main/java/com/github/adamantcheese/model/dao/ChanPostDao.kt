@@ -10,53 +10,14 @@ abstract class ChanPostDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insert(chanPostEntity: ChanPostEntity): Long
 
-    suspend fun insertOrUpdate(
-      ownerChanPostId: Long,
-      chanPostEntity: ChanPostEntity
-    ): Long {
-        val prev = select(ownerChanPostId)
-        if (prev != null) {
-            require(prev.chanPostId > 0L) { "Bad id: ${prev.chanPostId}, ownerChanPostId = $ownerChanPostId"}
-
-            chanPostEntity.chanPostId = prev.chanPostId
-            update(chanPostEntity)
-            return prev.chanPostId
-        }
-
-        return insert(chanPostEntity)
-    }
-
     @Update(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun update(chanPostEntity: ChanPostEntity)
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(chanPostIdEntity: ChanPostIdEntity): Long
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertOrIgnoreManyIds(chanPostIdEntityList: List<ChanPostIdEntity>): List<Long>
 
-    suspend fun insertOrIgnore(chanPostIdEntity: ChanPostIdEntity): ChanPostIdEntity {
-        val prev = selectChanPostIdEntity(
-          chanPostIdEntity.ownerThreadId,
-          setOf(chanPostIdEntity.ownerArchiveId),
-          chanPostIdEntity.postNo,
-          chanPostIdEntity.postSubNo
-        )
-
-        if (prev != null) {
-            return prev
-        }
-
-        val insertedId = insert(chanPostIdEntity)
-        require(insertedId > 0L) { "Bad id $insertedId, chanPostIdEntity = $chanPostIdEntity" }
-
-        chanPostIdEntity.postId = insertedId
-        return chanPostIdEntity
-    }
-
-    @Query("""
-        SELECT *
-        FROM ${ChanPostEntity.TABLE_NAME}
-        WHERE ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = :ownerChanPostId
-    """)
-    protected abstract suspend fun select(ownerChanPostId: Long): ChanPostEntity?
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun insertOrIgnoreManyPosts(chanPostEntityList: List<ChanPostEntity>)
 
     @Query("""
         SELECT *
@@ -85,7 +46,7 @@ abstract class ChanPostDao {
         	  cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
-        	  ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND
@@ -103,8 +64,7 @@ abstract class ChanPostDao {
     @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cpi
-        WHERE
-            cpi.${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (:postIdList)
+        WHERE cpi.${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (:postIdList)
     """)
     abstract suspend fun selectMany(postIdList: List<Long>): List<ChanPostFull>
 
@@ -126,13 +86,13 @@ abstract class ChanPostDao {
 
     @Query("""
         SELECT 
-        	  cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
-        	  cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
+            cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
+            cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
-        	  ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
             ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
@@ -173,13 +133,13 @@ abstract class ChanPostDao {
 
     @Query("""
         SELECT 
-        	  cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
-        	  cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
+            cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
+            cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
-        	  ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
             ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
@@ -218,13 +178,13 @@ abstract class ChanPostDao {
 
     @Query("""
        SELECT 
-        	  cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
-        	  cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
-        	  cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
+            cp_image.${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_IMAGE_ID_COLUMN_NAME},
+            cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_ID_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} as ${GroupedPostIdPostNoDto.POST_NO_COLUMN_NAME}, 
+            cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} as ${GroupedPostIdPostNoDto.ARCHIVE_ID_COLUMN_NAME}
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
-        	  ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
             ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
@@ -259,15 +219,17 @@ abstract class ChanPostDao {
     @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
     abstract suspend fun deleteAll(): Int
 
-    // TODO(KurobaEx): TESTS!
     @Query("""
         DELETE FROM ${ChanPostIdEntity.TABLE_NAME} 
         WHERE ${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (
-        	SELECT ${ChanPostIdEntity.POST_ID_COLUMN_NAME}
-        	FROM ${ChanPostIdEntity.TABLE_NAME}
-        	INNER JOIN ${ChanPostEntity.TABLE_NAME} ON ${ChanPostIdEntity.POST_ID_COLUMN_NAME} = ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
-        	WHERE ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
-        	AND ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+            SELECT ${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            FROM ${ChanPostIdEntity.TABLE_NAME}
+            INNER JOIN ${ChanPostEntity.TABLE_NAME} 
+                ON ${ChanPostIdEntity.POST_ID_COLUMN_NAME} = ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
+            WHERE 
+                ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+            AND 
+                ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
         )
     """)
     abstract suspend fun deletePostsByThreadId(ownerThreadId: Long): Int

@@ -13,7 +13,9 @@ import com.github.adamantcheese.model.data.post.ChanPostImage
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Before
 import org.junit.Test
@@ -264,24 +266,136 @@ class ChanPostLocalSourceTest {
 
         assertEquals(2, mostValuablePosts[0].chanPostId)
         assertEquals(1, mostValuablePosts[0].archiveId)
-        assertEquals(1234567890, mostValuablePosts[0].postDescriptor.postNo)
+        assertEquals(testThreadNo, mostValuablePosts[0].postDescriptor.postNo)
         assertEquals(1, mostValuablePosts[0].postImages.size)
 
         assertEquals(4, mostValuablePosts[1].chanPostId)
         assertEquals(0, mostValuablePosts[1].archiveId)
-        assertEquals(1234567891, mostValuablePosts[1].postDescriptor.postNo)
+        assertEquals(testThreadNo + 1, mostValuablePosts[1].postDescriptor.postNo)
         assertEquals(3, mostValuablePosts[1].postImages.size)
 
         assertEquals(6, mostValuablePosts[2].chanPostId)
         assertEquals(0, mostValuablePosts[2].archiveId)
-        assertEquals(1234567892, mostValuablePosts[2].postDescriptor.postNo)
+        assertEquals(testThreadNo + 2, mostValuablePosts[2].postDescriptor.postNo)
         assertEquals(0, mostValuablePosts[2].postImages.size)
 
         assertEquals(8, mostValuablePosts[3].chanPostId)
         assertEquals(1, mostValuablePosts[3].archiveId)
-        assertEquals(1234567893, mostValuablePosts[3].postDescriptor.postNo)
+        assertEquals(testThreadNo + 3, mostValuablePosts[3].postDescriptor.postNo)
         assertEquals(2, mostValuablePosts[3].postImages.size)
       }
+    }
+  }
+
+  @Test
+  fun `test delete posts should delete regular posts and archive posts but not OPs`() {
+    val threadsCount = 10
+    val postsPerThread = 10
+    val threadStartNo = 1_000_000L
+
+    withTransaction {
+      (0L until threadsCount).map { threadIndex ->
+        val threadNo = threadStartNo + threadIndex
+
+        val chanThreadId = insertOriginalPost(
+          createChanPost(threadNo, threadNo, archiveId0, true, createPostImages(1, archiveId0))
+        )
+        assertEquals((threadIndex + 1), chanThreadId)
+
+        insertOriginalPost(
+          createChanPost(threadNo, threadNo, archiveId1, true, createPostImages(2, archiveId1))
+        )
+        insertOriginalPost(
+          createChanPost(threadNo, threadNo, archiveId2, true, createPostImages(4, archiveId2))
+        )
+
+        val posts = (0 until postsPerThread).map { postIndex ->
+          createChanPost(threadNo, threadNo + postIndex + 1, archiveId0, false,
+            createPostImages(postIndex, archiveId0)
+          )
+        }
+
+        localSource.insertPosts(chanThreadId, posts)
+      }
+    }
+
+    runBlocking {
+      repeat(threadsCount) { threadIndex ->
+        withTransaction {
+          val actualDeletedCount = chanPostDao.deletePostsByThreadId(threadIndex + 1L)
+          assertEquals(postsPerThread, actualDeletedCount)
+        }
+      }
+    }
+
+    withTransaction {
+      val originalPosts = chanPostDao.testGetAll()
+
+      assertEquals(30, originalPosts.size)
+      assertTrue(originalPosts.all { it.chanPostEntity.isOp })
+    }
+  }
+
+  @Test
+  fun `test update image with new info`() {
+    val serverName = "123"
+    val thumbnailUrl = "http://${testSiteName}/${123}s.jpg".toHttpUrl()
+    val imageUrl = "http://${testSiteName}/${123}.jpg".toHttpUrl()
+
+    fun createImage(_serverName: String, _thumbnailUrl: HttpUrl? = null, _imageUrl: HttpUrl? = null): List<ChanPostImage> {
+      return listOf(
+        ChanPostImage(_serverName, archiveId0, _thumbnailUrl, null, _imageUrl, "1234-image", "jpg", 111,
+          222, false, false, 12345L, null, ChanPostImageType.STATIC)
+      )
+    }
+
+    withTransaction {
+      val chanThreadId = insertOriginalPost(
+        createChanPost(testThreadNo, testThreadNo, archiveId0, true, emptyList())
+      )
+      assertEquals(1, chanThreadId)
+      assertEquals(0, chanPostImageDao.testGetAll().size)
+
+      insertOriginalPost(
+        createChanPost(testThreadNo, testThreadNo, archiveId0, true, createImage(serverName))
+      )
+      assertEquals(1, chanThreadId)
+
+      var images = chanPostImageDao.testGetAll()
+      assertEquals(1, images.size)
+      assertEquals(serverName, images.first().serverFilename)
+      assertEquals(null, images.first().thumbnailUrl)
+      assertEquals(null, images.first().imageUrl)
+
+      insertOriginalPost(
+        createChanPost(testThreadNo, testThreadNo, archiveId0, true,
+          createImage(serverName, thumbnailUrl))
+      )
+
+      images = chanPostImageDao.testGetAll()
+      assertEquals(1, images.size)
+      assertEquals(serverName, images.first().serverFilename)
+      assertEquals(thumbnailUrl, images.first().thumbnailUrl)
+      assertEquals(null, images.first().imageUrl)
+
+      insertOriginalPost(
+        createChanPost(testThreadNo, testThreadNo, archiveId0, true,
+          createImage(serverName, thumbnailUrl, imageUrl))
+      )
+
+      images = chanPostImageDao.testGetAll()
+      assertEquals(1, images.size)
+      assertEquals(serverName, images.first().serverFilename)
+      assertEquals(thumbnailUrl, images.first().thumbnailUrl)
+      assertEquals(imageUrl, images.first().imageUrl)
+
+      insertOriginalPost(
+        createChanPost(testThreadNo, testThreadNo, archiveId1, true,
+          createImage(serverName, thumbnailUrl, imageUrl))
+      )
+
+      images = chanPostImageDao.testGetAll()
+      assertEquals(2, images.size)
     }
   }
 

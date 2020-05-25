@@ -1,5 +1,6 @@
 package com.github.adamantcheese.model.source.local
 
+import com.github.adamantcheese.common.flatMapIndexed
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -47,18 +48,76 @@ class ChanPostLocalSource(
                 first.postDescriptor.descriptor.boardCode()
         )
 
-        return chanOriginalPostList.map { chanPost ->
+        val chanThreadIds = chanOriginalPostList.map { chanPost ->
             val threadNo = chanPost.postDescriptor.getThreadNo()
 
-            val chanThreadId = chanThreadDao.insertOrUpdate(
-                    chanBoardEntity.boardId,
-                    threadNo,
-                    ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
+            return@map chanThreadDao.insertOrUpdate(
+              chanBoardEntity.boardId,
+              threadNo,
+              ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
             )
-
-            insertPostFullyInternal(chanThreadId, chanPost)
-            return@map chanThreadId
         }
+
+        val chanPostIdEntities = chanThreadIds.mapIndexed { index, chanThreadId ->
+            val chanOriginalPost = chanOriginalPostList[index]
+
+            return@mapIndexed ChanPostIdEntity(
+              postId = 0L,
+              ownerArchiveId = chanOriginalPost.archiveId,
+              ownerThreadId = chanThreadId,
+              postNo = chanOriginalPost.postDescriptor.postNo,
+              postSubNo = chanOriginalPost.postDescriptor.postSubNo
+            )
+        }
+
+        chanPostDao.insertOrIgnoreManyIds(chanPostIdEntities).forEachIndexed { index, chanPostDatabaseId ->
+            chanPostIdEntities[index].postId = chanPostDatabaseId
+        }
+
+        chanPostDao.insertOrIgnoreManyPosts(
+          chanPostIdEntities.mapIndexed { index, chanPostIdEntity ->
+              ChanPostMapper.toEntity(chanPostIdEntity.postId, chanOriginalPostList[index])
+          }
+        )
+
+        insertPostSpannables(chanPostIdEntities, chanOriginalPostList)
+
+        chanPostImageDao.insertMany(
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanOriginalPost = chanOriginalPostList[index]
+
+              return@flatMapIndexed chanOriginalPost.postImages.map { postImage ->
+                  ChanPostImageMapper.toEntity(chanPostIdEntity.postId, postImage)
+              }
+          }
+        )
+
+        chanPostHttpIconDao.insertMany(
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanOriginalPost = chanOriginalPostList[index]
+
+              return@flatMapIndexed chanOriginalPost.postIcons.map { postIcon ->
+                  ChanPostHttpIconMapper.toEntity(chanPostIdEntity.postId, postIcon)
+              }
+          }
+        )
+
+        chanPostReplyDao.insertManyOrIgnore(
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanOriginalPost = chanOriginalPostList[index]
+
+              return@flatMapIndexed chanOriginalPost.repliesTo.map { replyTo ->
+                  ChanPostReplyEntity(
+                    postReplyId = 0L,
+                    ownerPostId = chanPostIdEntity.postId,
+                    replyNo = replyTo,
+                    replyType = ChanPostReplyEntity.ReplyType.ReplyTo
+                  )
+              }.toList()
+          }
+        )
+
+        return chanThreadIds
     }
 
     suspend fun insertPosts(chanThreadId: Long, chanPostList: List<ChanPost>) {
@@ -80,92 +139,113 @@ class ChanPostLocalSource(
             )
         }
 
-        chanPostList.forEach { chanPost ->
-            insertPostFullyInternal(chanThreadId, chanPost)
-        }
-    }
-
-    private suspend fun insertPostFullyInternal(chanThreadId: Long, chanPost: ChanPost): Long {
-        ensureInTransaction()
-
-        val chanPostIdEntity = chanPostDao.insertOrIgnore(
-          ChanPostIdEntity(
-            postId = 0L,
-            ownerArchiveId = chanPost.archiveId,
-            ownerThreadId = chanThreadId,
-            postNo = chanPost.postDescriptor.postNo,
-            postSubNo = chanPost.postDescriptor.postSubNo
-          )
-        )
-
-        val chanPostEntityId = chanPostDao.insertOrUpdate(
-          chanPostIdEntity.postId,
-          ChanPostMapper.toEntity(chanPostIdEntity.postId, chanPost)
-        )
-
-        insertPostSpannables(chanPostEntityId, chanPost)
-
-        chanPost.postImages.forEach { postImage ->
-            chanPostImageDao.insertOrUpdate(
-                    ChanPostImageMapper.toEntity(chanPostEntityId, postImage)
+        val chanPostIdEntities = chanPostList.map { chanPost ->
+            ChanPostIdEntity(
+              postId = 0L,
+              ownerArchiveId = chanPost.archiveId,
+              ownerThreadId = chanThreadId,
+              postNo = chanPost.postDescriptor.postNo,
+              postSubNo = chanPost.postDescriptor.postSubNo
             )
         }
 
-        chanPost.postIcons.forEach { postIcon ->
-            chanPostHttpIconDao.insertOrUpdate(
-                    ChanPostHttpIconMapper.toEntity(chanPostEntityId, postIcon)
-            )
+        chanPostDao.insertOrIgnoreManyIds(chanPostIdEntities).forEachIndexed { index, postDatabaseId ->
+            chanPostIdEntities[index].postId = postDatabaseId
         }
+
+        chanPostDao.insertOrIgnoreManyPosts(
+          chanPostIdEntities.mapIndexed { index, chanPostIdEntity ->
+              ChanPostMapper.toEntity(chanPostIdEntity.postId, chanPostList[index])
+          }
+        )
+
+        insertPostSpannables(chanPostIdEntities, chanPostList)
+
+        chanPostImageDao.insertMany(
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanPost = chanPostList[index]
+
+              return@flatMapIndexed chanPost.postImages.map { postImage ->
+                  ChanPostImageMapper.toEntity(chanPostIdEntity.postId, postImage)
+              }
+          }
+        )
+
+        chanPostHttpIconDao.insertMany(
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanPost = chanPostList[index]
+
+              return@flatMapIndexed chanPost.postIcons.map { postIcon ->
+                  ChanPostHttpIconMapper.toEntity(chanPostIdEntity.postId, postIcon)
+              }
+          }
+        )
 
         chanPostReplyDao.insertManyOrIgnore(
-                chanPost.repliesTo.map { replyTo ->
-                    ChanPostReplyEntity(
-                            postReplyId = 0L,
-                            ownerPostId = chanPostEntityId,
-                            replyNo = replyTo,
-                            replyType = ChanPostReplyEntity.ReplyType.ReplyTo
-                    )
-                }.toList()
-        )
+          chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
+              val chanPost = chanPostList[index]
 
-        return chanPostEntityId
+              return@flatMapIndexed chanPost.repliesTo.map { replyTo ->
+                  ChanPostReplyEntity(
+                    postReplyId = 0L,
+                    ownerPostId = chanPostIdEntity.postId,
+                    replyNo = replyTo,
+                    replyType = ChanPostReplyEntity.ReplyType.ReplyTo
+                  )
+              }.toList()
+          }
+        )
     }
 
-    private suspend fun insertPostSpannables(chanPostEntityId: Long, chanPost: ChanPost) {
+    private suspend fun insertPostSpannables(
+      chanPostEntityIdList: List<ChanPostIdEntity>,
+      chanPostList: List<ChanPost>
+    ) {
         ensureInTransaction()
-        require(chanPostEntityId > 0) { "Bad chanPostEntityId: ${chanPostEntityId}" }
 
-        val postCommentWithSpansJson = TextSpanMapper.toEntity(
-                gson,
-                chanPostEntityId,
-                chanPost.postComment,
-                ChanTextSpanEntity.TextType.PostComment
-        )
+        val postCommentWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
+            val chanPost = chanPostList[index]
 
-        if (postCommentWithSpansJson != null) {
-            chanTextSpanDao.insertOrUpdate(chanPostEntityId, postCommentWithSpansJson)
+            return@mapIndexedNotNull TextSpanMapper.toEntity(
+              gson,
+              chanPostEntityId.postId,
+              chanPost.postComment,
+              ChanTextSpanEntity.TextType.PostComment
+            )
         }
 
-        val subjectWithSpansJson = TextSpanMapper.toEntity(
-                gson,
-                chanPostEntityId,
-                chanPost.subject,
-                ChanTextSpanEntity.TextType.Subject
-        )
-
-        if (subjectWithSpansJson != null) {
-            chanTextSpanDao.insertOrUpdate(chanPostEntityId, subjectWithSpansJson)
+        if (postCommentWithSpansJsonList.isNotEmpty()) {
+            chanTextSpanDao.insertMany(postCommentWithSpansJsonList)
         }
 
-        val tripcodeWithSpansJson = TextSpanMapper.toEntity(
-                gson,
-                chanPostEntityId,
-                chanPost.tripcode,
-                ChanTextSpanEntity.TextType.Tripcode
-        )
+        val subjectWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
+            val chanPost = chanPostList[index]
 
-        if (tripcodeWithSpansJson != null) {
-            chanTextSpanDao.insertOrUpdate(chanPostEntityId, tripcodeWithSpansJson)
+            return@mapIndexedNotNull TextSpanMapper.toEntity(
+              gson,
+              chanPostEntityId.postId,
+              chanPost.subject,
+              ChanTextSpanEntity.TextType.Subject
+            )
+        }
+
+        if (subjectWithSpansJsonList.isNotEmpty()) {
+            chanTextSpanDao.insertMany(subjectWithSpansJsonList)
+        }
+
+        val tripcodeWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
+            val chanPost = chanPostList[index]
+
+            return@mapIndexedNotNull TextSpanMapper.toEntity(
+              gson,
+              chanPostEntityId.postId,
+              chanPost.tripcode,
+              ChanTextSpanEntity.TextType.Tripcode
+            )
+        }
+
+        if (tripcodeWithSpansJsonList.isNotEmpty()) {
+            chanTextSpanDao.insertMany(tripcodeWithSpansJsonList)
         }
     }
 
