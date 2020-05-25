@@ -532,7 +532,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
       return PostUtils.shouldRetainPostFromArchive(archivePost, cachedPost)
     }
 
-    return false
+    // Post does not exist neither in fresh posts nor in cached posts meaning it was deleted from
+    // the server so we need to retain it
+    return true
   }
 
   @OptIn(ExperimentalTime::class)

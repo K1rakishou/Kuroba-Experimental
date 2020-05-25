@@ -190,7 +190,32 @@ class ArchivesJsonParser(
       archivePostMedia.imageUrl = remoteMediaLink
     }
 
+    archivePostMedia.imageUrl = fixImageUrlIfNecessary(archivePostMedia.imageUrl)
+
     return archivePostMedia
+  }
+
+  private fun fixImageUrlIfNecessary(imageUrl: String?): String? {
+    if (imageUrl == null) {
+      return imageUrl
+    }
+
+    // arch.b4k.co was caught red-handed sending broken links (without http/https schema but
+    // with both forward slashes, e.g. "//arch.b4k.co/..."  instead of "https://arch.b4k.co/...".
+    // We gotta fix this by ourselves for now.
+    // https://arch.b4k.co/meta/thread/357/
+
+    if (imageUrl.startsWith("https://") || imageUrl.startsWith("http://")) {
+      return imageUrl
+    }
+
+    if (imageUrl.startsWith("//")) {
+      return "https:$imageUrl"
+    }
+
+    logger.logError(TAG, "Unknown kind of broken image url: \"$imageUrl\". " +
+      "If you see this report it to devs!")
+    return null
   }
 
 }
