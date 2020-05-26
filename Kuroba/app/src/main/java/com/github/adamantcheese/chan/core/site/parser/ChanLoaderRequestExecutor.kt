@@ -127,11 +127,6 @@ class ChanLoaderRequestExecutor(
       .get()
       .build()
 
-    val chanReaderProcessor = ChanReaderProcessor(
-      chanPostRepository,
-      requestParams.loadable
-    )
-
     val response = try {
       okHttpClient.suspendCall(request)
     } catch (error: IOException) {
@@ -144,7 +139,7 @@ class ChanLoaderRequestExecutor(
         throw error
       }
 
-      val chanLoaderResponse = tryLoadFromDiskCache(archiveDescriptor, requestParams)
+      val chanLoaderResponse = tryLoadFromDiskCache(requestParams)
         ?: throw error
 
       Logger.d(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
@@ -163,7 +158,6 @@ class ChanLoaderRequestExecutor(
         val chanLoaderResponse = tryLoadFromArchivesOrLocalCopyIfPossible(
           descriptor,
           archiveDescriptor,
-          chanReaderProcessor,
           requestParams
         )
 
@@ -189,7 +183,6 @@ class ChanLoaderRequestExecutor(
           return@use readJson(
             descriptor,
             archiveDescriptor,
-            chanReaderProcessor,
             requestParams,
             jsonReader
           ).unwrap()
@@ -198,14 +191,12 @@ class ChanLoaderRequestExecutor(
   }
 
   private suspend fun tryLoadFromDiskCache(
-    archiveDescriptor: ArchiveDescriptor?,
     requestParams: ChanLoaderRequestParams
   ): ChanLoaderResponse? {
     BackgroundUtils.ensureBackgroundThread()
 
     val reloadedPosts = reloadPostsFromRepository(
       getDescriptor(requestParams.loadable),
-      archivesManager.getArchiveDescriptorId(archiveDescriptor),
       requestParams.loadable
     )
 
@@ -228,7 +219,6 @@ class ChanLoaderRequestExecutor(
   private suspend fun tryLoadFromArchivesOrLocalCopyIfPossible(
     descriptor: ChanDescriptor,
     archiveDescriptor: ArchiveDescriptor?,
-    chanReaderProcessor: ChanReaderProcessor,
     requestParams: ChanLoaderRequestParams
   ): ChanLoaderResponse? {
     BackgroundUtils.ensureBackgroundThread()
@@ -239,7 +229,7 @@ class ChanLoaderRequestExecutor(
     }
 
     val postsFromArchive = getPostsFromArchiveIfNecessary(
-      chanReaderProcessor.getToParse(),
+      emptyList(),
       requestParams.loadable,
       descriptor,
       archiveDescriptor
@@ -261,7 +251,6 @@ class ChanLoaderRequestExecutor(
 
     val reloadedPosts = reloadPostsFromRepository(
       descriptor,
-      archivesManager.getArchiveDescriptorId(archiveDescriptor),
       requestParams.loadable
     )
 
@@ -286,13 +275,17 @@ class ChanLoaderRequestExecutor(
   suspend fun readJson(
     descriptor: ChanDescriptor,
     archiveDescriptor: ArchiveDescriptor?,
-    chanReaderProcessor: ChanReaderProcessor,
     requestParams: ChanLoaderRequestParams,
     jsonReader: JsonReader
   ): ModularResult<ChanLoaderResponse> {
     BackgroundUtils.ensureBackgroundThread()
 
     return Try {
+      val chanReaderProcessor = ChanReaderProcessor(
+        chanPostRepository,
+        requestParams.loadable
+      )
+
       val loadable = requestParams.loadable
       val reader = requestParams.chanReader
 
@@ -328,8 +321,8 @@ class ChanLoaderRequestExecutor(
 
       val (reloadedPosts, reloadingDuration) = measureTimedValue {
         return@measureTimedValue reloadPostsFromRepository(
+          chanReaderProcessor,
           descriptor,
-          archivesManager.getArchiveDescriptorId(archiveDescriptor),
           requestParams.loadable
         )
       }
@@ -479,7 +472,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
       val cachedPostsMap = chanPostRepository.getThreadPosts(
         descriptor,
-        archiveDescriptor.getArchiveDatabaseId(),
+        archiveDescriptor.getArchiveId(),
         archivePostsNoList
       ).unwrap()
         .associateBy { chanPost -> chanPost.postDescriptor.postNo }
@@ -558,7 +551,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         post.no
       )
 
-      val archiveId = archivesManager.getArchiveDescriptorId(post.archiveDescriptor)
+      val archiveId = post.archiveDescriptor?.getArchiveId() ?: ArchiveDescriptor.NO_ARCHIVE_ID
       chanPosts.add(fromPost(gson, postDescriptor, post, archiveId))
     }
 
@@ -570,10 +563,12 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
   private suspend fun reloadPostsFromRepository(
     chanDescriptor: ChanDescriptor,
-    archiveId: Long,
     loadable: Loadable
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
+
+    val archiveId = archivesManager.getLatestArchiveDescriptor(chanDescriptor)?.getArchiveId()
+      ?: ArchiveDescriptor.NO_ARCHIVE_ID
 
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -608,10 +603,12 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
   private suspend fun reloadPostsFromRepository(
     chanReaderProcessor: ChanReaderProcessor,
     chanDescriptor: ChanDescriptor,
-    archiveId: Long,
     loadable: Loadable
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
+
+    val archiveId = archivesManager.getLatestArchiveDescriptor(chanDescriptor)?.getArchiveId()
+      ?: ArchiveDescriptor.NO_ARCHIVE_ID
 
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {

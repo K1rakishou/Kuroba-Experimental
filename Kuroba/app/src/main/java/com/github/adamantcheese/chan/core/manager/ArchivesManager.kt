@@ -44,6 +44,8 @@ class ArchivesManager(
   private lateinit var allArchiveDescriptors: List<ArchiveDescriptor>
   private lateinit var allArchiveDescriptorsMap: Map<Long, ArchiveDescriptor>
 
+  private val archiveDescriptorsPerThread = mutableMapOf<ChanDescriptor.ThreadDescriptor, ArchiveDescriptor>()
+
   init {
     applicationScope.launch {
       val allArchives = loadArchives()
@@ -60,7 +62,7 @@ class ArchivesManager(
       val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
 
       archiveDescriptors.forEach { descriptor ->
-        descriptor.setArchiveDatabaseId(archiveInfoMap[descriptor.domain]!!.databaseId)
+        descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)
 
         for (archive in allArchives) {
           if (descriptor.domain == archive.domain) {
@@ -72,7 +74,7 @@ class ArchivesManager(
 
       allArchivesData = allArchives
       allArchiveDescriptors = archiveDescriptors
-      allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveDatabaseId() }
+      allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveId() }
     }
   }
 
@@ -116,12 +118,12 @@ class ArchivesManager(
       .hide()
   }
 
-  fun getArchiveDescriptorId(archiveDescriptor: ArchiveDescriptor?): Long {
-    if (archiveDescriptor == null) {
-      return ArchiveDescriptor.NO_ARCHIVE_ID
+  suspend fun getLatestArchiveDescriptor(descriptor: ChanDescriptor): ArchiveDescriptor? {
+    if (descriptor !is ChanDescriptor.ThreadDescriptor) {
+      return null
     }
 
-    return archiveDescriptor.getArchiveDatabaseId()
+    return mutex.withLock { archiveDescriptorsPerThread[descriptor] }
   }
 
   suspend fun getArchiveDescriptor(
@@ -162,11 +164,17 @@ class ArchivesManager(
         return@Try null
       }
 
-      return@Try getBestPossibleArchiveOrNull(
+      val archiveDescriptor = getBestPossibleArchiveOrNull(
         threadDescriptor,
         enabledSuitableArchives,
         forced
       )
+
+      if (archiveDescriptor != null) {
+        mutex.withLock { archiveDescriptorsPerThread[threadDescriptor] = archiveDescriptor }
+      }
+
+      return@Try archiveDescriptor
     }
   }
 
@@ -262,7 +270,9 @@ class ArchivesManager(
 
     // If we couldn't find an archive that supports files for this board, but we are forced
     // to do a fetch in any case, then just return the first archive with the highest score
-    return sortedFetchHistoryList.first().first
+    val (archiveDescriptor, _) = sortedFetchHistoryList.first()
+
+    return archiveDescriptor
   }
 
   /**

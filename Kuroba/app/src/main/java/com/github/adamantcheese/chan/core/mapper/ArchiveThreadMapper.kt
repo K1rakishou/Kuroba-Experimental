@@ -88,7 +88,7 @@ object ArchiveThreadMapper {
       .extension(archivePostMedia.extension)
       .imageWidth(archivePostMedia.imageWidth)
       .imageHeight(archivePostMedia.imageHeight)
-      .archiveId(archiveDescriptor.getArchiveDatabaseId())
+      .archiveId(archiveDescriptor.getArchiveId())
       .size(archivePostMedia.size)
       .fileHash(archivePostMedia.fileHashBase64, true)
       .imageUrl(imageUrl)
