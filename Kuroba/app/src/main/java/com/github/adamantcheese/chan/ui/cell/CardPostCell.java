@@ -160,6 +160,7 @@ public class CardPostCell
     public void setPost(
             Loadable loadable,
             final Post post,
+            final int postIndex,
             PostCellInterface.PostCellCallback callback,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,

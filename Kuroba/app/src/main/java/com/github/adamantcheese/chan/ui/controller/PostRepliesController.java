@@ -326,6 +326,7 @@ public class PostRepliesController
             postCellInterface.setPost(
                     loadable,
                     post,
+                    -1,
                     presenter,
                     postPreloadedInfoHolder,
                     true,

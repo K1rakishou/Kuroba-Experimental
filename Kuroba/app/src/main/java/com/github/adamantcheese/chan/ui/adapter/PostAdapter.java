@@ -39,8 +39,10 @@ import com.github.adamantcheese.chan.utils.PostUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
@@ -61,6 +63,7 @@ public class PostAdapter
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
+    private final Map<Long, Integer> postIndexMap = new HashMap<>();
     /**
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
      */
@@ -111,17 +114,34 @@ public class PostAdapter
                         break;
                 }
 
-                PostCellInterface postCell = (PostCellInterface) inflate(inflateContext, layout, parent, false);
+                PostCellInterface postCell = (PostCellInterface) inflate(
+                        inflateContext,
+                        layout,
+                        parent,
+                        false
+                );
+
                 return new PostViewHolder(postCell);
             case TYPE_POST_STUB:
-                PostCellInterface postCellStub =
-                        (PostCellInterface) inflate(inflateContext, R.layout.cell_post_stub, parent, false);
+                PostCellInterface postCellStub = (PostCellInterface) inflate(
+                        inflateContext,
+                        R.layout.cell_post_stub,
+                        parent,
+                        false
+                );
                 return new PostViewHolder(postCellStub);
             case TYPE_LAST_SEEN:
-                return new LastSeenViewHolder(inflate(inflateContext, R.layout.cell_post_last_seen, parent, false));
+                return new LastSeenViewHolder(
+                        inflate(inflateContext, R.layout.cell_post_last_seen, parent, false)
+                );
             case TYPE_STATUS:
-                ThreadStatusCell statusCell =
-                        (ThreadStatusCell) inflate(inflateContext, R.layout.cell_thread_status, parent, false);
+                ThreadStatusCell statusCell = (ThreadStatusCell) inflate(
+                        inflateContext,
+                        R.layout.cell_thread_status,
+                        parent,
+                        false
+                );
+
                 StatusViewHolder statusViewHolder = new StatusViewHolder(statusCell);
                 statusCell.setCallback(statusCellCallback);
                 statusCell.setError(error);
@@ -147,9 +167,16 @@ public class PostAdapter
                 Post post = displayList.get(getPostPosition(position));
                 boolean highlight = shouldHighlightPost(post);
 
-                ((PostCellInterface) postViewHolder.itemView).setPost(
+                PostCellInterface postCell = ((PostCellInterface) postViewHolder.itemView);
+                Integer postIndex = postIndexMap.get(post.no);
+                if (postIndex == null || postIndex < 0) {
+                    postIndex = 0;
+                }
+
+                postCell.setPost(
                         loadable,
                         post,
+                        postIndex,
                         postCellCallback,
                         postPreloadedInfoHolder,
                         false,
@@ -291,8 +318,12 @@ public class PostAdapter
         changed = hasChangedPosts(posts, changed);
 
         updatingPosts.clear();
+
         displayList.clear();
         displayList.addAll(posts);
+
+        postIndexMap.clear();
+        fillPostIndexMap(postIndexMap, posts);
 
         lastSeenIndicatorPosition = getLastSeenIndicatorPosition(threadLoadable);
 
@@ -306,6 +337,12 @@ public class PostAdapter
 
         if (shouldUpdate) {
             notifyDataSetChanged();
+        }
+    }
+
+    private void fillPostIndexMap(Map<Long, Integer> postIndexMap, List<Post> posts) {
+        for (int index = 0; index < posts.size(); index++) {
+            postIndexMap.put(posts.get(index).no, index);
         }
     }
 
@@ -351,11 +388,15 @@ public class PostAdapter
         highlightedPostId = null;
         highlightedPostNo = -1;
         highlightedPostTripcode = null;
+
         selectedPost = -1;
         lastSeenIndicatorPosition = -1;
         error = null;
+
         updatingPosts.clear();
         displayList.clear();
+        postIndexMap.clear();
+
         notifyDataSetChanged();
     }
 
@@ -466,7 +507,6 @@ public class PostAdapter
         notifyItemChanged(postIndex);
     }
 
-    //region Holders
     public static class PostViewHolder
             extends RecyclerView.ViewHolder {
         public PostViewHolder(PostCellInterface postView) {
@@ -487,7 +527,6 @@ public class PostAdapter
             super(itemView);
         }
     }
-    //endregion
 
     public interface PostAdapterCallback {
         @Nullable Loadable getLoadable();

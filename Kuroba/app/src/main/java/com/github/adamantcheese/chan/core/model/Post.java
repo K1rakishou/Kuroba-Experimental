@@ -359,7 +359,10 @@ public class Post implements Comparable<Post> {
     @Override
     public int hashCode() {
         // Post.comment can now be mutated so it's not safe to use it to calculate hash code
-        return 31 * Objects.hashCode(no) + 31 * board.code.hashCode() + 31 * board.siteId + 31 * (deleted.get() ? 1 : 0);
+        return 31 * Objects.hashCode(no) +
+                31 * board.code.hashCode() +
+                31 * board.siteId +
+                31 * (deleted.get() ? 1 : 0);
     }
 
     @Override

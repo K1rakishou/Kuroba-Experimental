@@ -36,6 +36,7 @@ public interface PostCellInterface {
     void setPost(
             Loadable loadable,
             Post post,
+            int postIndex,
             PostCellCallback callback,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,

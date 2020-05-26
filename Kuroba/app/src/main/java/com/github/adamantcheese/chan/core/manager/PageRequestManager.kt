@@ -95,6 +95,14 @@ class PageRequestManager(
       shouldUpdate(boardDescriptor)
       return boardPagesMap[boardDescriptor.boardCode]
     }
+
+    val alreadyRequested = synchronized(this) {
+      requestedBoards.contains(boardDescriptor.boardCode)
+    }
+
+    if (alreadyRequested) {
+      return null
+    }
   
     launch {
       // Otherwise, get the site for the board and request the pages for it
@@ -140,35 +148,37 @@ class PageRequestManager(
         true
       }
     }
-    
-    if (!contains) {
-      val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
-      if (site == null) {
-        Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
-        return
-      }
 
-      val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
-      if (board == null) {
-        Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
-          "and boardCode (${boardDescriptor.boardCode})")
-        return
-      }
+    if (contains) {
+      return
+    }
 
-      when (val response = site.actions().pages(board)) {
-        is JsonReaderRequest.JsonReaderResponse.Success -> {
-          onPagesReceived(response.result.boardDescriptor, response.result)
-        }
-        is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-          Logger.e(TAG, "Server error while trying to get board ($board) pages, " +
-            "status code: ${response.statusCode}")
-        }
-        is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-          Logger.e(TAG, "Unknown server error while trying to get board (${board}) pages", response.error)
-        }
-        is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-          Logger.e(TAG, "Parsing error while trying to get board (${board}) pages", response.error)
-        }
+    val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    if (site == null) {
+      Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
+      return
+    }
+
+    val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
+    if (board == null) {
+      Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
+        "and boardCode (${boardDescriptor.boardCode})")
+      return
+    }
+
+    when (val response = site.actions().pages(board)) {
+      is JsonReaderRequest.JsonReaderResponse.Success -> {
+        onPagesReceived(response.result.boardDescriptor, response.result)
+      }
+      is JsonReaderRequest.JsonReaderResponse.ServerError -> {
+        Logger.e(TAG, "Server error while trying to get board ($board) pages, " +
+          "status code: ${response.statusCode}")
+      }
+      is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
+        Logger.e(TAG, "Unknown server error while trying to get board (${board}) pages", response.error)
+      }
+      is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
+        Logger.e(TAG, "Parsing error while trying to get board (${board}) pages", response.error)
       }
     }
   }

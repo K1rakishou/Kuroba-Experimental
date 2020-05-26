@@ -89,6 +89,7 @@ import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -162,6 +163,7 @@ public class PostCell
 
     private Loadable loadable;
     private Post post;
+    private int postIndex = 0;
     @Nullable
     private PostCellCallback callback;
     private boolean inPopup;
@@ -298,6 +300,7 @@ public class PostCell
     public void setPost(
             Loadable loadable,
             final Post post,
+            final int postIndex,
             PostCellInterface.PostCellCallback callback,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
@@ -321,6 +324,7 @@ public class PostCell
 
         this.loadable = loadable;
         this.post = post;
+        this.postIndex = postIndex;
         this.callback = callback;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
         this.inPopup = inPopup;
@@ -488,7 +492,12 @@ public class PostCell
     private void bindTitle(Theme theme, Post post) {
         List<CharSequence> titleParts = new ArrayList<>(5);
 
-        if (post.subject != null && post.subject.length() > 0) {
+        String postIndexText = "";
+        if (loadable.isThreadMode() && postIndex >= 0) {
+            postIndexText = String.format(Locale.ENGLISH, "#%d, ", (postIndex + 1));
+        }
+
+        if ((post.subject != null && post.subject.length() > 0)) {
             titleParts.add(post.subject);
             titleParts.add("\n");
         }
@@ -497,7 +506,7 @@ public class PostCell
             titleParts.add(post.tripcode);
         }
 
-        String noText = "No. " + post.no;
+        String noText = String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.no);
         if (ChanSettings.addDubs.get()) {
             String repeat = CommentParserHelper.getRepeatDigits(post.no);
             if (repeat != null) {

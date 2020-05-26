@@ -45,8 +45,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
  * {@link com.github.adamantcheese.chan.ui.cell.CardPostCell} and may have untested behaviour with
  * other layouts.
  */
-public class FastTextView
-        extends View {
+public class FastTextView extends View {
     private static final String TAG = "FastTextView";
     private static LruCache<FastTextViewItem, StaticLayout> textCache = new LruCache<>(250);
     private Set<FastTextViewItem> currentlyAllocatedItems = new HashSet<>();
