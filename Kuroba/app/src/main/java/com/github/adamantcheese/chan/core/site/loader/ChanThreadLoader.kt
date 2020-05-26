@@ -758,7 +758,7 @@ class ChanThreadLoader(
     companion object {
         private const val TAG = "ChanThreadLoader"
         private val executor = Executors.newSingleThreadScheduledExecutor()
-        private val WATCH_TIMEOUTS = intArrayOf(10, 15, 20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600)
+        private val WATCH_TIMEOUTS = intArrayOf(20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600)
         private val backgroundScheduler = Schedulers.from(executor)
     }
 
