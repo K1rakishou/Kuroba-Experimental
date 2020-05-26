@@ -24,243 +24,251 @@ import javax.inject.Singleton
 @Module
 class ModelMainModule {
 
-    @Singleton
-    @Provides
-    fun provideDatabase(application: Application): KurobaDatabase {
-        return KurobaDatabase.buildDatabase(application)
-    }
+  @Singleton
+  @Provides
+  fun provideDatabase(application: Application): KurobaDatabase {
+    return KurobaDatabase.buildDatabase(application)
+  }
 
-    @Singleton
-    @Provides
-    fun provideLogger(@VerboseLogs verboseLogs: Boolean): Logger {
-        return Logger(verboseLogs)
-    }
+  @Singleton
+  @Provides
+  fun provideLogger(@VerboseLogs verboseLogs: Boolean): Logger {
+    return Logger(verboseLogs)
+  }
 
-    @Singleton
-    @Provides
-    fun provideGson(): Gson {
-        return Gson().newBuilder().create()
-    }
+  @Singleton
+  @Provides
+  fun provideGson(): Gson {
+    return Gson().newBuilder().create()
+  }
 
-    /**
-     * Parsers
-     * */
+  /**
+   * Parsers
+   * */
 
-    @Singleton
-    @Provides
-    fun provideArchivesJsonParser(
-      @LoggerTagPrefix loggerTag: String,
-      logger: Logger
-    ): ArchivesJsonParser {
-        return ArchivesJsonParser(loggerTag, logger)
-    }
+  @Singleton
+  @Provides
+  fun provideArchivesJsonParser(
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): ArchivesJsonParser {
+    return ArchivesJsonParser(loggerTag, logger)
+  }
 
-    /**
-     * Local sources
-     * */
+  /**
+   * Local sources
+   * */
 
-    @Singleton
-    @Provides
-    fun provideMediaServiceLinkExtraContentLocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger
-    ): MediaServiceLinkExtraContentLocalSource {
-        return MediaServiceLinkExtraContentLocalSource(
-                database,
-                loggerTag,
-                logger
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideMediaServiceLinkExtraContentLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): MediaServiceLinkExtraContentLocalSource {
+    return MediaServiceLinkExtraContentLocalSource(
+      database,
+      loggerTag,
+      logger
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideSeenPostLocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger
-    ): SeenPostLocalSource {
-        return SeenPostLocalSource(
-                database,
-                loggerTag,
-                logger
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideSeenPostLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): SeenPostLocalSource {
+    return SeenPostLocalSource(
+      database,
+      loggerTag,
+      logger
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideInlinedFileInfoLocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger
-    ): InlinedFileInfoLocalSource {
-        return InlinedFileInfoLocalSource(
-                database,
-                loggerTag,
-                logger
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideInlinedFileInfoLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): InlinedFileInfoLocalSource {
+    return InlinedFileInfoLocalSource(
+      database,
+      loggerTag,
+      logger
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideChanPostLocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger,
-            gson: Gson
-    ): ChanPostLocalSource {
-        return ChanPostLocalSource(
-                database,
-                loggerTag,
-                logger,
-                gson
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideChanPostLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger,
+    gson: Gson
+  ): ChanPostLocalSource {
+    return ChanPostLocalSource(
+      database,
+      loggerTag,
+      logger,
+      gson
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideThirdPartyArchiveInfoLocalSource(
-            database: KurobaDatabase,
-            @LoggerTagPrefix loggerTag: String,
-            logger: Logger
-    ): ThirdPartyArchiveInfoLocalSource {
-        return ThirdPartyArchiveInfoLocalSource(
-                database,
-                loggerTag,
-                logger
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideThirdPartyArchiveInfoLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): ThirdPartyArchiveInfoLocalSource {
+    return ThirdPartyArchiveInfoLocalSource(
+      database,
+      loggerTag,
+      logger
+    )
+  }
 
-    /**
-     * Remote sources
-     * */
+  /**
+   * Remote sources
+   * */
 
-    @Singleton
-    @Provides
-    fun provideMediaServiceLinkExtraContentRemoteSource(
-            logger: Logger,
-            okHttpClient: OkHttpClient,
-            @LoggerTagPrefix loggerTag: String
-    ): MediaServiceLinkExtraContentRemoteSource {
-        return MediaServiceLinkExtraContentRemoteSource(okHttpClient, loggerTag, logger)
-    }
+  @Singleton
+  @Provides
+  fun provideMediaServiceLinkExtraContentRemoteSource(
+    logger: Logger,
+    okHttpClient: OkHttpClient,
+    @LoggerTagPrefix loggerTag: String
+  ): MediaServiceLinkExtraContentRemoteSource {
+    return MediaServiceLinkExtraContentRemoteSource(okHttpClient, loggerTag, logger)
+  }
 
-    @Singleton
-    @Provides
-    fun provideInlinedFileInfoRemoteSource(
-            logger: Logger,
-            okHttpClient: OkHttpClient,
-            @LoggerTagPrefix loggerTag: String
-    ): InlinedFileInfoRemoteSource {
-        return InlinedFileInfoRemoteSource(okHttpClient, loggerTag, logger)
-    }
+  @Singleton
+  @Provides
+  fun provideInlinedFileInfoRemoteSource(
+    logger: Logger,
+    okHttpClient: OkHttpClient,
+    @LoggerTagPrefix loggerTag: String
+  ): InlinedFileInfoRemoteSource {
+    return InlinedFileInfoRemoteSource(okHttpClient, loggerTag, logger)
+  }
 
-    @Singleton
-    @Provides
-    fun provideArchivesRemoteSource(
-            logger: Logger,
-            okHttpClient: OkHttpClient,
-            @LoggerTagPrefix loggerTag: String,
-            archivesJsonParser: ArchivesJsonParser
-    ): ArchivesRemoteSource {
-        return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser)
-    }
+  @Singleton
+  @Provides
+  fun provideArchivesRemoteSource(
+    logger: Logger,
+    okHttpClient: OkHttpClient,
+    @LoggerTagPrefix loggerTag: String,
+    archivesJsonParser: ArchivesJsonParser
+  ): ArchivesRemoteSource {
+    return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser)
+  }
 
-    /**
-     * Repositories
-     * */
+  /**
+   * Repositories
+   * */
 
-    @Singleton
-    @Provides
-    fun provideYoutubeLinkExtraContentRepository(
-            logger: Logger,
-            database: KurobaDatabase,
-            mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
-            mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource,
-            @LoggerTagPrefix loggerTag: String
-    ): MediaServiceLinkExtraContentRepository {
-        return MediaServiceLinkExtraContentRepository(
-                database,
-                loggerTag,
-                logger,
-                GenericCacheSource(),
-                mediaServiceLinkExtraContentLocalSource,
-                mediaServiceLinkExtraContentRemoteSource
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideYoutubeLinkExtraContentRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
+    mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String
+  ): MediaServiceLinkExtraContentRepository {
+    return MediaServiceLinkExtraContentRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      GenericCacheSource(),
+      mediaServiceLinkExtraContentLocalSource,
+      mediaServiceLinkExtraContentRemoteSource
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideSeenPostRepository(
-            logger: Logger,
-            database: KurobaDatabase,
-            seenPostLocalSource: SeenPostLocalSource,
-            @LoggerTagPrefix loggerTag: String
-    ): SeenPostRepository {
-        return SeenPostRepository(
-                database,
-                loggerTag,
-                logger,
-                seenPostLocalSource
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideSeenPostRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    seenPostLocalSource: SeenPostLocalSource,
+    @LoggerTagPrefix loggerTag: String,
+    @AppCoroutineScope scope: CoroutineScope
+  ): SeenPostRepository {
+    return SeenPostRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      seenPostLocalSource
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideInlinedFileInfoRepository(
-            logger: Logger,
-            database: KurobaDatabase,
-            inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
-            inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource,
-            @LoggerTagPrefix loggerTag: String
-    ): InlinedFileInfoRepository {
-        return InlinedFileInfoRepository(
-                database,
-                loggerTag,
-                logger,
-                GenericCacheSource(),
-                inlinedFileInfoLocalSource,
-                inlinedFileInfoRemoteSource
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideInlinedFileInfoRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
+    inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String
+  ): InlinedFileInfoRepository {
+    return InlinedFileInfoRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      GenericCacheSource(),
+      inlinedFileInfoLocalSource,
+      inlinedFileInfoRemoteSource
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideChanPostRepository(
-            logger: Logger,
-            database: KurobaDatabase,
-            chanPostLocalSource: ChanPostLocalSource,
-            @LoggerTagPrefix loggerTag: String,
-            @AppCoroutineScope scope: CoroutineScope,
-            appConstants: AppConstants
-    ): ChanPostRepository {
-        return ChanPostRepository(
-                database,
-                loggerTag,
-                logger,
-                scope,
-                chanPostLocalSource,
-                appConstants
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideChanPostRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    chanPostLocalSource: ChanPostLocalSource,
+    @LoggerTagPrefix loggerTag: String,
+    @AppCoroutineScope scope: CoroutineScope,
+    appConstants: AppConstants
+  ): ChanPostRepository {
+    return ChanPostRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      chanPostLocalSource,
+      appConstants
+    )
+  }
 
-    @Singleton
-    @Provides
-    fun provideThirdPartyArchiveInfoRepository(
-            logger: Logger,
-            database: KurobaDatabase,
-            thirdPartyArchiveInfoLocalSource: ThirdPartyArchiveInfoLocalSource,
-            archivesRemoteSource: ArchivesRemoteSource,
-            appConstants: AppConstants,
-            @LoggerTagPrefix loggerTag: String
-    ): ThirdPartyArchiveInfoRepository {
-        return ThirdPartyArchiveInfoRepository(
-                database,
-                loggerTag,
-                logger,
-                thirdPartyArchiveInfoLocalSource,
-                archivesRemoteSource,
-                appConstants
-        )
-    }
+  @Singleton
+  @Provides
+  fun provideThirdPartyArchiveInfoRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    thirdPartyArchiveInfoLocalSource: ThirdPartyArchiveInfoLocalSource,
+    archivesRemoteSource: ArchivesRemoteSource,
+    appConstants: AppConstants,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String
+  ): ThirdPartyArchiveInfoRepository {
+    return ThirdPartyArchiveInfoRepository(
+      database,
+      loggerTag,
+      logger,
+      appConstants,
+      scope,
+      thirdPartyArchiveInfoLocalSource,
+      archivesRemoteSource
+    )
+  }
 }

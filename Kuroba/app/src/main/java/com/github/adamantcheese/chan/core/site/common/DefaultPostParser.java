@@ -88,9 +88,14 @@ public class DefaultPostParser implements PostParser {
         parseSpans(theme, builder);
 
         if (builder.postCommentBuilder.hasComment()) {
-            builder.postCommentBuilder.setComment(
-                    parseComment(theme, builder, builder.postCommentBuilder.getComment(), callback)
+            CharSequence parsedComment = parseComment(
+                    theme,
+                    builder,
+                    builder.postCommentBuilder.getComment(),
+                    callback
             );
+
+            builder.postCommentBuilder.setComment(parsedComment);
         } else {
             builder.postCommentBuilder.setComment(new SpannableString(""));
         }

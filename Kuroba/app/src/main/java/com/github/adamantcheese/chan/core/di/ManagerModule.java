@@ -60,6 +60,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import io.reactivex.schedulers.Schedulers;
+import kotlinx.coroutines.CoroutineScope;
 import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
@@ -167,11 +168,13 @@ public class ManagerModule {
             Context appContext,
             ThirdPartyArchiveInfoRepository thirdPartyArchiveInfoRepository,
             Gson gson,
-            AppConstants appConstants
+            AppConstants appConstants,
+            CoroutineScope appScope
     ) {
-        Logger.d(AppModule.DI_TAG, "Archives manager (4chan only)");
+        Logger.d(AppModule.DI_TAG, "Archives manager");
         return new ArchivesManager(
                 appContext,
+                appScope,
                 thirdPartyArchiveInfoRepository,
                 gson,
                 appConstants,
@@ -188,7 +191,12 @@ public class ManagerModule {
             FileManager fileManager
     ) {
         Logger.d(AppModule.DI_TAG, "Thread save manager");
-        return new ThreadSaveManager(databaseManager, okHttpClient, savedThreadLoaderRepository, fileManager);
+        return new ThreadSaveManager(
+                databaseManager,
+                okHttpClient,
+                savedThreadLoaderRepository,
+                fileManager
+        );
     }
 
     @Provides

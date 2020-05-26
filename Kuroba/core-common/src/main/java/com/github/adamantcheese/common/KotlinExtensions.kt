@@ -1,5 +1,9 @@
 package com.github.adamantcheese.common
 
+import com.github.adamantcheese.common.ModularResult.Companion.Try
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import java.io.IOException
@@ -42,13 +46,27 @@ public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNull
 }
 
 public inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Collection<R>): List<R> {
-    val destination = mutableListOf<R>()
+  val destination = mutableListOf<R>()
 
-    for ((index, element) in this.withIndex()) {
-        val list = transform(index, element)
+  for ((index, element) in this.withIndex()) {
+    val list = transform(index, element)
 
-        destination.addAll(list)
-    }
+    destination.addAll(list)
+  }
 
-    return destination
+  return destination
+}
+
+@Suppress("RedundantAsync")
+public suspend fun <T> CoroutineScope.myAsyncSafe(func: suspend () -> T): ModularResult<T> {
+  return supervisorScope {
+    Try { async { func() }.await() }
+  }
+}
+
+@Suppress("RedundantAsync")
+public suspend fun <T> CoroutineScope.myAsync(func: suspend () -> T): T {
+  return supervisorScope {
+    async { func() }.await()
+  }
 }

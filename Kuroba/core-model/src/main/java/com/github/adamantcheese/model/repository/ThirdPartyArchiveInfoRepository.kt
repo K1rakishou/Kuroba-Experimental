@@ -4,6 +4,7 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.SuspendableInitializer
+import com.github.adamantcheese.common.myAsync
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchiveThread
@@ -14,259 +15,285 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.source.cache.ThirdPartyArchiveInfoCache
 import com.github.adamantcheese.model.source.local.ThirdPartyArchiveInfoLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
+import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
 import org.joda.time.Duration
 
 class ThirdPartyArchiveInfoRepository(
-        database: KurobaDatabase,
-        loggerTag: String,
-        logger: Logger,
-        private val localSource: ThirdPartyArchiveInfoLocalSource,
-        private val remoteSource: ArchivesRemoteSource,
-        private val appConstants: AppConstants
+  database: KurobaDatabase,
+  loggerTag: String,
+  logger: Logger,
+  private val appConstants: AppConstants,
+  private val applicationScope: CoroutineScope,
+  private val localSource: ThirdPartyArchiveInfoLocalSource,
+  private val remoteSource: ArchivesRemoteSource
 ) : AbstractRepository(database, logger) {
-    private val TAG = "$loggerTag ThirdPartyArchiveInfoRepository"
-    private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
-    private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
+  private val TAG = "$loggerTag ThirdPartyArchiveInfoRepository"
+  private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
+  private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
 
-    suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {
-        val result = tryWithTransaction {
-            val resultList = mutableListOf<ThirdPartyArchiveInfo>()
+  suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {
+    return applicationScope.myAsync {
+      val result = tryWithTransaction {
+        return@tryWithTransaction initInternal(allArchiveDescriptors)
+      }
 
-            val thirdPartyArchiveInfoList = allArchiveDescriptors.map { archiveDescriptor ->
-                ThirdPartyArchiveInfo(
-                        databaseId = 0L,
-                        archiveDescriptor = archiveDescriptor,
-                        enabled = false
-                )
-            }
+      when (result) {
+        is ModularResult.Value -> suspendableInitializer.initWithValue(Unit)
+        is ModularResult.Error -> suspendableInitializer.initWithError(result.error)
+      }
 
-            thirdPartyArchiveInfoList.forEach { thirdPartyArchiveInfo ->
-                val archiveInfo = if (!localSource.archiveExists(thirdPartyArchiveInfo.archiveDescriptor)) {
-                    val insertedIntoDatabase = localSource.insertThirdPartyArchiveInfo(
-                            thirdPartyArchiveInfo
-                    )
+      if (result is ModularResult.Error) {
+        throw result.error
+      }
 
-                    requireNotNull(insertedIntoDatabase) {
-                        "Couldn't insert archive info into the database, " +
-                                "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
-                    }
-                } else {
-                    val fromDatabase = localSource.selectThirdPartyArchiveInfo(
-                            thirdPartyArchiveInfo.archiveDescriptor
-                    )
+      return@myAsync (result as ModularResult.Value).value.associateBy { archiveInfo ->
+        archiveInfo.archiveDescriptor.domain
+      }
+    }
+  }
 
-                    requireNotNull(fromDatabase) {
-                        "Couldn't find archive info in the database, " +
-                                "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
-                    }
-                }
+  suspend fun insertFetchResult(
+    fetchResult: ThirdPartyArchiveFetchResult
+  ): ModularResult<ThirdPartyArchiveFetchResult?> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          require(fetchResult.databaseId == 0L) {
+            "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
+          }
 
-                require(archiveInfo.databaseId > 0L) {
-                    "Bad archiveInfo.databaseId: ${archiveInfo.databaseId}"
-                }
+          val thirdPartyArchiveFetchResult = localSource.insertFetchResult(fetchResult)
+          if (thirdPartyArchiveFetchResult != null) {
+            thirdPartyArchiveInfoCache.putThirdPartyArchiveFetchResult(
+              thirdPartyArchiveFetchResult
+            )
+          }
 
-                resultList += archiveInfo
-                thirdPartyArchiveInfoCache.putThirdPartyArchiveInfo(archiveInfo)
-            }
+          return@tryWithTransaction thirdPartyArchiveFetchResult
+        }
+      }
+    }
+  }
 
-            val fetchHistoryMap = localSource.selectLatestFetchHistory(
-                    allArchiveDescriptors,
-                    DateTime.now().minus(ONE_HOUR),
-                    appConstants.archiveFetchHistoryMaxEntries
+  suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          require(fetchResult.databaseId > 0L) {
+            "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
+          }
+
+          localSource.deleteFetchResult(fetchResult)
+          thirdPartyArchiveInfoCache.deleteFetchResult(fetchResult)
+
+          return@tryWithTransaction
+        }
+      }
+    }
+  }
+
+  suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          val isEnabled = thirdPartyArchiveInfoCache.isArchiveEnabledOrNull(archiveDescriptor)
+          if (isEnabled != null) {
+            return@tryWithTransaction isEnabled!!
+          }
+
+          val isActuallyEnabled = localSource.isArchiveEnabled(archiveDescriptor)
+
+          thirdPartyArchiveInfoCache.setArchiveEnabled(archiveDescriptor, isActuallyEnabled)
+          return@tryWithTransaction isActuallyEnabled
+        }
+      }
+    }
+  }
+
+  suspend fun setArchiveEnabled(
+    archiveDescriptor: ArchiveDescriptor,
+    isEnabled: Boolean
+  ): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
+          thirdPartyArchiveInfoCache.setArchiveEnabled(archiveDescriptor, isEnabled)
+
+          return@tryWithTransaction
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns fetch result history for thread with descriptor [threadDescriptor] for every archive
+   * in [archiveDescriptorList] that we had fetched posts from
+   * */
+  suspend fun selectLatestFetchHistoryForThread(
+    archiveDescriptorList: List<ArchiveDescriptor>,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized Try {
+          val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+          val newerThan = DateTime.now().minus(ONE_HOUR)
+
+          archiveDescriptorList.forEach { archiveDescriptor ->
+            val threadArchiveFetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistoryForThread(
+              archiveDescriptor,
+              threadDescriptor,
+              newerThan,
+              appConstants.archiveFetchHistoryMaxEntries
             )
 
-            fetchHistoryMap.forEach { (archiveDescriptor, fetchHistoryForArchiveList) ->
-                val databaseId = fetchHistoryForArchiveList.minBy { fetchHistoryForArchive ->
-                    return@minBy fetchHistoryForArchive.databaseId
-                }?.databaseId
+            resultMap[archiveDescriptor] = threadArchiveFetchHistory
+          }
 
-                if (databaseId != null) {
-                    val deletedCount = localSource.deleteOlderThan(archiveDescriptor, databaseId)
-                    logger.log(TAG, "deleteOlderThan($archiveDescriptor, $databaseId) -> $deletedCount")
-                }
-
-                fetchHistoryForArchiveList.forEach { fetchHistoryResult ->
-                    thirdPartyArchiveInfoCache.putThirdPartyArchiveFetchResult(fetchHistoryResult)
-                }
-            }
-
-            val fetchHistoryDebugInfo = fetchHistoryMap.map { (archiveDescriptor, fetchHistoryForArchiveList) ->
-                return@map "$archiveDescriptor: ($fetchHistoryForArchiveList)"
-            }.joinToString(separator = ";", prefix = "[", postfix = "]")
-
-            logger.log(TAG, "Loaded ${thirdPartyArchiveInfoList.size} archives, " +
-                    "fetchHistoryDebugInfo = $fetchHistoryDebugInfo")
-
-            return@tryWithTransaction resultList
+          return@Try resultMap.toMap()
         }
+      }
+    }
+  }
 
-        when (result) {
-            is ModularResult.Value -> suspendableInitializer.initWithValue(Unit)
-            is ModularResult.Error -> suspendableInitializer.initWithError(result.error)
-        }
+  /**
+   * Returns the latest N fetch results for this archive
+   * */
+  suspend fun selectLatestFetchHistory(
+    archiveDescriptor: ArchiveDescriptor
+  ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized Try {
+          val newerThan = DateTime.now().minus(ONE_HOUR)
 
-        if (result is ModularResult.Error) {
-            throw result.error
+          return@Try thirdPartyArchiveInfoCache.selectLatestFetchHistory(
+            archiveDescriptor,
+            newerThan,
+            appConstants.archiveFetchHistoryMaxEntries
+          )
         }
+      }
+    }
+  }
 
-        return (result as ModularResult.Value).value.associateBy { archiveInfo ->
-            archiveInfo.archiveDescriptor.domain
+  /**
+   * Returns the latest N fetch results for these archives
+   * */
+  suspend fun selectLatestFetchHistory(
+    archiveDescriptorList: List<ArchiveDescriptor>
+  ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized Try {
+          val newerThan = DateTime.now().minus(ONE_HOUR)
+          val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+
+          archiveDescriptorList.forEach { archiveDescriptor ->
+            val fetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistory(
+              archiveDescriptor,
+              newerThan,
+              appConstants.archiveFetchHistoryMaxEntries
+            )
+
+            resultMap[archiveDescriptor] = fetchHistory
+          }
+
+          return@Try resultMap.toMap()
         }
+      }
+    }
+  }
+
+  suspend fun fetchThreadFromNetwork(
+    threadArchiveRequestLink: String,
+    threadNo: Long
+  ): ModularResult<ArchiveThread> {
+    // We don't need to use SuspendableInitializer here
+    return applicationScope.myAsync {
+      return@myAsync Try {
+        return@Try remoteSource.fetchThreadFromNetwork(threadArchiveRequestLink, threadNo)
+      }
+    }
+  }
+
+  private suspend fun initInternal(
+    allArchiveDescriptors: List<ArchiveDescriptor>
+  ): MutableList<ThirdPartyArchiveInfo> {
+    val resultList = mutableListOf<ThirdPartyArchiveInfo>()
+
+    val thirdPartyArchiveInfoList = allArchiveDescriptors.map { archiveDescriptor ->
+      ThirdPartyArchiveInfo(
+        databaseId = 0L,
+        archiveDescriptor = archiveDescriptor,
+        enabled = false
+      )
     }
 
-    suspend fun insertFetchResult(
-            fetchResult: ThirdPartyArchiveFetchResult
-    ): ModularResult<ThirdPartyArchiveFetchResult?> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                require(fetchResult.databaseId == 0L) {
-                    "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
-                }
+    thirdPartyArchiveInfoList.forEach { thirdPartyArchiveInfo ->
+      val archiveInfo = if (!localSource.archiveExists(thirdPartyArchiveInfo.archiveDescriptor)) {
+        val insertedIntoDatabase = localSource.insertThirdPartyArchiveInfo(
+          thirdPartyArchiveInfo
+        )
 
-                val thirdPartyArchiveFetchResult = localSource.insertFetchResult(fetchResult)
-                if (thirdPartyArchiveFetchResult != null) {
-                    thirdPartyArchiveInfoCache.putThirdPartyArchiveFetchResult(
-                            thirdPartyArchiveFetchResult
-                    )
-                }
-
-                return@tryWithTransaction thirdPartyArchiveFetchResult
-            }
+        requireNotNull(insertedIntoDatabase) {
+          "Couldn't insert archive info into the database, " +
+            "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
         }
-    }
+      } else {
+        val fromDatabase = localSource.selectThirdPartyArchiveInfo(
+          thirdPartyArchiveInfo.archiveDescriptor
+        )
 
-    suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                require(fetchResult.databaseId > 0L) {
-                    "Bad fetchResult.databaseId: ${fetchResult.databaseId}"
-                }
-
-                localSource.deleteFetchResult(fetchResult)
-                thirdPartyArchiveInfoCache.deleteFetchResult(fetchResult)
-
-                return@tryWithTransaction
-            }
+        requireNotNull(fromDatabase) {
+          "Couldn't find archive info in the database, " +
+            "archiveDescriptor = ${thirdPartyArchiveInfo.archiveDescriptor}"
         }
+      }
+
+      require(archiveInfo.databaseId > 0L) {
+        "Bad archiveInfo.databaseId: ${archiveInfo.databaseId}"
+      }
+
+      resultList += archiveInfo
+      thirdPartyArchiveInfoCache.putThirdPartyArchiveInfo(archiveInfo)
     }
 
-    suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                val isEnabled = thirdPartyArchiveInfoCache.isArchiveEnabledOrNull(archiveDescriptor)
-                if (isEnabled != null) {
-                    return@tryWithTransaction isEnabled!!
-                }
+    val fetchHistoryMap = localSource.selectLatestFetchHistory(
+      allArchiveDescriptors,
+      DateTime.now().minus(ONE_HOUR),
+      appConstants.archiveFetchHistoryMaxEntries
+    )
 
-                val isActuallyEnabled = localSource.isArchiveEnabled(archiveDescriptor)
+    fetchHistoryMap.forEach { (archiveDescriptor, fetchHistoryForArchiveList) ->
+      val databaseId = fetchHistoryForArchiveList.minBy { fetchHistoryForArchive ->
+        return@minBy fetchHistoryForArchive.databaseId
+      }?.databaseId
 
-                thirdPartyArchiveInfoCache.setArchiveEnabled(archiveDescriptor, isActuallyEnabled)
-                return@tryWithTransaction isActuallyEnabled
-            }
-        }
+      if (databaseId != null) {
+        val deletedCount = localSource.deleteOlderThan(archiveDescriptor, databaseId)
+        logger.log(TAG, "deleteOlderThan($archiveDescriptor, $databaseId) -> $deletedCount")
+      }
+
+      fetchHistoryForArchiveList.forEach { fetchHistoryResult ->
+        thirdPartyArchiveInfoCache.putThirdPartyArchiveFetchResult(fetchHistoryResult)
+      }
     }
 
-    suspend fun setArchiveEnabled(
-            archiveDescriptor: ArchiveDescriptor,
-            isEnabled: Boolean
-    ): ModularResult<Unit> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized tryWithTransaction {
-                localSource.setArchiveEnabled(archiveDescriptor, isEnabled)
-                thirdPartyArchiveInfoCache.setArchiveEnabled(archiveDescriptor, isEnabled)
+    val fetchHistoryDebugInfo = fetchHistoryMap.map { (archiveDescriptor, fetchHistoryForArchiveList) ->
+      return@map "$archiveDescriptor: ($fetchHistoryForArchiveList)"
+    }.joinToString(separator = ";", prefix = "[", postfix = "]")
 
-                return@tryWithTransaction
-            }
-        }
-    }
+    logger.log(TAG, "Loaded ${thirdPartyArchiveInfoList.size} archives, " +
+      "fetchHistoryDebugInfo = $fetchHistoryDebugInfo")
 
-    /**
-     * Returns fetch result history for thread with descriptor [threadDescriptor] for every archive
-     * in [archiveDescriptorList] that we had fetched posts from
-     * */
-    suspend fun selectLatestFetchHistoryForThread(
-            archiveDescriptorList: List<ArchiveDescriptor>,
-            threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized Try {
-                val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
-                val newerThan = DateTime.now().minus(ONE_HOUR)
+    return resultList
+  }
 
-                archiveDescriptorList.forEach { archiveDescriptor ->
-                    val threadArchiveFetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistoryForThread(
-                            archiveDescriptor,
-                            threadDescriptor,
-                            newerThan,
-                            appConstants.archiveFetchHistoryMaxEntries
-                    )
-
-                    resultMap[archiveDescriptor] = threadArchiveFetchHistory
-                }
-
-                return@Try resultMap.toMap()
-            }
-        }
-    }
-
-    /**
-     * Returns the latest N fetch results for this archive
-     * */
-    suspend fun selectLatestFetchHistory(
-            archiveDescriptor: ArchiveDescriptor
-    ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized Try {
-                val newerThan = DateTime.now().minus(ONE_HOUR)
-
-                return@Try thirdPartyArchiveInfoCache.selectLatestFetchHistory(
-                        archiveDescriptor,
-                        newerThan,
-                        appConstants.archiveFetchHistoryMaxEntries
-                )
-            }
-        }
-    }
-
-    /**
-     * Returns the latest N fetch results for these archives
-     * */
-    suspend fun selectLatestFetchHistory(
-            archiveDescriptorList: List<ArchiveDescriptor>
-    ): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
-        return suspendableInitializer.invokeWhenInitialized {
-            return@invokeWhenInitialized Try {
-                val newerThan = DateTime.now().minus(ONE_HOUR)
-                val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
-
-                archiveDescriptorList.forEach { archiveDescriptor ->
-                    val fetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistory(
-                            archiveDescriptor,
-                            newerThan,
-                            appConstants.archiveFetchHistoryMaxEntries
-                    )
-
-                    resultMap[archiveDescriptor] = fetchHistory
-                }
-
-                return@Try resultMap.toMap()
-            }
-        }
-    }
-
-    suspend fun fetchThreadFromNetwork(
-            threadArchiveRequestLink: String,
-            threadNo: Long
-    ): ModularResult<ArchiveThread> {
-        // We don't need to use SuspendableInitializer here
-        return Try {
-            return@Try remoteSource.fetchThreadFromNetwork(threadArchiveRequestLink, threadNo)
-        }
-    }
-
-    companion object {
-        // Only select fetch results that were executed no more than 1 hour ago
-        private val ONE_HOUR = Duration.standardHours(1)
-    }
+  companion object {
+    // Only select fetch results that were executed no more than 1 hour ago
+    private val ONE_HOUR = Duration.standardHours(1)
+  }
 }

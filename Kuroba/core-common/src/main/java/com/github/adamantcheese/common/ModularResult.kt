@@ -81,7 +81,7 @@ sealed class ModularResult<V : Any?> {
             is Value -> value
         }
     }
-
+    
     fun unwrap(): V {
         return when (this) {
             is Error -> throw error

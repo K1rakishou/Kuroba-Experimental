@@ -19,8 +19,6 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,20 +26,17 @@ import org.joda.time.DateTime
 import org.joda.time.Duration
 import java.io.InputStreamReader
 import java.util.*
-import kotlin.coroutines.CoroutineContext
+
+typealias LatestArchivesFetchHistory = ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>>
 
 class ArchivesManager(
   private val appContext: Context,
+  private val applicationScope: CoroutineScope,
   private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
   private val gson: Gson,
   private val appConstants: AppConstants,
   private val verboseLogsEnabled: Boolean
-) : CoroutineScope {
-  private val supervisorJob = SupervisorJob()
-
-  override val coroutineContext: CoroutineContext
-    get() = Dispatchers.Default + supervisorJob
-
+) {
   private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
   private val mutex = Mutex()
 
@@ -50,7 +45,7 @@ class ArchivesManager(
   private lateinit var allArchiveDescriptorsMap: Map<Long, ArchiveDescriptor>
 
   init {
-    launch {
+    applicationScope.launch {
       val allArchives = loadArchives()
 
       val archiveDescriptors = allArchives.map { archive ->
@@ -129,7 +124,6 @@ class ArchivesManager(
     return archiveDescriptor.getArchiveDatabaseId()
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
   suspend fun getArchiveDescriptor(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     forced: Boolean
@@ -383,7 +377,10 @@ class ArchivesManager(
     return thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveDescriptor)
   }
 
-  suspend fun setArchiveEnabled(archiveDescriptor: ArchiveDescriptor, isEnabled: Boolean): ModularResult<Unit> {
+  suspend fun setArchiveEnabled(
+    archiveDescriptor: ArchiveDescriptor,
+    isEnabled: Boolean
+  ): ModularResult<Unit> {
     return thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveDescriptor, isEnabled)
   }
 
@@ -393,7 +390,7 @@ class ArchivesManager(
     return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(archiveDescriptor)
   }
 
-  suspend fun selectLatestFetchHistoryForAllArchives(): ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>> {
+  suspend fun selectLatestFetchHistoryForAllArchives(): LatestArchivesFetchHistory {
     return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors)
   }
 
