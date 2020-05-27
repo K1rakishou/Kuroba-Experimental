@@ -211,6 +211,8 @@ class ChanLoaderRequestExecutor(
       return null
     }
 
+    fillInReplies(reloadedPosts)
+
     return ChanLoaderResponse(originalPost.toPostBuilder(null), reloadedPosts).apply {
       preloadPostsInfo()
     }
@@ -265,6 +267,8 @@ class ChanLoaderRequestExecutor(
         "posts have no OP")
       return null
     }
+
+    fillInReplies(reloadedPosts)
 
     return ChanLoaderResponse(originalPost.toPostBuilder(archiveDescriptor), reloadedPosts).apply {
       preloadPostsInfo()
@@ -572,21 +576,16 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        chanPostRepository.getThreadPosts(
-          chanDescriptor,
-          archiveId,
-          Int.MAX_VALUE
-        ).unwrap()
+        chanPostRepository.getThreadPosts(chanDescriptor, archiveId, Int.MAX_VALUE)
+          .unwrap()
           .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToLoadCount = loadable.board.pages * loadable.board.perPage
 
-        chanPostRepository.getCatalogOriginalPosts(
-          chanDescriptor,
-          archiveId,
-          postsToLoadCount
-        ).unwrap()
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToLoadCount)
+          .unwrap()
+          // Sort in descending order by threads' lastModified value because that's the BUMP ordering
           .sortedByDescending { chanPost -> chanPost.lastModified }
       }
     }.map { post ->
@@ -620,7 +619,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         // When in the mode, we can just select every post we have for this thread
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
-        chanPostRepository.getThreadPosts(chanDescriptor, archiveId, maxCount).unwrap()
+        chanPostRepository.getThreadPosts(chanDescriptor, archiveId, maxCount)
+          .unwrap()
+          .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToGet = chanReaderProcessor.getPostNoListOrdered()
@@ -631,7 +632,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
         // is to get every post by it's postNo that we receive from the server. It's
         // already in correct order (the server order) so we don't even need to sort
         // them.
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToGet).unwrap()
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToGet)
+          .unwrap()
       }
     }.map { post ->
       return@map ChanPostMapper.toPost(
@@ -665,9 +667,9 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
       return emptyList()
     }
 
-    val internalIds = postBuildersToParse.map { postBuilder ->
-      return@map postBuilder.id
-    }.toSet()
+    val internalIds = postBuildersToParse
+      .map { postBuilder -> postBuilder.id }
+      .toSet()
 
     return postBuildersToParse
       .map { postToParse ->
@@ -750,37 +752,43 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     totalPosts.addAll(newPosts)
 
     if (loadable.isThreadMode) {
-      val postsByNo: MutableMap<Long, Post> = HashMap()
-      for (post in totalPosts) {
-        postsByNo[post.no] = post
-      }
-
-      // Maps post no's to a list of no's that that post received replies from
-      val replies: MutableMap<Long, MutableList<Long>> = HashMap()
-      for (sourcePost in totalPosts) {
-        for (replyTo in sourcePost.repliesTo) {
-          var value = replies[replyTo]
-          if (value == null) {
-            value = ArrayList(3)
-            replies[replyTo] = value
-          }
-          value.add(sourcePost.no)
-        }
-      }
-
-      for ((key, value) in replies) {
-        val subject = postsByNo[key]
-        // Sometimes a post replies to a ghost, a post that doesn't exist.
-        if (subject != null) {
-          subject.repliesFrom = value
-        }
-      }
+      fillInReplies(totalPosts)
     }
 
     val response = ChanLoaderResponse(op, totalPosts.toList())
     response.preloadPostsInfo()
 
     return response
+  }
+
+  private fun fillInReplies(totalPosts: List<Post>) {
+    val postsByNo: MutableMap<Long, Post> = HashMap()
+    for (post in totalPosts) {
+      postsByNo[post.no] = post
+    }
+
+    // Maps post no's to a list of no's that that post received replies from
+    val replies: MutableMap<Long, MutableList<Long>> = HashMap()
+    for (sourcePost in totalPosts) {
+      for (replyTo in sourcePost.repliesTo) {
+        var value = replies[replyTo]
+
+        if (value == null) {
+          value = ArrayList(3)
+          replies[replyTo] = value
+        }
+
+        value.add(sourcePost.no)
+      }
+    }
+
+    for ((key, value) in replies) {
+      val subject = postsByNo[key]
+      // Sometimes a post replies to a ghost, a post that doesn't exist.
+      if (subject != null) {
+        subject.repliesFrom = value
+      }
+    }
   }
 
   companion object {
