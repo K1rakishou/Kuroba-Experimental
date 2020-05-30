@@ -4,6 +4,7 @@ import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.features.archives.epoxy.epoxyFetchHistoryRow
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast

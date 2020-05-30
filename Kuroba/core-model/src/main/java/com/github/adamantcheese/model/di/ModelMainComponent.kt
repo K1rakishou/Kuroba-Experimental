@@ -25,6 +25,7 @@ interface ModelMainComponent {
     fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
     fun getChanPostRepository(): ChanPostRepository
     fun getThirdPartyArchiveInfoRepository(): ThirdPartyArchiveInfoRepository
+    fun getHistoryNavigationRepository(): HistoryNavigationRepository
 
     @Component.Builder
     interface Builder {

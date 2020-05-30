@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.features.drawer.DrawerController;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
 import javax.inject.Inject;

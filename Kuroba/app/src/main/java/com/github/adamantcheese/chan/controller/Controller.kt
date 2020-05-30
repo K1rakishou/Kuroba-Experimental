@@ -68,6 +68,16 @@ abstract class Controller(@JvmField var context: Context) {
   @JvmField
   var presentingThisController: Controller? = null
 
+  val top: Controller?
+    get() = if (childControllers.size > 0) {
+      childControllers[childControllers.size - 1]
+    } else {
+      null
+    }
+
+  open val toolbar: Toolbar?
+    get() = null
+
   @JvmField
   var alive = false
 
@@ -79,6 +89,7 @@ abstract class Controller(@JvmField var context: Context) {
   @CallSuper
   open fun onCreate() {
     alive = true
+
     if (LOG_STATES) {
       Logger.test(javaClass.simpleName + " onCreate")
     }
@@ -250,20 +261,13 @@ abstract class Controller(@JvmField var context: Context) {
     onDestroy()
   }
 
-  val top: Controller?
-    get() = if (childControllers.size > 0) {
-      childControllers[childControllers.size - 1]
-    } else {
-      null
-    }
-
-  open val toolbar: Toolbar?
-    get() = null
-
   private fun attachToView(parentView: ViewGroup) {
     var params = view.layoutParams
     if (params == null) {
-      params = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+      params = ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      )
     } else {
       params.width = ViewGroup.LayoutParams.MATCH_PARENT
       params.height = ViewGroup.LayoutParams.MATCH_PARENT

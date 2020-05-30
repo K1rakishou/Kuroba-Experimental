@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- TODO(KurobaEx): this should be the place for bottom navigation view -->
+
     <com.github.adamantcheese.chan.ui.toolbar.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"

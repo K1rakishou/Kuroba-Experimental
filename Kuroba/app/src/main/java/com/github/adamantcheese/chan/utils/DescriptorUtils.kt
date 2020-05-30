@@ -11,7 +11,7 @@ object DescriptorUtils {
         require(loadable.isThreadMode) { "Loadable must be in thread mode" }
         require(loadable.no > 0) { "Loadable is in thread mode but it has no threadId" }
 
-        return ChanDescriptor.ThreadDescriptor(loadable.boardDescriptor, loadable.no.toLong())
+        return ChanDescriptor.ThreadDescriptor(loadable.board.boardDescriptor(), loadable.no.toLong())
     }
 
     @JvmStatic
@@ -20,9 +20,9 @@ object DescriptorUtils {
             val threadId = loadable.no.toLong()
             check(threadId > 0) { "Loadable is in thread mode but it has no threadId" }
 
-            return ChanDescriptor.ThreadDescriptor(loadable.boardDescriptor, threadId)
+            return ChanDescriptor.ThreadDescriptor(loadable.board.boardDescriptor(), threadId)
         } else if (loadable.isCatalogMode) {
-            return ChanDescriptor.CatalogDescriptor(loadable.boardDescriptor)
+            return ChanDescriptor.CatalogDescriptor(loadable.board.boardDescriptor())
         }
 
         throw IllegalStateException("Unsupported loadable mode: ${loadable.mode}")

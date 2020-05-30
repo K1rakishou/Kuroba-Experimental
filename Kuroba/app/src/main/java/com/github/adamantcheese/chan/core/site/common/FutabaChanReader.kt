@@ -10,27 +10,36 @@ import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.PostParser
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class FutabaChanReader(archivesManager: ArchivesManager) : ChanReader {
+class FutabaChanReader(
+  private val archivesManager: ArchivesManager
+) : ChanReader {
+    private val mutex = Mutex()
+    private var parser: PostParser? = null
 
-    private val postParser: DefaultPostParser by lazy {
-        val commentParser = CommentParser().addDefaultRules()
-        val foolFuukaCommentParser = FoolFuukaCommentParser()
-        val parser = DefaultPostParser(commentParser)
+    override suspend fun getParser(): PostParser {
+        return mutex.withLock {
+            if (parser == null) {
+                val commentParser = CommentParser().addDefaultRules()
+                val foolFuukaCommentParser = FoolFuukaCommentParser()
+                val defaultPostParser = DefaultPostParser(commentParser)
 
-        for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
-            parser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)
+                for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
+                    defaultPostParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)
+                }
+
+                parser = defaultPostParser
+            }
+
+            return@withLock parser!!
         }
-
-        return@lazy parser
     }
-
-    override val parser: PostParser?
-        get() = postParser
 
     @Throws(Exception::class)
     override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {

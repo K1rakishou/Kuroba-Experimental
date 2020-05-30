@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
@@ -45,5 +46,11 @@ public class RoomDatabaseModule {
     @Singleton
     public ThirdPartyArchiveInfoRepository provideThirdPartyArchiveInfoRepository() {
         return modelMainComponent.getThirdPartyArchiveInfoRepository();
+    }
+
+    @Provides
+    @Singleton
+    public HistoryNavigationRepository provideHistoryNavigationRepository() {
+        return modelMainComponent.getHistoryNavigationRepository();
     }
 }

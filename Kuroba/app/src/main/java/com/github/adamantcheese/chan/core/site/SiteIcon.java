@@ -57,6 +57,10 @@ public class SiteIcon {
         this.imageLoaderV2 = imageLoaderV2;
     }
 
+    public HttpUrl getUrl() {
+        return url;
+    }
+
     public void get(Context context, SiteIconResult result) {
         if (drawable != null) {
             result.onSiteIcon(SiteIcon.this, drawable);

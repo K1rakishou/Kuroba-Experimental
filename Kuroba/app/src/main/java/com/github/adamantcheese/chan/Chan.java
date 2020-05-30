@@ -36,8 +36,10 @@ import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.di.RepositoryModule;
 import com.github.adamantcheese.chan.core.di.RoomDatabaseModule;
 import com.github.adamantcheese.chan.core.di.SiteModule;
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.net.DnsSelector;
@@ -94,6 +96,10 @@ public class Chan
     ReportManager reportManager;
     @Inject
     SettingsNotificationManager settingsNotificationManager;
+    @Inject
+    ApplicationVisibilityManager applicationVisibilityManager;
+    @Inject
+    HistoryNavigationManager historyNavigationManager;
 
     @NotNull
     @Override
@@ -331,6 +337,12 @@ public class Chan
         activityForegroundCounter++;
 
         if (getApplicationInForeground() != lastForeground) {
+            Logger.d(TAG, "^^^ App went foreground ^^^");
+
+            if (applicationVisibilityManager != null) {
+                applicationVisibilityManager.onEnteredForeground();
+            }
+
             postToEventBus(new ForegroundChangedMessage(getApplicationInForeground()));
         }
     }
@@ -340,10 +352,16 @@ public class Chan
 
         activityForegroundCounter--;
         if (activityForegroundCounter < 0) {
-            Logger.wtf("ChanApplication", "activityForegroundCounter below 0");
+            activityForegroundCounter = 0;
         }
 
         if (getApplicationInForeground() != lastForeground) {
+            Logger.d(TAG, "vvv App went background vvv");
+
+            if (applicationVisibilityManager != null) {
+                applicationVisibilityManager.onEnteredBackground();
+            }
+
             postToEventBus(new ForegroundChangedMessage(getApplicationInForeground()));
         }
     }

@@ -271,4 +271,20 @@ class ModelMainModule {
       archivesRemoteSource
     )
   }
+
+  @Singleton
+  @Provides
+  fun provideHistoryNavigationRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String
+  ) : HistoryNavigationRepository {
+    return HistoryNavigationRepository(
+      database,
+      loggerTag,
+      logger,
+      scope
+    )
+  }
 }

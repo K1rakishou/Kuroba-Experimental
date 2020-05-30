@@ -45,6 +45,7 @@ import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.features.drawer.DrawerController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
@@ -57,10 +58,12 @@ import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 
 import org.greenrobot.eventbus.Subscribe;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -503,6 +506,16 @@ public class ViewThreadController
     }
 
     @Override
+    public void showThread(@NotNull ChanDescriptor.ThreadDescriptor descriptor) {
+        // TODO(KurobaEx): apparently I don't need this? No-op for now.
+    }
+
+    @Override
+    public void showBoard(@NotNull ChanDescriptor.CatalogDescriptor descriptor) {
+        // TODO(KurobaEx): apparently I don't need this? No-op for now.
+    }
+
+    @Override
     public void showBoard(final Loadable catalogLoadable) {
         showBoardInternal(catalogLoadable, null);
     }
@@ -658,10 +671,7 @@ public class ViewThreadController
         }
 
         SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
-        if (savedThread == null
-                || savedThread.isFullyDownloaded
-                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
-                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading) {
+        if (savedThread == null || savedThread.isFullyDownloaded || shouldHideLocalThreadMenuItems()) {
             // No saved thread.
             // Saved thread fully downloaded.
             // Not downloading thread currently.
@@ -692,6 +702,11 @@ public class ViewThreadController
                 viewLiveCopyItem.visible = true;
             }
         }
+    }
+
+    private boolean shouldHideLocalThreadMenuItems() {
+        return loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
+                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading;
     }
 
     private void showHints() {

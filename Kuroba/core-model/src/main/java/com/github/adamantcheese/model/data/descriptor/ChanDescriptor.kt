@@ -7,6 +7,8 @@ sealed class ChanDescriptor {
     abstract fun siteName(): String
     abstract fun boardCode(): String
 
+    abstract fun siteDescriptor(): SiteDescriptor
+
     class ThreadDescriptor(
             val boardDescriptor: BoardDescriptor,
             val opNo: Long
@@ -17,6 +19,10 @@ sealed class ChanDescriptor {
 
         override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
         override fun boardCode(): String = boardDescriptor.boardCode
+
+        override fun siteDescriptor(): SiteDescriptor {
+            return boardDescriptor.siteDescriptor
+        }
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -57,6 +63,10 @@ sealed class ChanDescriptor {
 
         override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
         override fun boardCode(): String = boardDescriptor.boardCode
+
+        override fun siteDescriptor(): SiteDescriptor {
+            return boardDescriptor.siteDescriptor
+        }
 
         fun toThreadDescriptor(opNo: Long): ThreadDescriptor {
             return ThreadDescriptor(boardDescriptor, opNo)

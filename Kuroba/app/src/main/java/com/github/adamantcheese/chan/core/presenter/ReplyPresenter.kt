@@ -460,7 +460,7 @@ class ReplyPresenter @Inject constructor(
       // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
       // the loadable (local to this method) from the reply response
       val localSite = siteRepository.forId(replyResponse.siteId)
-      val localBoard = boardRepository.getFromCode(localSite, replyResponse.boardCode)
+      val localBoard = requireNotNull(boardRepository.getFromCode(localSite, replyResponse.boardCode))
 
       val loadableNo = if (replyResponse.threadNo == 0) {
         replyResponse.postNo.toLong()

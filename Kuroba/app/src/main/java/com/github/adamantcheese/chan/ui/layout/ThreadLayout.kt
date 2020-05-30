@@ -64,6 +64,7 @@ import com.github.adamantcheese.chan.ui.view.LoadView
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
 import javax.inject.Inject
@@ -763,6 +764,8 @@ class ThreadLayout @JvmOverloads constructor(
   interface ThreadLayoutCallback {
     val toolbar: Toolbar
 
+    fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
+    fun showBoard(descriptor: ChanDescriptor.CatalogDescriptor)
     fun showThread(threadLoadable: Loadable)
     fun showBoard(catalogLoadable: Loadable)
     fun showBoardAndSearch(catalogLoadable: Loadable, searchQuery: String?)

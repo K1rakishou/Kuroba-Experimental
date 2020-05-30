@@ -20,19 +20,24 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+
 public class BrowsePresenter
         implements Observer {
     private final DatabaseManager databaseManager;
+    private final HistoryNavigationManager historyNavigationManager;
 
     @Nullable
     private Callback callback;
@@ -41,13 +46,18 @@ public class BrowsePresenter
     private Board currentBoard;
 
     private BoardRepository.SitesBoards savedBoardsObservable;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Inject
-    public BrowsePresenter(DatabaseManager databaseManager, BoardManager boardManager) {
+    public BrowsePresenter(
+            DatabaseManager databaseManager,
+            BoardManager boardManager,
+            HistoryNavigationManager historyNavigationManager
+    ) {
         this.databaseManager = databaseManager;
+        this.historyNavigationManager = historyNavigationManager;
 
         savedBoardsObservable = boardManager.getSavedBoardsObservable();
-
         hadBoards = hasBoards();
     }
 
@@ -59,6 +69,8 @@ public class BrowsePresenter
 
     public void destroy() {
         this.callback = null;
+
+        compositeDisposable.clear();
         savedBoardsObservable.deleteObserver(this);
     }
 
@@ -111,11 +123,20 @@ public class BrowsePresenter
     }
 
     private void loadBoard(Board board) {
-        if (callback != null) {
-            currentBoard = board;
-
-            callback.loadBoard(getLoadableForBoard(board));
+        if (callback == null) {
+            return;
         }
+
+        historyNavigationManager.moveNavElementToTop(
+                new ChanDescriptor.CatalogDescriptor(board.boardDescriptor())
+        );
+
+        if (board.equals(currentBoard)) {
+            return;
+        }
+
+        currentBoard = board;
+        callback.loadBoard(getLoadableForBoard(board));
     }
 
     public interface Callback {

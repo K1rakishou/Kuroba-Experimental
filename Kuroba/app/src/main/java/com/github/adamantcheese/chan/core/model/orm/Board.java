@@ -123,6 +123,8 @@ public class Board
     @DatabaseField
     public boolean archive = false;
 
+    private BoardDescriptor boardDescriptor;
+
     @Deprecated // public, at least
     public Board() {
     }
@@ -198,8 +200,13 @@ public class Board
         return code.equals(other.code) && other.siteId == siteId;
     }
 
-    public BoardDescriptor boardDescriptor() {
-        return new BoardDescriptor(site.siteDescriptor(), code);
+    public synchronized BoardDescriptor boardDescriptor() {
+        if (this.boardDescriptor != null) {
+            return this.boardDescriptor;
+        }
+
+        this.boardDescriptor = new BoardDescriptor(site.siteDescriptor(), code);
+        return this.boardDescriptor;
     }
 
     /**

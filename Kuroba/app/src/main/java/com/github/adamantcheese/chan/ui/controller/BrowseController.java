@@ -27,6 +27,9 @@ import android.view.animation.RotateAnimation;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
+import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -34,6 +37,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
@@ -45,6 +49,9 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -74,10 +81,18 @@ public class BrowseController
     private static final int SORT_MODE_MODIFIED = 105;
     private static final int SORT_MODE_ACTIVITY = 106;
 
+    private DatabaseLoadableManager databaseLoadableManager;
+
     @Inject
     BrowsePresenter presenter;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    BoardRepository boardRepository;
+    @Inject
+    DatabaseManager databaseManager;
+    @Inject
+    HistoryNavigationManager historyNavigationManager;
 
     private PostsFilter.Order order;
     @Nullable
@@ -92,6 +107,8 @@ public class BrowseController
     public void onCreate() {
         super.onCreate();
         inject(this);
+
+        databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
         // Initialization
         order = PostsFilter.Order.find(ChanSettings.boardOrder.get());
@@ -440,6 +457,38 @@ public class BrowseController
     }
 
     @Override
+    public void showThread(@NotNull ChanDescriptor.ThreadDescriptor descriptor) {
+        Loadable threadLoadable = databaseLoadableManager.getByThreadDescriptor(descriptor);
+        if (threadLoadable == null) {
+            showToast(context, R.string.browse_controller_cannot_open_thread);
+            return;
+        }
+
+        if (!threadLoadable.isThreadMode()) {
+            String errorMessage = context.getString(
+                    R.string.browse_controller_cannot_open_thread_not_a_thread,
+                    threadLoadable.mode
+            );
+
+            showToast(context, errorMessage);
+            return;
+        }
+
+        showThread(threadLoadable, true);
+    }
+
+    @Override
+    public void showBoard(@NotNull ChanDescriptor.CatalogDescriptor descriptor) {
+        Board board = boardRepository.getFromBoardDescriptor(descriptor.getBoardDescriptor());
+        if (board == null) {
+            showToast(context, R.string.browse_controller_cannot_open_board);
+            return;
+        }
+
+        showBoard(board);
+    }
+
+    @Override
     public void showBoard(Loadable catalogLoadable) {
         //we don't actually need to do anything here because you can't tap board links in the browse controller
         //set the board just in case?
@@ -483,9 +532,12 @@ public class BrowseController
                     ((ViewThreadController) navigationController.getTop()).loadThread(threadLoadable);
                 }
             } else {
-                StyledToolbarNavigationController navigationController = new StyledToolbarNavigationController(context);
+                StyledToolbarNavigationController navigationController
+                        = new StyledToolbarNavigationController(context);
                 splitNav.setRightController(navigationController);
-                ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
+
+                ViewThreadController viewThreadController
+                        = new ViewThreadController(context, threadLoadable);
                 navigationController.pushController(viewThreadController, false);
             }
             splitNav.switchToController(false);
@@ -494,16 +546,60 @@ public class BrowseController
             if (slideNav.getRightController() instanceof ViewThreadController) {
                 ((ViewThreadController) slideNav.getRightController()).loadThread(threadLoadable);
             } else {
-                ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
+                ViewThreadController viewThreadController = new ViewThreadController(
+                        context,
+                        threadLoadable
+                );
+
                 slideNav.setRightController(viewThreadController);
             }
             slideNav.switchToController(false);
         } else {
             // the target ThreadNav must be pushed to the parent nav controller
             // (BrowseController -> ToolbarNavigationController)
-            ViewThreadController viewThreadController = new ViewThreadController(context, threadLoadable);
-            navigationController.pushController(viewThreadController, animated);
+            ViewThreadController viewThreadController = new ViewThreadController(
+                    context,
+                    threadLoadable
+            );
+
+            if (navigationController != null) {
+                navigationController.pushController(viewThreadController, animated);
+            }
         }
+
+        historyNavigationManager.moveNavElementToTop(threadLoadable.getChanDescriptor());
+    }
+
+    public void showBoard(Board board) {
+        // The target ThreadViewController is in a split nav
+        // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
+        SplitNavigationController splitNav = null;
+
+        // The target ThreadViewController is in a slide nav
+        // (BrowseController -> SlideController -> ToolbarNavigationController)
+        ThreadSlideController slideNav = null;
+
+        if (doubleNavigationController instanceof SplitNavigationController) {
+            splitNav = (SplitNavigationController) doubleNavigationController;
+        }
+
+        if (doubleNavigationController instanceof ThreadSlideController) {
+            slideNav = (ThreadSlideController) doubleNavigationController;
+        }
+
+        // Do nothing when split navigation is enabled because both controllers are always visible
+        // so we don't need to switch between left and right controllers
+        if (splitNav == null) {
+            if (slideNav != null) {
+                slideNav.switchToController(true);
+            } else {
+                if (navigationController != null) {
+                    navigationController.popController(true);
+                }
+            }
+        }
+
+        setBoard(board);
     }
 
     @Override

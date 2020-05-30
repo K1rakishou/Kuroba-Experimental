@@ -58,7 +58,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.SSLException
@@ -651,7 +650,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     }
   }
 
-  private fun parseNewPostsPosts(
+  private suspend fun parseNewPostsPosts(
     loadable: Loadable,
     chanReader: ChanReader,
     postBuildersToParse: List<Post.Builder>
@@ -671,21 +670,27 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
       .map { postBuilder -> postBuilder.id }
       .toSet()
 
-    return postBuildersToParse
-      .map { postToParse ->
-        return@map PostParseCallable(
-          filterEngine,
-          databaseSavedReplyManager,
-          currentTheme,
-          loadFilters(loadable),
-          postToParse,
-          chanReader,
-          internalIds
-        )
-      }
-      .chunked(Int.MAX_VALUE)
-      .map { postParseCallableList -> EXECUTOR.invokeAll(postParseCallableList) }
-      .flatMap { futureList -> futureList.mapNotNull { future -> future.get() } }
+    return coroutineScope {
+      return@coroutineScope postBuildersToParse
+        .chunked(POSTS_PER_BATCH)
+        .flatMap { postToParseChunk ->
+          val deferred = postToParseChunk.map { postToParse ->
+            return@map async(dispatcher) {
+              return@async PostParseWorker(
+                filterEngine,
+                databaseSavedReplyManager,
+                currentTheme,
+                loadFilters(loadable),
+                postToParse,
+                chanReader,
+                internalIds
+              ).parse()
+            }
+          }
+
+          return@flatMap deferred.awaitAll().filterNotNull()
+        }
+    }
   }
 
   private fun loadFilters(loadable: Loadable): List<Filter> {
@@ -795,15 +800,16 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
     private const val TAG = "ChanLoaderRequestExecutor"
     private const val threadFactoryName = "post_parser_thread_%d"
 
-    private var THREAD_COUNT = 0
-    private var EXECUTOR: ExecutorService
+    private val POSTS_PER_BATCH = 16
+
+    private val THREAD_COUNT = Runtime.getRuntime().availableProcessors()
     private val threadIndex = AtomicInteger(0)
+    private val dispatcher: CoroutineDispatcher
 
     init {
-      THREAD_COUNT = Runtime.getRuntime().availableProcessors()
       Logger.d(TAG, "Thread count: $THREAD_COUNT")
 
-      EXECUTOR = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
+      val executor = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
         val threadName = String.format(
           Locale.ENGLISH,
           threadFactoryName,
@@ -812,6 +818,8 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
         return@newFixedThreadPool Thread(runnable, threadName)
       }
+
+      dispatcher = executor.asCoroutineDispatcher()
     }
 
     @JvmStatic

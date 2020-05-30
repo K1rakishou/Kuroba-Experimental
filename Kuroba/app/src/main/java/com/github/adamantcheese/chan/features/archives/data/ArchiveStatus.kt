@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.features.archives
+package com.github.adamantcheese.chan.features.archives.data
 
 enum class ArchiveStatus {
     /**

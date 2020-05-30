@@ -63,6 +63,7 @@ import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.fsaf.FileManager
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
@@ -82,7 +83,8 @@ class ThreadPresenter @Inject constructor(
   private val siteRepository: SiteRepository,
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
-  private val seenPostsManager: SeenPostsManager
+  private val seenPostsManager: SeenPostsManager,
+  private val historyNavigationManager: HistoryNavigationManager
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -182,7 +184,6 @@ class ThreadPresenter @Inject constructor(
   @Synchronized
   fun unbindLoadable() {
     if (isBound) {
-
       if (loadable != null) {
         onDemandContentLoaderManager.cancelAllForLoadable(loadable!!)
       }
@@ -196,7 +197,10 @@ class ThreadPresenter @Inject constructor(
       threadPresenterCallback?.showLoading()
     }
 
-    job.cancel()
+    if (::job.isInitialized) {
+      job.cancel()
+    }
+
     compositeDisposable.clear()
   }
 
@@ -592,7 +596,10 @@ class ThreadPresenter @Inject constructor(
     }
 
     storeNewPostsIfThreadIsBeingDownloaded(result.posts)
-    addHistory()
+
+    if (loadable != null) {
+      createNewNavHistoryElement()
+    }
 
     // Update loadable in the database
     databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(loadable))
@@ -616,6 +623,30 @@ class ThreadPresenter @Inject constructor(
 
     if (result.loadable.isCatalogMode) {
       filterWatchManager.onCatalogLoad(result)
+    }
+  }
+
+  private fun createNewNavHistoryElement() {
+    val localLoadable = loadable!!
+
+    when (val descriptor = localLoadable.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        val site = siteRepository.bySiteDescriptor(descriptor.siteDescriptor())
+          ?: return
+
+        val siteIconUrl = site.icon().url
+        val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), localLoadable.boardCode)
+
+        historyNavigationManager.createNewNavElement(descriptor, siteIconUrl, title)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        val image = chanLoader?.thread?.op?.firstImage()
+        val title = localLoadable.title
+
+        if (image != null && title.isNotEmpty()) {
+          historyNavigationManager.createNewNavElement(descriptor, image.thumbnailUrl, title)
+        }
+      }
     }
   }
 
@@ -1337,24 +1368,6 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun addHistory() {
-    if (!isBound || chanLoader!!.thread == null) {
-      return
-    }
-    if (!historyAdded && addToLocalBackHistory
-      && ChanSettings.historyEnabled.get()
-      && loadable!!.isThreadMode
-      && !loadable!!.isLocal
-    ) {
-      historyAdded = true
-      val history = History()
-      history.loadable = loadable
-      val image = chanLoader!!.thread!!.op.firstImage()
-      history.thumbnailUrl = image?.getThumbnailUrl()?.toString() ?: ""
-      databaseManager.runTaskAsync(databaseManager.databaseHistoryManager.addHistory(history))
-    }
-  }
-
   fun showImageReencodingWindow(supportsReencode: Boolean) {
     threadPresenterCallback?.showImageReencodingWindow(loadable!!, supportsReencode)
   }
@@ -1368,9 +1381,9 @@ class ThreadPresenter @Inject constructor(
           posts.addAll(findPostWithReplies(post.no, thread.posts))
         }
       } else {
-        val post = findPostById(post.no, chanLoader!!.thread)
-        if (post != null) {
-          posts.add(post)
+        val foundPost = findPostById(post.no, chanLoader!!.thread)
+        if (foundPost != null) {
+          posts.add(foundPost)
         }
       }
     }

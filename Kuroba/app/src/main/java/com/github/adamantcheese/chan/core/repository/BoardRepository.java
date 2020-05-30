@@ -18,11 +18,14 @@ package com.github.adamantcheese.chan.core.repository;
 
 import android.util.Pair;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.core.database.DatabaseBoardManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +75,7 @@ public class BoardRepository implements Observer {
         }
     }
 
+    @Nullable
     public Board getFromCode(Site site, String code) {
         for (SiteBoards siteBoards : allBoards.get()) {
             if (siteBoards.site.id() == site.id()) {
@@ -85,6 +89,26 @@ public class BoardRepository implements Observer {
         }
 
         return null;
+    }
+
+    @Nullable
+    public Board getFromBoardDescriptor(BoardDescriptor boardDescriptor) {
+        for (SiteBoards siteBoards : allBoards.get()) {
+            if (siteBoards.site.siteDescriptor().equals(boardDescriptor.getSiteDescriptor())) {
+                for (Board board : siteBoards.boards) {
+                    if (board.boardDescriptor().equals(boardDescriptor)) {
+                        return board;
+                    }
+                }
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    public boolean containsBoard(BoardDescriptor boardDescriptor) {
+        return getFromBoardDescriptor(boardDescriptor) != null;
     }
 
     public SitesBoards getAll() {

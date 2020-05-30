@@ -115,6 +115,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="permission_app_settings">App settings</string>
     <string name="permission_grant">Grant</string>
 
+    <string name="menu_bookmarks">Bookmarks</string>
+    <string name="menu_browse">Browse</string>
+    <string name="menu_settings">Settings</string>
+
     <string name="update_later">Later</string>
     <string name="update_none">Already on the latest %1$s version.</string>
     <string name="update_check_failed">Failed to check for updates.</string>
@@ -364,7 +368,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_error_message_timer_reply">Error posting: You must wait %d seconds before posting a reply.</string>
     <string name="reply_error_message_timer_thread">Error posting: You must wait %d seconds before posting a thread.</string>
     <string name="reply_success">Post successful</string>
-
     <string name="reply_captcha_text">Type the text</string>
     <string name="reply_comment_button_quote" translatable="false">&gt;</string>
     <string name="reply_comment_button_spoiler">Spoiler</string>
@@ -372,7 +375,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_comment_button_eqn">Eqn</string>
     <string name="reply_comment_button_math">Math</string>
     <string name="reply_comment_button_sjis">SJIS</string>
-
     <string name="reply_comment_button_spoiler_tag">[s]</string>
     <string name="reply_comment_button_code_tag">[c]</string>
     <string name="reply_comment_button_eqn_tag">[eqn]</string>
@@ -794,6 +796,10 @@ Don't have a 4chan Pass?<br>
     <string name="only_on_op">Only on OP</string>
     <string name="apply_to_saved">Apply to own posts</string>
 
+    <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
+    <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
+    <string name="browse_controller_cannot_open_thread_not_a_thread">Cannot open thread, bad loadable mode: %1$d</string>
+
     <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
     <string name="thread_layout_remove_whole_chain">Remove whole chain</string>
     <string name="thread_layout_hide_post">Hide post</string>
@@ -983,5 +989,6 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
+    <string name="navigation_history_is_empty">Navigation history is empty</string>
 
 </resources>

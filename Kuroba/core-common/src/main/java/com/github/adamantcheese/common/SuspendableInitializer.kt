@@ -15,106 +15,106 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * to debug it.
  * */
 class SuspendableInitializer<T>(
-        private val tag: String,
-        private val logStates: Boolean = false,
-        private val value: CompletableDeferred<T> = CompletableDeferred()
+  private val tag: String,
+  private val logStates: Boolean = false,
+  private val value: CompletableDeferred<T> = CompletableDeferred()
 ) {
 
-    fun initWithValue(newValue: T) {
-        if (logStates) {
-            Log.d(tag, "initWithValue() called")
-        }
-
-        if (value.isCompleted) {
-            throw RuntimeException("Double initialization detected!")
-        }
-
-        value.complete(newValue)
+  fun initWithValue(newValue: T) {
+    if (logStates) {
+      Log.d(tag, "initWithValue() called")
     }
 
-    fun initWithError(exception: Throwable) {
-        if (logStates) {
-            Log.e(tag, "initWithError() called")
-        }
-
-        if (value.isCompleted) {
-            throw RuntimeException("Double initialization detected!")
-        }
-
-        value.completeExceptionally(exception)
+    if (value.isCompleted) {
+      throw RuntimeException("Double initialization detected!")
     }
 
-    fun initWithModularResult(modularResult: ModularResult<T>) {
-        when (modularResult) {
-            is ModularResult.Value -> initWithValue(modularResult.value)
-            is ModularResult.Error -> initWithError(modularResult.error)
-        }
+    value.complete(newValue)
+  }
+
+  fun initWithError(exception: Throwable) {
+    if (logStates) {
+      Log.e(tag, "initWithError() called")
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun awaitUntilInitialized() {
-        if (value.isCompleted) {
-            if (logStates) {
-                Log.d(tag, "awaitUntilInitialized() called when already initialized")
-            }
-
-            // This will throw is it was initialized with an error
-            value.getCompleted()
-            return
-        }
-
-        if (logStates) {
-            Log.d(tag, "awaitUntilInitialized() called when not initialized, awaiting...")
-        }
-
-        value.await()
+    if (value.isCompleted) {
+      throw RuntimeException("Double initialization detected!")
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun get(): T {
-        if (value.isCompleted) {
-            if (logStates) {
-                Log.d(tag, "get() called when already initialized")
-            }
+    value.completeExceptionally(exception)
+  }
 
-            return value.getCompleted()
-        }
+  fun initWithModularResult(modularResult: ModularResult<T>) {
+    when (modularResult) {
+      is ModularResult.Value -> initWithValue(modularResult.value)
+      is ModularResult.Error -> initWithError(modularResult.error)
+    }
+  }
 
-        if (logStates) {
-            Log.d(tag, "get() called when not initialized, awaiting...")
-        }
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun awaitUntilInitialized() {
+    if (value.isCompleted) {
+      if (logStates) {
+        Log.d(tag, "awaitUntilInitialized() called when already initialized")
+      }
 
-        return value.await()
+      // This will throw is it was initialized with an error
+      value.getCompleted()
+      return
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun getOrNull(): T? {
-        if (value.isCompleted) {
-            if (logStates) {
-                Log.d(tag, "getOrNull() called when already initialized")
-            }
-
-            return value.getCompleted()
-        }
-
-        if (logStates) {
-            Log.d(tag, "getOrNull() called when not initialized, returning null")
-        }
-
-        return null
+    if (logStates) {
+      Log.d(tag, "awaitUntilInitialized() called when not initialized, awaiting...")
     }
 
-    suspend fun <T : Any?> invokeWhenInitialized(func: suspend () -> T): T {
-        if (logStates) {
-            Log.d(tag, "afterInitialized() called, before awaitUntilInitialized")
-        }
+    value.await()
+  }
 
-        awaitUntilInitialized()
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun get(): T {
+    if (value.isCompleted) {
+      if (logStates) {
+        Log.d(tag, "get() called when already initialized")
+      }
 
-        if (logStates) {
-            Log.d(tag, "afterInitialized() called, after awaitUntilInitialized")
-        }
-
-        return func()
+      return value.getCompleted()
     }
+
+    if (logStates) {
+      Log.d(tag, "get() called when not initialized, awaiting...")
+    }
+
+    return value.await()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun getOrNull(): T? {
+    if (value.isCompleted) {
+      if (logStates) {
+        Log.d(tag, "getOrNull() called when already initialized")
+      }
+
+      return value.getCompleted()
+    }
+
+    if (logStates) {
+      Log.d(tag, "getOrNull() called when not initialized, returning null")
+    }
+
+    return null
+  }
+
+  suspend fun <T : Any?> invokeWhenInitialized(func: suspend () -> T): T {
+    if (logStates) {
+      Log.d(tag, "afterInitialized() called, before awaitUntilInitialized")
+    }
+
+    awaitUntilInitialized()
+
+    if (logStates) {
+      Log.d(tag, "afterInitialized() called, after awaitUntilInitialized")
+    }
+
+    return func()
+  }
 }

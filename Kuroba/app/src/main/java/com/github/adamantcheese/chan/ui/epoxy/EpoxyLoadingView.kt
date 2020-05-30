@@ -6,7 +6,7 @@ import android.widget.FrameLayout
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
+@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_MATCH_HEIGHT)
 class EpoxyLoadingView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,

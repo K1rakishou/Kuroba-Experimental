@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_bookmarks"
+        android:icon="@drawable/ic_baseline_bookmarks"
+        android:title="@string/menu_bookmarks" />
+    <item
+        android:id="@+id/action_browse"
+        android:icon="@drawable/ic_baseline_laptop"
+        android:title="@string/menu_browse" />
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_baseline_settings"
+        android:title="@string/menu_settings" />
+</menu>

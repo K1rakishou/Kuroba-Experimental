@@ -18,11 +18,16 @@ package com.github.adamantcheese.chan.core.database;
 
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.Chan;
+import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 
@@ -41,7 +46,10 @@ public class DatabaseLoadableManager {
     private DatabaseHelper helper;
     private DatabaseManager databaseManager;
     private SiteRepository siteRepository;
+    private BoardRepository boardRepository;
+
     private Map<Loadable, Loadable> cachedLoadables = new HashMap<>();
+    private Map<ChanDescriptor, Loadable> loadablesByDescriptors = new HashMap<>();
 
     public DatabaseLoadableManager(
             DatabaseHelper helper,
@@ -61,6 +69,18 @@ public class DatabaseLoadableManager {
         // create a dependency cycle
         siteRepository = Chan.instance(SiteRepository.class);
         return siteRepository;
+    }
+
+    private synchronized BoardRepository getBoardRepository() {
+        if (boardRepository != null) {
+            return boardRepository;
+        }
+
+        // TODO(dependency-cycles): get rid of dependency cycle
+        // We have to use Chan.instance() here because we can't inject it normally since it will
+        // create a dependency cycle
+        boardRepository = Chan.instance(BoardRepository.class);
+        return boardRepository;
     }
 
     /**
@@ -110,6 +130,57 @@ public class DatabaseLoadableManager {
         }
     }
 
+    @Nullable
+    public Loadable getByThreadDescriptor(final ChanDescriptor.ThreadDescriptor descriptor) {
+        if (loadablesByDescriptors.containsKey(descriptor)) {
+            return loadablesByDescriptors.get(descriptor);
+        }
+
+        Site site = getSiteRepository().bySiteDescriptor(descriptor.siteDescriptor());
+        if (site == null) {
+            return null;
+        }
+
+        Board board = getBoardRepository().getFromBoardDescriptor(descriptor.getBoardDescriptor());
+        if (board == null) {
+            return null;
+        }
+
+        return databaseManager.runTask(() -> {
+            QueryBuilder<Loadable, Integer> builder = helper.getLoadableDao().queryBuilder();
+            List<Loadable> results = builder.where()
+                    .eq("site", site.id())
+                    .and()
+                    .eq("mode", Loadable.Mode.THREAD)
+                    .and()
+                    .eq("board", board.code)
+                    .and()
+                    .eq("no", descriptor.getOpNo())
+                    .query();
+
+            if (results.size() > 1) {
+                Log.w(TAG, "Multiple loadables found for where Loadable.equals() would return true");
+                for (Loadable result : results) {
+                    Log.w(TAG, result.toString());
+                }
+            }
+
+            Loadable result = results.isEmpty() ? null : results.get(0);
+            if (result == null) {
+                return null;
+            }
+
+            Log.d(TAG, "Loadable found in db by thread descriptor");
+            result.site = site;
+            result.board = board;
+
+            cachedLoadables.put(result, result);
+            loadablesByDescriptors.put(result.getChanDescriptor(), result);
+
+            return result;
+        });
+    }
+
     /**
      * Call this when you use a thread loadable as a foreign object on your table
      * <p>It will correctly update the loadable cache
@@ -128,6 +199,7 @@ public class DatabaseLoadableManager {
         // If the loadable was already loaded in the cache, return that entry
         for (Loadable key : cachedLoadables.keySet()) {
             if (key.id == loadable.id) {
+                loadablesByDescriptors.put(key.getChanDescriptor(), loadable);
                 return key;
             }
         }
@@ -149,6 +221,8 @@ public class DatabaseLoadableManager {
             Loadable cachedLoadable = cachedLoadables.get(loadable);
             if (cachedLoadable != null) {
                 Logger.v(TAG, "Cached loadable found");
+
+                loadablesByDescriptors.put(cachedLoadable.getChanDescriptor(), cachedLoadable);
                 return cachedLoadable;
             } else {
                 QueryBuilder<Loadable, Integer> builder = helper.getLoadableDao().queryBuilder();
@@ -181,6 +255,8 @@ public class DatabaseLoadableManager {
                 }
 
                 cachedLoadables.put(result, result);
+                loadablesByDescriptors.put(result.getChanDescriptor(), result);
+
                 return result;
             }
         };
@@ -216,6 +292,7 @@ public class DatabaseLoadableManager {
         return () -> {
             for (Loadable key : cachedLoadables.keySet()) {
                 if (key.id == updatedLoadable.id) {
+                    loadablesByDescriptors.put(key.getChanDescriptor(), updatedLoadable);
                     cachedLoadables.put(key, updatedLoadable);
                     break;
                 }

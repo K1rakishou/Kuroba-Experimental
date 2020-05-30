@@ -60,6 +60,10 @@ public class SiteRepository {
         return null;
     }
 
+    public boolean containsSite(SiteDescriptor siteDescriptor) {
+        return bySiteDescriptor(siteDescriptor) != null;
+    }
+
     public void setId(SiteModel siteModel, int id) {
         databaseManager.runTask(databaseManager.getDatabaseSiteManager().updateId(siteModel, id));
     }

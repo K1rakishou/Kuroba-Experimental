@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="4dp"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <LinearLayout
+        android:id="@+id/history_entry_view_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:selectableItemBackground"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/history_entry_image"
+            android:layout_width="@dimen/history_entry_image_size"
+            android:layout_height="@dimen/history_entry_image_size"
+            android:padding="8dp"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_baseline_settings" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/history_entry_title"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/history_entry_image_size"
+            android:layout_marginStart="8dp"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="16sp"
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." />
+
+    </LinearLayout>
+
+</merge>

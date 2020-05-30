@@ -38,16 +38,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:clipToPadding="false"
             android:orientation="vertical">
 
-            <androidx.recyclerview.widget.RecyclerView
+            <com.airbnb.epoxy.EpoxyRecyclerView
                 android:id="@+id/drawer_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:clipToPadding="false"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:scrollbarStyle="outsideOverlay"
-                android:scrollbars="vertical" />
+                android:layout_height="match_parent"/>
+
+<!--     TODO(KurobaEx): move bookmarks to some other place       -->
+<!--            <androidx.recyclerview.widget.RecyclerView-->
+<!--                android:id="@+id/drawer_recycler_view"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="0dp"-->
+<!--                android:layout_weight="1"-->
+<!--                android:clipToPadding="false"-->
+<!--                android:paddingTop="8dp"-->
+<!--                android:paddingBottom="8dp"-->
+<!--                android:scrollbarStyle="outsideOverlay"-->
+<!--                android:scrollbars="vertical" />-->
 
             <View
                 android:id="@+id/divider"

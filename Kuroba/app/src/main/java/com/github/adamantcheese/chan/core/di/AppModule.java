@@ -22,7 +22,9 @@ import android.net.ConnectivityManager;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
@@ -31,6 +33,7 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDi
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
+import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileChooser;
@@ -223,5 +226,29 @@ public class AppModule {
         Logger.d(DI_TAG, "GlobalWindowInsetsManager");
 
         return new GlobalWindowInsetsManager();
+    }
+
+    @Provides
+    @Singleton
+    public ApplicationVisibilityManager provideApplicationVisibilityManager() {
+        Logger.d(DI_TAG, "ApplicationVisibilityManager");
+
+        return new ApplicationVisibilityManager();
+    }
+
+    @Provides
+    @Singleton
+    public HistoryNavigationManager provideHistoryNavigationManager(
+            CoroutineScope appScope,
+            HistoryNavigationRepository historyNavigationRepository,
+            ApplicationVisibilityManager applicationVisibilityManager
+    ) {
+        Logger.d(DI_TAG, "HistoryNavigationManager");
+
+        return new HistoryNavigationManager(
+                appScope,
+                historyNavigationRepository,
+                applicationVisibilityManager
+        );
     }
 }

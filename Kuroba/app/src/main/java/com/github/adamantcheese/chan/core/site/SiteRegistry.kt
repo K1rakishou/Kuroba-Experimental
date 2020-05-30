@@ -53,7 +53,6 @@ object SiteRegistry {
     // This differs from the Site.id() id, that id is used for site instance linking, this is just to
     // find the correct class to use.
     SITE_CLASSES.put(0, Chan4::class.java)
-
     //8chan was here but was removed; don't use ID 1
     SITE_CLASSES.put(2, Lainchan::class.java)
     //arisuchan was here but was removed; don't use ID 3

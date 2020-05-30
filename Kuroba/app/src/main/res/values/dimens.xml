@@ -25,4 +25,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <dimen name="cell_post_thumbnail_size">72dp</dimen>
     <dimen name="post_attention_label_width">5dp</dimen>
+    <dimen name="history_entry_image_size">48dp</dimen>
 </resources>

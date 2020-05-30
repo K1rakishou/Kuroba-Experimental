@@ -22,7 +22,7 @@ import android.text.TextUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -91,6 +91,8 @@ public class Loadable
     // when the title, listViewTop, listViewIndex or lastViewed were changed
     public boolean dirty = false;
 
+    private ChanDescriptor chanDescriptor;
+
     /**
      * Tells us whether this loadable (when in THREAD mode) contains information about
      * a live thread or the local saved copy of a thread (which may be already deleted from the server)
@@ -103,6 +105,25 @@ public class Loadable
 
     public synchronized LoadableDownloadingState getLoadableDownloadingState() {
         return loadableDownloadingState;
+    }
+
+    public synchronized ChanDescriptor getChanDescriptor() {
+        if (this.chanDescriptor != null) {
+            return this.chanDescriptor;
+        }
+
+        switch (mode) {
+            case Mode.CATALOG:
+                this.chanDescriptor = new ChanDescriptor.CatalogDescriptor(board.boardDescriptor());
+                break;
+            case Mode.THREAD:
+                this.chanDescriptor = new ChanDescriptor.ThreadDescriptor(board.boardDescriptor(), no);
+                break;
+            default:
+                throw new IllegalStateException("Unknown mode: " + mode);
+        }
+
+        return this.chanDescriptor;
     }
 
     /**
@@ -311,10 +332,6 @@ public class Loadable
         }
 
         return true;
-    }
-
-    public BoardDescriptor getBoardDescriptor() {
-        return BoardDescriptor.create(site.name(), boardCode);
     }
 
     /**

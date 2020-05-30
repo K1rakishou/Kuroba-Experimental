@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
@@ -39,6 +40,7 @@ class ArchivesManager(
 ) {
   private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
   private val mutex = Mutex()
+  private val suspendableInitializer = SuspendableInitializer<Unit>("ArchivesManager")
 
   private lateinit var allArchivesData: List<ArchiveData>
   private lateinit var allArchiveDescriptors: List<ArchiveDescriptor>
@@ -48,48 +50,20 @@ class ArchivesManager(
 
   init {
     applicationScope.launch {
-      val allArchives = loadArchives()
+      val initResult = Try { initArchivesManager() }
 
-      val archiveDescriptors = allArchives.map { archive ->
-        return@map ArchiveDescriptor(
-          -1L,
-          archive.name,
-          archive.domain,
-          ArchiveDescriptor.ArchiveType.byDomain(archive.domain)
-        )
-      }
-
-      val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
-
-      archiveDescriptors.forEach { descriptor ->
-        descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)
-
-        for (archive in allArchives) {
-          if (descriptor.domain == archive.domain) {
-            archive.setArchiveDescriptor(descriptor)
-            break
-          }
-        }
-      }
-
-      allArchivesData = allArchives
-      allArchiveDescriptors = archiveDescriptors
-      allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveId() }
+      suspendableInitializer.initWithModularResult(initResult)
     }
   }
 
-  fun getAllArchiveData(): List<ArchiveData> {
-    require(::allArchivesData.isInitialized) {
-      "allArchivesData was not initialized yet"
-    }
+  suspend fun getAllArchiveData(): List<ArchiveData> {
+    suspendableInitializer.awaitUntilInitialized()
 
     return allArchivesData
   }
 
-  fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
-    require(::allArchiveDescriptors.isInitialized) {
-      "allArchiveDescriptors was not initialized yet"
-    }
+  suspend fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
+    suspendableInitializer.awaitUntilInitialized()
 
     return allArchiveDescriptors
   }
@@ -176,6 +150,165 @@ class ArchivesManager(
 
       return@Try archiveDescriptor
     }
+  }
+
+  fun calculateFetchResultsScore(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
+    val totalFetches = fetchHistoryList.size
+
+    check(totalFetches <= appConstants.archiveFetchHistoryMaxEntries) {
+      "Too many totalFetches: $totalFetches"
+    }
+
+    if (totalFetches < appConstants.archiveFetchHistoryMaxEntries) {
+      // When we haven't sent at least archiveFetchHistoryMaxEntries fetches, we assume that
+      // all unsent yet fetches are success fetches, so basically unsentFetchesCount are
+      // all success fetches
+      val unsentFetchesCount = appConstants.archiveFetchHistoryMaxEntries - totalFetches
+      val successFetchesCount = fetchHistoryList.count { fetchHistory ->
+        fetchHistory.success
+      }
+
+      return unsentFetchesCount + successFetchesCount
+    } else {
+      return fetchHistoryList.count { fetchHistory -> fetchHistory.success }
+    }
+  }
+
+  fun getRequestLinkForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    archiveDescriptor: ArchiveDescriptor
+  ): String? {
+    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
+      ?: return null
+
+    return String.format(
+      Locale.ENGLISH,
+      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
+      archiveData.domain,
+      threadDescriptor.boardCode(),
+      threadDescriptor.opNo
+    )
+  }
+
+  fun getRequestLinkForPost(
+    postDescriptor: PostDescriptor,
+    archiveDescriptor: ArchiveDescriptor
+  ): String? {
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+    if (threadDescriptor == null) {
+      // Not a thread, catalogs are not supported
+      return null
+    }
+
+    if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
+      return null
+    }
+
+    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
+      ?: return null
+
+    return String.format(
+      Locale.ENGLISH,
+      FOOLFUUKA_POST_ENDPOINT_FORMAT,
+      archiveData.domain,
+      threadDescriptor.boardCode(),
+      postDescriptor.postNo
+    )
+  }
+
+  fun doesArchiveStoreMedia(
+    archiveDescriptor: ArchiveDescriptor,
+    boardDescriptor: BoardDescriptor
+  ): Boolean {
+    if (!boardDescriptor.siteDescriptor.is4chan()) {
+      return false
+    }
+
+    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
+      ?: return false
+
+    return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
+  }
+
+  suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
+    return thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveDescriptor)
+  }
+
+  suspend fun setArchiveEnabled(
+    archiveDescriptor: ArchiveDescriptor,
+    isEnabled: Boolean
+  ): ModularResult<Unit> {
+    return thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveDescriptor, isEnabled)
+  }
+
+  suspend fun selectLatestFetchHistory(
+    archiveDescriptor: ArchiveDescriptor
+  ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
+    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(archiveDescriptor)
+  }
+
+  suspend fun selectLatestFetchHistoryForAllArchives(): LatestArchivesFetchHistory {
+    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors)
+  }
+
+  suspend fun insertFetchHistory(
+    fetchResult: ThirdPartyArchiveFetchResult
+  ): ModularResult<ThirdPartyArchiveFetchResult?> {
+    return thirdPartyArchiveInfoRepository.insertFetchResult(fetchResult)
+      .peekValue { value ->
+        if (value != null) {
+          val fetchHistoryChange = FetchHistoryChange(
+            value.databaseId,
+            fetchResult.archiveDescriptor,
+            FetchHistoryChangeType.Insert
+          )
+
+          archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
+        }
+      }
+  }
+
+  suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
+    return thirdPartyArchiveInfoRepository.deleteFetchResult(fetchResult)
+      .peekValue {
+        val fetchHistoryChange = FetchHistoryChange(
+          fetchResult.databaseId,
+          fetchResult.archiveDescriptor,
+          FetchHistoryChangeType.Delete
+        )
+
+        archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
+      }
+  }
+
+  private suspend fun initArchivesManager() {
+    val allArchives = loadArchives()
+
+    val archiveDescriptors = allArchives.map { archive ->
+      return@map ArchiveDescriptor(
+        -1L,
+        archive.name,
+        archive.domain,
+        ArchiveDescriptor.ArchiveType.byDomain(archive.domain)
+      )
+    }
+
+    val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
+
+    archiveDescriptors.forEach { descriptor ->
+      descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)
+
+      for (archive in allArchives) {
+        if (descriptor.domain == archive.domain) {
+          archive.setArchiveDescriptor(descriptor)
+          break
+        }
+      }
+    }
+
+    allArchivesData = allArchives
+    allArchiveDescriptors = archiveDescriptors
+    allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveId() }
   }
 
   private suspend fun getBestPossibleArchiveOrNull(
@@ -289,84 +422,6 @@ class ArchivesManager(
     }
   }
 
-  fun calculateFetchResultsScore(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
-    val totalFetches = fetchHistoryList.size
-
-    check(totalFetches <= appConstants.archiveFetchHistoryMaxEntries) {
-      "Too many totalFetches: $totalFetches"
-    }
-
-    if (totalFetches < appConstants.archiveFetchHistoryMaxEntries) {
-      // When we haven't sent at least archiveFetchHistoryMaxEntries fetches, we assume that
-      // all unsent yet fetches are success fetches, so basically unsentFetchesCount are
-      // all success fetches
-      val unsentFetchesCount = appConstants.archiveFetchHistoryMaxEntries - totalFetches
-      val successFetchesCount = fetchHistoryList.count { fetchHistory ->
-        fetchHistory.success
-      }
-
-      return unsentFetchesCount + successFetchesCount
-    } else {
-      return fetchHistoryList.count { fetchHistory -> fetchHistory.success }
-    }
-  }
-
-  fun getRequestLinkForThread(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    archiveDescriptor: ArchiveDescriptor
-  ): String? {
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return null
-
-    return String.format(
-      Locale.ENGLISH,
-      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
-      archiveData.domain,
-      threadDescriptor.boardCode(),
-      threadDescriptor.opNo
-    )
-  }
-
-  fun getRequestLinkForPost(
-    postDescriptor: PostDescriptor,
-    archiveDescriptor: ArchiveDescriptor
-  ): String? {
-    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
-    if (threadDescriptor == null) {
-      // Not a thread, catalogs are not supported
-      return null
-    }
-
-    if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
-      return null
-    }
-
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return null
-
-    return String.format(
-      Locale.ENGLISH,
-      FOOLFUUKA_POST_ENDPOINT_FORMAT,
-      archiveData.domain,
-      threadDescriptor.boardCode(),
-      postDescriptor.postNo
-    )
-  }
-
-  fun doesArchiveStoreMedia(
-    archiveDescriptor: ArchiveDescriptor,
-    boardDescriptor: BoardDescriptor
-  ): Boolean {
-    if (!boardDescriptor.siteDescriptor.is4chan()) {
-      return false
-    }
-
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return false
-
-    return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
-  }
-
   private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
     return allArchivesData.firstOrNull { archiveData ->
       return@firstOrNull archiveData.name == archiveDescriptor.name
@@ -383,56 +438,6 @@ class ArchivesManager(
     }
   }
 
-  suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
-    return thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveDescriptor)
-  }
-
-  suspend fun setArchiveEnabled(
-    archiveDescriptor: ArchiveDescriptor,
-    isEnabled: Boolean
-  ): ModularResult<Unit> {
-    return thirdPartyArchiveInfoRepository.setArchiveEnabled(archiveDescriptor, isEnabled)
-  }
-
-  suspend fun selectLatestFetchHistory(
-    archiveDescriptor: ArchiveDescriptor
-  ): ModularResult<List<ThirdPartyArchiveFetchResult>> {
-    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(archiveDescriptor)
-  }
-
-  suspend fun selectLatestFetchHistoryForAllArchives(): LatestArchivesFetchHistory {
-    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors)
-  }
-
-  suspend fun insertFetchHistory(
-    fetchResult: ThirdPartyArchiveFetchResult
-  ): ModularResult<ThirdPartyArchiveFetchResult?> {
-    return thirdPartyArchiveInfoRepository.insertFetchResult(fetchResult)
-      .peekValue { value ->
-        if (value != null) {
-          val fetchHistoryChange = FetchHistoryChange(
-            value.databaseId,
-            fetchResult.archiveDescriptor,
-            FetchHistoryChangeType.Insert
-          )
-
-          archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
-        }
-      }
-  }
-
-  suspend fun deleteFetchResult(fetchResult: ThirdPartyArchiveFetchResult): ModularResult<Unit> {
-    return thirdPartyArchiveInfoRepository.deleteFetchResult(fetchResult)
-      .peekValue {
-        val fetchHistoryChange = FetchHistoryChange(
-          fetchResult.databaseId,
-          fetchResult.archiveDescriptor,
-          FetchHistoryChangeType.Delete
-        )
-
-        archiveFetchHistoryChangeSubject.onNext(fetchHistoryChange)
-      }
-  }
 
   data class ArchiveData(
     @Expose(serialize = false, deserialize = false)
