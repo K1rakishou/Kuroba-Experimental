@@ -94,14 +94,13 @@ abstract class SiteBase : Site, CoroutineScope {
 
         when (val readerResponse = actions().boards()) {
           is JsonReaderRequest.JsonReaderResponse.Success -> {
-            val createAllResult = boardManager.updateAvailableBoardsForSite(
+            boardManager.updateAvailableBoardsForSite(
               readerResponse.result.site,
               readerResponse.result.boards
             )
 
             Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
-              "boards count = ${readerResponse.result.boards.size}, " +
-              "createAllResult = $createAllResult")
+              "boards count = ${readerResponse.result.boards.size}")
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
             Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")

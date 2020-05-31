@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.ui.view;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
@@ -24,33 +26,58 @@ import android.view.animation.Interpolator;
 
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
+import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
+import com.github.adamantcheese.chan.utils.KtExtensionsKt;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
 public class HidingFloatingActionButton
         extends FloatingActionButton
         implements Toolbar.ToolbarCollapseCallback {
+    private static final Interpolator SLOWDOWN = new DecelerateInterpolator(2f);
+
     private boolean attachedToWindow;
     private Toolbar toolbar;
     private boolean attachedToToolbar;
     private CoordinatorLayout coordinatorLayout;
-    private int currentCollapseTranslation;
+    private float currentCollapseScale;
+    private int bottomNavViewHeight;
 
     public HidingFloatingActionButton(Context context) {
         super(context);
+        init();
     }
 
     public HidingFloatingActionButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public HidingFloatingActionButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        bottomNavViewHeight =
+                (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
     }
 
     public void setToolbar(Toolbar toolbar) {
         this.toolbar = toolbar;
+
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+
+        KtExtensionsKt.updateMargins(
+                this,
+                null,
+                null,
+                null,
+                null,
+                null,
+                layoutParams.bottomMargin + bottomNavViewHeight
+        );
 
         if (attachedToWindow && !attachedToToolbar) {
             toolbar.addCollapseCallback(this);
@@ -64,7 +91,8 @@ public class HidingFloatingActionButton
         attachedToWindow = true;
 
         if (!(getParent() instanceof CoordinatorLayout)) {
-            throw new IllegalArgumentException("HidingFloatingActionButton must be a parent of CoordinatorLayout");
+            throw new IllegalArgumentException("HidingFloatingActionButton " +
+                    "must be a parent of CoordinatorLayout");
         }
 
         coordinatorLayout = (CoordinatorLayout) getParent();
@@ -94,39 +122,60 @@ public class HidingFloatingActionButton
             return;
         }
 
-        int translation = (int) (getTotalHeight() * offset);
-        if (translation != currentCollapseTranslation) {
-            currentCollapseTranslation = translation;
-            float diff = Math.abs(translation - getTranslationY());
-            if (diff >= getHeight()) {
-                Interpolator slowdown = new DecelerateInterpolator(2f);
-                animate().translationY(translation).setDuration(300).setStartDelay(0).setInterpolator(slowdown).start();
+        if (offset != currentCollapseScale) {
+            currentCollapseScale = 1f - offset;
+
+            if (offset < 1f) {
+                if (getVisibility() != ViewGroup.VISIBLE) {
+                    setVisibility(ViewGroup.VISIBLE);
+                }
             } else {
-                setTranslationY(translation);
+                if (getVisibility() != ViewGroup.GONE) {
+                    setVisibility(ViewGroup.GONE);
+                }
             }
+
+            setScaleX(currentCollapseScale);
+            setScaleY(currentCollapseScale);
         }
     }
 
     @Override
     public void onCollapseAnimation(boolean collapse) {
-        if (isSnackbarShowing()) return;
-
-        int translation = collapse ? getTotalHeight() : 0;
-        if (translation != currentCollapseTranslation) {
-            currentCollapseTranslation = translation;
-            Interpolator slowdown = new DecelerateInterpolator(2f);
-            animate().translationY(translation).setDuration(300).setStartDelay(0).setInterpolator(slowdown).start();
+        if (isSnackbarShowing()) {
+            return;
         }
-    }
 
-    private int getTotalHeight() {
-        return getHeight() + ((ViewGroup.MarginLayoutParams) getLayoutParams()).bottomMargin;
+        float scale = collapse ? 0f : 1f;
+        if (scale != currentCollapseScale) {
+            currentCollapseScale = scale;
+
+            animate()
+                    .scaleX(currentCollapseScale)
+                    .scaleY(currentCollapseScale)
+                    .setDuration(300)
+                    .setStartDelay(0)
+                    .setInterpolator(SLOWDOWN)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            super.onAnimationEnd(animation);
+
+                            if (collapse) {
+                                setVisibility(ViewGroup.GONE);
+                            } else {
+                                setVisibility(ViewGroup.VISIBLE);
+                            }
+                        }
+                    })
+                    .start();
+        }
     }
 
     private boolean isSnackbarShowing() {
         for (int i = 0; i < coordinatorLayout.getChildCount(); i++) {
             if (coordinatorLayout.getChildAt(i) instanceof Snackbar.SnackbarLayout) {
-                currentCollapseTranslation = -1;
+                currentCollapseScale = -1;
                 return true;
             }
         }
