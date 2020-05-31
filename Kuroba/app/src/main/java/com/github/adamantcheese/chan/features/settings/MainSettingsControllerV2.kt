@@ -29,8 +29,8 @@ import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupT
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.features.settings.setting.*
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
-import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController
-import com.github.adamantcheese.chan.ui.controller.ToolbarNavigationController.ToolbarSearchCallback
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
@@ -209,6 +209,7 @@ class MainSettingsControllerV2(context: Context)
         (navigationController as ToolbarNavigationController).showSearch()
       }
       .build()
+    navigation.swipeable = false
 
     mainScope.launch {
       onSearchEnteredSubject
@@ -295,12 +296,17 @@ class MainSettingsControllerV2(context: Context)
 
   override fun onBack(): Boolean {
     if (screenStack.size <= 1) {
+      screenStack.clear()
       Logger.d(TAG, "onBack() screenStack.size <= 1, exiting")
       return false
     }
 
     rebuildScreen(popScreen())
     return true
+  }
+
+  fun isClosing(): Boolean {
+    return screenStack.isEmpty()
   }
 
   private fun rebuildDefaultScreen() {

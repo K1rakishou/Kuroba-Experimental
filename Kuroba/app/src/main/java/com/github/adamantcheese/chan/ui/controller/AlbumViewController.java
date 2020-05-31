@@ -31,6 +31,8 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.cell.AlbumViewCell;
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.view.GridRecyclerView;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;

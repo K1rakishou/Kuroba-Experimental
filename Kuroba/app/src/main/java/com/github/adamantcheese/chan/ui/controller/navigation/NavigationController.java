@@ -14,16 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.controller;
+package com.github.adamantcheese.chan.ui.controller.navigation;
 
 import android.content.Context;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 
+import com.github.adamantcheese.chan.controller.Controller;
+import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 
-public abstract class NavigationController extends Controller {
+public abstract class NavigationController extends Controller implements HasNavigation {
     protected ViewGroup container;
 
     protected ControllerTransition controllerTransition;
@@ -42,16 +44,18 @@ public abstract class NavigationController extends Controller {
     }
 
     public boolean pushController(final Controller to, ControllerTransition controllerTransition) {
-        if (blockingInput) return false;
+        if (blockingInput) {
+            return false;
+        }
 
         final Controller from = getTop();
 
         if (from == null && controllerTransition != null) {
-            controllerTransition = null; //can't animate push if from is null, just disable the animation
+            // can't animate push if from is null, just disable the animation
+            controllerTransition = null;
         }
 
         transition(from, to, true, controllerTransition);
-
         return true;
     }
 
@@ -64,10 +68,14 @@ public abstract class NavigationController extends Controller {
     }
 
     public boolean popController(ControllerTransition controllerTransition) {
-        if (blockingInput) return false;
+        if (blockingInput) {
+            return false;
+        }
 
         final Controller from = getTop();
-        final Controller to = childControllers.size() > 1 ? childControllers.get(childControllers.size() - 2) : null;
+        final Controller to = childControllers.size() > 1
+                ? childControllers.get(childControllers.size() - 2)
+                : null;
 
         transition(from, to, false, controllerTransition);
 
@@ -79,14 +87,15 @@ public abstract class NavigationController extends Controller {
     }
 
     public boolean beginSwipeTransition(final Controller from, final Controller to) {
-        if (blockingInput) return false;
+        if (blockingInput) {
+            return false;
+        }
 
         if (this.controllerTransition != null) {
             throw new IllegalArgumentException("Cannot transition while another transition is in progress.");
         }
 
         blockingInput = true;
-
         to.onShow();
 
         return true;
@@ -108,7 +117,10 @@ public abstract class NavigationController extends Controller {
     }
 
     public void transition(
-            final Controller from, final Controller to, final boolean pushing, ControllerTransition controllerTransition
+            final Controller from,
+            final Controller to,
+            final boolean pushing,
+            ControllerTransition controllerTransition
     ) {
         if (this.controllerTransition != null || blockingInput) {
             throw new IllegalArgumentException("Cannot transition while another transition is in progress.");
@@ -135,13 +147,17 @@ public abstract class NavigationController extends Controller {
         if (controllerTransition != null) {
             controllerTransition.from = from;
             controllerTransition.to = to;
+
             blockingInput = true;
             this.controllerTransition = controllerTransition;
+
             controllerTransition.setCallback(transition -> finishTransition(from, pushing));
             controllerTransition.perform();
-        } else {
-            finishTransition(from, pushing);
+
+            return;
         }
+
+        finishTransition(from, pushing);
     }
 
     private void finishTransition(Controller from, boolean pushing) {
@@ -158,10 +174,16 @@ public abstract class NavigationController extends Controller {
     }
 
     public boolean onBack() {
-        if (blockingInput) return true;
+        if (blockingInput) {
+            return true;
+        }
 
         if (childControllers.size() > 0) {
             Controller top = getTop();
+            if (top == null) {
+                return false;
+            }
+
             if (top.onBack()) {
                 return true;
             } else {

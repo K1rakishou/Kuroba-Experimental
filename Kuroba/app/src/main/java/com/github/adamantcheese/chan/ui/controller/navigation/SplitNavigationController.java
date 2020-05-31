@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.ui.controller;
+package com.github.adamantcheese.chan.ui.controller.navigation;
 
 import android.content.Context;
 import android.view.KeyEvent;
@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
+import com.github.adamantcheese.chan.ui.controller.PopupController;
 import com.github.adamantcheese.chan.ui.layout.SplitNavigationControllerLayout;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;

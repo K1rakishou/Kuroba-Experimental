@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.controller
+package com.github.adamantcheese.chan.features.gesture_editor
 
 import android.content.Context
 import android.content.res.Configuration
@@ -12,9 +12,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.AppCompatButton
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.features.gesture_editor.AdjustAndroid10GestureZonesView
-import com.github.adamantcheese.chan.features.gesture_editor.AttachSide
-import com.github.adamantcheese.chan.features.gesture_editor.ExclusionZone
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
 
 

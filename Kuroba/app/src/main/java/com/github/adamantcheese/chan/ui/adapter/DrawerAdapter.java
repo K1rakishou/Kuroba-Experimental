@@ -568,16 +568,17 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             totalNotificationsCount = itemView.findViewById(R.id.setting_notification_total_count);
             updatePaddings(notificationIcon, dp(4), dp(4), dp(4), dp(4));
 
-            itemView.setOnClickListener(v -> {
-                switch (getAdapterPosition()) {
-                    case 0:
-                        callback.openSettings();
-                        break;
-                    case 1:
-                        callback.openHistory();
-                        break;
-                }
-            });
+            // TODO(KurobaEx): pins, move to some other place
+//            itemView.setOnClickListener(v -> {
+//                switch (getAdapterPosition()) {
+//                    case 0:
+//                        callback.openSettings();
+//                        break;
+//                    case 1:
+//                        callback.openHistory();
+//                        break;
+//                }
+//            });
         }
     }
 
@@ -612,8 +613,9 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
         void onPinRemoved(Pin pin);
 
-        void openSettings();
-
-        void openHistory();
+        // TODO(KurobaEx): pins, move to some other place
+//        void openSettings();
+//
+//        void openHistory();
     }
 }

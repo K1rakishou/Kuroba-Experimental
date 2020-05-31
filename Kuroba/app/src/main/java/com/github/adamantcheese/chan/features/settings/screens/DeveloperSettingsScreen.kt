@@ -4,7 +4,6 @@ import android.content.Context
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager
@@ -17,6 +16,7 @@ import com.github.adamantcheese.chan.features.settings.SettingClickAction
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.ui.controller.LogsController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 

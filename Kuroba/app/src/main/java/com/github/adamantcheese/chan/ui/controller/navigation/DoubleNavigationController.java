@@ -14,14 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.ui.controller;
+package com.github.adamantcheese.chan.ui.controller.navigation;
 
 import android.view.ViewGroup;
 
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 
-public interface DoubleNavigationController {
+public interface DoubleNavigationController extends HasNavigation {
     void setEmptyView(ViewGroup emptyView);
 
     void setLeftController(Controller leftController);

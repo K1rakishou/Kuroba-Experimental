@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.ui.controller;
+package com.github.adamantcheese.chan.ui.controller.navigation;
 
 import android.content.Context;
 
@@ -24,6 +24,7 @@ import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.drawer.DrawerController;
+import com.github.adamantcheese.chan.ui.controller.PopupController;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
 import javax.inject.Inject;
@@ -52,23 +53,28 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         nav.setNavigationController(this);
         nav.setSwipeEnabled(ChanSettings.controllerSwipeable.get());
 
-        toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setBackgroundColor(themeHelper.getTheme().primaryColor.color);
-        toolbar.setCallback(this);
+        setToolbar(view.findViewById(R.id.toolbar));
+        requireToolbar().setBackgroundColor(themeHelper.getTheme().primaryColor.color);
+        requireToolbar().setCallback(this);
     }
 
     @Override
     public boolean popController(ControllerTransition controllerTransition) {
-        return !toolbar.isTransitioning() && super.popController(controllerTransition);
+        return !requireToolbar().isTransitioning() && super.popController(controllerTransition);
     }
 
     @Override
     public boolean pushController(Controller to, ControllerTransition controllerTransition) {
-        return !toolbar.isTransitioning() && super.pushController(to, controllerTransition);
+        return !requireToolbar().isTransitioning() && super.pushController(to, controllerTransition);
     }
 
     @Override
-    public void transition(Controller from, Controller to, boolean pushing, ControllerTransition controllerTransition) {
+    public void transition(
+            Controller from,
+            Controller to,
+            boolean pushing,
+            ControllerTransition controllerTransition
+    ) {
         super.transition(from, to, pushing, controllerTransition);
 
         if (to != null) {

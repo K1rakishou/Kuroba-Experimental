@@ -20,7 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.controller.NavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.common.GenericFunction;
 
 import java.util.ArrayList;

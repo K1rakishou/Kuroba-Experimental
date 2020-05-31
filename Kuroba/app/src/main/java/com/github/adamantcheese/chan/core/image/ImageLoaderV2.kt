@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import coil.ImageLoader
 import coil.network.HttpException
@@ -413,10 +414,18 @@ class ImageLoaderV2(
       return imageNotFoundDrawable!!
     }
 
-    imageNotFoundDrawable = AppCompatResources.getDrawable(
+    val drawable = AppCompatResources.getDrawable(
       context,
       R.drawable.ic_image_not_found
-    ) as BitmapDrawable
+    )
+
+    requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_not_found" }
+
+    if (drawable is BitmapDrawable) {
+      imageNotFoundDrawable = drawable
+    } else {
+      imageNotFoundDrawable = BitmapDrawable(context.resources, drawable.toBitmap())
+    }
 
     return imageNotFoundDrawable!!
   }
@@ -427,10 +436,18 @@ class ImageLoaderV2(
       return imageErrorLoadingDrawable!!
     }
 
-    imageErrorLoadingDrawable = AppCompatResources.getDrawable(
+    val drawable = AppCompatResources.getDrawable(
       context,
       R.drawable.ic_image_error_loading
-    ) as BitmapDrawable
+    )
+
+    requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_error_loading" }
+
+    if (drawable is BitmapDrawable) {
+      imageErrorLoadingDrawable = drawable
+    } else {
+      imageErrorLoadingDrawable = BitmapDrawable(context.resources, drawable.toBitmap())
+    }
 
     return imageErrorLoadingDrawable!!
   }

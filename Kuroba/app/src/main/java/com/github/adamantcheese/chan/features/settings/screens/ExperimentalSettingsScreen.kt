@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.ExperimentalScreen
@@ -11,6 +10,7 @@ import com.github.adamantcheese.chan.features.settings.screens.delegate.Exclusio
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.utils.AndroidUtils.isAndroid10
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 

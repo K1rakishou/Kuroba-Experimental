@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.widget.Toast
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2RebuildCallbacks
@@ -15,6 +14,7 @@ import com.github.adamantcheese.chan.features.settings.screens.delegate.base_dir
 import com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory.ThreadsLocationSetupDelegate
 import com.github.adamantcheese.chan.ui.controller.LoadingViewController
 import com.github.adamantcheese.chan.ui.controller.SaveLocationController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.BackgroundUtils

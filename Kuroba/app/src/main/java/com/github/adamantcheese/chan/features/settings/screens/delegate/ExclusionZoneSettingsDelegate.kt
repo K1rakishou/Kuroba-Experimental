@@ -8,11 +8,11 @@ import android.widget.ArrayAdapter
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
+import com.github.adamantcheese.chan.features.gesture_editor.AdjustAndroid10GestureZonesController
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.gesture_editor.AttachSide
 import com.github.adamantcheese.chan.features.gesture_editor.ExclusionZone
-import com.github.adamantcheese.chan.ui.controller.AdjustAndroid10GestureZonesController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 

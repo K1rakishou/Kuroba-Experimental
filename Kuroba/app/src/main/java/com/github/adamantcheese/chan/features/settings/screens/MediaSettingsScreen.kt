@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
@@ -14,6 +13,7 @@ import com.github.adamantcheese.chan.features.settings.screens.delegate.MediaSet
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager

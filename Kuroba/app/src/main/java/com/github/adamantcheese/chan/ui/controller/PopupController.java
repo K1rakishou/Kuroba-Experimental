@@ -22,7 +22,9 @@ import android.widget.FrameLayout;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.NavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 

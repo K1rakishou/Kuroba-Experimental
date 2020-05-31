@@ -14,19 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.ui.controller;
+package com.github.adamantcheese.chan.ui.controller.navigation;
 
 import android.content.Context;
 import android.widget.FrameLayout;
 
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
-import com.github.adamantcheese.chan.controller.NavigationController;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 
 public abstract class ToolbarNavigationController extends NavigationController implements Toolbar.ToolbarCallback {
-    protected Toolbar toolbar;
+    private Toolbar toolbar;
     protected boolean requireSpaceForToolbar = true;
 
     public ToolbarNavigationController(Context context) {
@@ -36,6 +35,10 @@ public abstract class ToolbarNavigationController extends NavigationController i
     @Override
     public Toolbar getToolbar() {
         return toolbar;
+    }
+
+    public void setToolbar(Toolbar toolbar) {
+        this.toolbar = toolbar;
     }
 
     public void showSearch() {

@@ -22,6 +22,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -29,12 +30,13 @@ import android.view.ViewConfiguration;
 import android.widget.FrameLayout;
 import android.widget.Scroller;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.view.ViewCompat;
 
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.NavigationController;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.features.gesture_editor.ExclusionZone;
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
@@ -145,9 +147,24 @@ public class NavigationControllerContainerLayout
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        if (!swipeEnabled || tracking || navigationController.isBlockingInput() || (
-                navigationController.getTop().navigation != null && !navigationController.getTop().navigation.swipeable)
-                || getBelowTop() == null) {
+        NavigationController navController = navigationController;
+
+        if (navController == null) {
+            return false;
+        }
+
+        Controller topController = navController.getTop();
+        if (topController == null) {
+            return false;
+        }
+
+        boolean shouldNotInterceptTouchEvent = !swipeEnabled
+                || tracking
+                || navController.isBlockingInput()
+                || !navController.getTop().navigation.swipeable
+                || getBelowTop() == null;
+
+        if (shouldNotInterceptTouchEvent) {
             return false;
         }
 
@@ -207,7 +224,8 @@ public class NavigationControllerContainerLayout
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!tracking || velocityTracker == null) { // tracking already ended
+        if (!tracking || velocityTracker == null) {
+            // tracking already ended
             return false;
         }
 
@@ -227,11 +245,12 @@ public class NavigationControllerContainerLayout
 
                 if (translationX > 0) {
                     boolean doFlingAway = false;
+                    boolean isEnoughVelocity = velocity > 0
+                            && Math.abs(velocity) > dp(800)
+                            && Math.abs(velocity) < maxFlingPixels;
 
-                    if ((velocity > 0 && Math.abs(velocity) > dp(800) && Math.abs(velocity) < maxFlingPixels)
-                            || translationX >= getWidth() * 3 / 4) {
+                    if (isEnoughVelocity || translationX >= getWidth() * 3 / 4) {
                         velocity = Math.max(dp(2000), velocity);
-
                         scroller.fling(translationX, 0, velocity, 0, 0, Integer.MAX_VALUE, 0, 0);
 
                         // Make sure the animation always goes past the end
@@ -289,6 +308,7 @@ public class NavigationControllerContainerLayout
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     private void provideAndroid10GesturesExclusionZones() {
         Map<Integer, Set<ExclusionZone>> zonesMap = exclusionZonesHolder.getZones();
         if (zonesMap.size() > 0) {
@@ -327,7 +347,12 @@ public class NavigationControllerContainerLayout
     private void endTracking(boolean finishTransition) {
         if (!tracking) return; //this method was already called previously
 
-        navigationController.endSwipeTransition(trackingController, behindTrackingController, finishTransition);
+        navigationController.endSwipeTransition(
+                trackingController,
+                behindTrackingController,
+                finishTransition
+        );
+
         tracking = false;
         trackingController = null;
         behindTrackingController = null;
@@ -341,14 +366,16 @@ public class NavigationControllerContainerLayout
     private Runnable flingRunnable = new Runnable() {
         @Override
         public void run() {
-            if (!tracking)
-                return; //this method was called one extra time, but it isn't needed anymore. return to prevent a race condition
+            if (!tracking) {
+                // this method was called one extra time, but it isn't needed anymore.
+                // Return to prevent a race condition
+                return;
+            }
 
             boolean finished = false;
 
             if (scroller.computeScrollOffset()) {
                 float translationX = scroller.getCurrX();
-
                 setTopControllerTranslation((int) translationX);
 
                 // The view is not visible anymore. End it before the fling completely finishes.

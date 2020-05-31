@@ -33,7 +33,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
@@ -44,7 +43,13 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.core.site.SiteService
 import com.github.adamantcheese.chan.features.drawer.DrawerController
-import com.github.adamantcheese.chan.ui.controller.*
+import com.github.adamantcheese.chan.ui.controller.BrowseController
+import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
+import com.github.adamantcheese.chan.ui.controller.ViewThreadController
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -156,6 +161,7 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
       onShow()
     }
 
+    mainNavigationController = StyledToolbarNavigationController(this)
     setupLayout()
 
     setContentView(drawerController.view)
@@ -169,18 +175,19 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
     val adapter = NfcAdapter.getDefaultAdapter(this)
     adapter?.setNdefPushMessageCallback(this, this)
 
-    historyNavigationManager.awaitUntilInitialized()
-    setupFromStateOrFreshLaunch(savedInstanceState)
-
     updateManager.autoUpdateCheck()
 
     if (ChanSettings.fullUserRotationEnable.get()) {
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
     }
+
+    historyNavigationManager.awaitUntilInitialized()
+    setupFromStateOrFreshLaunch(savedInstanceState)
   }
 
   private fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
-    val handled = savedInstanceState?.let { restoreFromSavedState(it) } ?: restoreFromUrl()
+    val handled = savedInstanceState?.let { restoreFromSavedState(it) }
+      ?: restoreFromUrl()
 
     // Not from a state or from an url, launch the setup controller if no boards are setup up yet,
     // otherwise load the default saved board.
@@ -294,16 +301,7 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
   }
 
   private fun setupLayout() {
-    mainNavigationController = StyledToolbarNavigationController(this)
-
-    var layoutMode = ChanSettings.layoutMode.get()
-    if (layoutMode == ChanSettings.LayoutMode.AUTO) {
-      layoutMode = if (AndroidUtils.isTablet()) {
-        ChanSettings.LayoutMode.SPLIT
-      } else {
-        ChanSettings.LayoutMode.SLIDE
-      }
-    }
+    val layoutMode = getCurrentLayoutMode()
 
     when (layoutMode) {
       ChanSettings.LayoutMode.SPLIT -> {
@@ -329,6 +327,21 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
     } else {
       mainNavigationController.pushController(browseController, false)
     }
+  }
+
+  private fun getCurrentLayoutMode(): ChanSettings.LayoutMode {
+    var layoutMode = requireNotNull(ChanSettings.layoutMode.get()) {
+      "ChanSettings.layoutMode returned null"
+    }
+
+    if (layoutMode == ChanSettings.LayoutMode.AUTO) {
+      layoutMode = if (AndroidUtils.isTablet()) {
+        ChanSettings.LayoutMode.SPLIT
+      } else {
+        ChanSettings.LayoutMode.SLIDE
+      }
+    }
+    return layoutMode
   }
 
   override fun onNewIntent(intent: Intent) {

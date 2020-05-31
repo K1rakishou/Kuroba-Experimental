@@ -41,6 +41,9 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
+import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.layout.BrowseBoardsFloatingMenu;
@@ -431,7 +434,7 @@ public class BrowseController
         presenter.bindLoadable(loadable);
         presenter.requestData();
 
-        ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
+        requireNavController().requireToolbar().updateTitle(navigation);
     }
 
     @Override

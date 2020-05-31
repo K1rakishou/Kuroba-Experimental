@@ -2,12 +2,12 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.features.settings.ImportExportScreen
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.screens.delegate.ImportExportSettingsDelegate
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 

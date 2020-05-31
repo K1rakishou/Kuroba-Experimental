@@ -6,12 +6,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.presenter.ImportExportSettingsPresenter
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.LoadingViewController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.BackgroundUtils

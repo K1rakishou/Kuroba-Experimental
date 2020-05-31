@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ReportManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
@@ -17,6 +16,7 @@ import com.github.adamantcheese.chan.ui.controller.LicensesController
 import com.github.adamantcheese.chan.ui.controller.ReportProblemController
 import com.github.adamantcheese.chan.ui.controller.SitesSetupController
 import com.github.adamantcheese.chan.ui.controller.crashlogs.ReviewCrashLogsController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
 

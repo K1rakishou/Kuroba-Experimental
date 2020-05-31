@@ -25,7 +25,8 @@ import androidx.annotation.CallSuper
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.transition.FadeInTransition
 import com.github.adamantcheese.chan.controller.transition.FadeOutTransition
-import com.github.adamantcheese.chan.ui.controller.DoubleNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.utils.AndroidUtils
@@ -85,6 +86,13 @@ abstract class Controller(@JvmField var context: Context) {
   protected var mainScope = MainScope() + CoroutineName("Controller")
 
   private var shown = false
+
+  fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
+    "Toolbar was not set"
+  }
+  fun requireNavController(): NavigationController = requireNotNull(navigationController) {
+    "navigationController was not set"
+  }
 
   @CallSuper
   open fun onCreate() {
@@ -206,8 +214,8 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   open fun onBack(): Boolean {
-    for (i in childControllers.indices.reversed()) {
-      val controller = childControllers[i]
+    for (index in childControllers.indices.reversed()) {
+      val controller = childControllers[index]
       if (controller.onBack()) {
         return true
       }
@@ -216,7 +224,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   @JvmOverloads
-  fun presentController(controller: Controller, animated: Boolean = true) {
+  open fun presentController(controller: Controller, animated: Boolean = true) {
     val contentView = (context as StartActivity).contentView
     presentingThisController = controller
 
@@ -242,7 +250,7 @@ abstract class Controller(@JvmField var context: Context) {
     stopPresenting(true)
   }
 
-  fun stopPresenting(animated: Boolean) {
+  open fun stopPresenting(animated: Boolean) {
     if (animated) {
       val transition = FadeOutTransition()
       transition.from = this
@@ -278,7 +286,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   companion object {
-    private const val LOG_STATES = false
+    private const val LOG_STATES = true
   }
 
 }

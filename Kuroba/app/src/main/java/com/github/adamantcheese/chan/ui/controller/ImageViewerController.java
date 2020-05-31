@@ -532,7 +532,8 @@ public class ImageViewerController
         }
 
         navigation.subtitle = (index + 1) + "/" + count;
-        ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
+        requireNavController().requireToolbar().updateTitle(navigation);
+
 
         ToolbarMenuSubItem rotate = navigation.findSubItem(ACTION_IMAGE_ROTATE);
         rotate.visible = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;

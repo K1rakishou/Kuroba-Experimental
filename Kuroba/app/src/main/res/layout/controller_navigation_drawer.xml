@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -24,16 +25,30 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.adamantcheese.chan.ui.view.TouchBlockingFrameLayout
-            android:id="@+id/container"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+
+            <com.github.adamantcheese.chan.ui.view.TouchBlockingFrameLayout
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.google.android.material.bottomnavigation.BottomNavigationView
+                android:id="@+id/bottom_navigation_view"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/bottom_nav_view_height"
+                android:background="?colorPrimary"
+                android:layout_alignParentBottom="true"
+                app:menu="@menu/bottom_navigation_menu"/>
+
+        </RelativeLayout>
 
         <com.github.adamantcheese.chan.ui.view.TouchBlockingLinearLayout
             android:id="@+id/drawer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_gravity="left"
+            android:layout_gravity="start"
             android:background="?backcolor"
             android:clipToPadding="false"
             android:orientation="vertical">

@@ -26,8 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
-import com.github.adamantcheese.chan.controller.NavigationController;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.Logger;
 

@@ -24,6 +24,7 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
@@ -34,7 +35,6 @@ import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.NavigationController;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -46,6 +46,9 @@ import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.drawer.DrawerController;
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
@@ -516,12 +519,12 @@ public class ViewThreadController
     }
 
     @Override
-    public void showBoard(final Loadable catalogLoadable) {
+    public void showBoard(@NonNull final Loadable catalogLoadable) {
         showBoardInternal(catalogLoadable, null);
     }
 
     @Override
-    public void showBoardAndSearch(final Loadable catalogLoadable, String search) {
+    public void showBoardAndSearch(@NonNull final Loadable catalogLoadable, String search) {
         showBoardInternal(catalogLoadable, search);
     }
 
@@ -607,7 +610,7 @@ public class ViewThreadController
 
         populateLocalOrLiveVersionMenu();
         navigation.title = loadable.title;
-        ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
+        requireNavController().requireToolbar().updateTitle(navigation);
 
         setPinIconState(false);
         setSaveIconState(false);
@@ -757,8 +760,8 @@ public class ViewThreadController
         setSaveIconState(false);
         populateLocalOrLiveVersionMenu();
 
-        ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
-        ((ToolbarNavigationController) navigationController).toolbar.updateViewForItem(navigation);
+        requireNavController().requireToolbar().updateTitle(navigation);
+        requireNavController().requireToolbar().updateViewForItem(navigation);
     }
 
     private void updateDrawerHighlighting(Loadable loadable) {

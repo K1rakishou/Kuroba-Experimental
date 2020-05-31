@@ -22,6 +22,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 
 import java.util.List;
 
@@ -43,8 +44,9 @@ public class ImageViewerNavigationController
         NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
         nav.setNavigationController(this);
         nav.setSwipeEnabled(false);
-        toolbar = view.findViewById(R.id.toolbar);
-        toolbar.setCallback(this);
+
+        setToolbar(view.findViewById(R.id.toolbar));
+        requireToolbar().setCallback(this);
     }
 
     public void showImages(
@@ -63,7 +65,12 @@ public class ImageViewerNavigationController
             ImageViewerController.ImageViewerCallback imageViewerCallback,
             ImageViewerController.GoPostCallback goPostCallback
     ) {
-        ImageViewerController imageViewerController = new ImageViewerController(loadable, context, toolbar);
+        ImageViewerController imageViewerController = new ImageViewerController(
+                loadable,
+                context,
+                requireToolbar()
+        );
+
         imageViewerController.setGoPostCallback(goPostCallback);
         pushController(imageViewerController, false);
         imageViewerController.setImageViewerCallback(imageViewerCallback);

@@ -284,7 +284,7 @@ public class AlbumDownloadController
 
     private void updateTitle() {
         navigation.title = getString(R.string.album_download_screen, getCheckCount(), items.size());
-        ((ToolbarNavigationController) navigationController).toolbar.updateTitle(navigation);
+        requireNavController().requireToolbar().updateTitle(navigation);
     }
 
     private void updateAllChecked() {

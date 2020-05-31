@@ -17,17 +17,18 @@
 package com.github.adamantcheese.chan.features.drawer
 
 import android.content.Context
-import android.view.Gravity
+import android.content.res.ColorStateList
+import android.view.MenuItem
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
@@ -39,20 +40,27 @@ import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.HeaderAction
-import com.github.adamantcheese.chan.ui.controller.*
+import com.github.adamantcheese.chan.ui.controller.HistoryController
+import com.github.adamantcheese.chan.ui.controller.ThreadController
+import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
+import com.github.adamantcheese.chan.ui.controller.navigation.*
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.chan.utils.updateMargins
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 
-class DrawerController(context: Context?) : Controller(context!!), DrawerView, DrawerAdapter.Callback, View.OnClickListener {
+class DrawerController(
+  context: Context
+) : Controller(context), DrawerView, DrawerAdapter.Callback, View.OnClickListener {
 
   @Inject
   lateinit var watchManager: WatchManager
@@ -60,6 +68,8 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var themeHelper: ThemeHelper
 
   private lateinit var rootLayout: FrameLayout
   private lateinit var container: FrameLayout
@@ -67,6 +77,7 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var drawerAdapter: DrawerAdapter
+  private lateinit var bottomNavView: BottomNavigationView
 
   private val drawerPresenter = DrawerPresenter()
 
@@ -122,9 +133,26 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
     rootLayout = view.findViewById(R.id.root_layout)
     container = view.findViewById(R.id.container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
-    drawerLayout.setDrawerShadow(R.drawable.panel_shadow, Gravity.LEFT)
+    drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
+
+    bottomNavView = view.findViewById(R.id.bottom_navigation_view)
+    bottomNavView.selectedItemId = R.id.action_browse
+
+    bottomNavView.itemIconTintList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(themeHelper.theme.textPrimary, themeHelper.theme.textSecondary)
+    )
+    bottomNavView.itemTextColor = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(themeHelper.theme.textPrimary, themeHelper.theme.textSecondary)
+    )
+
+    bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
+      onNavigationItemSelectedListener(menuItem)
+      return@setOnNavigationItemSelectedListener true
+    }
 
 //  TODO(KurobaEx): pins, move to some other place
 //  recyclerView = view.findViewById(R.id.drawer_recycler_view);
@@ -193,6 +221,51 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
     childController.onShow()
   }
 
+  private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
+    when (menuItem.itemId) {
+      R.id.action_browse -> closeAllNonMainControllers()
+      R.id.action_bookmarks -> openController(HistoryController(context));
+      R.id.action_settings -> openController(MainSettingsControllerV2(context))
+    }
+  }
+
+  private fun closeAllNonMainControllers() {
+    val currentNavController = top
+      ?: return
+
+    while (true) {
+      val topController = currentNavController.top
+        ?: return
+
+      if (topController is HasNavigation) {
+        return
+      }
+
+      if (currentNavController is NavigationController) {
+        currentNavController.popController(false)
+      } else if (currentNavController is DoubleNavigationController) {
+        currentNavController.popController(false)
+      }
+    }
+  }
+
+  private fun openController(controller: Controller) {
+    val topController = top
+      ?: return
+
+    if (topController is NavigationController) {
+      closeAllNonMainControllers()
+
+      topController.pushController(controller, false)
+    } else if (topController is DoubleNavigationController) {
+      closeAllNonMainControllers()
+
+      topController.pushController(controller, false)
+    }
+
+    drawerLayout.closeDrawer(GravityCompat.START)
+  }
+
   override fun onClick(v: View) {
     // no-op
   }
@@ -207,12 +280,31 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   }
 
   override fun onBack(): Boolean {
-    return if (drawerLayout.isDrawerOpen(drawer)) {
+    val handled = if (drawerLayout.isDrawerOpen(drawer)) {
       drawerLayout.closeDrawer(drawer)
       true
     } else {
       super.onBack()
     }
+
+    if (handled && mainToolbarNavigationController.childControllers.size <= 2) {
+      val topController = mainToolbarNavigationController.top
+
+      if (topController is MainSettingsControllerV2) {
+        // Hack! MainSettingsControllerV2 may return true in onBack() even though it's not about to
+        // get closed. That's because it uses it's own internal stack of views so we need to consider
+        // that case separately.
+        if (!topController.isClosing()) {
+          return handled
+        }
+      }
+
+      // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
+      // of the bottomNavView's child controllers (Bookmarks or Settings)
+      bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
+    }
+
+    return handled
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {
@@ -349,7 +441,7 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   }
 
   // TODO(KurobaEx): pins, move to some other place
-  //    private void onHeaderClickedInternal(boolean all, boolean hasDownloadFlag) {
+  private fun onHeaderClickedInternal(all: Boolean, hasDownloadFlag: Boolean) {
   //        final List<Pin> pins = watchManager.clearPins(all);
   //        if (!pins.isEmpty()) {
   //            if (!hasDownloadFlag) {
@@ -379,7 +471,8 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   //            fixSnackbarInsets(snackbar, globalWindowInsetsManager);
   //            snackbar.show();
   //        }
-  //    }
+      }
+
   override fun onPinRemoved(pin: Pin) {
     // TODO(KurobaEx): pins, move to some other place
 
@@ -405,15 +498,6 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
 //        fixSnackbarText(context, snackbar);
 //        fixSnackbarInsets(snackbar, globalWindowInsetsManager);
 //        snackbar.show();
-  }
-
-  override fun openSettings() {
-    openController(MainSettingsControllerV2(context))
-  }
-
-  override fun openHistory() {
-    // TODO(KurobaEx): Change to bookmarks for now?
-//        openController(new HistoryController(context));
   }
 
   fun setPinHighlighted(pin: Pin?) {
@@ -467,8 +551,13 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
   }
 
   fun setDrawerEnabled(enabled: Boolean) {
-    val lockMode = if (enabled) DrawerLayout.LOCK_MODE_UNLOCKED else DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-    drawerLayout.setDrawerLockMode(lockMode, Gravity.LEFT)
+    val lockMode = if (enabled) {
+      DrawerLayout.LOCK_MODE_UNLOCKED
+    } else {
+      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+    }
+
+    drawerLayout.setDrawerLockMode(lockMode, GravityCompat.START)
 
     if (!enabled) {
       drawerLayout.closeDrawer(drawer)
@@ -479,31 +568,18 @@ class DrawerController(context: Context?) : Controller(context!!), DrawerView, D
     var total = 0
     var color = false
 
-    for (p in watchManager.watchingPins) {
-      if (!PinType.hasWatchNewPostsFlag(p.pinType)) {
+    for (pin in watchManager.watchingPins) {
+      if (!PinType.hasWatchNewPostsFlag(pin.pinType)) {
         continue
       }
 
-      total += p.newPostCount
-      color = color or (p.newQuoteCount > 0)
+      total += pin.newPostCount
+      color = color or (pin.newQuoteCount > 0)
     }
 
     if (top != null) {
       mainToolbarNavigationController.toolbar?.arrowMenuDrawable?.setBadge(total, color)
     }
-  }
-
-  private fun openController(controller: Controller) {
-    val topController = top
-      ?: return
-
-    if (topController is NavigationController) {
-      topController.pushController(controller)
-    } else if (topController is DoubleNavigationController) {
-      (topController as DoubleNavigationController).pushController(controller)
-    }
-
-    drawerLayout.closeDrawer(Gravity.LEFT)
   }
 
   companion object {

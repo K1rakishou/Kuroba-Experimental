@@ -25,6 +25,8 @@ import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
@@ -124,8 +126,11 @@ public class ThreadSlideController
             } else {
                 slidingPaneLayout.closePane();
             }
-            Toolbar toolbar = ((ToolbarNavigationController) navigationController).toolbar;
-            toolbar.processScrollCollapse(Toolbar.TOOLBAR_COLLAPSE_SHOW, true);
+
+            requireNavController().requireToolbar().processScrollCollapse(
+                    Toolbar.TOOLBAR_COLLAPSE_SHOW,
+                    true
+            );
 
             if (slidingPaneLayout.getWidth() == 0) {
                 // It won't tell us it switched when it's not laid out yet.
@@ -287,7 +292,7 @@ public class ThreadSlideController
     }
 
     private void setParentNavigationItem(boolean left) {
-        Toolbar toolbar = ((ToolbarNavigationController) navigationController).toolbar;
+        Toolbar toolbar = requireNavController().requireToolbar();
 
         //default, blank navigation item with no menus or titles, so other layouts don't mess up
         NavigationItem item = new NavigationItem();

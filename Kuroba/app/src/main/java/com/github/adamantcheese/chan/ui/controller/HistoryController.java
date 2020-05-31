@@ -38,6 +38,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.History;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
@@ -105,6 +106,8 @@ public class HistoryController
                 )
                 .build()
                 .build();
+
+        navigation.swipeable = false;
 
         SwitchCompat historyEnabledSwitch = new SwitchCompat(context);
         historyEnabledSwitch.setChecked(ChanSettings.historyEnabled.get());

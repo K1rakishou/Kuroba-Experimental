@@ -3,7 +3,6 @@ package com.github.adamantcheese.chan.features.settings.screens
 import android.content.Context
 import android.widget.Toast
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.controller.NavigationController
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.BehaviorScreen
@@ -12,6 +11,7 @@ import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.ui.controller.SitesSetupController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.utils.AndroidUtils
