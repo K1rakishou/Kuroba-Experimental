@@ -46,10 +46,7 @@ import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
-import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
-import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
-import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController
-import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.*
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -64,7 +61,11 @@ import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
-class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivityCallbacks, CoroutineScope {
+class StartActivity : AppCompatActivity(),
+  CreateNdefMessageCallback,
+  FSAFActivityCallbacks,
+  CoroutineScope,
+  StartActivityCallbacks{
 
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -166,6 +167,8 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
 
     setContentView(drawerController.view)
     pushController(drawerController)
+
+    drawerController.attachBottomNavViewToToolbar()
 
     // Prevent overdraw
     // Do this after setContentView, or the decor creating will reset the background to a
@@ -301,11 +304,11 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
   }
 
   private fun setupLayout() {
-    val layoutMode = getCurrentLayoutMode()
+    val layoutMode = ChanSettings.getCurrentLayoutMode()
 
     when (layoutMode) {
       ChanSettings.LayoutMode.SPLIT -> {
-        val split = SplitNavigationController(this)
+        val split = SplitNavigationController(this, this)
         split.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
         drawerController.setChildController(split)
         split.setLeftController(mainNavigationController)
@@ -329,21 +332,6 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
     }
   }
 
-  private fun getCurrentLayoutMode(): ChanSettings.LayoutMode {
-    var layoutMode = requireNotNull(ChanSettings.layoutMode.get()) {
-      "ChanSettings.layoutMode returned null"
-    }
-
-    if (layoutMode == ChanSettings.LayoutMode.AUTO) {
-      layoutMode = if (AndroidUtils.isTablet()) {
-        ChanSettings.LayoutMode.SPLIT
-      } else {
-        ChanSettings.LayoutMode.SLIDE
-      }
-    }
-    return layoutMode
-  }
-
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
 
@@ -356,6 +344,10 @@ class StartActivity : AppCompatActivity(), CreateNdefMessageCallback, FSAFActivi
         passIntentToThreadSlideController(pinId)
       }
     }
+  }
+
+  override fun resetBottomNavViewCheckState() {
+    drawerController.resetBottomNavViewCheckState()
   }
 
   private fun passIntentToThreadSlideController(pinId: Int) {

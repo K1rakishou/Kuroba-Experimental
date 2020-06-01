@@ -47,7 +47,11 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
 
   override fun dispose() {
     super.dispose()
+
+    callback = null
     setting?.removeCallback(this)
+    setting = null
+    dependsOnSetting = null
   }
 
   private fun subscribeToChanges(dependsOnSetting: BooleanSetting) {

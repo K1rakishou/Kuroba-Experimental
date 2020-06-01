@@ -48,6 +48,12 @@ class ListSettingV2<T : Any> : SettingV2() {
     return ++updateCounter
   }
 
+  override fun dispose() {
+    super.dispose()
+
+    dependsOnSetting = null
+  }
+
   private fun setDependsOnSetting(dependsOnSetting: BooleanSetting) {
     this.dependsOnSetting = dependsOnSetting
     ++updateCounter

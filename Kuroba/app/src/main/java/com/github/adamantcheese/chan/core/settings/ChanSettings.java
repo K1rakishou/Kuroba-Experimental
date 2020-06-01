@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.core.settings.base_dir.SavedFilesBaseDirSet
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.google.gson.Gson;
 
@@ -646,6 +647,20 @@ public class ChanSettings {
             outputStream.write(settings.getBytes());
             outputStream.flush();
         }
+    }
+
+    public static ChanSettings.LayoutMode getCurrentLayoutMode() {
+        ChanSettings.LayoutMode layoutMode = ChanSettings.layoutMode.get();
+
+        if (layoutMode == ChanSettings.LayoutMode.AUTO) {
+            if (AndroidUtils.isTablet()) {
+                layoutMode = ChanSettings.LayoutMode.SPLIT;
+            } else {
+                layoutMode = ChanSettings.LayoutMode.SLIDE;
+            }
+        }
+
+        return layoutMode;
     }
 
     public static class ThemeColor {

@@ -22,6 +22,7 @@ import android.text.TextUtils;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.j256.ormlite.field.DatabaseField;
@@ -92,6 +93,7 @@ public class Loadable
     public boolean dirty = false;
 
     private ChanDescriptor chanDescriptor;
+    private BoardDescriptor boardDescriptor;
 
     /**
      * Tells us whether this loadable (when in THREAD mode) contains information about
@@ -124,6 +126,15 @@ public class Loadable
         }
 
         return this.chanDescriptor;
+    }
+
+    public synchronized BoardDescriptor getBoardDescriptor() {
+        if (this.boardDescriptor != null) {
+            return this.boardDescriptor;
+        }
+
+        this.boardDescriptor = new BoardDescriptor(site.siteDescriptor(), boardCode);
+        return this.boardDescriptor;
     }
 
     /**

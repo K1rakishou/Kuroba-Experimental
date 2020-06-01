@@ -44,6 +44,12 @@ class InputSettingV2<T : Any> : SettingV2() {
     ++updateCounter
   }
 
+  override fun dispose() {
+    super.dispose()
+
+    dependsOnSetting = null
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is InputSettingV2<*>) return false

@@ -48,12 +48,9 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.plusAssign
-import com.github.adamantcheese.chan.utils.updateMargins
+import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -77,7 +74,7 @@ class DrawerController(
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var drawerAdapter: DrawerAdapter
-  private lateinit var bottomNavView: BottomNavigationView
+  private lateinit var bottomNavView: HidingBottomNavigationView
 
   private val drawerPresenter = DrawerPresenter()
 
@@ -221,6 +218,19 @@ class DrawerController(
     childController.onShow()
   }
 
+  fun attachBottomNavViewToToolbar() {
+    val topController = top
+      ?: return
+
+    if (topController is ToolbarNavigationController) {
+      val toolbar = topController.toolbar
+
+      if (toolbar != null) {
+        bottomNavView.setToolbar(toolbar)
+      }
+    }
+  }
+
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
@@ -287,24 +297,15 @@ class DrawerController(
       super.onBack()
     }
 
-    if (handled && mainToolbarNavigationController.childControllers.size <= 2) {
-      val topController = mainToolbarNavigationController.top
-
-      if (topController is MainSettingsControllerV2) {
-        // Hack! MainSettingsControllerV2 may return true in onBack() even though it's not about to
-        // get closed. That's because it uses it's own internal stack of views so we need to consider
-        // that case separately.
-        if (!topController.isClosing()) {
-          return handled
-        }
-      }
-
-      // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
-      // of the bottomNavView's child controllers (Bookmarks or Settings)
-      bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
-    }
-
     return handled
+  }
+
+  fun resetBottomNavViewCheckState() {
+    BackgroundUtils.ensureMainThread()
+
+    // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
+    // of the bottomNavView's child controllers (Bookmarks or Settings)
+    bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {

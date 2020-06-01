@@ -35,15 +35,20 @@ import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
+import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
+import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
+import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.drawer.DrawerController;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
@@ -92,22 +97,24 @@ public class ViewThreadController
         ToolbarMenuItem.ToobarThreedotMenuCallback {
     private static final String TAG = "ViewThreadController";
 
-    private static final int ACTION_PIN = 1;
-    private static final int ACTION_ALBUM = 2;
-    private static final int ACTION_SAVE_THREAD = 3;
+    private static final int ACTION_PIN = 8001;
+    private static final int ACTION_ALBUM = 8002;
+    private static final int ACTION_SAVE_THREAD = 8003;
 
-    private static final int ACTION_REPLY = 100;
-    private static final int ACTION_SEARCH = 101;
-    private static final int ACTION_RELOAD = 102;
-    private static final int ACTION_VIEW_REMOVED_POSTS = 103;
-    private static final int ACTION_OPEN_BROWSER = 104;
-    private static final int ACTION_SHARE = 105;
-    private static final int ACTION_GO_TO_POST = 106;
-    private static final int ACTION_SCROLL_TO_TOP = 107;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 108;
+    private static final int ACTION_REPLY = 9000;
+    private static final int ACTION_SEARCH = 9001;
+    private static final int ACTION_RELOAD = 9002;
+    private static final int ACTION_VIEW_REMOVED_POSTS = 9003;
+    private static final int ACTION_OPEN_BROWSER = 9004;
+    private static final int ACTION_SHARE = 9005;
+    private static final int ACTION_GO_TO_POST = 9006;
+    private static final int ACTION_SCROLL_TO_TOP = 9007;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 9008;
 
-    private static final int ACTION_VIEW_LOCAL_COPY = 1000;
-    private static final int ACTION_VIEW_LIVE_COPY = 1001;
+    private static final int ACTION_VIEW_LOCAL_COPY = 10000;
+    private static final int ACTION_VIEW_LIVE_COPY = 10001;
+
+    private DatabaseLoadableManager databaseLoadableManager;
 
     @Inject
     WatchManager watchManager;
@@ -115,6 +122,12 @@ public class ViewThreadController
     FileManager fileManager;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    DatabaseManager databaseManager;
+    @Inject
+    BoardRepository boardRepository;
+    @Inject
+    HistoryNavigationManager historyNavigationManager;
 
     private boolean pinItemPinned = false;
     private DownloadThreadState prevState = DownloadThreadState.Default;
@@ -147,6 +160,8 @@ public class ViewThreadController
     public void onCreate() {
         super.onCreate();
         inject(this);
+
+        databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
         downloadAnimation =
                 (AnimatedVectorDrawableCompat) AnimationUtils.createAnimatedDownloadIcon(context, Color.WHITE).mutate();
@@ -510,12 +525,35 @@ public class ViewThreadController
 
     @Override
     public void showThread(@NotNull ChanDescriptor.ThreadDescriptor descriptor) {
-        // TODO(KurobaEx): apparently I don't need this? No-op for now.
+        Loadable threadLoadable = databaseLoadableManager.getByThreadDescriptor(descriptor);
+        if (threadLoadable == null) {
+            showToast(context, R.string.browse_controller_cannot_open_thread);
+            return;
+        }
+
+        if (!threadLoadable.isThreadMode()) {
+            String errorMessage = context.getString(
+                    R.string.browse_controller_cannot_open_thread_not_a_thread,
+                    threadLoadable.mode
+            );
+
+            showToast(context, errorMessage);
+            return;
+        }
+
+        loadThread(threadLoadable);
     }
 
     @Override
     public void showBoard(@NotNull ChanDescriptor.CatalogDescriptor descriptor) {
-        // TODO(KurobaEx): apparently I don't need this? No-op for now.
+        Board board = boardRepository.getFromBoardDescriptor(descriptor.getBoardDescriptor());
+        if (board == null) {
+            showToast(context, R.string.browse_controller_cannot_open_board);
+            return;
+        }
+
+        Loadable catalog = databaseLoadableManager.get(Loadable.forCatalog(board));
+        showBoard(catalog);
     }
 
     @Override
@@ -529,6 +567,10 @@ public class ViewThreadController
     }
 
     private void showBoardInternal(Loadable catalogLoadable, String searchQuery) {
+        historyNavigationManager.moveNavElementToTop(
+                new ChanDescriptor.CatalogDescriptor(catalogLoadable.getBoardDescriptor())
+        );
+
         if (doubleNavigationController != null
                 && doubleNavigationController.getLeftController() instanceof BrowseController) {
             // slide layout
@@ -592,6 +634,8 @@ public class ViewThreadController
     }
 
     public void loadThread(Loadable loadable, boolean addToLocalBackHistory) {
+        historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
+
         ThreadPresenter presenter = threadLayout.presenter;
         if (!loadable.equals(presenter.getLoadable())) {
             loadThreadInternal(loadable, addToLocalBackHistory);

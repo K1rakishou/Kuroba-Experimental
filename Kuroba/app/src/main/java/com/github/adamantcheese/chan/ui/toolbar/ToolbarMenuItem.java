@@ -272,7 +272,10 @@ public class ToolbarMenuItem {
             }
 
             if (subItem.moreItems.size() > 0) {
-                return findMenuSubItem(subItem.moreItems, menuId);
+                ToolbarMenuSubItem nestedItem = findMenuSubItem(subItem.moreItems, menuId);
+                if (nestedItem != null) {
+                    return nestedItem;
+                }
             }
         }
 

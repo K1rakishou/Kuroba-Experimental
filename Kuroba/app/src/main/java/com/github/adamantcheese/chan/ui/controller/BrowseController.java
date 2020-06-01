@@ -68,21 +68,21 @@ public class BrowseController
         extends ThreadController
         implements ThreadLayout.ThreadLayoutCallback, BrowsePresenter.Callback, BrowseBoardsFloatingMenu.ClickCallback,
         ThreadSlideController.SlideChangeListener {
-    private static final int ACTION_CHANGE_VIEW_MODE = 1;
-    private static final int ACTION_SORT = 2;
-    private static final int ACTION_REPLY = 3;
-    private static final int ACTION_OPEN_BROWSER = 4;
-    private static final int ACTION_SHARE = 5;
-    private static final int ACTION_SCROLL_TO_TOP = 6;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 7;
+    private static final int ACTION_CHANGE_VIEW_MODE = 901;
+    private static final int ACTION_SORT = 902;
+    private static final int ACTION_REPLY = 903;
+    private static final int ACTION_OPEN_BROWSER = 904;
+    private static final int ACTION_SHARE = 905;
+    private static final int ACTION_SCROLL_TO_TOP = 906;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 907;
 
-    private static final int SORT_MODE_BUMP = 100;
-    private static final int SORT_MODE_REPLY = 101;
-    private static final int SORT_MODE_IMAGE = 102;
-    private static final int SORT_MODE_NEWEST = 103;
-    private static final int SORT_MODE_OLDEST = 104;
-    private static final int SORT_MODE_MODIFIED = 105;
-    private static final int SORT_MODE_ACTIVITY = 106;
+    private static final int SORT_MODE_BUMP = 1000;
+    private static final int SORT_MODE_REPLY = 1001;
+    private static final int SORT_MODE_IMAGE = 1002;
+    private static final int SORT_MODE_NEWEST = 1003;
+    private static final int SORT_MODE_OLDEST = 1004;
+    private static final int SORT_MODE_MODIFIED = 1005;
+    private static final int SORT_MODE_ACTIVITY = 1006;
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -187,7 +187,8 @@ public class BrowseController
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
                 .withItem(R.drawable.ic_refresh_white_24dp, this::reloadClicked);
 
-        NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(navigationController);
+        NavigationItem.MenuOverflowBuilder overflowBuilder =
+                menuBuilder.withOverflow(navigationController);
 
         if (!ChanSettings.enableReplyFab.get()) {
             overflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply, this::replyClicked);
@@ -597,7 +598,10 @@ public class BrowseController
                 slideNav.switchToController(true);
             } else {
                 if (navigationController != null) {
-                    navigationController.popController(true);
+                    // We wouldn't want to pop BrowseController when opening a board
+                    if ((!(navigationController.getTop() instanceof BrowseController))) {
+                        navigationController.popController(true);
+                    }
                 }
             }
         }

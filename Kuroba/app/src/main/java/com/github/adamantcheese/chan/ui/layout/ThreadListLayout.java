@@ -82,7 +82,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.isTablet;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout;
 
@@ -711,7 +710,8 @@ public class ThreadListLayout
     }
 
     private boolean shouldToolbarCollapse() {
-        return !isTablet() && !ChanSettings.neverHideToolbar.get();
+        return ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT
+                && !ChanSettings.neverHideToolbar.get();
     }
 
     private void attachToolbarScroll(boolean attach) {

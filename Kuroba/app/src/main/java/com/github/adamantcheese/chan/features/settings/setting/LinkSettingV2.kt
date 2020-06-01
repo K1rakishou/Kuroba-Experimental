@@ -37,6 +37,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
     super.dispose()
 
     _callback = null
+    dependsOnSetting = null
   }
 
   private fun setDependsOnSetting(dependsOnSetting: BooleanSetting) {

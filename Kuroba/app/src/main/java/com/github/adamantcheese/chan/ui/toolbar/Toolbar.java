@@ -205,7 +205,14 @@ public class Toolbar
             setTranslationY(-scrollOffset);
 
             for (ToolbarCollapseCallback c : collapseCallbacks) {
-                c.onCollapseTranslation(scrollOffset / (float) getHeight());
+                float newScrollOffset = 0f;
+                int height = getHeight();
+
+                if (height > 0) {
+                    newScrollOffset = scrollOffset / (float) height;
+                }
+
+                c.onCollapseTranslation(newScrollOffset);
             }
         }
     }

@@ -22,6 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
@@ -29,6 +31,7 @@ import com.github.adamantcheese.chan.controller.transition.PopControllerTransiti
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 import com.github.adamantcheese.chan.ui.controller.PopupController;
 import com.github.adamantcheese.chan.ui.layout.SplitNavigationControllerLayout;
+import com.github.adamantcheese.chan.utils.KtExtensionsKt;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 
@@ -45,8 +48,13 @@ public class SplitNavigationController
     private PopupController popup;
     private StyledToolbarNavigationController popupChild;
 
-    public SplitNavigationController(Context context) {
+    @Nullable
+    private StartActivityCallbacks startActivityCallbacks;
+
+    public SplitNavigationController(Context context, StartActivityCallbacks startActivityCallbacks) {
         super(context);
+
+        this.startActivityCallbacks = startActivityCallbacks;
     }
 
     @Override
@@ -58,12 +66,14 @@ public class SplitNavigationController
         SplitNavigationControllerLayout container = new SplitNavigationControllerLayout(context);
         view = container;
 
-        leftControllerView = new FrameLayout(context);
-
         View dividerView = new View(context);
         dividerView.setBackgroundColor(getAttrColor(context, R.attr.divider_split_color));
 
+        leftControllerView = new FrameLayout(context);
         rightControllerView = new FrameLayout(context);
+
+        int bottomNavViewHeight = (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height);
+        KtExtensionsKt.updatePaddings(container, null, null, null, bottomNavViewHeight);
 
         container.setLeftView(leftControllerView);
         container.setRightView(rightControllerView);
@@ -71,6 +81,13 @@ public class SplitNavigationController
         container.build();
 
         setRightController(null);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        startActivityCallbacks = null;
     }
 
     @Override
@@ -168,6 +185,10 @@ public class SplitNavigationController
     public boolean popController(ControllerTransition controllerTransition) {
         if (popup != null) {
             if (popupChild.childControllers.size() == 1) {
+                if (startActivityCallbacks != null) {
+                    startActivityCallbacks.resetBottomNavViewCheckState();
+                }
+
                 presentingThisController.stopPresenting();
                 popup = null;
                 popupChild = null;
@@ -182,6 +203,10 @@ public class SplitNavigationController
 
     public void popAll() {
         if (popup != null) {
+            if (startActivityCallbacks != null) {
+                startActivityCallbacks.resetBottomNavViewCheckState();
+            }
+
             presentingThisController.stopPresenting();
             popup = null;
             popupChild = null;

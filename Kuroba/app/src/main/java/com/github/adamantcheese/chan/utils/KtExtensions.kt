@@ -108,6 +108,20 @@ fun View.updateMargins(
 }
 
 fun View.updatePaddings(
+  left: Int? = null,
+  right: Int? = null,
+  top: Int? = null,
+  bottom: Int? = null
+) {
+  val newLeft = left ?: paddingLeft
+  val newRight = right ?: paddingRight
+  val newTop = top ?: paddingTop
+  val newBottom = bottom ?: paddingBottom
+
+  setPadding(newLeft, newRight, newTop, newBottom)
+}
+
+fun View.updatePaddings(
   left: Int = paddingLeft,
   right: Int = paddingRight,
   top: Int = paddingTop,

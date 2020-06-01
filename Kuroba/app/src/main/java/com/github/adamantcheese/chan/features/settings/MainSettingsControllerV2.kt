@@ -305,10 +305,6 @@ class MainSettingsControllerV2(context: Context)
     return true
   }
 
-  fun isClosing(): Boolean {
-    return screenStack.isEmpty()
-  }
-
   private fun rebuildDefaultScreen() {
     pushScreen(defaultScreen)
     rebuildScreen(defaultScreen)

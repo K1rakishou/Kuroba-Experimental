@@ -27,6 +27,7 @@ import android.view.animation.Interpolator;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.utils.KtExtensionsKt;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -60,8 +61,15 @@ public class HidingFloatingActionButton
     }
 
     private void init() {
-        bottomNavViewHeight =
-                (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
+        // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
+        // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
+        // when in SPLIT mode.
+        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+            bottomNavViewHeight =
+                    (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
+        } else {
+            bottomNavViewHeight = 0;
+        }
     }
 
     public void setToolbar(Toolbar toolbar) {

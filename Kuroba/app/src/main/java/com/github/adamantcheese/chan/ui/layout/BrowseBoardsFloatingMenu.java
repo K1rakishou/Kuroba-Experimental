@@ -158,7 +158,8 @@ public class BrowseBoardsFloatingMenu
                     setupIcon.setColorFilter(themeHelper.getTheme().textPrimary, PorterDuff.Mode.SRC_IN);
                     setIcon(SiteIcon.fromDrawable(imageLoaderV2, setupIcon));
                     setBoardsType(BoardsType.STATIC);
-                    setConfig(new CommonConfig() {});
+                    setConfig(new CommonConfig() {
+                    });
                     setResolvable(new CommonSiteUrlHandler() {
                         @Override
                         public HttpUrl getUrl() {
@@ -188,7 +189,8 @@ public class BrowseBoardsFloatingMenu
                             return null;
                         }
                     });
-                    setActions(new CommonActions(null) {});
+                    setActions(new CommonActions(null) {
+                    });
                     setParser(new CommentParser());
                 }
 
@@ -334,17 +336,29 @@ public class BrowseBoardsFloatingMenu
         setAlpha(0f);
         setTranslationY(-dp(25));
         Interpolator slowdown = new DecelerateInterpolator(2f);
-        post(() -> animate().alpha(1f).translationY(0f).setInterpolator(slowdown).setDuration(250).start());
+
+        post(() -> {
+            animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setInterpolator(slowdown)
+                    .setDuration(250)
+                    .start();
+        });
     }
 
     private void animateOut(Runnable done) {
         Interpolator slowdown = new DecelerateInterpolator(2f);
-        animate().alpha(0f).setInterpolator(slowdown).setDuration(250).setListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                done.run();
-            }
-        }).start();
+        animate()
+                .alpha(0f)
+                .setInterpolator(slowdown)
+                .setDuration(250)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        done.run();
+                    }
+                }).start();
     }
 
     private class BrowseBoardsAdapter
@@ -380,7 +394,11 @@ public class BrowseBoardsFloatingMenu
                         false
                 ));
             } else if (viewType == SITE.typeId) {
-                return new SiteViewHolder(AndroidUtils.inflate(getContext(), R.layout.cell_browse_site, parent, false));
+                return new SiteViewHolder(AndroidUtils.inflate(
+                        getContext(),
+                        R.layout.cell_browse_site,
+                        parent, false
+                ));
             } else if (viewType == BOARD.typeId) {
                 return new BoardViewHolder(AndroidUtils.inflate(getContext(),
                         R.layout.cell_browse_board,
@@ -395,8 +413,10 @@ public class BrowseBoardsFloatingMenu
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             Item item = items.getAtPosition(position);
+
             //noinspection StatementWithEmptyBody
             if (holder instanceof InputViewHolder) {
+                // no-op
             } else if (holder instanceof SiteViewHolder) {
                 SiteViewHolder siteViewHolder = ((SiteViewHolder) holder);
                 siteViewHolder.bind(item.site);
@@ -527,7 +547,9 @@ public class BrowseBoardsFloatingMenu
 
     public interface ClickCallback {
         void setBoard(Board item);
+
         void onSiteClicked(Site site);
+
         void openSetup();
     }
 }

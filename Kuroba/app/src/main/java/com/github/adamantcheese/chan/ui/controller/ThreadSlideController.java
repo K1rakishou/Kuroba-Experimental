@@ -23,6 +23,7 @@ import android.view.ViewGroup;
 import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
@@ -78,6 +79,13 @@ public class ThreadSlideController
 
         setLeftController(null);
         setRightController(null);
+    }
+
+    @Override
+    public void onShow() {
+        super.onShow();
+
+        ((StartActivity) context).resetBottomNavViewCheckState();
     }
 
     public void onSlidingPaneLayoutStateRestored() {
