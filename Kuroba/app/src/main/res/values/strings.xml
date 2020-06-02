@@ -989,6 +989,6 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
-    <string name="navigation_history_is_empty">Navigation history is empty</string>
+    <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here.</string>
 
 </resources>

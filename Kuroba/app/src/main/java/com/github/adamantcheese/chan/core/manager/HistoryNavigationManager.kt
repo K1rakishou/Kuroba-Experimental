@@ -41,7 +41,7 @@ class HistoryNavigationManager(
         .filter { visibility -> visibility == ApplicationVisibility.Background }
         .collect {
           withContext(NonCancellable) {
-            historyNavigationRepository.persist(navigationStack)
+            historyNavigationRepository.persist(navigationStack.toList())
           }
         }
     }
@@ -59,6 +59,8 @@ class HistoryNavigationManager(
           suspendableInitializer.initWithError(loadedNavElementsResult.error)
         }
       }
+
+      navStackChanged()
     }
   }
 
@@ -91,7 +93,7 @@ class HistoryNavigationManager(
       return
     }
 
-    navigationStackChangesSubject.onNext(Unit)
+    navStackChanged()
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor) {
@@ -110,19 +112,7 @@ class HistoryNavigationManager(
 
     // Move the existing navigation element at the top of the list
     navigationStack.add(0, navigationStack.removeAt(indexOfElem))
-    navigationStackChangesSubject.onNext(Unit)
-  }
-
-  private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
-    BackgroundUtils.ensureMainThread()
-
-    val indexOfElem = navigationStack.indexOf(navElement)
-    if (indexOfElem >= 0) {
-      return false
-    }
-
-    navigationStack.add(0, navElement)
-    return true
+    navStackChanged()
   }
 
   fun isAtTop(descriptor: ChanDescriptor): Boolean {
@@ -137,6 +127,22 @@ class HistoryNavigationManager(
     }
 
     return topNavElementDescriptor == descriptor
+  }
+
+  private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
+    BackgroundUtils.ensureMainThread()
+
+    val indexOfElem = navigationStack.indexOf(navElement)
+    if (indexOfElem >= 0) {
+      return false
+    }
+
+    navigationStack.add(0, navElement)
+    return true
+  }
+
+  private fun navStackChanged() {
+    navigationStackChangesSubject.onNext(Unit)
   }
 
 }

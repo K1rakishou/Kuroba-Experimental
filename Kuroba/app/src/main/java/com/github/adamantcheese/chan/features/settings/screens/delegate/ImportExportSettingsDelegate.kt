@@ -213,7 +213,6 @@ class ImportExportSettingsDelegate(
       } else {
         loadingViewController.stopPresenting()
         showToast(context, R.string.successfully_exported_text, Toast.LENGTH_LONG)
-        navigationController.popController()
       }
     }
   }
