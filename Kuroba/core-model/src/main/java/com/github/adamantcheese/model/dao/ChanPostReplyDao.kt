@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.adamantcheese.model.entity.ChanPostReplyEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostReplyEntity
 
 @Dao
 abstract class ChanPostReplyDao {

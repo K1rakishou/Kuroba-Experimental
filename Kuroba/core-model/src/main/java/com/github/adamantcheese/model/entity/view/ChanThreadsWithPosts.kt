@@ -3,9 +3,9 @@ package com.github.adamantcheese.model.entity.view
 import androidx.room.ColumnInfo
 import androidx.room.DatabaseView
 import com.github.adamantcheese.model.KurobaDatabase
-import com.github.adamantcheese.model.entity.ChanPostEntity
-import com.github.adamantcheese.model.entity.ChanPostIdEntity
-import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostIdEntity
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 
 /**
  * Represents a thread with more than one post that is not an original post and which lastModified

@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.adamantcheese.model.entity.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
 
 @Dao
 abstract class ChanBoardDao {
@@ -47,9 +47,9 @@ abstract class ChanBoardDao {
         }
 
         val chanBoardEntity = ChanBoardEntity(
-                boardId = 0L,
-                siteName = siteName,
-                boardCode = boardCode
+          boardId = 0L,
+          siteName = siteName,
+          boardCode = boardCode
         )
 
         val insertedId = insert(chanBoardEntity)

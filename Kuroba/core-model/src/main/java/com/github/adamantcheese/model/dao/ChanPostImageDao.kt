@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.dao
 
 import androidx.room.*
-import com.github.adamantcheese.model.entity.ChanPostImageEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostImageEntity
 import okhttp3.HttpUrl
 
 @Dao

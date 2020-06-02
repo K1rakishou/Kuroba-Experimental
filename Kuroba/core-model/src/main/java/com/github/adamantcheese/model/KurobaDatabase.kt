@@ -7,9 +7,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
-import com.github.adamantcheese.model.entity.*
+import com.github.adamantcheese.model.entity.InlinedFileInfoEntity
+import com.github.adamantcheese.model.entity.MediaServiceLinkExtraContentEntity
+import com.github.adamantcheese.model.entity.SeenPostEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
+import com.github.adamantcheese.model.entity.chan.*
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 
 @Database(

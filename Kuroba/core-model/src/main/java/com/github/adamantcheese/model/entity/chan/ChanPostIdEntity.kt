@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity
+package com.github.adamantcheese.model.entity.chan
 
 import androidx.room.*
 

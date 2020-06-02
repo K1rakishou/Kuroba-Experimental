@@ -6,10 +6,10 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
-import com.github.adamantcheese.model.entity.ChanPostIdEntity
-import com.github.adamantcheese.model.entity.ChanPostReplyEntity
-import com.github.adamantcheese.model.entity.ChanTextSpanEntity
-import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostIdEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostReplyEntity
+import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import com.github.adamantcheese.model.mapper.*
 import com.google.gson.Gson
 

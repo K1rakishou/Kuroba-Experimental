@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.entity.archive
 
 import androidx.room.*
-import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import org.joda.time.DateTime
 
 @Entity(

@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.converter
 
 import androidx.room.TypeConverter
-import com.github.adamantcheese.model.entity.ChanPostReplyEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostReplyEntity
 
 class ReplyTypeTypeConverter {
 

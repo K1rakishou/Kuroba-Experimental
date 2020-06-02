@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity
+package com.github.adamantcheese.model.entity.chan
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -19,8 +19,8 @@ import androidx.room.PrimaryKey
             Index(
                     name = ChanBoardEntity.BOARD_DESCRIPTOR_INDEX_NAME,
                     value = [
-                        ChanBoardEntity.SITE_NAME_COLUMN_NAME,
-                        ChanBoardEntity.BOARD_CODE_COLUMN_NAME
+                      ChanBoardEntity.SITE_NAME_COLUMN_NAME,
+                      ChanBoardEntity.BOARD_CODE_COLUMN_NAME
                     ],
                     unique = true
             )

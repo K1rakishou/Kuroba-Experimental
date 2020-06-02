@@ -4,10 +4,10 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
-import com.github.adamantcheese.model.entity.ChanPostEntity
-import com.github.adamantcheese.model.entity.ChanPostIdEntity
-import com.github.adamantcheese.model.entity.ChanTextSpanEntity
-import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostIdEntity
+import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import com.google.gson.Gson
 
 object ChanPostMapper {
@@ -17,24 +17,24 @@ object ChanPostMapper {
             chanPost: ChanPost
     ): ChanPostEntity {
         return ChanPostEntity(
-                chanPostId = chanPostId,
-                deleted = chanPost.deleted,
-                timestamp = chanPost.timestamp,
-                name = chanPost.name,
-                posterId = chanPost.posterId,
-                moderatorCapcode = chanPost.moderatorCapcode,
-                isOp = chanPost.isOp,
-                isSavedReply = chanPost.isSavedReply
+          chanPostId = chanPostId,
+          deleted = chanPost.deleted,
+          timestamp = chanPost.timestamp,
+          name = chanPost.name,
+          posterId = chanPost.posterId,
+          moderatorCapcode = chanPost.moderatorCapcode,
+          isOp = chanPost.isOp,
+          isSavedReply = chanPost.isSavedReply
         )
     }
 
     fun fromEntity(
-            gson: Gson,
-            chanDescriptor: ChanDescriptor,
-            chanThreadEntity: ChanThreadEntity,
-            chanPostIdEntity: ChanPostIdEntity,
-            chanPostEntity: ChanPostEntity?,
-            chanTextSpanEntityList: List<ChanTextSpanEntity>?
+      gson: Gson,
+      chanDescriptor: ChanDescriptor,
+      chanThreadEntity: ChanThreadEntity,
+      chanPostIdEntity: ChanPostIdEntity,
+      chanPostEntity: ChanPostEntity?,
+      chanTextSpanEntityList: List<ChanTextSpanEntity>?
     ): ChanPost? {
         if (chanPostEntity == null) {
             return null

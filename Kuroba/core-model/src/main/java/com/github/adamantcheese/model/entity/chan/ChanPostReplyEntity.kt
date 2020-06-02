@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity
+package com.github.adamantcheese.model.entity.chan
 
 import androidx.room.*
 
@@ -17,17 +17,17 @@ import androidx.room.*
             Index(
                     name = ChanPostReplyEntity.OWNER_POST_ID_REPLY_NO_REPLY_TYPE_INDEX_NAME,
                     value = [
-                        ChanPostReplyEntity.OWNER_POST_ID_COLUMN_NAME,
-                        ChanPostReplyEntity.REPLY_NO_COLUMN_NAME,
-                        ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME
+                      ChanPostReplyEntity.OWNER_POST_ID_COLUMN_NAME,
+                      ChanPostReplyEntity.REPLY_NO_COLUMN_NAME,
+                      ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME
                     ],
                     unique = true
             ),
             Index(
                     name = ChanPostReplyEntity.OWNER_POST_ID_REPLY_TYPE_INDEX_NAME,
                     value = [
-                        ChanPostReplyEntity.OWNER_POST_ID_COLUMN_NAME,
-                        ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME
+                      ChanPostReplyEntity.OWNER_POST_ID_COLUMN_NAME,
+                      ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME
                     ]
             )
         ]

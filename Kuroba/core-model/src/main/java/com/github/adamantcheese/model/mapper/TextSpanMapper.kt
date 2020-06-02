@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.mapper
 
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpanInfoList
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
-import com.github.adamantcheese.model.entity.ChanTextSpanEntity
+import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
 import com.google.gson.Gson
 
 object TextSpanMapper {

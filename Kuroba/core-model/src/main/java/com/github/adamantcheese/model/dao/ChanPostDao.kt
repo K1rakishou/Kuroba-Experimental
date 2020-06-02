@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.dao
 
 import androidx.room.*
 import com.github.adamantcheese.model.KurobaDatabase
-import com.github.adamantcheese.model.entity.*
+import com.github.adamantcheese.model.entity.chan.*
 
 @Dao
 abstract class ChanPostDao {

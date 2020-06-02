@@ -4,34 +4,34 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
-import com.github.adamantcheese.model.entity.ChanPostFull
-import com.github.adamantcheese.model.entity.ChanTextSpanEntity
-import com.github.adamantcheese.model.entity.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.ChanPostFull
+import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import com.google.gson.Gson
 
 object ChanThreadMapper {
 
     fun toEntity(threadNo: Long, ownerBoardId: Long, chanPost: ChanPost): ChanThreadEntity {
         return ChanThreadEntity(
-                threadId = 0L,
-                threadNo = threadNo,
-                ownerBoardId = ownerBoardId,
-                lastModified = chanPost.lastModified,
-                replies = chanPost.replies,
-                threadImagesCount = chanPost.threadImagesCount,
-                uniqueIps = chanPost.uniqueIps,
-                sticky = chanPost.sticky,
-                closed = chanPost.closed,
-                archived = chanPost.archived
+          threadId = 0L,
+          threadNo = threadNo,
+          ownerBoardId = ownerBoardId,
+          lastModified = chanPost.lastModified,
+          replies = chanPost.replies,
+          threadImagesCount = chanPost.threadImagesCount,
+          uniqueIps = chanPost.uniqueIps,
+          sticky = chanPost.sticky,
+          closed = chanPost.closed,
+          archived = chanPost.archived
         )
     }
 
     fun fromEntity(
-            gson: Gson,
-            chanDescriptor: ChanDescriptor,
-            chanThreadEntity: ChanThreadEntity,
-            chanPostFull: ChanPostFull,
-            chanTextSpanEntityList: List<ChanTextSpanEntity>?
+      gson: Gson,
+      chanDescriptor: ChanDescriptor,
+      chanThreadEntity: ChanThreadEntity,
+      chanPostFull: ChanPostFull,
+      chanTextSpanEntityList: List<ChanTextSpanEntity>?
     ): ChanPost {
         val postComment = TextSpanMapper.fromEntity(
                 gson,

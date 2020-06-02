@@ -540,9 +540,16 @@ public class PostCell
                 fileInfo.append(postFileName ? " " : "\n");
                 fileInfo.append(image.extension.toUpperCase());
 
-                // if -1, linked image, no info
-                fileInfo.append(image.getSize() == -1 ? "" : " " + getReadableFileSize(image.getSize()));
-                fileInfo.append(image.isInlined ? "" : " " + image.imageWidth + "x" + image.imageHeight);
+                fileInfo.append(
+                        image.isInlined
+                                ? ""
+                                : " " + getReadableFileSize(image.getSize())
+                );
+                fileInfo.append(
+                        image.isInlined
+                                ? ""
+                                : " " + image.imageWidth + "x" + image.imageHeight
+                );
             }
 
             if (ArchiveDescriptor.isActualArchive(image.archiveId)) {

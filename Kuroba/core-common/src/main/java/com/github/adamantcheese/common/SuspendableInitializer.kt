@@ -58,7 +58,7 @@ class SuspendableInitializer<T>(
         Log.d(tag, "awaitUntilInitialized() called when already initialized")
       }
 
-      // This will throw is it was initialized with an error
+      // This will throw if it was initialized with an error
       value.getCompleted()
       return
     }
