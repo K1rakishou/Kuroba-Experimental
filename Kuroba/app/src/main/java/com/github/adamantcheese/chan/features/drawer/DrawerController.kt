@@ -25,6 +25,7 @@ import android.widget.LinearLayout
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
@@ -231,6 +232,10 @@ class DrawerController(
     }
   }
 
+  fun loadThread(descriptor: ChanDescriptor.ThreadDescriptor) {
+    topThreadController?.showThread(descriptor)
+  }
+
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
@@ -290,14 +295,12 @@ class DrawerController(
   }
 
   override fun onBack(): Boolean {
-    val handled = if (drawerLayout.isDrawerOpen(drawer)) {
+    return if (drawerLayout.isDrawerOpen(drawer)) {
       drawerLayout.closeDrawer(drawer)
       true
     } else {
       super.onBack()
     }
-
-    return handled
   }
 
   fun resetBottomNavViewCheckState() {
@@ -310,6 +313,16 @@ class DrawerController(
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {
     epoxyRecyclerView.withModels {
+      addOneshotModelBuildListener {
+        val llm = (epoxyRecyclerView.layoutManager as LinearLayoutManager)
+
+        if (llm.findFirstCompletelyVisibleItemPosition() <= 1) {
+          // Scroll to the top of the nav history list if the previous fully visible item's position
+          // was either 0 or 1
+          llm.scrollToPosition(0)
+        }
+      }
+
       when (state) {
         HistoryControllerState.Loading -> {
           epoxyLoadingView {

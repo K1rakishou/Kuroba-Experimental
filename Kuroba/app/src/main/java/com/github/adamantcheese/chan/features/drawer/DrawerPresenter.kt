@@ -14,7 +14,6 @@ import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -35,12 +34,12 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
     super.onCreate(view)
     Chan.inject(this)
 
-    scope.launch(Dispatchers.Default) {
+    scope.launch {
       setState(HistoryControllerState.Loading)
 
       historyNavigationManager.listenForNavigationStackChanges().asFlow()
         .collect {
-          BackgroundUtils.ensureBackgroundThread()
+          BackgroundUtils.ensureMainThread()
 
           ModularResult.Try { showNavigationHistory() }.safeUnwrap { error ->
             Logger.e(TAG, "showNavigationHistory() error", error)
@@ -64,7 +63,7 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
   }
 
   private suspend fun showNavigationHistory() {
-    BackgroundUtils.ensureBackgroundThread()
+    BackgroundUtils.ensureMainThread()
     historyNavigationManager.awaitUntilInitialized()
 
     val navHistoryList = historyNavigationManager.getAll().mapNotNull { navigationElement ->

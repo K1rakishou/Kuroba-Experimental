@@ -27,13 +27,13 @@ class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
     }
   }
 
-  fun post(func: () -> Unit) {
+  fun post(func: suspend () -> Unit) {
     val serializedAction = SerializedAction(func)
     channel.offer(serializedAction)
   }
 
   data class SerializedAction(
-    val action: () -> Unit
+    val action: suspend () -> Unit
   )
 
   companion object {

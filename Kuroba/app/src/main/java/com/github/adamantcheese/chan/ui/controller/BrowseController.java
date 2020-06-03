@@ -155,7 +155,7 @@ public class BrowseController
     }
 
     public void loadWithDefaultBoard() {
-        presenter.loadWithDefaultBoard();
+        presenter.loadWithDefaultBoard(false);
     }
 
     private void initNavigation() {

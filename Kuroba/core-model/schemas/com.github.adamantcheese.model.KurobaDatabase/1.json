@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8bd48de5a0c7028184c7645c3bf273a1",
+    "identityHash": "3d1e5b6db9851ef38d45e4a45aa0b3e9",
     "entities": [
       {
         "tableName": "chan_board",
@@ -990,6 +990,105 @@
           }
         ],
         "foreignKeys": []
+      },
+      {
+        "tableName": "nav_history_element",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `thread_no` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boardCode",
+            "columnName": "board_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadNo",
+            "columnName": "thread_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_nav_history_element_site_name_board_code_thread_no",
+            "unique": true,
+            "columnNames": [
+              "site_name",
+              "board_code",
+              "thread_no"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_nav_history_element_site_name_board_code_thread_no` ON `${TABLE_NAME}` (`site_name`, `board_code`, `thread_no`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "nav_history_element_info",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_nav_history_id` INTEGER NOT NULL, `thumbnail_url` TEXT NOT NULL, `title` TEXT NOT NULL, `element_order` INTEGER NOT NULL, PRIMARY KEY(`owner_nav_history_id`), FOREIGN KEY(`owner_nav_history_id`) REFERENCES `nav_history_element`(`id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ownerNavHistoryId",
+            "columnName": "owner_nav_history_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumbnailUrl",
+            "columnName": "thumbnail_url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "element_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "owner_nav_history_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "nav_history_element",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_nav_history_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "views": [
@@ -1000,7 +1099,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8bd48de5a0c7028184c7645c3bf273a1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d1e5b6db9851ef38d45e4a45aa0b3e9')"
     ]
   }
 }

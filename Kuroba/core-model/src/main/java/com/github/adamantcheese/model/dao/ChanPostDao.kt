@@ -14,10 +14,10 @@ abstract class ChanPostDao {
     abstract suspend fun update(chanPostEntity: ChanPostEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertOrIgnoreManyIds(chanPostIdEntityList: List<ChanPostIdEntity>): List<Long>
+    abstract suspend fun insertOrReplaceManyIds(chanPostIdEntityList: List<ChanPostIdEntity>): List<Long>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun insertOrIgnoreManyPosts(chanPostEntityList: List<ChanPostEntity>)
+    abstract suspend fun insertOrReplaceManyPosts(chanPostEntityList: List<ChanPostEntity>)
 
     @Query("""
         SELECT *
@@ -94,7 +94,7 @@ abstract class ChanPostDao {
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
             ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
-            ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND
@@ -141,7 +141,7 @@ abstract class ChanPostDao {
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
             ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
-            ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND
@@ -186,7 +186,7 @@ abstract class ChanPostDao {
         LEFT OUTER JOIN ${ChanPostImageEntity.TABLE_NAME} cp_image
             ON cp_image.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
-            ON ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIdList)
         AND

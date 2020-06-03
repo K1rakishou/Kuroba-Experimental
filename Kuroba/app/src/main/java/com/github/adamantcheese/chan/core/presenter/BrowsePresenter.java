@@ -82,10 +82,10 @@ public class BrowsePresenter
         loadBoard(board);
     }
 
-    public void loadWithDefaultBoard() {
+    public void loadWithDefaultBoard(boolean boardSetViaBoardSetup) {
         Board first = firstBoard();
         if (first != null) {
-            loadBoard(first);
+            loadBoard(first, !boardSetViaBoardSetup);
         }
     }
 
@@ -100,7 +100,7 @@ public class BrowsePresenter
         if (o == savedBoardsObservable) {
             if (!hadBoards && hasBoards()) {
                 hadBoards = true;
-                loadWithDefaultBoard();
+                loadWithDefaultBoard(true);
             }
         }
     }
@@ -123,13 +123,22 @@ public class BrowsePresenter
     }
 
     private void loadBoard(Board board) {
+        loadBoard(board, false);
+    }
+
+    private void loadBoard(Board board, boolean isDefaultBoard) {
         if (callback == null) {
             return;
         }
 
-        historyNavigationManager.moveNavElementToTop(
-                new ChanDescriptor.CatalogDescriptor(board.boardDescriptor())
-        );
+        if (!isDefaultBoard) {
+            // Do not bring a board to the top of the navigation list if we are loading the default
+            // board that we load on every app start. Because we want to have the last visited
+            // thread/board on top not the default board.
+            historyNavigationManager.moveNavElementToTop(
+                    new ChanDescriptor.CatalogDescriptor(board.boardDescriptor())
+            );
+        }
 
         if (board.equals(currentBoard)) {
             return;

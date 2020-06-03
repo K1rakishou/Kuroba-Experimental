@@ -286,7 +286,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   companion object {
-    private const val LOG_STATES = true
+    private const val LOG_STATES = false
   }
 
 }

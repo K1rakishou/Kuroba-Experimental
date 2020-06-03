@@ -19,6 +19,7 @@ class SuspendableInitializer<T>(
   private val logStates: Boolean = false,
   private val value: CompletableDeferred<T> = CompletableDeferred()
 ) {
+  private val toRunAfterInitialized = mutableListOf<() -> Unit>()
 
   fun initWithValue(newValue: T) {
     if (logStates) {
@@ -30,6 +31,7 @@ class SuspendableInitializer<T>(
     }
 
     value.complete(newValue)
+    invokeAllCallbacks()
   }
 
   fun initWithError(exception: Throwable) {
@@ -42,6 +44,7 @@ class SuspendableInitializer<T>(
     }
 
     value.completeExceptionally(exception)
+    invokeAllCallbacks()
   }
 
   fun initWithModularResult(modularResult: ModularResult<T>) {
@@ -69,6 +72,8 @@ class SuspendableInitializer<T>(
 
     value.await()
   }
+
+  fun isInitialized() = value.isCompleted
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun get(): T {
@@ -104,6 +109,17 @@ class SuspendableInitializer<T>(
     return null
   }
 
+  fun invokeAfterInitialized(func: () -> Unit) {
+    if (value.isCompleted) {
+      func()
+      return
+    }
+
+    synchronized(this) {
+      toRunAfterInitialized.add(func)
+    }
+  }
+
   suspend fun <T : Any?> invokeWhenInitialized(func: suspend () -> T): T {
     if (logStates) {
       Log.d(tag, "afterInitialized() called, before awaitUntilInitialized")
@@ -116,5 +132,16 @@ class SuspendableInitializer<T>(
     }
 
     return func()
+  }
+
+  private fun invokeAllCallbacks() {
+    val copyOfCallbacks = synchronized(this) {
+      val copy = toRunAfterInitialized.toList()
+      toRunAfterInitialized.clear()
+
+      return@synchronized copy
+    }
+
+    copyOfCallbacks.forEach { func -> func.invoke() }
   }
 }

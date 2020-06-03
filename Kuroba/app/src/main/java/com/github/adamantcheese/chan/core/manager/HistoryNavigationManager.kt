@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.core.manager
 
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -11,15 +13,13 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.reactive.collect
 import okhttp3.HttpUrl
+import java.util.concurrent.TimeUnit
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
@@ -27,7 +27,8 @@ class HistoryNavigationManager(
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
   private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
-  private val mutex = Mutex()
+  private val persistTaskSubject = PublishProcessor.create<Unit>()
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   private val navigationStack = mutableListOf<NavHistoryElement>()
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
@@ -39,20 +40,25 @@ class HistoryNavigationManager(
       applicationVisibilityManager.listenForAppVisibilityUpdates()
         .asFlow()
         .filter { visibility -> visibility == ApplicationVisibility.Background }
+        .collect { persisNavigationStack() }
+    }
+
+    appScope.launch {
+      persistTaskSubject
+        .throttleLast(15, TimeUnit.SECONDS)
         .collect {
-          withContext(NonCancellable) {
-            historyNavigationRepository.persist(navigationStack.toList())
-          }
+          persisNavigationStack()
         }
     }
 
     appScope.launch {
-      when (val loadedNavElementsResult = historyNavigationRepository.initialize()) {
+      @Suppress("MoveVariableDeclarationIntoWhen")
+      val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
+      when (loadedNavElementsResult) {
         is ModularResult.Value -> {
-          mutex.withLock {
-            navigationStack.addAll(loadedNavElementsResult.value)
-          }
+          BackgroundUtils.ensureMainThread()
 
+          navigationStack.addAll(loadedNavElementsResult.value)
           suspendableInitializer.initWithValue(Unit)
         }
         is ModularResult.Error -> {
@@ -64,9 +70,17 @@ class HistoryNavigationManager(
     }
   }
 
-  suspend fun getAll(): List<NavHistoryElement> {
-    return mutex.withLock { navigationStack.toList() }
+  fun runAfterInitialized(func: () -> Unit) {
+    suspendableInitializer.invokeAfterInitialized(func)
   }
+
+  fun getAll(): List<NavHistoryElement> {
+    BackgroundUtils.ensureMainThread()
+
+    return navigationStack.toList()
+  }
+
+  fun getNavElementAtTop(): NavHistoryElement? = navigationStack.firstOrNull()
 
   fun listenForNavigationStackChanges(): Flowable<Unit> {
     return navigationStackChangesSubject
@@ -83,36 +97,42 @@ class HistoryNavigationManager(
   ) {
     BackgroundUtils.ensureMainThread()
 
-    val navElementInfo = NavHistoryElementInfo(thumbnailImageUrl, title)
-    val navElement = when (descriptor) {
-      is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
-      is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
-    }
+    serializedCoroutineExecutor.post {
+      val navElementInfo = NavHistoryElementInfo(thumbnailImageUrl, title)
+      val navElement = when (descriptor) {
+        is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
+        is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
+      }
 
-    if (!addNewOrIgnore(navElement)) {
-      return
-    }
+      if (!addNewOrIgnore(navElement)) {
+        return@post
+      }
 
-    navStackChanged()
+      navStackChanged()
+    }
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor) {
     BackgroundUtils.ensureMainThread()
 
-    val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
-      return@indexOfFirst when (navHistoryElement) {
-        is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
-        is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+    serializedCoroutineExecutor.post {
+      BackgroundUtils.ensureMainThread()
+
+      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+        return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
+          is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+        }
       }
-    }
 
-    if (indexOfElem < 0) {
-      return
-    }
+      if (indexOfElem < 0) {
+        return@post
+      }
 
-    // Move the existing navigation element at the top of the list
-    navigationStack.add(0, navigationStack.removeAt(indexOfElem))
-    navStackChanged()
+      // Move the existing navigation element at the top of the list
+      navigationStack.add(0, navigationStack.removeAt(indexOfElem))
+      navStackChanged()
+    }
   }
 
   fun isAtTop(descriptor: ChanDescriptor): Boolean {
@@ -129,6 +149,21 @@ class HistoryNavigationManager(
     return topNavElementDescriptor == descriptor
   }
 
+  private fun persisNavigationStack() {
+    serializedCoroutineExecutor.post {
+      BackgroundUtils.ensureMainThread()
+      Logger.d(TAG, "persisNavigationStack called")
+
+      historyNavigationRepository.persist(navigationStack.toList())
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Error while trying to persist navigation stack", error)
+          return@post
+        }
+
+      Logger.d(TAG, "persisNavigationStack finished")
+    }
+  }
+
   private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
     BackgroundUtils.ensureMainThread()
 
@@ -143,6 +178,11 @@ class HistoryNavigationManager(
 
   private fun navStackChanged() {
     navigationStackChangesSubject.onNext(Unit)
+    persistTaskSubject.onNext(Unit)
   }
 
+  companion object {
+    private const val TAG = "HistoryNavigationManager"
+    private const val MAX_NAV_HISTORY_ENTRIES = 128
+  }
 }

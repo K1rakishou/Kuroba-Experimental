@@ -13,6 +13,8 @@ import com.github.adamantcheese.model.entity.SeenPostEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 import com.github.adamantcheese.model.entity.chan.*
+import com.github.adamantcheese.model.entity.navigation.NavHistoryElementIdEntity
+import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 
 @Database(
@@ -29,7 +31,9 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     SeenPostEntity::class,
     InlinedFileInfoEntity::class,
     ThirdPartyArchiveFetchHistoryEntity::class,
-    ThirdPartyArchiveInfoEntity::class
+    ThirdPartyArchiveInfoEntity::class,
+    NavHistoryElementIdEntity::class,
+    NavHistoryElementInfoEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class
@@ -62,6 +66,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanPostReplyDao(): ChanPostReplyDao
   abstract fun thirdPartyArchiveInfoDao(): ThirdPartyArchiveInfoDao
   abstract fun thirdPartyArchiveFetchHistoryDao(): ThirdPartyArchiveFetchHistoryDao
+  abstract fun navHistoryDao(): NavHistoryDao
 
   companion object {
     const val DATABASE_NAME = "Kuroba.db"

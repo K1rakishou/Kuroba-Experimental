@@ -131,6 +131,20 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideNavHistoryLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): NavHistoryLocalSource {
+    return NavHistoryLocalSource(
+      database,
+      loggerTag,
+      logger
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -278,13 +292,15 @@ class ModelMainModule {
     logger: Logger,
     database: KurobaDatabase,
     @AppCoroutineScope scope: CoroutineScope,
-    @LoggerTagPrefix loggerTag: String
+    @LoggerTagPrefix loggerTag: String,
+    navHistoryLocalSource: NavHistoryLocalSource
   ) : HistoryNavigationRepository {
     return HistoryNavigationRepository(
       database,
       loggerTag,
       logger,
-      scope
+      scope,
+      navHistoryLocalSource
     )
   }
 }

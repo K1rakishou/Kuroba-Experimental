@@ -40,45 +40,36 @@ class ArchivesManager(
 ) {
   private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
   private val mutex = Mutex()
-  private val suspendableInitializer = SuspendableInitializer<Unit>("ArchivesManager")
-
-  private lateinit var allArchivesData: List<ArchiveData>
-  private lateinit var allArchiveDescriptors: List<ArchiveDescriptor>
-  private lateinit var allArchiveDescriptorsMap: Map<Long, ArchiveDescriptor>
+  private val allArchivesData = SuspendableInitializer<List<ArchiveData>>("allArchivesData")
+  private val allArchiveDescriptors = SuspendableInitializer<List<ArchiveDescriptor>>("allArchiveDescriptors")
+  private val allArchiveDescriptorsMap = SuspendableInitializer<Map<Long, ArchiveDescriptor>>("allArchiveDescriptorsMap")
 
   private val archiveDescriptorsPerThread = mutableMapOf<ChanDescriptor.ThreadDescriptor, ArchiveDescriptor>()
 
   init {
     applicationScope.launch {
-      val initResult = Try { initArchivesManager() }
-
-      suspendableInitializer.initWithModularResult(initResult)
+      initArchivesManager()
     }
   }
 
   suspend fun getAllArchiveData(): List<ArchiveData> {
-    suspendableInitializer.awaitUntilInitialized()
-
-    return allArchivesData
+    return allArchivesData.get()
   }
 
   suspend fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
-    suspendableInitializer.awaitUntilInitialized()
-
-    return allArchiveDescriptors
+    return allArchiveDescriptors.get()
   }
 
   suspend fun getArchiveDescriptorByDatabaseId(archiveId: Long?): ArchiveDescriptor? {
+    // Start waiting before holding the lock
+    allArchiveDescriptorsMap.awaitUntilInitialized()
+
     return mutex.withLock {
       if (archiveId == null) {
         return@withLock null
       }
 
-      require(::allArchiveDescriptorsMap.isInitialized) {
-        "allArchiveDescriptorsMap was not initialized yet"
-      }
-
-      return@withLock allArchiveDescriptorsMap[archiveId]
+      return@withLock allArchiveDescriptorsMap.get()[archiveId]
     }
   }
 
@@ -112,7 +103,7 @@ class ArchivesManager(
         return@Try null
       }
 
-      val suitableArchives = allArchivesData.filter { archiveData ->
+      val suitableArchives = allArchivesData.get().filter { archiveData ->
         archiveData.supportedBoards.contains(threadDescriptor.boardCode())
       }
 
@@ -174,7 +165,7 @@ class ArchivesManager(
     }
   }
 
-  fun getRequestLinkForThread(
+  suspend fun getRequestLinkForThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     archiveDescriptor: ArchiveDescriptor
   ): String? {
@@ -190,7 +181,7 @@ class ArchivesManager(
     )
   }
 
-  fun getRequestLinkForPost(
+  suspend fun getRequestLinkForPost(
     postDescriptor: PostDescriptor,
     archiveDescriptor: ArchiveDescriptor
   ): String? {
@@ -216,7 +207,7 @@ class ArchivesManager(
     )
   }
 
-  fun doesArchiveStoreMedia(
+  suspend fun doesArchiveStoreMedia(
     archiveDescriptor: ArchiveDescriptor,
     boardDescriptor: BoardDescriptor
   ): Boolean {
@@ -248,7 +239,7 @@ class ArchivesManager(
   }
 
   suspend fun selectLatestFetchHistoryForAllArchives(): LatestArchivesFetchHistory {
-    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors)
+    return thirdPartyArchiveInfoRepository.selectLatestFetchHistory(allArchiveDescriptors.get())
   }
 
   suspend fun insertFetchHistory(
@@ -282,33 +273,47 @@ class ArchivesManager(
   }
 
   private suspend fun initArchivesManager() {
-    val allArchives = loadArchives()
+    try {
+      val allArchives = loadArchives()
 
-    val archiveDescriptors = allArchives.map { archive ->
-      return@map ArchiveDescriptor(
-        -1L,
-        archive.name,
-        archive.domain,
-        ArchiveDescriptor.ArchiveType.byDomain(archive.domain)
-      )
-    }
+      val archiveDescriptors = allArchives.map { archive ->
+        return@map ArchiveDescriptor(
+          -1L,
+          archive.name,
+          archive.domain,
+          ArchiveDescriptor.ArchiveType.byDomain(archive.domain)
+        )
+      }
 
-    val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
+      val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
 
-    archiveDescriptors.forEach { descriptor ->
-      descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)
+      archiveDescriptors.forEach { descriptor ->
+        descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)
 
-      for (archive in allArchives) {
-        if (descriptor.domain == archive.domain) {
-          archive.setArchiveDescriptor(descriptor)
-          break
+        for (archive in allArchives) {
+          if (descriptor.domain == archive.domain) {
+            archive.setArchiveDescriptor(descriptor)
+            break
+          }
         }
       }
-    }
 
-    allArchivesData = allArchives
-    allArchiveDescriptors = archiveDescriptors
-    allArchiveDescriptorsMap = archiveDescriptors.associateBy { it.getArchiveId() }
+      allArchivesData.initWithValue(allArchives)
+      allArchiveDescriptors.initWithValue(archiveDescriptors)
+      allArchiveDescriptorsMap.initWithValue(archiveDescriptors.associateBy { it.getArchiveId() })
+    } catch (error: Throwable) {
+      if (!allArchivesData.isInitialized()) {
+        allArchivesData.initWithError(error)
+      }
+
+      if (!allArchiveDescriptors.isInitialized()) {
+        allArchiveDescriptors.initWithError(error)
+      }
+
+      if (!allArchiveDescriptorsMap.isInitialized()) {
+        allArchiveDescriptorsMap.initWithError(error)
+      }
+    }
   }
 
   private suspend fun getBestPossibleArchiveOrNull(
@@ -422,8 +427,8 @@ class ArchivesManager(
     }
   }
 
-  private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
-    return allArchivesData.firstOrNull { archiveData ->
+  private suspend fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
+    return allArchivesData.get().firstOrNull { archiveData ->
       return@firstOrNull archiveData.name == archiveDescriptor.name
         && archiveData.domain == archiveDescriptor.domain
     }

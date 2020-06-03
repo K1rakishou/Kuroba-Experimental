@@ -54,6 +54,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.setupFullscreen
+import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import kotlinx.coroutines.*
@@ -202,8 +203,22 @@ class StartActivity : AppCompatActivity(),
   private fun restoreFresh() {
     if (!siteService.areSitesSetup()) {
       browseController?.showSitesNotSetup()
-    } else {
-      browseController?.loadWithDefaultBoard()
+      return
+    }
+
+    historyNavigationManager.runAfterInitialized {
+      val topNavElement = historyNavigationManager.getNavElementAtTop()
+      if (topNavElement != null) {
+        when (topNavElement) {
+          is NavHistoryElement.Catalog -> {
+            browseController?.showBoard(topNavElement.descriptor)
+          }
+          is NavHistoryElement.Thread -> {
+            browseController?.loadWithDefaultBoard()
+            drawerController.loadThread(topNavElement.descriptor)
+          }
+        }
+      }
     }
   }
 

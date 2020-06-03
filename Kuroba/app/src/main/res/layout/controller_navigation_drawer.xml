@@ -56,7 +56,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <com.airbnb.epoxy.EpoxyRecyclerView
                 android:id="@+id/drawer_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="match_parent"
+                android:scrollbars="vertical"/>
 
 <!--     TODO(KurobaEx): move bookmarks to some other place       -->
 <!--            <androidx.recyclerview.widget.RecyclerView-->

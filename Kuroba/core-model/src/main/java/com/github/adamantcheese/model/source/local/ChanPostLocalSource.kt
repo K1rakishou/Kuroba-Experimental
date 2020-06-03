@@ -110,11 +110,11 @@ class ChanPostLocalSource(
     chanPostIdEntities: List<ChanPostIdEntity>,
     chanPostList: List<ChanPost>
   ) {
-    chanPostDao.insertOrIgnoreManyIds(chanPostIdEntities).forEachIndexed { index, postDatabaseId ->
+    chanPostDao.insertOrReplaceManyIds(chanPostIdEntities).forEachIndexed { index, postDatabaseId ->
       chanPostIdEntities[index].postId = postDatabaseId
     }
 
-    chanPostDao.insertOrIgnoreManyPosts(
+    chanPostDao.insertOrReplaceManyPosts(
       chanPostIdEntities.mapIndexed { index, chanPostIdEntity ->
         ChanPostMapper.toEntity(chanPostIdEntity.postId, chanPostList[index])
       }
