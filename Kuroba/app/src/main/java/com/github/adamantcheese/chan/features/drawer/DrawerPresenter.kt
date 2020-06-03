@@ -62,6 +62,10 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
     return historyNavigationManager.isAtTop(descriptor)
   }
 
+  fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
+    historyNavigationManager.onNavElementRemoved(descriptor)
+  }
+
   private suspend fun showNavigationHistory() {
     BackgroundUtils.ensureMainThread()
     historyNavigationManager.awaitUntilInitialized()

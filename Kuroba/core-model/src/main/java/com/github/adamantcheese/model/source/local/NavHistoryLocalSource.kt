@@ -16,16 +16,8 @@ class NavHistoryLocalSource(
   suspend fun selectAll(maxCount: Int): List<NavHistoryElement> {
     ensureInTransaction()
 
-    val navHistory = navHistoryDao.selectAll(maxCount)
-    val excludedIds = navHistory.map { navHistoryFullDto ->
-      navHistoryFullDto.navHistoryElementIdEntity.id
-    }
-
-    navHistoryDao.deleteAllExcept(excludedIds)
-
-    return navHistory.map { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto)
-    }
+    return navHistoryDao.selectAll(maxCount)
+      .map { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto) }
   }
 
   suspend fun persist(navHistoryStack: List<NavHistoryElement>) {
@@ -35,7 +27,9 @@ class NavHistoryLocalSource(
       NavHistoryElementMapper.toNavHistoryElementIdEntity(navHistoryElement)
     }
 
-    val navHistoryIdList = navHistoryDao.insertManyIdsOrReplace(navHistoryElementIdEntityList)
+    val navHistoryIdList = navHistoryDao.insertManyIdsOrReplace(
+      navHistoryElementIdEntityList
+    )
 
     val navHistoryElementInfoEntityList = navHistoryStack.zip(navHistoryIdList)
       .mapIndexed { order, pair ->
@@ -49,6 +43,7 @@ class NavHistoryLocalSource(
       }
 
     navHistoryDao.insertManyInfoOrReplace(navHistoryElementInfoEntityList)
+    navHistoryDao.deleteAllExcept(navHistoryIdList)
   }
 
 }

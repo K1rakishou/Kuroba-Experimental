@@ -62,7 +62,8 @@ class HistoryNavigationManager(
           suspendableInitializer.initWithValue(Unit)
         }
         is ModularResult.Error -> {
-          suspendableInitializer.initWithError(loadedNavElementsResult.error)
+          Logger.e(TAG, "Exception while initializing HistoryNavigationManager", loadedNavElementsResult.error)
+          suspendableInitializer.initWithValue(Unit)
         }
       }
 
@@ -95,9 +96,9 @@ class HistoryNavigationManager(
     thumbnailImageUrl: HttpUrl,
     title: String
   ) {
-    BackgroundUtils.ensureMainThread()
-
     serializedCoroutineExecutor.post {
+      BackgroundUtils.ensureMainThread()
+
       val navElementInfo = NavHistoryElementInfo(thumbnailImageUrl, title)
       val navElement = when (descriptor) {
         is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
@@ -113,8 +114,6 @@ class HistoryNavigationManager(
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor) {
-    BackgroundUtils.ensureMainThread()
-
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 
@@ -131,6 +130,26 @@ class HistoryNavigationManager(
 
       // Move the existing navigation element at the top of the list
       navigationStack.add(0, navigationStack.removeAt(indexOfElem))
+      navStackChanged()
+    }
+  }
+
+  fun onNavElementRemoved(descriptor: ChanDescriptor) {
+    serializedCoroutineExecutor.post {
+      BackgroundUtils.ensureMainThread()
+
+      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+        return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
+          is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+        }
+      }
+
+      if (indexOfElem < 0) {
+        return@post
+      }
+
+      navigationStack.removeAt(indexOfElem)
       navStackChanged()
     }
   }
@@ -183,6 +202,6 @@ class HistoryNavigationManager(
 
   companion object {
     private const val TAG = "HistoryNavigationManager"
-    private const val MAX_NAV_HISTORY_ENTRIES = 128
+    private const val MAX_NAV_HISTORY_ENTRIES = 64
   }
 }

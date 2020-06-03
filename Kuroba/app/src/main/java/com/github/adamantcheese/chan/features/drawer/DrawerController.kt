@@ -27,6 +27,7 @@ import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyRecyclerView
+import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
@@ -37,6 +38,7 @@ import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
 import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
+import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter
@@ -50,6 +52,7 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
+import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.greenrobot.eventbus.EventBus
@@ -182,6 +185,23 @@ class DrawerController(
     }
 
     ViewCompat.requestApplyInsets(rootLayout)
+
+    EpoxyTouchHelper
+      .initSwiping(epoxyRecyclerView)
+      .right()
+      .withTarget(EpoxyHistoryEntryViewModel_::class.java)
+      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyHistoryEntryViewModel_>() {
+        override fun onSwipeCompleted(
+          model: EpoxyHistoryEntryViewModel_,
+          itemView: View?,
+          position: Int,
+          direction: Int
+        ) {
+          super.onSwipeCompleted(model, itemView, position, direction)
+
+          drawerPresenter.onNavElementSwipedAway(model.descriptor())
+        }
+      })
 
     compositeDisposable += drawerPresenter.listenForStateChanges()
       .subscribe(
@@ -347,6 +367,7 @@ class DrawerController(
 
             epoxyHistoryEntryView {
               id("navigation_history_entry_${navHistoryEntry.hashCode()}")
+              descriptor(navHistoryEntry.descriptor)
               imageLoaderRequestData(requestData)
               title(navHistoryEntry.title)
               clickListener {

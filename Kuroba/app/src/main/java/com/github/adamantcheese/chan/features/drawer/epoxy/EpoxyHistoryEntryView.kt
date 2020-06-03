@@ -13,6 +13,7 @@ import com.airbnb.epoxy.*
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
   private var requestDisposable: RequestDisposable? = null
+  private var descriptor: ChanDescriptor? = null
 
   private val viewHolder: LinearLayout
   private val thumbnailImage: AppCompatImageView
@@ -53,6 +55,11 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @ModelProp
   fun setTitle(titleText: String) {
     title.text = titleText
+  }
+
+  @ModelProp(options = [ModelProp.Option.DoNotHash])
+  fun setDescriptor(descriptor: ChanDescriptor) {
+    this.descriptor = descriptor
   }
 
   @CallbackProp
