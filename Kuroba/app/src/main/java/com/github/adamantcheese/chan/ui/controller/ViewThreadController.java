@@ -227,6 +227,7 @@ public class ViewThreadController
         }
 
         ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
+        boolean isThread = descriptor instanceof ChanDescriptor.ThreadDescriptor;
         boolean is4chan = descriptor.siteDescriptor().is4chan();
 
         menuOverflowBuilder
@@ -248,7 +249,7 @@ public class ViewThreadController
                 .withSubItem(
                         ACTION_RETRIEVE_DELETED_POSTS,
                         R.string.action_retrieve_deleted_posts,
-                        is4chan && descriptor instanceof ChanDescriptor.ThreadDescriptor,
+                        is4chan && isThread,
                         this::retrieveDeletedPosts
                 )
                 .withSubItem(
