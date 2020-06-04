@@ -80,7 +80,9 @@ public class SitesSetupController
             new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
                 @Override
                 public boolean onMove(
-                        RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target
+                        RecyclerView recyclerView,
+                        RecyclerView.ViewHolder viewHolder,
+                        RecyclerView.ViewHolder target
                 ) {
                     int from = viewHolder.getAdapterPosition();
                     int to = target.getAdapterPosition();
@@ -182,7 +184,8 @@ public class SitesSetupController
 
         dialogView.setPresenter(presenter);
 
-        final AlertDialog dialog = new AlertDialog.Builder(context).setView(dialogView)
+        final AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(dialogView)
                 .setTitle(R.string.setup_sites_add_title)
                 .setPositiveButton(R.string.add, (dialog1, which) -> dialogView.onPositiveClicked())
                 .setNegativeButton(R.string.cancel, null)

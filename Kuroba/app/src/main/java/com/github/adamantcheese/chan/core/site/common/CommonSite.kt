@@ -222,7 +222,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     override fun respondsTo(url: HttpUrl): Boolean {
-      return url.host == url.host
+      return this.url!!.host == url.host
     }
     
     override fun desktopUrl(loadable: Loadable, postNo: Long?): String {

@@ -21,7 +21,6 @@ import android.view.View;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
-import com.github.adamantcheese.common.GenericFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,19 +154,6 @@ public class NavigationItem {
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
             return withSubItem(id, getString(text), true, clickCallback);
-        }
-
-        public MenuOverflowBuilder withSubItem(
-                int id,
-                int text,
-                ToolbarMenuSubItem.ClickCallback clickCallback,
-                GenericFunction<Boolean> predicatee
-        ) {
-            if (predicatee.invoke()) {
-                return withSubItem(id, getString(text), true, clickCallback);
-            }
-
-            return this;
         }
 
         public MenuOverflowBuilder withSubItem(

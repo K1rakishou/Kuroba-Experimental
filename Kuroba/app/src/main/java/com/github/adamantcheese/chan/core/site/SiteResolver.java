@@ -83,7 +83,8 @@ public class SiteResolver {
         if (httpUrl == null) {
             for (SiteUrlHandler siteUrlHandler : siteUrlHandlers) {
                 if (siteUrlHandler.matchesName(url)) {
-                    return new SiteResolverResult(SiteResolverResult.Match.BUILTIN,
+                    return new SiteResolverResult(
+                            SiteResolverResult.Match.BUILTIN,
                             siteUrlHandler.getSiteClass(),
                             null
                     );
@@ -99,7 +100,11 @@ public class SiteResolver {
 
         for (SiteUrlHandler siteUrlHandler : siteUrlHandlers) {
             if (siteUrlHandler.respondsTo(httpUrl)) {
-                return new SiteResolverResult(SiteResolverResult.Match.BUILTIN, siteUrlHandler.getSiteClass(), null);
+                return new SiteResolverResult(
+                        SiteResolverResult.Match.BUILTIN,
+                        siteUrlHandler.getSiteClass(),
+                        null
+                );
             }
         }
 

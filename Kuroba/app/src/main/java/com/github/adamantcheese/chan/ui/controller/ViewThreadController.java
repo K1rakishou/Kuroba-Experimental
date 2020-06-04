@@ -248,8 +248,8 @@ public class ViewThreadController
                 .withSubItem(
                         ACTION_RETRIEVE_DELETED_POSTS,
                         R.string.action_retrieve_deleted_posts,
-                        this::retrieveDeletedPosts,
-                        () -> is4chan && descriptor instanceof ChanDescriptor.ThreadDescriptor
+                        is4chan && descriptor instanceof ChanDescriptor.ThreadDescriptor,
+                        this::retrieveDeletedPosts
                 )
                 .withSubItem(
                         ACTION_OPEN_BROWSER,
@@ -264,8 +264,8 @@ public class ViewThreadController
                 .withSubItem(
                         ACTION_GO_TO_POST,
                         R.string.action_go_to_post,
-                        this::onGoToPostClicked,
-                        () -> BuildConfig.DEV_BUILD
+                        BuildConfig.DEV_BUILD,
+                        this::onGoToPostClicked
                 )
                 .withSubItem(
                         ACTION_SCROLL_TO_TOP,
@@ -359,7 +359,7 @@ public class ViewThreadController
 
         if (threadLayout.presenter.save()) {
             updateDrawerHighlighting(loadable);
-            populateLocalOrLiveVersionMenu();
+            updateLocalThreadMenuItems();
 
             // Update icon at the very end, otherwise it won't start animating at all
             setSaveIconState(true);
@@ -437,7 +437,7 @@ public class ViewThreadController
      */
     private void handleClickViewLocalVersion(ToolbarMenuSubItem item) {
         if (loadable.getLoadableDownloadingState() != DownloadingAndNotViewable) {
-            populateLocalOrLiveVersionMenu();
+            updateLocalThreadMenuItems();
             return;
         }
 
@@ -456,7 +456,7 @@ public class ViewThreadController
      */
     private void handleClickViewLiveVersion(ToolbarMenuSubItem item) {
         if (loadable.getLoadableDownloadingState() != DownloadingAndViewable) {
-            populateLocalOrLiveVersionMenu();
+            updateLocalThreadMenuItems();
             return;
         }
 
@@ -658,7 +658,7 @@ public class ViewThreadController
         }
 
         // if we're toggling local/live we need to rebuild the menu
-        populateLocalOrLiveVersionMenu();
+        updateLocalThreadMenuItems();
     }
 
     private void loadThreadInternal(Loadable loadable, boolean addToLocalBackHistory) {
@@ -667,7 +667,7 @@ public class ViewThreadController
         presenter.bindLoadable(loadable, addToLocalBackHistory);
         this.loadable = loadable;
 
-        populateLocalOrLiveVersionMenu();
+        updateMenuItems();
         navigation.title = loadable.title;
         requireNavController().requireToolbar().updateTitle(navigation);
 
@@ -681,7 +681,28 @@ public class ViewThreadController
         showHints();
     }
 
-    private void populateLocalOrLiveVersionMenu() {
+    private void updateMenuItems() {
+        updateRetrievePostsFromArchivesMenuItem();
+        updateLocalThreadMenuItems();
+    }
+
+    private void updateRetrievePostsFromArchivesMenuItem() {
+        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
+        boolean is4chan = descriptor.siteDescriptor().is4chan();
+
+        ToolbarMenuSubItem retrieveDeletedPostsItem = navigation.findSubItem(ACTION_RETRIEVE_DELETED_POSTS);
+        if (retrieveDeletedPostsItem == null) {
+            return;
+        }
+
+        if (is4chan) {
+            retrieveDeletedPostsItem.visible = true;
+        } else {
+            retrieveDeletedPostsItem.visible = false;
+        }
+    }
+
+    private void updateLocalThreadMenuItems() {
         // setup the extra items if they're needed, or remove as necessary
         ToolbarMenuSubItem viewLocalCopyItem = navigation.findSubItem(ACTION_VIEW_LOCAL_COPY);
         ToolbarMenuSubItem viewLiveCopyItem = navigation.findSubItem(ACTION_VIEW_LIVE_COPY);
@@ -817,7 +838,7 @@ public class ViewThreadController
 
         setPinIconState(false);
         setSaveIconState(false);
-        populateLocalOrLiveVersionMenu();
+        updateLocalThreadMenuItems();
 
         requireNavController().requireToolbar().updateTitle(navigation);
         requireNavController().requireToolbar().updateViewForItem(navigation);
