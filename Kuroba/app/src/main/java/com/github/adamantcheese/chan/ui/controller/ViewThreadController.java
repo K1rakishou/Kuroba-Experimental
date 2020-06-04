@@ -64,6 +64,7 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
+import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
@@ -105,11 +106,12 @@ public class ViewThreadController
     private static final int ACTION_SEARCH = 9001;
     private static final int ACTION_RELOAD = 9002;
     private static final int ACTION_VIEW_REMOVED_POSTS = 9003;
-    private static final int ACTION_OPEN_BROWSER = 9004;
-    private static final int ACTION_SHARE = 9005;
-    private static final int ACTION_GO_TO_POST = 9006;
-    private static final int ACTION_SCROLL_TO_TOP = 9007;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 9008;
+    private static final int ACTION_RETRIEVE_DELETED_POSTS = 9004;
+    private static final int ACTION_OPEN_BROWSER = 9005;
+    private static final int ACTION_SHARE = 9006;
+    private static final int ACTION_GO_TO_POST = 9007;
+    private static final int ACTION_SCROLL_TO_TOP = 9008;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 9009;
 
     private static final int ACTION_VIEW_LOCAL_COPY = 10000;
     private static final int ACTION_VIEW_LIVE_COPY = 10001;
@@ -224,6 +226,9 @@ public class ViewThreadController
             );
         }
 
+        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
+        boolean is4chan = descriptor.siteDescriptor().is4chan();
+
         menuOverflowBuilder
                 .withSubItem(
                         ACTION_SEARCH,
@@ -237,8 +242,14 @@ public class ViewThreadController
                 )
                 .withSubItem(
                         ACTION_VIEW_REMOVED_POSTS,
-                        R.string.view_removed_posts,
+                        R.string.action_view_removed_posts,
                         this::showRemovedPostsDialog
+                )
+                .withSubItem(
+                        ACTION_RETRIEVE_DELETED_POSTS,
+                        R.string.action_retrieve_deleted_posts,
+                        this::retrieveDeletedPosts,
+                        () -> is4chan && descriptor instanceof ChanDescriptor.ThreadDescriptor
                 )
                 .withSubItem(
                         ACTION_OPEN_BROWSER,
@@ -364,7 +375,11 @@ public class ViewThreadController
     }
 
     private void reloadClicked(ToolbarMenuSubItem item) {
-        threadLayout.presenter.requestData(true);
+        threadLayout.presenter.requestData();
+    }
+
+    public void retrieveDeletedPosts(ToolbarMenuSubItem item) {
+        threadLayout.presenter.retrieveDeletedPosts();
     }
 
     public void showRemovedPostsDialog(ToolbarMenuSubItem item) {

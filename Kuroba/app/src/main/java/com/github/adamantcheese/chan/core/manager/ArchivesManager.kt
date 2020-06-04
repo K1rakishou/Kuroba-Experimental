@@ -8,9 +8,7 @@ import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
-import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import com.google.gson.annotations.Expose
@@ -91,48 +89,114 @@ class ArchivesManager(
     return mutex.withLock { archiveDescriptorsPerThread[descriptor] }
   }
 
+  suspend fun hasEnabledArchives(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    Logger.d(TAG, "hasEnabledArchives(threadDescriptor=$threadDescriptor)")
+
+    if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
+      // Only 4chan archives are supported
+      return false
+    }
+
+    val suitableArchives = allArchivesData.get().filter { archiveData ->
+      archiveData.supportedBoards.contains(threadDescriptor.boardCode())
+    }
+
+    if (suitableArchives.isEmpty()) {
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "No archives for board (${threadDescriptor.boardCode()})")
+      }
+
+      return false
+    }
+
+    for (suitableArchive in suitableArchives) {
+      val archiveDescriptor = suitableArchive.getArchiveDescriptor()
+
+      val isEnabled = thirdPartyArchiveInfoRepository.isArchiveEnabled(archiveDescriptor)
+        .peekError { error -> Logger.e(TAG, "isArchiveEnabled error", error) }
+        .valueOrNull() ?: false
+
+      if (isEnabled) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  suspend fun allowedToUseAnyOfEnabledArchives(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    Logger.d(TAG, "allowedToUseAnyOfEnabledArchives(threadDescriptor=$threadDescriptor)")
+
+    val result = Try {
+      val suitableArchives = getEnabledSuitableArchives(threadDescriptor)
+      if (suitableArchives.isEmpty()) {
+        return@Try false
+      }
+
+      val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
+        suitableArchives.map { it.getArchiveDescriptor() },
+        threadDescriptor
+      ).unwrap()
+
+      if (fetchHistoryMap.isEmpty()) {
+        // No fetch history at all meaning we haven't used archives yet
+        return true
+      }
+
+      val now = DateTime.now()
+
+      for ((_, fetchHistoryList) in fetchHistoryMap) {
+        if (fetchHistoryList.isEmpty()) {
+          // No history for this archive meaning we haven't used this particular archive
+          return@Try true
+        }
+
+        for (thirdPartyArchiveFetchResult in fetchHistoryList) {
+          val timeDelta = now.minus(thirdPartyArchiveFetchResult.insertedOn.millis)
+
+          if (thirdPartyArchiveFetchResult.success && timeDelta.millis > ARCHIVE_UPDATE_INTERVAL.millis) {
+            return@Try true
+          }
+        }
+
+        val hasSuccessful = fetchHistoryList.any { fetchResult -> fetchResult.success }
+        if (hasSuccessful) {
+          continue
+        }
+
+        // If there are no successful fetches over then last N fetches and their total amount is less
+        // than [appConstants.archiveFetchHistoryMaxEntries] consider such archive suitable for a
+        // new fetch.
+        if (fetchHistoryList.size < appConstants.archiveFetchHistoryMaxEntries) {
+          return@Try true
+        }
+      }
+
+      return@Try false
+    }
+
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "allowedToUseAnyOfEnabledArchives error", result.error)
+      return false
+    }
+
+    return (result as ModularResult.Value).value
+  }
+
   suspend fun getArchiveDescriptor(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    forced: Boolean
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<ArchiveDescriptor?> {
-    Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor, forced=$forced)")
+    Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor)")
 
     return Try {
-      if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
-        // Only 4chan archives are supported
-        return@Try null
-      }
-
-      val suitableArchives = allArchivesData.get().filter { archiveData ->
-        archiveData.supportedBoards.contains(threadDescriptor.boardCode())
-      }
-
-      if (suitableArchives.isEmpty()) {
-        if (verboseLogsEnabled) {
-          Logger.d(TAG, "No archives for board (${threadDescriptor.boardCode()})")
-        }
-
-        return@Try null
-      }
-
-      val enabledSuitableArchives = suitableArchives.filter { suitableArchive ->
-        return@filter thirdPartyArchiveInfoRepository.isArchiveEnabled(
-          suitableArchive.getArchiveDescriptor()
-        ).unwrap()
-      }
-
+      val enabledSuitableArchives = getEnabledSuitableArchives(threadDescriptor)
       if (enabledSuitableArchives.isEmpty()) {
-        if (verboseLogsEnabled) {
-          Logger.d(TAG, "All archives are disabled")
-        }
-
         return@Try null
       }
 
       val archiveDescriptor = getBestPossibleArchiveOrNull(
         threadDescriptor,
-        enabledSuitableArchives,
-        forced
+        enabledSuitableArchives
       )
 
       if (archiveDescriptor != null) {
@@ -141,6 +205,43 @@ class ArchivesManager(
 
       return@Try archiveDescriptor
     }
+  }
+
+  private suspend fun getEnabledSuitableArchives(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): List<ArchiveData> {
+    if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
+      // Only 4chan archives are supported
+      return emptyList()
+    }
+
+    val suitableArchives = allArchivesData.get().filter { archiveData ->
+      archiveData.supportedBoards.contains(threadDescriptor.boardCode())
+    }
+
+    if (suitableArchives.isEmpty()) {
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "No archives for board (${threadDescriptor.boardCode()})")
+      }
+
+      return emptyList()
+    }
+
+    val enabledSuitableArchives = suitableArchives.filter { suitableArchive ->
+      return@filter thirdPartyArchiveInfoRepository.isArchiveEnabled(
+        suitableArchive.getArchiveDescriptor()
+      ).unwrap()
+    }
+
+    if (enabledSuitableArchives.isEmpty()) {
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "All archives are disabled")
+      }
+
+      return emptyList()
+    }
+
+    return enabledSuitableArchives
   }
 
   fun calculateFetchResultsScore(fetchHistoryList: List<ThirdPartyArchiveFetchResult>): Int {
@@ -179,46 +280,6 @@ class ArchivesManager(
       threadDescriptor.boardCode(),
       threadDescriptor.opNo
     )
-  }
-
-  suspend fun getRequestLinkForPost(
-    postDescriptor: PostDescriptor,
-    archiveDescriptor: ArchiveDescriptor
-  ): String? {
-    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
-    if (threadDescriptor == null) {
-      // Not a thread, catalogs are not supported
-      return null
-    }
-
-    if (!threadDescriptor.boardDescriptor.siteDescriptor.is4chan()) {
-      return null
-    }
-
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return null
-
-    return String.format(
-      Locale.ENGLISH,
-      FOOLFUUKA_POST_ENDPOINT_FORMAT,
-      archiveData.domain,
-      threadDescriptor.boardCode(),
-      postDescriptor.postNo
-    )
-  }
-
-  suspend fun doesArchiveStoreMedia(
-    archiveDescriptor: ArchiveDescriptor,
-    boardDescriptor: BoardDescriptor
-  ): Boolean {
-    if (!boardDescriptor.siteDescriptor.is4chan()) {
-      return false
-    }
-
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return false
-
-    return archiveData.supportedFiles.contains(boardDescriptor.boardCode)
   }
 
   suspend fun isArchiveEnabled(archiveDescriptor: ArchiveDescriptor): ModularResult<Boolean> {
@@ -318,11 +379,10 @@ class ArchivesManager(
 
   private suspend fun getBestPossibleArchiveOrNull(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    suitableArchives: List<ArchiveData>,
-    forced: Boolean
+    suitableArchives: List<ArchiveData>
   ): ArchiveDescriptor? {
     Logger.d(TAG, "getBestPossibleArchiveOrNull(threadDescriptor=$threadDescriptor, " +
-      "suitableArchivesSize=${suitableArchives.size}, forced=$forced)")
+      "suitableArchivesSize=${suitableArchives.size})")
 
     // Get fetch history (last N fetch results) for this thread for every suitable archive
     val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
@@ -337,11 +397,7 @@ class ArchivesManager(
       }?.getArchiveDescriptor()
     }
 
-    val fetchIsFreshTimeThreshold = if (forced) {
-      DateTime.now().minus(FORCED_ARCHIVE_UPDATE_INTERVAL)
-    } else {
-      DateTime.now().minus(NORMAL_ARCHIVE_UPDATE_INTERVAL)
-    }
+    val fetchIsFreshTimeThreshold = DateTime.now().minus(ARCHIVE_UPDATE_INTERVAL)
 
     val sortedFetchHistoryList = fetchHistoryMap.mapNotNull { (archiveDescriptor, fetchHistoryList) ->
       // If fetch history contains at least one fetch that was executed later than
@@ -372,16 +428,14 @@ class ArchivesManager(
       }
     }
 
-    if (!forced) {
-      val allArchivesAreBad = sortedFetchHistoryList.all { (_, successfulFetchesCount) ->
-        successfulFetchesCount == 0
-      }
+    val allArchivesAreBad = sortedFetchHistoryList.all { (_, successfulFetchesCount) ->
+      successfulFetchesCount == 0
+    }
 
-      // If there are no archive with positive score and we are not forced to fetch new posts
-      // then do not fetch anything.
-      if (allArchivesAreBad) {
-        return null
-      }
+    // If there are no archive with positive score and we are not forced to fetch new posts
+    // then do not fetch anything.
+    if (allArchivesAreBad) {
+      return null
     }
 
     // Try to find an archive that supports files for this board
@@ -498,11 +552,7 @@ class ArchivesManager(
       "thebarchive.com"
     )
 
-    // We can forcefully fetch posts from an archive no more than once in 5 minutes
-    private val FORCED_ARCHIVE_UPDATE_INTERVAL = Duration.standardMinutes(5)
-
-    // We can normally fetch posts from an archive no more than once in four hours
-    private val NORMAL_ARCHIVE_UPDATE_INTERVAL = Duration.standardHours(4)
+    val ARCHIVE_UPDATE_INTERVAL = Duration.standardMinutes(10)
 
     private const val TAG = "ArchivesManager"
     private const val ARCHIVES_JSON_FILE_NAME = "archives.json"

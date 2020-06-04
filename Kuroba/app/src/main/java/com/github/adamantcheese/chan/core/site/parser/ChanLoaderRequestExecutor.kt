@@ -113,12 +113,13 @@ class ChanLoaderRequestExecutor(
 
     val descriptor = getDescriptor(requestParams.loadable)
 
-    val archiveDescriptor = when (descriptor) {
-      is ChanDescriptor.ThreadDescriptor -> archivesManager.getArchiveDescriptor(
-        descriptor,
-        requestParams.forceLoading
-      ).unwrap()
-      is ChanDescriptor.CatalogDescriptor -> null
+    val archiveDescriptor = if (requestParams.retrieveDeletedPostsFromArchives) {
+      when (descriptor) {
+        is ChanDescriptor.ThreadDescriptor -> archivesManager.getArchiveDescriptor(descriptor).unwrap()
+        is ChanDescriptor.CatalogDescriptor -> null
+      }
+    } else {
+      null
     }
 
     val request = Request.Builder()

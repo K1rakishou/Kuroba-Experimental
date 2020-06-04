@@ -161,9 +161,9 @@ public class NavigationItem {
                 int id,
                 int text,
                 ToolbarMenuSubItem.ClickCallback clickCallback,
-                GenericFunction<Boolean> conditionFunc
+                GenericFunction<Boolean> predicatee
         ) {
-            if (conditionFunc.invoke()) {
+            if (predicatee.invoke()) {
                 return withSubItem(id, getString(text), true, clickCallback);
             }
 

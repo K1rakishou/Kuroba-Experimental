@@ -57,7 +57,9 @@ import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
@@ -84,7 +86,8 @@ class ThreadPresenter @Inject constructor(
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
-  private val historyNavigationManager: HistoryNavigationManager
+  private val historyNavigationManager: HistoryNavigationManager,
+  private val archivesManager: ArchivesManager
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -101,10 +104,10 @@ class ThreadPresenter @Inject constructor(
   private var order = PostsFilter.Order.BUMP
   private var historyAdded = false
   private var addToLocalBackHistory = false
-  private var context: Context? = null
   private val compositeDisposable = CompositeDisposable()
+  private val job = SupervisorJob()
 
-  private lateinit var job: Job
+  private lateinit var context: Context
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadPresenter")
@@ -124,7 +127,8 @@ class ThreadPresenter @Inject constructor(
       return PinType.hasWatchNewPostsFlag(pin.pinType)
     }
 
-  fun create(threadPresenterCallback: ThreadPresenterCallback?) {
+  fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback?) {
+    this.context = context
     this.threadPresenterCallback = threadPresenterCallback
   }
 
@@ -135,12 +139,7 @@ class ThreadPresenter @Inject constructor(
   @Synchronized
   fun bindLoadable(_loadable: Loadable, addToLocalBackHistory: Boolean) {
     var loadable = _loadable
-
-    if (::job.isInitialized) {
-      job.cancel()
-    }
-
-    job = SupervisorJob()
+    job.cancelChildren()
 
     if (loadable != this.loadable) {
       if (isBound) {
@@ -197,10 +196,7 @@ class ThreadPresenter @Inject constructor(
       threadPresenterCallback?.showLoading()
     }
 
-    if (::job.isInitialized) {
-      job.cancel()
-    }
-
+    job.cancelChildren()
     compositeDisposable.clear()
   }
 
@@ -276,12 +272,44 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  @JvmOverloads
-  fun requestData(forced: Boolean = false) {
+  fun requestData() {
     BackgroundUtils.ensureMainThread()
+
     if (isBound) {
       threadPresenterCallback?.showLoading()
-      chanLoader!!.requestData(forced)
+      chanLoader?.requestData()
+    }
+  }
+
+  fun retrieveDeletedPosts() {
+    BackgroundUtils.ensureMainThread()
+    val descriptor = DescriptorUtils.getDescriptor(loadable!!)
+
+    if (isBound && descriptor is ChanDescriptor.ThreadDescriptor) {
+      launch {
+        if (!archivesManager.hasEnabledArchives(descriptor)) {
+          showToast(
+            context,
+            context.getString(R.string.thread_presenter_no_archives_enabled),
+            Toast.LENGTH_LONG
+          )
+          return@launch
+        }
+
+        if (!archivesManager.allowedToUseAnyOfEnabledArchives(descriptor)) {
+          val minutes = ArchivesManager.ARCHIVE_UPDATE_INTERVAL.standardMinutes
+
+          showToast(
+            context,
+            context.getString(R.string.thread_presenter_no_available_archives, minutes),
+            Toast.LENGTH_LONG
+          )
+          return@launch
+        }
+
+        threadPresenterCallback?.showLoading()
+        chanLoader?.requestDataWithDeletedPosts()
+      }
     }
   }
 
@@ -409,7 +437,7 @@ class ThreadPresenter @Inject constructor(
       AndroidUtils.postToEventBus(PinAddedMessage(newPin))
     }
     if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
-      AndroidUtils.showToast(context, R.string.thread_layout_background_watcher_is_disabled_message, Toast.LENGTH_LONG)
+      showToast(context, R.string.thread_layout_background_watcher_is_disabled_message, Toast.LENGTH_LONG)
     }
     return true
   }
@@ -984,7 +1012,7 @@ class ThreadPresenter @Inject constructor(
   ): FloatingListMenuItem {
     return FloatingListMenuItem(
       postOptionPin,
-      context!!.getString(stringId)
+      context.getString(stringId)
     )
   }
 
@@ -1073,7 +1101,7 @@ class ThreadPresenter @Inject constructor(
           loadable!!.no.toLong(),
           post.no
         )
-        AndroidUtils.showToast(context, "Refresh to add mock replies")
+        showToast(context, "Refresh to add mock replies")
       }
     }
   }
@@ -1145,7 +1173,7 @@ class ThreadPresenter @Inject constructor(
       )
 
       if (board == null) {
-        AndroidUtils.showToast(context, R.string.site_uses_dynamic_boards)
+        showToast(context, R.string.site_uses_dynamic_boards)
         return
       }
 
@@ -1167,7 +1195,7 @@ class ThreadPresenter @Inject constructor(
       )
 
       if (board == null) {
-        AndroidUtils.showToast(context, R.string.site_uses_dynamic_boards)
+        showToast(context, R.string.site_uses_dynamic_boards)
         return
       }
 
@@ -1392,10 +1420,17 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun showRemovedPostsDialog() {
-    if (!isBound || chanLoader!!.thread == null || loadable!!.isCatalogMode) {
+    if (!isBound || loadable?.isCatalogMode == true) {
       return
     }
-    threadPresenterCallback?.viewRemovedPostsForTheThread(chanLoader!!.thread!!.posts, loadable!!.no.toLong())
+
+    val posts = chanLoader?.thread?.posts
+      ?: return
+
+    val loadableNo = loadable?.no?.toLong()
+      ?: return
+
+    threadPresenterCallback?.viewRemovedPostsForTheThread(posts, loadableNo)
   }
 
   fun onRestoreRemovedPostsClicked(selectedPosts: List<Long>) {
@@ -1404,10 +1439,6 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.onRestoreRemovedPostsClicked(loadable!!, selectedPosts)
-  }
-
-  fun setContext(context: Context?) {
-    this.context = context
   }
 
   fun updateLoadable(loadableDownloadingState: LoadableDownloadingState?) {

@@ -139,6 +139,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
     <string name="action_pin">Bookmark</string>
+    <string name="action_view_removed_posts">View removed posts</string>
+    <string name="action_retrieve_deleted_posts">Retrieve deleted posts from archive</string>
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_share">Share</string>
     <string name="action_go_to_post">Go to post</string>
@@ -765,6 +767,8 @@ Don't have a 4chan Pass?<br>
             disable it (so that you don\'t have to wait ~20 seconds each time you open a thread).]]>
     </string>
 
+    <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread.</string>
+
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
@@ -806,7 +810,6 @@ Don't have a 4chan Pass?<br>
     <string name="thread_layout_remove_post">Remove post</string>
     <string name="thread_layout_hide_whole_chain_as_well">Would you like to hide the whole reply chain as well?</string>
     <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
-    <string name="view_removed_posts">View removed posts</string>
     <string name="restore_posts">Restore posts</string>
     <string name="restored_n_posts">Restored %1$d posts</string>
     <string name="no_removed_posts_for_current_thread">No removed posts found for the current thread</string>
@@ -990,5 +993,6 @@ Don't have a 4chan Pass?<br>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here.</string>
+    <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
 
 </resources>

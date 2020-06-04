@@ -188,11 +188,15 @@ class ChanThreadLoader(
     private fun resetLoader() {
     }
 
+    fun requestDataWithDeletedPosts() {
+        requestData(true)
+    }
+
     /**
      * Request data for the first time.
      */
     @JvmOverloads
-    fun requestData(forced: Boolean = false) {
+    fun requestData(retrieveDeletedPostsFromArchives: Boolean = false) {
         BackgroundUtils.ensureMainThread()
         clearTimer()
 
@@ -200,14 +204,14 @@ class ChanThreadLoader(
                 .subscribeOn(backgroundScheduler)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
-                        { loaded -> requestDataInternal(loaded, forced) },
+                        { loaded -> requestDataInternal(loaded, retrieveDeletedPostsFromArchives) },
                         { error -> notifyAboutError(ChanLoaderException(error)) }
                 )
 
         compositeDisposable.add(disposable)
     }
 
-    private fun requestDataInternal(loaded: Boolean, forced: Boolean) {
+    private fun requestDataInternal(loaded: Boolean, retrieveDeletedPostsFromArchives: Boolean) {
         BackgroundUtils.ensureMainThread()
 
         if (loaded) {
@@ -226,7 +230,7 @@ class ChanThreadLoader(
         currentTimeout = -1
 
         synchronized(this) { thread = null }
-        requestMoreDataInternal(forced)
+        requestMoreDataInternal(retrieveDeletedPostsFromArchives)
     }
 
     private fun loadSavedCopyIfExists(): Boolean {
@@ -267,21 +271,21 @@ class ChanThreadLoader(
      *
      * @return `true` if a new request was started, `false` otherwise.
      */
-    fun requestMoreData(forced: Boolean): Boolean {
+    fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
         BackgroundUtils.ensureMainThread()
         clearPendingRunnable()
 
         return if (loadable.isThreadMode && requestJob == null) {
-            compositeDisposable.add(requestMoreDataInternal(forced))
+            compositeDisposable.add(requestMoreDataInternal(retrieveDeletedPostsFromArchives))
             true
         } else {
             false
         }
     }
 
-    private fun requestMoreDataInternal(forced: Boolean): Disposable {
+    private fun requestMoreDataInternal(retrieveDeletedPostsFromArchives: Boolean): Disposable {
         val getDataResult = Single.fromCallable {
-            val requestJob = getData(forced)
+            val requestJob = getData(retrieveDeletedPostsFromArchives)
                     ?: return@fromCallable error<Job>(ThreadAlreadyArchivedException())
 
             return@fromCallable value(requestJob)
@@ -361,7 +365,7 @@ class ChanThreadLoader(
         clearPendingRunnable()
     }
 
-    private fun getData(forced: Boolean): Job? {
+    private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
         BackgroundUtils.ensureBackgroundThread()
 
         if (loadable.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded
@@ -380,7 +384,7 @@ class ChanThreadLoader(
                 loadable,
                 loadable.getSite().chanReader(),
                 synchronized(this) { thread?.posts ?: ArrayList() },
-                forced
+                retrieveDeletedPostsFromArchives
         )
 
         val url = getChanUrl(loadable).toString()

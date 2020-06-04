@@ -38,22 +38,17 @@ public class ChanLoaderRequestParams {
      */
     public final List<Post> cached;
 
-    /**
-     * True when user clicked either the thread menu "Reload" button in the toolbar or the UpdateCell
-     * in the posts recycler view. We use it to force fetch posts from the archives ignoring whether
-     * all archives are dead
-     * */
-    public final boolean forceLoading;
+    public final boolean retrieveDeletedPostsFromArchives;
 
     public ChanLoaderRequestParams(
             Loadable loadable,
             ChanReader chanReader,
             List<Post> cached,
-            boolean forceLoading
+            boolean retrieveDeletedPostsFromArchives
     ) {
         this.loadable = loadable;
         this.chanReader = chanReader;
         this.cached = cached;
-        this.forceLoading = forceLoading;
+        this.retrieveDeletedPostsFromArchives = retrieveDeletedPostsFromArchives;
     }
 }

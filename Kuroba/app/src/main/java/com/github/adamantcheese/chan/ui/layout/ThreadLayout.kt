@@ -150,7 +150,7 @@ class ThreadLayout @JvmOverloads constructor(
     progressLayout = AndroidUtils.inflate(context, R.layout.layout_thread_progress, this, false)
 
     // View setup
-    presenter.setContext(context)
+    presenter.create(context, this)
     threadListLayout.setCallbacks(presenter, presenter, presenter, presenter, this)
     postPopupHelper = PostPopupHelper(context, presenter, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
@@ -168,8 +168,6 @@ class ThreadLayout @JvmOverloads constructor(
       replyButton.setToolbar(callback.toolbar)
       themeHelper.theme.applyFabColor(replyButton)
     }
-
-    presenter.create(this)
   }
 
   fun destroy() {
