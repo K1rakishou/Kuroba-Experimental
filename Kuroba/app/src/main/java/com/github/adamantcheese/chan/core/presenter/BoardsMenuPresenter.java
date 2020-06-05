@@ -50,9 +50,7 @@ public class BoardsMenuPresenter
     }
 
     public void create(Callback callback, Board selectedBoard) {
-
         this.allBoards.addObserver(this);
-
         items = new Items();
 
         updateWithFilter();

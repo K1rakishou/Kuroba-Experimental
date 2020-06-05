@@ -1179,11 +1179,11 @@ class MultiImageView @JvmOverloads constructor(
       mediaSource.isAccessible = true
 
       if (mediaSource.get(exoPlayer) != null) {
-        val source = mediaSource[exoPlayer] as ProgressiveMediaSource
+        val source = mediaSource.get(exoPlayer) as ProgressiveMediaSource
         val dataSource = source.javaClass.getDeclaredField("dataSourceFactory")
 
         dataSource.isAccessible = true
-        val factory = dataSource[source] as DataSource.Factory
+        val factory = dataSource.get(source) as DataSource.Factory
         (factory.createDataSource() as WebmStreamingDataSource).clearListeners()
         dataSource.isAccessible = false
       }

@@ -79,9 +79,10 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
 
-      if ((width != null && width > 0) && (height != null && height > 0)) {
-        size(width, height)
-      }
+      // TODO(KurobaEx): disabled for now because some images cause crashes
+//      if ((width != null && width > 0) && (height != null && height > 0)) {
+//        size(width, height)
+//      }
 
       listener(
         onError = { _, throwable ->
@@ -107,9 +108,12 @@ class ImageLoaderV2(
       )
       target(
         onSuccess = { drawable ->
-          listenerRef.get()?.onResponse(drawable as BitmapDrawable)
-          listenerRef.set(null)
-          contextRef.set(null)
+          try {
+            listenerRef.get()?.onResponse(drawable as BitmapDrawable)
+          } finally {
+            listenerRef.set(null)
+            contextRef.set(null)
+          }
         }
       )
 
@@ -133,19 +137,22 @@ class ImageLoaderV2(
       data(url)
       lifecycle(lifecycle)
 
-      if ((width != null && width > 0) && (height != null && height > 0)) {
-        size(width, height)
-      }
+      // TODO(KurobaEx): disabled for now because some images cause crashes
+//      if ((width != null && width > 0) && (height != null && height > 0)) {
+//        size(width, height)
+//      }
 
       listener(
         onError = { _, throwable ->
-          if (throwable is HttpException && throwable.response.code == 404) {
-            localListener.get()?.onNotFound()
-          } else {
-            localListener.get()?.onResponseError(throwable)
+          try {
+            if (throwable is HttpException && throwable.response.code == 404) {
+              localListener.get()?.onNotFound()
+            } else {
+              localListener.get()?.onResponseError(throwable)
+            }
+          } finally {
+            localListener.set(null)
           }
-
-          localListener.set(null)
         },
         onCancel = {
           localListener.set(null)
@@ -153,8 +160,11 @@ class ImageLoaderV2(
       )
       target(
         onSuccess = { drawable ->
-          localListener.get()?.onResponse(drawable as BitmapDrawable, false)
-          localListener.set(null)
+          try {
+            localListener.get()?.onResponse(drawable as BitmapDrawable, false)
+          } finally {
+            localListener.set(null)
+          }
         }
       )
 
