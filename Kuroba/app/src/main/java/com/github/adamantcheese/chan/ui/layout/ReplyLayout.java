@@ -247,9 +247,10 @@ public class ReplyLayout
 
         previewHolder.setOnClickListener(this);
 
-        moreDropdown = new DropdownArrowDrawable(dp(16),
+        moreDropdown = new DropdownArrowDrawable(
                 dp(16),
-                !ChanSettings.moveInputToBottom.get(),
+                dp(16),
+                false,
                 getAttrColor(getContext(), R.attr.dropdown_dark_color),
                 getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
         );
@@ -331,14 +332,12 @@ public class ReplyLayout
         params.width = MATCH_PARENT;
         params.height = matchParent ? MATCH_PARENT : WRAP_CONTENT;
 
-        if (ChanSettings.moveInputToBottom.get()) {
-            if (matchParent) {
-                setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, 0);
-                params.gravity = Gravity.TOP;
-            } else {
-                setPadding(0, 0, 0, 0);
-                params.gravity = Gravity.BOTTOM;
-            }
+        if (matchParent) {
+            setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, 0);
+            params.gravity = Gravity.TOP;
+        } else {
+            setPadding(0, 0, 0, 0);
+            params.gravity = Gravity.BOTTOM;
         }
 
         setLayoutParams(params);
@@ -621,17 +620,10 @@ public class ReplyLayout
 
     @Subscribe
     public void onEvent(RefreshUIMessage message) {
-        if (!ChanSettings.moveInputToBottom.get()) {
-            setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, 0);
-            LayoutParams params = (LayoutParams) getLayoutParams();
-            params.gravity = Gravity.TOP;
-            setLayoutParams(params);
-        } else if (ChanSettings.moveInputToBottom.get()) {
-            setPadding(0, 0, 0, 0);
-            LayoutParams params = (LayoutParams) getLayoutParams();
-            params.gravity = Gravity.BOTTOM;
-            setLayoutParams(params);
-        }
+        setPadding(0, 0, 0, 0);
+        LayoutParams params = (LayoutParams) getLayoutParams();
+        params.gravity = Gravity.BOTTOM;
+        setLayoutParams(params);
     }
 
     @Override
@@ -639,13 +631,18 @@ public class ReplyLayout
         setWrappingMode(expanded);
 
         comment.setMaxLines(expanded ? 500 : 6);
+        previewHolder.setLayoutParams(
+                new LinearLayout.LayoutParams(MATCH_PARENT, expanded ? dp(150) : dp(100))
+        );
 
-        previewHolder.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, expanded ? dp(150) : dp(100)));
+        float startRotation = 1f;
+        float endRotation = 0f;
 
-        float startRotation = ChanSettings.moveInputToBottom.get() ? 1f : 0f;
-        float endRotation = ChanSettings.moveInputToBottom.get() ? 0f : 1f;
-        ValueAnimator animator =
-                ValueAnimator.ofFloat(expanded ? startRotation : endRotation, expanded ? endRotation : startRotation);
+        ValueAnimator animator = ValueAnimator.ofFloat(
+                expanded ? startRotation : endRotation,
+                expanded ? endRotation : startRotation
+        );
+
         animator.setInterpolator(new DecelerateInterpolator(2f));
         animator.setDuration(400);
         animator.addUpdateListener(animation -> moreDropdown.setRotation((float) animation.getAnimatedValue()));

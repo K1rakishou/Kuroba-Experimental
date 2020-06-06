@@ -38,7 +38,6 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.di.NetModule;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -95,10 +94,9 @@ public class CaptchaNoJsLayoutV2
 
         View view = inflate(context, R.layout.layout_captcha_nojs_v2, this);
 
-        if (ChanSettings.moveInputToBottom.get()) {
-            LinearLayout topLevel = findViewById(R.id.captcha_layout_v2_top_level);
-            topLevel.setGravity(Gravity.BOTTOM);
-        }
+        LinearLayout topLevel = findViewById(R.id.captcha_layout_v2_top_level);
+        topLevel.setGravity(Gravity.BOTTOM);
+
         captchaChallengeTitle = view.findViewById(R.id.captcha_layout_v2_title);
         captchaImagesGrid = view.findViewById(R.id.captcha_layout_v2_images_grid);
         captchaVerifyButton = view.findViewById(R.id.captcha_layout_v2_verify_button);
@@ -112,8 +110,8 @@ public class CaptchaNoJsLayoutV2
 
     @Override
     public void onConfigurationChanged(Configuration configuration) {
-        //note: this is here because if we kept the captcha images on rotate, a bunch of recycled bitmap errors are thrown
-        //instead of dealing with that, just get a new, fresh captcha
+        // note: this is here because if we kept the captcha images on rotate, a bunch of recycled
+        // bitmap errors are thrown instead of dealing with that, just get a new, fresh captcha
         reset();
     }
 

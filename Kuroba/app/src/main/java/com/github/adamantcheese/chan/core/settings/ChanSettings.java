@@ -191,7 +191,6 @@ public class ChanSettings {
     public static final IntegerSetting boardGridSpanCount;
     public static final BooleanSetting neverHideToolbar;
     public static final BooleanSetting enableReplyFab;
-    public static final BooleanSetting moveInputToBottom;
     public static final BooleanSetting captchaOnBottom;
     public static final BooleanSetting neverShowPages;
 
@@ -345,7 +344,6 @@ public class ChanSettings {
             boardGridSpanCount = new IntegerSetting(p, "preference_board_grid_span_count", 0);
             neverHideToolbar = new BooleanSetting(p, "preference_never_hide_toolbar", false);
             enableReplyFab = new BooleanSetting(p, "preference_enable_reply_fab", true);
-            moveInputToBottom = new BooleanSetting(p, "move_input_bottom", false);
             captchaOnBottom = new BooleanSetting(p, "captcha_on_bottom", true);
             neverShowPages = new BooleanSetting(p, "never_show_page_number", false);
 

@@ -329,15 +329,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.LayoutGroup.MoveInputToBottom,
-          topDescriptionIdFunc = { R.string.setting_bottom_input },
-          bottomDescriptionIdFunc = { R.string.setting_bottom_input_description },
-          setting = ChanSettings.moveInputToBottom,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.LayoutGroup.BottomJsCaptcha,
           topDescriptionIdFunc = { R.string.setting_bottom_js_captcha },
           bottomDescriptionIdFunc = { R.string.setting_bottom_js_captcha_description },

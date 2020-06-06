@@ -25,8 +25,7 @@ import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
 
-public class DropdownArrowDrawable
-        extends Drawable {
+public class DropdownArrowDrawable extends Drawable {
     private Paint paint = new Paint();
     private Path path = new Path();
     private int width;
@@ -38,7 +37,7 @@ public class DropdownArrowDrawable
     public DropdownArrowDrawable(int width, int height, boolean down, int color, int pressedColor) {
         this.width = width;
         this.height = height;
-        rotation = down ? 0f : 1f;
+        this.rotation = down ? 0f : 1f;
         this.color = color;
         this.pressedColor = pressedColor;
 

@@ -51,6 +51,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -200,6 +201,8 @@ public class SitesSetupController
     public void openSiteConfiguration(Site site) {
         SiteSetupController c = new SiteSetupController(context);
         c.setSite(site);
+
+        Objects.requireNonNull(navigationController);
         navigationController.pushController(c);
     }
 

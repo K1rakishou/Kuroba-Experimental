@@ -37,6 +37,7 @@ public class SiteAddLayout
 
         urlContainer = findViewById(R.id.url_container);
         url = findViewById(R.id.url);
+        url.requestFocus();
     }
 
     public void setDialog(Dialog dialog) {

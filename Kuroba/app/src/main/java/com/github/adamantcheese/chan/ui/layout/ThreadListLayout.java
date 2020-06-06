@@ -152,11 +152,9 @@ public class ThreadListLayout
         searchStatus = findViewById(R.id.search_status);
         recyclerView = findViewById(R.id.recycler_view);
 
-        if (ChanSettings.moveInputToBottom.get()) {
-            LayoutParams params = (LayoutParams) reply.getLayoutParams();
-            params.gravity = Gravity.BOTTOM;
-            reply.setLayoutParams(params);
-        }
+        LayoutParams params = (LayoutParams) reply.getLayoutParams();
+        params.gravity = Gravity.BOTTOM;
+        reply.setLayoutParams(params);
 
         // View setup
         reply.setCallback(this);
@@ -191,12 +189,7 @@ public class ThreadListLayout
         setFastScroll(false);
         attachToolbarScroll(true);
 
-        if (ChanSettings.moveInputToBottom.get()) {
-            reply.setPadding(0, 0, 0, 0);
-        } else {
-            reply.setPadding(0, toolbarHeight(), 0, 0);
-        }
-
+        reply.setPadding(0, 0, 0, 0);
         updatePaddings(searchStatus, -1, -1, searchStatus.getPaddingTop() + toolbarHeight(), -1);
     }
 
@@ -438,7 +431,7 @@ public class ThreadListLayout
 
         if (open) {
             reply.setVisibility(VISIBLE);
-            reply.setTranslationY(ChanSettings.moveInputToBottom.get() ? height : -height);
+            reply.setTranslationY(height);
             viewPropertyAnimator.translationY(0f);
 
             if (!isSplitMode) {
@@ -450,7 +443,7 @@ public class ThreadListLayout
             }
 
             reply.setTranslationY(0f);
-            viewPropertyAnimator.translationY(ChanSettings.moveInputToBottom.get() ? height : -height);
+            viewPropertyAnimator.translationY(height);
             viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
@@ -777,18 +770,10 @@ public class ThreadListLayout
         int defaultPadding = postViewMode == CARD ? dp(1) : 0;
         int recyclerTop = defaultPadding + toolbarHeight();
         int recyclerBottom = defaultPadding;
-        //reply view padding calculations (before measure)
-        if (ChanSettings.moveInputToBottom.get()) {
-            reply.setPadding(0, 0, 0, 0);
-        } else {
-            if (!replyOpen && searchOpen) {
-                reply.setPadding(0, searchStatus.getMeasuredHeight(), 0, 0); // (2)
-            } else {
-                reply.setPadding(0, toolbarHeight(), 0, 0); // (1)
-            }
-        }
+        // reply view padding calculations (before measure)
+        reply.setPadding(0, 0, 0, 0);
 
-        //measurements
+        // measurements
         if (replyOpen) {
             reply.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
@@ -800,14 +785,9 @@ public class ThreadListLayout
             );
         }
 
-        //recycler view padding calculations
+        // recycler view padding calculations
         if (replyOpen) {
-            if (ChanSettings.moveInputToBottom.get()) {
-                recyclerBottom += reply.getMeasuredHeight();
-            } else {
-                recyclerTop += reply.getMeasuredHeight();
-                recyclerTop -= toolbarHeight(); // reply has built-in padding for the toolbar height when input at top
-            }
+            recyclerBottom += reply.getMeasuredHeight();
         }
         if (searchOpen) {
             recyclerTop += searchStatus.getMeasuredHeight(); //search status has built-in padding for the toolbar height
@@ -815,16 +795,8 @@ public class ThreadListLayout
         }
         recyclerView.setPadding(defaultPadding, recyclerTop, defaultPadding, recyclerBottom);
 
-        //reply view padding calculations (after measure)
-        if (ChanSettings.moveInputToBottom.get()) {
-            reply.setPadding(0, 0, 0, 0);
-        } else {
-            if (replyOpen && searchOpen) {
-                reply.setPadding(0, searchStatus.getMeasuredHeight(), 0, 0); // (2)
-            } else {
-                reply.setPadding(0, toolbarHeight(), 0, 0); // (1)
-            }
-        }
+        // reply view padding calculations (after measure)
+        reply.setPadding(0, 0, 0, 0);
     }
 
     @Override

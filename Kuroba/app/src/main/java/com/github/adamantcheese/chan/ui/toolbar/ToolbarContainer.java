@@ -465,8 +465,7 @@ public class ToolbarContainer extends FrameLayout {
             if (item.middleMenu != null) {
                 int arrowColor = getAttrColor(getContext(), R.attr.dropdown_light_color);
                 int arrowPressedColor = getAttrColor(getContext(), R.attr.dropdown_light_pressed_color);
-                final Drawable arrowDrawable =
-                        new DropdownArrowDrawable(dp(12), dp(12), true, arrowColor, arrowPressedColor);
+                final Drawable arrowDrawable = new DropdownArrowDrawable(dp(12), dp(12), true, arrowColor, arrowPressedColor);
                 arrowDrawable.setBounds(0, 0, arrowDrawable.getIntrinsicWidth(), arrowDrawable.getIntrinsicHeight());
                 ImageView dropdown = new ImageView(getContext());
                 dropdown.setImageDrawable(arrowDrawable);

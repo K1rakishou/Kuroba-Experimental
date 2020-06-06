@@ -284,7 +284,6 @@ sealed class AppearanceScreen(
     object CatalogColumnsCount : LayoutGroup("catalog_columns_count")
     object NeverHideToolbar : LayoutGroup("never_hide_toolbar")
     object EnableReplyFAB : LayoutGroup("enable_reply_fab")
-    object MoveInputToBottom : LayoutGroup("move_input_to_bottom")
     object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
     object NeverShowPages : LayoutGroup("never_show_pages")
 
