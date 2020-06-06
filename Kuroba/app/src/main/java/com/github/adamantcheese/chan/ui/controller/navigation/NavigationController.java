@@ -26,6 +26,7 @@ import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
+import com.github.adamantcheese.chan.core.navigation.HasNavigation;
 
 import javax.inject.Inject;
 

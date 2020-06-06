@@ -51,6 +51,7 @@ import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.ImageViewerPresenter;
 import com.github.adamantcheese.chan.core.saver.ImageSaveTask;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
@@ -100,7 +101,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout;
 
 public class ImageViewerController
         extends Controller
-        implements ImageViewerPresenter.Callback, ToolbarMenuItem.ToobarThreedotMenuCallback {
+        implements ImageViewerPresenter.Callback,
+        ToolbarMenuItem.ToobarThreedotMenuCallback,
+        RequiresNoBottomNavBar {
     private static final String TAG = "ImageViewerController";
     private static final int TRANSITION_DURATION = 300;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;

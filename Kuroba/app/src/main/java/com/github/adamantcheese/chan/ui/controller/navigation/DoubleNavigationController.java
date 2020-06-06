@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.core.navigation.HasNavigation;
 
 public interface DoubleNavigationController extends HasNavigation {
     void setEmptyView(ViewGroup emptyView);

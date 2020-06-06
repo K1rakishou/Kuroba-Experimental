@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
 import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.model.orm.PinType
+import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_

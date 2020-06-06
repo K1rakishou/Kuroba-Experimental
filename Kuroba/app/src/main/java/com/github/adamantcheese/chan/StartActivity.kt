@@ -39,6 +39,7 @@ import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
@@ -47,7 +48,10 @@ import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
-import com.github.adamantcheese.chan.ui.controller.navigation.*
+import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController
+import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -206,10 +210,14 @@ class StartActivity : AppCompatActivity(),
       .asFlow()
       .collect { change ->
         when (change) {
+          is ControllerNavigationManager.ControllerNavigationChange.Presented,
+          is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
           is ControllerNavigationManager.ControllerNavigationChange.Pushed,
           is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
             val hasNoBottomNavBarControllers = stack.any { navController ->
-              return@any isControllerPresent(navController) { controller -> controller is RequiresNoBottomNavBar }
+              return@any isControllerPresent(navController) { controller ->
+                return@isControllerPresent controller is RequiresNoBottomNavBar
+              }
             }
 
             if (hasNoBottomNavBarControllers) {

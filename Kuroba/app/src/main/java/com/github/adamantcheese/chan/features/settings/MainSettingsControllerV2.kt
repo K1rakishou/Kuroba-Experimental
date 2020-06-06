@@ -19,6 +19,7 @@ import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
@@ -27,7 +28,6 @@ import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupT
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.features.settings.setting.*
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
-import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView

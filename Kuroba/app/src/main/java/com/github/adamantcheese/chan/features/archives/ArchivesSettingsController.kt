@@ -6,9 +6,9 @@ import androidx.appcompat.app.AlertDialog
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.epoxy.epoxyArchiveSettingRow
-import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration

@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.controller.navigation
+package com.github.adamantcheese.chan.core.navigation
 
 /**
  * Opening a controller with this annotation will hide the bottom navigation bar if the current

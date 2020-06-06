@@ -35,11 +35,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.SitesSetupPresenter;
 import com.github.adamantcheese.chan.core.presenter.SitesSetupPresenter.SiteBoardCount;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
-import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.layout.SiteAddLayout;
