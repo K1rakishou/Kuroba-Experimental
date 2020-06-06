@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.collect
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.util.concurrent.TimeUnit
 
@@ -40,14 +41,14 @@ class HistoryNavigationManager(
       applicationVisibilityManager.listenForAppVisibilityUpdates()
         .asFlow()
         .filter { visibility -> visibility == ApplicationVisibility.Background }
-        .collect { persisNavigationStack() }
+        .collect { persisNavigationStack(true) }
     }
 
     appScope.launch {
       persistTaskSubject
-        .throttleLast(15, TimeUnit.SECONDS)
+        .throttleFirst(5, TimeUnit.SECONDS)
         .collect {
-          persisNavigationStack()
+          persisNavigationStack(false)
         }
     }
 
@@ -168,18 +169,33 @@ class HistoryNavigationManager(
     return topNavElementDescriptor == descriptor
   }
 
-  private fun persisNavigationStack() {
-    serializedCoroutineExecutor.post {
-      BackgroundUtils.ensureMainThread()
-      Logger.d(TAG, "persisNavigationStack called")
+  private fun persisNavigationStack(blocking: Boolean) {
+    BackgroundUtils.ensureMainThread()
 
-      historyNavigationRepository.persist(navigationStack.toList())
-        .safeUnwrap { error ->
-          Logger.e(TAG, "Error while trying to persist navigation stack", error)
-          return@post
-        }
+    if (blocking) {
+      runBlocking {
+        Logger.d(TAG, "persistNavigationStack blocking called")
 
-      Logger.d(TAG, "persisNavigationStack finished")
+        historyNavigationRepository.persist(navigationStack.toList())
+          .safeUnwrap { error ->
+            Logger.e(TAG, "Error while trying to persist navigation stack", error)
+            return@runBlocking
+          }
+
+        Logger.d(TAG, "persistNavigationStack blocking finished")
+      }
+    } else {
+      serializedCoroutineExecutor.post {
+        Logger.d(TAG, "persistNavigationStack async called")
+
+        historyNavigationRepository.persist(navigationStack.toList())
+          .safeUnwrap { error ->
+            Logger.e(TAG, "Error while trying to persist navigation stack", error)
+            return@post
+          }
+
+        Logger.d(TAG, "persistNavigationStack async finished")
+      }
     }
   }
 
