@@ -18,16 +18,21 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.content.Context;
 
+import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
+import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
@@ -44,12 +49,17 @@ import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
+import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
+import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
+import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.feather2.Provides;
+import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileManager;
+import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -65,6 +75,8 @@ import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
 import static com.github.adamantcheese.chan.core.di.NetModule.THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME;
+import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
+import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
 
 public class ManagerModule {
     private static final String CRASH_LOGS_DIR_NAME = "crashlogs";
@@ -277,5 +289,69 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "PrefetchIndicatorAnimationManager");
 
         return new PrefetchImageDownloadIndicatorManager();
+    }
+
+    @Provides
+    @Singleton
+    public FileManager provideFileManager(Context applicationContext) {
+        DirectoryManager directoryManager = new DirectoryManager(applicationContext);
+
+        // Add new base directories here
+        LocalThreadsBaseDirectory localThreadsBaseDirectory = new LocalThreadsBaseDirectory();
+        SavedFilesBaseDirectory savedFilesBaseDirectory = new SavedFilesBaseDirectory();
+
+        BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
+
+        if (BuildConfig.DEV_BUILD) {
+            resolutionStrategy = ThrowAnException;
+        }
+
+        FileManager fileManager = new FileManager(applicationContext, resolutionStrategy, directoryManager);
+
+        fileManager.registerBaseDir(LocalThreadsBaseDirectory.class, localThreadsBaseDirectory);
+        fileManager.registerBaseDir(SavedFilesBaseDirectory.class, savedFilesBaseDirectory);
+
+        return fileManager;
+    }
+
+
+    @Provides
+    @Singleton
+    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
+        Logger.d(AppModule.DI_TAG, "GlobalWindowInsetsManager");
+
+        return new GlobalWindowInsetsManager();
+    }
+
+    @Provides
+    @Singleton
+    public ApplicationVisibilityManager provideApplicationVisibilityManager() {
+        Logger.d(AppModule.DI_TAG, "ApplicationVisibilityManager");
+
+        return new ApplicationVisibilityManager();
+    }
+
+    @Provides
+    @Singleton
+    public HistoryNavigationManager provideHistoryNavigationManager(
+            CoroutineScope appScope,
+            HistoryNavigationRepository historyNavigationRepository,
+            ApplicationVisibilityManager applicationVisibilityManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "HistoryNavigationManager");
+
+        return new HistoryNavigationManager(
+                appScope,
+                historyNavigationRepository,
+                applicationVisibilityManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ControllerNavigationManager provideControllerNavigationManager() {
+        Logger.d(AppModule.DI_TAG, "ControllerNavigationManager");
+
+        return new ControllerNavigationManager();
     }
 }

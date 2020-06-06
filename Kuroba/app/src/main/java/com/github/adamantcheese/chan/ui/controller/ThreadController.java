@@ -100,6 +100,12 @@ public abstract class ThreadController
     }
 
     @Override
+    public void onShow() {
+        super.onShow();
+        threadLayout.onShow();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 

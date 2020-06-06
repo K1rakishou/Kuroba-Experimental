@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupT
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.features.settings.setting.*
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
+import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
@@ -57,7 +58,8 @@ import javax.inject.Inject
 class MainSettingsControllerV2(context: Context)
   : Controller(context),
   ToolbarSearchCallback,
-  MainSettingsControllerV2RebuildCallbacks {
+  MainSettingsControllerV2RebuildCallbacks,
+  RequiresNoBottomNavBar {
 
   @Inject
   lateinit var databaseManager: DatabaseManager

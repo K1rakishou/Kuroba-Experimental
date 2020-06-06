@@ -58,7 +58,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.math.max
 import kotlin.math.min
 
 /**
@@ -133,8 +132,8 @@ class ChanThreadLoader(
             return if (requestJob != null) {
                 0L
             } else {
-                val waitTime = WATCH_TIMEOUTS[max(0, currentTimeout)] * 1000L
-                lastLoadTime + waitTime - System.currentTimeMillis()
+                val waitTime = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+                lastLoadTime + (waitTime * 1000L) - System.currentTimeMillis()
             }
         }
 
@@ -347,7 +346,7 @@ class ChanThreadLoader(
         BackgroundUtils.ensureMainThread()
 
         clearPendingRunnable()
-        val watchTimeout = WATCH_TIMEOUTS[currentTimeout]
+        val watchTimeout = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
 
         Logger.d(TAG, "Scheduled reload in " + watchTimeout + "s")
 

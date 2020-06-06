@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterType
+import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -92,12 +93,12 @@ class ThreadLayout @JvmOverloads constructor(
 
   @Inject
   lateinit var databaseManager: DatabaseManager
-
   @Inject
   lateinit var presenter: ThreadPresenter
-
   @Inject
   lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var historyNavigationManager: HistoryNavigationManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -131,6 +132,10 @@ class ThreadLayout @JvmOverloads constructor(
 
   init {
     Chan.inject(this)
+  }
+
+  fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
+    this.drawerCallbacks = drawerCallbacks
   }
 
   fun create(callback: ThreadLayoutCallback) {
@@ -172,8 +177,11 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
-    this.drawerCallbacks = drawerCallbacks
+  fun onShow() {
+    val descriptor = presenter.loadable?.chanDescriptor
+      ?: return
+
+    historyNavigationManager.moveNavElementToTop(descriptor)
   }
 
   fun destroy() {

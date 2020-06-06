@@ -19,26 +19,17 @@ package com.github.adamantcheese.chan.core.di;
 import android.content.Context;
 import android.net.ConnectivityManager;
 
-import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
-import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
-import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
-import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
-import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
-import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.feather2.Provides;
-import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -53,8 +44,6 @@ import okhttp3.Dns;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMaxScreenSize;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMinScreenSize;
-import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
-import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
 
 public class AppModule {
     private Context applicationContext;
@@ -176,29 +165,6 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public FileManager provideFileManager() {
-        DirectoryManager directoryManager = new DirectoryManager(applicationContext);
-
-        // Add new base directories here
-        LocalThreadsBaseDirectory localThreadsBaseDirectory = new LocalThreadsBaseDirectory();
-        SavedFilesBaseDirectory savedFilesBaseDirectory = new SavedFilesBaseDirectory();
-
-        BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
-
-        if (BuildConfig.DEV_BUILD) {
-            resolutionStrategy = ThrowAnException;
-        }
-
-        FileManager fileManager = new FileManager(applicationContext, resolutionStrategy, directoryManager);
-
-        fileManager.registerBaseDir(LocalThreadsBaseDirectory.class, localThreadsBaseDirectory);
-        fileManager.registerBaseDir(SavedFilesBaseDirectory.class, savedFilesBaseDirectory);
-
-        return fileManager;
-    }
-
-    @Provides
-    @Singleton
     public FileChooser provideFileChooser() {
         return new FileChooser(applicationContext);
     }
@@ -220,35 +186,4 @@ public class AppModule {
         return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
     }
 
-    @Provides
-    @Singleton
-    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
-        Logger.d(DI_TAG, "GlobalWindowInsetsManager");
-
-        return new GlobalWindowInsetsManager();
-    }
-
-    @Provides
-    @Singleton
-    public ApplicationVisibilityManager provideApplicationVisibilityManager() {
-        Logger.d(DI_TAG, "ApplicationVisibilityManager");
-
-        return new ApplicationVisibilityManager();
-    }
-
-    @Provides
-    @Singleton
-    public HistoryNavigationManager provideHistoryNavigationManager(
-            CoroutineScope appScope,
-            HistoryNavigationRepository historyNavigationRepository,
-            ApplicationVisibilityManager applicationVisibilityManager
-    ) {
-        Logger.d(DI_TAG, "HistoryNavigationManager");
-
-        return new HistoryNavigationManager(
-                appScope,
-                historyNavigationRepository,
-                applicationVisibilityManager
-        );
-    }
 }

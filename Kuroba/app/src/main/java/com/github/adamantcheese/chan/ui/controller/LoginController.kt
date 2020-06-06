@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.site.SiteActions
 import com.github.adamantcheese.chan.core.site.http.HttpCall
 import com.github.adamantcheese.chan.core.site.http.LoginRequest
 import com.github.adamantcheese.chan.core.site.http.LoginResponse
+import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.ui.view.CrossfadeView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ import kotlinx.coroutines.launch
 class LoginController(
   context: Context,
   private val site: Site
-) : Controller(context), View.OnClickListener {
+) : Controller(context), View.OnClickListener, RequiresNoBottomNavBar {
   
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView

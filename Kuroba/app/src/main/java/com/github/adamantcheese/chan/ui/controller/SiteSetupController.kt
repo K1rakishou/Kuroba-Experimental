@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
 import com.github.adamantcheese.chan.features.archives.ArchivesSettingsController
+import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController
 import com.github.adamantcheese.chan.ui.settings.*
 import com.github.adamantcheese.chan.utils.AndroidUtils
@@ -32,7 +33,10 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import java.util.*
 import javax.inject.Inject
 
-class SiteSetupController(context: Context) : SettingsController(context), SiteSetupPresenter.Callback {
+class SiteSetupController(context: Context) :
+  SettingsController(context),
+  SiteSetupPresenter.Callback,
+  RequiresNoBottomNavBar {
 
     @Inject
     lateinit var presenter: SiteSetupPresenter

@@ -38,6 +38,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.History;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.ui.controller.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -58,7 +59,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class HistoryController
         extends Controller
-        implements CompoundButton.OnCheckedChangeListener, ToolbarNavigationController.ToolbarSearchCallback {
+        implements CompoundButton.OnCheckedChangeListener,
+        ToolbarNavigationController.ToolbarSearchCallback,
+        RequiresNoBottomNavBar {
     private static final int ACTION_HISTORY_CLEAR = 1;
     private static final int ACTION_SAVED_REPLY_CLEAR = 2;
 

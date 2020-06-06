@@ -188,6 +188,38 @@ public class ViewThreadController
     }
 
     @Override
+    public void onShow() {
+        super.onShow();
+
+        ThreadPresenter presenter = threadLayout.presenter;
+        if (presenter != null) {
+            setPinIconState(false);
+            setSaveIconState(false);
+        }
+
+        if (drawerCallbacks != null) {
+            drawerCallbacks.resetBottomNavViewCheckState();
+            drawerCallbacks.showBottomNavBar(false, false);
+        }
+    }
+
+    @Override
+    public void onHide() {
+        super.onHide();
+
+        downloadAnimation.unregisterAnimationCallback(downloadAnimationCallback);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        dismissHintPopup();
+        updateDrawerHighlighting(null);
+        updateLeftPaneHighlighting(null);
+    }
+
+    @Override
     protected void setDrawerCallbacks(@Nullable DrawerCallbacks drawerCallbacks) {
         super.setDrawerCallbacks(drawerCallbacks);
     }
@@ -483,33 +515,6 @@ public class ViewThreadController
         }
 
         threadLayout.presenter.requestData();
-    }
-
-    @Override
-    public void onShow() {
-        super.onShow();
-
-        ThreadPresenter presenter = threadLayout.presenter;
-        if (presenter != null) {
-            setPinIconState(false);
-            setSaveIconState(false);
-        }
-    }
-
-    @Override
-    public void onHide() {
-        super.onHide();
-
-        downloadAnimation.unregisterAnimationCallback(downloadAnimationCallback);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        dismissHintPopup();
-        updateDrawerHighlighting(null);
-        updateLeftPaneHighlighting(null);
     }
 
     @Override

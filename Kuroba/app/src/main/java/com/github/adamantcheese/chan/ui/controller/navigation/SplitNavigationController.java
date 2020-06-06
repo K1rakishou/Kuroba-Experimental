@@ -29,9 +29,14 @@ import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.PopupController;
 import com.github.adamantcheese.chan.ui.layout.SplitNavigationControllerLayout;
 import com.github.adamantcheese.chan.utils.KtExtensionsKt;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 
@@ -41,6 +46,8 @@ public class SplitNavigationController
     public Controller leftController;
     public Controller rightController;
 
+    @Nullable
+    private DrawerCallbacks drawerCallbacks;
     private FrameLayout leftControllerView;
     private FrameLayout rightControllerView;
     private ViewGroup emptyView;
@@ -48,13 +55,12 @@ public class SplitNavigationController
     private PopupController popup;
     private StyledToolbarNavigationController popupChild;
 
-    @Nullable
-    private StartActivityCallbacks startActivityCallbacks;
-
-    public SplitNavigationController(Context context, StartActivityCallbacks startActivityCallbacks) {
+    public SplitNavigationController(Context context) {
         super(context);
+    }
 
-        this.startActivityCallbacks = startActivityCallbacks;
+    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.drawerCallbacks = drawerCallbacks;
     }
 
     @Override
@@ -87,7 +93,7 @@ public class SplitNavigationController
     public void onDestroy() {
         super.onDestroy();
 
-        startActivityCallbacks = null;
+        drawerCallbacks = null;
     }
 
     @Override
@@ -185,11 +191,13 @@ public class SplitNavigationController
     public boolean popController(ControllerTransition controllerTransition) {
         if (popup != null) {
             if (popupChild.childControllers.size() == 1) {
-                if (startActivityCallbacks != null) {
-                    startActivityCallbacks.resetBottomNavViewCheckState();
+                if (drawerCallbacks != null) {
+                    drawerCallbacks.resetBottomNavViewCheckState();
                 }
 
+                Objects.requireNonNull(presentingThisController);
                 presentingThisController.stopPresenting();
+
                 popup = null;
                 popupChild = null;
             } else {
@@ -203,11 +211,13 @@ public class SplitNavigationController
 
     public void popAll() {
         if (popup != null) {
-            if (startActivityCallbacks != null) {
-                startActivityCallbacks.resetBottomNavViewCheckState();
+            if (drawerCallbacks != null) {
+                drawerCallbacks.resetBottomNavViewCheckState();
             }
 
+            Objects.requireNonNull(presentingThisController);
             presentingThisController.stopPresenting();
+
             popup = null;
             popupChild = null;
         }
@@ -228,4 +238,5 @@ public class SplitNavigationController
         return (rightController != null && rightController.dispatchKeyEvent(event)) || (leftController != null
                 && leftController.dispatchKeyEvent(event)) || super.dispatchKeyEvent(event);
     }
+
 }

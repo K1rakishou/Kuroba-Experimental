@@ -20,19 +20,27 @@ import android.content.Context;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 
+import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
+import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
+
+import javax.inject.Inject;
 
 public abstract class NavigationController extends Controller implements HasNavigation {
-    protected ViewGroup container;
 
+    @Inject
+    ControllerNavigationManager controllerNavigationManager;
+
+    protected ViewGroup container;
     protected ControllerTransition controllerTransition;
     protected boolean blockingInput = false;
 
     public NavigationController(Context context) {
         super(context);
+        Chan.inject(this);
     }
 
     public boolean pushController(final Controller to) {
@@ -108,6 +116,9 @@ public abstract class NavigationController extends Controller implements HasNavi
         if (finish) {
             from.onHide();
             removeChildController(from);
+
+            controllerNavigationManager.onControllerSwipedFrom(from);
+            controllerNavigationManager.onControllerSwipedTo(to);
         } else {
             to.onHide();
         }
@@ -151,16 +162,16 @@ public abstract class NavigationController extends Controller implements HasNavi
             blockingInput = true;
             this.controllerTransition = controllerTransition;
 
-            controllerTransition.setCallback(transition -> finishTransition(from, pushing));
+            controllerTransition.setCallback(transition -> finishTransition(from, to, pushing));
             controllerTransition.perform();
 
             return;
         }
 
-        finishTransition(from, pushing);
+        finishTransition(from, to, pushing);
     }
 
-    private void finishTransition(Controller from, boolean pushing) {
+    private void finishTransition(Controller from, Controller to, boolean pushing) {
         if (from != null) {
             from.onHide();
         }
@@ -171,6 +182,12 @@ public abstract class NavigationController extends Controller implements HasNavi
 
         controllerTransition = null;
         blockingInput = false;
+
+        if (pushing) {
+            controllerNavigationManager.onControllerPushed(to);
+        } else {
+            controllerNavigationManager.onControllerPopped(from);
+        }
     }
 
     public boolean onBack() {

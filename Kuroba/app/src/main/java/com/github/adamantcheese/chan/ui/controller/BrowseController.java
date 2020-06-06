@@ -129,6 +129,16 @@ public class BrowseController
     }
 
     @Override
+    public void onShow() {
+        super.onShow();
+
+        if (drawerCallbacks != null) {
+            drawerCallbacks.resetBottomNavViewCheckState();
+            drawerCallbacks.showBottomNavBar(false, false);
+        }
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -397,6 +407,8 @@ public class BrowseController
 
     @Override
     public void openSetup() {
+        Objects.requireNonNull(navigationController, "navigationController is null");
+
         SitesSetupController setupController = new SitesSetupController(context);
         if (doubleNavigationController != null) {
             doubleNavigationController.pushController(setupController);
@@ -589,7 +601,7 @@ public class BrowseController
                     threadLoadable
             );
 
-            Objects.requireNonNull(navigationController);
+            Objects.requireNonNull(navigationController, "navigationController is null");
 
             navigationController.pushController(viewThreadController, animated);
             viewThreadController.setDrawerCallbacks(drawerCallbacks);

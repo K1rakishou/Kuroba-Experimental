@@ -23,15 +23,18 @@ import android.view.ViewGroup;
 import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.utils.Logger;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
@@ -48,12 +51,18 @@ public class ThreadSlideController
     public Controller leftController;
     public Controller rightController;
 
+    @Nullable
+    private DrawerCallbacks drawerCallbacks;
     private boolean leftOpen = true;
     private ViewGroup emptyView;
     private ThreadSlidingPaneLayout slidingPaneLayout;
 
     public ThreadSlideController(Context context) {
         super(context);
+    }
+
+    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.drawerCallbacks = drawerCallbacks;
     }
 
     @Override
@@ -82,10 +91,19 @@ public class ThreadSlideController
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        drawerCallbacks = null;
+    }
+
+    @Override
     public void onShow() {
         super.onShow();
 
-        ((StartActivity) context).resetBottomNavViewCheckState();
+        if (drawerCallbacks != null) {
+            drawerCallbacks.resetBottomNavViewCheckState();
+        }
     }
 
     public void onSlidingPaneLayoutStateRestored() {

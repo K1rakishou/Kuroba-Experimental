@@ -7,7 +7,6 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import java.lang.Math.abs
 
 class HidingBottomNavigationView @JvmOverloads constructor(
   context: Context,
@@ -17,7 +16,6 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
-  private var currentCollapseTranslation = 0
   private var isTranslationLocked = false
   private var isCollapseLocked = false
 
@@ -51,8 +49,6 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
     }
 
-    onCollapseAnimation(false)
-
     if (unlockTranslation) {
       isTranslationLocked = false
     }
@@ -60,6 +56,8 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     if (unlockCollapse) {
       isCollapseLocked = false
     }
+
+    onCollapseAnimation(false)
   }
 
   override fun onAttachedToWindow() {
@@ -83,49 +81,45 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun onCollapseTranslation(offset: Float) {
-    val translation = (getTotalHeight() * offset).toInt()
-    if (translation == currentCollapseTranslation) {
-      return
-    }
-
-    currentCollapseTranslation = translation
-
     if (isCollapseLocked) {
       return
     }
 
-    val diff = abs(translation - translationY)
+    val translation = (getTotalHeight() * offset)
+    if (translation.toInt() == translationY.toInt()) {
+      return
+    }
+
+    val diff = kotlin.math.abs(translation - translationY)
     if (diff >= height) {
       animate()
-        .translationY(translation.toFloat())
+        .translationY(translation)
         .setDuration(300)
         .setStartDelay(0)
         .setInterpolator(SLOWDOWN)
         .start()
     } else {
-      translationY = translation.toFloat()
+      translationY = translation
     }
   }
 
   override fun onCollapseAnimation(collapse: Boolean) {
-    val translation = if (collapse) {
-      getTotalHeight()
-    } else {
-      0
-    }
-
-    if (translation == currentCollapseTranslation) {
-      return
-    }
-
-    currentCollapseTranslation = translation
-
     if (isTranslationLocked) {
       return
     }
 
+    val translation = if (collapse) {
+      getTotalHeight().toFloat()
+    } else {
+      0f
+    }
+
+    if (translation.toInt() == translationY.toInt()) {
+      return
+    }
+
     animate()
-      .translationY(translation.toFloat())
+      .translationY(translation)
       .setDuration(300)
       .setStartDelay(0)
       .setInterpolator(SLOWDOWN)

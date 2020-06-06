@@ -34,6 +34,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
@@ -58,6 +59,8 @@ import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -65,8 +68,7 @@ import kotlin.coroutines.CoroutineContext
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
   FSAFActivityCallbacks,
-  CoroutineScope,
-  StartActivityCallbacks{
+  CoroutineScope {
 
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -84,6 +86,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var siteRepository: SiteRepository
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
+  @Inject
+  lateinit var controllerNavigationManager: ControllerNavigationManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -141,7 +145,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private suspend fun onCreateInternal(savedInstanceState: Bundle?) {
+  suspend fun onCreateInternal(savedInstanceState: Bundle?) {
     Chan.inject(this)
 
     if (BuildConfig.DEV_BUILD) {
@@ -187,6 +191,55 @@ class StartActivity : AppCompatActivity(),
 
     historyNavigationManager.awaitUntilInitialized()
     setupFromStateOrFreshLaunch(savedInstanceState)
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      coroutineScope {
+        launch {
+          listenForControllerNavigationChanges()
+        }
+      }
+    }
+  }
+
+  private suspend fun listenForControllerNavigationChanges() {
+    controllerNavigationManager.listenForControllerNavigationChanges()
+      .asFlow()
+      .collect { change ->
+        when (change) {
+          is ControllerNavigationManager.ControllerNavigationChange.Pushed,
+          is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
+            val hasNoBottomNavBarControllers = stack.any { navController ->
+              return@any isControllerPresent(navController) { controller -> controller is RequiresNoBottomNavBar }
+            }
+
+            if (hasNoBottomNavBarControllers) {
+              drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
+            } else {
+              drawerController.showBottomNavBar(unlockTranslation = true, unlockCollapse = true)
+            }
+          }
+          else -> {
+            // no-op
+          }
+        }
+      }
+  }
+
+  private fun isControllerPresent(
+    controller: Controller,
+    predicate: (Controller) -> Boolean
+  ): Boolean {
+    if (predicate(controller)) {
+      return true
+    }
+
+    for (childController in controller.childControllers) {
+      if (isControllerPresent(childController, predicate)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   private fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
@@ -323,9 +376,11 @@ class StartActivity : AppCompatActivity(),
 
     when (layoutMode) {
       ChanSettings.LayoutMode.SPLIT -> {
-        val split = SplitNavigationController(this, this)
+        val split = SplitNavigationController(this)
         split.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
         drawerController.setChildController(split)
+
+        split.setDrawerCallbacks(drawerController)
         split.setLeftController(mainNavigationController)
       }
       ChanSettings.LayoutMode.PHONE,
@@ -341,6 +396,8 @@ class StartActivity : AppCompatActivity(),
       val slideController = ThreadSlideController(this)
       slideController.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
       mainNavigationController.pushController(slideController, false)
+
+      slideController.setDrawerCallbacks(drawerController)
       slideController.setLeftController(browseController)
     } else {
       mainNavigationController.pushController(browseController, false)
@@ -361,10 +418,6 @@ class StartActivity : AppCompatActivity(),
         passIntentToThreadSlideController(pinId)
       }
     }
-  }
-
-  override fun resetBottomNavViewCheckState() {
-    drawerController.resetBottomNavViewCheckState()
   }
 
   private fun passIntentToThreadSlideController(pinId: Int) {

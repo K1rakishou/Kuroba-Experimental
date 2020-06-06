@@ -44,9 +44,7 @@ import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.HeaderAction
-import com.github.adamantcheese.chan.ui.controller.HistoryController
-import com.github.adamantcheese.chan.ui.controller.ThreadController
-import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
+import com.github.adamantcheese.chan.ui.controller.*
 import com.github.adamantcheese.chan.ui.controller.navigation.*
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
@@ -210,6 +208,8 @@ class DrawerController(
         { error -> Logger.e(TAG, "Unknown error subscribed to listenForStateChanges()", error) }
       )
 
+
+
     // TODO(KurobaEx): pins, move to some other place
 //    compositeDisposable += settingsNotificationManager.listenForNotificationUpdates()
 //      .subscribe(
@@ -258,36 +258,28 @@ class DrawerController(
   }
 
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
-    val isSplitMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> {
-        if (!isSplitMode) {
-          hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-        }
-
-        openController(HistoryController(context))
-      }
-      R.id.action_settings -> {
-        if (!isSplitMode) {
-          hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-        }
-
-        openController(MainSettingsControllerV2(context))
-      }
+      R.id.action_bookmarks -> openController(HistoryController(context))
+      R.id.action_settings -> openController(MainSettingsControllerV2(context))
     }
   }
 
   private fun closeAllNonMainControllers() {
     val currentNavController = top
       ?: return
+    val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE
 
     while (true) {
       val topController = currentNavController.top
         ?: return
 
       if (topController is HasNavigation) {
+        return
+      }
+
+      if (isPhoneMode && (topController is BrowseController || topController is ViewThreadController)) {
+        // If we pop BrowseController when in PHONE mode we will soft-lock the app
         return
       }
 
@@ -346,7 +338,7 @@ class DrawerController(
     bottomNavView.show(unlockTranslation, unlockCollapse)
   }
 
-  fun resetBottomNavViewCheckState() {
+  override fun resetBottomNavViewCheckState() {
     BackgroundUtils.ensureMainThread()
 
     // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either

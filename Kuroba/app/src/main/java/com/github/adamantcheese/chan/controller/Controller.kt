@@ -22,9 +22,11 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.CallSuper
+import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.transition.FadeInTransition
 import com.github.adamantcheese.chan.controller.transition.FadeOutTransition
+import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
@@ -37,10 +39,14 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.plus
 import java.util.*
+import javax.inject.Inject
 
 abstract class Controller(@JvmField var context: Context) {
 
   lateinit var view: ViewGroup
+
+  @Inject
+  lateinit var controllerNavigationManager: ControllerNavigationManager
 
   @JvmField
   var navigation = NavigationItem()
@@ -90,12 +96,14 @@ abstract class Controller(@JvmField var context: Context) {
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
     "Toolbar was not set"
   }
+
   fun requireNavController(): NavigationController = requireNotNull(navigationController) {
     "navigationController was not set"
   }
 
   @CallSuper
   open fun onCreate() {
+    Chan.inject(this)
     alive = true
 
     if (LOG_STATES) {
@@ -240,6 +248,7 @@ abstract class Controller(@JvmField var context: Context) {
     }
 
     (context as StartActivity).pushController(controller)
+    controllerNavigationManager.onControllerPresented(controller)
   }
 
   fun isAlreadyPresenting(predicate: Function1<Controller, Boolean>): Boolean {
@@ -262,6 +271,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     (context as StartActivity).popController(this)
     presentedByController?.presentingThisController = null
+    controllerNavigationManager.onControllerUnpresented(this)
   }
 
   private fun finishPresenting() {
