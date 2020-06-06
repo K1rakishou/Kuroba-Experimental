@@ -468,8 +468,7 @@ public class BrowseController
 
     @Override
     public void loadSiteSetup(Site site) {
-        SiteSetupController siteSetupController = new SiteSetupController(context);
-        siteSetupController.setSite(site);
+        SiteSetupController siteSetupController = new SiteSetupController(site, context);
 
         if (doubleNavigationController != null) {
             doubleNavigationController.pushController(siteSetupController);

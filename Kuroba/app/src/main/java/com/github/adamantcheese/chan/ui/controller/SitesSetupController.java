@@ -199,8 +199,7 @@ public class SitesSetupController
 
     @Override
     public void openSiteConfiguration(Site site) {
-        SiteSetupController c = new SiteSetupController(context);
-        c.setSite(site);
+        SiteSetupController c = new SiteSetupController(site, context);
 
         Objects.requireNonNull(navigationController);
         navigationController.pushController(c);

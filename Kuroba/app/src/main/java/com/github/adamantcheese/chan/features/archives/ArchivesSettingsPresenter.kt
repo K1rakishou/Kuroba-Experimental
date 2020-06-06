@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.features.archives
 
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
+import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListInteractor
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.features.archives.data.ArchiveInfo
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
@@ -10,9 +11,7 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.common.AppConstants
-import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -21,17 +20,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import java.util.*
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 
 internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControllerView>() {
 
   @Inject
   lateinit var archivesManager: ArchivesManager
-
   @Inject
   lateinit var appConstants: AppConstants
+  @Inject
+  lateinit var loadArchiveInfoListInteractor: LoadArchiveInfoListInteractor
 
   private val archivesSettingsStateSubject =
     BehaviorProcessor.createDefault<ArchivesSettingsState>(ArchivesSettingsState.Default)
@@ -64,6 +62,10 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
     return archivesSettingsStateSubject
       .observeOn(AndroidSchedulers.mainThread())
       .hide()
+  }
+
+  fun loadArchivesAndShowAsync() {
+    scope.launch { loadArchivesAndShow() }
   }
 
   fun onArchiveSettingClicked(archiveInfo: ArchiveInfo) {
@@ -106,7 +108,11 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
           }
 
           val newStatus = when (newState) {
-            ArchiveState.Enabled -> calculateStatusByFetchHistory(fetchHistory)
+            ArchiveState.Enabled -> ArchiveStatus.calculateStatusByFetchHistory(
+              appConstants,
+              archivesManager,
+              fetchHistory
+            )
             ArchiveState.Disabled -> ArchiveStatus.Disabled
             ArchiveState.PermanentlyDisabled -> ArchiveStatus.PermanentlyDisabled
           }
@@ -141,7 +147,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
   fun onArchiveStatusHelpClicked(selectedArchiveInfo: ArchiveInfo) {
     scope.launch {
       withView {
-        val allArchives = loadArchives()
+        val allArchives = loadArchiveInfoListInteractor.execute(Unit)
           .safeUnwrap { error ->
             Logger.e(TAG, "Failed to load all archives", error)
 
@@ -194,13 +200,9 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
     onHistoryLoaded(history)
   }
 
-  fun loadArchivesAndShowAsync() {
-    scope.launch { loadArchivesAndShow() }
-  }
-
   private suspend fun loadArchivesAndShow() {
     withView {
-      val archiveInfoList = loadArchives()
+      val archiveInfoList = loadArchiveInfoListInteractor.execute(Unit)
         .safeUnwrap { error ->
           Logger.e(TAG, "Failed to load all archives", error)
 
@@ -214,90 +216,6 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
       updateState { ArchivesSettingsState.ArchivesLoaded(archiveInfoList) }
     }
-  }
-
-  private suspend fun loadArchives(): ModularResult<List<ArchiveInfo>> {
-    return Try {
-      val archivesFetchHistoryMap = archivesManager.selectLatestFetchHistoryForAllArchives()
-        .unwrap()
-
-      return@Try archivesManager.getAllArchiveData().map { archiveData ->
-        return@map loadArchiveInfo(archiveData, archivesFetchHistoryMap)
-      }
-    }
-  }
-
-  private suspend fun loadArchiveInfo(
-    archiveData: ArchivesManager.ArchiveData,
-    archivesFetchHistoryMap: Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>
-  ): ArchiveInfo {
-    val archiveNameWithDomain = String.format(
-      Locale.ENGLISH,
-      "%s (%s)",
-      archiveData.name,
-      archiveData.domain
-    )
-
-    val archiveDescriptor = archiveData.getArchiveDescriptor()
-
-    val isArchiveEnabled = archivesManager.isArchiveEnabled(archiveDescriptor)
-      .mapErrorToValue { error ->
-        Logger.e(TAG, "Error while invoking isArchiveEnabled()", error)
-
-        return@mapErrorToValue false
-      }
-
-    val status = if (archiveData.isEnabled()) {
-      if (isArchiveEnabled) {
-        calculateStatusByFetchHistory(archivesFetchHistoryMap[archiveDescriptor])
-      } else {
-        ArchiveStatus.Disabled
-      }
-    } else {
-      ArchiveStatus.PermanentlyDisabled
-    }
-
-    val state = if (archiveData.isEnabled()) {
-      if (isArchiveEnabled) {
-        ArchiveState.Enabled
-      } else {
-        ArchiveState.Disabled
-      }
-    } else {
-      ArchiveState.PermanentlyDisabled
-    }
-
-    return ArchiveInfo(
-      archiveDescriptor,
-      archiveNameWithDomain,
-      status,
-      state,
-      archiveData.supportedBoards.joinToString(),
-      archiveData.supportedFiles.joinToString()
-    )
-  }
-
-  private fun calculateStatusByFetchHistory(
-    fetchHistory: List<ThirdPartyArchiveFetchResult>?
-  ): ArchiveStatus {
-    if (fetchHistory == null) {
-      return ArchiveStatus.Working
-    }
-
-    require(fetchHistory.size <= appConstants.archiveFetchHistoryMaxEntries) {
-      "Archive fetch history is too long"
-    }
-
-    val successFetchesCount = archivesManager.calculateFetchResultsScore(fetchHistory)
-    if (successFetchesCount >= appConstants.archiveFetchHistoryMaxEntries) {
-      return ArchiveStatus.Working
-    }
-
-    if (successFetchesCount <= 0) {
-      return ArchiveStatus.NotWorking
-    }
-
-    return ArchiveStatus.ExperiencingProblems
   }
 
   private inline fun <reified T : ArchivesSettingsState> isCurrentState(): Boolean {

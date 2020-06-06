@@ -230,7 +230,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_site_login_description_enabled">Logged in</string>
     <string name="setup_site_third_party_archives">Third-party archives</string>
     <string name="setup_site_setup_archives_title">Setup archives</string>
-    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread</string>
+    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d\nEnabled archives: %2$d\nWorking archives: %3$d</string>
 
     <string name="setup_site_login_description_disabled">Off</string>
     <string name="setup_board_title">Configure boards of %s</string>

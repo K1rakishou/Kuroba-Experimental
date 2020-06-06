@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.di.AppModule;
 import com.github.adamantcheese.chan.core.di.DatabaseModule;
 import com.github.adamantcheese.chan.core.di.ExecutorsModule;
 import com.github.adamantcheese.chan.core.di.GsonModule;
+import com.github.adamantcheese.chan.core.di.InteractorsModule;
 import com.github.adamantcheese.chan.core.di.LoaderModule;
 import com.github.adamantcheese.chan.core.di.ManagerModule;
 import com.github.adamantcheese.chan.core.di.NetModule;
@@ -173,6 +174,7 @@ public class Chan
 
         feather = Feather.with(
                 new AppModule(this, this, okHttpDns, okHttpProtocols, appConstants),
+                new InteractorsModule(),
                 new ExecutorsModule(),
                 new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
