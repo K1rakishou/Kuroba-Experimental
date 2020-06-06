@@ -345,6 +345,8 @@ class StartActivity : AppCompatActivity(),
     } else {
       mainNavigationController.pushController(browseController, false)
     }
+
+    browseController!!.setDrawerCallbacks(drawerController)
   }
 
   override fun onNewIntent(intent: Intent) {

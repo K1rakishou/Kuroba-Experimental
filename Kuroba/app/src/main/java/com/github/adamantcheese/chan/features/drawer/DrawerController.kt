@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
 import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.model.orm.PinType
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
@@ -61,7 +62,7 @@ import javax.inject.Inject
 
 class DrawerController(
   context: Context
-) : Controller(context), DrawerView, DrawerAdapter.Callback, View.OnClickListener {
+) : Controller(context), DrawerView, DrawerCallbacks, DrawerAdapter.Callback, View.OnClickListener {
 
   @Inject
   lateinit var watchManager: WatchManager
@@ -257,10 +258,24 @@ class DrawerController(
   }
 
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
+    val isSplitMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
+
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> openController(HistoryController(context));
-      R.id.action_settings -> openController(MainSettingsControllerV2(context))
+      R.id.action_bookmarks -> {
+        if (!isSplitMode) {
+          hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+        }
+
+        openController(HistoryController(context))
+      }
+      R.id.action_settings -> {
+        if (!isSplitMode) {
+          hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+        }
+
+        openController(MainSettingsControllerV2(context))
+      }
     }
   }
 
@@ -321,6 +336,14 @@ class DrawerController(
     } else {
       super.onBack()
     }
+  }
+
+  override fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean) {
+    bottomNavView.hide(lockTranslation, lockCollapse)
+  }
+
+  override fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+    bottomNavView.show(unlockTranslation, unlockCollapse)
   }
 
   fun resetBottomNavViewCheckState() {

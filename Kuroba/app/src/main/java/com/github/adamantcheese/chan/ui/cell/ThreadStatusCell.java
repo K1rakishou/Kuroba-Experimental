@@ -35,8 +35,10 @@ import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.utils.KtExtensionsKt;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 
 import javax.inject.Inject;
@@ -83,6 +85,13 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         text = findViewById(R.id.text);
         text.setTypeface(themeHelper.getTheme().mainFont);
 
+        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+            int bottomNavViewHeight =
+                    (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
+
+            KtExtensionsKt.updateMargins(this, null, null, null, null, null, bottomNavViewHeight);
+        }
+
         setOnClickListener(this);
     }
 
@@ -99,15 +108,27 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
 
     @SuppressLint("SetTextI18n")
     public boolean update() {
-        if (error != null) {
-            text.setText(error + "\n" + getString(R.string.thread_refresh_bar_inactive));
-            return false;
-        }
-
         ChanThread chanThread = callback.getChanThread();
         if (chanThread == null) {
             // Recyclerview not clearing immediately or view didn't receive
             // onDetachedFromWindow.
+            return false;
+        }
+
+        if (chanThread.getLoadable().isCatalogMode()) {
+            if (isClickable()) {
+                setClickable(false);
+            }
+
+            if (isFocusable()) {
+                setFocusable(false);
+            }
+
+            return false;
+        }
+
+        if (error != null) {
+            text.setText(error + "\n" + getString(R.string.thread_refresh_bar_inactive));
             return false;
         }
 

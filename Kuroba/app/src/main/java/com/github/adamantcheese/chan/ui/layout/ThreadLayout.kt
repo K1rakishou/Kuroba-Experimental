@@ -48,6 +48,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper
@@ -110,6 +111,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
 
+  private var drawerCallbacks: DrawerCallbacks? = null
   private var newPostsNotification: Snackbar? = null
   private var replyButtonEnabled = false
   private var showingReplyButton = false
@@ -170,7 +172,12 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
+  fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
+    this.drawerCallbacks = drawerCallbacks
+  }
+
   fun destroy() {
+    drawerCallbacks = null
     presenter.unbindLoadable()
     threadListLayout.onDestroy()
   }
@@ -214,6 +221,14 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.setPostViewMode(postViewMode)
   }
 
+  override fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean) {
+    drawerCallbacks?.hideBottomNavBar(lockTranslation, lockCollapse)
+  }
+
+  override fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+    drawerCallbacks?.showBottomNavBar(unlockTranslation, unlockCollapse)
+  }
+
   override fun replyLayoutOpen(open: Boolean) {
     showReplyButton(!open)
   }
@@ -243,6 +258,10 @@ class ThreadLayout @JvmOverloads constructor(
       if (replyButton.visibility != View.VISIBLE) {
         replyButton.show()
       }
+    }
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
     }
 
     presenter.updateLoadable(thread.loadable.loadableDownloadingState)

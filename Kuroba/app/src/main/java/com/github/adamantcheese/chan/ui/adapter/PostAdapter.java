@@ -483,7 +483,7 @@ public class PostAdapter
         Loadable loadable = postAdapterCallback.getLoadable();
         // the loadable can be null while this adapter is used between cleanup and the removal
         // of the recyclerview from the view hierarchy, although it's rare.
-        return loadable != null && loadable.isThreadMode();
+        return loadable != null;
     }
 
     public void updatePost(Post post) {

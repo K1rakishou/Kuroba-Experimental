@@ -23,6 +23,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.view.KeyEvent;
 
+import androidx.annotation.Nullable;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.github.adamantcheese.chan.Chan;
@@ -34,6 +35,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
@@ -53,12 +55,17 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public abstract class ThreadController
         extends Controller
-        implements ThreadLayout.ThreadLayoutCallback, ImageViewerController.ImageViewerCallback,
-                   SwipeRefreshLayout.OnRefreshListener, ToolbarNavigationController.ToolbarSearchCallback,
-                   NfcAdapter.CreateNdefMessageCallback, ThreadSlideController.SlideChangeListener {
+        implements ThreadLayout.ThreadLayoutCallback,
+        ImageViewerController.ImageViewerCallback,
+        SwipeRefreshLayout.OnRefreshListener,
+        ToolbarNavigationController.ToolbarSearchCallback,
+        NfcAdapter.CreateNdefMessageCallback,
+        ThreadSlideController.SlideChangeListener {
     private static final String TAG = "ThreadController";
 
     protected ThreadLayout threadLayout;
+    @Nullable
+    protected DrawerCallbacks drawerCallbacks;
     private SwipeRefreshLayout swipeRefreshLayout;
 
     public ThreadController(Context context) {
@@ -95,10 +102,17 @@ public abstract class ThreadController
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        drawerCallbacks = null;
         threadLayout.destroy();
         FastTextView.cleanup();
 
         EventBus.getDefault().unregister(this);
+    }
+
+    protected void setDrawerCallbacks(@Nullable DrawerCallbacks drawerCallbacks) {
+        threadLayout.setDrawerCallbacks(drawerCallbacks);
+        this.drawerCallbacks = drawerCallbacks;
     }
 
     public void showSitesNotSetup() {
@@ -279,4 +293,5 @@ public abstract class ThreadController
     public boolean threadBackPressed() {
         return false;
     }
+
 }

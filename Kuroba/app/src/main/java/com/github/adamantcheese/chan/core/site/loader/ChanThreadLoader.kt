@@ -361,7 +361,7 @@ class ChanThreadLoader(
 
     fun clearTimer() {
         BackgroundUtils.ensureMainThread()
-        currentTimeout = 0
+        currentTimeout = -1
         clearPendingRunnable()
     }
 

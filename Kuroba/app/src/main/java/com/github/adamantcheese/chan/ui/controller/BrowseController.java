@@ -40,6 +40,7 @@ import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
@@ -56,6 +57,8 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -66,8 +69,11 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class BrowseController
         extends ThreadController
-        implements ThreadLayout.ThreadLayoutCallback, BrowsePresenter.Callback, BrowseBoardsFloatingMenu.ClickCallback,
-        ThreadSlideController.SlideChangeListener {
+        implements ThreadLayout.ThreadLayoutCallback,
+        BrowsePresenter.Callback,
+        BrowseBoardsFloatingMenu.ClickCallback,
+        ThreadSlideController.SlideChangeListener,
+        ThreadSlideController.ReplyAutoCloseListener {
     private static final int ACTION_CHANGE_VIEW_MODE = 901;
     private static final int ACTION_SORT = 902;
     private static final int ACTION_REPLY = 903;
@@ -131,6 +137,7 @@ public class BrowseController
             hint = null;
         }
 
+        drawerCallbacks = null;
         presenter.destroy();
     }
 
@@ -147,6 +154,10 @@ public class BrowseController
         hint = HintPopup.show(context, hintView, R.string.thread_empty_setup_hint);
         hint.alignCenter();
         hint.wiggle();
+    }
+
+    public void setDrawerCallbacks(DrawerCallbacks drawerCallbacks) {
+        super.setDrawerCallbacks(drawerCallbacks);
     }
 
     @Override
@@ -375,6 +386,11 @@ public class BrowseController
     }
 
     @Override
+    public void onReplyViewShouldClose() {
+        threadLayout.openReply(false);
+    }
+
+    @Override
     public void onSiteClicked(Site site) {
         presenter.onBoardsFloatingMenuSiteClicked(site);
     }
@@ -533,7 +549,11 @@ public class BrowseController
                         (StyledToolbarNavigationController) splitNav.getRightController();
 
                 if (navigationController.getTop() instanceof ViewThreadController) {
-                    ((ViewThreadController) navigationController.getTop()).loadThread(threadLoadable);
+                    ViewThreadController viewThreadController
+                            = ((ViewThreadController) navigationController.getTop());
+
+                    viewThreadController.setDrawerCallbacks(drawerCallbacks);
+                    viewThreadController.loadThread(threadLoadable);
                 }
             } else {
                 StyledToolbarNavigationController navigationController
@@ -542,7 +562,9 @@ public class BrowseController
 
                 ViewThreadController viewThreadController
                         = new ViewThreadController(context, threadLoadable);
+
                 navigationController.pushController(viewThreadController, false);
+                viewThreadController.setDrawerCallbacks(drawerCallbacks);
             }
             splitNav.switchToController(false);
         } else if (slideNav != null) {
@@ -556,6 +578,7 @@ public class BrowseController
                 );
 
                 slideNav.setRightController(viewThreadController);
+                viewThreadController.setDrawerCallbacks(drawerCallbacks);
             }
             slideNav.switchToController(false);
         } else {
@@ -566,9 +589,10 @@ public class BrowseController
                     threadLoadable
             );
 
-            if (navigationController != null) {
-                navigationController.pushController(viewThreadController, animated);
-            }
+            Objects.requireNonNull(navigationController);
+
+            navigationController.pushController(viewThreadController, animated);
+            viewThreadController.setDrawerCallbacks(drawerCallbacks);
         }
 
         historyNavigationManager.moveNavElementToTop(threadLoadable.getChanDescriptor());

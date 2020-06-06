@@ -118,7 +118,7 @@ fun View.updatePaddings(
   val newTop = top ?: paddingTop
   val newBottom = bottom ?: paddingBottom
 
-  setPadding(newLeft, newRight, newTop, newBottom)
+  setPadding(newLeft, newTop, newRight, newBottom)
 }
 
 fun View.updatePaddings(

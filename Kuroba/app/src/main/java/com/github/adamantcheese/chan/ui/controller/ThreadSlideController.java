@@ -42,7 +42,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 public class ThreadSlideController
         extends Controller
         implements DoubleNavigationController, SlidingPaneLayout.PanelSlideListener,
-                   ToolbarNavigationController.ToolbarSearchCallback {
+        ToolbarNavigationController.ToolbarSearchCallback {
     private static final String TAG = "ThreadSlideController";
 
     public Controller leftController;
@@ -282,6 +282,12 @@ public class ThreadSlideController
     private void slideStateChanged() {
         setParentNavigationItem(leftOpen);
 
+        if (leftOpen && rightController instanceof ReplyAutoCloseListener) {
+            ((ReplyAutoCloseListener) rightController).onReplyViewShouldClose();
+        } else if (!leftOpen && leftController instanceof ReplyAutoCloseListener) {
+            ((ReplyAutoCloseListener) leftController).onReplyViewShouldClose();
+        }
+
         notifySlideChanged(leftOpen ? leftController : rightController);
     }
 
@@ -319,6 +325,10 @@ public class ThreadSlideController
         navigation.handlesToolbarInset = true;
         navigation.hasDrawer = true;
         toolbar.setNavigationItem(true, true, navigation, null);
+    }
+
+    public interface ReplyAutoCloseListener {
+        void onReplyViewShouldClose();
     }
 
     public interface SlideChangeListener {

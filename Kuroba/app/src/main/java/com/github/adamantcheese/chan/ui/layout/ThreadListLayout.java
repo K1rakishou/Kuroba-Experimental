@@ -416,44 +416,59 @@ public class ThreadListLayout
     }
 
     public void openReply(boolean open) {
-        if (showingThread != null && replyOpen != open) {
-            this.replyOpen = open;
-
-            reply.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-            );
-            int height = reply.getMeasuredHeight();
-
-            final ViewPropertyAnimator viewPropertyAnimator = reply.animate();
-            viewPropertyAnimator.setListener(null);
-            viewPropertyAnimator.setInterpolator(new DecelerateInterpolator(2f));
-            viewPropertyAnimator.setDuration(600);
-
-            if (open) {
-                reply.setVisibility(VISIBLE);
-                reply.setTranslationY(ChanSettings.moveInputToBottom.get() ? height : -height);
-                viewPropertyAnimator.translationY(0f);
-            } else {
-                reply.setTranslationY(0f);
-                viewPropertyAnimator.translationY(ChanSettings.moveInputToBottom.get() ? height : -height);
-                viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        viewPropertyAnimator.setListener(null);
-                        reply.setVisibility(GONE);
-                    }
-                });
-            }
-
-            reply.onOpen(open);
-            setRecyclerViewPadding();
-            if (!open) {
-                hideKeyboard(reply);
-            }
-            threadListLayoutCallback.replyLayoutOpen(open);
-
-            attachToolbarScroll(!(open || searchOpen));
+        if (showingThread == null || replyOpen == open) {
+            return;
         }
+
+        this.replyOpen = open;
+
+        reply.measure(
+                MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        );
+
+        int height = reply.getMeasuredHeight();
+
+        final ViewPropertyAnimator viewPropertyAnimator = reply.animate();
+        viewPropertyAnimator.setListener(null);
+        viewPropertyAnimator.setInterpolator(new DecelerateInterpolator(2f));
+        viewPropertyAnimator.setDuration(600);
+
+        boolean isSplitMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT;
+
+        if (open) {
+            reply.setVisibility(VISIBLE);
+            reply.setTranslationY(ChanSettings.moveInputToBottom.get() ? height : -height);
+            viewPropertyAnimator.translationY(0f);
+
+            if (!isSplitMode) {
+                threadListLayoutCallback.hideBottomNavBar(true, true);
+            }
+        } else {
+            if (!isSplitMode) {
+                threadListLayoutCallback.showBottomNavBar(true, true);
+            }
+
+            reply.setTranslationY(0f);
+            viewPropertyAnimator.translationY(ChanSettings.moveInputToBottom.get() ? height : -height);
+            viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    viewPropertyAnimator.setListener(null);
+                    reply.setVisibility(GONE);
+                }
+            });
+        }
+
+        reply.onOpen(open);
+        setRecyclerViewPadding();
+
+        if (!open) {
+            hideKeyboard(reply);
+        }
+        threadListLayoutCallback.replyLayoutOpen(open);
+
+        attachToolbarScroll(!(open || searchOpen));
     }
 
     public ReplyPresenter getReplyPresenter() {
@@ -906,6 +921,8 @@ public class ThreadListLayout
     }
 
     public interface ThreadListLayoutCallback {
+        void hideBottomNavBar(Boolean lockTranslation, Boolean lockCollapse);
+        void showBottomNavBar(Boolean unlockTranslation, Boolean unlockCollapse);
         void replyLayoutOpen(boolean open);
         Toolbar getToolbar();
         void showImageReencodingWindow(boolean supportsReencode);

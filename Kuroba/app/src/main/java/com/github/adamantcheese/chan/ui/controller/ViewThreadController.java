@@ -50,6 +50,7 @@ import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.features.drawer.DrawerController;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
@@ -95,7 +96,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 public class ViewThreadController
         extends ThreadController
         implements ThreadLayout.ThreadLayoutCallback,
-        ToolbarMenuItem.ToobarThreedotMenuCallback {
+        ToolbarMenuItem.ToobarThreedotMenuCallback,
+        ThreadSlideController.ReplyAutoCloseListener {
     private static final String TAG = "ViewThreadController";
 
     private static final int ACTION_PIN = 8001;
@@ -165,8 +167,10 @@ public class ViewThreadController
 
         databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
-        downloadAnimation =
-                (AnimatedVectorDrawableCompat) AnimationUtils.createAnimatedDownloadIcon(context, Color.WHITE).mutate();
+        downloadAnimation = (AnimatedVectorDrawableCompat) AnimationUtils.createAnimatedDownloadIcon(
+                context,
+                Color.WHITE
+        ).mutate();
 
         downloadIconOutline = context.getDrawable(R.drawable.ic_download_anim0);
         downloadIconOutline.setTint(Color.WHITE);
@@ -181,6 +185,11 @@ public class ViewThreadController
 
         buildMenu();
         loadThread(loadable);
+    }
+
+    @Override
+    protected void setDrawerCallbacks(@Nullable DrawerCallbacks drawerCallbacks) {
+        super.setDrawerCallbacks(drawerCallbacks);
     }
 
     protected void buildMenu() {
@@ -373,6 +382,11 @@ public class ViewThreadController
 
     private void replyClicked(ToolbarMenuSubItem item) {
         threadLayout.openReply(true);
+    }
+
+    @Override
+    public void onReplyViewShouldClose() {
+        threadLayout.openReply(false);
     }
 
     private void reloadClicked(ToolbarMenuSubItem item) {
