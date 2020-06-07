@@ -177,13 +177,6 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun onShow() {
-    val descriptor = presenter.loadable?.chanDescriptor
-      ?: return
-
-    historyNavigationManager.moveNavElementToTop(descriptor)
-  }
-
   fun destroy() {
     drawerCallbacks = null
     presenter.unbindLoadable()

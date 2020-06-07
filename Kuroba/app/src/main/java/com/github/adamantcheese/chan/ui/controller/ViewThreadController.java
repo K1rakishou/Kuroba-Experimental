@@ -1015,6 +1015,15 @@ public class ViewThreadController
     public void onMenuHidden() {
     }
 
+    @Override
+    public void onSlideChanged(boolean leftOpen) {
+        super.onSlideChanged(leftOpen);
+
+        if (loadable != null) {
+            historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
+        }
+    }
+
     public enum DownloadThreadState {
         Default,
         DownloadInProgress,

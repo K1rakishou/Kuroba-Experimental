@@ -100,12 +100,6 @@ public abstract class ThreadController
     }
 
     @Override
-    public void onShow() {
-        super.onShow();
-        threadLayout.onShow();
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -291,7 +285,7 @@ public abstract class ThreadController
     }
 
     @Override
-    public void onSlideChanged() {
+    public void onSlideChanged(boolean leftOpen) {
         threadLayout.gainedFocus();
     }
 

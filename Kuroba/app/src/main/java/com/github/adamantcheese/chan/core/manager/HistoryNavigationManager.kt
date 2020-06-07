@@ -82,7 +82,15 @@ class HistoryNavigationManager(
     return navigationStack.toList()
   }
 
-  fun getNavElementAtTop(): NavHistoryElement? = navigationStack.firstOrNull()
+  fun getNavElementAtTop(): NavHistoryElement? {
+    return navigationStack.firstOrNull()
+  }
+
+  fun getFirstCatalogNavElement(): NavHistoryElement? {
+    return navigationStack.firstOrNull { navHistoryElement ->
+      navHistoryElement is NavHistoryElement.Catalog
+    }
+  }
 
   fun listenForNavigationStackChanges(): Flowable<Unit> {
     return navigationStackChangesSubject

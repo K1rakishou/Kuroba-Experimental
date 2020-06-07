@@ -339,6 +339,10 @@ class DrawerController(
     bottomNavView.show(unlockTranslation, unlockCollapse)
   }
 
+  override fun resetBottomNavViewState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+    bottomNavView.resetState(unlockTranslation, unlockCollapse)
+  }
+
   override fun resetBottomNavViewCheckState() {
     BackgroundUtils.ensureMainThread()
 

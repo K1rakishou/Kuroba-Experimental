@@ -315,7 +315,7 @@ public class ThreadSlideController
         }
 
         if (controller instanceof SlideChangeListener) {
-            ((SlideChangeListener) controller).onSlideChanged();
+            ((SlideChangeListener) controller).onSlideChanged(leftOpen);
         }
 
         for (Controller childController : controller.childControllers) {
@@ -350,6 +350,6 @@ public class ThreadSlideController
     }
 
     public interface SlideChangeListener {
-        void onSlideChanged();
+        void onSlideChanged(boolean leftOpen);
     }
 }

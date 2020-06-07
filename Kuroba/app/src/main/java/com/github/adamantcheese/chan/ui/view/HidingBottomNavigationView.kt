@@ -61,6 +61,11 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     onCollapseAnimation(false)
   }
 
+  fun resetState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+    isTranslationLocked = !unlockTranslation
+    isCollapseLocked = !unlockCollapse
+  }
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     attachedToWindow = true

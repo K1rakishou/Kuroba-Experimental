@@ -223,7 +223,7 @@ class StartActivity : AppCompatActivity(),
             if (hasNoBottomNavBarControllers) {
               drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
             } else {
-              drawerController.showBottomNavBar(unlockTranslation = true, unlockCollapse = true)
+              drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
             }
           }
           else -> {
@@ -279,9 +279,14 @@ class StartActivity : AppCompatActivity(),
           browseController?.showBoard(topNavElement.descriptor)
         }
         is NavHistoryElement.Thread -> {
-          // TODO(KurobaEx): instead of always loading the default board try to find the last
-          //  visited board and load it instead
-          browseController?.loadWithDefaultBoard()
+          historyNavigationManager.getFirstCatalogNavElement()?.let { catalogNavElement ->
+            require(catalogNavElement is NavHistoryElement.Catalog) {
+              "catalogNavElement is not catalog!"
+            }
+
+            browseController?.setBoard(catalogNavElement.descriptor)
+          }
+
           drawerController.loadThread(topNavElement.descriptor)
         }
       }

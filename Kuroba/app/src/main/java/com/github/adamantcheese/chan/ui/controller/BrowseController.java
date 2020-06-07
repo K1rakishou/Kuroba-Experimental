@@ -519,6 +519,16 @@ public class BrowseController
         showBoard(board);
     }
 
+    public void setBoard(@NotNull ChanDescriptor.CatalogDescriptor descriptor) {
+        Board board = boardRepository.getFromBoardDescriptor(descriptor.getBoardDescriptor());
+        if (board == null) {
+            showToast(context, R.string.browse_controller_cannot_open_board);
+            return;
+        }
+
+        setBoard(board);
+    }
+
     @Override
     public void showBoard(Loadable catalogLoadable) {
         //we don't actually need to do anything here because you can't tap board links in the browse controller
@@ -645,12 +655,18 @@ public class BrowseController
     }
 
     @Override
-    public void onSlideChanged() {
-        super.onSlideChanged();
+    public void onSlideChanged(boolean leftOpen) {
+        super.onSlideChanged(leftOpen);
+
         if (getToolbar() != null && searchQuery != null) {
             getToolbar().openSearch(searchQuery);
             getToolbar().searchInput(searchQuery);
             searchQuery = null;
+        }
+
+        Loadable loadable = getLoadable();
+        if (loadable != null) {
+            historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
         }
     }
 

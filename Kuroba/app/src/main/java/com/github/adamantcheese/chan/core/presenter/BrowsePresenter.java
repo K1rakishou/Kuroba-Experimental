@@ -74,6 +74,7 @@ public class BrowsePresenter
         savedBoardsObservable.deleteObserver(this);
     }
 
+    @Nullable
     public Board currentBoard() {
         return currentBoard;
     }
