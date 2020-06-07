@@ -23,6 +23,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import org.joda.time.Duration
+import org.joda.time.Period
 import java.io.InputStreamReader
 import java.util.*
 
@@ -41,8 +42,6 @@ class ArchivesManager(
   private val allArchivesData = SuspendableInitializer<List<ArchiveData>>("allArchivesData")
   private val allArchiveDescriptors = SuspendableInitializer<List<ArchiveDescriptor>>("allArchiveDescriptors")
   private val allArchiveDescriptorsMap = SuspendableInitializer<Map<Long, ArchiveDescriptor>>("allArchiveDescriptorsMap")
-
-  private val archiveDescriptorsPerThread = mutableMapOf<ChanDescriptor.ThreadDescriptor, ArchiveDescriptor>()
 
   init {
     applicationScope.launch {
@@ -81,12 +80,17 @@ class ArchivesManager(
       .hide()
   }
 
-  suspend fun getLatestArchiveDescriptor(descriptor: ChanDescriptor): ArchiveDescriptor? {
+  suspend fun getLastUsedArchiveForThread(descriptor: ChanDescriptor): ArchiveDescriptor? {
     if (descriptor !is ChanDescriptor.ThreadDescriptor) {
       return null
     }
 
-    return mutex.withLock { archiveDescriptorsPerThread[descriptor] }
+    val archiveId = thirdPartyArchiveInfoRepository.selectLastUsedArchiveIdByThreadDescriptor(descriptor)
+      ?: return null
+
+    return allArchiveDescriptors.get().firstOrNull { archiveDescriptor ->
+      archiveDescriptor.getArchiveId() == archiveId
+    }
   }
 
   suspend fun hasEnabledArchives(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
@@ -124,63 +128,42 @@ class ArchivesManager(
     return false
   }
 
-  suspend fun allowedToUseAnyOfEnabledArchives(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
-    Logger.d(TAG, "allowedToUseAnyOfEnabledArchives(threadDescriptor=$threadDescriptor)")
+  suspend fun getTimeLeftUntilArchiveAvailable(
+    archiveDescriptor: ArchiveDescriptor,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Period? {
+    val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
+      listOf(archiveDescriptor),
+      threadDescriptor
+    ).unwrap()
 
-    val result = Try {
-      val suitableArchives = getEnabledSuitableArchives(threadDescriptor)
-      if (suitableArchives.isEmpty()) {
-        return@Try false
-      }
-
-      val fetchHistoryMap = thirdPartyArchiveInfoRepository.selectLatestFetchHistoryForThread(
-        suitableArchives.map { it.getArchiveDescriptor() },
-        threadDescriptor
-      ).unwrap()
-
-      if (fetchHistoryMap.isEmpty()) {
-        // No fetch history at all meaning we haven't used archives yet
-        return true
-      }
-
-      val now = DateTime.now()
-
-      for ((_, fetchHistoryList) in fetchHistoryMap) {
-        if (fetchHistoryList.isEmpty()) {
-          // No history for this archive meaning we haven't used this particular archive
-          return@Try true
-        }
-
-        for (thirdPartyArchiveFetchResult in fetchHistoryList) {
-          val timeDelta = now.minus(thirdPartyArchiveFetchResult.insertedOn.millis)
-
-          if (thirdPartyArchiveFetchResult.success && timeDelta.millis > ARCHIVE_UPDATE_INTERVAL.millis) {
-            return@Try true
-          }
-        }
-
-        val hasSuccessful = fetchHistoryList.any { fetchResult -> fetchResult.success }
-        if (hasSuccessful) {
-          continue
-        }
-
-        // If there are no successful fetches over then last N fetches and their total amount is less
-        // than [appConstants.archiveFetchHistoryMaxEntries] consider such archive suitable for a
-        // new fetch.
-        if (fetchHistoryList.size < appConstants.archiveFetchHistoryMaxEntries) {
-          return@Try true
-        }
-      }
-
-      return@Try false
+    if (fetchHistoryMap.isEmpty()) {
+      // No fetch history at all meaning we haven't used archives yet
+      return null
     }
 
-    if (result is ModularResult.Error) {
-      Logger.e(TAG, "allowedToUseAnyOfEnabledArchives error", result.error)
-      return false
+    val fetchHistory = fetchHistoryMap[archiveDescriptor]
+      ?: return null
+
+    if (fetchHistory.isEmpty()) {
+      return null
     }
 
-    return (result as ModularResult.Value).value
+    val now = DateTime.now()
+
+    val sortedHistory = fetchHistory.sortedByDescending { thirdPartyArchiveFetchResult ->
+      thirdPartyArchiveFetchResult.insertedOn.millis
+    }
+
+    val insertedOn = sortedHistory.first().insertedOn
+    require(now >= insertedOn) { "Bad insertedOn (now = $now, insertedOn = $insertedOn)" }
+
+    val timeDelta = insertedOn.plus(ARCHIVE_UPDATE_INTERVAL).minus(now.millis)
+    if (timeDelta.isBefore(0)) {
+      return null
+    }
+
+    return Period(now, insertedOn.plus(ARCHIVE_UPDATE_INTERVAL))
   }
 
   suspend fun getArchiveDescriptor(
@@ -194,16 +177,10 @@ class ArchivesManager(
         return@Try null
       }
 
-      val archiveDescriptor = getBestPossibleArchiveOrNull(
+      return@Try getBestPossibleArchiveOrNull(
         threadDescriptor,
         enabledSuitableArchives
       )
-
-      if (archiveDescriptor != null) {
-        mutex.withLock { archiveDescriptorsPerThread[threadDescriptor] = archiveDescriptor }
-      }
-
-      return@Try archiveDescriptor
     }
   }
 
@@ -552,7 +529,7 @@ class ArchivesManager(
       "thebarchive.com"
     )
 
-    val ARCHIVE_UPDATE_INTERVAL = Duration.standardMinutes(10)
+    val ARCHIVE_UPDATE_INTERVAL: Duration = Duration.standardMinutes(5)
 
     private const val TAG = "ArchivesManager"
     private const val ARCHIVES_JSON_FILE_NAME = "archives.json"

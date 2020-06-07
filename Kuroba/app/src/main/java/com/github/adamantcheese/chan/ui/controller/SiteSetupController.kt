@@ -174,6 +174,9 @@ class SiteSetupController(
     val enabledArchives = archiveInfoList.count { archiveInfo ->
         return@count archiveInfo.state == ArchiveState.Enabled
     }
+    val permanentlyDisabled = archiveInfoList.count { archiveInfo ->
+      return@count archiveInfo.state == ArchiveState.PermanentlyDisabled
+    }
     val workingArchives = archiveInfoList.count { archiveInfo ->
         return@count archiveInfo.status == ArchiveStatus.Working
           || archiveInfo.status == ArchiveStatus.ExperiencingProblems
@@ -187,6 +190,7 @@ class SiteSetupController(
       getString(
         R.string.setup_site_setup_archives_description,
         archiveInfoList.size,
+        permanentlyDisabled,
         enabledArchives,
         workingArchives
       ),

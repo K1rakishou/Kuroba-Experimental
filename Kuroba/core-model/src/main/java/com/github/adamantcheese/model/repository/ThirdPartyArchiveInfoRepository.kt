@@ -111,6 +111,16 @@ class ThirdPartyArchiveInfoRepository(
     }
   }
 
+  suspend fun selectLastUsedArchiveIdByThreadDescriptor(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Long? {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized localSource.selectLastUsedArchiveIdByThreadDescriptor(threadDescriptor)
+      }
+    }
+  }
+
   suspend fun setArchiveEnabled(
     archiveDescriptor: ArchiveDescriptor,
     isEnabled: Boolean

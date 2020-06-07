@@ -56,11 +56,8 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBase
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
-import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.DescriptorUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
@@ -285,31 +282,69 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
     val descriptor = DescriptorUtils.getDescriptor(loadable!!)
 
-    if (isBound && descriptor is ChanDescriptor.ThreadDescriptor) {
-      launch {
-        if (!archivesManager.hasEnabledArchives(descriptor)) {
-          showToast(
-            context,
-            context.getString(R.string.thread_presenter_no_archives_enabled),
-            Toast.LENGTH_LONG
-          )
-          return@launch
-        }
+    if (!isBound || descriptor !is ChanDescriptor.ThreadDescriptor) {
+      return
+    }
 
-        if (!archivesManager.allowedToUseAnyOfEnabledArchives(descriptor)) {
-          val minutes = ArchivesManager.ARCHIVE_UPDATE_INTERVAL.standardMinutes
-
-          showToast(
-            context,
-            context.getString(R.string.thread_presenter_no_available_archives, minutes),
-            Toast.LENGTH_LONG
-          )
-          return@launch
-        }
-
-        threadPresenterCallback?.showLoading()
-        chanLoader?.requestDataWithDeletedPosts()
+    launch {
+      if (!archivesManager.hasEnabledArchives(descriptor)) {
+        showToast(
+          context,
+          context.getString(R.string.thread_presenter_no_archives_enabled),
+          Toast.LENGTH_LONG
+        )
+        return@launch
       }
+
+      var archiveDescriptor = archivesManager.getArchiveDescriptor(descriptor)
+        .safeUnwrap { error ->
+          Logger.e(
+            TAG,
+            "Error while trying to get archive descriptor for a thread: $descriptor",
+            error
+          )
+
+          showToast(
+            context,
+            context.getString(R.string.thread_presenter_error_while_trying_to_get_archive_descriptor),
+            Toast.LENGTH_LONG
+          )
+          return@launch
+        }
+
+      if (archiveDescriptor == null) {
+        archiveDescriptor = archivesManager.getLastUsedArchiveForThread(descriptor)
+
+        if (archiveDescriptor == null) {
+          showToast(
+            context,
+            context.getString(R.string.thread_presenter_no_archives_for_thread),
+            Toast.LENGTH_LONG
+          )
+          return@launch
+        }
+      }
+
+      val timeUntilArchiveAvailablePeriod = archivesManager.getTimeLeftUntilArchiveAvailable(
+        archiveDescriptor,
+        descriptor
+      )
+
+      if (timeUntilArchiveAvailablePeriod != null) {
+        showToast(
+          context,
+          context.getString(
+            R.string.thread_presenter_no_available_archives,
+            ArchivesManager.ARCHIVE_UPDATE_INTERVAL.standardMinutes,
+            TimeUtils.getArchiveAvailabilityFormatted(timeUntilArchiveAvailablePeriod)
+          ),
+          Toast.LENGTH_LONG
+        )
+        return@launch
+      }
+
+      threadPresenterCallback?.showLoading()
+      chanLoader?.requestDataWithDeletedPosts()
     }
   }
 

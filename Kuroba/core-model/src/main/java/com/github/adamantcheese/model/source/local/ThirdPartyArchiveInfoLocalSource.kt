@@ -6,20 +6,24 @@ import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.entity.archive.LastUsedArchiveForThreadRelationEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
+import com.github.adamantcheese.model.source.cache.LastUsedArchiveForThreadCache
 import org.joda.time.DateTime
 
 class ThirdPartyArchiveInfoLocalSource(
         database: KurobaDatabase,
         loggerTag: String,
-        private val logger: Logger
+        private val logger: Logger,
+        private val lastUsedArchiveForThreadCache: LastUsedArchiveForThreadCache
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag ThirdPartyArchiveInfoLocalSource"
     private val chanBoardDao = database.chanBoardDao()
     private val chanThreadDao = database.chanThreadDao()
     private val thirdPartyArchiveInfoDao = database.thirdPartyArchiveInfoDao()
     private val thirdPartyArchiveFetchHistoryDao = database.thirdPartyArchiveFetchHistoryDao()
+    private val lastUsedArchiveForThreadDao = database.lastUsedArchiveForThreadDao()
 
     suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): ThirdPartyArchiveInfo? {
         ensureInTransaction()
@@ -37,6 +41,20 @@ class ThirdPartyArchiveInfoLocalSource(
         }
 
         return thirdPartyArchiveInfo.copy(databaseId = databaseId)
+    }
+
+    suspend fun selectLastUsedArchiveIdByThreadDescriptor(
+      threadDescriptor: ChanDescriptor.ThreadDescriptor
+    ): Long? {
+        val fromCache = lastUsedArchiveForThreadCache.get(threadDescriptor)
+        if (fromCache != null) {
+            return fromCache
+        }
+
+        val chanThreadId = getChanThreadIdOrNull(threadDescriptor)
+          ?: return null
+
+        return lastUsedArchiveForThreadDao.select(chanThreadId)?.thirdPartyArchiveInfoEntity?.archiveId
     }
 
     suspend fun selectThirdPartyArchiveInfo(archiveDescriptor: ArchiveDescriptor): ThirdPartyArchiveInfo? {
@@ -82,6 +100,18 @@ class ThirdPartyArchiveInfoLocalSource(
             return null
         }
 
+        lastUsedArchiveForThreadDao.insert(
+          LastUsedArchiveForThreadRelationEntity(
+            ownerThreadId = chanThreadId,
+            archiveId = thirdPartyArchiveInfoEntity.archiveId
+          )
+        )
+
+        lastUsedArchiveForThreadCache.store(
+          fetchResult.threadDescriptor,
+          thirdPartyArchiveInfoEntity.archiveId
+        )
+
         return fetchResult.copy(databaseId = databaseId)
     }
 
@@ -117,11 +147,16 @@ class ThirdPartyArchiveInfoLocalSource(
         // This thing is a little bit tricky because we need to get N latest fetch results overall,
         // but ThirdPartyArchiveFetchResult requires us to provide ThreadDescriptor as well, which
         // we don't have here. So we are forced to construct them manually by searching all the
-        // necessary stuff in the database directly.
+        // necessary stuff in the database directly. This method is only called once upon the app
+        // start up and then the results are cached in memory, so it should be fine.
         val chanThreadEntityMap = fetchHistoryList
                 .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-                .map { fetchHistoryList -> fetchHistoryList.map { fetchHistory -> fetchHistory.ownerThreadId } }
-                .flatMap { ownerThreadIdListChunk -> chanThreadDao.selectManyByThreadIdList(ownerThreadIdListChunk) }
+                .map { fetchHistoryList ->
+                    fetchHistoryList.map { fetchHistory -> fetchHistory.ownerThreadId }
+                }
+                .flatMap { ownerThreadIdListChunk ->
+                    chanThreadDao.selectManyByThreadIdList(ownerThreadIdListChunk)
+                }
                 .groupBy { chanThreadEntity -> chanThreadEntity.threadId }
 
         val chanBoardIdList = chanThreadEntityMap.values.flatMap { chanThreadEntityList ->

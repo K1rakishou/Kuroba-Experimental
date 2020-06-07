@@ -126,7 +126,6 @@ public class BoardsMenuPresenter
         public int findBoardPosition(Board board) {
             int position = 0;
             for (Item item : items) {
-
                 if (item.board != null && item.board.siteCodeEquals(board)) {
                     return position;
                 }

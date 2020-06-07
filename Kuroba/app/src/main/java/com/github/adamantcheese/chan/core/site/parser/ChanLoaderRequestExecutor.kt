@@ -571,7 +571,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val archiveId = archivesManager.getLatestArchiveDescriptor(chanDescriptor)?.getArchiveId()
+    val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
       ?: ArchiveDescriptor.NO_ARCHIVE_ID
 
     return when (chanDescriptor) {
@@ -606,7 +606,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val archiveId = archivesManager.getLatestArchiveDescriptor(chanDescriptor)?.getArchiveId()
+    val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
       ?: ArchiveDescriptor.NO_ARCHIVE_ID
 
     val posts = when (chanDescriptor) {

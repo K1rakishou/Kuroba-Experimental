@@ -230,7 +230,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_site_login_description_enabled">Logged in</string>
     <string name="setup_site_third_party_archives">Third-party archives</string>
     <string name="setup_site_setup_archives_title">Setup archives</string>
-    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d\nEnabled archives: %2$d\nWorking archives: %3$d</string>
+    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d (-%2$d)\nEnabled archives: %3$d\nWorking archives: %4$d</string>
 
     <string name="setup_site_login_description_disabled">Off</string>
     <string name="setup_board_title">Configure boards of %s</string>
@@ -765,7 +765,10 @@ Don't have a 4chan Pass?<br>
             disable it (so that you don\'t have to wait ~20 seconds each time you open a thread).]]>
     </string>
 
-    <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread.</string>
+    <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
+    <string name="thread_presenter_error_while_trying_to_get_archive_descriptor">Error while trying get archive descriptor by thread descriptor</string>
+    <string name="thread_presenter_no_archives_for_thread">No archives were found for the current thread. This means that all archives supporting current board are disabled (In this case you can enable them in site settings) or all archives supporting current board are not working (See archives settings in site settings)</string>
+    <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>
 
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
@@ -991,6 +994,5 @@ Don't have a 4chan Pass?<br>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here.</string>
-    <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
 
 </resources>

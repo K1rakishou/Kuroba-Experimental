@@ -269,15 +269,20 @@ class StartActivity : AppCompatActivity(),
 
     historyNavigationManager.runAfterInitialized {
       val topNavElement = historyNavigationManager.getNavElementAtTop()
-      if (topNavElement != null) {
-        when (topNavElement) {
-          is NavHistoryElement.Catalog -> {
-            browseController?.showBoard(topNavElement.descriptor)
-          }
-          is NavHistoryElement.Thread -> {
-            browseController?.loadWithDefaultBoard()
-            drawerController.loadThread(topNavElement.descriptor)
-          }
+      if (topNavElement == null) {
+        browseController?.loadWithDefaultBoard()
+        return@runAfterInitialized
+      }
+
+      when (topNavElement) {
+        is NavHistoryElement.Catalog -> {
+          browseController?.showBoard(topNavElement.descriptor)
+        }
+        is NavHistoryElement.Thread -> {
+          // TODO(KurobaEx): instead of always loading the default board try to find the last
+          //  visited board and load it instead
+          browseController?.loadWithDefaultBoard()
+          drawerController.loadThread(topNavElement.descriptor)
         }
       }
     }

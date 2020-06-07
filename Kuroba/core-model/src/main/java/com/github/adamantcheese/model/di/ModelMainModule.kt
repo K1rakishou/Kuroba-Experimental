@@ -10,6 +10,7 @@ import com.github.adamantcheese.model.di.annotation.VerboseLogs
 import com.github.adamantcheese.model.parser.ArchivesJsonParser
 import com.github.adamantcheese.model.repository.*
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
+import com.github.adamantcheese.model.source.cache.LastUsedArchiveForThreadCache
 import com.github.adamantcheese.model.source.local.*
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.source.remote.InlinedFileInfoRemoteSource
@@ -53,6 +54,16 @@ class ModelMainModule {
     logger: Logger
   ): ArchivesJsonParser {
     return ArchivesJsonParser(loggerTag, logger)
+  }
+
+  /**
+   * Caches
+   * */
+
+  @Singleton
+  @Provides
+  fun provideLastUsedArchiveForThreadCache(): LastUsedArchiveForThreadCache {
+    return LastUsedArchiveForThreadCache()
   }
 
   /**
@@ -122,12 +133,14 @@ class ModelMainModule {
   fun provideThirdPartyArchiveInfoLocalSource(
     database: KurobaDatabase,
     @LoggerTagPrefix loggerTag: String,
-    logger: Logger
+    logger: Logger,
+    lastUsedArchiveForThreadCache: LastUsedArchiveForThreadCache
   ): ThirdPartyArchiveInfoLocalSource {
     return ThirdPartyArchiveInfoLocalSource(
       database,
       loggerTag,
-      logger
+      logger,
+      lastUsedArchiveForThreadCache
     )
   }
 
