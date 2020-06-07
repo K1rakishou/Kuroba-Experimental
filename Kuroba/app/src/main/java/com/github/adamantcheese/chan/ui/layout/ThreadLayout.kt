@@ -268,10 +268,6 @@ class ThreadLayout @JvmOverloads constructor(
       }
     }
 
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-    }
-
     presenter.updateLoadable(thread.loadable.loadableDownloadingState)
     threadListLayout.showPosts(thread, filter, visible != Visible.THREAD, refreshAfterHideOrRemovePosts)
     switchVisible(Visible.THREAD)
@@ -600,6 +596,10 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (!threadListLayout.scrolledToBottom() && BackgroundUtils.isInForeground()) {
+      if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+        drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+      }
+
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 

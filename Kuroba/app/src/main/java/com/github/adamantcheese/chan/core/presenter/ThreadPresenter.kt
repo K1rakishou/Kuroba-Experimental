@@ -1183,7 +1183,7 @@ class ThreadPresenter @Inject constructor(
         val loadable = Loadable.forThread(
           board.site,
           board,
-          threadLink.threadId.toLong(),
+          threadLink.threadId,
           ""
         )
 

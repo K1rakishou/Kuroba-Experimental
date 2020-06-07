@@ -16,6 +16,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
+
   private var isTranslationLocked = false
   private var isCollapseLocked = false
 
