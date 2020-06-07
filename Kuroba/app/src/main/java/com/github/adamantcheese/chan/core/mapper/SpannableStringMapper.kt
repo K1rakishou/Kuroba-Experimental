@@ -139,6 +139,19 @@ object SpannableStringMapper {
         var postLinkableValueJson: String? = null
 
         when (postLinkable.type) {
+            PostLinkable.Type.DEAD -> {
+                val postId = postLinkable.linkableValue.extractLongOrNull()
+
+                if (postId != null) {
+                    postLinkableValueJson = gson.toJson(
+                      PostLinkableQuoteValue(
+                        PostLinkableType.Dead,
+                        postId
+                      )
+                    )
+                    serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Dead.typeValue)
+                }
+            }
             PostLinkable.Type.QUOTE -> {
                 val postId = postLinkable.linkableValue.extractLongOrNull()
 
@@ -336,6 +349,19 @@ object SpannableStringMapper {
         )
 
         val postLinkable = when (serializablePostLinkableSpan.postLinkableType) {
+            PostLinkableType.Dead -> {
+                val postLinkableQuoteValue = gson.fromJson(
+                  serializablePostLinkableSpan.postLinkableValueJson,
+                  PostLinkableQuoteValue::class.java
+                )
+
+                PostLinkable(
+                  currentTheme,
+                  serializablePostLinkableSpan.key,
+                  PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
+                  PostLinkable.Type.DEAD
+                )
+            }
             PostLinkableType.Quote -> {
                 val postLinkableQuoteValue = gson.fromJson(
                         serializablePostLinkableSpan.postLinkableValueJson,

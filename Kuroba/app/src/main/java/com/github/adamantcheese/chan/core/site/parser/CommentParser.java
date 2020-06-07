@@ -60,6 +60,7 @@ public class CommentParser {
     private static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
     private static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
     private static final String OP_REPLY_SUFFIX = " (OP)";
+    private static final String DEAD_REPLY_SUFFIX = " (DEAD)";
     private static final String EXTERN_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
 
     @Inject
@@ -68,6 +69,7 @@ public class CommentParser {
     private Map<String, List<StyleRule>> rules = new HashMap<>();
 
     private String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
+    private Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
     private Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
     private Pattern quotePattern = Pattern.compile(".*#p(\\d+)");
     private Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
@@ -88,6 +90,7 @@ public class CommentParser {
         rule(tagRule("a").action(this::handleAnchor));
         rule(tagRule("span").cssClass("fortune").action(this::handleFortune));
         rule(tagRule("table").action(this::handleTable));
+        rule(tagRule("span").cssClass("deadlink").action(this::handleDeadlink));
 
         rule(tagRule("s").link(PostLinkable.Type.SPOILER));
         rule(tagRule("b").bold());
@@ -101,11 +104,6 @@ public class CommentParser {
                 .backgroundColor(StyleRule.BackgroundColor.CODE)
         );
 
-        rule(tagRule("span")
-                .cssClass("deadlink")
-                .foregroundColor(StyleRule.ForegroundColor.QUOTE)
-                .strikeThrough()
-        );
         rule(tagRule("span")
                 .cssClass("spoiler")
                 .link(PostLinkable.Type.SPOILER)
@@ -164,6 +162,56 @@ public class CommentParser {
         return text;
     }
 
+    private CharSequence handleDeadlink(
+            Theme theme,
+            PostParser.Callback callback,
+            Post.Builder post,
+            CharSequence text,
+            Element anchor
+    ) {
+        Matcher matcher = deadQuotePattern.matcher(text);
+        if (!matcher.matches()) {
+            // Something unknown
+            return text;
+        }
+
+        long postId = Long.parseLong(matcher.group(1));
+
+        PostLinkable.Type type;
+        PostLinkable.Value value = new PostLinkable.Value.LongValue(postId);
+
+        if (callback.isInternal(postId)) {
+            // Link to post in same thread with post number (>>post)
+            type = PostLinkable.Type.QUOTE;
+            post.addReplyTo(postId);
+        } else {
+            // Link to post not in same thread in this case it means that the post is dead.
+            type = PostLinkable.Type.DEAD;
+        }
+
+        PostLinkable.Link link = new PostLinkable.Link(type, TextUtils.concat(text, DEAD_REPLY_SUFFIX), value);
+        appendSuffixes(callback, post, link, postId);
+
+        SpannableString res = new SpannableString(link.getKey());
+        PostLinkable pl = new PostLinkable(
+                theme,
+                link.getKey(),
+                link.getLinkValue(),
+                link.getType()
+        );
+
+        res.setSpan(
+                pl,
+                0,
+                res.length(),
+                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
+        );
+
+        post.addLinkable(pl);
+
+        return res;
+    }
+
     private CharSequence handleAnchor(
             Theme theme,
             PostParser.Callback callback,
@@ -213,20 +261,7 @@ public class CommentParser {
             Long postNo = handlerLink.getLinkValue().extractLongOrNull();
             if (postNo != null) {
                 post.addReplyTo(postNo);
-
-                // Append (OP) when it's a reply to OP
-                if (postNo == post.opId) {
-                    handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), OP_REPLY_SUFFIX));
-                }
-
-                // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-                if (callback.isSaved(postNo)) {
-                    if (post.isSavedReply) {
-                        handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_SELF_SUFFIX));
-                    } else {
-                        handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_OTHER_SUFFIX));
-                    }
-                }
+                appendSuffixes(callback, post, handlerLink, postNo);
             }
         }
 
@@ -254,6 +289,27 @@ public class CommentParser {
         }
 
         spannableStringBuilder.append(res);
+    }
+
+    private void appendSuffixes(
+            PostParser.Callback callback,
+            Post.Builder post,
+            PostLinkable.Link handlerLink,
+            Long postNo
+    ) {
+        // Append (OP) when it's a reply to OP
+        if (postNo == post.opId) {
+            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), OP_REPLY_SUFFIX));
+        }
+
+        // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
+        if (callback.isSaved(postNo)) {
+            if (post.isSavedReply) {
+                handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_SELF_SUFFIX));
+            } else {
+                handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_OTHER_SUFFIX));
+            }
+        }
     }
 
     private boolean isPostLinkableAlreadyAdded(SpannableString res, CharSequence handlerLinkKey) {
@@ -402,13 +458,13 @@ public class CommentParser {
 
         if (externalMatcher.matches()) {
             String board = externalMatcher.group(1);
-            int threadId = Integer.parseInt(externalMatcher.group(2));
-            int postId = Integer.parseInt(externalMatcher.group(3));
+            long threadId = Long.parseLong(externalMatcher.group(2));
+            long postId = Long.parseLong(externalMatcher.group(3));
 
             if (board.equals(post.board.code) && callback.isInternal(postId)) {
                 // link to post in same thread with post number (>>post)
                 type = PostLinkable.Type.QUOTE;
-                value = new PostLinkable.Value.IntegerValue(postId);
+                value = new PostLinkable.Value.LongValue(postId);
             } else {
                 // link to post not in same thread with post number (>>post or >>>/board/post)
                 type = PostLinkable.Type.THREAD;

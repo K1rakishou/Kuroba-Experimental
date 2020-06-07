@@ -189,6 +189,47 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun getThreadPostIds(
+    descriptor: ChanDescriptor.ThreadDescriptor,
+    archiveId: Long,
+    maxCount: Int
+  ): ModularResult<Set<Long>> {
+    val archiveIds = toArchiveIdsSet(archiveId)
+
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          val fromCache = postCache.getLatest(descriptor, maxCount)
+            .map { it.postDescriptor.postNo }
+            .toSet()
+
+          if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
+            return@tryWithTransaction fromCache
+          }
+
+          val postsFromDatabase = localSource.getThreadPosts(
+            descriptor,
+            archiveIds,
+            fromCache,
+            maxCount
+          )
+
+          if (postsFromDatabase.isNotEmpty()) {
+            postsFromDatabase.forEach { post ->
+              postCache.putIntoCache(post.postDescriptor, post)
+            }
+          }
+
+          val fromDatabase = postsFromDatabase
+            .map { post -> post.postDescriptor.postNo }
+            .toSet()
+
+          return@tryWithTransaction fromCache + fromDatabase
+        }
+      }
+    }
+  }
+
   suspend fun getThreadPosts(
     descriptor: ChanDescriptor.ThreadDescriptor,
     archiveId: Long,

@@ -9,14 +9,12 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.entity.archive.LastUsedArchiveForThreadRelationEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
-import com.github.adamantcheese.model.source.cache.LastUsedArchiveForThreadCache
 import org.joda.time.DateTime
 
 class ThirdPartyArchiveInfoLocalSource(
         database: KurobaDatabase,
         loggerTag: String,
-        private val logger: Logger,
-        private val lastUsedArchiveForThreadCache: LastUsedArchiveForThreadCache
+        private val logger: Logger
 ) : AbstractLocalSource(database) {
     private val TAG = "$loggerTag ThirdPartyArchiveInfoLocalSource"
     private val chanBoardDao = database.chanBoardDao()
@@ -25,7 +23,9 @@ class ThirdPartyArchiveInfoLocalSource(
     private val thirdPartyArchiveFetchHistoryDao = database.thirdPartyArchiveFetchHistoryDao()
     private val lastUsedArchiveForThreadDao = database.lastUsedArchiveForThreadDao()
 
-    suspend fun insertThirdPartyArchiveInfo(thirdPartyArchiveInfo: ThirdPartyArchiveInfo): ThirdPartyArchiveInfo? {
+    suspend fun insertThirdPartyArchiveInfo(
+      thirdPartyArchiveInfo: ThirdPartyArchiveInfo
+    ): ThirdPartyArchiveInfo? {
         ensureInTransaction()
 
         val databaseId = thirdPartyArchiveInfoDao.insertOrUpdate(
@@ -46,15 +46,14 @@ class ThirdPartyArchiveInfoLocalSource(
     suspend fun selectLastUsedArchiveIdByThreadDescriptor(
       threadDescriptor: ChanDescriptor.ThreadDescriptor
     ): Long? {
-        val fromCache = lastUsedArchiveForThreadCache.get(threadDescriptor)
-        if (fromCache != null) {
-            return fromCache
-        }
-
         val chanThreadId = getChanThreadIdOrNull(threadDescriptor)
           ?: return null
 
-        return lastUsedArchiveForThreadDao.select(chanThreadId)?.thirdPartyArchiveInfoEntity?.archiveId
+        val lastUsedArchives = lastUsedArchiveForThreadDao.selectMany(chanThreadId)
+
+        return lastUsedArchives.firstOrNull { lastUsedArchive ->
+            lastUsedArchive.thirdPartyArchiveInfoEntity.enabled
+        }?.thirdPartyArchiveInfoEntity?.archiveId
     }
 
     suspend fun selectThirdPartyArchiveInfo(archiveDescriptor: ArchiveDescriptor): ThirdPartyArchiveInfo? {
@@ -100,16 +99,15 @@ class ThirdPartyArchiveInfoLocalSource(
             return null
         }
 
+        val now = DateTime.now()
+
         lastUsedArchiveForThreadDao.insert(
           LastUsedArchiveForThreadRelationEntity(
+            id = 0L,
             ownerThreadId = chanThreadId,
-            archiveId = thirdPartyArchiveInfoEntity.archiveId
+            archiveId = thirdPartyArchiveInfoEntity.archiveId,
+            lastUpdatedOn = now
           )
-        )
-
-        lastUsedArchiveForThreadCache.store(
-          fetchResult.threadDescriptor,
-          thirdPartyArchiveInfoEntity.archiveId
         )
 
         return fetchResult.copy(databaseId = databaseId)

@@ -35,7 +35,7 @@ class PostLinkable(
 ) : ClickableSpan() {
 
   enum class Type {
-    QUOTE, LINK, SPOILER, THREAD, BOARD, SEARCH
+    QUOTE, LINK, SPOILER, THREAD, BOARD, SEARCH, DEAD
   }
 
   var isSpoilerVisible: Boolean = ChanSettings.revealTextSpoilers.get()
@@ -57,7 +57,8 @@ class PostLinkable(
       Type.LINK,
       Type.THREAD,
       Type.BOARD,
-      Type.SEARCH -> {
+      Type.SEARCH,
+      Type.DEAD -> {
         if (type == Type.QUOTE) {
           val value = when (linkableValue) {
             is Value.IntegerValue -> linkableValue.value.toLong()
@@ -78,7 +79,11 @@ class PostLinkable(
           ds.color = theme.quoteColor
         }
 
-        ds.isUnderlineText = true
+        if (type == Type.DEAD) {
+          ds.isStrikeThruText = true
+        } else {
+          ds.isUnderlineText = true
+        }
       }
       Type.SPOILER -> {
         ds.bgColor = theme.spoilerColor
@@ -134,20 +139,10 @@ class PostLinkable(
       }
     }
 
-    fun extractIntOrNull(): Int? {
-      return when (this) {
-        is IntegerValue -> value
-        is LongValue -> value.toInt()
-        is StringValue,
-        is ThreadLink,
-        is SearchLink -> null
-      }
-    }
-
     data class IntegerValue(val value: Int) : Value()
     data class LongValue(val value: Long) : Value()
     data class StringValue(val value: CharSequence) : Value()
-    data class ThreadLink(var board: String, var threadId: Int, var postId: Int) : Value()
+    data class ThreadLink(var board: String, var threadId: Long, var postId: Long) : Value()
     data class SearchLink(var board: String, var search: String) : Value()
   }
 

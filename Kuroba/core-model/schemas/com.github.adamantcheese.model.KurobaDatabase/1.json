@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "713e5d787dda7fd458f27f2795e8d6f1",
+    "identityHash": "d3a3a81b310172f02a311e50a697acff",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1092,8 +1092,14 @@
       },
       {
         "tableName": "last_used_archive_for_thread_relation",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `archive_id` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_id` INTEGER NOT NULL, `archive_id` INTEGER NOT NULL, `last_updated_on` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
           {
             "fieldPath": "ownerThreadId",
             "columnName": "owner_thread_id",
@@ -1105,15 +1111,31 @@
             "columnName": "archive_id",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdatedOn",
+            "columnName": "last_updated_on",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
           "columnNames": [
-            "owner_thread_id"
+            "id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_last_used_archive_for_thread_relation_owner_thread_id_archive_id",
+            "unique": true,
+            "columnNames": [
+              "owner_thread_id",
+              "archive_id"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_last_used_archive_for_thread_relation_owner_thread_id_archive_id` ON `${TABLE_NAME}` (`owner_thread_id`, `archive_id`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "chan_thread",
@@ -1137,7 +1159,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '713e5d787dda7fd458f27f2795e8d6f1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd3a3a81b310172f02a311e50a697acff')"
     ]
   }
 }

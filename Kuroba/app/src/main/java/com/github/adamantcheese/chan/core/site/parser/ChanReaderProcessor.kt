@@ -31,6 +31,15 @@ class ChanReaderProcessor(
 
     var op: Post.Builder? = null
 
+    fun getThreadCap(): Int {
+        var maxCount = op?.stickyCap ?: Int.MAX_VALUE
+        if (maxCount < 0) {
+            maxCount = Int.MAX_VALUE
+        }
+
+        return maxCount
+    }
+
     suspend fun addPost(postBuilder: Post.Builder) {
         if (differsFromCached(postBuilder)) {
             addForParse(postBuilder)

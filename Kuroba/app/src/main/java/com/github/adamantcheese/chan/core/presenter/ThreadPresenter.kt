@@ -1188,7 +1188,7 @@ class ThreadPresenter @Inject constructor(
         )
 
         val threadLoadable = databaseManager.databaseLoadableManager.get(loadable)
-        threadLoadable.markedNo = threadLink.postId
+        threadLoadable.markedNo = threadLink.postId.toInt()
 
         threadPresenterCallback?.showThread(threadLoadable)
       }

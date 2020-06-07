@@ -8,11 +8,11 @@ public class PostLinkThreadLinkValue
     @SerializedName("board")
     private String board;
     @SerializedName("thread_id")
-    private int threadId;
+    private long threadId;
     @SerializedName("post_id")
-    private int postId;
+    private long postId;
 
-    public PostLinkThreadLinkValue(SerializablePostLinkableSpan.PostLinkableType type, String board, int threadId, int postId) {
+    public PostLinkThreadLinkValue(SerializablePostLinkableSpan.PostLinkableType type, String board, long threadId, long postId) {
         super(type);
 
         this.board = board;
@@ -24,11 +24,11 @@ public class PostLinkThreadLinkValue
         return board;
     }
 
-    public int getThreadId() {
+    public long getThreadId() {
         return threadId;
     }
 
-    public int getPostId() {
+    public long getPostId() {
         return postId;
     }
 }

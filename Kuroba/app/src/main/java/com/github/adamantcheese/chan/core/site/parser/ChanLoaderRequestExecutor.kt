@@ -243,9 +243,11 @@ class ChanLoaderRequestExecutor(
 
     if (postsFromArchive.isNotEmpty()) {
       val parsedPosts = parseNewPostsPosts(
+        descriptor,
         requestParams.loadable,
         requestParams.chanReader,
-        postsFromArchive
+        postsFromArchive,
+        Int.MAX_VALUE
       )
 
       storeNewPostsInRepository(parsedPosts, false)
@@ -313,7 +315,13 @@ class ChanLoaderRequestExecutor(
 
       val (parsedPosts, parsingDuration) = measureTimedValue {
         val posts = mergePosts(chanReaderProcessor.getToParse(), archivePosts)
-        return@measureTimedValue parseNewPostsPosts(loadable, reader, posts)
+        return@measureTimedValue parseNewPostsPosts(
+          descriptor,
+          loadable,
+          reader,
+          posts,
+          chanReaderProcessor.getThreadCap()
+        )
       }
 
       val (storedPostNoList, storeDuration) = measureTimedValue {
@@ -611,10 +619,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
 
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        var maxCount = chanReaderProcessor.op?.stickyCap ?: Int.MAX_VALUE
-        if (maxCount < 0) {
-          maxCount = Int.MAX_VALUE
-        }
+        val maxCount = chanReaderProcessor.getThreadCap()
 
         // When in the mode, we can just select every post we have for this thread
         // descriptor and then just sort the in the correct order. We should also use
@@ -652,24 +657,42 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
   }
 
   private suspend fun parseNewPostsPosts(
+    chanDescriptor: ChanDescriptor,
     loadable: Loadable,
     chanReader: ChanReader,
-    postBuildersToParse: List<Post.Builder>
+    postBuildersToParse: List<Post.Builder>,
+    maxCount: Int
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
     if (verboseLogsEnabled) {
-      Logger.d(TAG, "parseNewPostsPosts(loadable=${loadable.toShortString()}, " +
-        "postsToParseSize=${postBuildersToParse.size})")
+      Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
+        "loadable=${loadable.toShortString()}, " +
+        "postsToParseSize=${postBuildersToParse.size}, " +
+        "maxCount=$maxCount)")
     }
 
     if (postBuildersToParse.isEmpty()) {
       return emptyList()
     }
 
-    val internalIds = postBuildersToParse
+    var internalIds = postBuildersToParse
       .map { postBuilder -> postBuilder.id }
       .toSet()
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
+        ?: ArchiveDescriptor.NO_ARCHIVE_ID
+
+      if (archiveId != ArchiveDescriptor.NO_ARCHIVE_ID) {
+        internalIds = chanPostRepository.getThreadPostIds(chanDescriptor, archiveId, maxCount)
+          .mapErrorToValue { error ->
+            Logger.e(TAG, "Error while trying to get post ids for a thread" +
+              " (chanDescriptor=$chanDescriptor, archiveId=$archiveId, maxCount=$maxCount)", error)
+            return@mapErrorToValue emptySet<Long>()
+          }
+      }
+    }
 
     return coroutineScope {
       return@coroutineScope postBuildersToParse

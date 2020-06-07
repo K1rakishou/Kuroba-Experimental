@@ -19,7 +19,8 @@ abstract class LastUsedArchiveForThreadDao {
     SELECT *
     FROM ${LastUsedArchiveForThreadRelationEntity.TABLE_NAME}
     WHERE ${LastUsedArchiveForThreadRelationEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+    ORDER BY ${LastUsedArchiveForThreadRelationEntity.LAST_UPDATED_ON_COLUMN_NAME} DESC
   """)
-  abstract suspend fun select(ownerThreadId: Long): LastUsedArchiveForThreadDto?
+  abstract suspend fun selectMany(ownerThreadId: Long): List<LastUsedArchiveForThreadDto>
 
 }
