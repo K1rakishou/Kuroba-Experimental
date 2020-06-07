@@ -134,7 +134,10 @@ public class BrowseController
 
         if (drawerCallbacks != null) {
             drawerCallbacks.resetBottomNavViewCheckState();
-            drawerCallbacks.showBottomNavBar(false, false);
+
+            if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+                drawerCallbacks.showBottomNavBar(false, false);
+            }
         }
     }
 

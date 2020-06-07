@@ -209,6 +209,10 @@ class StartActivity : AppCompatActivity(),
     controllerNavigationManager.listenForControllerNavigationChanges()
       .asFlow()
       .collect { change ->
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+          return@collect
+        }
+
         when (change) {
           is ControllerNavigationManager.ControllerNavigationChange.Presented,
           is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
