@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlin.math.abs
 
 class HidingBottomNavigationView @JvmOverloads constructor(
   context: Context,
@@ -17,6 +18,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
 
+  private var lastOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
 
@@ -34,7 +36,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
     }
 
-    onCollapseAnimation(true)
+    onCollapseAnimationInternal(collapse = true, isFromToolbarCallbacks = false)
 
     if (lockTranslation) {
       isTranslationLocked = true
@@ -58,12 +60,14 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       isCollapseLocked = false
     }
 
-    onCollapseAnimation(false)
+    onCollapseAnimationInternal(collapse = false, isFromToolbarCallbacks = false)
   }
 
   fun resetState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
     isTranslationLocked = !unlockTranslation
     isCollapseLocked = !unlockCollapse
+
+    restoreHeightWithAnimation()
   }
 
   override fun onAttachedToWindow() {
@@ -87,6 +91,8 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun onCollapseTranslation(offset: Float) {
+    lastOffset = offset
+
     if (isCollapseLocked) {
       return
     }
@@ -96,7 +102,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val diff = kotlin.math.abs(translation - translationY)
+    val diff = abs(translation - translationY)
     if (diff >= height) {
       animate()
         .translationY(translation)
@@ -110,6 +116,18 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun onCollapseAnimation(collapse: Boolean) {
+    onCollapseAnimationInternal(collapse, true)
+  }
+
+  private fun onCollapseAnimationInternal(collapse: Boolean, isFromToolbarCallbacks: Boolean) {
+    if (isFromToolbarCallbacks) {
+      if (collapse) {
+        lastOffset = 1f
+      } else {
+        lastOffset = 0f
+      }
+    }
+
     if (isTranslationLocked) {
       return
     }
@@ -120,6 +138,24 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       0f
     }
 
+    if (translation.toInt() == translationY.toInt()) {
+      return
+    }
+
+    animate()
+      .translationY(translation)
+      .setDuration(300)
+      .setStartDelay(0)
+      .setInterpolator(SLOWDOWN)
+      .start()
+  }
+
+  private fun restoreHeightWithAnimation() {
+    if (isTranslationLocked || isCollapseLocked) {
+      return
+    }
+
+    val translation = lastOffset * getTotalHeight().toFloat()
     if (translation.toInt() == translationY.toInt()) {
       return
     }
