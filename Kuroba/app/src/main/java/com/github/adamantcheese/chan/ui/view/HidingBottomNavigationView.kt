@@ -18,7 +18,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
 
-  private var lastOffset = 0f
+  private var lastCollapseTranslationOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
 
@@ -91,7 +91,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun onCollapseTranslation(offset: Float) {
-    lastOffset = offset
+    lastCollapseTranslationOffset = offset
 
     if (isCollapseLocked) {
       return
@@ -122,9 +122,9 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private fun onCollapseAnimationInternal(collapse: Boolean, isFromToolbarCallbacks: Boolean) {
     if (isFromToolbarCallbacks) {
       if (collapse) {
-        lastOffset = 1f
+        lastCollapseTranslationOffset = 1f
       } else {
-        lastOffset = 0f
+        lastCollapseTranslationOffset = 0f
       }
     }
 
@@ -155,7 +155,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = lastOffset * getTotalHeight().toFloat()
+    val translation = lastCollapseTranslationOffset * getTotalHeight().toFloat()
     if (translation.toInt() == translationY.toInt()) {
       return
     }
