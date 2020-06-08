@@ -6,8 +6,8 @@ import android.widget.Toast
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
-import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2RebuildCallbacks
 import com.github.adamantcheese.chan.features.settings.MediaScreen
+import com.github.adamantcheese.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory.MediaSettingsControllerPresenter
 import com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory.SaveLocationSetupDelegate
 import com.github.adamantcheese.chan.features.settings.screens.delegate.base_directory.SharedLocationSetupDelegate
@@ -23,7 +23,7 @@ import com.github.k1rakishou.fsaf.FileManager
 
 class MediaSettingsDelegate(
   private val context: Context,
-  private val callback: MainSettingsControllerV2RebuildCallbacks,
+  private val callback: SettingsCoordinatorCallbacks,
   private val navigationController: NavigationController,
   private val fileManager: FileManager,
   private val fileChooser: FileChooser,

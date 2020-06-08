@@ -15,17 +15,12 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.cache.CacheHandler
-import com.github.adamantcheese.chan.core.cache.FileCacheV2
-import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
-import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxySettingsGroupTitle
-import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.features.settings.setting.*
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
@@ -33,163 +28,31 @@ import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationC
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
-import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
-import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
-import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
-import com.github.adamantcheese.model.repository.SeenPostRepository
-import com.github.k1rakishou.fsaf.FileChooser
-import com.github.k1rakishou.fsaf.FileManager
-import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import java.util.*
 import javax.inject.Inject
 
 class MainSettingsControllerV2(context: Context)
   : Controller(context),
   ToolbarSearchCallback,
-  MainSettingsControllerV2RebuildCallbacks,
   RequiresNoBottomNavBar {
 
   @Inject
-  lateinit var databaseManager: DatabaseManager
-  @Inject
-  lateinit var fileCacheV2: FileCacheV2
-  @Inject
-  lateinit var cacheHandler: CacheHandler
-  @Inject
-  lateinit var seenPostRepository: SeenPostRepository
-  @Inject
-  lateinit var mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
-  @Inject
-  lateinit var inlinedFileInfoRepository: InlinedFileInfoRepository
-  @Inject
-  lateinit var filterWatchManager: FilterWatchManager
-  @Inject
-  lateinit var wakeManager: WakeManager
-  @Inject
-  lateinit var reportManager: ReportManager
-  @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
-  @Inject
-  lateinit var themeHelper: ThemeHelper
-  @Inject
-  lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
-  @Inject
-  lateinit var fileChooser: FileChooser
-  @Inject
-  lateinit var fileManager: FileManager
-  @Inject
-  lateinit var threadSaveManager: ThreadSaveManager
-  @Inject
-  lateinit var watchManager: WatchManager
 
   lateinit var recyclerView: EpoxyRecyclerView
-
-  private val mainSettingsScreen by lazy {
-    MainSettingsScreen(
-      context,
-      databaseManager,
-      (context as StartActivity).updateManager,
-      reportManager,
-      navigationController!!
-    )
-  }
-
-  private val threadWatcherSettingsScreen by lazy {
-    ThreadWatcherSettingsScreen(
-      context
-    )
-  }
-
-  private val appearanceSettingsScreen by lazy {
-    AppearanceSettingsScreen(
-      context,
-      navigationController!!,
-      themeHelper
-    )
-  }
-
-  private val behaviorSettingsScreen by lazy {
-    BehaviourSettingsScreen(
-      context,
-      navigationController!!,
-      databaseManager
-    )
-  }
-
-  private val experimentalSettingsScreen by lazy {
-    ExperimentalSettingsScreen(
-      context,
-      navigationController!!,
-      exclusionZonesHolder
-    )
-  }
-
-  private val developerSettingsScreen by lazy {
-    DeveloperSettingsScreen(
-      context,
-      navigationController!!,
-      cacheHandler,
-      fileCacheV2,
-      filterWatchManager,
-      wakeManager
-    )
-  }
-
-  private val databaseSummaryScreen by lazy {
-    DatabaseSettingsSummaryScreen(
-      context,
-      inlinedFileInfoRepository,
-      mediaServiceLinkExtraContentRepository,
-      seenPostRepository
-    )
-  }
-
-  private val importExportSettingsScreen by lazy {
-    ImportExportSettingsScreen(
-      context,
-      navigationController!!,
-      fileChooser,
-      fileManager,
-      databaseManager
-    )
-  }
-
-  private val mediaSettingsScreen by lazy {
-    val runtimePermissionsHelper = (context as StartActivity).runtimePermissionsHelper
-
-    MediaSettingsScreen(
-      context,
-      this,
-      navigationController!!,
-      fileManager,
-      fileChooser,
-      databaseManager,
-      threadSaveManager,
-      watchManager,
-      runtimePermissionsHelper
-    )
-  }
-
-  private val settingsGraphDelegate = lazy { buildSettingsGraph() }
-  private val settingsGraph by settingsGraphDelegate
-
-  private val screenStack = Stack<IScreenIdentifier>()
-  private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
-  private val defaultScreen = MainScreen
+  lateinit var settingsCoordinator: SettingsCoordinator
 
   private val cancellableToast = CancellableToast()
+  private val defaultScreen = MainScreen
+
   private var hasPendingRestart = false
   private var hasPendingUiRefresh = false
 
@@ -208,40 +71,73 @@ class MainSettingsControllerV2(context: Context)
       .build()
     navigation.swipeable = false
 
-    mainScope.launch {
-      onSearchEnteredSubject
-        .asFlow()
-        .debounce(DEBOUNCE_TIME_MS)
-        .collect { query ->
-          if (query.length < MIN_QUERY_LENGTH) {
-            rebuildCurrentScreen()
-            return@collect
-          }
-
-          rebuildScreenWithSearchQuery(query)
-        }
-    }
+    settingsCoordinator = SettingsCoordinator(context, navigationController!!)
+    settingsCoordinator.onCreate()
+    settingsCoordinator.rebuildScreen(defaultScreen)
 
     mainScope.launch {
-      settingsNotificationManager.listenForNotificationUpdates()
+      settingsCoordinator.listenForRenderScreenActions()
         .asFlow()
-        .catch { error -> Logger.e(TAG, "Unknown error received from SettingsNotificationManager", error) }
-        .collect {
-          rebuildCurrentScreen()
+        .collect { renderAction ->
+          renderScreen(renderAction)
         }
     }
+  }
 
-    mainSettingsScreen.onCreate()
-    developerSettingsScreen.onCreate()
-    databaseSummaryScreen.onCreate()
-    threadWatcherSettingsScreen.onCreate()
-    appearanceSettingsScreen.onCreate()
-    behaviorSettingsScreen.onCreate()
-    experimentalSettingsScreen.onCreate()
-    importExportSettingsScreen.onCreate()
-    mediaSettingsScreen.onCreate()
+  private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {
+    recyclerView.withModels {
+      if (renderAction is SettingsCoordinator.RenderAction.RenderScreen
+        || renderAction is SettingsCoordinator.RenderAction.RenderSearchScreen) {
+        addOneshotModelBuildListener {
+          recyclerView.scrollToPosition(0)
+        }
+      }
 
-    rebuildDefaultScreen()
+      when (renderAction) {
+        is SettingsCoordinator.RenderAction.RenderScreen -> {
+          navigation.title = renderAction.settingsScreen.title
+          (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
+
+          renderScreen(renderAction.settingsScreen)
+        }
+        is SettingsCoordinator.RenderAction.RenderSearchScreen -> {
+          renderSearchScreen(
+            renderAction.topScreenIdentifier,
+            renderAction.graph,
+            renderAction.query
+          )
+        }
+      }
+    }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    settingsCoordinator.onDestroy()
+    restartAppOrRefreshUiIfNecessary()
+  }
+
+  override fun onSearchVisibilityChanged(visible: Boolean) {
+    if (!visible) {
+      settingsCoordinator.rebuildCurrentScreen()
+    }
+  }
+
+  override fun onSearchEntered(entered: String?) {
+    settingsCoordinator.onSearchEntered(entered ?: "")
+  }
+
+  override fun onBack(): Boolean {
+    return settingsCoordinator.onBack()
+  }
+
+  private fun updateRestartRefreshButton(settingV2: SettingV2) {
+    if (settingV2.requiresRestart) {
+      hasPendingRestart = true
+    } else if (settingV2.requiresUiRefresh) {
+      hasPendingUiRefresh = true
+    }
   }
 
   private fun restartAppOrRefreshUiIfNecessary() {
@@ -254,114 +150,11 @@ class MainSettingsControllerV2(context: Context)
     }
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    mainSettingsScreen.onDestroy()
-    developerSettingsScreen.onDestroy()
-    databaseSummaryScreen.onDestroy()
-    threadWatcherSettingsScreen.onDestroy()
-    appearanceSettingsScreen.onDestroy()
-    behaviorSettingsScreen.onDestroy()
-    experimentalSettingsScreen.onDestroy()
-    importExportSettingsScreen.onDestroy()
-    mediaSettingsScreen.onDestroy()
-
-    if (settingsGraphDelegate.isInitialized()) {
-      settingsGraph.clear()
-    }
-
-    screenStack.clear()
-    restartAppOrRefreshUiIfNecessary()
-  }
-
-  override fun onSearchVisibilityChanged(visible: Boolean) {
-    if (!visible) {
-      rebuildCurrentScreen()
-    }
-  }
-
-  override fun onSearchEntered(entered: String?) {
-    onSearchEnteredSubject.onNext(entered ?: "")
-  }
-
-  override fun onBack(): Boolean {
-    if (screenStack.size <= 1) {
-      screenStack.clear()
-      Logger.d(TAG, "onBack() screenStack.size <= 1, exiting")
-      return false
-    }
-
-    rebuildScreen(popScreen())
-    return true
-  }
-
-  private fun rebuildDefaultScreen() {
-    pushScreen(defaultScreen)
-    rebuildScreen(defaultScreen)
-  }
-
-  private fun rebuildCurrentScreen() {
-    require(screenStack.isNotEmpty()) { "Stack is empty" }
-
-    val screenIdentifier = screenStack.peek()
-    rebuildScreen(screenIdentifier)
-  }
-
-  private fun rebuildScreenWithSearchQuery(query: String) {
-    settingsGraph.rebuildScreens()
-    val graph = settingsGraph
-
-    recyclerView.withModels {
-      addOneshotModelBuildListener {
-        recyclerView.scrollToPosition(0)
-      }
-
-      renderSearchScreen(graph, query)
-    }
-  }
-
-  private fun rebuildScreen(screen: IScreenIdentifier) {
-    settingsGraph.rebuildScreen(screen)
-    val settingsScreen = settingsGraph[screen]
-
-    recyclerView.withModels {
-      addOneshotModelBuildListener {
-        recyclerView.scrollToPosition(0)
-      }
-
-      updateTitle(settingsScreen)
-      renderScreen(settingsScreen)
-    }
-  }
-
-  override fun rebuildSetting(
-    screenIdentifier: IScreenIdentifier,
-    groupIdentifier: IGroupIdentifier,
-    settingIdentifier: SettingsIdentifier
+  private fun EpoxyController.renderSearchScreen(
+    topScreenIdentifier: IScreenIdentifier?,
+    graph: SettingsGraph,
+    query: String
   ) {
-    val settingsScreen = settingsGraph[screenIdentifier]
-      .apply { rebuildSetting(groupIdentifier, settingIdentifier) }
-
-    recyclerView.withModels {
-      updateTitle(settingsScreen)
-
-      renderScreen(settingsScreen)
-    }
-  }
-
-  private fun updateTitle(settingsScreen: SettingsScreen) {
-    navigation.title = settingsScreen.title
-    (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
-  }
-
-  private fun EpoxyController.renderSearchScreen(graph: SettingsGraph, query: String) {
-    val topScreenIdentifier = if (screenStack.isEmpty()) {
-      null
-    } else {
-      screenStack.peek()
-    }
-
     var foundSomething = false
     var globalSettingIndex = 0
 
@@ -454,9 +247,9 @@ class MainSettingsControllerV2(context: Context)
               when (val clickAction = settingV2.callback.invoke()) {
                 SettingClickAction.RefreshClickedSetting -> {
                   if (!query.isNullOrEmpty()) {
-                    rebuildScreenWithSearchQuery(query)
+                    settingsCoordinator.rebuildScreenWithSearchQuery(query)
                   } else {
-                    rebuildSetting(
+                    settingsCoordinator.rebuildSetting(
                       settingsScreen.screenIdentifier,
                       settingsGroup.groupIdentifier,
                       settingV2.settingsIdentifier
@@ -464,8 +257,7 @@ class MainSettingsControllerV2(context: Context)
                   }
                 }
                 is SettingClickAction.OpenScreen -> {
-                  pushScreen(clickAction.screenIdentifier)
-                  rebuildScreen(clickAction.screenIdentifier)
+                  settingsCoordinator.rebuildScreen(clickAction.screenIdentifier)
                 }
               }.exhaustive
             }
@@ -495,9 +287,9 @@ class MainSettingsControllerV2(context: Context)
               }
 
               if (!query.isNullOrEmpty()) {
-                rebuildScreenWithSearchQuery(query)
+                settingsCoordinator.rebuildScreenWithSearchQuery(query)
               } else {
-                rebuildCurrentScreen()
+                settingsCoordinator.rebuildCurrentScreen()
               }
             }
           } else {
@@ -525,9 +317,9 @@ class MainSettingsControllerV2(context: Context)
                 }
 
                 if (!query.isNullOrEmpty()) {
-                  rebuildScreenWithSearchQuery(query)
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query)
                 } else {
-                  rebuildCurrentScreen()
+                  settingsCoordinator.rebuildCurrentScreen()
                 }
               }
             }
@@ -556,9 +348,9 @@ class MainSettingsControllerV2(context: Context)
                 }
 
                 if (!query.isNullOrEmpty()) {
-                  rebuildScreenWithSearchQuery(query)
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query)
                 } else {
-                  rebuildCurrentScreen()
+                  settingsCoordinator.rebuildCurrentScreen()
                 }
               }
             }
@@ -574,14 +366,6 @@ class MainSettingsControllerV2(context: Context)
       epoxyDividerView {
         id("epoxy_divider_${globalSettingIndex}")
       }
-    }
-  }
-
-  private fun updateRestartRefreshButton(settingV2: SettingV2) {
-    if (settingV2.requiresRestart) {
-      hasPendingRestart = true
-    } else if (settingV2.requiresUiRefresh) {
-      hasPendingUiRefresh = true
     }
   }
 
@@ -609,7 +393,11 @@ class MainSettingsControllerV2(context: Context)
     )
   }
 
-  private fun showInputDialog(view: View, inputSettingV2: InputSettingV2<*>, rebuildScreenFunc: (Any?) -> Unit) {
+  private fun showInputDialog(
+    view: View,
+    inputSettingV2: InputSettingV2<*>,
+    rebuildScreenFunc: (Any?) -> Unit
+  ) {
     val container = LinearLayout(view.context)
     container.setPadding(dp(24f), dp(8f), dp(24f), 0)
 
@@ -690,40 +478,7 @@ class MainSettingsControllerV2(context: Context)
     rebuildScreenFunc(inputSettingV2.getCurrent())
   }
 
-  private fun popScreen(): IScreenIdentifier {
-    screenStack.pop()
-    return screenStack.peek()
-  }
-
-  private fun pushScreen(screenIdentifier: IScreenIdentifier) {
-    val stackAlreadyContainsScreen = screenStack.any { screenIdentifierInStack ->
-      screenIdentifierInStack == screenIdentifier
-    }
-
-    if (!stackAlreadyContainsScreen) {
-      screenStack.push(screenIdentifier)
-    }
-  }
-
-  private fun buildSettingsGraph(): SettingsGraph {
-    val graph = SettingsGraph()
-
-    graph += mainSettingsScreen.build()
-    graph += developerSettingsScreen.build()
-    graph += databaseSummaryScreen.build()
-    graph += threadWatcherSettingsScreen.build()
-    graph += appearanceSettingsScreen.build()
-    graph += behaviorSettingsScreen.build()
-    graph += experimentalSettingsScreen.build()
-    graph += importExportSettingsScreen.build()
-    graph += mediaSettingsScreen.build()
-
-    return graph
-  }
-
   companion object {
     private const val TAG = "MainSettingsControllerV2"
-    private const val MIN_QUERY_LENGTH = 3
-    private const val DEBOUNCE_TIME_MS = 350L
   }
 }

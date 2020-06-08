@@ -6,8 +6,8 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2RebuildCallbacks
 import com.github.adamantcheese.chan.features.settings.MediaScreen
+import com.github.adamantcheese.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.screens.delegate.MediaSettingsDelegate
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
@@ -20,7 +20,7 @@ import com.github.k1rakishou.fsaf.FileManager
 
 class MediaSettingsScreen(
   context: Context,
-  private val callback: MainSettingsControllerV2RebuildCallbacks,
+  private val callback: SettingsCoordinatorCallbacks,
   private val navigationController: NavigationController,
   private val fileManager: FileManager,
   private val fileChooser: FileChooser,

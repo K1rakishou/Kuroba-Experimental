@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.features.settings
 
-interface MainSettingsControllerV2RebuildCallbacks {
+interface SettingsCoordinatorCallbacks {
   fun rebuildSetting(
     screenIdentifier: IScreenIdentifier,
     groupIdentifier: IGroupIdentifier,

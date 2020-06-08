@@ -24,7 +24,7 @@ class BehaviourSettingsScreen(
 ) : BaseSettingsScreen(
   context,
   BehaviorScreen,
-  R.string.setting_other_settings_group
+  R.string.settings_screen_behavior
 ) {
 
   override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
