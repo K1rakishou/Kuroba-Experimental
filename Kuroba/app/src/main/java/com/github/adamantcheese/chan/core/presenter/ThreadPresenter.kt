@@ -407,6 +407,7 @@ class ThreadPresenter @Inject constructor(
       if (!startedSaving) {
         watchManager.stopSavingThread(loadable)
       }
+
       return startedSaving
     }
 
@@ -472,9 +473,15 @@ class ThreadPresenter @Inject constructor(
 
       AndroidUtils.postToEventBus(PinAddedMessage(newPin))
     }
+
     if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
-      showToast(context, R.string.thread_layout_background_watcher_is_disabled_message, Toast.LENGTH_LONG)
+      showToast(
+        context,
+        R.string.thread_layout_background_watcher_is_disabled_message,
+        Toast.LENGTH_LONG
+      )
     }
+
     return true
   }
 
@@ -488,10 +495,12 @@ class ThreadPresenter @Inject constructor(
 
   fun onSearchVisibilityChanged(visible: Boolean) {
     searchOpen = visible
+
     threadPresenterCallback?.showSearch(visible)
     if (!visible) {
       searchQuery = null
     }
+
     if (chanLoader != null && chanLoader!!.thread != null) {
       showPosts()
     }
@@ -499,12 +508,21 @@ class ThreadPresenter @Inject constructor(
 
   fun onSearchEntered(entered: String?) {
     searchQuery = entered
+
     if (chanLoader != null && chanLoader!!.thread != null) {
       showPosts()
       if (TextUtils.isEmpty(entered)) {
-        threadPresenterCallback?.setSearchStatus(null, true, false)
+        threadPresenterCallback?.setSearchStatus(
+          query = null,
+          setEmptyText = true,
+          hideKeyboard = false
+        )
       } else {
-        threadPresenterCallback?.setSearchStatus(entered, false, false)
+        threadPresenterCallback?.setSearchStatus(
+          query = entered,
+          setEmptyText = false,
+          hideKeyboard = false
+        )
       }
     }
   }
@@ -563,6 +581,7 @@ class ThreadPresenter @Inject constructor(
 
   override fun onPostUnbind(post: Post, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
+
     if (loadable != null) {
       onDemandContentLoaderManager.onPostUnbind(loadable!!, post, isActuallyRecycling)
       seenPostsManager.onPostUnbind(loadable!!, post)
@@ -571,6 +590,7 @@ class ThreadPresenter @Inject constructor(
 
   private fun onPostUpdatedWithNewContent(batchResult: LoaderBatchResult) {
     BackgroundUtils.ensureMainThread()
+
     if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
       threadPresenterCallback?.onPostUpdated(batchResult.post)
     }
@@ -584,28 +604,26 @@ class ThreadPresenter @Inject constructor(
         }
       }
     }
+
     return false
   }
 
-  /*
-     * ChanThreadLoader callbacks
-     */
   override fun onChanLoaderData(result: ChanThread) {
     BackgroundUtils.ensureMainThread()
 
-    if (isBound) {
-      if (isWatching) {
-        chanLoader!!.setTimer()
-      }
-    } else {
+    if (!isBound) {
       Logger.e(TAG, "onChanLoaderData when not bound!")
       return
+    }
+
+    if (isWatching) {
+      chanLoader!!.setTimer()
     }
 
     loadable!!.setLoadableState(result.loadable.loadableDownloadingState)
     Logger.d(TAG, "onChanLoaderData() loadableDownloadingState = " + loadable!!.loadableDownloadingState.name)
 
-    //allow for search refreshes inside the catalog
+    // allow for search refreshes inside the catalog
     if (result.loadable.isCatalogMode && !TextUtils.isEmpty(searchQuery)) {
       onSearchEntered(searchQuery)
     } else {
@@ -617,9 +635,9 @@ class ThreadPresenter @Inject constructor(
       var more = 0
 
       if (lastLoaded > 0) {
-        for (p in result.posts) {
-          if (p.no == lastLoaded.toLong()) {
-            more = result.postsCount - result.posts.indexOf(p) - 1
+        for (post in result.posts) {
+          if (post.no == lastLoaded.toLong()) {
+            more = result.postsCount - result.posts.indexOf(post) - 1
             break
           }
         }
@@ -703,6 +721,7 @@ class ThreadPresenter @Inject constructor(
 
         historyNavigationManager.createNewNavElement(descriptor, siteIconUrl, title)
       }
+
       is ChanDescriptor.ThreadDescriptor -> {
         val image = chanLoader?.thread?.op?.firstImage()
         val title = localLoadable.title
@@ -715,26 +734,31 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun storeNewPostsIfThreadIsBeingDownloaded(posts: List<Post>) {
-    if (posts.isEmpty() || loadable!!.isCatalogMode
+    if (posts.isEmpty()
+      || loadable!!.isCatalogMode
       || loadable!!.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded) {
       return
     }
+
     val pin = watchManager.findPinByLoadableId(loadable!!.id)
     if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
       // No pin for this loadable we are probably not downloading this thread
       // or no downloading flag
       return
     }
+
     val savedThread = watchManager.findSavedThreadByLoadableId(loadable!!.id)
     if (savedThread == null || savedThread.isStopped || savedThread.isFullyDownloaded) {
       // Either the thread is not being downloaded or it is stopped or already fully downloaded
       return
     }
+
     if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory::class.java)) {
       Logger.d(TAG, "storeNewPostsIfThreadIsBeingDownloaded() LocalThreadsBaseDirectory does not exist")
       watchManager.stopSavingAllThreads()
       return
     }
+
     if (!threadSaveManager.enqueueThreadToSave(loadable, posts)) {
       // Probably base directory was removed by the user, can't do anything other than
       // just stop this download
@@ -748,9 +772,6 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showError(error)
   }
 
-  /*
-     * PostAdapter callbacks
-     */
   override fun onListScrolledToBottom() {
     if (!isBound) {
       return
@@ -895,9 +916,6 @@ class ThreadPresenter @Inject constructor(
     return null
   }
 
-  /*
-     * PostView callbacks
-     */
   override fun onPostClicked(post: Post) {
     if (!isBound || loadable?.isCatalogMode != true) {
       return
@@ -1001,10 +1019,12 @@ class ThreadPresenter @Inject constructor(
       if (!TextUtils.isEmpty(post.posterId)) {
         menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id))
       }
+
       if (!TextUtils.isEmpty(post.tripcode)) {
         menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
       }
+
       if (loadable!!.site.siteFeature(Site.SiteFeature.IMAGE_FILE_HASH) && post.postImages.isNotEmpty()) {
         menu.add(createMenuItem(POST_OPTION_FILTER_IMAGE_HASH, R.string.post_filter_image_hash))
       }
@@ -1034,7 +1054,13 @@ class ThreadPresenter @Inject constructor(
         post.board,
         post.no
       )
-      val stringId = if (isSaved) R.string.unmark_as_my_post else R.string.mark_as_my_post
+
+      val stringId = if (isSaved) {
+        R.string.unmark_as_my_post
+      } else {
+        R.string.mark_as_my_post
+      }
+
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
       if (BuildConfig.DEV_BUILD && loadable!!.no > 0) {
         menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
@@ -1268,14 +1294,19 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onShowPostReplies(post: Post) {
-    if (!isBound) return
+    if (!isBound) {
+      return
+    }
+
     val posts: MutableList<Post> = ArrayList()
+
     for (no in post.repliesFrom) {
       val replyPost = findPostById(no, chanLoader!!.thread)
       if (replyPost != null) {
         posts.add(replyPost)
       }
     }
+
     if (posts.size > 0) {
       threadPresenterCallback?.showPostsPopup(post, posts)
     }
@@ -1290,16 +1321,20 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun isWatching(): Boolean {
-    return (ChanSettings.autoRefreshThread.get()
+    return ChanSettings.autoRefreshThread.get()
       && BackgroundUtils.isInForeground()
       && isBound
       && loadable!!.isThreadMode
       && chanLoader!!.thread != null && !chanLoader!!.thread!!.isClosed
-      && !chanLoader!!.thread!!.isArchived)
+      && !chanLoader!!.thread!!.isArchived
   }
 
   override fun getChanThread(): ChanThread? {
-    return if (isBound) chanLoader!!.thread else null
+    return if (isBound) {
+      chanLoader!!.thread
+    } else {
+      null
+    }
   }
 
   override fun getPage(op: Post): BoardPage? {
@@ -1307,7 +1342,10 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onListStatusClicked() {
-    if (!isBound) return
+    if (!isBound) {
+      return
+    }
+
     if (!chanLoader!!.thread!!.isArchived) {
       chanLoader!!.requestMoreDataAndResetTimer()
     }
@@ -1373,53 +1411,82 @@ class ThreadPresenter @Inject constructor(
 
   private fun showPostInfo(post: Post) {
     val text = StringBuilder()
+
     for (image in post.postImages) {
-      text.append("Filename: ").append(image.filename).append(".").append(image.extension)
+      text
+        .append("Filename: ")
+        .append(image.filename)
+        .append(".")
+        .append(image.extension)
+
       if (image.isInlined) {
         text.append("\nLinked file")
       } else {
-        text.append(" \nDimensions: ")
+        text
+          .append(" \nDimensions: ")
           .append(image.imageWidth)
           .append("x")
           .append(image.imageHeight)
           .append("\nSize: ")
           .append(getReadableFileSize(image.size))
       }
+
       if (image.spoiler() && image.isInlined) {
         // all linked files are spoilered, don't say that
         text.append("\nSpoilered")
       }
+
       text.append("\n")
     }
-    text.append("Posted: ").append(PostHelper.getLocalDate(post))
+
+    text
+      .append("Posted: ")
+      .append(PostHelper.getLocalDate(post))
+
     if (!TextUtils.isEmpty(post.posterId) && isBound && chanLoader!!.thread != null) {
-      text.append("\nId: ").append(post.posterId)
+      text
+        .append("\nId: ")
+        .append(post.posterId)
+
       var count = 0
-      try {
-        for (p in chanLoader!!.thread!!.posts) {
-          if (p.posterId == post.posterId) count++
+
+      chanLoader?.thread?.posts?.forEach { p ->
+        if (p.posterId == post.posterId) {
+          count++
         }
-      } catch (ignored: Exception) {
       }
-      text.append("\nCount: ").append(count)
+
+      text
+        .append("\nCount: ")
+        .append(count)
     }
+
     if (!TextUtils.isEmpty(post.tripcode)) {
-      text.append("\nTripcode: ").append(post.tripcode)
+      text
+        .append("\nTripcode: ")
+        .append(post.tripcode)
     }
-    if (post.httpIcons != null && !post.httpIcons.isEmpty()) {
+
+    if (post.httpIcons != null && post.httpIcons.isNotEmpty()) {
       for (icon in post.httpIcons) {
-        if (icon.url.toString().contains("troll")) {
-          text.append("\nTroll Country: ").append(icon.name)
-        } else if (icon.url.toString().contains("country")) {
-          text.append("\nCountry: ").append(icon.name)
-        } else if (icon.url.toString().contains("minileaf")) {
-          text.append("\n4chan Pass Year: ").append(icon.name)
+        when {
+          icon.url.toString().contains("troll") -> {
+            text.append("\nTroll Country: ").append(icon.name)
+          }
+          icon.url.toString().contains("country") -> {
+            text.append("\nCountry: ").append(icon.name)
+          }
+          icon.url.toString().contains("minileaf") -> {
+            text.append("\n4chan Pass Year: ").append(icon.name)
+          }
         }
       }
     }
+
     if (!TextUtils.isEmpty(post.capcode)) {
       text.append("\nCapcode: ").append(post.capcode)
     }
+
     threadPresenterCallback?.showPostInfo(text.toString())
   }
 
@@ -1485,13 +1552,17 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun markAllPostsAsSeen() {
-    if (!isBound) return
+    if (!isBound) {
+      return
+    }
+
     val pin = watchManager.findPinByLoadableId(loadable!!.id)
     if (pin != null) {
       var savedThread: SavedThread? = null
       if (PinType.hasDownloadFlag(pin.pinType)) {
         savedThread = watchManager.findSavedThreadByLoadableId(loadable!!.id)
       }
+
       if (savedThread == null) {
         watchManager.onBottomPostViewed(pin)
       }
@@ -1562,10 +1633,12 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_HIGHLIGHT_TRIPCODE = 11
     private const val POST_OPTION_HIDE = 12
     private const val POST_OPTION_OPEN_BROWSER = 13
-    private const val POST_OPTION_FILTER_TRIPCODE = 14
-    private const val POST_OPTION_FILTER_IMAGE_HASH = 15
-    private const val POST_OPTION_REMOVE = 16
-    private const val POST_OPTION_MOCK_REPLY = 17
+    private const val POST_OPTION_REMOVE = 14
+    private const val POST_OPTION_MOCK_REPLY = 15
+
+    private const val POST_OPTION_FILTER_TRIPCODE = 100
+    private const val POST_OPTION_FILTER_IMAGE_HASH = 101
+
   }
 
 }

@@ -495,7 +495,10 @@ class ThreadLayout @JvmOverloads constructor(
       deletingDialog!!.dismiss()
       deletingDialog = null
 
-      AlertDialog.Builder(context).setMessage(message).setPositiveButton(R.string.ok, null).show()
+      AlertDialog.Builder(context)
+        .setMessage(message)
+        .setPositiveButton(R.string.ok, null)
+        .show()
     }
   }
 
@@ -577,7 +580,9 @@ class ThreadLayout @JvmOverloads constructor(
   override fun onRestoreRemovedPostsClicked(threadLoadable: Loadable, selectedPosts: List<Long>) {
     val postsToRestore: MutableList<PostHide> = ArrayList()
     for (postNo in selectedPosts) {
-      postsToRestore.add(PostHide.unhidePost(threadLoadable.site.id(), threadLoadable.boardCode, postNo))
+      postsToRestore.add(
+        PostHide.unhidePost(threadLoadable.site.id(), threadLoadable.boardCode, postNo)
+      )
     }
 
     databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(postsToRestore))
