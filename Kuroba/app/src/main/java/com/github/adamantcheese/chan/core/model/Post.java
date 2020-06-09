@@ -26,6 +26,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,6 @@ public class Post implements Comparable<Post> {
     public final List<PostHttpIcon> httpIcons;
     public final boolean isSavedReply;
     private final int stickyCap;
-    private final PostFilter postFilter;
 
     @Nullable
     public final CharSequence subject;
@@ -94,6 +94,7 @@ public class Post implements Comparable<Post> {
 
     @Nullable
     private ArchiveDescriptor archiveDescriptor = null;
+    private PostDescriptor postDescriptor;
     private boolean isFromCache = false;
 
     // These members may only mutate on the main thread.
@@ -160,19 +161,10 @@ public class Post implements Comparable<Post> {
 
         capcode = builder.moderatorCapcode;
 
-        postFilter = new PostFilter(
-                builder.filterHighlightedColor,
-                builder.filterStub,
-                builder.filterRemove,
-                builder.filterWatch,
-                builder.filterReplies,
-                builder.filterOnlyOP,
-                builder.filterSaved
-        );
-
         isSavedReply = builder.isSavedReply;
         repliesTo = Collections.unmodifiableSet(builder.repliesToIds);
 
+        postDescriptor = builder.getPostDescriptor();
         archiveDescriptor = builder.archiveDescriptor;
         isFromCache = builder.isFromCache;
     }
@@ -184,6 +176,10 @@ public class Post implements Comparable<Post> {
     @Nullable
     public synchronized ArchiveDescriptor getArchiveDescriptor() {
         return archiveDescriptor;
+    }
+
+    public synchronized PostDescriptor getPostDescriptor() {
+        return postDescriptor;
     }
 
     public synchronized List<PostLinkable> getLinkables() {
@@ -254,10 +250,6 @@ public class Post implements Comparable<Post> {
         }
 
         return true;
-    }
-
-    public PostFilter getPostFilter() {
-        return postFilter;
     }
 
     @AnyThread
@@ -351,11 +343,6 @@ public class Post implements Comparable<Post> {
         return postImages.isEmpty() ? null : postImages.get(0);
     }
 
-    @MainThread
-    public boolean hasFilterParameters() {
-        return postFilter.hasFilterParameters();
-    }
-
     @Override
     public int hashCode() {
         // Post.comment can now be mutated so it's not safe to use it to calculate hash code
@@ -424,15 +411,6 @@ public class Post implements Comparable<Post> {
                 .posterId(posterId)
                 .moderatorCapcode(capcode)
                 .setHttpIcons(httpIcons)
-                .filter(
-                        postFilter.getFilterHighlightedColor(),
-                        postFilter.getFilterStub(),
-                        postFilter.getFilterRemove(),
-                        postFilter.getFilterWatch(),
-                        postFilter.getFilterReplies(),
-                        postFilter.getFilterOnlyOP(),
-                        postFilter.getFilterSaved()
-                )
                 .isSavedReply(isSavedReply)
                 .linkables(getLinkables())
                 .repliesTo(repliesTo);
@@ -482,15 +460,8 @@ public class Post implements Comparable<Post> {
         @Nullable
         public CharSequence subject;
 
-        public int filterHighlightedColor;
-        public boolean filterStub;
-        public boolean filterRemove;
-        public boolean filterWatch;
-        public boolean filterReplies;
-        public boolean filterOnlyOP;
-        public boolean filterSaved;
-
         private boolean isFromCache = false;
+        private PostDescriptor postDescriptor;
 
         @Nullable
         public ArchiveDescriptor archiveDescriptor = null;
@@ -500,6 +471,23 @@ public class Post implements Comparable<Post> {
 
         public Set<Long> getRepliesToIds() {
             return repliesToIds;
+        }
+
+        public synchronized PostDescriptor getPostDescriptor() {
+            if (postDescriptor != null) {
+                return postDescriptor;
+            }
+
+            Objects.requireNonNull(board);
+
+            postDescriptor = PostDescriptor.create(
+                    board.site.name(),
+                    board.code,
+                    getOpId(),
+                    id
+            );
+
+            return postDescriptor;
         }
 
         public Builder board(Board board) {
@@ -654,25 +642,6 @@ public class Post implements Comparable<Post> {
             }
 
             return id;
-        }
-
-        public Builder filter(
-                int highlightedColor,
-                boolean stub,
-                boolean remove,
-                boolean watch,
-                boolean filterReplies,
-                boolean onlyOnOp,
-                boolean filterSaved
-        ) {
-            this.filterHighlightedColor = highlightedColor;
-            this.filterStub = stub;
-            this.filterRemove = remove;
-            this.filterWatch = watch;
-            this.filterReplies = filterReplies;
-            this.filterOnlyOP = onlyOnOp;
-            this.filterSaved = filterSaved;
-            return this;
         }
 
         public Builder isSavedReply(boolean isSavedReply) {

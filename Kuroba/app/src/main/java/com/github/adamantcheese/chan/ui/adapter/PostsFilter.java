@@ -79,62 +79,71 @@ public class PostsFilter {
     public List<Post> apply(List<Post> original, int siteId, String board) {
         List<Post> posts = new ArrayList<>(original);
 
-        // Process order
         if (order != PostsFilter.Order.BUMP) {
-            switch (order) {
-                case IMAGE:
-                    Collections.sort(posts, IMAGE_COMPARATOR);
-                    break;
-                case REPLY:
-                    Collections.sort(posts, REPLY_COMPARATOR);
-                    break;
-                case NEWEST:
-                    Collections.sort(posts, NEWEST_COMPARATOR);
-                    break;
-                case OLDEST:
-                    Collections.sort(posts, OLDEST_COMPARATOR);
-                    break;
-                case MODIFIED:
-                    Collections.sort(posts, MODIFIED_COMPARATOR);
-                    break;
-                case ACTIVITY:
-                    Collections.sort(posts, THREAD_ACTIVITY_COMPARATOR);
-                    break;
-            }
+            processOrder(posts);
         }
 
-        // Process search
         if (!TextUtils.isEmpty(query)) {
-            String lowerQuery = query.toLowerCase(Locale.ENGLISH);
-
-            boolean add;
-            Iterator<Post> i = posts.iterator();
-            while (i.hasNext()) {
-                Post item = i.next();
-                add = false;
-                if (item.getComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
-                    add = true;
-                } else if (item.subject != null &&
-                                item.subject.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)
-                ) {
-                    add = true;
-                } else if (item.name.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
-                    add = true;
-                } else if (item.getPostImagesCount() > 0) {
-                    for (PostImage image : item.getPostImages()) {
-                        if (image.filename != null && image.filename.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
-                            add = true;
-                        }
-                    }
-                }
-                if (!add) {
-                    i.remove();
-                }
-            }
+            processSearch(posts);
         }
 
         // Process hidden by filter and post/thread hiding
         return databaseManager.getDatabaseHideManager().filterHiddenPosts(posts, siteId, board);
+    }
+
+    private void processOrder(List<Post> posts) {
+        switch (order) {
+            case IMAGE:
+                Collections.sort(posts, IMAGE_COMPARATOR);
+                break;
+            case REPLY:
+                Collections.sort(posts, REPLY_COMPARATOR);
+                break;
+            case NEWEST:
+                Collections.sort(posts, NEWEST_COMPARATOR);
+                break;
+            case OLDEST:
+                Collections.sort(posts, OLDEST_COMPARATOR);
+                break;
+            case MODIFIED:
+                Collections.sort(posts, MODIFIED_COMPARATOR);
+                break;
+            case ACTIVITY:
+                Collections.sort(posts, THREAD_ACTIVITY_COMPARATOR);
+                break;
+        }
+    }
+
+    private void processSearch(List<Post> posts) {
+        String lowerQuery = query.toLowerCase(Locale.ENGLISH);
+
+        boolean add;
+        Iterator<Post> iterator = posts.iterator();
+
+        while (iterator.hasNext()) {
+            Post item = iterator.next();
+            add = false;
+
+            if (item.getComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                add = true;
+            } else if (item.subject != null
+                    && item.subject.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                add = true;
+            } else if (item.name.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                add = true;
+            } else if (item.getPostImagesCount() > 0) {
+                for (PostImage image : item.getPostImages()) {
+                    if (image.filename != null
+                            && image.filename.toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+                        add = true;
+                    }
+                }
+            }
+
+            if (!add) {
+                iterator.remove();
+            }
+        }
     }
 
     public enum Order {

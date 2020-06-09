@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.core.mapper;
 
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.PostFilter;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -13,7 +15,11 @@ import java.util.List;
 public class PostMapper {
     private static final String TAG = "PostMapper";
 
-    public static SerializablePost toSerializablePost(Gson gson, Post post) {
+    public static SerializablePost toSerializablePost(
+            PostFilterManager postFilterManager,
+            Gson gson,
+            Post post
+    ) {
         return new SerializablePost(
                 post.boardId,
                 BoardMapper.toSerializableBoard(post.board),
@@ -29,13 +35,13 @@ public class PostMapper {
                 post.opNo,
                 post.capcode,
                 post.isSavedReply,
-                post.getPostFilter().getFilterHighlightedColor(),
-                post.getPostFilter().getFilterStub(),
-                post.getPostFilter().getFilterRemove(),
-                post.getPostFilter().getFilterWatch(),
-                post.getPostFilter().getFilterReplies(),
-                post.getPostFilter().getFilterOnlyOP(),
-                post.getPostFilter().getFilterSaved(),
+                postFilterManager.getFilterHighlightedColor(post.getPostDescriptor()),
+                postFilterManager.getFilterStub(post.getPostDescriptor()),
+                postFilterManager.getFilterRemove(post.getPostDescriptor()),
+                postFilterManager.getFilterWatch(post.getPostDescriptor()),
+                postFilterManager.getFilterReplies(post.getPostDescriptor()),
+                postFilterManager.getFilterOnlyOP(post.getPostDescriptor()),
+                postFilterManager.getFilterSaved(post.getPostDescriptor()),
                 post.getRepliesTo(),
                 post.deleted.get(),
                 post.getRepliesFrom(),
@@ -50,11 +56,17 @@ public class PostMapper {
         );
     }
 
-    public static List<SerializablePost> toSerializablePostList(Gson gson, List<Post> postList) {
+    public static List<SerializablePost> toSerializablePostList(
+            PostFilterManager postFilterManager,
+            Gson gson,
+            List<Post> postList
+    ) {
         List<SerializablePost> serializablePostList = new ArrayList<>(postList.size());
 
         for (Post post : postList) {
-            serializablePostList.add(toSerializablePost(gson, post));
+            SerializablePost serializablePost = toSerializablePost(postFilterManager, gson, post);
+
+            serializablePostList.add(serializablePost);
         }
 
         return serializablePostList;
@@ -63,6 +75,7 @@ public class PostMapper {
     public static Post fromSerializedPost(
             Gson gson,
             Loadable loadable,
+            PostFilterManager postFilterManager,
             SerializablePost serializablePost,
             Theme currentTheme
     ) {
@@ -97,15 +110,6 @@ public class PostMapper {
                 .opId(serializablePost.getOpId())
                 .moderatorCapcode(serializablePost.getCapcode())
                 .isSavedReply(serializablePost.isSavedReply())
-                .filter(
-                        serializablePost.getFilterHighlightedColor(),
-                        serializablePost.isFilterStub(),
-                        serializablePost.isFilterRemove(),
-                        serializablePost.isFilterWatch(),
-                        serializablePost.isFilterReplies(),
-                        serializablePost.isFilterOnlyOP(),
-                        serializablePost.isFilterSaved()
-                )
                 .repliesTo(serializablePost.getRepliesTo())
                 .sticky(serializablePost.isSticky())
                 .archived(serializablePost.isArchived())
@@ -118,12 +122,25 @@ public class PostMapper {
         post.setTitle(serializablePost.getTitle());
         post.setRepliesFrom(serializablePost.getRepliesFrom());
 
+        PostFilter postFilter = new PostFilter(
+                serializablePost.getFilterHighlightedColor(),
+                serializablePost.isFilterStub(),
+                serializablePost.isFilterRemove(),
+                serializablePost.isFilterWatch(),
+                serializablePost.isFilterReplies(),
+                serializablePost.isFilterOnlyOP(),
+                serializablePost.isFilterSaved()
+        );
+
+        postFilterManager.insert(post.getPostDescriptor(), postFilter);
+
         return post;
     }
 
     public static List<Post> fromSerializedPostList(
             Gson gson,
             Loadable loadable,
+            PostFilterManager postFilterManager,
             List<SerializablePost> serializablePostList,
             Theme currentTheme
     ) {
@@ -132,7 +149,15 @@ public class PostMapper {
 
         for (SerializablePost serializablePost : serializablePostList) {
             try {
-                posts.add(fromSerializedPost(gson, loadable, serializablePost, currentTheme));
+                Post post = fromSerializedPost(
+                        gson,
+                        loadable,
+                        postFilterManager,
+                        serializablePost,
+                        currentTheme
+                );
+
+                posts.add(post);
             } catch (Throwable error) {
                 // Skip post if could not deserialize
                 if (firstException == null) {

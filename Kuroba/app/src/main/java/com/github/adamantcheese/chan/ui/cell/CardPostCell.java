@@ -26,6 +26,7 @@ import android.widget.TextView;
 import androidx.cardview.widget.CardView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -61,6 +62,8 @@ public class CardPostCell
 
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private Post post;
     private Loadable loadable;
@@ -253,9 +256,13 @@ public class CardPostCell
             thumbView.unbindPostImage();
         }
 
-        if (post.getPostFilter().getFilterHighlightedColor() != 0) {
+        int filterHighlightedColor = postFilterManager.getFilterHighlightedColor(
+                post.getPostDescriptor()
+        );
+
+        if (filterHighlightedColor != 0) {
             filterMatchColor.setVisibility(VISIBLE);
-            filterMatchColor.setBackgroundColor(post.getPostFilter().getFilterHighlightedColor());
+            filterMatchColor.setBackgroundColor(filterHighlightedColor);
         } else {
             filterMatchColor.setVisibility(GONE);
         }

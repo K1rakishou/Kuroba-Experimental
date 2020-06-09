@@ -114,7 +114,7 @@ public class PostStubCell
                 items,
                 item -> {
                     if (callback != null) {
-                        callback.onPostOptionClicked(post, (Integer) item.getKey(), inPopup);
+                        callback.onPostOptionClicked(post, item.getKey(), inPopup);
                     }
 
                     return Unit.INSTANCE;
@@ -131,8 +131,8 @@ public class PostStubCell
 
     @Override
     public void onClick(View v) {
-        if (callback != null) {
-            if (v == this) {
+        if (v == this) {
+            if (callback != null) {
                 callback.onPostClicked(post);
             }
         }

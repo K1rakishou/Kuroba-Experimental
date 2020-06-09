@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper.fromPost
@@ -83,6 +84,7 @@ class ChanLoaderRequestExecutor(
   private val appConstants: AppConstants,
   private val archivesManager: ArchivesManager,
   private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
+  private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
   private val currentTheme: Theme
 ) : CoroutineScope {
@@ -702,6 +704,7 @@ Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsC
             return@map async(dispatcher) {
               return@async PostParseWorker(
                 filterEngine,
+                postFilterManager,
                 databaseSavedReplyManager,
                 currentTheme,
                 loadFilters(loadable),

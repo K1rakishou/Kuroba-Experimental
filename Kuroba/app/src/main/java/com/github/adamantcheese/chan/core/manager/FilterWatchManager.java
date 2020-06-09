@@ -66,6 +66,7 @@ public class FilterWatchManager implements WakeManager.Wakeable {
     private final BoardRepository boardRepository;
     private final DatabaseLoadableManager databaseLoadableManager;
     private final Gson gson;
+    private final PostFilterManager postFilterManager;
 
     // filterLoaders keeps track of ChanThreadLoaders so they can be cleared correctly each alarm
     // trigger ignoredPosts keeps track of threads pinned by the filter manager and ignores them for
@@ -90,7 +91,8 @@ public class FilterWatchManager implements WakeManager.Wakeable {
             ChanLoaderManager chanLoaderManager,
             BoardRepository boardRepository,
             DatabaseManager databaseManager,
-            Gson gson
+            Gson gson,
+            PostFilterManager postFilterManager
     ) {
         this.wakeManager = wakeManager;
         this.filterEngine = filterEngine;
@@ -98,6 +100,7 @@ public class FilterWatchManager implements WakeManager.Wakeable {
         this.chanLoaderManager = chanLoaderManager;
         this.boardRepository = boardRepository;
         this.gson = gson;
+        this.postFilterManager = postFilterManager;
         this.databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
         wakeManager.registerWakeable(this);
@@ -208,23 +211,23 @@ public class FilterWatchManager implements WakeManager.Wakeable {
         //Match filters and ignores
         List<Filter> filters = filterEngine.getEnabledWatchFilters();
 
-        for (Filter f : filters) {
-            for (Post p : catalog.getPosts()) {
-                if (!filterEngine.matches(f, p)
-                        || !p.getPostFilter().getFilterWatch()
-                        || ignoredPosts.contains(p.no)) {
+        for (Filter filter : filters) {
+            for (Post post : catalog.getPosts()) {
+                if (!filterEngine.matches(filter, post)
+                        || !postFilterManager.getFilterWatch(post.getPostDescriptor())
+                        || ignoredPosts.contains(post.no)) {
                     continue;
                 }
 
                 Loadable pinLoadable = Loadable.forThread(catalog.getLoadable().site,
-                        p.board,
-                        p.no,
-                        PostHelper.getTitle(p, catalog.getLoadable())
+                        post.board,
+                        post.no,
+                        PostHelper.getTitle(post, catalog.getLoadable())
                 );
 
                 pinLoadable = databaseLoadableManager.get(pinLoadable);
-                watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
-                toAdd.add(p.no);
+                watchManager.createPin(pinLoadable, post, PinType.WATCH_NEW_POSTS);
+                toAdd.add(post.no);
 
             }
         }
@@ -248,23 +251,23 @@ public class FilterWatchManager implements WakeManager.Wakeable {
             Set<Long> toAdd = new HashSet<>();
 
             // Match filters and ignores
-            for (Filter f : filters) {
-                for (Post p : result.getPosts()) {
-                    if (!filterEngine.matches(f, p)
-                            || !p.getPostFilter().getFilterWatch()
-                            || ignoredPosts.contains(p.no)) {
+            for (Filter filter : filters) {
+                for (Post post : result.getPosts()) {
+                    if (!filterEngine.matches(filter, post)
+                            || !postFilterManager.getFilterWatch(post.getPostDescriptor())
+                            || ignoredPosts.contains(post.no)) {
                         continue;
                     }
 
                     Loadable pinLoadable = Loadable.forThread(result.getLoadable().site,
-                            p.board,
-                            p.no,
-                            PostHelper.getTitle(p, result.getLoadable())
+                            post.board,
+                            post.no,
+                            PostHelper.getTitle(post, result.getLoadable())
                     );
 
                     pinLoadable = databaseLoadableManager.get(pinLoadable);
-                    watchManager.createPin(pinLoadable, p, PinType.WATCH_NEW_POSTS);
-                    toAdd.add(p.no);
+                    watchManager.createPin(pinLoadable, post, PinType.WATCH_NEW_POSTS);
+                    toAdd.add(post.no);
 
                 }
             }

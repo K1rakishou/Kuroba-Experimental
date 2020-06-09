@@ -20,10 +20,7 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager
-import com.github.adamantcheese.chan.core.manager.WatchManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
@@ -94,6 +91,8 @@ class ChanThreadLoader(
     lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
     @Inject
     lateinit var themeHelper: ThemeHelper
+    @Inject
+    lateinit var postFilterManager: PostFilterManager
 
     @Volatile
     var thread: ChanThread? = null
@@ -109,6 +108,7 @@ class ChanThreadLoader(
                 appConstants,
                 archivesManager,
                 thirdPartyArchiveInfoRepository,
+                postFilterManager,
                 ChanSettings.verboseLogs.get(),
                 themeHelper.theme
         )

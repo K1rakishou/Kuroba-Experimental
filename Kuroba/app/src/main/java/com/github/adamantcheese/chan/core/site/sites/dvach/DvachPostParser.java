@@ -5,6 +5,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.site.common.DefaultPostParser;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
@@ -26,8 +27,8 @@ public class DvachPostParser extends DefaultPostParser {
 
     private CommentParser commentParser;
 
-    public DvachPostParser(CommentParser commentParser) {
-        super(commentParser);
+    public DvachPostParser(CommentParser commentParser, PostFilterManager postFilterManager) {
+        super(commentParser, postFilterManager);
     }
 
     @Override

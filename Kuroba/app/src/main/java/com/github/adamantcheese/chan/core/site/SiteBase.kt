@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
@@ -47,6 +48,7 @@ abstract class SiteBase : Site, CoroutineScope {
   protected val imageLoaderV2: ImageLoaderV2
   protected val archivesManager: ArchivesManager
   protected val boardManager: BoardManager
+  protected val postFilterManager: PostFilterManager
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -64,6 +66,7 @@ abstract class SiteBase : Site, CoroutineScope {
     imageLoaderV2 = instance(ImageLoaderV2::class.java)
     archivesManager = instance(ArchivesManager::class.java)
     boardManager = instance(BoardManager::class.java)
+    postFilterManager = instance(PostFilterManager::class.java)
   }
 
   override fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings) {

@@ -140,7 +140,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(commentParser)
+    postParser = DefaultPostParser(commentParser, postFilterManager)
   }
   
   /**

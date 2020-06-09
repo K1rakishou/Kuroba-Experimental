@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.repository
 
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.mapper.ThreadMapper
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.SerializableThread
@@ -26,7 +27,8 @@ class SavedThreadLoaderRepository
 @Inject
 constructor(
         private val gson: Gson,
-        private val fileManager: FileManager
+        private val fileManager: FileManager,
+        private val postFilterManager: PostFilterManager
 ) {
 
     @Throws(IOException::class)
@@ -73,10 +75,10 @@ constructor(
             return@use DataOutputStream(outputStream).use { dos ->
                 val serializableThread = if (oldSerializableThread != null) {
                     // Merge with old posts if there are any
-                    oldSerializableThread.merge(gson, posts)
+                    oldSerializableThread.merge(postFilterManager, gson, posts)
                 } else {
                     // Use only the new posts
-                    ThreadMapper.toSerializableThread(gson, posts)
+                    ThreadMapper.toSerializableThread(postFilterManager, gson, posts)
                 }
 
                 val bytes = gson.toJson(serializableThread).toByteArray(StandardCharsets.UTF_8)

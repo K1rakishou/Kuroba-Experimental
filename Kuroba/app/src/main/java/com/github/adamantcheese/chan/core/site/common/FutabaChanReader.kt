@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.site.common
 
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -18,7 +19,8 @@ import java.util.*
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class FutabaChanReader(
-  private val archivesManager: ArchivesManager
+  private val archivesManager: ArchivesManager,
+  private val postFilterManager: PostFilterManager
 ) : ChanReader {
     private val mutex = Mutex()
     private var parser: PostParser? = null
@@ -28,7 +30,7 @@ class FutabaChanReader(
             if (parser == null) {
                 val commentParser = CommentParser().addDefaultRules()
                 val foolFuukaCommentParser = FoolFuukaCommentParser()
-                val defaultPostParser = DefaultPostParser(commentParser)
+                val defaultPostParser = DefaultPostParser(commentParser, postFilterManager)
 
                 for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
                     defaultPostParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)

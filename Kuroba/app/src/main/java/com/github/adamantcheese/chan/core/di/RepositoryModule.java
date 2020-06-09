@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.core.database.DatabaseHelper;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
@@ -64,8 +65,16 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public SavedThreadLoaderRepository provideSavedThreadLoaderRepository(Gson gson, FileManager fileManager) {
+    public SavedThreadLoaderRepository provideSavedThreadLoaderRepository(
+            Gson gson,
+            FileManager fileManager,
+            PostFilterManager postFilterManager
+    ) {
         Logger.d(AppModule.DI_TAG, "Saved thread loader repository");
-        return new SavedThreadLoaderRepository(gson, fileManager);
+        return new SavedThreadLoaderRepository(
+                gson,
+                fileManager,
+                postFilterManager
+        );
     }
 }

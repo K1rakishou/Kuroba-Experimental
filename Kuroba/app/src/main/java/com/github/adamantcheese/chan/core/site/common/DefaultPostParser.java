@@ -23,6 +23,7 @@ import android.text.style.BackgroundColorSpan;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
@@ -53,12 +54,14 @@ public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
     private CommentParser commentParser;
+    private PostFilterManager postFilterManager;
 
     @GuardedBy("this")
     private Map<ArchiveDescriptor, CommentParser> archiveCommentParsers = new HashMap<>();
 
-    public DefaultPostParser(CommentParser commentParser) {
+    public DefaultPostParser(CommentParser commentParser, PostFilterManager postFilterManager) {
         this.commentParser = commentParser;
+        this.postFilterManager = postFilterManager;
     }
 
     public void addArchiveCommentParser(
@@ -136,7 +139,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.subject)) {
             SpannableString subjectSpan = new SpannableString(builder.subject);
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
-            if (!builder.filterStub) {
+            if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
                 subjectSpan.setSpan(
                         new ForegroundColorSpanHashed(theme.subjectColor),
                         0,

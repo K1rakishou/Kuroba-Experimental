@@ -35,6 +35,7 @@ import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
@@ -146,7 +147,8 @@ public class ManagerModule {
             ChanLoaderManager chanLoaderManager,
             BoardRepository boardRepository,
             DatabaseManager databaseManager,
-            Gson gson
+            Gson gson,
+            PostFilterManager postFilterManager
     ) {
         Logger.d(AppModule.DI_TAG, "Filter watch manager");
         return new FilterWatchManager(
@@ -156,7 +158,8 @@ public class ManagerModule {
                 chanLoaderManager,
                 boardRepository,
                 databaseManager,
-                gson
+                gson,
+                postFilterManager
         );
     }
 
@@ -216,10 +219,16 @@ public class ManagerModule {
     public SavedThreadLoaderManager provideSavedThreadLoaderManager(
             Gson gson,
             SavedThreadLoaderRepository savedThreadLoaderRepository,
-            FileManager fileManager
+            FileManager fileManager,
+            PostFilterManager postFilterManager
     ) {
         Logger.d(AppModule.DI_TAG, "Saved thread loader manager");
-        return new SavedThreadLoaderManager(gson, savedThreadLoaderRepository, fileManager);
+        return new SavedThreadLoaderManager(
+                gson,
+                savedThreadLoaderRepository,
+                fileManager,
+                postFilterManager
+        );
     }
 
     @Provides
@@ -353,5 +362,13 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ControllerNavigationManager");
 
         return new ControllerNavigationManager();
+    }
+
+    @Provides
+    @Singleton
+    public PostFilterManager providePostFilterManager() {
+        Logger.d(AppModule.DI_TAG, "PostFilterManager");
+
+        return new PostFilterManager();
     }
 }

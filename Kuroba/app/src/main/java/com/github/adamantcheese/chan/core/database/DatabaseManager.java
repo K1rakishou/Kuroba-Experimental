@@ -22,6 +22,7 @@ import android.os.Looper;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.Chan;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.j256.ormlite.dao.Dao;
@@ -61,6 +62,8 @@ public class DatabaseManager {
     DatabaseHelper helper;
     @Inject
     FileManager fileManager;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private final DatabasePinManager databasePinManager;
     private final DatabaseLoadableManager databaseLoadableManager;
@@ -85,7 +88,7 @@ public class DatabaseManager {
         databaseFilterManager = new DatabaseFilterManager(helper);
         databaseBoardManager = new DatabaseBoardManager(helper);
         databaseSiteManager = new DatabaseSiteManager(helper);
-        databaseHideManager = new DatabaseHideManager(helper, this);
+        databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
         databaseSavedThreadManager = new DatabaseSavedThreadManager(helper, fileManager);
         EventBus.getDefault().register(this);
     }

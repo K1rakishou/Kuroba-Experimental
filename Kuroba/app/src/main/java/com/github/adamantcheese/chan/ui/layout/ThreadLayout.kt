@@ -37,7 +37,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterType
-import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -98,7 +98,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
+  lateinit var postFilterManager: PostFilterManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -513,9 +513,15 @@ class ThreadLayout @JvmOverloads constructor(
 
     snackbar.isGestureInsetBottomIgnored = true
     snackbar.setAction(R.string.undo, {
+      postFilterManager.remove(post.postDescriptor)
+
       databaseManager.runTask(databaseManager.databaseHideManager.removePostHide(postHide))
       presenter.refreshUI()
     }).show()
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+    }
 
     AndroidUtils.fixSnackbarText(context, snackbar)
   }
@@ -542,15 +548,25 @@ class ThreadLayout @JvmOverloads constructor(
     val snackbar = Snackbar.make(this, formattedString, Snackbar.LENGTH_LONG)
     snackbar.isGestureInsetBottomIgnored = true
     snackbar.setAction(R.string.undo) {
+      postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
+
       databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(hideList))
       presenter.refreshUI()
     }.show()
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+    }
 
     AndroidUtils.fixSnackbarText(context, snackbar)
   }
 
   override fun unhideOrUnremovePost(post: Post) {
-    databaseManager.runTask(databaseManager.databaseHideManager.removePostHide(PostHide.unhidePost(post)))
+    postFilterManager.remove(post.postDescriptor)
+
+    databaseManager.runTask(
+      databaseManager.databaseHideManager.removePostHide(PostHide.unhidePost(post))
+    )
     presenter.refreshUI()
   }
 
@@ -570,6 +586,10 @@ class ThreadLayout @JvmOverloads constructor(
     val snackbar = Snackbar.make(this, AndroidUtils.getString(R.string.restored_n_posts, postsToRestore.size), Snackbar.LENGTH_LONG)
     snackbar.isGestureInsetBottomIgnored = true
     snackbar.show()
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
+    }
 
     AndroidUtils.fixSnackbarText(context, snackbar)
   }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -23,6 +24,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import kotlin.Unit;
+
 public class DatabaseHideManager {
     private static final String TAG = "DatabaseHideManager";
 
@@ -31,13 +34,16 @@ public class DatabaseHideManager {
 
     private DatabaseHelper helper;
     private DatabaseManager databaseManager;
+    private PostFilterManager postFilterManager;
 
     public DatabaseHideManager(
             DatabaseHelper databaseHelper,
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            PostFilterManager postFilterManager
     ) {
         this.helper = databaseHelper;
         this.databaseManager = databaseManager;
+        this.postFilterManager = postFilterManager;
     }
 
     public Callable<Void> load() {
@@ -82,7 +88,7 @@ public class DatabaseHideManager {
 
             // filter out hidden posts
             for (Post post : postsFastLookupMap.values()) {
-                if (post.getPostFilter().getFilterRemove()) {
+                if (postFilterManager.getFilterRemove(post.getPostDescriptor())) {
                     // this post is already filtered by some custom filter
                     continue;
                 }
@@ -91,7 +97,8 @@ public class DatabaseHideManager {
                 if (hiddenPost != null) {
                     if (hiddenPost.hide) {
                         // hide post
-                        Post newPost = rebuildPostWithCustomFilter(post,
+                        updatePostWithCustomFilter(
+                                post,
                                 0,
                                 true,
                                 false,
@@ -100,7 +107,7 @@ public class DatabaseHideManager {
                                 false
                         );
 
-                        resultList.add(newPost);
+                        resultList.add(post);
                     } else {
                         // remove post
                         if (post.isOP) {
@@ -133,13 +140,21 @@ public class DatabaseHideManager {
 
             for (Long replyNo : post.getRepliesTo()) {
                 if (hiddenPostsLookupMap.containsKey(replyNo)) {
-                    PostHide parentHiddenPost = hiddenPostsLookupMap.get(replyNo);
                     Post parentPost = postsFastLookupMap.get(replyNo);
+                    if (parentPost == null) {
+                        continue;
+                    }
 
-                    if (
-                            (parentPost == null || !parentPost.getPostFilter().getFilterRemove())
-                                    || (parentHiddenPost == null  || !parentHiddenPost.hideRepliesToThisPost)
-                    ) {
+                    PostHide parentHiddenPost = hiddenPostsLookupMap.get(replyNo);
+                    if (parentHiddenPost == null) {
+                        continue;
+                    }
+
+                    boolean filterRemove = postFilterManager.getFilterRemove(
+                            parentPost.getPostDescriptor()
+                    );
+
+                    if (!filterRemove || !parentHiddenPost.hideRepliesToThisPost) {
                         continue;
                     }
 
@@ -148,6 +163,7 @@ public class DatabaseHideManager {
                             parentHiddenPost.hide,
                             true
                     );
+
                     hiddenPostsLookupMap.put((long) newHiddenPost.no, newHiddenPost);
                     newHiddenPosts.add(newHiddenPost);
 
@@ -168,17 +184,25 @@ public class DatabaseHideManager {
 
     private void applyFiltersToReplies(List<Post> posts, Map<Long, Post> postsFastLookupMap) {
         for (Post post : posts) {
-            if (post.isOP) continue; //skip the OP
-
-            if (post.hasFilterParameters()) {
-                if (post.getPostFilter().getFilterRemove() && post.getPostFilter().getFilterStub()) {
-                    // wtf?
-                    Logger.w(TAG, "Post has both filterRemove and filterStub flags");
-                    continue;
-                }
-
-                applyPostFilterActionToChildPosts(post, postsFastLookupMap);
+            if (post.isOP) {
+                // skip the OP
+                continue;
             }
+
+            if (!postFilterManager.hasFilterParameters(post.getPostDescriptor())) {
+                continue;
+            }
+
+            boolean filterRemove = postFilterManager.getFilterRemove(post.getPostDescriptor());
+            boolean filterStub = postFilterManager.getFilterStub(post.getPostDescriptor());
+
+            if (filterRemove && filterStub) {
+                // wtf?
+                Logger.w(TAG, "Post has both filterRemove and filterStub flags");
+                continue;
+            }
+
+            applyPostFilterActionToChildPosts(post, postsFastLookupMap);
         }
     }
 
@@ -210,7 +234,8 @@ public class DatabaseHideManager {
      * Returns a chain of hidden posts.
      */
     private void applyPostFilterActionToChildPosts(Post parentPost, Map<Long, Post> postsFastLookupMap) {
-        if (postsFastLookupMap.isEmpty() || !parentPost.getPostFilter().getFilterReplies()) {
+        if (postsFastLookupMap.isEmpty()
+                || !postFilterManager.getFilterReplies(parentPost.getPostDescriptor())) {
             // do nothing with replies if filtering is disabled for replies
             return;
         }
@@ -237,30 +262,36 @@ public class DatabaseHideManager {
                 continue;
             }
 
-            // do not overwrite filter parameters from another filter
-            if (!childPost.hasFilterParameters()) {
-                Post newPost = rebuildPostWithCustomFilter(childPost,
-                        parentPost.getPostFilter().getFilterHighlightedColor(),
-                        parentPost.getPostFilter().getFilterStub(),
-                        parentPost.getPostFilter().getFilterRemove(),
-                        parentPost.getPostFilter().getFilterWatch(),
-                        true,
-                        parentPost.getPostFilter().getFilterSaved()
-                );
+            boolean hasFilterParameters =
+                    postFilterManager.hasFilterParameters(childPost.getPostDescriptor());
 
-                // assign the filter parameters to the child post
-                postsFastLookupMap.put(no, newPost);
-
-                postWithAllReplies.remove(childPost);
-                postWithAllReplies.add(newPost);
+            if (hasFilterParameters) {
+                // do not overwrite filter parameters from another filter
+                continue;
             }
+
+            updatePostWithCustomFilter(
+                    childPost,
+                    postFilterManager.getFilterHighlightedColor(parentPost.getPostDescriptor()),
+                    postFilterManager.getFilterStub(parentPost.getPostDescriptor()),
+                    postFilterManager.getFilterRemove(parentPost.getPostDescriptor()),
+                    postFilterManager.getFilterWatch(parentPost.getPostDescriptor()),
+                    true,
+                    postFilterManager.getFilterSaved(parentPost.getPostDescriptor())
+            );
+
+            // assign the filter parameters to the child post
+            postsFastLookupMap.put(no, childPost);
+
+            postWithAllReplies.remove(childPost);
+            postWithAllReplies.add(childPost);
         }
     }
 
     /**
      * Rebuilds a child post with custom filter parameters
      */
-    private Post rebuildPostWithCustomFilter(
+    private void updatePostWithCustomFilter(
             Post childPost,
             int filterHighlightedColor,
             boolean filterStub,
@@ -269,38 +300,16 @@ public class DatabaseHideManager {
             boolean filterReplies,
             boolean filterSaved
     ) {
-        return new Post.Builder().board(childPost.board)
-                .posterId(childPost.posterId)
-                .opId(childPost.opNo)
-                .id(childPost.no)
-                .op(childPost.isOP)
-                .replies(childPost.getTotalRepliesCount())
-                .threadImagesCount(childPost.getThreadImagesCount())
-                .uniqueIps(childPost.getUniqueIps())
-                .sticky(childPost.isSticky())
-                .archived(childPost.isArchived())
-                .lastModified(childPost.getLastModified())
-                .closed(childPost.isClosed())
-                .subject(childPost.subject)
-                .name(childPost.name)
-                .comment(childPost.getComment())
-                .tripcode(childPost.tripcode)
-                .setUnixTimestampSeconds(childPost.time)
-                .postImages(childPost.getPostImages())
-                .moderatorCapcode(childPost.capcode)
-                .setHttpIcons(childPost.httpIcons)
-                .filter(filterHighlightedColor,
-                        filterStub,
-                        filterRemove,
-                        filterWatch,
-                        filterReplies,
-                        false,
-                        filterSaved
-                )
-                .isSavedReply(childPost.isSavedReply)
-                .linkables(childPost.getLinkables())
-                .repliesTo(childPost.getRepliesTo())
-                .build();
+        postFilterManager.update(childPost.getPostDescriptor(), postFilter -> {
+            postFilter.setFilterHighlightedColor(filterHighlightedColor);
+            postFilter.setFilterStub(filterStub);
+            postFilter.setFilterRemove(filterRemove);
+            postFilter.setFilterWatch(filterWatch);
+            postFilter.setFilterReplies(filterReplies);
+            postFilter.setFilterSaved(filterSaved);
+
+            return Unit.INSTANCE;
+        });
     }
 
     @Nullable
@@ -332,7 +341,10 @@ public class DatabaseHideManager {
     public Callable<Void> addPostsHide(List<PostHide> hideList) {
         return () -> {
             for (PostHide postHide : hideList) {
-                if (contains(postHide)) continue;
+                if (contains(postHide)) {
+                    continue;
+                }
+
                 helper.getPostHideDao().createIfNotExists(postHide);
             }
 

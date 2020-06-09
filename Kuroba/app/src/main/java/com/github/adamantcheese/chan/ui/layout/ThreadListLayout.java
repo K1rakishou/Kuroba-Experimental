@@ -40,6 +40,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -98,6 +99,8 @@ public class ThreadListLayout
     WatchManager watchManager;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -172,6 +175,7 @@ public class ThreadListLayout
         this.threadListLayoutCallback = threadListLayoutCallback;
 
         postAdapter = new PostAdapter(
+                postFilterManager,
                 recyclerView,
                 postAdapterCallback,
                 postCellCallback,

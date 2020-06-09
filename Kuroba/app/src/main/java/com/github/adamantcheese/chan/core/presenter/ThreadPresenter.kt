@@ -84,7 +84,8 @@ class ThreadPresenter @Inject constructor(
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
   private val historyNavigationManager: HistoryNavigationManager,
-  private val archivesManager: ArchivesManager
+  private val archivesManager: ArchivesManager,
+  private val postFilterManager: PostFilterManager
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -990,7 +991,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if ((loadable!!.isCatalogMode || loadable!!.isThreadMode && !post.isOP) && !loadable!!.isLocal) {
-      if (!post.postFilter.filterStub) {
+      if (!postFilterManager.getFilterStub(post.postDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
       }
       menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
@@ -1107,7 +1108,8 @@ class ThreadPresenter @Inject constructor(
       POST_OPTION_SHARE -> if (isBound) {
         AndroidUtils.shareLink(loadable!!.site.resolvable().desktopUrl(loadable!!, post.no))
       }
-      POST_OPTION_REMOVE, POST_OPTION_HIDE -> {
+      POST_OPTION_REMOVE,
+      POST_OPTION_HIDE -> {
         if (chanLoader == null || chanLoader!!.thread == null) {
           return
         }

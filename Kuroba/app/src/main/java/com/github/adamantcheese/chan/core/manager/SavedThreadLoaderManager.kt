@@ -18,7 +18,8 @@ import javax.inject.Inject
 class SavedThreadLoaderManager @Inject constructor(
         private val gson: Gson,
         private val savedThreadLoaderRepository: SavedThreadLoaderRepository,
-        private val fileManager: FileManager
+        private val fileManager: FileManager,
+        private val postFilterManager: PostFilterManager
 ) {
 
     fun loadSavedThread(loadable: Loadable, currentTheme: Theme): ChanThread? {
@@ -78,7 +79,13 @@ class SavedThreadLoaderManager @Inject constructor(
                 return null
             }
 
-            return ThreadMapper.fromSerializedThread(gson, loadable, serializableThread, currentTheme)
+            return ThreadMapper.fromSerializedThread(
+              gson,
+              loadable,
+              serializableThread,
+              postFilterManager,
+              currentTheme
+            )
         } catch (e: IOException) {
             Logger.e(TAG, "Could not load saved thread", e)
             return null

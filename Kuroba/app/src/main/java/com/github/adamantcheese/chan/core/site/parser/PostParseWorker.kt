@@ -18,7 +18,9 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
+import com.github.adamantcheese.chan.core.model.PostFilter
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
@@ -29,6 +31,7 @@ import java.util.*
 // belong to ChanReaderRequest
 internal class PostParseWorker(
   private val filterEngine: FilterEngine,
+  private val postFilterManager: PostFilterManager,
   private val savedReplyManager: DatabaseSavedReplyManager,
   private val currentTheme: Theme,
   private val filters: List<Filter>,
@@ -66,21 +69,50 @@ internal class PostParseWorker(
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun processPostFilter(post: Post.Builder) {
     for (filter in filters) {
+      val postDescriptor = post.postDescriptor
+
       if (filterEngine.matches(filter, post)) {
-        when (FilterEngine.FilterAction.forId(filter.action)) {
-          FilterEngine.FilterAction.COLOR -> {
-            post.filter(filter.color, false, false, false, filter.applyToReplies, filter.onlyOnOP, filter.applyToSaved)
-          }
-          FilterEngine.FilterAction.HIDE -> {
-            post.filter(0, true, false, false, filter.applyToReplies, filter.onlyOnOP, false)
-          }
-          FilterEngine.FilterAction.REMOVE -> {
-            post.filter(0, false, true, false, filter.applyToReplies, filter.onlyOnOP, false)
-          }
-          FilterEngine.FilterAction.WATCH -> {
-            post.filter(0, false, false, true, false, true, false)
-          }
-        }
+        postFilterManager.insert(postDescriptor, createPostFilter(filter))
+        return
+      }
+
+      postFilterManager.remove(postDescriptor)
+    }
+  }
+
+  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
+  private fun createPostFilter(filter: Filter): PostFilter {
+    return when (FilterEngine.FilterAction.forId(filter.action)) {
+      FilterEngine.FilterAction.COLOR -> {
+        PostFilter(
+          filterHighlightedColor = filter.color,
+          filterReplies = filter.applyToReplies,
+          filterOnlyOP = filter.onlyOnOP,
+          filterSaved = filter.applyToSaved
+        )
+      }
+      FilterEngine.FilterAction.HIDE -> {
+        PostFilter(
+          filterHighlightedColor = 0,
+          filterStub = true,
+          filterReplies = filter.applyToReplies,
+          filterOnlyOP = filter.onlyOnOP
+        )
+      }
+      FilterEngine.FilterAction.REMOVE -> {
+        PostFilter(
+          filterHighlightedColor = 0,
+          filterRemove = true,
+          filterReplies = filter.applyToReplies,
+          filterOnlyOP = filter.onlyOnOP
+        )
+      }
+      FilterEngine.FilterAction.WATCH -> {
+        PostFilter(
+          filterHighlightedColor = 0,
+          filterWatch = true,
+          filterOnlyOP = true
+        )
       }
     }
   }

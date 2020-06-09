@@ -405,7 +405,7 @@ class Chan4 : SiteBase() {
   }
 
   override fun chanReader(): ChanReader {
-    return FutabaChanReader(archivesManager)
+    return FutabaChanReader(archivesManager, postFilterManager)
   }
 
   override fun actions(): SiteActions {

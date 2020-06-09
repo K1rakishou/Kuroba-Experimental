@@ -59,6 +59,7 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
@@ -142,6 +143,8 @@ public class PostCell
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private List<PostImageThumbnailView> thumbnailViews = new ArrayList<>(1);
     private RelativeLayout relativeLayoutContainer;
@@ -332,7 +335,8 @@ public class PostCell
         this.selected = selected;
         this.markedNo = markedNo;
         this.showDivider = showDivider;
-        this.hasColoredFilter = post.getPostFilter().getFilterHighlightedColor() != 0;
+        this.hasColoredFilter =
+                postFilterManager.getFilterHighlightedColor(post.getPostDescriptor()) != 0;
 
         bindPost(theme, post);
 
@@ -459,7 +463,9 @@ public class PostCell
         // Filter label is more important than unseen post label
         if (hasColoredFilter) {
             postAttentionLabel.setVisibility(VISIBLE);
-            postAttentionLabel.setBackgroundColor(post.getPostFilter().getFilterHighlightedColor());
+            postAttentionLabel.setBackgroundColor(
+                    postFilterManager.getFilterHighlightedColor(post.getPostDescriptor())
+            );
             return;
         }
 

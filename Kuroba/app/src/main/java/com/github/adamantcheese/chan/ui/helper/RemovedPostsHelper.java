@@ -74,10 +74,10 @@ public class RemovedPostsHelper {
         List<Post> removedPosts = new ArrayList<>();
 
         @SuppressLint("UseSparseArrays")
-        Map<Integer, PostHide> fastLookupMap = new HashMap<>();
+        Map<Long, PostHide> fastLookupMap = new HashMap<>();
 
         for (PostHide postHide : hiddenPosts) {
-            fastLookupMap.put(postHide.no, postHide);
+            fastLookupMap.put((long) postHide.no, postHide);
         }
 
         for (Post post : threadPosts) {

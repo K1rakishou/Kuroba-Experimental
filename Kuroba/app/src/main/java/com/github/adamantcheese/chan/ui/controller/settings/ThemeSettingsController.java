@@ -42,6 +42,7 @@ import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -93,6 +94,8 @@ public class ThemeSettingsController
 
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private Board dummyBoard = new Board();
     private Loadable dummyLoadable = Loadable.emptyLoadable();
@@ -316,7 +319,7 @@ public class ThemeSettingsController
             Context themeContext = new ContextThemeWrapper(context, theme.resValue);
 
             CommentParser parser = new CommentParser().addDefaultRules();
-            DefaultPostParser postParser = new DefaultPostParser(parser);
+            DefaultPostParser postParser = new DefaultPostParser(parser, postFilterManager);
 
             Post.Builder builder1 = new Post.Builder().board(dummyBoard)
                     .id(123456789)
@@ -362,41 +365,47 @@ public class ThemeSettingsController
             layoutManager.setOrientation(RecyclerView.VERTICAL);
             postsView.setLayoutManager(layoutManager);
 
-            PostAdapter adapter = new PostAdapter(postsView, new PostAdapter.PostAdapterCallback() {
-                @Override
-                public Loadable getLoadable() {
-                    return dummyLoadable;
-                }
+            PostAdapter adapter = new PostAdapter(
+                    postFilterManager,
+                    postsView,
+                    new PostAdapter.PostAdapterCallback() {
+                        @Override
+                        public Loadable getLoadable() {
+                            return dummyLoadable;
+                        }
 
-                @Override
-                public void onUnhidePostClick(Post post) {
-                }
-            }, dummyPostCallback, new ThreadStatusCell.Callback() {
-                @Override
-                public long getTimeUntilLoadMore() {
-                    return 0;
-                }
+                        @Override
+                        public void onUnhidePostClick(Post post) {
+                        }
+                    },
+                    dummyPostCallback,
+                    new ThreadStatusCell.Callback() {
+                        @Override
+                        public long getTimeUntilLoadMore() {
+                            return 0;
+                        }
 
-                @Override
-                public boolean isWatching() {
-                    return false;
-                }
+                        @Override
+                        public boolean isWatching() {
+                            return false;
+                        }
 
-                @Nullable
-                @Override
-                public ChanThread getChanThread() {
-                    return null;
-                }
+                        @Nullable
+                        @Override
+                        public ChanThread getChanThread() {
+                            return null;
+                        }
 
-                @Override
-                public Chan4PagesRequest.BoardPage getPage(Post op) {
-                    return null;
-                }
+                        @Override
+                        public Chan4PagesRequest.BoardPage getPage(Post op) {
+                            return null;
+                        }
 
-                @Override
-                public void onListStatusClicked() {
-                }
-            }, theme);
+                        @Override
+                        public void onListStatusClicked() {
+                        }
+                    },
+                    theme);
 
             PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
             postPreloadedInfoHolder.preloadPostsInfo(posts);

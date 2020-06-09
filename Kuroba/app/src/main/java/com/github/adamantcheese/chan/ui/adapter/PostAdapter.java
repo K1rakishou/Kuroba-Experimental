@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
@@ -60,6 +61,7 @@ public class PostAdapter
     private final PostAdapterCallback postAdapterCallback;
     private final PostCellInterface.PostCellCallback postCellCallback;
     private RecyclerView recyclerView;
+    private PostFilterManager postFilterManager;
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
@@ -84,12 +86,14 @@ public class PostAdapter
     private Theme theme;
 
     public PostAdapter(
+            PostFilterManager postFilterManager,
             RecyclerView recyclerView,
             PostAdapterCallback postAdapterCallback,
             PostCellInterface.PostCellCallback postCellCallback,
             ThreadStatusCell.Callback statusCellCallback,
             Theme theme
     ) {
+        this.postFilterManager = postFilterManager;
         this.recyclerView = recyclerView;
         this.postAdapterCallback = postAdapterCallback;
         this.postCellCallback = postCellCallback;
@@ -231,7 +235,7 @@ public class PostAdapter
             return TYPE_STATUS;
         } else {
             Post post = displayList.get(getPostPosition(position));
-            if (post.getPostFilter().getFilterStub()) {
+            if (postFilterManager.getFilterStub(post.getPostDescriptor())) {
                 return TYPE_POST_STUB;
             } else {
                 return TYPE_POST;

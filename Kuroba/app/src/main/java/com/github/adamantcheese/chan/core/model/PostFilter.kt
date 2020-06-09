@@ -1,17 +1,17 @@
 package com.github.adamantcheese.chan.core.model
 
 data class PostFilter(
-        val filterHighlightedColor: Int = 0,
-        val filterStub: Boolean = false,
-        val filterRemove: Boolean = false,
-        val filterWatch: Boolean = false,
-        val filterReplies: Boolean = false,
-        val filterOnlyOP: Boolean = false,
-        val filterSaved: Boolean = false
+  var filterHighlightedColor: Int = 0,
+  var filterStub: Boolean = false,
+  var filterRemove: Boolean = false,
+  var filterWatch: Boolean = false,
+  var filterReplies: Boolean = false,
+  var filterOnlyOP: Boolean = false,
+  var filterSaved: Boolean = false
 ) {
 
-    fun hasFilterParameters(): Boolean {
-        return filterRemove || filterHighlightedColor != 0 || filterReplies || filterStub
-    }
+  fun hasFilterParameters(): Boolean {
+    return filterRemove || filterHighlightedColor != 0 || filterReplies || filterStub
+  }
 
 }
