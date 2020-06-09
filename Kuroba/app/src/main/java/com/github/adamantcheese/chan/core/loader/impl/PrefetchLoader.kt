@@ -16,6 +16,7 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import kotlin.math.abs
 
 class PrefetchLoader(
         private val scheduler: Scheduler,
@@ -82,7 +83,7 @@ class PrefetchLoader(
                         0f
                     }
 
-                    onPrefetchProgress(prefetch.postImage, progress)
+                    onPrefetchProgress(prefetch.postImage, abs(1f - progress))
                 }
 
                 override fun onSuccess(file: RawFile) {

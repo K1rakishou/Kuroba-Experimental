@@ -163,6 +163,9 @@ public class PostImageThumbnailView
 
         if (prefetchState instanceof PrefetchState.PrefetchStarted) {
             prefetching = true;
+
+            segmentedCircleDrawable.percentage(1f);
+            invalidate();
             return;
         }
 

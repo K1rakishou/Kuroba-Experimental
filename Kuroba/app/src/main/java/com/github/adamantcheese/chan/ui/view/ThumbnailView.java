@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.ui.view;
 
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
@@ -37,6 +39,9 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.View;
+import android.view.animation.Interpolator;
+
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
@@ -56,8 +61,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private static final String TAG = "ThumbnailView";
-    private RequestDisposable requestDisposable;
+    private static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
 
+    private RequestDisposable requestDisposable;
     private boolean circular = false;
     private int rounding = 0;
     private boolean clickable = false;
@@ -79,6 +85,8 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private String errorText;
     private Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private Rect tmpTextRect = new Rect();
+
+    private AnimatorSet alphaAnimator = new AnimatorSet();
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -114,7 +122,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
 
             error = false;
             setImageBitmap(null);
-            animate().cancel();
+            alphaAnimator.end();
         }
 
         if (!TextUtils.isEmpty(url)) {
@@ -139,7 +147,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
             int width,
             int height
     ) {
-        animate().cancel();
+        alphaAnimator.end();
 
         requestDisposable = imageLoaderV2.loadFromDisk(
                 getContext(),
@@ -367,13 +375,21 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     }
 
     private void onImageSet(boolean isImmediate) {
-        clearAnimation();
-
         if (!isImmediate) {
             setAlpha(0f);
-            animate().alpha(1f).setDuration(200);
+
+            ValueAnimator alphaAnimation = ValueAnimator.ofFloat(0f, 1f);
+            alphaAnimation.setDuration(200);
+            alphaAnimation.setInterpolator(INTERPOLATOR);
+            alphaAnimation.addUpdateListener(animation -> {
+                float alpha = (float) animation.getAnimatedValue();
+                setAlpha(alpha);
+            });
+
+            alphaAnimator.play(alphaAnimation);
+            alphaAnimator.start();
         } else {
-            animate().cancel();
+            alphaAnimator.end();
             setAlpha(1f);
         }
     }

@@ -50,7 +50,7 @@ fun <K, V> HashMap<K, V>.putIfNotContains(key: K, value: V) {
 }
 
 fun Throwable.errorMessageOrClassName(): String {
-  if (message != null) {
+  if (!message.isNullOrBlank()) {
     return message!!
   }
 

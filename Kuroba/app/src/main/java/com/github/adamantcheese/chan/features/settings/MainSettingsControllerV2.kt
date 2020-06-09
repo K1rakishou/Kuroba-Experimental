@@ -31,7 +31,6 @@ import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
-import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collect
@@ -86,13 +85,6 @@ class MainSettingsControllerV2(context: Context)
 
   private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {
     recyclerView.withModels {
-      if (renderAction is SettingsCoordinator.RenderAction.RenderScreen
-        || renderAction is SettingsCoordinator.RenderAction.RenderSearchScreen) {
-        addOneshotModelBuildListener {
-          recyclerView.scrollToPosition(0)
-        }
-      }
-
       when (renderAction) {
         is SettingsCoordinator.RenderAction.RenderScreen -> {
           navigation.title = renderAction.settingsScreen.title
