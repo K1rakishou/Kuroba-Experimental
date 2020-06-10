@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.parser
+package com.github.adamantcheese.chan.core.site.loader
 
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
@@ -28,10 +28,9 @@ import com.github.adamantcheese.chan.core.mapper.ChanPostMapper.fromPost
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
-import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
-import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
-import com.github.adamantcheese.chan.core.site.loader.ServerException
+import com.github.adamantcheese.chan.core.site.parser.ChanReader
+import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor

@@ -28,9 +28,8 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloading
 import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.model.orm.SavedThread
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestExecutor.Companion.getChanUrl
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
-import com.github.adamantcheese.chan.core.site.parser.ChanLoaderRequestExecutor
-import com.github.adamantcheese.chan.core.site.parser.ChanLoaderRequestExecutor.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -100,17 +99,17 @@ class ChanThreadLoader(
 
     private val chanLoaderRequestExecutor by lazy {
         return@lazy ChanLoaderRequestExecutor(
-                gson,
-                okHttpClient,
-                databaseManager.databaseSavedReplyManager,
-                filterEngine,
-                chanPostRepository,
-                appConstants,
-                archivesManager,
-                thirdPartyArchiveInfoRepository,
-                postFilterManager,
-                ChanSettings.verboseLogs.get(),
-                themeHelper.theme
+          gson,
+          okHttpClient,
+          databaseManager.databaseSavedReplyManager,
+          filterEngine,
+          chanPostRepository,
+          appConstants,
+          archivesManager,
+          thirdPartyArchiveInfoRepository,
+          postFilterManager,
+          ChanSettings.verboseLogs.get(),
+          themeHelper.theme
         )
     }
 
