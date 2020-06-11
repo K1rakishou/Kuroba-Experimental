@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.utils
 
 import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.toByteString
 import okio.HashingSource
 import okio.blackholeSink
 import okio.buffer
@@ -20,6 +21,11 @@ object HashingUtil {
 
     fun stringHash(inputString: String): String {
         return inputString.encodeUtf8().md5().hex()
+    }
+
+    @JvmStatic
+    fun byteArrayHashSha256HexString(byteArray: ByteArray): String {
+        return byteArray.toByteString(0, byteArray.size).sha256().hex()
     }
 
 }

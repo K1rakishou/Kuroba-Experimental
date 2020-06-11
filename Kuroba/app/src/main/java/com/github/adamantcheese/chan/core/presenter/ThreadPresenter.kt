@@ -20,7 +20,6 @@ import android.content.Context
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.annotation.StringRes
-import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
@@ -57,6 +56,7 @@ import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
@@ -1062,7 +1062,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
-      if (BuildConfig.DEV_BUILD && loadable!!.no > 0) {
+      if (getFlavorType() == AndroidUtils.FlavorType.Dev && loadable!!.no > 0) {
         menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
       }
     }

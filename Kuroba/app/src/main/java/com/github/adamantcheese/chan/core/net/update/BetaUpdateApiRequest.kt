@@ -21,10 +21,14 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class DevUpdateApiRequest(
+class BetaUpdateApiRequest(
   request: Request,
   okHttpClient: OkHttpClient
-) : JsonReaderRequest<DevUpdateApiRequest.DevUpdateApiResponse>(RequestType.DevUpdateApiRequest, request, okHttpClient) {
+) : JsonReaderRequest<BetaUpdateApiRequest.DevUpdateApiResponse>(
+  RequestType.BetaUpdateApiRequest,
+  request,
+  okHttpClient
+) {
   
   override suspend fun readJson(reader: JsonReader): DevUpdateApiResponse {
     var responseCode: Int? = null
@@ -41,7 +45,7 @@ class DevUpdateApiRequest(
     }
   
     if (responseCode == null || commitHash == null) {
-      throw UpdateRequestError("Update API response is incomplete, issue with dev apk server API!")
+      throw UpdateRequestError("Update API response is incomplete, issue with beta apk server API!")
     }
   
     return DevUpdateApiResponse(responseCode!!, commitHash!!)
@@ -53,6 +57,6 @@ class DevUpdateApiRequest(
   )
   
   companion object {
-    private const val TAG = "DevUpdateApiRequest"
+    private const val TAG = "BetaUpdateApiRequest"
   }
 }

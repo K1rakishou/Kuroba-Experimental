@@ -54,8 +54,21 @@ class MainSettingsScreen(
           context = context,
           identifier = MainScreen.AboutAppGroup.AppVersion,
           topDescriptionStringFunc = { createAppVersionString() },
-          bottomDescriptionIdFunc = { R.string.settings_update_check },
-          callback = { updateManager.manualUpdateCheck() },
+          bottomDescriptionStringFunc = {
+            if (getFlavorType() != FlavorType.Dev) {
+              context.getString(R.string.settings_update_check)
+            } else {
+              context.getString(R.string.settings_updates_are_disabled)
+            }
+          },
+          callbackWithClickAction = {
+            if (getFlavorType() != FlavorType.Dev) {
+              updateManager.manualUpdateCheck()
+              SettingClickAction.NoAction
+            } else {
+              SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
+            }
+          },
           notificationType = SettingNotificationType.ApkUpdate
         )
 
@@ -220,13 +233,22 @@ class MainSettingsScreen(
   }
 
   private fun createAppVersionString(): String {
-    val isOfficialCheck = if (getBuildType() == BuildType.Release) {
+    val isVerified = getVerifiedBuildType() == VerifiedBuildType.Release
+      || getVerifiedBuildType() == VerifiedBuildType.Debug
+
+    val verificationBadge = if (isVerified) {
       "✓"
     } else {
       "✗"
     }
 
-    return getApplicationLabel().toString() + " " + BuildConfig.VERSION_NAME + " " + isOfficialCheck
+    return String.format(
+      "%s %s %s (commit %s)",
+      getApplicationLabel().toString(),
+      BuildConfig.VERSION_NAME,
+      verificationBadge,
+      BuildConfig.COMMIT_HASH.take(12)
+    )
   }
 
   private fun onReportSettingClick() {

@@ -38,7 +38,7 @@ import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.net.update.DevUpdateApiRequest
+import com.github.adamantcheese.chan.core.net.update.BetaUpdateApiRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -102,6 +102,11 @@ class UpdateManager(
   fun autoUpdateCheck() {
     BackgroundUtils.ensureMainThread()
 
+    if (getFlavorType() == FlavorType.Dev) {
+      Logger.d(TAG, "Updater is disabled for dev builds!")
+      return
+    }
+
     if (
       PersistableChanState.previousVersion.get() < BuildConfig.VERSION_CODE
       && PersistableChanState.previousVersion.get() != 0
@@ -111,10 +116,7 @@ class UpdateManager(
       return
     }
 
-    if (
-      BuildConfig.DEV_BUILD &&
-      PersistableChanState.previousDevHash.get() != BuildConfig.COMMIT_HASH
-    ) {
+    if (PersistableChanState.previousDevHash.get() != BuildConfig.COMMIT_HASH) {
       onDevAlreadyUpdated()
       return
     }
@@ -123,10 +125,15 @@ class UpdateManager(
   }
 
   fun manualUpdateCheck() {
+    if (getFlavorType() == FlavorType.Dev) {
+      Logger.d(TAG, "Updater is disabled for dev builds!")
+      return
+    }
+
     launch { runUpdateApi(true) }
   }
 
-  @Suppress("ConstantConditionIf")
+  @Suppress("ConstantConditionIf", "WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private suspend fun runUpdateApi(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -149,17 +156,23 @@ class UpdateManager(
       PersistableChanState.updateCheckTime.set(now)
     }
 
-    if (!BuildConfig.DEV_BUILD) {
-      Logger.d(TAG, "Calling update API for release")
-      updateRelease(manual)
-    } else {
-      Logger.d(TAG, "Calling update API for dev")
-      updateDev(manual)
+    when (getFlavorType()) {
+      FlavorType.Release -> {
+        Logger.d(TAG, "Calling update API for release")
+        updateRelease(manual)
+      }
+      FlavorType.Beta -> {
+        Logger.d(TAG, "Calling update API for beta")
+        updateBeta(manual)
+      }
+      FlavorType.Dev -> {
+        throw RuntimeException("Updater should be disabled for dev builds")
+      }
     }
   }
 
   @Suppress("ConstantConditionIf")
-  private suspend fun updateDev(manual: Boolean) {
+  private suspend fun updateBeta(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
 
     val request = Request.Builder()
@@ -167,7 +180,7 @@ class UpdateManager(
       .get()
       .build()
 
-    val response = DevUpdateApiRequest(request, okHttpClient.proxiedClient).execute()
+    val response = BetaUpdateApiRequest(request, okHttpClient.proxiedClient).execute()
 
     coroutineScope {
       withContext(Dispatchers.Main) {
@@ -176,15 +189,15 @@ class UpdateManager(
             onSuccessfullyGotLatestApkUuid(response.result, manual)
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Error while trying to get new dev apk, status code: ${response.statusCode}")
+            Logger.e(TAG, "Error while trying to get new beta apk, status code: ${response.statusCode}")
             failedUpdate(manual)
           }
           is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-            Logger.e(TAG, "Unknown error while trying to get new dev apk", response.error)
+            Logger.e(TAG, "Unknown error while trying to get new beta apk", response.error)
             failedUpdate(manual)
           }
           is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-            Logger.e(TAG, "Parsing error while trying to get new dev apk", response.error)
+            Logger.e(TAG, "Parsing error while trying to get new beta apk", response.error)
             failedUpdate(manual)
           }
         }
@@ -193,7 +206,7 @@ class UpdateManager(
   }
 
   private fun onSuccessfullyGotLatestApkUuid(
-    response: DevUpdateApiRequest.DevUpdateApiResponse,
+    response: BetaUpdateApiRequest.DevUpdateApiResponse,
     manual: Boolean
   ) {
     BackgroundUtils.ensureMainThread()
@@ -292,18 +305,14 @@ class UpdateManager(
     }
   }
 
-
   private fun processUpdateApiResponse(
     responseRelease: ReleaseUpdateApiResponse,
     manual: Boolean
   ): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    if (
-      (responseRelease.versionCode > BuildConfig.VERSION_CODE || BuildConfig.DEV_BUILD)
-      && BackgroundUtils.isInForeground()
-    ) {
-
+    if ((responseRelease.versionCode > BuildConfig.VERSION_CODE || getFlavorType() == FlavorType.Beta)
+      && BackgroundUtils.isInForeground()) {
       // Do not spam dialogs if this is not the manual update check, use the notifications
       // instead
       if (manual) {
@@ -402,10 +411,10 @@ class UpdateManager(
   private fun failedUpdate(manual: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    val buildTag = if (BuildConfig.DEV_BUILD) {
-      "dev"
+    val buildTag = if (getFlavorType() == FlavorType.Beta) {
+      "beta"
     } else {
-      "stable"
+      "release"
     }
 
     Logger.e(TAG, "Failed to process $buildTag API call for updating")

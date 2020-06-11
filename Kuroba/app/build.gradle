@@ -22,6 +22,10 @@ android {
         return stdout.toString().trim()
     }
 
+    productFlavors.all {
+        ext.apkVersionNameSuffix = null
+    }
+
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 29
@@ -66,9 +70,10 @@ android {
         // you WILL need to change the code in UpdateManager if your endpoint changes or you use a different API structure
         buildConfigField "String", "DEV_API_ENDPOINT", "\"https://kuroba.io:8443\""
         // this is for checking who's built what in debug logs
-        buildConfigField "String", "SIGNATURE", "\"8952c098\""
+        buildConfigField "String", "RELEASE_SIGNATURE", "\"86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9\""
         // this is the default dev signing signature, update it if you change the dev keystore
-        buildConfigField "String", "DEV_SIGNATURE", "\"10d4e433\""
+        buildConfigField "String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\""
+        buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
 
         /**
          * ------------------------------------------------------------
@@ -88,8 +93,6 @@ android {
                 outputFileName = manifestPlaceholders.get("appName").toString() + ".apk"
             }
         }
-
-        buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
 
         vectorDrawables.useSupportLibrary = true
     }
@@ -120,12 +123,16 @@ android {
     flavorDimensions "default"
 
     productFlavors {
+        // FLAVOR_TYPE 0 - release build
+        // FLAVOR_TYPE 1 - beta build
+        // FLAVOR_TYPE 2 - dev build
+
         stable {
             dimension "default"
             applicationIdSuffix ""
-            versionNameSuffix ""
+            apkVersionNameSuffix = ""
 
-            buildConfigField "boolean", "DEV_BUILD", "false"
+            buildConfigField "int", "FLAVOR_TYPE", "0"
             buildConfigField "int", "UPDATE_DELAY", "5"
 
             // These are manifest placeholders for the application name, icon location and file
@@ -133,9 +140,25 @@ android {
             // otherwise the app will not work)
             manifestPlaceholders = [
                     appName              : "KurobaEx",
-                    iconLoc              : "@mipmap/ic_launcher",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
-                    devBuild             : false
+                    iconLoc              : "@mipmap/ic_launcher_release",
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+            ]
+        }
+        beta {
+            dimension "default"
+            // Different app ids for different flavors so that the users are able to install both
+            // of them without deleting anything
+            applicationIdSuffix ".beta"
+            apkVersionNameSuffix = "-beta"
+
+            buildConfigField "int", "FLAVOR_TYPE", "1"
+            buildConfigField "int", "UPDATE_DELAY", "1"
+
+            // The same as in stable flavor
+            manifestPlaceholders = [
+                    appName              : "KurobaEx-beta",
+                    iconLoc              : "@mipmap/ic_launcher_beta",
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
             ]
         }
         dev {
@@ -143,18 +166,17 @@ android {
             // Different app ids for different flavors so that the users are able to install both
             // of them without deleting anything
             applicationIdSuffix ".dev"
-            versionNameSuffix "-${getCommitHash().substring(0, 7)}"
+            apkVersionNameSuffix = "-dev"
 
-            // To easily figure out whether the app uses development flavors or not
-            buildConfigField "boolean", "DEV_BUILD", "true"
-            buildConfigField "int", "UPDATE_DELAY", "1"
+            buildConfigField "int", "FLAVOR_TYPE", "2"
+            // We never use updater for dev builds
+            buildConfigField "int", "UPDATE_DELAY", "99999999"
 
             // The same as in stable flavor
             manifestPlaceholders = [
                     appName              : "KurobaEx-dev",
-                    iconLoc              : "@mipmap/ic_launcher",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
-                    devBuild             : true
+                    iconLoc              : "@mipmap/ic_launcher_dev",
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
             ]
         }
     }
@@ -171,7 +193,7 @@ android {
                     throw new GradleException("Couldn't find flavor by variant.flavorName = ${variant.flavorName}")
                 }
 
-                outputFileName = "KurobaEx${flavor.versionNameSuffix}.apk"
+                outputFileName = "KurobaEx${flavor.apkVersionNameSuffix}.apk"
             }
         }
 

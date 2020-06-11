@@ -149,10 +149,10 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  suspend fun onCreateInternal(savedInstanceState: Bundle?) {
+  private suspend fun onCreateInternal(savedInstanceState: Bundle?) {
     Chan.inject(this)
 
-    if (BuildConfig.DEV_BUILD) {
+    if (AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 

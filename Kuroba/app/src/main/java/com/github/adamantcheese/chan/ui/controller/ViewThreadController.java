@@ -31,7 +31,6 @@ import androidx.core.util.Pair;
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
-import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
@@ -64,6 +63,7 @@ import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
@@ -88,6 +88,7 @@ import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDown
 import static com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu.OVERFLOW_ID;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLinkInBrowser;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.shareLink;
@@ -309,7 +310,7 @@ public class ViewThreadController
                 .withSubItem(
                         ACTION_GO_TO_POST,
                         R.string.action_go_to_post,
-                        BuildConfig.DEV_BUILD,
+                        getFlavorType() == AndroidUtils.FlavorType.Dev,
                         this::onGoToPostClicked
                 )
                 .withSubItem(

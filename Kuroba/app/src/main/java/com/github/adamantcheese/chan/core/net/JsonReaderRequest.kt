@@ -104,7 +104,7 @@ abstract class JsonReaderRequest<T>(
     Chan420BoardsRequest("Chan420Boards"),
     Chan4BoardsRequest("Chan4Boards"),
     Chan4PagesRequest("Chan4Pages"),
-    DevUpdateApiRequest("DevUpdateApi"),
+    BetaUpdateApiRequest("BetaUpdateApi"),
     DvachBoardsRequest("DvachBoards"),
     ReleaseUpdateApiRequest("ReleaseUpdateApi")
   }

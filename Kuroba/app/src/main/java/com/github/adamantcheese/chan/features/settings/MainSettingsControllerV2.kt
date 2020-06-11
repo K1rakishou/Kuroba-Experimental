@@ -237,6 +237,9 @@ class MainSettingsControllerV2(context: Context)
 
             clickListener {
               when (val clickAction = settingV2.callback.invoke()) {
+                SettingClickAction.NoAction -> {
+                  // no-op
+                }
                 SettingClickAction.RefreshClickedSetting -> {
                   if (!query.isNullOrEmpty()) {
                     settingsCoordinator.rebuildScreenWithSearchQuery(query)
@@ -250,6 +253,9 @@ class MainSettingsControllerV2(context: Context)
                 }
                 is SettingClickAction.OpenScreen -> {
                   settingsCoordinator.rebuildScreen(clickAction.screenIdentifier)
+                }
+                is SettingClickAction.ShowToast -> {
+                  showToast(context, clickAction.messageId)
                 }
               }.exhaustive
             }

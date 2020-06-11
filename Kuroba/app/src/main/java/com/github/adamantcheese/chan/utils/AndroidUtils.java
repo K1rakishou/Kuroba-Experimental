@@ -80,9 +80,9 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.BuildType.Development;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.BuildType.Other;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.BuildType.Release;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.VerifiedBuildType.Debug;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.VerifiedBuildType.Release;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.VerifiedBuildType.Unknown;
 
 public class AndroidUtils {
     private static final String TAG = "AndroidUtils";
@@ -141,24 +141,44 @@ public class AndroidUtils {
         return getAppContext().getSharedPreferences(CHAN_STATE_PREFS_NAME, MODE_PRIVATE);
     }
 
-    public enum BuildType {
-        Development,
-        Release,
-        Other
-    }
-
-    public static BuildType getBuildType() {
+    public static VerifiedBuildType getVerifiedBuildType() {
         try {
             @SuppressLint("PackageManagerGetSignatures")
-            Signature sig = application.getPackageManager()
-                    .getPackageInfo(application.getPackageName(), PackageManager.GET_SIGNATURES).signatures[0];
-            String buildSig = Integer.toHexString(sig.toCharsString().hashCode());
-            Logger.d(TAG, "Build Signature: " + buildSig);
-            boolean isRelease = BuildConfig.SIGNATURE.equals(buildSig);
-            boolean isDev = BuildConfig.DEV_SIGNATURE.equals(buildSig);
-            return isRelease ? Release : (isDev ? Development : Other);
+            Signature sig = application.getPackageManager().getPackageInfo(
+                    application.getPackageName(),
+                    PackageManager.GET_SIGNING_CERTIFICATES
+            ).signingInfo.getApkContentsSigners()[0];
+
+            String signatureHexString =
+                    HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
+            Logger.d(TAG, "Build Signature: " + signatureHexString);
+
+            boolean isOfficialRelease = BuildConfig.RELEASE_SIGNATURE.equals(signatureHexString);
+            if (isOfficialRelease) {
+                return Release;
+            }
+
+            boolean isOfficialBeta = BuildConfig.DEBUG_SIGNATURE.equals(signatureHexString);
+            if (isOfficialBeta) {
+                return Debug;
+            }
+
+            return Unknown;
         } catch (Exception ignored) {
-            return Other;
+            return Unknown;
+        }
+    }
+
+    public static FlavorType getFlavorType() {
+        switch (BuildConfig.FLAVOR_TYPE) {
+            case 0:
+                return FlavorType.Release;
+            case 1:
+                return FlavorType.Beta;
+            case 2:
+                return FlavorType.Dev;
+            default:
+                throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
         }
     }
 
@@ -678,5 +698,17 @@ public class AndroidUtils {
         }
 
         return "Unknown";
+    }
+
+    public enum FlavorType {
+        Release,
+        Beta,
+        Dev
+    }
+
+    public enum VerifiedBuildType {
+        Debug,
+        Release,
+        Unknown
     }
 }

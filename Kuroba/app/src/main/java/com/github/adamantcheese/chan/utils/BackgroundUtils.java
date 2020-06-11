@@ -19,7 +19,6 @@ package com.github.adamantcheese.chan.utils;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 
@@ -28,6 +27,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 
 public class BackgroundUtils {
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -53,30 +53,37 @@ public class BackgroundUtils {
     }
 
     public static void ensureMainThread() {
-        if (!isMainThread()) {
-            if (BuildConfig.DEV_BUILD && ChanSettings.crashOnSafeThrow.get()) {
-                throw new IllegalStateException("Cannot be executed on a background thread!");
-            } else {
-                Logger.e(
-                        "BackgroundUtils",
-                        "ensureMainThread() expected main thread but got " + Thread.currentThread().getName()
-                );
-            }
+        if (isMainThread()) {
+            return;
+        }
+
+        if (getFlavorType() != AndroidUtils.FlavorType.Release
+                && ChanSettings.crashOnSafeThrow.get()) {
+            throw new IllegalStateException("Cannot be executed on a background thread!");
+        } else {
+            Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but " +
+                    "got " + Thread.currentThread().getName());
         }
     }
 
     public static void ensureBackgroundThread() {
-        if (isMainThread()) {
-            if (BuildConfig.DEV_BUILD && ChanSettings.crashOnSafeThrow.get()) {
-                throw new IllegalStateException("Cannot be executed on the main thread!");
-            } else {
-                Logger.e("BackgroundUtils", "ensureBackgroundThread() expected background thread but got main");
-            }
+        if (!isMainThread()) {
+            return;
+        }
+
+        if (getFlavorType() != AndroidUtils.FlavorType.Release
+                && ChanSettings.crashOnSafeThrow.get()) {
+            throw new IllegalStateException("Cannot be executed on the main thread!");
+        } else {
+            Logger.e("BackgroundUtils", "ensureBackgroundThread() expected background thread " +
+                    "but got main");
         }
     }
 
     public static <T> Cancelable runWithExecutor(
-            Executor executor, final Callable<T> background, final BackgroundResult<T> result
+            Executor executor,
+            final Callable<T> background,
+            final BackgroundResult<T> result
     ) {
         final AtomicBoolean canceled = new AtomicBoolean(false);
         Cancelable cancelable = () -> canceled.set(true);

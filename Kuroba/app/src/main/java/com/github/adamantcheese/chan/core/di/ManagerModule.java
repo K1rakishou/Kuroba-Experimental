@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.content.Context;
 
-import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
@@ -52,6 +51,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
@@ -76,6 +76,7 @@ import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
 import static com.github.adamantcheese.chan.core.di.NetModule.THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
 
@@ -311,7 +312,7 @@ public class ManagerModule {
 
         BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
 
-        if (BuildConfig.DEV_BUILD) {
+        if (getFlavorType() != AndroidUtils.FlavorType.Release) {
             resolutionStrategy = ThrowAnException;
         }
 

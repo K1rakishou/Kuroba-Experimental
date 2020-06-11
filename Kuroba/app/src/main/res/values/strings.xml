@@ -457,6 +457,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_led">Notification light</string>
     <string name="settings_group_about">About</string>
     <string name="settings_update_check">Tap to check for updates</string>
+    <string name="settings_updates_are_disabled">Updates are disabled</string>
     <string name="settings_report">Report</string>
     <string name="settings_report_description">Report a problem/crash</string>
     <string name="settings_collect_crash_logs">Collect crash logs</string>
@@ -994,5 +995,6 @@ Don't have a 4chan Pass?<br>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here.</string>
+    <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
 
 </resources>
