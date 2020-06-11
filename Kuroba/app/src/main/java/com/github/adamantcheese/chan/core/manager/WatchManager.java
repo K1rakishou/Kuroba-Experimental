@@ -732,7 +732,7 @@ public class WatchManager
         // too often too, which also led to notification being updated too often, etc.
         // All of that could sometimes cause the notification to turn into a silent notification.
         // So to avoid this and to reduce the amount of pin updates per second a debouncer was
-        // introduced. It updateState() is called too often, it will skip all updates and will wait
+        // introduced. If updateState() is called too often, it will skip all updates and will wait
         // for at least STATE_UPDATE_DEBOUNCE_TIME_MS without any updates before calling
         // updateStateInternal().
         stateUpdateDebouncer.post(() -> updateStateInternal(watchEnabled, backgroundEnabled),

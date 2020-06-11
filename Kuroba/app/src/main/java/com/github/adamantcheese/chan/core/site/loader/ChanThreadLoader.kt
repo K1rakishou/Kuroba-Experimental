@@ -28,13 +28,14 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloading
 import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.model.orm.SavedThread
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestExecutor.Companion.getChanUrl
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
+import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.StringUtils
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.error
@@ -97,8 +98,8 @@ class ChanThreadLoader(
     var thread: ChanThread? = null
         private set
 
-    private val chanLoaderRequestExecutor by lazy {
-        return@lazy ChanLoaderRequestExecutor(
+    private val chanThreadLoaderCoordinator by lazy {
+        return@lazy ChanThreadLoaderCoordinator(
           gson,
           okHttpClient,
           databaseManager.databaseSavedReplyManager,
@@ -109,7 +110,7 @@ class ChanThreadLoader(
           thirdPartyArchiveInfoRepository,
           postFilterManager,
           ChanSettings.verboseLogs.get(),
-          themeHelper.theme
+          themeHelper
         )
     }
 
@@ -228,7 +229,7 @@ class ChanThreadLoader(
         currentTimeout = -1
 
         synchronized(this) { thread = null }
-        requestMoreDataInternal(retrieveDeletedPostsFromArchives)
+        compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
     }
 
     private fun loadSavedCopyIfExists(): Boolean {
@@ -274,7 +275,7 @@ class ChanThreadLoader(
         clearPendingRunnable()
 
         return if (loadable.isThreadMode && requestJob == null) {
-            compositeDisposable.add(requestMoreDataInternal(retrieveDeletedPostsFromArchives))
+            compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
             true
         } else {
             false
@@ -387,7 +388,7 @@ class ChanThreadLoader(
 
         val url = getChanUrl(loadable).toString()
 
-        return chanLoaderRequestExecutor.execute(url, requestParams) { chanLoaderResponseResult ->
+        return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
             when (chanLoaderResponseResult) {
                 is ModularResult.Value -> {
                     onResponse(chanLoaderResponseResult.value)
