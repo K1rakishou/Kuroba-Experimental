@@ -42,6 +42,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.os.StatFs;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -698,6 +699,14 @@ public class AndroidUtils {
         }
 
         return "Unknown";
+    }
+
+    public static long getAvailableSpaceInBytes(File file) {
+        long availableSpace = -1L;
+        StatFs stat = new StatFs(file.getPath());
+        availableSpace = stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
+
+        return availableSpace;
     }
 
     public enum FlavorType {

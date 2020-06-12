@@ -172,11 +172,11 @@ class SettingsCoordinator(
         .debounce(DEBOUNCE_TIME_MS)
         .collect { query ->
           if (query.length < MIN_QUERY_LENGTH) {
-            rebuildCurrentScreen()
+            rebuildCurrentScreen(BuildOptions.Default)
             return@collect
           }
 
-          rebuildScreenWithSearchQuery(query)
+          rebuildScreenWithSearchQuery(query, BuildOptions.Default)
         }
     }
 
@@ -187,7 +187,7 @@ class SettingsCoordinator(
           Logger.e(TAG, "Unknown error received from SettingsNotificationManager", error)
         }
         .collect {
-          rebuildCurrentScreen()
+          rebuildCurrentScreen(BuildOptions.BuildWithNotificationType)
         }
     }
 
@@ -234,14 +234,20 @@ class SettingsCoordinator(
     settingIdentifier: SettingsIdentifier
   ) {
     val settingsScreen = settingsGraph[screenIdentifier]
-      .apply { rebuildSetting(groupIdentifier, settingIdentifier) }
+      .apply {
+        rebuildSetting(
+          groupIdentifier,
+          settingIdentifier,
+          BuildOptions.Default
+        )
+      }
 
     renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))
   }
 
-  fun rebuildScreen(screenIdentifier: IScreenIdentifier) {
+  fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
     pushScreen(screenIdentifier)
-    rebuildScreenInternal(screenIdentifier)
+    rebuildScreenInternal(screenIdentifier, buildOptions)
   }
 
   fun onSearchEntered(query: String) {
@@ -255,19 +261,19 @@ class SettingsCoordinator(
       return false
     }
 
-    rebuildScreen(popScreen())
+    rebuildScreen(popScreen(), BuildOptions.Default)
     return true
   }
 
-  fun rebuildCurrentScreen() {
+  fun rebuildCurrentScreen(buildOptions: BuildOptions) {
     require(screenStack.isNotEmpty()) { "Stack is empty" }
 
     val screenIdentifier = screenStack.peek()
-    rebuildScreen(screenIdentifier)
+    rebuildScreen(screenIdentifier, buildOptions)
   }
 
-  fun rebuildScreenWithSearchQuery(query: String) {
-    settingsGraph.rebuildScreens()
+  fun rebuildScreenWithSearchQuery(query: String, buildOptions: BuildOptions) {
+    settingsGraph.rebuildScreens(buildOptions)
     val graph = settingsGraph
 
     val topScreenIdentifier = if (screenStack.isEmpty()) {
@@ -279,8 +285,8 @@ class SettingsCoordinator(
     renderSettingsSubject.onNext(RenderAction.RenderSearchScreen(topScreenIdentifier, graph, query))
   }
 
-  private fun rebuildScreenInternal(screen: IScreenIdentifier) {
-    settingsGraph.rebuildScreen(screen)
+  private fun rebuildScreenInternal(screen: IScreenIdentifier, buildOptions: BuildOptions) {
+    settingsGraph.rebuildScreen(screen, buildOptions)
     val settingsScreen = settingsGraph[screen]
 
     renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))

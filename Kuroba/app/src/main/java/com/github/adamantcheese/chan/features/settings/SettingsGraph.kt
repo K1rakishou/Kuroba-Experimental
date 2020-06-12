@@ -28,7 +28,7 @@ class SettingsGraph(
       return cached
     }
 
-    rebuildScreen(screenIdentifier)
+    rebuildScreen(screenIdentifier, BuildOptions.Default)
     return screenMap[screenIdentifier]!!
   }
 
@@ -36,20 +36,22 @@ class SettingsGraph(
     screenMap.values.forEach { screen -> iterator(screen) }
   }
 
-  fun rebuildScreens() {
+  fun rebuildScreens(buildOptions: BuildOptions) {
     screenMap.clear()
 
     screensBuilderMap.forEach { (screenIdentifier, buildFunction) ->
-      screenMap[screenIdentifier] = buildFunction.invoke().apply { rebuildGroups() }
+      screenMap[screenIdentifier] = buildFunction.invoke()
+        .apply { rebuildGroups(buildOptions) }
     }
   }
 
-  fun rebuildScreen(screenIdentifier: IScreenIdentifier) {
+  fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
     requireNotNull(screensBuilderMap[screenIdentifier]) {
       "Screen builder does not exist, identifier: ${screenIdentifier}"
     }
 
-    screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke().apply { rebuildGroups() }
+    screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke()
+      .apply { rebuildGroups(buildOptions) }
   }
 
   fun clear() {

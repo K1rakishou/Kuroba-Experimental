@@ -72,7 +72,7 @@ class MainSettingsControllerV2(context: Context)
 
     settingsCoordinator = SettingsCoordinator(context, navigationController!!)
     settingsCoordinator.onCreate()
-    settingsCoordinator.rebuildScreen(defaultScreen)
+    settingsCoordinator.rebuildScreen(defaultScreen, BuildOptions.Default)
 
     mainScope.launch {
       settingsCoordinator.listenForRenderScreenActions()
@@ -112,7 +112,7 @@ class MainSettingsControllerV2(context: Context)
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
     if (!visible) {
-      settingsCoordinator.rebuildCurrentScreen()
+      settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
     }
   }
 
@@ -242,7 +242,7 @@ class MainSettingsControllerV2(context: Context)
                 }
                 SettingClickAction.RefreshClickedSetting -> {
                   if (!query.isNullOrEmpty()) {
-                    settingsCoordinator.rebuildScreenWithSearchQuery(query)
+                    settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
                   } else {
                     settingsCoordinator.rebuildSetting(
                       settingsScreen.screenIdentifier,
@@ -252,7 +252,7 @@ class MainSettingsControllerV2(context: Context)
                   }
                 }
                 is SettingClickAction.OpenScreen -> {
-                  settingsCoordinator.rebuildScreen(clickAction.screenIdentifier)
+                  settingsCoordinator.rebuildScreen(clickAction.screenIdentifier, BuildOptions.Default)
                 }
                 is SettingClickAction.ShowToast -> {
                   showToast(context, clickAction.messageId)
@@ -285,9 +285,9 @@ class MainSettingsControllerV2(context: Context)
               }
 
               if (!query.isNullOrEmpty()) {
-                settingsCoordinator.rebuildScreenWithSearchQuery(query)
+                settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
               } else {
-                settingsCoordinator.rebuildCurrentScreen()
+                settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
               }
             }
           } else {
@@ -315,9 +315,9 @@ class MainSettingsControllerV2(context: Context)
                 }
 
                 if (!query.isNullOrEmpty()) {
-                  settingsCoordinator.rebuildScreenWithSearchQuery(query)
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
                 } else {
-                  settingsCoordinator.rebuildCurrentScreen()
+                  settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
                 }
               }
             }
@@ -346,9 +346,9 @@ class MainSettingsControllerV2(context: Context)
                 }
 
                 if (!query.isNullOrEmpty()) {
-                  settingsCoordinator.rebuildScreenWithSearchQuery(query)
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
                 } else {
-                  settingsCoordinator.rebuildCurrentScreen()
+                  settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
                 }
               }
             }

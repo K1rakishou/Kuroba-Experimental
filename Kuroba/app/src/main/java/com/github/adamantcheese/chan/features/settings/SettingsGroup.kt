@@ -42,21 +42,27 @@ class SettingsGroup(
 
   fun lastIndex() = settingsMap.values.size - 1
 
-  fun rebuildSettings() {
-    settingsMap.clear()
-
+  fun rebuildSettings(buildOptions: BuildOptions) {
     settingsBuilderMap.forEach { (settingsIdentifier, buildFunction) ->
+      if (!shouldBuildThisSetting(buildOptions, settingsIdentifier)) {
+        return@forEach
+      }
+
       val newUpdateCounter = settingsMap[settingsIdentifier]?.update() ?: 0
       settingsMap[settingsIdentifier] = buildFunction.invoke(newUpdateCounter)
     }
   }
 
-  fun rebuildSetting(settingsIdentifier: SettingsIdentifier) {
+  fun rebuildSetting(settingsIdentifier: SettingsIdentifier, buildOptions: BuildOptions) {
     requireNotNull(settingsMap[settingsIdentifier]) {
       "Setting does not exist, identifier: ${settingsIdentifier}"
     }
     requireNotNull(settingsBuilderMap[settingsIdentifier]) {
       "Setting builder does not exist, identifier: ${settingsIdentifier}"
+    }
+
+    if (!shouldBuildThisSetting(buildOptions, settingsIdentifier)) {
+      return
     }
 
     val newUpdateCounter = settingsMap[settingsIdentifier]!!.update()
@@ -67,8 +73,30 @@ class SettingsGroup(
     settingsMap.values.forEach { setting -> setting.dispose() }
   }
 
+  private fun shouldBuildThisSetting(
+    buildOptions: BuildOptions,
+    settingsIdentifier: SettingsIdentifier
+  ): Boolean {
+    when (buildOptions) {
+      BuildOptions.Default -> {
+        // no-op
+      }
+      BuildOptions.BuildWithNotificationType -> {
+        if (settingsMap.containsKey(settingsIdentifier)) {
+          val hasNotificationType = settingsMap[settingsIdentifier]!!.notificationType != null
+          if (!hasNotificationType) {
+            return false
+          }
+        }
+      }
+    }
+
+    return true
+  }
+
   class SettingsGroupBuilder(
     val groupIdentifier: IGroupIdentifier,
     val buildFunction: () -> SettingsGroup
   )
+
 }

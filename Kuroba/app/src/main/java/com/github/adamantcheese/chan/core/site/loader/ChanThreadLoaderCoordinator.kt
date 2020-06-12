@@ -182,6 +182,7 @@ class ChanThreadLoaderCoordinator(
           .unwrap()
 
         return@Try normalPostLoader.loadPosts(
+          url,
           chanReaderProcessor,
           requestParams,
           descriptor,

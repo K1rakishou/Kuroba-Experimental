@@ -631,7 +631,7 @@ class CacheHandler(
     private fun createDirectories() {
         if (!fileManager.exists(cacheDirFile) && fileManager.create(cacheDirFile) == null) {
             val rawFile = File(cacheDirFile.getFullPath())
-            if (!rawFile.mkdirs()) {
+            if (!rawFile.exists() && !rawFile.mkdirs()) {
                 throw RuntimeException(
                         "Unable to create file cache dir ${cacheDirFile.getFullPath()}, " +
                                 "additional info = ${getAdditionalDebugInfo(rawFile)}")
@@ -643,7 +643,7 @@ class CacheHandler(
 
         if (!fileManager.exists(chunksCacheDirFile) && fileManager.create(chunksCacheDirFile) == null) {
             val rawFile = File(chunksCacheDirFile.getFullPath())
-            if (!rawFile.mkdirs()) {
+            if (!rawFile.exists() && !rawFile.mkdirs()) {
                 throw RuntimeException(
                         "Unable to create file chunks cache dir ${chunksCacheDirFile.getFullPath()}, " +
                                 "additional info = ${getAdditionalDebugInfo(rawFile)}")
@@ -658,18 +658,21 @@ class CacheHandler(
         val state = Environment.getExternalStorageState(file)
         val externalCacheDir = AndroidUtils.getAppContext().externalCacheDir?.absolutePath ?: "<null>"
         val internalCacheDir = AndroidUtils.getAppContext().cacheDir ?: "<null>"
+        val availableSpace = AndroidUtils.getAvailableSpaceInBytes(file)
 
         return "(exists = ${file.exists()}, " +
+                "parent exists = ${file.parentFile?.exists()}, " +
                 "canRead = ${file.canRead()}, " +
                 "canWrite = ${file.canWrite()}, " +
+                "isDirectory = ${file.isDirectory}, " +
                 "state = ${state}, " +
+                "availableSpace = ${availableSpace}, " +
                 "externalCacheDir = ${externalCacheDir}, " +
                 "internalCacheDir = ${internalCacheDir})"
     }
 
     private fun backgroundRecalculateSize() {
         if (recalculationRunning.get()) {
-            // Already running. Do not use compareAndSet() here!
             return
         }
 

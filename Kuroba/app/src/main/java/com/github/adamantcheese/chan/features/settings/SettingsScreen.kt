@@ -26,26 +26,32 @@ class SettingsScreen(
     groupsMap.values.forEach { settingsGroup -> iterator(settingsGroup) }
   }
 
-  fun rebuildGroups() {
+  fun rebuildGroups(buildOptions: BuildOptions) {
     groupsMap.clear()
 
     groupsBuilderMap.forEach { (groupIdentifier, buildFunction) ->
-      groupsMap[groupIdentifier] = buildFunction.invoke().apply { rebuildSettings() }
+      groupsMap[groupIdentifier] = buildFunction.invoke()
+        .apply { rebuildSettings(buildOptions) }
     }
   }
 
-  fun rebuildGroup(groupIdentifier: IGroupIdentifier) {
+  fun rebuildGroup(groupIdentifier: IGroupIdentifier, buildOptions: BuildOptions) {
     requireNotNull(groupsBuilderMap[groupIdentifier]) {
       "Group builder does not exist, identifier: ${groupIdentifier}"
     }
 
-    groupsMap[groupIdentifier] = groupsBuilderMap[groupIdentifier]!!.invoke().apply { rebuildSettings() }
+    groupsMap[groupIdentifier] = groupsBuilderMap[groupIdentifier]!!.invoke()
+      .apply { rebuildSettings(buildOptions) }
   }
 
-  fun rebuildSetting(groupIdentifier: IGroupIdentifier, settingIdentifier: SettingsIdentifier) {
+  fun rebuildSetting(
+    groupIdentifier: IGroupIdentifier,
+    settingIdentifier: SettingsIdentifier,
+    buildOptions: BuildOptions
+  ) {
     requireNotNull(groupsMap[groupIdentifier]) {
       "Group does not exist, groupIdentifier: $groupIdentifier"
-    }.rebuildSetting(settingIdentifier)
+    }.rebuildSetting(settingIdentifier, buildOptions)
   }
 
   fun clear() {

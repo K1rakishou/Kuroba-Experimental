@@ -9,6 +9,8 @@ import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ParsePost
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
@@ -33,6 +35,7 @@ internal class NormalPostLoader(
 
   @OptIn(ExperimentalTime::class)
   suspend fun loadPosts(
+    url: String,
     chanReaderProcessor: ChanReaderProcessor,
     requestParams: ChanLoaderRequestParams,
     descriptor: ChanDescriptor,
@@ -80,6 +83,7 @@ internal class NormalPostLoader(
     val postsFromCache = reloadedPosts.count { post -> post.isFromCache }
 
     val logStr = createLogString(
+      url,
       storeDuration,
       storedPostNoList,
       reloadingDuration,
@@ -199,6 +203,7 @@ internal class NormalPostLoader(
 
   @OptIn(ExperimentalTime::class)
   private fun createLogString(
+    url: String,
     storeDuration: Duration,
     storedPostNoList: List<Long>,
     reloadingDuration: Duration,
@@ -210,8 +215,15 @@ internal class NormalPostLoader(
     archivePosts: List<Post.Builder>,
     cachedPostsCount: Int
   ): String {
+    val urlToLog = if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
+      url
+    } else {
+      "<url hidden>"
+    }
+
     return """
     ChanReaderRequest.readJson() stats:
+    url = $urlToLog,
     Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).
     Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).
     Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).

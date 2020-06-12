@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.k1rakishou.feather2.Provides;
@@ -166,12 +167,20 @@ public class AppModule {
     }
 
     static File getCacheDir() {
+        File cacheDir;
+
         // See also res/xml/filepaths.xml for the fileprovider.
         if (getAppContext().getExternalCacheDir() != null) {
-            return getAppContext().getExternalCacheDir();
+            cacheDir = getAppContext().getExternalCacheDir();
         } else {
-            return getAppContext().getCacheDir();
+            cacheDir = getAppContext().getCacheDir();
         }
+
+        long spaceInBytes = AndroidUtils.getAvailableSpaceInBytes(cacheDir);
+        Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
+                " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
+
+        return cacheDir;
     }
 
     @Provides
