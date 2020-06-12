@@ -58,12 +58,6 @@ public class Pin
     @DatabaseField
     public boolean archived = false;
 
-    /**
-     * Pins can now be used to either watch new posts or save new posts or do both
-     */
-    @DatabaseField(columnName = "pin_type")
-    public int pinType;
-
     public Pin() {
     }
 
@@ -77,8 +71,7 @@ public class Pin
             boolean isError,
             String thumbnailUrl,
             int order,
-            boolean archived,
-            int pinType
+            boolean archived
     ) {
         this.loadable = loadable;
         this.watching = watching;
@@ -90,7 +83,6 @@ public class Pin
         this.thumbnailUrl = thumbnailUrl;
         this.order = order;
         this.archived = archived;
-        this.pinType = pinType;
     }
 
     public int getNewPostCount() {
@@ -124,7 +116,6 @@ public class Pin
         copy.thumbnailUrl = thumbnailUrl;
         copy.order = order;
         copy.archived = archived;
-        copy.pinType = pinType;
         return copy;
     }
 
@@ -160,8 +151,8 @@ public class Pin
     @NonNull
     @Override
     public String toString() {
-        return "[id = " + id + ", pinType = " + pinType + ", isError = " + isError + ", isArchived = " + archived
-                + ", watching = " + watching + ", (active) = " + (!isError && !archived) + ", no = " + loadable.no
-                + "]";
+        return "[id = " + id + ", isError = " + isError + ", isArchived = " + archived
+                + ", watching = " + watching + ", (active) = " + (!isError && !archived)
+                + ", no = " + loadable.no + "]";
     }
 }

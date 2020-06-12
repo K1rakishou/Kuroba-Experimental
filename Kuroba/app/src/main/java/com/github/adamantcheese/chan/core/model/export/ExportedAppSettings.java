@@ -23,7 +23,6 @@ import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ExportedAppSettings {
@@ -37,8 +36,6 @@ public class ExportedAppSettings {
     private List<ExportedFilter> exportedFilters;
     @SerializedName("exported_post_hides")
     private List<ExportedPostHide> exportedPostHides;
-    @SerializedName("exported_saved_threads")
-    private List<ExportedSavedThread> exportedSavedThreads;
     @SerializedName("exported_settings")
     @Nullable
     private String settings;
@@ -48,19 +45,17 @@ public class ExportedAppSettings {
             List<ExportedBoard> exportedBoards,
             List<ExportedFilter> exportedFilters,
             List<ExportedPostHide> exportedPostHides,
-            List<ExportedSavedThread> exportedSavedThreads,
             @NonNull String settings
     ) {
         this.exportedSites = exportedSites;
         this.exportedBoards = exportedBoards;
         this.exportedFilters = exportedFilters;
         this.exportedPostHides = exportedPostHides;
-        this.exportedSavedThreads = exportedSavedThreads;
         this.settings = settings;
     }
 
     public static ExportedAppSettings empty() {
-        return new ExportedAppSettings(new ArrayList<>(),
+        return new ExportedAppSettings(
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),
@@ -93,10 +88,6 @@ public class ExportedAppSettings {
         return exportedPostHides;
     }
 
-    public List<ExportedSavedThread> getExportedSavedThreads() {
-        return exportedSavedThreads != null ? exportedSavedThreads : Collections.emptyList();
-    }
-
     public int getVersion() {
         return ImportExportRepository.CURRENT_EXPORT_SETTINGS_VERSION;
     }
@@ -120,10 +111,6 @@ public class ExportedAppSettings {
 
     public void setExportedPostHides(List<ExportedPostHide> exportedPostHides) {
         this.exportedPostHides = exportedPostHides;
-    }
-
-    public void setExportedSavedThreads(List<ExportedSavedThread> exportedSavedThreads) {
-        this.exportedSavedThreads = exportedSavedThreads;
     }
 
     public void setSettings(String settings) {

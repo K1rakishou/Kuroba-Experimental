@@ -38,18 +38,14 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
-import com.github.adamantcheese.chan.core.manager.SavedThreadLoaderManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
-import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WakeManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
-import com.github.adamantcheese.chan.core.repository.SavedThreadLoaderRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
-import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -72,10 +68,8 @@ import javax.inject.Singleton;
 
 import io.reactivex.schedulers.Schedulers;
 import kotlinx.coroutines.CoroutineScope;
-import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
-import static com.github.adamantcheese.chan.core.di.NetModule.THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
@@ -117,18 +111,14 @@ public class ManagerModule {
             DatabaseManager databaseManager,
             ChanLoaderManager chanLoaderManager,
             WakeManager wakeManager,
-            PageRequestManager pageRequestManager,
-            ThreadSaveManager threadSaveManager,
-            FileManager fileManager
+            PageRequestManager pageRequestManager
     ) {
         Logger.d(AppModule.DI_TAG, "Watch manager");
         return new WatchManager(
                 databaseManager,
                 chanLoaderManager,
                 wakeManager,
-                pageRequestManager,
-                threadSaveManager,
-                fileManager
+                pageRequestManager
         );
     }
 
@@ -200,40 +190,6 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ThreadSaveManager provideSaveThreadManager(
-            DatabaseManager databaseManager,
-            @Named(THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME) OkHttpClient okHttpClient,
-            SavedThreadLoaderRepository savedThreadLoaderRepository,
-            FileManager fileManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "Thread save manager");
-        return new ThreadSaveManager(
-                databaseManager,
-                okHttpClient,
-                savedThreadLoaderRepository,
-                fileManager
-        );
-    }
-
-    @Provides
-    @Singleton
-    public SavedThreadLoaderManager provideSavedThreadLoaderManager(
-            Gson gson,
-            SavedThreadLoaderRepository savedThreadLoaderRepository,
-            FileManager fileManager,
-            PostFilterManager postFilterManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "Saved thread loader manager");
-        return new SavedThreadLoaderManager(
-                gson,
-                savedThreadLoaderRepository,
-                fileManager,
-                postFilterManager
-        );
-    }
-
-    @Provides
-    @Singleton
     public MockReplyManager provideMockReplyManager() {
         Logger.d(AppModule.DI_TAG, "Mock reply manager");
         return new MockReplyManager();
@@ -244,14 +200,13 @@ public class ManagerModule {
     public ReportManager provideReportManager(
             NetModule.ProxiedOkHttpClient okHttpClient,
             Gson gson,
-            ThreadSaveManager threadSaveManager,
             SettingsNotificationManager settingsNotificationManager
     ) {
         Logger.d(AppModule.DI_TAG, "Report manager");
         File cacheDir = getCacheDir();
 
-        return new ReportManager(okHttpClient.getProxiedClient(),
-                threadSaveManager,
+        return new ReportManager(
+                okHttpClient.getProxiedClient(),
                 settingsNotificationManager,
                 gson,
                 new File(cacheDir, CRASH_LOGS_DIR_NAME)
@@ -307,18 +262,14 @@ public class ManagerModule {
         DirectoryManager directoryManager = new DirectoryManager(applicationContext);
 
         // Add new base directories here
-        LocalThreadsBaseDirectory localThreadsBaseDirectory = new LocalThreadsBaseDirectory();
         SavedFilesBaseDirectory savedFilesBaseDirectory = new SavedFilesBaseDirectory();
 
         BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
-
         if (getFlavorType() != AndroidUtils.FlavorType.Release) {
             resolutionStrategy = ThrowAnException;
         }
 
         FileManager fileManager = new FileManager(applicationContext, resolutionStrategy, directoryManager);
-
-        fileManager.registerBaseDir(LocalThreadsBaseDirectory.class, localThreadsBaseDirectory);
         fileManager.registerBaseDir(SavedFilesBaseDirectory.class, savedFilesBaseDirectory);
 
         return fileManager;

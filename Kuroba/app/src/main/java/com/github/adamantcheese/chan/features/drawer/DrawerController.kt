@@ -36,7 +36,6 @@ import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
 import com.github.adamantcheese.chan.core.model.orm.Pin
-import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
@@ -624,10 +623,6 @@ class DrawerController(
     var color = false
 
     for (pin in watchManager.watchingPins) {
-      if (!PinType.hasWatchNewPostsFlag(pin.pinType)) {
-        continue
-      }
-
       total += pin.newPostCount
       color = color or (pin.newQuoteCount > 0)
     }

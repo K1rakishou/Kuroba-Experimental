@@ -36,15 +36,10 @@ class ImportExportSettingsDelegate(
   }
 
   fun onExportClicked() {
-    val localThreadsLocationIsSAFBacked = ChanSettings.localThreadLocation.isSafDirActive()
     val savedFilesLocationIsSAFBacked = ChanSettings.saveLocation.isSafDirActive()
 
-    if (localThreadsLocationIsSAFBacked || savedFilesLocationIsSAFBacked) {
-      showDirectoriesWillBeResetToDefaultDialog(
-        localThreadsLocationIsSAFBacked,
-        savedFilesLocationIsSAFBacked
-      )
-
+    if (savedFilesLocationIsSAFBacked) {
+      showDirectoriesWillBeResetToDefaultDialog()
       return
     }
 
@@ -73,56 +68,10 @@ class ImportExportSettingsDelegate(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  private fun showDirectoriesWillBeResetToDefaultDialog(
-    localThreadsLocationIsSAFBacked: Boolean, savedFilesLocationIsSAFBacked: Boolean
-  ) {
-    check(localThreadsLocationIsSAFBacked || savedFilesLocationIsSAFBacked) {
-      "Both localThreadsLocationIsSAFBacked and savedFilesLocationIsSAFBacked are false, wtf?"
-    }
-
-    val localThreadsString = if (localThreadsLocationIsSAFBacked) {
-      context.getString(R.string.import_or_export_warning_local_threads_base_dir)
-    } else {
-      ""
-    }
-
-    val andString = if (localThreadsLocationIsSAFBacked && savedFilesLocationIsSAFBacked) {
-      context.getString(R.string.import_or_export_warning_and)
-    } else {
-      ""
-    }
-
-    val savedFilesString = if (savedFilesLocationIsSAFBacked) {
-      context.getString(R.string.import_or_export_warning_saved_files_base_dir)
-    } else {
-      ""
-    }
-
-    val messagePartOne = AndroidUtils.getString(
-      R.string.import_or_export_warning_super_long_message_part_one,
-      localThreadsString,
-      andString,
-      savedFilesString
-    )
-
-    var messagePartTwo: String? = ""
-
-    if (localThreadsLocationIsSAFBacked) {
-      val downloadingThreadsCount: Long = databaseManager.runTask {
-        databaseManager.databaseSavedThreadManager
-          .countDownloadingThreads()
-          .call()
-      }
-
-      if (downloadingThreadsCount > 0) {
-        messagePartTwo = context.getString(R.string.import_or_export_warning_super_long_message_part_two)
-      }
-    }
-
-    val fullMessage = String.format("%s %s", messagePartOne, messagePartTwo)
-    val alertDialog: AlertDialog = AlertDialog.Builder(context)
+  private fun showDirectoriesWillBeResetToDefaultDialog() {
+    val alertDialog = AlertDialog.Builder(context)
       .setTitle(context.getString(R.string.import_or_export_warning))
-      .setMessage(fullMessage)
+      .setMessage(R.string.import_or_export_saf_location_warning)
       .setPositiveButton(R.string.ok, { dialog, _ ->
         dialog.dismiss()
         showCreateNewOrOverwriteDialog()

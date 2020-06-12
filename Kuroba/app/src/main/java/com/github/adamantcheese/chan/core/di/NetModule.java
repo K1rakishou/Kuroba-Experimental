@@ -45,7 +45,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class NetModule {
     public static final String USER_AGENT = getApplicationLabel() + "/" + BuildConfig.VERSION_NAME;
-    public static final String THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME = "thread_save_manager_okhttp_client";
     public static final String DOWNLOADER_OKHTTP_CLIENT_NAME = "downloader_okhttp_client";
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
@@ -116,24 +115,6 @@ public class NetModule {
         return new OkHttpClient.Builder().connectTimeout(30, SECONDS)
                 .readTimeout(30, SECONDS)
                 .writeTimeout(30, SECONDS)
-                .protocols(okHttpProtocols.protocols)
-                .dns(okHttpDns)
-                .build();
-    }
-
-    /**
-     * This okHttpClient is for local threads downloading.
-     */
-    @Provides
-    @Singleton
-    @Named(THREAD_SAVE_MANAGER_OKHTTP_CLIENT_NAME)
-    public OkHttpClient provideOkHttpClientForThreadSaveManager(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
-        Logger.d(AppModule.DI_TAG, "ThreadSaverOkHttp client");
-
-        return new OkHttpClient().newBuilder()
-                .connectTimeout(30, SECONDS)
-                .writeTimeout(30, SECONDS)
-                .readTimeout(30, SECONDS)
                 .protocols(okHttpProtocols.protocols)
                 .dns(okHttpDns)
                 .build();

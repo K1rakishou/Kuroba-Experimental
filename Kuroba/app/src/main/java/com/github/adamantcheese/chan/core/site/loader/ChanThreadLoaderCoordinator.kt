@@ -23,7 +23,10 @@ import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.site.loader.internal.*
+import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
+import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
+import com.github.adamantcheese.chan.core.site.loader.internal.NormalPostLoader
+import com.github.adamantcheese.chan.core.site.loader.internal.Utils
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.GetPostsFromArchiveUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
@@ -138,13 +141,12 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val localThreadPostLoader by lazy { LocalThreadPostLoader() }
   private val databasePostLoader by lazy { DatabasePostLoader(reloadPostsFromDatabaseUseCase) }
 
   fun loadThread(
     url: String,
     requestParams: ChanLoaderRequestParams,
-    resultCallback: (ModularResult<ChanLoaderResponse>) -> Unit
+    resultCallback: (ModularResult<ThreadLoadResult>) -> Unit
   ): Job {
     return launch {
       BackgroundUtils.ensureBackgroundThread()
@@ -158,7 +160,7 @@ class ChanThreadLoaderCoordinator(
         val response = try {
           okHttpClient.suspendCall(request)
         } catch (error: IOException) {
-          return@Try fallbackPostLoadOnNetworkError(requestParams, url, error)
+          return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }
 
         val descriptor = getDescriptor(requestParams.loadable)
@@ -167,7 +169,6 @@ class ChanThreadLoaderCoordinator(
         if (!response.isSuccessful) {
           if (response.code == NOT_FOUND) {
             return@Try fallbackPostLoadWhenThreadIsDead(
-              url,
               descriptor,
               requestParams,
               response.code
@@ -193,28 +194,10 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun fallbackPostLoadWhenThreadIsDead(
-    url: String,
     descriptor: ChanDescriptor,
     requestParams: ChanLoaderRequestParams,
     responseCode: Int
-  ): ChanLoaderResponse {
-    if (requestParams.loadable.isDownloadingOrDownloaded) {
-      // Thread is being downloaded or has been already downloaded, so use
-      // local copy.
-      localThreadPostLoader.markThreadAsDownloaded(requestParams)
-        .mapErrorToValue { error ->
-          Logger.e(TAG, "Error marking local thread as downloaded", error)
-        }
-
-      return when (val result = localThreadPostLoader.loadPosts(url, requestParams)) {
-        is ModularResult.Value -> result.value
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Error loading posts from LocalThreadPostLoader", result.error)
-          throw ServerException(responseCode)
-        }
-      }
-    }
-
+  ): ThreadLoadResult {
     archivePostLoader.updateThreadPostsFromArchiveIfNeeded(descriptor, requestParams)
       .mapErrorToValue { error ->
         Logger.e(TAG, "Error updating thread posts from archive", error)
@@ -224,29 +207,18 @@ class ChanThreadLoaderCoordinator(
       ?: throw ServerException(responseCode)
 
     Logger.d(TAG, "Successfully recovered from 404 error")
-    return chanLoaderResponse
+    return ThreadLoadResult.LoadedFromArchive(chanLoaderResponse)
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(
     requestParams: ChanLoaderRequestParams,
-    url: String,
     error: IOException
-  ): ChanLoaderResponse {
-    // An IOException occurred during the network request. This is probably a network problem
-    // or maybe even a server issue. Instead of showing the error we can try to load whatever
-    // there is in the database cache.
-    if (requestParams.loadable.isDownloadingOrDownloaded) {
-      // Thread is being downloaded or has been already downloaded, so use
-      // local copy instead.
-      return localThreadPostLoader.loadPosts(url, requestParams)
-        .unwrap()
-    }
-
+  ): ThreadLoadResult {
     val chanLoaderResponse = databasePostLoader.loadPosts(requestParams)
       ?: throw error
 
     Logger.d(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
-    return chanLoaderResponse
+    return ThreadLoadResult.LoadedFromDatabaseCopy(chanLoaderResponse)
   }
 
   private suspend fun readPostsFromResponse(

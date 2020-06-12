@@ -30,9 +30,6 @@ import com.j256.ormlite.table.DatabaseTable;
 
 import java.util.Locale;
 
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.AlreadyDownloaded;
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
 import static com.github.adamantcheese.chan.utils.StringUtils.maskPostNo;
 
 /**
@@ -94,20 +91,6 @@ public class Loadable
 
     private ChanDescriptor chanDescriptor;
     private BoardDescriptor boardDescriptor;
-
-    /**
-     * Tells us whether this loadable (when in THREAD mode) contains information about
-     * a live thread or the local saved copy of a thread (which may be already deleted from the server)
-     */
-    private transient LoadableDownloadingState loadableDownloadingState = LoadableDownloadingState.NotDownloading;
-
-    public synchronized void setLoadableState(LoadableDownloadingState state) {
-        this.loadableDownloadingState = state;
-    }
-
-    public synchronized LoadableDownloadingState getLoadableDownloadingState() {
-        return loadableDownloadingState;
-    }
 
     public synchronized ChanDescriptor getChanDescriptor() {
         if (this.chanDescriptor != null) {
@@ -284,7 +267,7 @@ public class Loadable
         return "Loadable{id=" + id + ", mode=" + mode + ", board='" + boardCode + '\'' + ", no=" + maskPostNo(no) + '\''
                 + ", listViewIndex=" + listViewIndex + ", listViewTop=" + listViewTop + ", lastViewed=" + maskPostNo(
                 lastViewed) + ", lastLoaded=" + maskPostNo(lastLoaded) + ", markedNo=" + maskPostNo(markedNo)
-                + ", dirty=" + dirty + ", loadableDownloadingState=" + loadableDownloadingState.name() + '}';
+                + ", dirty=" + dirty + '}';
     }
 
     public boolean isThreadMode() {
@@ -301,26 +284,6 @@ public class Loadable
     }
 
     /**
-     * Thread is either fully downloaded or it is still being downloaded BUT we are currently
-     * viewing the local copy of the thread
-     */
-    public boolean isLocal() {
-        return loadableDownloadingState == DownloadingAndViewable
-                || loadableDownloadingState == AlreadyDownloaded;
-    }
-
-    /**
-     * Thread is being downloaded but we are not currently viewing the local copy
-     */
-    public boolean isDownloading() {
-        return loadableDownloadingState == DownloadingAndNotViewable;
-    }
-
-    public boolean isDownloadingOrDownloaded() {
-        return isLocal() || isDownloading();
-    }
-
-    /**
      * Extracts and converts to a string only the info that we are interested in from this loadable
      */
     public String toShortString() {
@@ -334,11 +297,6 @@ public class Loadable
     public boolean isSuitableForPrefetch() {
         if (!ChanSettings.autoLoadThreadImages.get()) {
             // Prefetching disabled
-            return false;
-        }
-
-        if (isLocal() || isDownloading()) {
-            // Cannot prefetch local threads
             return false;
         }
 
@@ -418,29 +376,5 @@ public class Loadable
         public static final int INVALID = -1;
         public static final int THREAD = 0;
         public static final int CATALOG = 1;
-    }
-
-    /**
-     * Only for Loadable.Mode == THREAD
-     */
-    public enum LoadableDownloadingState {
-        /**
-         * We are not downloading a thread associated with this loadable
-         */
-        NotDownloading,
-        /**
-         * We are downloading this thread, but we are not viewing it at the current time.
-         * (We are viewing the live thread)
-         */
-        DownloadingAndNotViewable,
-        /**
-         * We are downloading this thread and we are currently viewing it (We are viewing the local
-         * thread)
-         */
-        DownloadingAndViewable,
-        /**
-         * Thread has been fully downloaded so it's always a local thread
-         */
-        AlreadyDownloaded,
     }
 }

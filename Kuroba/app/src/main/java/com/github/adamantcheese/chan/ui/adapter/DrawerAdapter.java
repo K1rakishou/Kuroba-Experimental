@@ -19,7 +19,6 @@ package com.github.adamantcheese.chan.ui.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -28,21 +27,16 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
-import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
-import com.github.adamantcheese.chan.core.model.orm.PinType;
-import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.helper.PinHelper;
 import com.github.adamantcheese.chan.ui.helper.PostHelper;
@@ -50,7 +44,6 @@ import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
-import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
@@ -93,8 +86,6 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     ThemeHelper themeHelper;
 
     private Context context;
-    private Drawable downloadIconOutline;
-    private Drawable downloadIconFilled;
 
     private final Callback callback;
     private Pin highlighted;
@@ -105,12 +96,6 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         this.callback = callback;
         this.context = context;
         setHasStableIds(true);
-
-        downloadIconOutline = context.getDrawable(R.drawable.ic_download_anim0).mutate();
-        downloadIconOutline.setTint(themeHelper.getTheme().textPrimary);
-
-        downloadIconFilled = context.getDrawable(R.drawable.ic_download_anim1).mutate();
-        downloadIconFilled.setTint(Color.GRAY);
 
         archivedIcon = BitmapFactory.decodeResource(getRes(), R.drawable.archived_icon);
     }
@@ -132,7 +117,9 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
             @Override
             public boolean onMove(
-                    RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target
+                    RecyclerView recyclerView,
+                    RecyclerView.ViewHolder viewHolder,
+                    RecyclerView.ViewHolder target
             ) {
                 int from = viewHolder.getAdapterPosition();
                 int to = target.getAdapterPosition();
@@ -239,20 +226,6 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     @Override
-    public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
-        super.onViewRecycled(holder);
-        if (holder.getItemViewType() == TYPE_PIN) {
-            PinViewHolder pinViewHolder = (PinViewHolder) holder;
-            if (pinViewHolder.threadDownloadIcon.getDrawable() instanceof AnimatedVectorDrawableCompat) {
-                AnimatedVectorDrawableCompat downloadIcon =
-                        (AnimatedVectorDrawableCompat) pinViewHolder.threadDownloadIcon.getDrawable();
-                downloadIcon.stop();
-                downloadIcon.clearAnimationCallbacks();
-            }
-        }
-    }
-
-    @Override
     public int getItemCount() {
         return watchManager.getAllPins().size() + PIN_OFFSET;
     }
@@ -328,20 +301,13 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         holder.image.setGreyscale(!pin.watching);
 
         if (ChanSettings.watchEnabled.get()) {
-            if (PinType.hasWatchNewPostsFlag(pin.pinType)) {
-                WatchManager.PinWatcher pinWatcher = watchManager.getPinWatcher(pin);
-                if (pinWatcher != null) {
-                    updatePinViewHolderInternal(pin, watchCount, pinWatcher);
-                }
-            } else {
-                watchCount.setVisibility(GONE);
+            WatchManager.PinWatcher pinWatcher = watchManager.getPinWatcher(pin);
+            if (pinWatcher != null) {
+                updatePinViewHolderInternal(pin, watchCount, pinWatcher);
             }
         } else {
             watchCount.setVisibility(GONE);
-            holder.threadDownloadIcon.setVisibility(GONE);
         }
-
-        setPinDownloadIcon(holder, pin);
 
         boolean highlighted = pin == this.highlighted;
         if (highlighted && !holder.highlighted) {
@@ -408,78 +374,9 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     }
 
     private void loadBookmarkImage(PinViewHolder holder, Pin pin) {
-        SavedThread savedThread = null;
-
-        if (PinType.hasDownloadFlag(pin.pinType)) {
-            savedThread = watchManager.findSavedThreadByLoadableId(pin.loadable.id);
-        }
-
-        if (savedThread == null || !savedThread.isFullyDownloaded) {
-            holder.image.setUrl(pin.thumbnailUrl);
-            return;
-        }
-
         String filename = StringUtils.convertThumbnailUrlToFilenameOnDisk(pin.thumbnailUrl);
         if (filename == null || filename.isEmpty()) {
             holder.image.setUrl(pin.thumbnailUrl);
-            return;
-        }
-
-        holder.image.setUrlFromDisk(pin.loadable, filename, false, dp(40), dp(40));
-    }
-
-    private void setPinDownloadIcon(PinViewHolder holder, Pin pin) {
-        SavedThread savedThread = null;
-
-        if (PinType.hasDownloadFlag(pin.pinType)) {
-            savedThread = watchManager.findSavedThreadByLoadableId(pin.loadable.id);
-        }
-
-        if (savedThread == null) {
-            holder.threadDownloadIcon.setVisibility(GONE);
-            return;
-        }
-
-        holder.threadDownloadIcon.setVisibility(VISIBLE);
-
-        if (savedThread.isFullyDownloaded) {
-            if (holder.threadDownloadIcon.getDrawable() instanceof AnimatedVectorDrawableCompat) {
-                AnimatedVectorDrawableCompat drawable =
-                        (AnimatedVectorDrawableCompat) holder.threadDownloadIcon.getDrawable();
-                drawable.stop();
-                drawable.clearAnimationCallbacks();
-            }
-
-            holder.threadDownloadIcon.setImageDrawable(downloadIconFilled);
-            return;
-        }
-
-        if (savedThread.isStopped) {
-            if (holder.threadDownloadIcon.getDrawable() instanceof AnimatedVectorDrawableCompat) {
-                AnimatedVectorDrawableCompat drawable =
-                        (AnimatedVectorDrawableCompat) holder.threadDownloadIcon.getDrawable();
-                drawable.stop();
-                drawable.clearAnimationCallbacks();
-            }
-
-            holder.threadDownloadIcon.setImageDrawable(downloadIconOutline);
-            return;
-        }
-
-        if (!(holder.threadDownloadIcon.getDrawable() instanceof AnimatedVectorDrawableCompat)) {
-            AnimatedVectorDrawableCompat downloadAnimation =
-                    AnimationUtils.createAnimatedDownloadIcon(context, themeHelper.getTheme().textPrimary);
-            holder.threadDownloadIcon.setImageDrawable(downloadAnimation);
-
-            downloadAnimation.start();
-            downloadAnimation.registerAnimationCallback(new Animatable2Compat.AnimationCallback() {
-                @Override
-                public void onAnimationEnd(Drawable drawable) {
-                    super.onAnimationEnd(drawable);
-
-                    downloadAnimation.start();
-                }
-            });
         }
     }
 
@@ -489,7 +386,6 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         private ThumbnailView image;
         private TextView textView;
         private TextView watchCountText;
-        private AppCompatImageView threadDownloadIcon;
 
         private PinViewHolder(View itemView) {
             super(itemView);
@@ -499,7 +395,6 @@ public class DrawerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             textView.setTypeface(themeHelper.getTheme().mainFont);
             watchCountText = itemView.findViewById(R.id.watch_count);
             watchCountText.setTypeface(themeHelper.getTheme().mainFont);
-            threadDownloadIcon = itemView.findViewById(R.id.thread_download_icon);
 
             AndroidUtils.setBoundlessRoundRippleBackground(watchCountText);
 

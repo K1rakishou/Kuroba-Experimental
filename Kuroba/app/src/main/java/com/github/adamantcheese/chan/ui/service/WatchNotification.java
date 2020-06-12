@@ -33,32 +33,23 @@ import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
-import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
-import com.github.adamantcheese.chan.core.model.orm.PinType;
-import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
-import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.k1rakishou.fsaf.FileManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -70,8 +61,7 @@ import static com.github.adamantcheese.chan.core.settings.ChanSettings.NOTIFY_ON
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 
-public class WatchNotification
-        extends Service {
+public class WatchNotification extends Service {
     private static final String TAG = "WatchNotification";
     private static String NOTIFICATION_ID_STR = "1";
     private static String NOTIFICATION_ID_ALERT_STR = "2";
@@ -88,36 +78,46 @@ public class WatchNotification
 
     @Inject
     WatchManager watchManager;
-    @Inject
-    ThreadSaveManager threadSaveManager;
-    @Inject
-    FileManager fileManager;
 
     public static void setupChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager notificationManager = getNotificationManager();
-            if (notificationManager.getNotificationChannel(NOTIFICATION_ID_STR) != null
-                    && notificationManager.getNotificationChannel(NOTIFICATION_ID_ALERT_STR) != null) return;
-            //notification channel for non-alerts
-            notificationManager.createNotificationChannel(new NotificationChannel(NOTIFICATION_ID_STR,
-                    NOTIFICATION_NAME,
-                    NotificationManager.IMPORTANCE_MIN
-            ));
-            //notification channel for alerts
-            NotificationChannel alert = new NotificationChannel(NOTIFICATION_ID_ALERT_STR,
-                    NOTIFICATION_NAME_ALERT,
-                    NotificationManager.IMPORTANCE_HIGH
-            );
-            alert.setSound(DEFAULT_NOTIFICATION_URI,
-                    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
-                            .build()
-            );
-            alert.enableLights(true);
-            alert.setLightColor(0xff91e466);
-            notificationManager.createNotificationChannel(alert);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return;
         }
+
+        NotificationManager notificationManager = getNotificationManager();
+        if (notificationManager.getNotificationChannel(NOTIFICATION_ID_STR) != null
+                && notificationManager.getNotificationChannel(NOTIFICATION_ID_ALERT_STR) != null) {
+            return;
+        }
+
+        // notification channel for non-alerts
+        notificationManager.createNotificationChannel(
+                new NotificationChannel(
+                        NOTIFICATION_ID_STR,
+                        NOTIFICATION_NAME,
+                        NotificationManager.IMPORTANCE_MIN
+                )
+        );
+
+        // notification channel for alerts
+        NotificationChannel alert = new NotificationChannel(
+                NOTIFICATION_ID_ALERT_STR,
+                NOTIFICATION_NAME_ALERT,
+                NotificationManager.IMPORTANCE_HIGH
+        );
+
+        alert.setSound(
+                DEFAULT_NOTIFICATION_URI,
+                new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
+                        .build()
+        );
+
+        alert.enableLights(true);
+        alert.setLightColor(0xff91e466);
+        notificationManager.createNotificationChannel(alert);
     }
 
     @Override
@@ -143,14 +143,23 @@ public class WatchNotification
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         setupChannel();
-        //start with a blank notification, to ensure it is made within 5 seconds
-        startForeground(NOTIFICATION_ID, new NotificationCompat.Builder(this, NOTIFICATION_ID_STR).build());
 
-        if (intent != null && intent.getExtras() != null && intent.getExtras().getBoolean(PAUSE_PINS_KEY, false)) {
+        // start with a blank notification, to ensure it is made within 5 seconds
+        startForeground(
+                NOTIFICATION_ID,
+                new NotificationCompat.Builder(this, NOTIFICATION_ID_STR)
+                        .build()
+        );
+
+        if (intent != null
+                && intent.getExtras() != null
+                && intent.getExtras().getBoolean(PAUSE_PINS_KEY, false)
+        ) {
             watchManager.pauseAll();
         }
 
-        Notification notification = createNotification(); //this may take more than 5 seconds to generate
+        // this may take more than 5 seconds to generate
+        Notification notification = createNotification();
         if (notification == null) {
             Logger.d(TAG, "onStartCommand() createNotification returned null");
             stopSelf();
@@ -175,10 +184,6 @@ public class WatchNotification
         List<Pin> pins = new ArrayList<>();
         //A list of pins that had new posts in them, or had new quotes in them, depending on settings
         List<Pin> subjectPins = new ArrayList<>();
-        // A list of pins that download threads
-        List<Pin> threadDownloaderPins = new ArrayList<>();
-        // Used for ThreadSaveManager
-        HashMap<SavedThread, Pair<Loadable, List<Post>>> unviewedPostsByThread = new HashMap<>();
 
         int flags = 0;
 
@@ -188,54 +193,36 @@ public class WatchNotification
                 continue;
             }
 
-            if (PinType.hasNoFlags(pin.pinType)) {
-                Logger.d(TAG, "Pin " + pin.toString() + " has no flags");
-                continue;
-            }
+            pins.add(pin);
 
-            if (PinType.hasDownloadFlag(pin.pinType)) {
-                SavedThread savedThread = watchManager.findSavedThreadByLoadableId(pin.loadable.id);
-                if (savedThread != null && savedThread.isRunning()) {
-                    // Just pass all the posts to the threadSaveManager. It will figure out new posts by itself
-                    List<Post> allPosts = watcher.getPosts();
-                    if (!allPosts.isEmpty()) {
-                        // Add all posts to the map
-                        unviewedPostsByThread.put(savedThread, new Pair<>(pin.loadable, allPosts));
-                    }
+            if (notifyQuotesOnly) {
+                unviewedPosts.addAll(watcher.getUnviewedQuotes());
+                listQuoting.addAll(watcher.getUnviewedQuotes());
+
+                if (watcher.getWereNewQuotes()) {
+                    flags |= NOTIFICATION_LIGHT | NOTIFICATION_PEEK | NOTIFICATION_SOUND;
                 }
 
-                if (savedThread != null) {
-                    threadDownloaderPins.add(pin);
+                if (pin.getNewQuoteCount() > 0) {
+                    subjectPins.add(pin);
                 }
-            }
+            } else {
+                unviewedPosts.addAll(watcher.getUnviewedPosts());
+                listQuoting.addAll(watcher.getUnviewedQuotes());
 
-            if (PinType.hasWatchNewPostsFlag(pin.pinType) && pin.watching) {
-                pins.add(pin);
-
-                if (notifyQuotesOnly) {
-                    unviewedPosts.addAll(watcher.getUnviewedQuotes());
-                    listQuoting.addAll(watcher.getUnviewedQuotes());
-                    if (watcher.getWereNewQuotes()) {
-                        flags |= NOTIFICATION_LIGHT | NOTIFICATION_PEEK | NOTIFICATION_SOUND;
-                    }
-                    if (pin.getNewQuoteCount() > 0) {
-                        subjectPins.add(pin);
-                    }
-                } else {
-                    unviewedPosts.addAll(watcher.getUnviewedPosts());
-                    listQuoting.addAll(watcher.getUnviewedQuotes());
-                    if (watcher.getWereNewPosts()) {
-                        flags |= NOTIFICATION_LIGHT;
-                        if (!soundQuotesOnly) {
-                            flags |= NOTIFICATION_PEEK | NOTIFICATION_SOUND;
-                        }
-                    }
-                    if (watcher.getWereNewQuotes()) {
+                if (watcher.getWereNewPosts()) {
+                    flags |= NOTIFICATION_LIGHT;
+                    if (!soundQuotesOnly) {
                         flags |= NOTIFICATION_PEEK | NOTIFICATION_SOUND;
                     }
-                    if (pin.getNewPostCount() > 0) {
-                        subjectPins.add(pin);
-                    }
+                }
+
+                if (watcher.getWereNewQuotes()) {
+                    flags |= NOTIFICATION_PEEK | NOTIFICATION_SOUND;
+                }
+
+                if (pin.getNewPostCount() > 0) {
+                    subjectPins.add(pin);
                 }
             }
         }
@@ -249,18 +236,14 @@ public class WatchNotification
             flags &= ~(NOTIFICATION_PEEK);
         }
 
-        if (unviewedPostsByThread.size() > 0) {
-            updateSavedThreads(unviewedPostsByThread);
-        }
-
-        if (pins.isEmpty() && threadDownloaderPins.isEmpty()) {
-            Logger.d(TAG, "Both pins or threadDownloaderPins are empty");
+        if (pins.isEmpty()) {
+            Logger.d(TAG, "Pins are empty");
             return null;
         }
 
-        return setupNotificationTextFields(pins,
+        return setupNotificationTextFields(
+                pins,
                 subjectPins,
-                threadDownloaderPins,
                 unviewedPosts,
                 listQuoting,
                 notifyQuotesOnly,
@@ -268,28 +251,9 @@ public class WatchNotification
         );
     }
 
-    private void updateSavedThreads(HashMap<SavedThread, Pair<Loadable, List<Post>>> allPostsByThread) {
-        if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory.class)) {
-            Logger.d(TAG, "updateSavedThreads() LocalThreadsBaseDirectory does not exist");
-
-            watchManager.stopSavingAllThreads();
-            return;
-        }
-
-        for (Map.Entry<SavedThread, Pair<Loadable, List<Post>>> entry : allPostsByThread.entrySet()) {
-            Loadable loadable = entry.getValue().first;
-            List<Post> posts = entry.getValue().second;
-
-            if (!threadSaveManager.enqueueThreadToSave(loadable, posts)) {
-                watchManager.stopSavingThread(loadable);
-            }
-        }
-    }
-
     private Notification setupNotificationTextFields(
             List<Pin> pins,
             List<Pin> subjectPins,
-            List<Pin> threadDownloaderPins,
             Set<Post> unviewedPosts,
             Set<Post> listQuoting,
             boolean notifyQuotesOnly,
@@ -298,7 +262,7 @@ public class WatchNotification
         if (unviewedPosts.isEmpty()) {
             // Idle notification
             PersistableChanState.watchLastCount.set(0);
-            return buildNotification(formatNotificationTitle(pins.size(), threadDownloaderPins.size()),
+            return buildNotification(formatNotificationTitle(pins.size()),
                     Collections.singletonList(getString(R.string.watch_idle)),
                     0,
                     false,
@@ -306,144 +270,113 @@ public class WatchNotification
                     pins.size() > 0 ? pins.get(0) : null,
                     pins.size() > 0
             );
-        } else {
-            // New posts notification
-            String message;
-            Set<Post> postsForExpandedLines;
-            if (notifyQuotesOnly) {
-                message = formatNotificationTitleNewQuotes(listQuoting.size(), threadDownloaderPins.size());
-                postsForExpandedLines = listQuoting;
-            } else {
-                postsForExpandedLines = unviewedPosts;
-                if (listQuoting.size() > 0) {
-                    message = formatNotificationTitleNewQuoting(unviewedPosts.size(),
-                            listQuoting.size(),
-                            threadDownloaderPins.size()
-                    );
-                } else {
-                    message = formatNotificationTitleNewPosts(unviewedPosts.size(), threadDownloaderPins.size());
-                }
-            }
-
-            List<Post> finalPosts = new ArrayList<>(postsForExpandedLines);
-            Collections.sort(finalPosts);
-            List<CharSequence> expandedLines = new ArrayList<>();
-            for (Post postForExpandedLine : finalPosts) {
-                CharSequence prefix;
-                if (postForExpandedLine.getTitle().length() <= 6) {
-                    prefix = postForExpandedLine.getTitle();
-                } else {
-                    prefix = postForExpandedLine.getTitle().subSequence(0, 6);
-                }
-
-                CharSequence comment = postForExpandedLine.firstImage() != null ? "(img) " : "";
-                if (postForExpandedLine.getComment().length() > 0) {
-                    // FIXME: this thing is pretty slow sometimes (50-200ms).
-                    //  Can we replace it with something faster?
-                    comment = TextUtils.concat(comment, postForExpandedLine.getComment());
-                }
-
-                // Replace >>123456789 with >789 to shorten the notification
-                // Also replace spoilered shit with █
-                // All spans are deleted by the replaceAll call and you can't modify their ranges easily so this will have to do
-                Editable toFix = new SpannableStringBuilder(comment);
-                PostLinkable[] spans = toFix.getSpans(0, comment.length(), PostLinkable.class);
-                for (PostLinkable span : spans) {
-                    if (span.getType() == PostLinkable.Type.SPOILER) {
-                        int start = toFix.getSpanStart(span);
-                        int end = toFix.getSpanEnd(span);
-
-                        char[] chars = new char[end - start];
-                        Arrays.fill(chars, '█');
-                        String s = new String(chars);
-
-                        toFix.replace(start, end, s);
-                    }
-                }
-                comment = SHORTEN_NO_PATTERN.matcher(toFix).replaceAll(">$1");
-
-                expandedLines.add(prefix + ": " + comment);
-            }
-
-            boolean alert = PersistableChanState.watchLastCount.get() < listQuoting.size();
-            PersistableChanState.watchLastCount.set(listQuoting.size());
-
-            return buildNotification(message,
-                    expandedLines,
-                    flags,
-                    alert,
-                    PersistableChanState.watchLastCount.get() > 0,
-                    subjectPins.size() == 1 ? subjectPins.get(0) : null,
-                    pins.size() > 0
-            );
         }
+
+        // New posts notification
+        String message;
+        Set<Post> postsForExpandedLines;
+
+        if (notifyQuotesOnly) {
+            message = formatNotificationTitleNewQuotes(listQuoting.size());
+            postsForExpandedLines = listQuoting;
+        } else {
+            postsForExpandedLines = unviewedPosts;
+            if (listQuoting.size() > 0) {
+                message = formatNotificationTitleNewQuoting(unviewedPosts.size(),
+                        listQuoting.size()
+                );
+            } else {
+                message = formatNotificationTitleNewPosts(unviewedPosts.size());
+            }
+        }
+
+        List<Post> finalPosts = new ArrayList<>(postsForExpandedLines);
+        Collections.sort(finalPosts);
+        List<CharSequence> expandedLines = new ArrayList<>();
+
+        for (Post postForExpandedLine : finalPosts) {
+            CharSequence prefix;
+            if (postForExpandedLine.getTitle().length() <= 6) {
+                prefix = postForExpandedLine.getTitle();
+            } else {
+                prefix = postForExpandedLine.getTitle().subSequence(0, 6);
+            }
+
+            CharSequence comment = postForExpandedLine.firstImage() != null ? "(img) " : "";
+            if (postForExpandedLine.getComment().length() > 0) {
+                comment = TextUtils.concat(comment, postForExpandedLine.getComment());
+            }
+
+            // Replace >>123456789 with >789 to shorten the notification
+            // Also replace spoilered shit with █
+            // All spans are deleted by the replaceAll call and you can't modify their ranges
+            // easily so this will have to do
+            Editable toFix = new SpannableStringBuilder(comment);
+            PostLinkable[] spans = toFix.getSpans(0, comment.length(), PostLinkable.class);
+
+            for (PostLinkable span : spans) {
+                if (span.getType() == PostLinkable.Type.SPOILER) {
+                    int start = toFix.getSpanStart(span);
+                    int end = toFix.getSpanEnd(span);
+
+                    char[] chars = new char[end - start];
+                    Arrays.fill(chars, '█');
+                    String s = new String(chars);
+
+                    toFix.replace(start, end, s);
+                }
+            }
+
+            comment = SHORTEN_NO_PATTERN.matcher(toFix).replaceAll(">$1");
+            expandedLines.add(prefix + ": " + comment);
+        }
+
+        boolean alert = PersistableChanState.watchLastCount.get() < listQuoting.size();
+        PersistableChanState.watchLastCount.set(listQuoting.size());
+
+        return buildNotification(message,
+                expandedLines,
+                flags,
+                alert,
+                PersistableChanState.watchLastCount.get() > 0,
+                subjectPins.size() == 1 ? subjectPins.get(0) : null,
+                pins.size() > 0
+        );
     }
 
-    private String formatNotificationTitleNewPosts(int unviewedPostsCount, int threadDownloaderPinsCount) {
-        String watchNewQuotesTitle = getQuantityString(R.plurals.thread_new_posts,
+    private String formatNotificationTitleNewPosts(int unviewedPostsCount) {
+        return getQuantityString(
+                R.plurals.thread_new_posts,
                 unviewedPostsCount,
                 unviewedPostsCount,
                 unviewedPostsCount
         );
-        String downloadTitle =
-                getQuantityString(R.plurals.download_title, threadDownloaderPinsCount, threadDownloaderPinsCount);
-
-        if (unviewedPostsCount != 0 && threadDownloaderPinsCount == 0) {
-            return watchNewQuotesTitle;
-        } else if (unviewedPostsCount == 0 && threadDownloaderPinsCount != 0) {
-            return downloadTitle;
-        }
-
-        return String.format("%s, %s", watchNewQuotesTitle, downloadTitle);
     }
 
-    private String formatNotificationTitleNewQuotes(int listQuotingCount, int threadDownloaderPinsCount) {
-        String watchNewQuotesTitle =
-                getQuantityString(R.plurals.watch_new_quotes, listQuotingCount, listQuotingCount, listQuotingCount);
-        String downloadTitle =
-                getQuantityString(R.plurals.download_title, threadDownloaderPinsCount, threadDownloaderPinsCount);
-
-        if (listQuotingCount != 0 && threadDownloaderPinsCount == 0) {
-            return watchNewQuotesTitle;
-        } else if (listQuotingCount == 0 && threadDownloaderPinsCount != 0) {
-            return downloadTitle;
-        }
-
-        return String.format("%s, %s", watchNewQuotesTitle, downloadTitle);
+    private String formatNotificationTitleNewQuotes(int listQuotingCount) {
+        return getQuantityString(
+                R.plurals.watch_new_quotes,
+                listQuotingCount,
+                listQuotingCount,
+                listQuotingCount
+        );
     }
 
     private String formatNotificationTitleNewQuoting(
-            int unviewedPostsCount, int listQuotingCount, int threadDownloaderPinsCount
+            int unviewedPostsCount,
+            int listQuotingCount
     ) {
-        String watchNewTitle = getQuantityString(R.plurals.watch_new_quoting,
+
+        return getQuantityString(
+                R.plurals.watch_new_quoting,
                 unviewedPostsCount,
                 unviewedPostsCount,
                 listQuotingCount
         );
-        String downloadTitle =
-                getQuantityString(R.plurals.download_title, threadDownloaderPinsCount, threadDownloaderPinsCount);
-
-        if (unviewedPostsCount != 0 && threadDownloaderPinsCount == 0) {
-            return watchNewTitle;
-        } else if (unviewedPostsCount == 0 && threadDownloaderPinsCount != 0) {
-            return downloadTitle;
-        }
-
-        return String.format("%s, %s", watchNewTitle, downloadTitle);
     }
 
-    private String formatNotificationTitle(int pinsCount, int threadDownloaderPinsCount) {
-        String watchTitle = getQuantityString(R.plurals.watch_title, pinsCount, pinsCount);
-        String downloadTitle =
-                getQuantityString(R.plurals.download_title, threadDownloaderPinsCount, threadDownloaderPinsCount);
-
-        if (pinsCount != 0 && threadDownloaderPinsCount == 0) {
-            return watchTitle;
-        } else if (pinsCount == 0 && threadDownloaderPinsCount != 0) {
-            return downloadTitle;
-        }
-
-        return String.format("%s, %s", watchTitle, downloadTitle);
+    private String formatNotificationTitle(int pinsCount) {
+        return getQuantityString(R.plurals.watch_title, pinsCount, pinsCount);
     }
 
     /**
@@ -466,21 +399,38 @@ public class WatchNotification
             boolean hasWatchPins
     ) {
         synchronized (this) {
-            NotificationCompat.Builder builder =
-                    new NotificationCompat.Builder(this, alertIcon ? NOTIFICATION_ID_ALERT_STR : NOTIFICATION_ID_STR);
-            builder.setContentTitle(title).setContentText(TextUtils.join(", ", expandedLines)).setOngoing(true);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    this,
+                    alertIcon ? NOTIFICATION_ID_ALERT_STR : NOTIFICATION_ID_STR
+            );
 
-            //setup launch action, add pin if there's only one thread watching
+            builder.setContentTitle(title)
+                    .setContentText(TextUtils.join(", ", expandedLines))
+                    .setOngoing(true);
+
+            // setup launch action, add pin if there's only one thread watching
             Intent intent = new Intent(this, StartActivity.class);
+
             intent.setAction(Intent.ACTION_MAIN)
                     .addCategory(Intent.CATEGORY_LAUNCHER)
-                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                            | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                    .setFlags(
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                                    | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK
+                                    | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+                    )
                     .putExtra("pin_id", target != null ? target.id : -1);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    this,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+            );
+
             builder.setContentIntent(pendingIntent);
 
-            //setup lights, sound, and peek
+            // setup lights, sound, and peek
             if ((flags & NOTIFICATION_SOUND) != 0 || (flags & NOTIFICATION_PEEK) != 0) {
                 builder.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);
             }
@@ -489,34 +439,47 @@ public class WatchNotification
                 builder.setLights(0xff91e466, 1000, 1000);
             }
 
-            //set the alert icon if necessary
-            //if the last notification was an alert, continue it having that icon until it goes to zero
-            //also keep the priority so it shows up in the status bar
+            // set the alert icon if necessary
+            // if the last notification was an alert, continue it having that icon until it goes to zero
+            // also keep the priority so it shows up in the status bar
             if (alertIcon || alertIconOverride) {
-                builder.setSmallIcon(R.drawable.ic_stat_notify_alert).setPriority(NotificationCompat.PRIORITY_HIGH);
+                builder.setSmallIcon(R.drawable.ic_stat_notify_alert)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH);
             } else {
-                builder.setSmallIcon(R.drawable.ic_stat_notify).setPriority(NotificationCompat.PRIORITY_MIN);
+                builder.setSmallIcon(R.drawable.ic_stat_notify)
+                        .setPriority(NotificationCompat.PRIORITY_MIN);
             }
 
             if (hasWatchPins) {
                 //setup the pause watch button
                 Intent pauseWatching = new Intent(this, WatchNotification.class);
                 pauseWatching.putExtra(PAUSE_PINS_KEY, true);
-                PendingIntent pauseWatchIntent =
-                        PendingIntent.getService(this, 0, pauseWatching, PendingIntent.FLAG_UPDATE_CURRENT);
-                builder.addAction(R.drawable.ic_pause_white_24dp,
+
+                PendingIntent pauseWatchIntent = PendingIntent.getService(
+                        this,
+                        0,
+                        pauseWatching, PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+                builder.addAction(
+                        R.drawable.ic_pause_white_24dp,
                         getString(R.string.watch_pause_pins),
                         pauseWatchIntent
                 );
             }
 
-            //setup the display in the notification
+            // setup the display in the notification
             NotificationCompat.InboxStyle style = new NotificationCompat.InboxStyle();
-            for (CharSequence line : expandedLines.subList(Math.max(0, expandedLines.size() - 10),
+
+            List<CharSequence> latestLines = expandedLines.subList(
+                    Math.max(0, expandedLines.size() - 10),
                     expandedLines.size()
-            )) {
+            );
+
+            for (CharSequence line : latestLines) {
                 style.addLine(line);
             }
+
             style.setBigContentTitle(title);
             builder.setStyle(style);
 

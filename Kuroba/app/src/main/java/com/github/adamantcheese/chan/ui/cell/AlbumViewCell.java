@@ -68,7 +68,6 @@ public class AlbumViewCell
         // now)
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
         thumbnailView.bindPostImage(
-                loadable,
                 postImage,
                 true,
                 ChanSettings.autoLoadThreadImages.get() ? 500 : thumbnailSize,

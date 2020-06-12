@@ -295,17 +295,14 @@ public class ImageViewerPresenter
     private void onLowResInCenter() {
         PostImage postImage = images.get(selectedPosition);
 
-        if (imageAutoLoad(loadable, postImage)
-                && (!postImage.spoiler() || ChanSettings.revealImageSpoilers.get())) {
+        if (imageAutoLoad(postImage) && (!postImage.spoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.type == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
             } else if (postImage.type == ChanPostImageType.GIF) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.MOVIE
-                    && videoAutoLoad(loadable, postImage)) {
+            } else if (postImage.type == ChanPostImageType.MOVIE && videoAutoLoad(postImage)) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else if (postImage.type == ChanPostImageType.PDF
-                    || postImage.type == ChanPostImageType.SWF) {
+            } else if (postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF) {
                 callback.setImageMode(postImage, OTHER, true);
             }
         }
@@ -390,16 +387,14 @@ public class ImageViewerPresenter
         boolean loadChunked = true;
 
         if (postImage.type == ChanPostImageType.STATIC || postImage.type == ChanPostImageType.GIF) {
-            load = imageAutoLoad(loadable, postImage);
+            load = imageAutoLoad(postImage);
         } else if (postImage.type == ChanPostImageType.MOVIE) {
-            load = videoAutoLoad(loadable, postImage);
+            load = videoAutoLoad(postImage);
         }
 
-        /*
-         * If the file is a webm file and webm streaming is turned on we don't want to download the
-         * webm chunked because it will most likely corrupt the file since we will forcefully stop
-         * it.
-         * */
+        // If the file is a webm file and webm streaming is turned on we don't want to download the
+        // webm chunked because it will most likely corrupt the file since we will forcefully stop
+        // it.
         if (postImage.type == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
             loadChunked = false;
         }
@@ -428,14 +423,12 @@ public class ImageViewerPresenter
                 );
 
                 preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
-                        loadable,
                         postImage,
                         extraInfo,
                         fileCacheListener
                 );
             } else {
                 preloadDownload[0] = fileCacheV2.enqueueNormalDownloadFileRequest(
-                        loadable,
                         postImage,
                         false,
                         fileCacheListener
@@ -496,7 +489,7 @@ public class ImageViewerPresenter
         // Don't mistake a swipe when the pager is disabled as a tap
         if (viewPagerVisible) {
             PostImage postImage = images.get(selectedPosition);
-            if (imageAutoLoad(loadable, postImage) && !postImage.spoiler()) {
+            if (imageAutoLoad(postImage) && !postImage.spoiler()) {
                 if (postImage.type == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                     callback.setImageMode(postImage, VIDEO, true);
                 } else {
@@ -636,9 +629,8 @@ public class ImageViewerPresenter
         }
     }
 
-    private boolean imageAutoLoad(Loadable loadable, PostImage postImage) {
-        if (!postImage.isInlined && loadable.isLocal()) {
-            // All images are stored locally when isSavedCopy is true
+    private boolean imageAutoLoad(PostImage postImage) {
+        if (!postImage.isInlined) {
             return true;
         }
 
@@ -652,13 +644,12 @@ public class ImageViewerPresenter
                 || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
     }
 
-    private boolean videoAutoLoad(Loadable loadable, PostImage postImage) {
-        if (!postImage.isInlined && loadable.isLocal()) {
-            // All videos are stored locally when isSavedCopy is true
+    private boolean videoAutoLoad(PostImage postImage) {
+        if (!postImage.isInlined) {
             return true;
         }
 
-        return imageAutoLoad(loadable, postImage)
+        return imageAutoLoad(postImage)
                 && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
     }
 

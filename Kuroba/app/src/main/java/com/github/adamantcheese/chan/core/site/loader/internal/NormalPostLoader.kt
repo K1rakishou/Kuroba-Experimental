@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.site.loader.internal
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
+import com.github.adamantcheese.chan.core.site.loader.ThreadLoadResult
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.GetPostsFromArchiveUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
@@ -36,7 +37,7 @@ internal class NormalPostLoader(
     requestParams: ChanLoaderRequestParams,
     descriptor: ChanDescriptor,
     archiveDescriptor: ArchiveDescriptor?
-  ): ChanLoaderResponse {
+  ): ThreadLoadResult {
     val (archivePosts, archiveFetchDuration) = measureTimedValue {
       return@measureTimedValue getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
         chanReaderProcessor.getToParse(),
@@ -94,7 +95,7 @@ internal class NormalPostLoader(
     Logger.d(TAG, logStr)
 
     val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
-    return processPosts(op, reloadedPosts, requestParams)
+    return ThreadLoadResult.LoadedNormally(processPosts(op, reloadedPosts, requestParams))
   }
 
   /**

@@ -75,7 +75,6 @@ class SaveLocationSetupDelegate(
     interface MediaControllerCallbacks {
         fun runWithWritePermissionsOrShowErrorToast(func: Runnable)
         fun pushController(saveLocationController: SaveLocationController)
-        fun updateThreadsLocationViewText(newLocation: String)
         fun updateSaveLocationViewText(newLocation: String)
         fun presentController(loadingViewController: LoadingViewController)
         fun onFilesBaseDirectoryReset()

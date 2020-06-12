@@ -133,13 +133,9 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoaderV2 provideImageLoaderV2(
-            CoroutineScope applicationCoroutineScope,
-            ImageLoader coilImageLoader,
-            FileManager fileManager
-    ) {
+    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader) {
         Logger.d(DI_TAG, "Image loader v2");
-        return new ImageLoaderV2(applicationCoroutineScope, coilImageLoader, fileManager);
+        return new ImageLoaderV2(coilImageLoader);
     }
 
     @Provides

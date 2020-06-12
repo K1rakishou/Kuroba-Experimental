@@ -28,13 +28,10 @@ import androidx.annotation.NonNull;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchState;
-import com.github.adamantcheese.chan.core.manager.ThreadSaveManager;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.chan.utils.StringUtils;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
 import javax.inject.Inject;
@@ -110,7 +107,6 @@ public class PostImageThumbnailView
     }
 
     public void bindPostImage(
-            Loadable loadable,
             @NonNull PostImage postImage,
             boolean useHiRes,
             int width,
@@ -122,30 +118,9 @@ public class PostImageThumbnailView
 
         this.postImage = postImage;
 
-        if (!loadable.isLocal() || postImage.isInlined) {
+        if (!postImage.isInlined) {
             String url = getUrl(postImage, useHiRes);
             setUrl(url, width, height);
-        } else {
-            String fileName;
-
-            if (postImage.spoiler()) {
-                String extension = StringUtils.extractFileNameExtension(
-                        postImage.spoilerThumbnailUrl.toString()
-                );
-
-                fileName = ThreadSaveManager.formatSpoilerImageName(extension);
-            } else {
-                String extension = StringUtils.extractFileNameExtension(
-                        postImage.thumbnailUrl.toString()
-                );
-
-                fileName = ThreadSaveManager.formatThumbnailImageName(
-                        postImage.serverFilename,
-                        extension
-                );
-            }
-
-            setUrlFromDisk(loadable, fileName, postImage.spoiler(), width, height);
         }
     }
 

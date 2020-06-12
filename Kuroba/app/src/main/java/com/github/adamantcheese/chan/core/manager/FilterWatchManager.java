@@ -25,7 +25,6 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.orm.PinType;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException;
@@ -226,7 +225,7 @@ public class FilterWatchManager implements WakeManager.Wakeable {
                 );
 
                 pinLoadable = databaseLoadableManager.get(pinLoadable);
-                watchManager.createPin(pinLoadable, post, PinType.WATCH_NEW_POSTS);
+                watchManager.createPin(pinLoadable, post);
                 toAdd.add(post.no);
 
             }
@@ -266,7 +265,7 @@ public class FilterWatchManager implements WakeManager.Wakeable {
                     );
 
                     pinLoadable = databaseLoadableManager.get(pinLoadable);
-                    watchManager.createPin(pinLoadable, post, PinType.WATCH_NEW_POSTS);
+                    watchManager.createPin(pinLoadable, post);
                     toAdd.add(post.no);
 
                 }

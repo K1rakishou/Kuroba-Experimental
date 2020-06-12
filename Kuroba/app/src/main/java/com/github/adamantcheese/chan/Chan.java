@@ -77,6 +77,7 @@ import kotlinx.coroutines.Dispatchers;
 import okhttp3.Dns;
 import okhttp3.Protocol;
 
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getVerifiedBuildType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 import static java.lang.Thread.currentThread;
@@ -150,7 +151,11 @@ public class Chan
 
     private void onCreateInternal() {
         registerActivityLifecycleCallbacks(this);
-        System.setProperty("kotlinx.coroutines.debug", BuildConfig.DEBUG ? "on" : "off");
+
+        System.setProperty(
+                "kotlinx.coroutines.debug",
+                getFlavorType() == AndroidUtils.FlavorType.Dev ? "on" : "off"
+        );
 
         AppConstants appConstants = new AppConstants(getApplicationContext());
         logAppConstants(appConstants);

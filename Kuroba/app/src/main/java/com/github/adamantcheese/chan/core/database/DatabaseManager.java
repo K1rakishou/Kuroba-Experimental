@@ -73,7 +73,6 @@ public class DatabaseManager {
     private final DatabaseBoardManager databaseBoardManager;
     private final DatabaseSiteManager databaseSiteManager;
     private final DatabaseHideManager databaseHideManager;
-    private final DatabaseSavedThreadManager databaseSavedThreadManager;
 
     @Inject
     public DatabaseManager() {
@@ -89,7 +88,6 @@ public class DatabaseManager {
         databaseBoardManager = new DatabaseBoardManager(helper);
         databaseSiteManager = new DatabaseSiteManager(helper);
         databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
-        databaseSavedThreadManager = new DatabaseSavedThreadManager(helper, fileManager);
         EventBus.getDefault().register(this);
     }
 
@@ -134,10 +132,6 @@ public class DatabaseManager {
         return databaseHideManager;
     }
 
-    public DatabaseSavedThreadManager getDatabaseSavedThreadManager() {
-        return databaseSavedThreadManager;
-    }
-
     // Called when the app changes foreground state
     @Subscribe
     public void onEvent(Chan.ForegroundChangedMessage message) {
@@ -171,7 +165,6 @@ public class DatabaseManager {
             o += "History rows: " + helper.getHistoryDao().countOf() + "\n";
             o += "Filter rows: " + helper.getFilterDao().countOf() + "\n";
             o += "Site rows: " + helper.getSiteDao().countOf() + "\n";
-            o += "Local thread rows: " + helper.getSavedThreadDao().countOf() + "\n";
         } catch (SQLException e) {
             e.printStackTrace();
         }

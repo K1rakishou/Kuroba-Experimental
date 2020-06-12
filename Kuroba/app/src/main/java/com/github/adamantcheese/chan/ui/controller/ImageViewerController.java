@@ -227,28 +227,21 @@ public class ImageViewerController
                 R.string.action_open_browser,
                 this::openBrowserClicked
         );
-        if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(
-                    ACTION_SHARE,
-                    R.string.action_share,
-                    this::shareClicked
-            );
-        }
-
+        overflowBuilder.withSubItem(
+                ACTION_SHARE,
+                R.string.action_share,
+                this::shareClicked
+        );
         overflowBuilder.withSubItem(
                 ACTION_SEARCH_IMAGE,
                 R.string.action_search_image,
                 this::searchClicked
         );
-
-        if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(
-                    ACTION_DOWNLOAD_ALBUM,
-                    R.string.action_download_album,
-                    this::downloadAlbumClicked
-            );
-        }
-
+        overflowBuilder.withSubItem(
+                ACTION_DOWNLOAD_ALBUM,
+                R.string.action_download_album,
+                this::downloadAlbumClicked
+        );
         overflowBuilder.withSubItem(
                 ACTION_TRANSPARENCY_TOGGLE,
                 R.string.action_transparency_toggle,
@@ -259,14 +252,11 @@ public class ImageViewerController
                 R.string.action_image_rotate,
                 this::rotateImage
         );
-
-        if (!loadable.isLocal()) {
-            overflowBuilder.withSubItem(
-                    ACTION_RELOAD,
-                    R.string.action_reload,
-                    this::forceReload
-            );
-        }
+        overflowBuilder.withSubItem(
+                ACTION_RELOAD,
+                R.string.action_reload,
+                this::forceReload
+        );
 
         overflowBuilder.build().build();
     }
@@ -550,8 +540,6 @@ public class ImageViewerController
     public void updatePreviewImage(PostImage postImage) {
         imageLoaderV2.load(
                 context,
-                true,
-                loadable,
                 postImage,
                 previewImage.getWidth(),
                 previewImage.getHeight(),
@@ -660,8 +648,6 @@ public class ImageViewerController
 
         imageLoaderV2.load(
                 context,
-                true,
-                loadable,
                 postImage,
                 previewImage.getWidth(),
                 previewImage.getHeight(),

@@ -22,7 +22,6 @@ import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.settings.base_dir.LocalThreadsBaseDirSetting;
 import com.github.adamantcheese.chan.core.settings.base_dir.SavedFilesBaseDirSetting;
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
@@ -251,7 +250,6 @@ public class ChanSettings {
     public static final StringSetting parseYoutubeAPIKey;
     public static final BooleanSetting fullUserRotationEnable;
     public static final BooleanSetting allowFilePickChooser;
-    public static final BooleanSetting allowMediaScannerToScanLocalThreads;
     public static final BooleanSetting showCopyApkUpdateDialog;
 
     // Proxy
@@ -263,11 +261,9 @@ public class ChanSettings {
     //region MEDIA
     // Saving
     public static final SavedFilesBaseDirSetting saveLocation;
-    public static final LocalThreadsBaseDirSetting localThreadLocation;
     public static final BooleanSetting saveBoardFolder;
     public static final BooleanSetting saveThreadFolder;
     public static final BooleanSetting saveServerFilename;
-    public static final BooleanSetting incrementalThreadDownloadingEnabled;
 
     // Video settings
     public static final BooleanSetting videoAutoLoop;
@@ -407,8 +403,6 @@ public class ChanSettings {
                     new StringSetting(p, "parse_youtube_API_key", "AIzaSyB5_zaen_-46Uhz1xGR-lz1YoUMHqCD6CE");
             fullUserRotationEnable = new BooleanSetting(p, "full_user_rotation_enable", true);
             allowFilePickChooser = new BooleanSetting(p, "allow_file_picker_chooser", false);
-            allowMediaScannerToScanLocalThreads =
-                    new BooleanSetting(p, "allow_media_scanner_to_scan_local_threads", false);
             showCopyApkUpdateDialog = new BooleanSetting(p, "show_copy_apk_update_dialog", true);
 
             // Proxy
@@ -424,11 +418,9 @@ public class ChanSettings {
             //region MEDIA
             // Saving
             saveLocation = new SavedFilesBaseDirSetting(p);
-            localThreadLocation = new LocalThreadsBaseDirSetting(p);
             saveBoardFolder = new BooleanSetting(p, "preference_save_subboard", false);
             saveThreadFolder = new BooleanSetting(p, "preference_save_subthread", false);
             saveServerFilename = new BooleanSetting(p, "preference_image_save_original", false);
-            incrementalThreadDownloadingEnabled = new BooleanSetting(p, "incremental_thread_downloading", true);
 
             // Video Settings
             videoAutoLoop = new BooleanSetting(p, "preference_video_loop", true);
@@ -553,7 +545,6 @@ public class ChanSettings {
     public static String serializeToString()
             throws IOException {
         String prevSaveLocationUri = null;
-        String prevLocalThreadsLocationUri = null;
 
         /*
          We need to check if the user has any of the location settings set to a SAF directory.
@@ -578,23 +569,16 @@ public class ChanSettings {
             saveLocation.resetActiveDir();
         }
 
-        if (localThreadLocation.isSafDirActive()) {
-            // Save the localThreadsLocationUri
-            prevLocalThreadsLocationUri = localThreadLocation.getSafBaseDir().get();
-
-            localThreadLocation.getSafBaseDir().remove();
-            localThreadLocation.resetFileDir();
-            localThreadLocation.resetActiveDir();
-        }
-
         File file = new File(getAppDir(), sharedPrefsFile);
 
         if (!file.exists()) {
-            throw new IOException("Shared preferences file does not exist! (" + file.getAbsolutePath() + ")");
+            throw new IOException("Shared preferences file does not exist! " +
+                    "(" + file.getAbsolutePath() + ")");
         }
 
         if (!file.canRead()) {
-            throw new IOException("Cannot read from shared preferences file! (" + file.getAbsolutePath() + ")");
+            throw new IOException("Cannot read from shared preferences file! " +
+                    "(" + file.getAbsolutePath() + ")");
         }
 
         byte[] buffer = new byte[(int) file.length()];
@@ -603,7 +587,8 @@ public class ChanSettings {
             int readAmount = inputStream.read(buffer);
 
             if (readAmount != file.length()) {
-                throw new IOException("Could not read shared prefs file readAmount != fileLength " + readAmount + ", "
+                throw new IOException("Could not read shared prefs file " +
+                        "readAmount != fileLength " + readAmount + ", "
                         + file.length());
             }
         }
@@ -612,11 +597,6 @@ public class ChanSettings {
         if (prevSaveLocationUri != null) {
             ChanSettings.saveLocation.resetFileDir();
             ChanSettings.saveLocation.setSafBaseDir(Uri.parse(prevSaveLocationUri));
-        }
-
-        if (prevLocalThreadsLocationUri != null) {
-            ChanSettings.localThreadLocation.resetFileDir();
-            ChanSettings.localThreadLocation.setSafBaseDir(Uri.parse(prevLocalThreadsLocationUri));
         }
 
         return new String(buffer);

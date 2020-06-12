@@ -16,23 +16,17 @@
  */
 package com.github.adamantcheese.chan.ui.controller;
 
-import android.Manifest;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.InputType;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.util.Pair;
-import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
-import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
@@ -44,8 +38,6 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
-import com.github.adamantcheese.chan.core.model.orm.PinType;
-import com.github.adamantcheese.chan.core.model.orm.SavedThread;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -55,22 +47,16 @@ import com.github.adamantcheese.chan.ui.controller.navigation.NavigationControll
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
-import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
-import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
-import com.github.adamantcheese.chan.utils.AnimationUtils;
 import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
-import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.fsaf.file.AbstractFile;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
@@ -83,8 +69,6 @@ import javax.inject.Inject;
 import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndNotViewable;
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.DownloadingAndViewable;
 import static com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu.OVERFLOW_ID;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
@@ -103,7 +87,6 @@ public class ViewThreadController
 
     private static final int ACTION_PIN = 8001;
     private static final int ACTION_ALBUM = 8002;
-    private static final int ACTION_SAVE_THREAD = 8003;
 
     private static final int ACTION_REPLY = 9000;
     private static final int ACTION_SEARCH = 9001;
@@ -116,15 +99,10 @@ public class ViewThreadController
     private static final int ACTION_SCROLL_TO_TOP = 9008;
     private static final int ACTION_SCROLL_TO_BOTTOM = 9009;
 
-    private static final int ACTION_VIEW_LOCAL_COPY = 10000;
-    private static final int ACTION_VIEW_LIVE_COPY = 10001;
-
     private DatabaseLoadableManager databaseLoadableManager;
 
     @Inject
     WatchManager watchManager;
-    @Inject
-    FileManager fileManager;
     @Inject
     ThemeHelper themeHelper;
     @Inject
@@ -135,26 +113,13 @@ public class ViewThreadController
     HistoryNavigationManager historyNavigationManager;
 
     private boolean pinItemPinned = false;
-    private DownloadThreadState prevState = DownloadThreadState.Default;
     private Loadable loadable;
 
     //pairs of the current thread loadable and the thread we're going to's hashcode
     private Deque<Pair<Loadable, Integer>> threadFollowerpool = new ArrayDeque<>();
 
-    private Drawable downloadIconOutline;
-    private Drawable downloadIconFilled;
-    private AnimatedVectorDrawableCompat downloadAnimation;
     @Nullable
     private HintPopup hintPopup = null;
-
-    private Animatable2Compat.AnimationCallback downloadAnimationCallback = new Animatable2Compat.AnimationCallback() {
-        @Override
-        public void onAnimationEnd(Drawable drawable) {
-            super.onAnimationEnd(drawable);
-
-            downloadAnimation.start();
-        }
-    };
 
     public ViewThreadController(Context context, Loadable loadable) {
         super(context);
@@ -167,17 +132,6 @@ public class ViewThreadController
         inject(this);
 
         databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
-
-        downloadAnimation = (AnimatedVectorDrawableCompat) AnimationUtils.createAnimatedDownloadIcon(
-                context,
-                Color.WHITE
-        ).mutate();
-
-        downloadIconOutline = context.getDrawable(R.drawable.ic_download_anim0);
-        downloadIconOutline.setTint(Color.WHITE);
-
-        downloadIconFilled = context.getDrawable(R.drawable.ic_download_anim1);
-        downloadIconFilled.setTint(Color.WHITE);
 
         threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST);
         view.setBackgroundColor(getAttrColor(context, R.attr.backcolor));
@@ -195,7 +149,6 @@ public class ViewThreadController
         ThreadPresenter presenter = threadLayout.presenter;
         if (presenter != null) {
             setPinIconState(false);
-            setSaveIconState(false);
         }
 
         if (drawerCallbacks != null) {
@@ -205,13 +158,6 @@ public class ViewThreadController
                 drawerCallbacks.showBottomNavBar(false, false);
             }
         }
-    }
-
-    @Override
-    public void onHide() {
-        super.onHide();
-
-        downloadAnimation.unregisterAnimationCallback(downloadAnimationCallback);
     }
 
     @Override
@@ -229,20 +175,7 @@ public class ViewThreadController
     }
 
     protected void buildMenu() {
-        prevState = DownloadThreadState.Default;
-
         NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu();
-
-        if (ChanSettings.incrementalThreadDownloadingEnabled.get()) {
-            // This method recreates the menu (and if there was the download animation running it
-            // will be reset to the default icon). We need to reset the prev state as well so that
-            // we can start animation again
-            menuBuilder.withItem(
-                    ACTION_SAVE_THREAD,
-                    downloadIconOutline,
-                    this::saveClicked
-            );
-        }
 
         if (!ChanSettings.textOnly.get()) {
             menuBuilder.withItem(
@@ -324,24 +257,6 @@ public class ViewThreadController
                         this::downClicked
                 );
 
-        // These items are dynamic; create them here by default if settings permit
-        if (ChanSettings.incrementalThreadDownloadingEnabled.get()
-                && getThreadDownloadState() != DownloadThreadState.Default) {
-            menuOverflowBuilder.withSubItem(
-                    ACTION_VIEW_LOCAL_COPY,
-                    R.string.view_local_version,
-                    true,
-                    this::handleClickViewLocalVersion
-            );
-
-            menuOverflowBuilder.withSubItem(
-                    ACTION_VIEW_LIVE_COPY,
-                    R.string.view_view_version,
-                    true,
-                    this::handleClickViewLiveVersion
-            );
-        }
-
         menuOverflowBuilder.build().build();
     }
 
@@ -352,63 +267,8 @@ public class ViewThreadController
     private void pinClicked(ToolbarMenuItem item) {
         if (threadLayout.presenter.pin()) {
             setPinIconState(true);
-            setSaveIconState(true);
 
             updateDrawerHighlighting(loadable);
-        }
-    }
-
-    private void saveClicked(ToolbarMenuItem item) {
-        if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
-            // Too many problems with this thing, just disable it while viewing downloading thread
-            return;
-        }
-
-        RuntimePermissionsHelper runtimePermissionsHelper = ((StartActivity) context).getRuntimePermissionsHelper();
-        if (runtimePermissionsHelper.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            saveClickedInternal();
-            return;
-        }
-
-        runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, granted -> {
-            if (granted) {
-                saveClickedInternal();
-            } else {
-                showToast(context,
-                        R.string.view_thread_controller_thread_downloading_requires_write_permission,
-                        Toast.LENGTH_LONG
-                );
-            }
-        });
-    }
-
-    private void saveClickedInternal() {
-        AbstractFile baseLocalThreadsDir = fileManager.newBaseDirectoryFile(LocalThreadsBaseDirectory.class);
-
-        if (baseLocalThreadsDir == null) {
-            Logger.e(TAG, "saveClickedInternal() fileManager.newLocalThreadFile() returned null");
-            showToast(context, R.string.local_threads_base_dir_does_not_exist, Toast.LENGTH_LONG);
-            return;
-        }
-
-        if (!fileManager.exists(baseLocalThreadsDir) && fileManager.create(baseLocalThreadsDir) == null) {
-            Logger.e(TAG, "saveClickedInternal() Couldn't create baseLocalThreadsDir");
-            showToast(context, R.string.could_not_create_base_local_threads_dir, Toast.LENGTH_LONG);
-            return;
-        }
-
-        if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory.class)) {
-            Logger.e(TAG, "Base local threads directory does not exist");
-            showToast(context, R.string.local_threads_base_dir_does_not_exist, Toast.LENGTH_LONG);
-            return;
-        }
-
-        if (threadLayout.presenter.save()) {
-            updateDrawerHighlighting(loadable);
-            updateLocalThreadMenuItems();
-
-            // Update icon at the very end, otherwise it won't start animating at all
-            setSaveIconState(true);
         }
     }
 
@@ -483,44 +343,6 @@ public class ViewThreadController
         threadLayout.scrollTo(-1, false);
     }
 
-    /**
-     * Replaces the current live thread with the local thread
-     */
-    private void handleClickViewLocalVersion(ToolbarMenuSubItem item) {
-        if (loadable.getLoadableDownloadingState() != DownloadingAndNotViewable) {
-            updateLocalThreadMenuItems();
-            return;
-        }
-
-        loadable.setLoadableState(DownloadingAndViewable);
-        Pin pin = watchManager.findPinByLoadableId(loadable.id);
-        if (pin != null) {
-            pin.loadable.setLoadableState(DownloadingAndViewable);
-            watchManager.updatePin(pin);
-        }
-
-        threadLayout.presenter.requestData();
-    }
-
-    /**
-     * Replaces the current local thread with the live thread
-     */
-    private void handleClickViewLiveVersion(ToolbarMenuSubItem item) {
-        if (loadable.getLoadableDownloadingState() != DownloadingAndViewable) {
-            updateLocalThreadMenuItems();
-            return;
-        }
-
-        loadable.setLoadableState(DownloadingAndNotViewable);
-        Pin pin = watchManager.findPinByLoadableId(loadable.id);
-        if (pin != null) {
-            pin.loadable.setLoadableState(DownloadingAndNotViewable);
-            watchManager.updatePin(pin);
-        }
-
-        threadLayout.presenter.requestData();
-    }
-
     @Override
     public void openPin(Pin pin) {
         loadThread(pin.loadable);
@@ -529,25 +351,21 @@ public class ViewThreadController
     @Subscribe
     public void onEvent(PinMessages.PinAddedMessage message) {
         setPinIconState(true);
-        setSaveIconState(true);
     }
 
     @Subscribe
     public void onEvent(PinMessages.PinRemovedMessage message) {
         setPinIconState(true);
-        setSaveIconState(true);
     }
 
     @Subscribe
     public void onEvent(PinMessages.PinChangedMessage message) {
         setPinIconState(false);
-        setSaveIconState(false);
     }
 
     @Subscribe
     public void onEvent(PinMessages.PinsChangedMessage message) {
         setPinIconState(true);
-        setSaveIconState(true);
     }
 
     @Override
@@ -678,11 +496,7 @@ public class ViewThreadController
         ThreadPresenter presenter = threadLayout.presenter;
         if (!loadable.equals(presenter.getLoadable())) {
             loadThreadInternal(loadable, addToLocalBackHistory);
-            return;
         }
-
-        // if we're toggling local/live we need to rebuild the menu
-        updateLocalThreadMenuItems();
     }
 
     private void loadThreadInternal(Loadable loadable, boolean addToLocalBackHistory) {
@@ -696,7 +510,6 @@ public class ViewThreadController
         requireNavController().requireToolbar().updateTitle(navigation);
 
         setPinIconState(false);
-        setSaveIconState(false);
 
         updateDrawerHighlighting(loadable);
         updateLeftPaneHighlighting(loadable);
@@ -707,7 +520,6 @@ public class ViewThreadController
 
     private void updateMenuItems() {
         updateRetrievePostsFromArchivesMenuItem();
-        updateLocalThreadMenuItems();
     }
 
     private void updateRetrievePostsFromArchivesMenuItem() {
@@ -724,96 +536,6 @@ public class ViewThreadController
         } else {
             retrieveDeletedPostsItem.visible = false;
         }
-    }
-
-    private void updateLocalThreadMenuItems() {
-        // setup the extra items if they're needed, or remove as necessary
-        ToolbarMenuSubItem viewLocalCopyItem = navigation.findSubItem(ACTION_VIEW_LOCAL_COPY);
-        ToolbarMenuSubItem viewLiveCopyItem = navigation.findSubItem(ACTION_VIEW_LIVE_COPY);
-
-        if (ChanSettings.incrementalThreadDownloadingEnabled.get()
-                && getThreadDownloadState() != DownloadThreadState.Default) {
-            ToolbarMenuItem overflowMenu = navigation.findItem(OVERFLOW_ID);
-
-            if (viewLiveCopyItem == null && viewLocalCopyItem == null) {
-                overflowMenu.addSubItem(
-                        new ToolbarMenuSubItem(
-                                ACTION_VIEW_LOCAL_COPY,
-                                R.string.view_local_version,
-                                this::handleClickViewLocalVersion
-                        )
-                );
-                overflowMenu.addSubItem(
-                        new ToolbarMenuSubItem(
-                                ACTION_VIEW_LIVE_COPY,
-                                R.string.view_view_version,
-                                this::handleClickViewLiveVersion
-                        )
-                );
-            }
-        } else {
-            if (viewLocalCopyItem != null) {
-                viewLocalCopyItem.visible = false;
-            }
-
-            if (viewLiveCopyItem != null) {
-                viewLiveCopyItem.visible = false;
-            }
-        }
-
-        Pin pin = watchManager.findPinByLoadableId(loadable.id);
-        if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-            // No pin for this loadable we are probably not downloading this thread.
-            // Pin has no downloading flag.
-            // Disable menu items.
-
-            if (viewLocalCopyItem != null) {
-                viewLocalCopyItem.visible = false;
-            }
-            if (viewLiveCopyItem != null) {
-                viewLiveCopyItem.visible = false;
-            }
-
-            return;
-        }
-
-        SavedThread savedThread = watchManager.findSavedThreadByLoadableId(loadable.id);
-        if (savedThread == null || savedThread.isFullyDownloaded || shouldHideLocalThreadMenuItems()) {
-            // No saved thread.
-            // Saved thread fully downloaded.
-            // Not downloading thread currently.
-            // Disable menu items.
-
-            if (viewLocalCopyItem != null) {
-                viewLocalCopyItem.visible = false;
-            }
-            if (viewLiveCopyItem != null) {
-                viewLiveCopyItem.visible = false;
-            }
-
-            return;
-        }
-
-        if (loadable.getLoadableDownloadingState() == DownloadingAndNotViewable) {
-            if (viewLocalCopyItem != null) {
-                viewLocalCopyItem.visible = true;
-            }
-            if (viewLiveCopyItem != null) {
-                viewLiveCopyItem.visible = false;
-            }
-        } else if (loadable.getLoadableDownloadingState() == DownloadingAndViewable) {
-            if (viewLocalCopyItem != null) {
-                viewLocalCopyItem.visible = false;
-            }
-            if (viewLiveCopyItem != null) {
-                viewLiveCopyItem.visible = true;
-            }
-        }
-    }
-
-    private boolean shouldHideLocalThreadMenuItems() {
-        return loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.AlreadyDownloaded
-                || loadable.getLoadableDownloadingState() == Loadable.LoadableDownloadingState.NotDownloading;
     }
 
     private void showHints() {
@@ -834,17 +556,6 @@ public class ViewThreadController
                     hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -dp(1), 0);
                 }
             }, 600);
-        } else if (counter == 4) {
-            view.postDelayed(() -> {
-                ToolbarMenuItem saveThreadItem = navigation.findItem(ACTION_SAVE_THREAD);
-                if (saveThreadItem != null) {
-                    View view = saveThreadItem.getView();
-                    if (view != null) {
-                        dismissHintPopup();
-                        hintPopup = HintPopup.show(context, view, getString(R.string.thread_save_hint), -dp(1), 0);
-                    }
-                }
-            }, 600);
         }
     }
 
@@ -861,8 +572,6 @@ public class ViewThreadController
         navigation.title = this.loadable.title;
 
         setPinIconState(false);
-        setSaveIconState(false);
-        updateLocalThreadMenuItems();
 
         requireNavController().requireToolbar().updateTitle(navigation);
         requireNavController().requireToolbar().updateViewForItem(navigation);
@@ -906,69 +615,6 @@ public class ViewThreadController
         ThreadPresenter presenter = threadLayout.presenter;
         if (presenter != null) {
             setPinIconStateDrawable(presenter.isPinned(), animated);
-        }
-    }
-
-    private void setSaveIconState(boolean animated) {
-        ThreadPresenter presenter = threadLayout.presenter;
-        if (presenter != null) {
-            setSaveIconStateDrawable(getThreadDownloadState(), animated);
-        }
-    }
-
-    private DownloadThreadState getThreadDownloadState() {
-        Pin pin = watchManager.findPinByLoadableId(loadable.id);
-        if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-            return DownloadThreadState.Default;
-        }
-
-        SavedThread savedThread = watchManager.findSavedThreadByLoadableId(pin.loadable.id);
-        if (savedThread == null) {
-            return DownloadThreadState.Default;
-        }
-
-        if (savedThread.isFullyDownloaded || savedThread.isStopped) {
-            return DownloadThreadState.FullyDownloaded;
-        }
-
-        return DownloadThreadState.DownloadInProgress;
-    }
-
-    private void setSaveIconStateDrawable(
-            DownloadThreadState downloadThreadState, boolean animated
-    ) {
-        if (downloadThreadState == prevState) {
-            return;
-        }
-
-        ToolbarMenuItem menuItem = navigation.findItem(ACTION_SAVE_THREAD);
-        if (menuItem == null) {
-            return;
-        }
-
-        prevState = downloadThreadState;
-
-        switch (downloadThreadState) {
-            case Default:
-                downloadAnimation.stop();
-                downloadAnimation.clearAnimationCallbacks();
-
-                menuItem.setImage(downloadIconOutline, animated);
-                break;
-            case DownloadInProgress:
-                menuItem.setImage(downloadAnimation, animated);
-                downloadAnimation.start();
-
-                // Don't forget to remove the old callback before adding a new one
-                downloadAnimation.unregisterAnimationCallback(downloadAnimationCallback);
-                downloadAnimation.registerAnimationCallback(downloadAnimationCallback);
-                break;
-            case FullyDownloaded:
-                downloadAnimation.stop();
-                downloadAnimation.clearAnimationCallbacks();
-
-                menuItem.setImage(downloadIconFilled, animated);
-                break;
         }
     }
 
@@ -1026,11 +672,5 @@ public class ViewThreadController
         if (loadable != null) {
             historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
         }
-    }
-
-    public enum DownloadThreadState {
-        Default,
-        DownloadInProgress,
-        FullyDownloaded
     }
 }

@@ -20,7 +20,6 @@ import android.util.LruCache;
 
 import androidx.annotation.NonNull;
 
-import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader;
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback;
@@ -44,8 +43,6 @@ public class ChanLoaderManager {
     private static final String TAG = "ChanLoaderManager";
     public static final int THREAD_LOADERS_CACHE_SIZE = 25;
 
-    private WatchManager watchManager;
-
     // map between a loadable and a chan loader instance for it, currently in use
     private Map<Loadable, ChanThreadLoader> threadLoaders = new HashMap<>();
     // chan loader cache for released loadables
@@ -55,17 +52,6 @@ public class ChanLoaderManager {
         inject(this);
     }
 
-    private synchronized WatchManager getWatchManager() {
-        if (watchManager != null) {
-            return watchManager;
-        }
-
-        // TODO(dependency-cycles): get rid of dependency cycle
-        // We have to use Chan.instance() here because we can't inject it normally since it will
-        // create a dependency cycle
-        watchManager = Chan.instance(WatchManager.class);
-        return watchManager;
-    }
 
     @NonNull
     public synchronized ChanThreadLoader obtain(@NonNull Loadable loadable, ChanLoaderCallback listener) {
@@ -87,11 +73,11 @@ public class ChanLoaderManager {
             }
 
             if (chanLoader == null) {
-                chanLoader = new ChanThreadLoader(loadable, getWatchManager());
+                chanLoader = new ChanThreadLoader(loadable);
                 threadLoaders.put(loadable, chanLoader);
             }
         } else {
-            chanLoader = new ChanThreadLoader(loadable, getWatchManager());
+            chanLoader = new ChanThreadLoader(loadable);
         }
 
         chanLoader.addListener(listener);

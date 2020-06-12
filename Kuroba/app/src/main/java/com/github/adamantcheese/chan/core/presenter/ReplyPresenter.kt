@@ -28,7 +28,6 @@ import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.model.orm.PinType
 import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository
@@ -489,7 +488,7 @@ class ReplyPresenter @Inject constructor(
           // reply
           val thread = callback.thread
           if (thread != null) {
-            watchManager.createPin(localLoadable, thread.op, PinType.WATCH_NEW_POSTS)
+            watchManager.createPin(localLoadable, thread.op)
           } else {
             watchManager.createPin(localLoadable)
           }

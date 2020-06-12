@@ -245,7 +245,6 @@ public class CardPostCell
                     : thumbView.getHeight();
 
             thumbView.bindPostImage(
-                    loadable,
                     firstPostImage,
                     true,
                     width,

@@ -251,17 +251,10 @@ class ThreadLayout @JvmOverloads constructor(
     filter: PostsFilter,
     refreshAfterHideOrRemovePosts: Boolean
   ) {
-    if (thread!!.loadable.isLocal) {
-      if (replyButton.visibility == View.VISIBLE) {
-        replyButton.hide()
-      }
-    } else {
-      if (replyButton.visibility != View.VISIBLE) {
-        replyButton.show()
-      }
+    if (replyButton.visibility != View.VISIBLE) {
+      replyButton.show()
     }
 
-    presenter.updateLoadable(thread.loadable.loadableDownloadingState)
     threadListLayout.showPosts(thread, filter, visible != Visible.THREAD, refreshAfterHideOrRemovePosts)
     switchVisible(Visible.THREAD)
     callback.onShowPosts()

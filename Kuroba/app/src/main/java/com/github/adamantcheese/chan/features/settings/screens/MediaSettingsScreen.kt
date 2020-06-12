@@ -2,9 +2,6 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.ThreadSaveManager
-import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.MediaScreen
 import com.github.adamantcheese.chan.features.settings.SettingsCoordinatorCallbacks
@@ -24,9 +21,6 @@ class MediaSettingsScreen(
   private val navigationController: NavigationController,
   private val fileManager: FileManager,
   private val fileChooser: FileChooser,
-  private val databaseManager: DatabaseManager,
-  private val threadSaveManager: ThreadSaveManager,
-  private val watchManager: WatchManager,
   private val runtimePermissionsHelper: RuntimePermissionsHelper
 ) : BaseSettingsScreen(
   context,
@@ -40,8 +34,6 @@ class MediaSettingsScreen(
       navigationController,
       fileManager,
       fileChooser,
-      databaseManager,
-      threadSaveManager,
       runtimePermissionsHelper
     )
   }
@@ -229,28 +221,6 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.save_location_screen },
           bottomDescriptionStringFunc = { mediaSettingsDelegate.getSaveLocation() },
           callback = { mediaSettingsDelegate.showUseSAFOrOldAPIForSaveLocationDialog() }
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.ThreadDownloadEnabled,
-          topDescriptionIdFunc = { R.string.incremental_thread_downloading_title },
-          bottomDescriptionIdFunc = { R.string.incremental_thread_downloading_description },
-          setting = ChanSettings.incrementalThreadDownloadingEnabled,
-          checkChangedCallback = { isChecked ->
-            if (!isChecked) {
-              watchManager.stopSavingAllThreads()
-            }
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier =  MediaScreen.MediaSavingGroup.ThreadSaveLocation,
-          topDescriptionIdFunc = { R.string.media_settings_local_threads_location_title },
-          bottomDescriptionStringFunc = { mediaSettingsDelegate.getLocalThreadsLocation() },
-          callback = { mediaSettingsDelegate.showUseSAFOrOldAPIForLocalThreadsLocationDialog() },
-          dependsOnSetting = ChanSettings.incrementalThreadDownloadingEnabled
         )
 
         group += BooleanSettingV2.createBuilder(

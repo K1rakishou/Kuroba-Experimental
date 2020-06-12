@@ -44,7 +44,6 @@ import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState.AlreadyDownloaded;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class ThreadStatusCell extends LinearLayout implements View.OnClickListener {
@@ -135,8 +134,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         boolean update = false;
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-        if (!chanThread.isArchived() && !chanThread.isClosed()
-                && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
+        if (!chanThread.isArchived() && !chanThread.isClosed()) {
             update = true;
         }
 
@@ -219,22 +217,19 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             }
         }
 
-        if (!chanThread.getLoadable().isLocal()) {
-            Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
-            if (boardPage != null) {
-                SpannableString page = new SpannableString(String.valueOf(boardPage.getPage()));
-                if (boardPage.getPage() >= board.pages) {
-                    page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
-                }
-
-                builder.append(" / ").append(getString(R.string.thread_page_no)).append(' ').append(page);
+        Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
+        if (boardPage != null) {
+            SpannableString page = new SpannableString(String.valueOf(boardPage.getPage()));
+            if (boardPage.getPage() >= board.pages) {
+                page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
             }
+
+            builder.append(" / ").append(getString(R.string.thread_page_no)).append(' ').append(page);
         }
     }
 
     private void appendThreadRefreshPart(ChanThread chanThread, SpannableStringBuilder builder) {
-        if (!chanThread.isArchived() && !chanThread.isClosed()
-                && chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
+        if (!chanThread.isArchived() && !chanThread.isClosed()) {
             long time = callback.getTimeUntilLoadMore() / 1000L;
             if (!callback.isWatching()) {
                 builder.append(getString(R.string.thread_refresh_bar_inactive));
@@ -247,18 +242,10 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     }
 
     private boolean appendThreadStatusPart(ChanThread chanThread, SpannableStringBuilder builder) {
-        if (chanThread.getLoadable().isLocal()) {
-            builder.append(getString(R.string.local_thread_text));
-
-            if (chanThread.getLoadable().getLoadableDownloadingState() != AlreadyDownloaded) {
-                return true;
-            }
-        } else {
-            if (chanThread.isArchived()) {
-                builder.append(getString(R.string.thread_archived));
-            } else if (chanThread.isClosed()) {
-                builder.append(getString(R.string.thread_closed));
-            }
+        if (chanThread.isArchived()) {
+            builder.append(getString(R.string.thread_archived));
+        } else if (chanThread.isClosed()) {
+            builder.append(getString(R.string.thread_closed));
         }
 
         return false;

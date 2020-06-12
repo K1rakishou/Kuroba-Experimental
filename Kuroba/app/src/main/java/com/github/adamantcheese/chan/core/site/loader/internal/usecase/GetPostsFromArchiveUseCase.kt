@@ -40,11 +40,6 @@ class GetPostsFromArchiveUseCase(
         return@Try emptyList<Post.Builder>()
       }
 
-      if (loadable.isDownloadingOrDownloaded) {
-        // Do not fetch posts from archives in local threads
-        return@Try emptyList<Post.Builder>()
-      }
-
       if (archiveDescriptor == null) {
         if (verboseLogsEnabled) {
           Logger.d(TAG, "No archives for thread descriptor: $descriptor")

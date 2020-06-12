@@ -20,13 +20,13 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.ChanLoaderManager
+import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState
-import com.github.adamantcheese.chan.core.model.orm.PinType
-import com.github.adamantcheese.chan.core.model.orm.SavedThread
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
@@ -67,18 +67,13 @@ import kotlin.math.min
  *
  * For threads timers can be started with [setTimer] to do a request later.
  */
-class ChanThreadLoader(
-        val loadable: Loadable,
-        private val watchManager: WatchManager
-) {
+class ChanThreadLoader(val loadable: Loadable) {
     @Inject
     lateinit var gson: Gson
     @Inject
     lateinit var okHttpClient: ProxiedOkHttpClient
     @Inject
     lateinit var databaseManager: DatabaseManager
-    @Inject
-    lateinit var savedThreadLoaderManager: SavedThreadLoaderManager
     @Inject
     lateinit var appConstants: AppConstants
     @Inject
@@ -199,24 +194,6 @@ class ChanThreadLoader(
         BackgroundUtils.ensureMainThread()
         clearTimer()
 
-        val disposable = Single.fromCallable { loadSavedCopyIfExists() }
-                .subscribeOn(backgroundScheduler)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        { loaded -> requestDataInternal(loaded, retrieveDeletedPostsFromArchives) },
-                        { error -> notifyAboutError(ChanLoaderException(error)) }
-                )
-
-        compositeDisposable.add(disposable)
-    }
-
-    private fun requestDataInternal(loaded: Boolean, retrieveDeletedPostsFromArchives: Boolean) {
-        BackgroundUtils.ensureMainThread()
-
-        if (loaded) {
-            return
-        }
-
         requestJob?.cancel()
         requestJob = null
 
@@ -230,38 +207,6 @@ class ChanThreadLoader(
 
         synchronized(this) { thread = null }
         compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
-    }
-
-    private fun loadSavedCopyIfExists(): Boolean {
-        BackgroundUtils.ensureBackgroundThread()
-
-        if (loadable.isLocal) {
-            // Do not attempt to load data from the network when viewing a saved thread use local
-            // saved thread instead
-            val chanThread = loadSavedThreadIfItExists()
-            if (chanThread != null && chanThread.postsCount > 0) {
-                // HACK: When opening a pin with local thread that is not yet fully downloaded
-                // we don't want to set the thread as archived/closed because it will make
-                // it permanently archived (fully downloaded)
-                if (loadable.loadableDownloadingState == LoadableDownloadingState.DownloadingAndViewable) {
-                    chanThread.isArchived = false
-                    chanThread.isClosed = false
-                }
-
-                thread = chanThread
-
-                onPreparedResponseInternal(
-                        chanThread,
-                        loadable.loadableDownloadingState,
-                        chanThread.isClosed,
-                        chanThread.isArchived
-                )
-
-                return true
-            }
-        }
-
-        return false
     }
 
     /**
@@ -312,7 +257,7 @@ class ChanThreadLoader(
     }
 
     /**
-     * Request more data if [.getTimeUntilLoadMore] is negative.
+     * Request more data if [getTimeUntilLoadMore] is negative.
      */
     fun loadMoreIfTime(): Boolean {
         BackgroundUtils.ensureMainThread()
@@ -366,17 +311,6 @@ class ChanThreadLoader(
 
     private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
         BackgroundUtils.ensureBackgroundThread()
-
-        if (loadable.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded
-                && loadable.mode == Loadable.Mode.THREAD) {
-            // If loadableDownloadingState is AlreadyDownloaded try to load the local thread from
-            // the disk. If we couldn't do that then try to send the request to the server
-            if (onThreadArchived(closed = true, archived = true)) {
-                Logger.d(TAG, "Thread is already fully downloaded for loadable $loadable")
-                return null
-            }
-        }
-
         Logger.d(TAG, "Requested /" + loadable.boardCode + "/, " + StringUtils.maskPostNo(loadable.no))
 
         val requestParams = ChanLoaderRequestParams(
@@ -391,7 +325,13 @@ class ChanThreadLoader(
         return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
             when (chanLoaderResponseResult) {
                 is ModularResult.Value -> {
-                    onResponse(chanLoaderResponseResult.value)
+                    when (val threadLoadResult = chanLoaderResponseResult.value) {
+                        is ThreadLoadResult.LoadedNormally -> {
+                            onResponse(threadLoadResult.chanLoaderResponse)
+                        }
+                        is ThreadLoadResult.LoadedFromDatabaseCopy -> TODO()
+                        is ThreadLoadResult.LoadedFromArchive -> TODO()
+                    }
                 }
                 is ModularResult.Error -> {
                     onErrorResponse(chanLoaderResponseResult.error as ChanLoaderException)
@@ -417,13 +357,6 @@ class ChanThreadLoader(
     private fun onResponseInternal(response: ChanLoaderResponse?): Boolean {
         BackgroundUtils.ensureBackgroundThread()
 
-        // The server returned us a closed or an archived thread
-        if (response?.op != null && (response.op.closed || response.op.archived)) {
-            if (onThreadArchived(response.op.closed, response.op.archived)) {
-                return true
-            }
-        }
-
         // Normal thread, not archived/deleted/closed
         if (response == null || response.posts.isEmpty()) {
             onErrorResponse(ChanLoaderException(IOException("Post size is 0")))
@@ -441,125 +374,6 @@ class ChanThreadLoader(
 
         onResponseInternalNext(response.op)
         return true
-    }
-
-    private fun onThreadArchived(closed: Boolean, archived: Boolean): Boolean {
-        BackgroundUtils.ensureBackgroundThread()
-
-        val chanThread = loadSavedThreadIfItExists()
-        if (chanThread == null) {
-            Logger.d(TAG, "Thread " + StringUtils.maskPostNo(loadable.no) +
-                    " is archived but we don't have a local copy of the thread")
-
-            // We don't have this thread locally saved, so return false and DO NOT SET thread to
-            // chanThread because this will close this thread (user will see 404 not found error)
-            // which we don't want.
-            return false
-        }
-
-        val threadNo = StringUtils.maskPostNo(chanThread.loadable.no)
-        Logger.d(TAG, "Thread $threadNo is archived ($archived) or closed ($closed)")
-
-        synchronized(this) { thread = chanThread }
-
-        // If saved thread was not found or it has no posts (deserialization error) switch to
-        // the error route
-        if (chanThread.postsCount > 0) {
-            // Update SavedThread info in the database and in the watchManager.
-            // Set isFullyDownloaded and isStopped to true so we can stop downloading it and stop
-            // showing the download thread animated icon.
-            BackgroundUtils.runOnMainThread {
-                val savedThread = watchManager.findSavedThreadByLoadableId(chanThread.loadableId)
-                if (savedThread != null && !savedThread.isFullyDownloaded) {
-                    updateThreadAsDownloaded(archived, chanThread, savedThread)
-                }
-            }
-
-            // Otherwise pass it to the response parse method
-            onPreparedResponseInternal(
-                    chanThread,
-                    LoadableDownloadingState.AlreadyDownloaded,
-                    closed,
-                    archived
-            )
-            return true
-        }
-
-        Logger.d(TAG, "Thread " + StringUtils.maskPostNo(chanThread.loadable.no) + " has no posts")
-        return false
-    }
-
-    private fun updateThreadAsDownloaded(
-            archived: Boolean,
-            chanThread: ChanThread,
-            savedThread: SavedThread
-    ) {
-        BackgroundUtils.ensureMainThread()
-
-        savedThread.isFullyDownloaded = true
-        savedThread.isStopped = true
-
-        chanThread.updateLoadableState(LoadableDownloadingState.AlreadyDownloaded)
-        watchManager.createOrUpdateSavedThread(savedThread)
-
-        var pin = watchManager.findPinByLoadableId(savedThread.loadableId)
-        if (pin == null) {
-            pin = databaseManager.runTask(
-                    databaseManager.databasePinManager.getPinByLoadableId(savedThread.loadableId)
-            )
-        }
-
-        if (pin == null) {
-            throw RuntimeException("Wtf? We have saved thread but we don't have a pin " +
-                    "associated with it?")
-        }
-
-        pin.archived = archived
-        pin.watching = false
-
-        // Trigger the drawer to be updated so the downloading icon is updated as well
-        watchManager.updatePin(pin)
-
-        databaseManager.runTask {
-            databaseManager.databaseSavedThreadManager
-                    .updateThreadStoppedFlagByLoadableId(savedThread.loadableId, true)
-                    .call()
-            databaseManager.databaseSavedThreadManager
-                    .updateThreadFullyDownloadedByLoadableId(savedThread.loadableId)
-                    .call()
-        }
-
-        val threadNo = StringUtils.maskPostNo(chanThread.loadable.no)
-        Logger.d(TAG, "Successfully updated thread $threadNo as fully downloaded")
-    }
-
-    private fun onPreparedResponseInternal(
-            chanThread: ChanThread,
-            state: LoadableDownloadingState,
-            closed: Boolean,
-            archived: Boolean
-    ) {
-        BackgroundUtils.ensureBackgroundThread()
-
-        synchronized(this) {
-            val localThread = checkNotNull(thread) { "thread is null" }
-            localThread.isClosed = closed
-            localThread.isArchived = archived
-        }
-
-        val fakeOp = Post.Builder()
-        val savedOp = chanThread.op
-
-        fakeOp.closed(closed)
-        fakeOp.archived(archived)
-        fakeOp.sticky(savedOp.isSticky)
-        fakeOp.replies(savedOp.totalRepliesCount)
-        fakeOp.threadImagesCount(savedOp.threadImagesCount)
-        fakeOp.uniqueIps(savedOp.uniqueIps)
-        fakeOp.lastModified(savedOp.lastModified)
-
-        chanThread.updateLoadableState(state)
-        onResponseInternalNext(fakeOp)
     }
 
     @Synchronized
@@ -633,55 +447,7 @@ class ChanThreadLoader(
             return
         }
 
-        val disposable = tryLoadSavedThread(error)
-                .subscribeOn(backgroundScheduler)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ loaded ->
-                    if (loaded) {
-                        return@subscribe
-                    }
-
-                    notifyAboutError(error)
-                }, { throwable ->
-                    notifyAboutError(ChanLoaderException(throwable))
-                })
-
-        compositeDisposable.add(disposable)
-    }
-
-    private fun tryLoadSavedThread(error: ChanLoaderException): Single<Boolean> {
-        return Single.fromCallable {
-            BackgroundUtils.ensureBackgroundThread()
-
-            // Thread was deleted (404), try to load a saved copy (if we have it)
-            if (error.isNotFound && loadable.mode == Loadable.Mode.THREAD) {
-                Logger.d(TAG, "Got 404 status for a thread " + StringUtils.maskPostNo(loadable.no))
-
-                val chanThread = loadSavedThreadIfItExists()
-                if (chanThread != null && chanThread.postsCount > 0) {
-                    synchronized(this) { thread = chanThread }
-
-                    Logger.d(TAG,
-                            "Successfully loaded local thread " + StringUtils.maskPostNo(loadable.no) +
-                                    " from disk, isClosed = " + chanThread.isClosed +
-                                    ", isArchived = " + chanThread.isArchived
-                    )
-
-                    onPreparedResponseInternal(chanThread,
-                            LoadableDownloadingState.AlreadyDownloaded,
-                            chanThread.isClosed,
-                            chanThread.isArchived
-                    )
-
-                    // We managed to load local thread, do no need to show the error screen
-                    return@fromCallable true
-                }
-
-                // Fallthrough
-            }
-
-            return@fromCallable false
-        }
+        notifyAboutError(error)
     }
 
     private fun notifyAboutError(error: ChanLoaderException) {
@@ -695,50 +461,6 @@ class ChanThreadLoader(
 
         Logger.e(TAG, "notifyAboutError()", error)
         listeners.forEach { listener -> listener.onChanLoaderError(error) }
-    }
-
-    /**
-     * Loads a saved thread if it exists
-     */
-    private fun loadSavedThreadIfItExists(): ChanThread? {
-        BackgroundUtils.ensureBackgroundThread()
-        val loadable = loadable
-
-        // FIXME(synchronization): Not thread safe! findPinByLoadableId is not synchronized.
-        val pin = watchManager.findPinByLoadableId(loadable.id)
-        if (pin == null) {
-            Logger.d(TAG, "Could not find pin for loadable $loadable")
-            return null
-        }
-
-        if (!PinType.hasDownloadFlag(pin.pinType)) {
-            Logger.d(TAG, "Pin has no DownloadPosts flag")
-            return null
-        }
-
-        val savedThread = getSavedThreadByThreadLoadable(loadable)
-        if (savedThread == null) {
-            Logger.d(TAG, "Could not find savedThread for loadable $loadable")
-            return null
-        }
-
-        return savedThreadLoaderManager.loadSavedThread(loadable, themeHelper.theme)
-    }
-
-    private fun getSavedThreadByThreadLoadable(loadable: Loadable): SavedThread? {
-        BackgroundUtils.ensureBackgroundThread()
-
-        return databaseManager.runTask {
-            val pin = databaseManager.databasePinManager.getPinByLoadableId(loadable.id).call()
-            if (pin == null) {
-                Logger.e(TAG, "Could not find pin by loadableId = " + loadable.id)
-                return@runTask null
-            }
-
-            return@runTask databaseManager.databaseSavedThreadManager.getSavedThreadByLoadableId(
-                    pin.loadable.id
-            ).call()
-        }
     }
 
     private fun clearPendingRunnable() {

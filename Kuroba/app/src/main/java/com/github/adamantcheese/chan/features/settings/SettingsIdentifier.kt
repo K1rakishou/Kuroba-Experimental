@@ -423,7 +423,6 @@ sealed class BehaviorScreen(
     object ParseYoutubeAPIKey : OtherSettingsGroup("parse_youtube_api_key")
     object FullUserRotationEnable : OtherSettingsGroup("full_user_rotation")
     object AllowFilePickChooser : OtherSettingsGroup("allow_file_pick_chooser")
-    object AllowMediaScannerToScanLocalThreads : OtherSettingsGroup("allow_media_scanner_to_scan_local_threads")
     object ShowCopyApkUpdateDialog : OtherSettingsGroup("show_copy_apk_update_dialog")
 
     companion object : IGroupIdentifier() {
@@ -472,8 +471,6 @@ sealed class MediaScreen(
     MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object MediaSaveLocation : MediaSavingGroup("media_save_location")
-    object ThreadDownloadEnabled : MediaSavingGroup("thread_download_enabled")
-    object ThreadSaveLocation : MediaSavingGroup("thread_save_location")
     object SaveBoardFolder : MediaSavingGroup("save_board_folder")
     object SaveThreadFolder : MediaSavingGroup("save_thread_folder")
     object SaveServerFilename : MediaSavingGroup("save_server_file_name")

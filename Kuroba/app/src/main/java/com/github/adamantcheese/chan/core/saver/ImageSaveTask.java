@@ -127,7 +127,6 @@ public class ImageSaveTask
                 });
             } else {
                 CancelableDownload cancelableDownload = fileCacheV2.enqueueNormalDownloadFileRequest(
-                        loadable,
                         postImage,
                         isBatchDownload,
                         this

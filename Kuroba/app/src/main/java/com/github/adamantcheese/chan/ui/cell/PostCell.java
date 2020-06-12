@@ -849,7 +849,7 @@ public class PostCell
                     layoutParams.addRule(RelativeLayout.BELOW, lastId);
                 }
 
-                thumbnailView.bindPostImage(loadable, image, false, size, size);
+                thumbnailView.bindPostImage(image, false, size, size);
                 thumbnailView.setClickable(true);
 
                 // Always set the click listener to avoid check the file cache (which will touch the

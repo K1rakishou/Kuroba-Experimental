@@ -121,14 +121,6 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.OtherSettingsGroup.AllowMediaScannerToScanLocalThreads,
-          topDescriptionIdFunc = { R.string.settings_allow_media_scanner_scan_local_threads_title },
-          bottomDescriptionIdFunc = { R.string.settings_allow_media_scanner_scan_local_threads_description },
-          setting = ChanSettings.allowMediaScannerToScanLocalThreads
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = BehaviorScreen.OtherSettingsGroup.ShowCopyApkUpdateDialog,
           topDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_title },
           bottomDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_message },

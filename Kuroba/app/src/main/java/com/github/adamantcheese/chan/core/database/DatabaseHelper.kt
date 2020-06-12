@@ -48,7 +48,6 @@ class DatabaseHelper @Inject constructor(
     val historyDao by lazy { getDao(History::class.java)!! as Dao<History, Int> }
     val filterDao by lazy { getDao(Filter::class.java)!! as Dao<Filter, Int> }
     val siteDao by lazy { getDao(SiteModel::class.java)!! as Dao<SiteModel, Int> }
-    val savedThreadDao by lazy { getDao(SavedThread::class.java)!! as Dao<SavedThread, Int> }
 
     override fun onCreate(database: SQLiteDatabase, connectionSource: ConnectionSource) {
         try {
@@ -69,7 +68,6 @@ class DatabaseHelper @Inject constructor(
         TableUtils.createTable(connectionSource, History::class.java)
         TableUtils.createTable(connectionSource, Filter::class.java)
         TableUtils.createTable(connectionSource, SiteModel::class.java)
-        TableUtils.createTable(connectionSource, SavedThread::class.java)
     }
 
     @Throws(SQLException::class)
@@ -82,7 +80,6 @@ class DatabaseHelper @Inject constructor(
         TableUtils.dropTable<History, Any>(connectionSource, History::class.java, true)
         TableUtils.dropTable<Filter, Any>(connectionSource, Filter::class.java, true)
         TableUtils.dropTable<SiteModel, Any>(connectionSource, SiteModel::class.java, true)
-        TableUtils.dropTable<SavedThread, Any>(connectionSource, SavedThread::class.java, true)
     }
 
     /**
@@ -471,11 +468,6 @@ class DatabaseHelper @Inject constructor(
                 loadableIdSet.add(loadable.id)
             }
 
-            // saved threads
-            val savedThreadDelete = savedThreadDao.deleteBuilder()
-            savedThreadDelete.where().`in`("loadable_id", loadableIdSet)
-            savedThreadDelete.delete()
-
             // pins
             val pinDelete = pinDao.deleteBuilder()
             pinDelete.where().`in`("loadable_id", loadableIdSet)
@@ -554,11 +546,6 @@ class DatabaseHelper @Inject constructor(
                     loadableIdSet.add(loadable.id)
                 }
             }
-
-            //saved threads
-            val savedThreadDelete = savedThreadDao.deleteBuilder()
-            savedThreadDelete.where().`in`("loadable_id", loadableIdSet)
-            savedThreadDelete.delete()
 
             //pins
             val pinDelete = pinDao.deleteBuilder()

@@ -266,7 +266,7 @@ class MultiImageView @JvmOverloads constructor(
 
       when (newMode) {
         Mode.LOWRES -> {
-          setThumbnail(loadable, postImage, center)
+          setThumbnail(postImage, center)
           transparentBackground = ChanSettings.transparencyOn.get()
         }
         Mode.BIGIMAGE -> setBigImage(loadable, postImage)
@@ -368,13 +368,11 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setThumbnail(loadable: Loadable, postImage: PostImage?, center: Boolean) {
+  private fun setThumbnail(postImage: PostImage?, center: Boolean) {
     BackgroundUtils.ensureMainThread()
 
     thumbnailRequestDisposable = imageLoaderV2.load(
       context,
-      true,
-      loadable,
       postImage!!,
       width,
       height,
@@ -423,7 +421,6 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        loadable,
         postImage,
         extraInfo,
         object : FileCacheListener() {
@@ -493,7 +490,6 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        loadable,
         postImage,
         extraInfo,
         object : FileCacheListener() {
@@ -626,7 +622,6 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        loadable,
         postImage,
         extraInfo,
         object : FileCacheListener() {

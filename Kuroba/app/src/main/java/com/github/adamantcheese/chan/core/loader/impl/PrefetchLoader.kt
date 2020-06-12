@@ -53,11 +53,7 @@ class PrefetchLoader(
         }
 
         prefetchList.forEach { prefetch ->
-            val cancelableDownload = fileCacheV2.enqueueMediaPrefetchRequest(
-                    prefetch.loadable,
-                    prefetch.postImage
-            )
-
+            val cancelableDownload = fileCacheV2.enqueueMediaPrefetchRequest(prefetch.postImage)
             if (cancelableDownload == null) {
                 // Already cached or something like that
                 onPrefetchCompleted(prefetch.postImage)

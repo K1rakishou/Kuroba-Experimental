@@ -178,14 +178,6 @@ public class SaveLocationController
 
                 return new File(ChanSettings.saveLocation.getFileApiBaseDir().get());
             }
-        } else {
-            if (ChanSettings.localThreadLocation.isFileDirActive()) {
-                if (ChanSettings.localThreadLocation.getFileApiBaseDir().get().isEmpty()) {
-                    return getExternalStorageDir();
-                }
-
-                return new File(ChanSettings.localThreadLocation.getFileApiBaseDir().get());
-            }
         }
 
         return getExternalStorageDir();
@@ -206,7 +198,6 @@ public class SaveLocationController
     }
 
     public enum SaveLocationControllerMode {
-        ImageSaveLocation,
-        LocalThreadsSaveLocation
+        ImageSaveLocation
     }
 }

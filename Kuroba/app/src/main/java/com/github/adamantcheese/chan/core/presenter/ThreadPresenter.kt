@@ -27,13 +27,11 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult.Succeeded
 import com.github.adamantcheese.chan.core.manager.*
-import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.PinAddedMessage
-import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.PinChangedMessage
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.*
-import com.github.adamantcheese.chan.core.model.orm.Loadable.LoadableDownloadingState
+import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.Site
@@ -51,7 +49,6 @@ import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
-import com.github.adamantcheese.chan.ui.settings.base_directory.LocalThreadsBaseDirectory
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
@@ -77,7 +74,6 @@ class ThreadPresenter @Inject constructor(
   private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
-  private val threadSaveManager: ThreadSaveManager,
   private val fileManager: FileManager,
   private val siteRepository: SiteRepository,
   private val mockReplyManager: MockReplyManager,
@@ -119,10 +115,7 @@ class ThreadPresenter @Inject constructor(
         return false
       }
 
-      val pin = watchManager.findPinByLoadableId(loadable!!.id)
-        ?: return false
-
-      return PinType.hasWatchNewPostsFlag(pin.pinType)
+      return watchManager.findPinByLoadableId(loadable!!.id) != null
     }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback?) {
@@ -141,7 +134,6 @@ class ThreadPresenter @Inject constructor(
 
     if (loadable != this.loadable) {
       if (isBound) {
-        stopSavingThreadIfItIsBeingSaved(this.loadable)
         unbindLoadable()
       }
 
@@ -156,8 +148,6 @@ class ThreadPresenter @Inject constructor(
 
       this.loadable = loadable
       this.addToLocalBackHistory = addToLocalBackHistory
-
-      startSavingThreadIfItIsNotBeingSaved(this.loadable)
 
       chanLoader = chanLoaderManager.obtain(loadable, this)
       threadPresenterCallback?.showLoading()
@@ -196,68 +186,6 @@ class ThreadPresenter @Inject constructor(
 
     job.cancelChildren()
     compositeDisposable.clear()
-  }
-
-  private fun stopSavingThreadIfItIsBeingSaved(loadable: Loadable?) {
-    if (ChanSettings.watchEnabled.get()
-      && ChanSettings.watchBackground.get()
-      || loadable == null
-      || loadable.mode != Loadable.Mode.THREAD) {
-      return
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable.id)
-    if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-      return
-    }
-
-    val savedThread = watchManager.findSavedThreadByLoadableId(loadable.id)
-    if (savedThread == null
-      || loadable.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded
-      || savedThread.isFullyDownloaded || savedThread.isStopped) {
-      return
-    }
-
-    watchManager.stopSavingThread(loadable)
-    AndroidUtils.postToEventBus(PinChangedMessage(pin))
-  }
-
-  private fun startSavingThreadIfItIsNotBeingSaved(loadable: Loadable?) {
-    if (ChanSettings.watchEnabled.get()
-      && ChanSettings.watchBackground.get()
-      || loadable == null
-      || loadable.mode != Loadable.Mode.THREAD) {
-      // Do not start thread saving if background watcher is enabled
-      // Or if we're in the catalog
-      return
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable.id)
-    if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-      // No pin for this loadable we are probably not downloading this thread
-      // Pin has no downloading flag
-      return
-    }
-
-    val savedThread = watchManager.findSavedThreadByLoadableId(loadable.id)
-    if (loadable.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded
-      || savedThread == null
-      || savedThread.isFullyDownloaded
-      || !savedThread.isStopped) {
-      // We are viewing already saved copy of the thread
-      // We are not downloading this thread
-      // Thread is already fully downloaded
-      // Thread saving is already in progress
-      return
-    }
-
-    if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory::class.java)) {
-      // Base directory for local threads does not exist or was deleted
-      return
-    }
-
-    watchManager.startSavingThread(loadable)
-    AndroidUtils.postToEventBus(PinChangedMessage(pin))
   }
 
   fun requestInitialData() {
@@ -373,124 +301,16 @@ class ThreadPresenter @Inject constructor(
     if (pin == null) {
       if (chanLoader!!.thread != null) {
         val op = chanLoader!!.thread!!.op
-        watchManager.createPin(loadable, op, PinType.WATCH_NEW_POSTS)
+        watchManager.createPin(loadable, op)
       } else {
         watchManager.createPin(loadable)
       }
+
       return true
     }
 
-    if (PinType.hasWatchNewPostsFlag(pin.pinType)) {
-      pin.pinType = PinType.removeWatchNewPostsFlag(pin.pinType)
-      if (PinType.hasNoFlags(pin.pinType)) {
-        watchManager.deletePin(pin)
-      } else {
-        watchManager.updatePin(pin)
-      }
-    } else {
-      pin.pinType = PinType.addWatchNewPostsFlag(pin.pinType)
-      watchManager.updatePin(pin)
-    }
-
+    watchManager.deletePin(pin)
     return true
-  }
-
-  @Synchronized
-  fun save(): Boolean {
-    if (!isBound) {
-      return false
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable!!.id)
-    if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-      val startedSaving = saveInternal()
-      if (!startedSaving) {
-        watchManager.stopSavingThread(loadable)
-      }
-
-      return startedSaving
-    }
-
-    if (!PinType.hasWatchNewPostsFlag(pin.pinType)) {
-      pin.pinType = PinType.removeDownloadNewPostsFlag(pin.pinType)
-      watchManager.deletePin(pin)
-    } else {
-      watchManager.stopSavingThread(pin.loadable)
-
-      // Remove the flag after stopping thread saving, otherwise we just won't find the thread
-      // because the pin won't have the download flag which we check somewhere deep inside the
-      // stopSavingThread() method
-      pin.pinType = PinType.removeDownloadNewPostsFlag(pin.pinType)
-      watchManager.updatePin(pin)
-    }
-
-    loadable!!.setLoadableState(LoadableDownloadingState.NotDownloading)
-    return true
-  }
-
-  private fun saveInternal(): Boolean {
-    if (chanLoader!!.thread == null) {
-      Logger.e(TAG, "chanLoader.getThread() == null")
-      return false
-    }
-
-    val op = chanLoader!!.thread!!.op
-    val postsToSave = chanLoader!!.thread!!.posts
-    val oldPin = watchManager.findPinByLoadableId(loadable!!.id)
-
-    if (oldPin != null) {
-      // Save button is clicked and bookmark button is already pressed
-      // Update old pin and start saving the thread
-      check(!PinType.hasDownloadFlag(oldPin.pinType)) {
-        // We forgot to delete pin when cancelling thread download?
-        "oldPin already contains DownloadFlag"
-      }
-
-      oldPin.pinType = PinType.addDownloadNewPostsFlag(oldPin.pinType)
-      watchManager.updatePin(oldPin)
-
-      if (!startSavingThreadInternal(loadable, postsToSave, oldPin)) {
-        return false
-      }
-
-      AndroidUtils.postToEventBus(PinChangedMessage(oldPin))
-    } else {
-      // Save button is clicked and bookmark button is not yet pressed
-      // Create new pin and start saving the thread
-
-      // We don't want to send PinAddedMessage broadcast right away. We will send it after
-      // the thread has been saved
-      check(watchManager.createPin(loadable, op, PinType.DOWNLOAD_NEW_POSTS, false)) {
-        "Could not create pin for loadable $loadable"
-      }
-
-      val newPin = watchManager.getPinByLoadable(loadable)
-        ?: throw IllegalStateException("Could not find freshly created pin by loadable $loadable")
-
-      if (!startSavingThreadInternal(loadable, postsToSave, newPin)) {
-        return false
-      }
-
-      AndroidUtils.postToEventBus(PinAddedMessage(newPin))
-    }
-
-    if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
-      showToast(
-        context,
-        R.string.thread_layout_background_watcher_is_disabled_message,
-        Toast.LENGTH_LONG
-      )
-    }
-
-    return true
-  }
-
-  private fun startSavingThreadInternal(loadable: Loadable?, postsToSave: List<Post>, newPin: Pin): Boolean {
-    check(PinType.hasDownloadFlag(newPin.pinType)) {
-      "newPin does not have DownloadFlag: " + newPin.pinType
-    }
-
-    return watchManager.startSavingThread(loadable, postsToSave)
   }
 
   fun onSearchVisibilityChanged(visible: Boolean) {
@@ -620,9 +440,6 @@ class ThreadPresenter @Inject constructor(
       chanLoader!!.setTimer()
     }
 
-    loadable!!.setLoadableState(result.loadable.loadableDownloadingState)
-    Logger.d(TAG, "onChanLoaderData() loadableDownloadingState = " + loadable!!.loadableDownloadingState.name)
-
     // allow for search refreshes inside the catalog
     if (result.loadable.isCatalogMode && !TextUtils.isEmpty(searchQuery)) {
       onSearchEntered(searchQuery)
@@ -677,31 +494,12 @@ class ThreadPresenter @Inject constructor(
       loadable!!.markedNo = -1
     }
 
-    storeNewPostsIfThreadIsBeingDownloaded(result.posts)
-
     if (loadable != null) {
       createNewNavHistoryElement()
     }
 
     // Update loadable in the database
     databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(loadable))
-
-    if (!ChanSettings.watchEnabled.get() && !ChanSettings.watchBackground.get()
-      && loadable!!.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded) {
-      Logger.d(TAG, "Background watcher is disabled, so we need to update "
-        + "ViewThreadController's downloading icon as well as the pin in the DrawerAdapter")
-
-      val pin = watchManager.findPinByLoadableId(loadable!!.id)
-      if (pin == null) {
-        Logger.d(TAG, "Could not find pin with loadableId = " + loadable!!.id + ", it was already deleted?")
-        return
-      }
-
-      pin.isError = true
-      pin.watching = false
-
-      watchManager.updatePin(pin, true)
-    }
 
     if (result.loadable.isCatalogMode) {
       filterWatchManager.onCatalogLoad(result)
@@ -730,39 +528,6 @@ class ThreadPresenter @Inject constructor(
           historyNavigationManager.createNewNavElement(descriptor, image.thumbnailUrl, title)
         }
       }
-    }
-  }
-
-  private fun storeNewPostsIfThreadIsBeingDownloaded(posts: List<Post>) {
-    if (posts.isEmpty()
-      || loadable!!.isCatalogMode
-      || loadable!!.loadableDownloadingState == LoadableDownloadingState.AlreadyDownloaded) {
-      return
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable!!.id)
-    if (pin == null || !PinType.hasDownloadFlag(pin.pinType)) {
-      // No pin for this loadable we are probably not downloading this thread
-      // or no downloading flag
-      return
-    }
-
-    val savedThread = watchManager.findSavedThreadByLoadableId(loadable!!.id)
-    if (savedThread == null || savedThread.isStopped || savedThread.isFullyDownloaded) {
-      // Either the thread is not being downloaded or it is stopped or already fully downloaded
-      return
-    }
-
-    if (!fileManager.baseDirectoryExists(LocalThreadsBaseDirectory::class.java)) {
-      Logger.d(TAG, "storeNewPostsIfThreadIsBeingDownloaded() LocalThreadsBaseDirectory does not exist")
-      watchManager.stopSavingAllThreads()
-      return
-    }
-
-    if (!threadSaveManager.enqueueThreadToSave(loadable, posts)) {
-      // Probably base directory was removed by the user, can't do anything other than
-      // just stop this download
-      watchManager.stopSavingThread(loadable)
     }
   }
 
@@ -999,16 +764,16 @@ class ThreadPresenter @Inject constructor(
 
     if (loadable!!.isCatalogMode) {
       menu.add(createMenuItem(POST_OPTION_PIN, R.string.action_pin))
-    } else if (!loadable!!.isLocal) {
+    } else {
       menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote))
       menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text))
     }
 
-    if (loadable!!.getSite().siteFeature(Site.SiteFeature.POST_REPORT) && !loadable!!.isLocal) {
+    if (loadable!!.getSite().siteFeature(Site.SiteFeature.POST_REPORT)) {
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
     }
 
-    if ((loadable!!.isCatalogMode || loadable!!.isThreadMode && !post.isOP) && !loadable!!.isLocal) {
+    if (loadable!!.isCatalogMode || loadable!!.isThreadMode && !post.isOP) {
       if (!postFilterManager.getFilterStub(post.postDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
       }
@@ -1035,7 +800,7 @@ class ThreadPresenter @Inject constructor(
         post.board,
         post.no
       )
-      if (isSaved && !loadable!!.isLocal) {
+      if (isSaved) {
         menu.add(createMenuItem(POST_OPTION_DELETE, R.string.post_delete))
       }
     }
@@ -1049,22 +814,20 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
-    if (!loadable!!.isLocal) {
-      val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
-        post.board,
-        post.no
-      )
+    val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
+      post.board,
+      post.no
+    )
 
-      val stringId = if (isSaved) {
-        R.string.unmark_as_my_post
-      } else {
-        R.string.mark_as_my_post
-      }
+    val stringId = if (isSaved) {
+      R.string.unmark_as_my_post
+    } else {
+      R.string.mark_as_my_post
+    }
 
-      menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
-      if (getFlavorType() == AndroidUtils.FlavorType.Dev && loadable!!.no > 0) {
-        menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
-      }
+    menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
+    if (getFlavorType() == AndroidUtils.FlavorType.Dev && loadable!!.no > 0) {
+      menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
     }
   }
 
@@ -1126,7 +889,7 @@ class ThreadPresenter @Inject constructor(
         val title = PostHelper.getTitle(post, loadable)
         val loadable = Loadable.forThread(loadable!!.site, post.board, post.no, title)
         val pinLoadable = databaseManager.databaseLoadableManager.get(loadable)
-        watchManager.createPin(pinLoadable, post, PinType.WATCH_NEW_POSTS)
+        watchManager.createPin(pinLoadable, post)
       }
       POST_OPTION_OPEN_BROWSER -> if (isBound) {
         AndroidUtils.openLink(loadable!!.site.resolvable().desktopUrl(loadable!!, post.no))
@@ -1545,12 +1308,6 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.onRestoreRemovedPostsClicked(loadable!!, selectedPosts)
   }
 
-  fun updateLoadable(loadableDownloadingState: LoadableDownloadingState?) {
-    if (isBound) {
-      loadable!!.setLoadableState(loadableDownloadingState)
-    }
-  }
-
   fun markAllPostsAsSeen() {
     if (!isBound) {
       return
@@ -1558,14 +1315,7 @@ class ThreadPresenter @Inject constructor(
 
     val pin = watchManager.findPinByLoadableId(loadable!!.id)
     if (pin != null) {
-      var savedThread: SavedThread? = null
-      if (PinType.hasDownloadFlag(pin.pinType)) {
-        savedThread = watchManager.findSavedThreadByLoadableId(loadable!!.id)
-      }
-
-      if (savedThread == null) {
-        watchManager.onBottomPostViewed(pin)
-      }
+      watchManager.onBottomPostViewed(pin)
     }
   }
 

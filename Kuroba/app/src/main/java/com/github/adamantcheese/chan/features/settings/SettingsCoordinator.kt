@@ -64,8 +64,6 @@ class SettingsCoordinator(
   @Inject
   lateinit var fileManager: FileManager
   @Inject
-  lateinit var threadSaveManager: ThreadSaveManager
-  @Inject
   lateinit var watchManager: WatchManager
 
   private val mainSettingsScreen by lazy {
@@ -147,9 +145,6 @@ class SettingsCoordinator(
       navigationController,
       fileManager,
       fileChooser,
-      databaseManager,
-      threadSaveManager,
-      watchManager,
       runtimePermissionsHelper
     )
   }

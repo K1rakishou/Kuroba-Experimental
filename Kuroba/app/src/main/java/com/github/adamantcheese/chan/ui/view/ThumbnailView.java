@@ -45,7 +45,6 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 
@@ -138,27 +137,6 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
 
     public void setUrl(String url) {
         setUrl(url, null, null);
-    }
-
-    public void setUrlFromDisk(
-            Loadable loadable,
-            String filename,
-            boolean isSpoiler,
-            int width,
-            int height
-    ) {
-        alphaAnimator.end();
-
-        requestDisposable = imageLoaderV2.loadFromDisk(
-                getContext(),
-                loadable,
-                filename,
-                isSpoiler,
-                width,
-                height,
-                this,
-                null
-        );
     }
 
     public void setCircular(boolean circular) {

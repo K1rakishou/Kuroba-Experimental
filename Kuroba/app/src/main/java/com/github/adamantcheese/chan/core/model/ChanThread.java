@@ -90,14 +90,6 @@ public class ChanThread {
         this.posts = Collections.unmodifiableList(new ArrayList<>(newPosts));
     }
 
-    public synchronized int getLoadableId() {
-        return loadable.id;
-    }
-
-    public synchronized void updateLoadableState(Loadable.LoadableDownloadingState state) {
-        loadable.setLoadableState(state);
-    }
-
     /**
      * Not safe! Only use for read-only operations!
      */
