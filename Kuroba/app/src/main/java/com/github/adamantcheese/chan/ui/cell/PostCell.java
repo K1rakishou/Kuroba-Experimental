@@ -59,6 +59,7 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -145,6 +146,8 @@ public class PostCell
     ImageLoaderV2 imageLoaderV2;
     @Inject
     PostFilterManager postFilterManager;
+    @Inject
+    ArchivesManager archivesManager;
 
     private List<PostImageThumbnailView> thumbnailViews = new ArrayList<>(1);
     private RelativeLayout relativeLayoutContainer;
@@ -559,9 +562,21 @@ public class PostCell
             }
 
             if (ArchiveDescriptor.isActualArchive(image.archiveId)) {
-                fileInfo
-                        .append(" ")
-                        .append(getString(R.string.image_from_archive));
+                ArchiveDescriptor archiveDescriptor =
+                        archivesManager.getArchiveDescriptorByDatabaseIdOrNull(image.archiveId);
+
+                if (archiveDescriptor == null) {
+                    fileInfo
+                            .append(" ")
+                            .append(getString(R.string.image_from_archive));
+                } else {
+                    String msg =
+                            getString(R.string.image_from_archive_with_name, archiveDescriptor.getName());
+
+                    fileInfo
+                            .append(" ")
+                            .append(msg);
+                }
             }
 
             titleParts.add(fileInfo);

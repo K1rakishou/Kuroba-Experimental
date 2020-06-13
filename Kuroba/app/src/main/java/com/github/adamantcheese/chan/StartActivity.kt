@@ -283,12 +283,15 @@ class StartActivity : AppCompatActivity(),
           browseController?.showBoard(topNavElement.descriptor)
         }
         is NavHistoryElement.Thread -> {
-          historyNavigationManager.getFirstCatalogNavElement()?.let { catalogNavElement ->
+          val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
+          if (catalogNavElement != null) {
             require(catalogNavElement is NavHistoryElement.Catalog) {
               "catalogNavElement is not catalog!"
             }
 
             browseController?.setBoard(catalogNavElement.descriptor)
+          } else {
+            browseController?.loadWithDefaultBoard()
           }
 
           drawerController.loadThread(topNavElement.descriptor)

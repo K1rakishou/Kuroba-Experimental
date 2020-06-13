@@ -19,13 +19,13 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.joda.time.Period
 import java.io.InputStreamReader
 import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
 
 typealias LatestArchivesFetchHistory = ModularResult<Map<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>>
 
@@ -38,7 +38,7 @@ class ArchivesManager(
   private val verboseLogsEnabled: Boolean
 ) {
   private val archiveFetchHistoryChangeSubject = PublishProcessor.create<FetchHistoryChange>()
-  private val mutex = Mutex()
+  private val lock = ReentrantReadWriteLock()
   private val allArchivesData = SuspendableInitializer<List<ArchiveData>>("allArchivesData")
   private val allArchiveDescriptors = SuspendableInitializer<List<ArchiveDescriptor>>("allArchiveDescriptors")
   private val allArchiveDescriptorsMap = SuspendableInitializer<Map<Long, ArchiveDescriptor>>("allArchiveDescriptorsMap")
@@ -58,16 +58,22 @@ class ArchivesManager(
   }
 
   suspend fun getArchiveDescriptorByDatabaseId(archiveId: Long?): ArchiveDescriptor? {
+    if (archiveId == null) {
+      return null
+    }
+
     // Start waiting before holding the lock
     allArchiveDescriptorsMap.awaitUntilInitialized()
 
-    return mutex.withLock {
-      if (archiveId == null) {
-        return@withLock null
-      }
+    return lock.read { allArchiveDescriptorsMap.get()[archiveId] }
+  }
 
-      return@withLock allArchiveDescriptorsMap.get()[archiveId]
+  fun getArchiveDescriptorByDatabaseIdOrNull(archiveId: Long?): ArchiveDescriptor? {
+    if (archiveId == null) {
+      return null
     }
+
+    return lock.read { allArchiveDescriptorsMap.getOrNull()?.get(archiveId) }
   }
 
   /**
