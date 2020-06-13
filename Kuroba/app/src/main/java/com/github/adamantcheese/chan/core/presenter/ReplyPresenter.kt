@@ -534,7 +534,7 @@ class ReplyPresenter @Inject constructor(
         errorMessage = AndroidUtils.getString(R.string.reply_error_message, replyResponse.errorMessage)
       }
 
-      Logger.e(TAG, "onPostComplete error", errorMessage)
+      Logger.e(TAG, "onPostComplete error: $errorMessage")
       switchPage(Page.INPUT)
       callback.openMessage(errorMessage)
     }

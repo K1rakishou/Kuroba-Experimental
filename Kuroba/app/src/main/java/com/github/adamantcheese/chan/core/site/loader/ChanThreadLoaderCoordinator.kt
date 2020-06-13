@@ -81,7 +81,7 @@ class ChanThreadLoaderCoordinator(
   private val job = SupervisorJob()
 
   override val coroutineContext: CoroutineContext
-    get() = Dispatchers.IO + job + CoroutineName("ChanReaderRequest")
+    get() = Dispatchers.IO + job + CoroutineName("ChanThreadLoaderCoordinator")
 
   private val reloadPostsFromDatabaseUseCase by lazy {
     ReloadPostsFromDatabaseUseCase(

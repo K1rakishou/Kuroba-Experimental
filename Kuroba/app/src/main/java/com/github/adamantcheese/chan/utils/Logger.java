@@ -37,12 +37,6 @@ public class Logger {
             Log.v(TAG_PREFIX + tag, message, throwable);
         }
     }
-
-    public static void v(String tag, String format, Object... args) {
-        if (BuildConfig.DEBUG) {
-            Log.v(TAG_PREFIX + tag, String.format(format, args));
-        }
-    }
     //endregion VERBOSE
 
     //region DEBUG
@@ -57,12 +51,6 @@ public class Logger {
             Log.d(TAG_PREFIX + tag, message, throwable);
         }
     }
-
-    public static void d(String tag, String format, Object... args) {
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG_PREFIX + tag, String.format(format, args));
-        }
-    }
     //endregion DEBUG
 
     //region INFO
@@ -74,9 +62,6 @@ public class Logger {
         Log.i(TAG_PREFIX + tag, message, throwable);
     }
 
-    public static void i(String tag, String format, Object... args) {
-        Log.i(TAG_PREFIX + tag, String.format(format, args));
-    }
     //endregion INFO
 
     //region WARN
@@ -88,9 +73,6 @@ public class Logger {
         Log.w(TAG_PREFIX + tag, message, throwable);
     }
 
-    public static void w(String tag, String format, Object... args) {
-        Log.w(TAG_PREFIX + tag, String.format(format, args));
-    }
     //endregion WARN
 
     //region ERROR
@@ -101,10 +83,6 @@ public class Logger {
     public static void e(String tag, String message, Throwable throwable) {
         Log.e(TAG_PREFIX + tag, message, throwable);
     }
-
-    public static void e(String tag, String format, Object... args) {
-        Log.e(TAG_PREFIX + tag, String.format(format, args));
-    }
     //endregion ERROR
 
     //region WTF
@@ -114,10 +92,6 @@ public class Logger {
 
     public static void wtf(String tag, String message, Throwable throwable) {
         Log.wtf(TAG_PREFIX + tag, message, throwable);
-    }
-
-    public static void wtf(String tag, String format, Object... args) {
-        Log.wtf(TAG_PREFIX + tag, String.format(format, args));
     }
     //endregion WTF
 
@@ -131,12 +105,6 @@ public class Logger {
     public static void test(String message, Throwable throwable) {
         if (BuildConfig.DEBUG) {
             Log.i(TAG_PREFIX + "test", message, throwable);
-        }
-    }
-
-    public static void test(String format, Object... args) {
-        if (BuildConfig.DEBUG) {
-            Log.i(TAG_PREFIX + "test", String.format(format, args));
         }
     }
     //endregion TEST

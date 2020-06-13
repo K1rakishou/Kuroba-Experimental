@@ -122,7 +122,7 @@ class GetPostsFromArchiveUseCase(
     when (archiveThreadResult) {
       is ModularResult.Error -> {
         if (archiveThreadResult.error is ArchivesRemoteSource.ArchivesApiException) {
-          Logger.e(TAG, "Archive api error", archiveThreadResult.error.errorMessageOrClassName())
+          Logger.e(TAG, "Archive api error: ${archiveThreadResult.error.errorMessageOrClassName()}")
 
           // We need to insert a success fetch result here. We got an API error from the server (404)
           // but for us it's still success since the archive is alive.
@@ -132,7 +132,7 @@ class GetPostsFromArchiveUseCase(
 
         if (archiveThreadResult.error is CancellationException || archiveThreadResult.error is SSLException) {
           val errorMsg = archiveThreadResult.error.errorMessageOrClassName()
-          Logger.e(TAG, "Error while fetching archive posts", errorMsg)
+          Logger.e(TAG, "Error while fetching archive posts: $errorMsg")
         } else {
           Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
         }

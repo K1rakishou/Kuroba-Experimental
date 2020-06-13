@@ -708,7 +708,9 @@ class ThreadLayout @JvmOverloads constructor(
           dismissSnackbar()
         }
       }
+
       this.visible = visible
+
       when (visible) {
         Visible.EMPTY -> {
           loadView.setView(inflateEmptyView())
@@ -717,11 +719,13 @@ class ThreadLayout @JvmOverloads constructor(
         Visible.LOADING -> {
           val view = loadView.setView(progressLayout)
 
-          // TODO: cleanup
           if (refreshedFromSwipe) {
             refreshedFromSwipe = false
             view.visibility = View.GONE
+          } else {
+            view.visibility = View.VISIBLE
           }
+
           showReplyButton(false)
         }
         Visible.THREAD -> {
@@ -742,10 +746,12 @@ class ThreadLayout @JvmOverloads constructor(
   private fun inflateEmptyView(): View {
     val view = AndroidUtils.inflate(context, R.layout.layout_empty_setup, null)
     val tv = view.findViewById<TextView>(R.id.feature)
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       // This unicode symbol crashes app on APIs below 23
       tv.setText(R.string.thread_empty_setup_feature)
     }
+
     return view
   }
 

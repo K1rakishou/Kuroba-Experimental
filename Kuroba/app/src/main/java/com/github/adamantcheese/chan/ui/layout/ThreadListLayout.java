@@ -593,9 +593,11 @@ public class ThreadListLayout
         postAdapter.cleanup();
         reply.cleanup();
         openReply(false);
+
         if (showingThread.getLoadable().isThreadMode()) {
             openSearch(false);
         }
+
         showingThread = null;
         lastPostCount = 0;
         noParty();
