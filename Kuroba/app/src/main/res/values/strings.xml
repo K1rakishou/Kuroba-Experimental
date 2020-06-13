@@ -138,6 +138,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="minutes">%d minutes</string>
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
+    <string name="action_force_reload">Force reload</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_retrieve_deleted_posts">Retrieve deleted posts from archive</string>
@@ -758,6 +759,7 @@ Don't have a 4chan Pass?<br>
     </string>
 
     <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
+    <string name="thread_presenter_failed_to_delete_thread">Failed to delete thread</string>
     <string name="thread_presenter_error_while_trying_to_get_archive_descriptor">Error while trying get archive descriptor by thread descriptor</string>
     <string name="thread_presenter_no_archives_for_thread">No archives were found for the current thread. This means that all archives supporting current board are disabled (In this case you can enable them in site settings) or all archives supporting current board are not working (See archives settings in site settings)</string>
     <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>

@@ -23,7 +23,7 @@ class FoolFuukaCommentParser : CommentParser() {
             tag: String,
             text: CharSequence,
             element: Element
-    ): CharSequence {
+    ): CharSequence? {
         var newElement = element
         var newTag = tag
 

@@ -128,6 +128,16 @@ abstract class ChanThreadDao {
     """)
     abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
 
+    @Query("""
+        DELETE FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE 
+            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        AND
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
+    """)
+    abstract suspend fun deleteThread(ownerBoardId: Long, threadNo: Long)
+
     @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
     abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
+
 }

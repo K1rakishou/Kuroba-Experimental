@@ -289,6 +289,16 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          return@tryWithTransaction localSource.deleteThread(threadDescriptor)
+        }
+      }
+    }
+  }
+
   /**
    * Every post has it's own archiveId. If a post was not fetched from any archive it's archiveId
    * will be [ArchiveDescriptor.NO_ARCHIVE_ID]. Otherwise a real archive id will be used. When
@@ -432,4 +442,5 @@ class ChanPostRepository(
 
     return false
   }
+
 }

@@ -25,6 +25,7 @@ import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -136,6 +137,7 @@ public class CommentParser {
         this.fullQuotePattern = fullQuotePattern;
     }
 
+    @Nullable
     public CharSequence handleTag(
             PostParser.Callback callback,
             Theme theme,
@@ -253,6 +255,13 @@ public class CommentParser {
             PostLinkable.Link handlerLink,
             SpannableStringBuilder spannableStringBuilder
     ) {
+        if (isPostLinkableAlreadyAdded(new SpannableString(handlerLink.getKey()), handlerLink.getLinkValue())) {
+            // Fix for some sites (like 2ch.hk and some archives too) having the same link spans
+            // encountered twice (This breaks video title and duration spans for youtube links
+            // since we process the same spans twice)
+            return;
+        }
+
         if (handlerLink.getType() == PostLinkable.Type.THREAD) {
             handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERN_THREAD_LINK_SUFFIX));
         }
@@ -267,26 +276,21 @@ public class CommentParser {
 
         SpannableString res = new SpannableString(handlerLink.getKey());
 
-        // Fix for some sites (like 2ch.hk) having the same link spans encountered twice (This
-        // breaks video title and duration spans for youtube links since we process the same spans
-        // twice)
-        if (!isPostLinkableAlreadyAdded(res, handlerLink.getKey())) {
-            PostLinkable pl = new PostLinkable(
-                    theme,
-                    handlerLink.getKey(),
-                    handlerLink.getLinkValue(),
-                    handlerLink.getType()
-            );
+        PostLinkable pl = new PostLinkable(
+                theme,
+                handlerLink.getKey(),
+                handlerLink.getLinkValue(),
+                handlerLink.getType()
+        );
 
-            res.setSpan(
-                    pl,
-                    0,
-                    res.length(),
-                    (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
-            );
+        res.setSpan(
+                pl,
+                0,
+                res.length(),
+                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
+        );
 
-            post.addLinkable(pl);
-        }
+        post.addLinkable(pl);
 
         spannableStringBuilder.append(res);
     }
@@ -312,14 +316,19 @@ public class CommentParser {
         }
     }
 
-    private boolean isPostLinkableAlreadyAdded(SpannableString res, CharSequence handlerLinkKey) {
-        PostLinkable[] alreadySetPostLinkables = res.getSpans(0, res.length(), PostLinkable.class);
+    private boolean isPostLinkableAlreadyAdded(SpannableString res, PostLinkable.Value linkValue) {
+        PostLinkable[] alreadySetPostLinkables = res.getSpans(
+                0,
+                res.length(),
+                PostLinkable.class
+        );
+
         if (alreadySetPostLinkables.length == 0) {
             return false;
         }
 
         for (PostLinkable postLinkable : alreadySetPostLinkables) {
-            if (handlerLinkKey.toString().equals(postLinkable.getKey().toString())) {
+            if (linkValue.equals(postLinkable.getLinkableValue())) {
                 return true;
             }
         }

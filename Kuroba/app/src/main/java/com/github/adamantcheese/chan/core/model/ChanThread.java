@@ -86,6 +86,10 @@ public class ChanThread {
         return posts;
     }
 
+    public synchronized void clearPosts() {
+        posts = Collections.unmodifiableList(new ArrayList<>());
+    }
+
     public synchronized void setNewPosts(List<Post> newPosts) {
         this.posts = Collections.unmodifiableList(new ArrayList<>(newPosts));
     }

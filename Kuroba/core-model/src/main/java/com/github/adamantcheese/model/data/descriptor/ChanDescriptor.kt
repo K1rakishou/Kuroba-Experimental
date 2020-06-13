@@ -9,6 +9,14 @@ sealed class ChanDescriptor {
 
     abstract fun siteDescriptor(): SiteDescriptor
 
+    @JvmOverloads
+    fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
+        return when (this) {
+            is ThreadDescriptor -> this
+            is CatalogDescriptor -> ThreadDescriptor(boardDescriptor, threadNo!!)
+        }
+    }
+
     class ThreadDescriptor(
             val boardDescriptor: BoardDescriptor,
             val opNo: Long
@@ -66,10 +74,6 @@ sealed class ChanDescriptor {
 
         override fun siteDescriptor(): SiteDescriptor {
             return boardDescriptor.siteDescriptor
-        }
-
-        fun toThreadDescriptor(opNo: Long): ThreadDescriptor {
-            return ThreadDescriptor(boardDescriptor, opNo)
         }
 
         override fun equals(other: Any?): Boolean {

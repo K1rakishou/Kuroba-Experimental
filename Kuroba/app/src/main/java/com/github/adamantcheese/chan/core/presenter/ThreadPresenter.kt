@@ -60,7 +60,7 @@ import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.fsaf.FileManager
+import com.github.adamantcheese.model.repository.ChanPostRepository
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import java.util.*
@@ -74,8 +74,8 @@ class ThreadPresenter @Inject constructor(
   private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
-  private val fileManager: FileManager,
   private val siteRepository: SiteRepository,
+  private val chanPostRepository: ChanPostRepository,
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
@@ -195,6 +195,37 @@ class ThreadPresenter @Inject constructor(
       } else {
         chanLoader!!.quickLoad()
       }
+    }
+  }
+
+  fun forceRequestData() {
+    BackgroundUtils.ensureMainThread()
+
+    if (!isBound || loadable == null) {
+      return
+    }
+
+    val threadNo = chanLoader?.thread?.op?.no
+      ?: return
+
+    launch {
+      val threadDescriptor = loadable!!.chanDescriptor.toThreadDescriptor(threadNo)
+      threadPresenterCallback?.showLoading()
+
+      chanPostRepository.deleteThread(threadDescriptor).safeUnwrap { error ->
+        Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error)
+
+        showToast(
+          context,
+          context.getString(R.string.thread_presenter_failed_to_delete_thread),
+          Toast.LENGTH_LONG
+        )
+
+        return@launch
+      }
+
+      chanLoader?.thread?.clearPosts()
+      chanLoader?.requestData()
     }
   }
 

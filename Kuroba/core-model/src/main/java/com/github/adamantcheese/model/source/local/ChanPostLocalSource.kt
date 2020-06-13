@@ -550,6 +550,21 @@ class ChanPostLocalSource(
     return chanPostDao.deleteAll()
   }
 
+  suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    ensureInTransaction()
+
+    val chanBoardEntity = chanBoardDao.select(
+      threadDescriptor.siteName(),
+      threadDescriptor.boardCode()
+    )
+
+    if (chanBoardEntity == null) {
+      return
+    }
+
+    chanThreadDao.deleteThread(chanBoardEntity.boardId, threadDescriptor.opNo)
+  }
+
   suspend fun deleteOldPosts(toDeleteCount: Int): Int {
     ensureInTransaction()
     require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }

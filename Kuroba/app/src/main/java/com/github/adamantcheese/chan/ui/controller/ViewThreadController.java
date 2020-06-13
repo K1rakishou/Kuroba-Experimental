@@ -98,6 +98,8 @@ public class ViewThreadController
     private static final int ACTION_GO_TO_POST = 9007;
     private static final int ACTION_SCROLL_TO_TOP = 9008;
     private static final int ACTION_SCROLL_TO_BOTTOM = 9009;
+    private static final int ACTION_FORCE_RELOAD = 9010;
+
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -220,6 +222,12 @@ public class ViewThreadController
                         this::reloadClicked
                 )
                 .withSubItem(
+                        ACTION_FORCE_RELOAD,
+                        R.string.action_force_reload,
+                        getFlavorType() == AndroidUtils.FlavorType.Dev,
+                        this::forceReloadClicked
+                )
+                .withSubItem(
                         ACTION_VIEW_REMOVED_POSTS,
                         R.string.action_view_removed_posts,
                         this::showRemovedPostsDialog
@@ -287,6 +295,10 @@ public class ViewThreadController
 
     private void reloadClicked(ToolbarMenuSubItem item) {
         threadLayout.presenter.requestData();
+    }
+
+    private void forceReloadClicked(ToolbarMenuSubItem item) {
+        threadLayout.presenter.forceRequestData();
     }
 
     public void retrieveDeletedPosts(ToolbarMenuSubItem item) {

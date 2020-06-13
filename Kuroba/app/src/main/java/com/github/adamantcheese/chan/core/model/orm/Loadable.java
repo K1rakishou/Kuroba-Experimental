@@ -24,7 +24,6 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
-import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -301,28 +300,6 @@ public class Loadable
         }
 
         return true;
-    }
-
-    /**
-     * @param threadOrPostNo may be either a threadNo (in case of a catalog loadable) or a postNo
-     *                       (in case of a thread loadable)
-     * */
-    public PostDescriptor getPostDescriptor(long threadOrPostNo) {
-        if (isThreadMode()) {
-            if (no <= 0) {
-                throw new IllegalStateException("Loadable is a thread loadable but it has no id, no = " + no);
-            }
-
-            return PostDescriptor.create(board.site.name(), board.code, no, threadOrPostNo);
-        } else if (isCatalogMode()) {
-            if (no > 0) {
-                throw new IllegalStateException("Loadable is a catalog loadable but it has id, no = " + no);
-            }
-
-            return PostDescriptor.create(board.site.name(), board.code, threadOrPostNo);
-        }
-
-        throw new IllegalArgumentException("Unsupported loadable mode = " + mode);
     }
 
     public static Loadable readFromParcel(Parcel parcel) {
