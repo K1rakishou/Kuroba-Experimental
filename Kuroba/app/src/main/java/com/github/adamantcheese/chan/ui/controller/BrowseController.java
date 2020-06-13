@@ -409,7 +409,7 @@ public class BrowseController
                                 loadable.site,
                                 loadable.board,
                                 threadNo,
-                                String.valueOf(threadNo)
+                                ""
                         );
 
                         showThread(databaseLoadableManager.get(threadLoadable));

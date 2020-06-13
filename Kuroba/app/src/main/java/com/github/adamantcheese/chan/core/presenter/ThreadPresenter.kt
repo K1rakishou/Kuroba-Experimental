@@ -526,7 +526,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (loadable != null) {
-      createNewNavHistoryElement()
+      createNewNavHistoryElement(result)
     }
 
     // Update loadable in the database
@@ -537,7 +537,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun createNewNavHistoryElement() {
+  private fun createNewNavHistoryElement(chanThread: ChanThread) {
     val localLoadable = loadable!!
 
     when (val descriptor = localLoadable.chanDescriptor) {
@@ -553,7 +553,11 @@ class ThreadPresenter @Inject constructor(
 
       is ChanDescriptor.ThreadDescriptor -> {
         val image = chanLoader?.thread?.op?.firstImage()
-        val title = localLoadable.title
+        val title = if (TextUtils.isEmpty(loadable!!.title)) {
+          PostHelper.getTitle(chanThread.op, loadable)
+        } else {
+          localLoadable.title
+        }
 
         if (image != null && title.isNotEmpty()) {
           historyNavigationManager.createNewNavElement(descriptor, image.thumbnailUrl, title)
