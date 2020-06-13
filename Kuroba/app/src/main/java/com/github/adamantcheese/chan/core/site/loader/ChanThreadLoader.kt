@@ -33,6 +33,7 @@ import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinato
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.StringUtils
 import com.github.adamantcheese.chan.utils.plusAssign
@@ -68,423 +69,423 @@ import kotlin.math.min
  * For threads timers can be started with [setTimer] to do a request later.
  */
 class ChanThreadLoader(val loadable: Loadable) {
-    @Inject
-    lateinit var gson: Gson
-    @Inject
-    lateinit var okHttpClient: ProxiedOkHttpClient
-    @Inject
-    lateinit var databaseManager: DatabaseManager
-    @Inject
-    lateinit var appConstants: AppConstants
-    @Inject
-    lateinit var filterEngine: FilterEngine
-    @Inject
-    lateinit var chanPostRepository: ChanPostRepository
-    @Inject
-    lateinit var archivesManager: ArchivesManager
-    @Inject
-    lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
-    @Inject
-    lateinit var themeHelper: ThemeHelper
-    @Inject
-    lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var gson: Gson
+  @Inject
+  lateinit var okHttpClient: ProxiedOkHttpClient
+  @Inject
+  lateinit var databaseManager: DatabaseManager
+  @Inject
+  lateinit var appConstants: AppConstants
+  @Inject
+  lateinit var filterEngine: FilterEngine
+  @Inject
+  lateinit var chanPostRepository: ChanPostRepository
+  @Inject
+  lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
+  @Inject
+  lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var postFilterManager: PostFilterManager
 
-    @Volatile
-    var thread: ChanThread? = null
-        private set
+  @Volatile
+  var thread: ChanThread? = null
+    private set
 
-    private val chanThreadLoaderCoordinator by lazy {
-        return@lazy ChanThreadLoaderCoordinator(
-          gson,
-          okHttpClient,
-          databaseManager.databaseSavedReplyManager,
-          filterEngine,
-          chanPostRepository,
-          appConstants,
-          archivesManager,
-          thirdPartyArchiveInfoRepository,
-          postFilterManager,
-          ChanSettings.verboseLogs.get(),
-          themeHelper
-        )
+  private val chanThreadLoaderCoordinator by lazy {
+    return@lazy ChanThreadLoaderCoordinator(
+      gson,
+      okHttpClient,
+      databaseManager.databaseSavedReplyManager,
+      filterEngine,
+      chanPostRepository,
+      appConstants,
+      archivesManager,
+      thirdPartyArchiveInfoRepository,
+      postFilterManager,
+      ChanSettings.verboseLogs.get(),
+      themeHelper
+    )
+  }
+
+  private val compositeDisposable = CompositeDisposable()
+  @Volatile
+  private var requestJob: Job? = null
+  private var pendingFuture: ScheduledFuture<*>? = null
+
+  private val listeners: MutableList<ChanLoaderCallback> = CopyOnWriteArrayList()
+  private var currentTimeout = 0
+  private var lastPostCount = 0
+  private var lastLoadTime: Long = 0
+
+  /**
+   * Get the time in milliseconds until another loadMore is recommended
+   */
+  val timeUntilLoadMore: Long
+    get() {
+      BackgroundUtils.ensureMainThread()
+      return if (requestJob != null) {
+        0L
+      } else {
+        val waitTime = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+        lastLoadTime + (waitTime * 1000L) - System.currentTimeMillis()
+      }
     }
 
-    private val compositeDisposable = CompositeDisposable()
-    private var requestJob: Job? = null
-    private var pendingFuture: ScheduledFuture<*>? = null
+  /**
+   * **Do not call this constructor yourself, obtain ChanLoaders through [ChanLoaderManager]**
+   * Also, do not use feather().instance(WatchManager.class) here because it will create a cyclic
+   * dependency instantiation
+   */
+  init {
+    inject(this)
+  }
 
-    private val listeners: MutableList<ChanLoaderCallback> = CopyOnWriteArrayList()
-    private var currentTimeout = 0
-    private var lastPostCount = 0
-    private var lastLoadTime: Long = 0
+  /**
+   * Add a LoaderListener
+   *
+   * @param listener the listener to add
+   */
+  fun addListener(listener: ChanLoaderCallback) {
+    BackgroundUtils.ensureMainThread()
+    listeners.add(listener)
+  }
 
-    /**
-     * Get the time in milliseconds until another loadMore is recommended
-     */
-    val timeUntilLoadMore: Long
-        get() {
-            BackgroundUtils.ensureMainThread()
-            return if (requestJob != null) {
-                0L
-            } else {
-                val waitTime = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
-                lastLoadTime + (waitTime * 1000L) - System.currentTimeMillis()
-            }
+  /**
+   * Remove a LoaderListener
+   *
+   * @param listener the listener to remove
+   * @return true if there are no more listeners, false otherwise
+   */
+  fun removeListener(listener: ChanLoaderCallback?): Boolean {
+    BackgroundUtils.ensureMainThread()
+
+    listeners.remove(listener)
+    compositeDisposable.clear()
+
+    return if (listeners.isEmpty()) {
+      clearTimer()
+
+      requestJob?.cancel()
+      requestJob = null
+
+      // Since chan thread loaders are cached in ChanThreadLoaderManager, instead of being
+      // destroyed, and thus can be reused, we need to reset them before they are put into
+      // cache.
+      resetLoader()
+      true
+    } else {
+      false
+    }
+  }
+
+  private fun resetLoader() {
+  }
+
+  fun requestDataWithDeletedPosts() {
+    requestData(true)
+  }
+
+  /**
+   * Request data for the first time.
+   */
+  @JvmOverloads
+  fun requestData(retrieveDeletedPostsFromArchives: Boolean = false) {
+    BackgroundUtils.ensureMainThread()
+    clearTimer()
+
+    requestJob?.cancel()
+    requestJob = null
+
+    if (loadable.isCatalogMode) {
+      loadable.no = 0
+      loadable.listViewIndex = 0
+      loadable.listViewTop = 0
+    }
+
+    currentTimeout = -1
+
+    synchronized(this) { thread = null }
+    compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
+  }
+
+  /**
+   * Request more data. This only works for thread loaders.<br></br>
+   * This clears any pending pending timers, created with [.setTimer].
+   *
+   * @return `true` if a new request was started, `false` otherwise.
+   */
+  fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
+    BackgroundUtils.ensureMainThread()
+    clearPendingRunnable()
+
+    return if (loadable.isThreadMode && requestJob == null) {
+      compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
+      true
+    } else {
+      false
+    }
+  }
+
+  private fun requestMoreDataInternal(retrieveDeletedPostsFromArchives: Boolean): Disposable {
+    val getDataResult = Single.fromCallable {
+      val requestJob = getData(retrieveDeletedPostsFromArchives)
+        ?: return@fromCallable error<Job>(ThreadAlreadyArchivedException())
+
+      return@fromCallable value(requestJob)
+    }
+
+    return getDataResult
+      .subscribeOn(backgroundScheduler)
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe({ result ->
+        when (result) {
+          is ModularResult.Value -> requestJob = result.value
+          is ModularResult.Error -> handleErrorResult(result.error)
         }
-
-    /**
-     * **Do not call this constructor yourself, obtain ChanLoaders through [ChanLoaderManager]**
-     * Also, do not use feather().instance(WatchManager.class) here because it will create a cyclic
-     * dependency instantiation
-     */
-    init {
-        inject(this)
-    }
-
-    /**
-     * Add a LoaderListener
-     *
-     * @param listener the listener to add
-     */
-    fun addListener(listener: ChanLoaderCallback) {
-        BackgroundUtils.ensureMainThread()
-        listeners.add(listener)
-    }
-
-    /**
-     * Remove a LoaderListener
-     *
-     * @param listener the listener to remove
-     * @return true if there are no more listeners, false otherwise
-     */
-    fun removeListener(listener: ChanLoaderCallback?): Boolean {
-        BackgroundUtils.ensureMainThread()
-
-        listeners.remove(listener)
-        compositeDisposable.clear()
-
-        return if (listeners.isEmpty()) {
-            clearTimer()
-
-            requestJob?.cancel()
-            requestJob = null
-
-            // Since chan thread loaders are cached in ChanThreadLoaderManager, instead of being
-            // destroyed, and thus can be reused, we need to reset them before they are put into
-            // cache.
-            resetLoader()
-            true
-        } else {
-            false
-        }
-    }
-
-    private fun resetLoader() {
-    }
-
-    fun requestDataWithDeletedPosts() {
-        requestData(true)
-    }
-
-    /**
-     * Request data for the first time.
-     */
-    @JvmOverloads
-    fun requestData(retrieveDeletedPostsFromArchives: Boolean = false) {
-        BackgroundUtils.ensureMainThread()
-        clearTimer()
-
-        requestJob?.cancel()
-        requestJob = null
-
-        if (loadable.isCatalogMode) {
-            loadable.no = 0
-            loadable.listViewIndex = 0
-            loadable.listViewTop = 0
-        }
-
-        currentTimeout = -1
-
-        synchronized(this) { thread = null }
-        compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
-    }
-
-    /**
-     * Request more data. This only works for thread loaders.<br></br>
-     * This clears any pending pending timers, created with [.setTimer].
-     *
-     * @return `true` if a new request was started, `false` otherwise.
-     */
-    fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
-        BackgroundUtils.ensureMainThread()
-        clearPendingRunnable()
-
-        return if (loadable.isThreadMode && requestJob == null) {
-            compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
-            true
-        } else {
-            false
-        }
-    }
-
-    private fun requestMoreDataInternal(retrieveDeletedPostsFromArchives: Boolean): Disposable {
-        val getDataResult = Single.fromCallable {
-            val requestJob = getData(retrieveDeletedPostsFromArchives)
-                    ?: return@fromCallable error<Job>(ThreadAlreadyArchivedException())
-
-            return@fromCallable value(requestJob)
-        }
-
-        return getDataResult
-                .subscribeOn(backgroundScheduler)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe({ result ->
-                    when (result) {
-                        is ModularResult.Value -> requestJob = result.value
-                        is ModularResult.Error -> handleErrorResult(result.error)
-                    }
-                }, { error ->
-                    notifyAboutError(ChanLoaderException(error))
-                })
-    }
-
-    private fun handleErrorResult(error: Throwable) {
-        if (error is ThreadAlreadyArchivedException) {
-            return
-        }
-
+      }, { error ->
         notifyAboutError(ChanLoaderException(error))
+      })
+  }
+
+  private fun handleErrorResult(error: Throwable) {
+    if (error is ThreadAlreadyArchivedException) {
+      return
     }
 
-    /**
-     * Request more data if [getTimeUntilLoadMore] is negative.
-     */
-    fun loadMoreIfTime(): Boolean {
-        BackgroundUtils.ensureMainThread()
-        return timeUntilLoadMore < 0L && requestMoreData(false)
+    notifyAboutError(ChanLoaderException(error))
+  }
+
+  /**
+   * Request more data if [getTimeUntilLoadMore] is negative.
+   */
+  fun loadMoreIfTime(): Boolean {
+    BackgroundUtils.ensureMainThread()
+    return timeUntilLoadMore < 0L && requestMoreData(false)
+  }
+
+  fun quickLoad() {
+    BackgroundUtils.ensureMainThread()
+
+    val localThread = synchronized(this) {
+      checkNotNull(thread) { "Cannot quick load without already loaded thread" }
     }
 
-    fun quickLoad() {
-        BackgroundUtils.ensureMainThread()
+    listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
+    requestMoreData(false)
+  }
 
-        val localThread = synchronized(this) {
-            checkNotNull(thread) { "Cannot quick load without already loaded thread" }
-        }
+  /**
+   * Request more data and reset the watch timer.
+   */
+  fun requestMoreDataAndResetTimer() {
+    BackgroundUtils.ensureMainThread()
 
-        listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
+    if (requestJob == null) {
+      clearTimer()
+      requestMoreData(true)
+    }
+  }
+
+  fun setTimer() {
+    BackgroundUtils.ensureMainThread()
+
+    clearPendingRunnable()
+    val watchTimeout = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+
+    Logger.d(TAG, "Scheduled reload in " + watchTimeout + "s")
+
+    pendingFuture = executor.schedule({
+      runOnMainThread {
+        pendingFuture = null
         requestMoreData(false)
-    }
+      }
+    }, watchTimeout.toLong(), TimeUnit.SECONDS)
+  }
 
-    /**
-     * Request more data and reset the watch timer.
-     */
-    fun requestMoreDataAndResetTimer() {
-        BackgroundUtils.ensureMainThread()
+  fun clearTimer() {
+    BackgroundUtils.ensureMainThread()
+    currentTimeout = -1
+    clearPendingRunnable()
+  }
 
-        if (requestJob == null) {
-            clearTimer()
-            requestMoreData(true)
-        }
-    }
+  private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
+    BackgroundUtils.ensureBackgroundThread()
+    Logger.d(TAG, "Requested /" + loadable.boardCode + "/, " + StringUtils.maskPostNo(loadable.no))
 
-    fun setTimer() {
-        BackgroundUtils.ensureMainThread()
+    val requestParams = ChanLoaderRequestParams(
+      loadable,
+      loadable.getSite().chanReader(),
+      synchronized(this) { thread?.posts ?: ArrayList() },
+      retrieveDeletedPostsFromArchives
+    )
 
-        clearPendingRunnable()
-        val watchTimeout = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+    val url = getChanUrl(loadable).toString()
 
-        Logger.d(TAG, "Scheduled reload in " + watchTimeout + "s")
-
-        pendingFuture = executor.schedule({
-            BackgroundUtils.runOnMainThread {
-                pendingFuture = null
-                requestMoreData(false)
+    return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
+      when (chanLoaderResponseResult) {
+        is ModularResult.Value -> {
+          val chanLoaderResponse = when (val threadLoadResult = chanLoaderResponseResult.value) {
+            is ThreadLoadResult.LoadedNormally -> threadLoadResult.chanLoaderResponse
+            is ThreadLoadResult.LoadedFromDatabaseCopy -> threadLoadResult.chanLoaderResponse
+            is ThreadLoadResult.LoadedFromArchive -> {
+                threadLoadResult.chanLoaderResponse.op.archived = true
+                threadLoadResult.chanLoaderResponse
             }
-        }, watchTimeout.toLong(), TimeUnit.SECONDS)
+          }
+
+          onResponse(chanLoaderResponse)
+        }
+        is ModularResult.Error -> {
+          onErrorResponse(chanLoaderResponseResult.error as ChanLoaderException)
+        }
+      }
+    }
+  }
+
+  private fun onResponse(response: ChanLoaderResponse) {
+    requestJob = null
+
+    try {
+      onResponseInternal(response)
+    } catch (error: Throwable) {
+      runOnMainThread { notifyAboutError(ChanLoaderException(error)) }
+    }
+  }
+
+  private fun onResponseInternal(response: ChanLoaderResponse): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
+
+    // Normal thread, not archived/deleted/closed
+    if (response.posts.isEmpty()) {
+      onErrorResponse(ChanLoaderException(IOException("Post size is 0")))
+      return false
     }
 
-    fun clearTimer() {
-        BackgroundUtils.ensureMainThread()
-        currentTimeout = -1
-        clearPendingRunnable()
+    synchronized(this) {
+      if (thread == null) {
+        thread = ChanThread(loadable, ArrayList())
+      }
+
+      thread!!.setNewPosts(response.posts)
+      thread!!.postPreloadedInfoHolder = response.postPreloadedInfoHolder
     }
 
-    private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
-        BackgroundUtils.ensureBackgroundThread()
-        Logger.d(TAG, "Requested /" + loadable.boardCode + "/, " + StringUtils.maskPostNo(loadable.no))
+    onResponseInternalNext(response.op)
+    return true
+  }
 
-        val requestParams = ChanLoaderRequestParams(
-                loadable,
-                loadable.getSite().chanReader(),
-                synchronized(this) { thread?.posts ?: ArrayList() },
-                retrieveDeletedPostsFromArchives
-        )
+  @Synchronized
+  private fun onResponseInternalNext(fakeOp: Post.Builder) {
+    BackgroundUtils.ensureBackgroundThread()
 
-        val url = getChanUrl(loadable).toString()
+    val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
+    processResponse(fakeOp)
 
-        return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
-            when (chanLoaderResponseResult) {
-                is ModularResult.Value -> {
-                    when (val threadLoadResult = chanLoaderResponseResult.value) {
-                        is ThreadLoadResult.LoadedNormally -> {
-                            onResponse(threadLoadResult.chanLoaderResponse)
-                        }
-                        is ThreadLoadResult.LoadedFromDatabaseCopy -> TODO()
-                        is ThreadLoadResult.LoadedFromArchive -> TODO()
-                    }
-                }
-                is ModularResult.Error -> {
-                    onErrorResponse(chanLoaderResponseResult.error as ChanLoaderException)
-                }
-            }
-        }
+    if (TextUtils.isEmpty(loadable.title)) {
+      loadable.setTitle(PostHelper.getTitle(localThread.op, loadable))
     }
 
-    private fun onResponse(response: ChanLoaderResponse?) {
-        requestJob = null
-
-        val disposable = Single.fromCallable { onResponseInternal(response) }
-                .subscribeOn(backgroundScheduler)
-                .subscribe({
-                    // no-op
-                }, { error ->
-                    notifyAboutError(ChanLoaderException(error!!))
-                })
-
-        compositeDisposable.add(disposable)
+    for (post in localThread.posts) {
+      post.title = loadable.title
     }
 
-    private fun onResponseInternal(response: ChanLoaderResponse?): Boolean {
-        BackgroundUtils.ensureBackgroundThread()
+    lastLoadTime = System.currentTimeMillis()
+    val postCount = localThread.postsCount
 
-        // Normal thread, not archived/deleted/closed
-        if (response == null || response.posts.isEmpty()) {
-            onErrorResponse(ChanLoaderException(IOException("Post size is 0")))
-            return false
-        }
-
-        synchronized(this) {
-            if (thread == null) {
-                thread = ChanThread(loadable, ArrayList())
-            }
-
-            thread!!.setNewPosts(response.posts)
-            thread!!.postPreloadedInfoHolder = response.postPreloadedInfoHolder
-        }
-
-        onResponseInternalNext(response.op)
-        return true
+    if (postCount > lastPostCount) {
+      lastPostCount = postCount
+      currentTimeout = 0
+    } else {
+      currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
     }
 
-    @Synchronized
-    private fun onResponseInternalNext(fakeOp: Post.Builder) {
-        BackgroundUtils.ensureBackgroundThread()
+    runOnMainThread {
+      listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
+    }
+  }
 
-        val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
-        processResponse(fakeOp)
+  /**
+   * Final processing of a response that needs to happen on the main thread.
+   */
+  @Synchronized
+  private fun processResponse(fakeOp: Post.Builder?) {
+    BackgroundUtils.ensureBackgroundThread()
 
-        if (TextUtils.isEmpty(loadable.title)) {
-            loadable.setTitle(PostHelper.getTitle(localThread.op, loadable))
-        }
-
-        for (post in localThread.posts) {
-            post.title = loadable.title
-        }
-
-        lastLoadTime = System.currentTimeMillis()
-        val postCount = localThread.postsCount
-
-        if (postCount > lastPostCount) {
-            lastPostCount = postCount
-            currentTimeout = 0
-        } else {
-            currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
-        }
-
-        BackgroundUtils.runOnMainThread {
-            listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
-        }
+    val localThread = synchronized(this) {
+      checkNotNull(thread) { "thread is null during processResponse" }
     }
 
-    /**
-     * Final processing of a response that needs to happen on the main thread.
-     */
-    @Synchronized
-    private fun processResponse(fakeOp: Post.Builder?) {
-        BackgroundUtils.ensureBackgroundThread()
+    if (loadable.isThreadMode && localThread.postsCount > 0) {
+      // Replace some op parameters to the real op (index 0).
+      // This is done on the main thread to avoid race conditions.
+      val realOp = localThread.op
 
-        val localThread = synchronized(this) {
-            checkNotNull(thread) { "thread is null during processResponse" }
-        }
+      if (fakeOp == null) {
+        Logger.e(TAG, "Thread has no op!")
+        return
+      }
 
-        if (loadable.isThreadMode && localThread.postsCount > 0) {
-            // Replace some op parameters to the real op (index 0).
-            // This is done on the main thread to avoid race conditions.
-            val realOp = localThread.op
+      realOp.isClosed = fakeOp.closed
+      realOp.isArchived = fakeOp.archived
+      realOp.isSticky = fakeOp.sticky
+      realOp.totalRepliesCount = fakeOp.totalRepliesCount
+      realOp.threadImagesCount = fakeOp.threadImagesCount
+      realOp.uniqueIps = fakeOp.uniqueIps
+      realOp.lastModified = fakeOp.lastModified
+      localThread.isClosed = realOp.isClosed
+      localThread.isArchived = realOp.isArchived
+    }
+  }
 
-            if (fakeOp == null) {
-                Logger.e(TAG, "Thread has no op!")
-                return
-            }
+  private fun onErrorResponse(error: ChanLoaderException) {
+    requestJob = null
 
-            realOp.isClosed = fakeOp.closed
-            realOp.isArchived = fakeOp.archived
-            realOp.isSticky = fakeOp.sticky
-            realOp.totalRepliesCount = fakeOp.totalRepliesCount
-            realOp.threadImagesCount = fakeOp.threadImagesCount
-            realOp.uniqueIps = fakeOp.uniqueIps
-            realOp.lastModified = fakeOp.lastModified
-            localThread.isClosed = realOp.isClosed
-            localThread.isArchived = realOp.isArchived
-        }
+    if (error.isCoroutineCancellationError()) {
+      Logger.d(TAG, "Request canceled")
+      return
     }
 
-    private fun onErrorResponse(error: ChanLoaderException) {
-        requestJob = null
+    runOnMainThread { notifyAboutError(error) }
+  }
 
-        if (error.isCoroutineCancellationError()) {
-            Logger.d(TAG, "Request canceled")
-            return
-        }
+  private fun notifyAboutError(error: ChanLoaderException) {
+    BackgroundUtils.ensureMainThread()
+    clearTimer()
 
-        notifyAboutError(error)
+    if (error.isCoroutineCancellationError()) {
+      Logger.d(TAG, "Request canceled")
+      return
     }
 
-    private fun notifyAboutError(error: ChanLoaderException) {
-        BackgroundUtils.ensureMainThread()
-        clearTimer()
+    Logger.e(TAG, "notifyAboutError()", error)
+    listeners.forEach { listener -> listener.onChanLoaderError(error) }
+  }
 
-        if (error.isCoroutineCancellationError()) {
-            Logger.d(TAG, "Request canceled")
-            return
-        }
+  private fun clearPendingRunnable() {
+    BackgroundUtils.ensureMainThread()
 
-        Logger.e(TAG, "notifyAboutError()", error)
-        listeners.forEach { listener -> listener.onChanLoaderError(error) }
+    if (pendingFuture != null) {
+      Logger.d(TAG, "Cleared timer")
+      pendingFuture!!.cancel(false)
+      pendingFuture = null
     }
+  }
 
-    private fun clearPendingRunnable() {
-        BackgroundUtils.ensureMainThread()
+  interface ChanLoaderCallback {
+    fun onChanLoaderData(result: ChanThread)
+    fun onChanLoaderError(error: ChanLoaderException)
+  }
 
-        if (pendingFuture != null) {
-            Logger.d(TAG, "Cleared timer")
-            pendingFuture!!.cancel(false)
-            pendingFuture = null
-        }
-    }
+  private class ThreadAlreadyArchivedException : Exception("Thread already archived")
 
-    interface ChanLoaderCallback {
-        fun onChanLoaderData(result: ChanThread)
-        fun onChanLoaderError(error: ChanLoaderException)
-    }
-
-    private class ThreadAlreadyArchivedException : Exception("Thread already archived")
-
-    companion object {
-        private const val TAG = "ChanThreadLoader"
-        private val executor = Executors.newSingleThreadScheduledExecutor()
-        private val WATCH_TIMEOUTS = intArrayOf(20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600)
-        private val backgroundScheduler = Schedulers.from(executor)
-    }
+  companion object {
+    private const val TAG = "ChanThreadLoader"
+    private val executor = Executors.newSingleThreadScheduledExecutor()
+    private val WATCH_TIMEOUTS = intArrayOf(20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600)
+    private val backgroundScheduler = Schedulers.from(executor)
+  }
 
 }

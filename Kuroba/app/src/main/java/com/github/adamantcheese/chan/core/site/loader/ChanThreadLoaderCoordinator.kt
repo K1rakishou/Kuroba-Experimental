@@ -164,7 +164,12 @@ class ChanThreadLoaderCoordinator(
         }
 
         val descriptor = getDescriptor(requestParams.loadable)
-        val archiveDescriptor = Utils.getArchiveDescriptor(archivesManager, descriptor, requestParams)
+        val archiveDescriptor = Utils.getArchiveDescriptor(
+          archivesManager,
+          descriptor,
+          requestParams,
+          false
+        )
 
         if (!response.isSuccessful) {
           if (response.code == NOT_FOUND) {

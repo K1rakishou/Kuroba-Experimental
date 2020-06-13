@@ -5,6 +5,7 @@ import android.util.JsonToken
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchivePostMedia
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.util.extractFileNameExtension
 import com.github.adamantcheese.model.util.jsonObject
 import com.github.adamantcheese.model.util.nextStringOrNull
@@ -24,7 +25,14 @@ class ArchivesJsonParser(
         return@jsonObject
       }
 
-      val parsedThreadNo = nextName().toLongOrNull()
+      val jsonKey = nextName()
+      if (jsonKey == "error") {
+        val errorMessage = nextStringOrNull()
+          ?: "No error message"
+        throw ArchivesRemoteSource.ArchivesApiException(errorMessage)
+      }
+
+      val parsedThreadNo = jsonKey.toLongOrNull()
       if (parsedThreadNo == null || parsedThreadNo != threadNo) {
         logger.logError(TAG, "Bad parsedThreadNo: ${parsedThreadNo}, expected ${threadNo}")
         return@jsonObject

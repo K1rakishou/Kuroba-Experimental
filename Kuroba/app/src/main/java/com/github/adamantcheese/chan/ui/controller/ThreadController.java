@@ -124,6 +124,7 @@ public abstract class ThreadController
     /*
      * Used to save instance state
      */
+    @Nullable
     public Loadable getLoadable() {
         return threadLayout.presenter.getLoadable();
     }

@@ -246,7 +246,7 @@ class ThirdPartyArchiveInfoLocalSource(
         return thirdPartyArchiveFetchHistoryDao.deleteOlderThan(archiveId, fetchHistoryId)
     }
 
-    private suspend fun getChanThreadIdOrNull(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
+    suspend fun getChanThreadIdOrNull(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
         val chanBoardEntity = chanBoardDao.select(
                 threadDescriptor.siteName(),
                 threadDescriptor.boardCode()

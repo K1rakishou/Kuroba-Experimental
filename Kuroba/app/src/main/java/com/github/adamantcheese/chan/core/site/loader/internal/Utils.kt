@@ -10,12 +10,13 @@ internal object Utils {
   suspend fun getArchiveDescriptor(
     archivesManager: ArchivesManager,
     descriptor: ChanDescriptor,
-    requestParams: ChanLoaderRequestParams
+    requestParams: ChanLoaderRequestParams,
+    forced: Boolean
   ): ArchiveDescriptor? {
-    return if (requestParams.retrieveDeletedPostsFromArchives) {
+    return if (requestParams.retrieveDeletedPostsFromArchives || forced) {
       when (descriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
-          archivesManager.getArchiveDescriptor(descriptor)
+          archivesManager.getArchiveDescriptor(descriptor, forced)
             .unwrap()
         }
         is ChanDescriptor.CatalogDescriptor -> null

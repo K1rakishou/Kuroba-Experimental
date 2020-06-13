@@ -44,6 +44,16 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          return@tryWithTransaction localSource.insertEmptyThread(descriptor)
+        }
+      }
+    }
+  }
+
   /**
    * Returns a list of posts that differ from the cached ones and which we want to parse again and
    * show the user (otherwise show cached posts)
@@ -79,7 +89,9 @@ class ChanPostRepository(
     count: Int
   ): ModularResult<List<ChanPost>> {
     require(count > 0) { "Bad count param: $count" }
+
     val archiveIds = toArchiveIdsSet(archiveId)
+    logger.log(TAG, "getCatalogOriginalPosts(descriptor=$descriptor, archiveIds=${archiveIds}, count=$count)")
 
     return applicationScope.myAsync {
       return@myAsync suspendableInitializer.invokeWhenInitialized {
@@ -236,6 +248,7 @@ class ChanPostRepository(
     maxCount: Int
   ): ModularResult<List<ChanPost>> {
     val archiveIds = toArchiveIdsSet(archiveId)
+    logger.log(TAG, "getThreadPosts(descriptor=$descriptor, archiveIds=${archiveIds}, maxCount=$maxCount)")
 
     return applicationScope.myAsync {
       return@myAsync suspendableInitializer.invokeWhenInitialized {

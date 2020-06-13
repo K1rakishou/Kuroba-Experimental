@@ -225,7 +225,7 @@ class ThreadPresenter @Inject constructor(
         return@launch
       }
 
-      var archiveDescriptor = archivesManager.getArchiveDescriptor(descriptor)
+      var archiveDescriptor = archivesManager.getArchiveDescriptor(descriptor, false)
         .safeUnwrap { error ->
           Logger.e(
             TAG,

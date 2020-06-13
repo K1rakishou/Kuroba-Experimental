@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
@@ -19,6 +20,7 @@ class StorePostsInRepositoryUseCase(
     isCatalog: Boolean
   ): List<Long> {
     BackgroundUtils.ensureBackgroundThread()
+    Logger.d(TAG, "storePosts(postsCount=${posts.size}, isCatalog=$isCatalog)")
 
     if (posts.isEmpty()) {
       return emptyList()

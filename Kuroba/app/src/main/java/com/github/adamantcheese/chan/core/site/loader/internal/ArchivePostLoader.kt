@@ -27,13 +27,11 @@ internal class ArchivePostLoader(
         return@Try
       }
 
-      // TODO(KurobaEx): I need to make sure that no throttling is applied here, we always want
-      //  to load posts from archives when the original thread is dead.
       val postsFromArchive = getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
         emptyList(),
         requestParams.loadable,
         descriptor,
-        Utils.getArchiveDescriptor(archivesManager, descriptor, requestParams)
+        Utils.getArchiveDescriptor(archivesManager, descriptor, requestParams, true)
       ).safeUnwrap { error ->
         Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
           "posts from archive", error)

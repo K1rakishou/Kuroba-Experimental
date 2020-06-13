@@ -167,9 +167,10 @@ class ArchivesManager(
   }
 
   suspend fun getArchiveDescriptor(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    forced: Boolean
   ): ModularResult<ArchiveDescriptor?> {
-    Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor)")
+    Logger.d(TAG, "getArchiveDescriptor(threadDescriptor=$threadDescriptor, forced=$forced)")
 
     return Try {
       val enabledSuitableArchives = getEnabledSuitableArchives(threadDescriptor)
@@ -179,7 +180,8 @@ class ArchivesManager(
 
       return@Try getBestPossibleArchiveOrNull(
         threadDescriptor,
-        enabledSuitableArchives
+        enabledSuitableArchives,
+        forced
       )
     }
   }
@@ -356,7 +358,8 @@ class ArchivesManager(
 
   private suspend fun getBestPossibleArchiveOrNull(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    suitableArchives: List<ArchiveData>
+    suitableArchives: List<ArchiveData>,
+    forced: Boolean
   ): ArchiveDescriptor? {
     Logger.d(TAG, "getBestPossibleArchiveOrNull(threadDescriptor=$threadDescriptor, " +
       "suitableArchivesSize=${suitableArchives.size})")
@@ -374,7 +377,11 @@ class ArchivesManager(
       }?.getArchiveDescriptor()
     }
 
-    val fetchIsFreshTimeThreshold = DateTime.now().minus(ARCHIVE_UPDATE_INTERVAL)
+    val fetchIsFreshTimeThreshold = if (forced) {
+      DateTime.now()
+    } else {
+      DateTime.now().minus(ARCHIVE_UPDATE_INTERVAL)
+    }
 
     val sortedFetchHistoryList = fetchHistoryMap.mapNotNull { (archiveDescriptor, fetchHistoryList) ->
       // If fetch history contains at least one fetch that was executed later than

@@ -1,7 +1,6 @@
 package com.github.adamantcheese.chan.core.site.loader
 
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.google.gson.JsonParseException
 import java.net.SocketException
 import java.net.SocketTimeoutException
@@ -39,8 +38,6 @@ class ChanLoaderException(
             }
         }
 
-    fun toShortString() = exception.errorMessageOrClassName()
-
     private fun isServerErrorNotFound(exception: ServerException): Boolean {
         return exception.statusCode == 404
     }
@@ -53,6 +50,6 @@ class ChanLoaderException(
 
 class ServerException(val statusCode: Int) : Exception("Bad status code: ${statusCode}") {
     fun isAuthError(): Boolean {
-        return statusCode in 400..499
+        return statusCode == 401 || statusCode == 403
     }
 }

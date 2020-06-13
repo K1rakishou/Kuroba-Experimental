@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.cache.downloader
 import com.github.adamantcheese.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import io.reactivex.exceptions.CompositeException
+import javax.net.ssl.SSLException
 
 internal sealed class FileCacheException(message: String) : Exception(message) {
 
@@ -76,22 +77,30 @@ internal fun logErrorsAndExtractErrorMessage(tag: String, prefix: String, error:
 
         val result = sb.toString()
 
-        if (error is FileCacheException) {
-            logError(tag, result)
-        } else {
+        if (shouldPrintFullStacktrace(error)) {
             logError(tag, result, error)
+        } else {
+            logError(tag, result)
         }
 
         result
     } else {
         val msg = "$prefix, class = ${error.javaClass.simpleName}, message = ${error.message}"
 
-        if (error is FileCacheException) {
-            logError(tag, msg)
-        } else {
+        if (shouldPrintFullStacktrace(error)) {
             logError(tag, msg, error)
+        } else {
+            logError(tag, msg)
         }
 
         msg
+    }
+}
+
+private fun shouldPrintFullStacktrace(error: Throwable): Boolean {
+    return when (error) {
+        is FileCacheException -> false
+        is SSLException -> false
+        else -> true
     }
 }

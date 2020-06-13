@@ -51,21 +51,23 @@ class ParsePostsUseCase(
       return emptyList()
     }
 
-    var internalIds = postBuildersToParse
+    val internalIds = postBuildersToParse
       .map { postBuilder -> postBuilder.id }
-      .toSet()
+      .toMutableSet()
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
         ?: ArchiveDescriptor.NO_ARCHIVE_ID
 
       if (archiveId != ArchiveDescriptor.NO_ARCHIVE_ID) {
-        internalIds = chanPostRepository.getThreadPostIds(chanDescriptor, archiveId, maxCount)
+        val cachedInternalIds = chanPostRepository.getThreadPostIds(chanDescriptor, archiveId, maxCount)
           .mapErrorToValue { error ->
             Logger.e(TAG, "Error while trying to get post ids for a thread" +
               " (chanDescriptor=$chanDescriptor, archiveId=$archiveId, maxCount=$maxCount)", error)
             return@mapErrorToValue emptySet<Long>()
           }
+
+        internalIds.addAll(cachedInternalIds)
       }
     }
 

@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.ui.controller;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
+import android.text.InputType;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.Animation;
@@ -53,6 +54,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
+import com.github.adamantcheese.chan.utils.DialogUtils;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -81,6 +85,7 @@ public class BrowseController
     private static final int ACTION_SHARE = 905;
     private static final int ACTION_SCROLL_TO_TOP = 906;
     private static final int ACTION_SCROLL_TO_BOTTOM = 907;
+    private static final int ACTION_OPEN_THREAD_BY_ID = 908;
 
     private static final int SORT_MODE_BUMP = 1000;
     private static final int SORT_MODE_REPLY = 1001;
@@ -288,6 +293,7 @@ public class BrowseController
                 )
                 .build()
                 .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, this::openBrowserClicked)
+                .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, this::openThreadById)
                 .withSubItem(ACTION_SHARE, R.string.action_share, this::shareClicked)
                 .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, this::upClicked)
                 .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, this::downClicked)
@@ -384,6 +390,40 @@ public class BrowseController
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {
         handleShareAndOpenInBrowser(false);
+    }
+
+    private void openThreadById(ToolbarMenuSubItem item) {
+        Loadable loadable = getLoadable();
+        if (loadable == null) {
+            return;
+        }
+
+        DialogUtils.createSimpleDialogWithInput(
+                context,
+                R.string.browse_controller_enter_thread_id,
+                (input) -> {
+                    try {
+                        long threadNo = Long.parseLong(input);
+
+                        Loadable threadLoadable = Loadable.forThread(
+                                loadable.site,
+                                loadable.board,
+                                threadNo,
+                                String.valueOf(threadNo)
+                        );
+
+                        showThread(databaseLoadableManager.get(threadLoadable));
+                    } catch (NumberFormatException e) {
+                        showToast(
+                                context,
+                                context.getString(R.string.browse_controller_error_parsing_thread_id)
+                        );
+                    }
+
+                    return Unit.INSTANCE;
+                },
+                InputType.TYPE_CLASS_NUMBER
+        ).show();
     }
 
     private void shareClicked(ToolbarMenuSubItem item) {

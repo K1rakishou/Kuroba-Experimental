@@ -142,6 +142,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_retrieve_deleted_posts">Retrieve deleted posts from archive</string>
     <string name="action_open_browser">Open in a browser</string>
+    <string name="action_open_thread_by_id">Open a thread by it\'s ID</string>
     <string name="action_share">Share</string>
     <string name="action_go_to_post">Go to post</string>
     <string name="action_download_album">Download album</string>
@@ -795,6 +796,8 @@ Don't have a 4chan Pass?<br>
     <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
     <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
     <string name="browse_controller_cannot_open_thread_not_a_thread">Cannot open thread, bad loadable mode: %1$d</string>
+    <string name="browse_controller_enter_thread_id">Enter thread id</string>
+    <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
 
     <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
     <string name="thread_layout_remove_whole_chain">Remove whole chain</string>

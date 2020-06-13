@@ -28,6 +28,26 @@ class ChanPostLocalSource(
   private val chanTextSpanDao = database.chanTextSpanDao()
   private val chanPostReplyDao = database.chanPostReplyDao()
 
+  suspend fun insertEmptyThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
+    ensureInTransaction()
+
+    val chanBoardEntity = chanBoardDao.select(
+      threadDescriptor.siteName(),
+      threadDescriptor.boardCode()
+    )
+
+    if (chanBoardEntity == null) {
+      logger.logError(TAG, "Cannot insert empty thread (site ${threadDescriptor.siteName()} or " +
+        "board ${threadDescriptor.boardCode()} does not exist)")
+      return null
+    }
+
+    return chanThreadDao.insertDefaultOrIgnore(
+      chanBoardEntity.boardId,
+      threadDescriptor.opNo
+    )
+  }
+
   suspend fun insertOriginalPost(chanPost: ChanPost): Long {
     ensureInTransaction()
 

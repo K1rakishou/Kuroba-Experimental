@@ -17,6 +17,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
+import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLException
 
@@ -67,44 +68,19 @@ class GetPostsFromArchiveUseCase(
         descriptor.opNo
       )
 
-      val archiveThread = when (archiveThreadResult) {
-        is ModularResult.Error -> {
-          if (archiveThreadResult.error is CancellationException ||
-            archiveThreadResult.error is SSLException
-          ) {
-            Logger.e(
-              TAG,
-              "Error while fetching archive posts",
-              archiveThreadResult.error.errorMessageOrClassName()
-            )
-          } else {
-            Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
-          }
+      // In case of the user opening a thread via "Open thread by it's ID" menu we need to create
+      // an empty thread in the database otherwise no posts will be inserted and the user will
+      // see the 404 error.
+      val threadId = chanPostRepository.createEmptyThreadIfNotExists(descriptor)
+        .unwrap()
 
-          val fetchResult = ThirdPartyArchiveFetchResult.error(
-            archiveDescriptor,
-            descriptor,
-            archiveThreadResult.error.errorMessageOrClassName()
-          )
-
-          archivesManager.insertFetchHistory(fetchResult).unwrap()
-          ArchiveThread(emptyList())
-        }
-        is ModularResult.Value -> {
-          Logger.d(TAG, "Successfully fetched ${archiveThreadResult.value.posts.size} " +
-            "posts from archive ${archiveDescriptor}")
-
-          val fetchResult = ThirdPartyArchiveFetchResult.success(
-            archiveDescriptor,
-            descriptor
-          )
-
-          archivesManager.insertFetchHistory(fetchResult).unwrap()
-          archiveThreadResult.value
-        }
+      val archiveThread = handleResult(archiveThreadResult, archiveDescriptor, descriptor)
+      if (archiveThread.posts.isEmpty()) {
+        return@Try emptyList<Post.Builder>()
       }
 
-      if (archiveThread.posts.isEmpty()) {
+      if (threadId == null) {
+        Logger.e(TAG, "Couldn't create empty thread to for archive posts")
         return@Try emptyList<Post.Builder>()
       }
 
@@ -136,6 +112,68 @@ class GetPostsFromArchiveUseCase(
         archiveDescriptor
       )
     }
+  }
+
+  private suspend fun handleResult(
+    archiveThreadResult: ModularResult<ArchiveThread>,
+    archiveDescriptor: ArchiveDescriptor,
+    descriptor: ChanDescriptor.ThreadDescriptor
+  ): ArchiveThread {
+    when (archiveThreadResult) {
+      is ModularResult.Error -> {
+        if (archiveThreadResult.error is ArchivesRemoteSource.ArchivesApiException) {
+          Logger.e(TAG, "Archive api error", archiveThreadResult.error.errorMessageOrClassName())
+
+          // We need to insert a success fetch result here. We got an API error from the server (404)
+          // but for us it's still success since the archive is alive.
+          insertSuccessFetchResult(archiveDescriptor, descriptor)
+          return ArchiveThread(emptyList())
+        }
+
+        if (archiveThreadResult.error is CancellationException || archiveThreadResult.error is SSLException) {
+          val errorMsg = archiveThreadResult.error.errorMessageOrClassName()
+          Logger.e(TAG, "Error while fetching archive posts", errorMsg)
+        } else {
+          Logger.e(TAG, "Error while fetching archive posts", archiveThreadResult.error)
+        }
+
+        insertFailFetchResult(archiveDescriptor, descriptor, archiveThreadResult)
+        return ArchiveThread(emptyList())
+      }
+      is ModularResult.Value -> {
+        val postsCount = archiveThreadResult.value.posts.size
+        Logger.d(TAG, "Successfully fetched ${postsCount} posts from archive ${archiveDescriptor}")
+
+        insertSuccessFetchResult(archiveDescriptor, descriptor)
+        return archiveThreadResult.value
+      }
+    }
+  }
+
+  private suspend fun insertFailFetchResult(
+    archiveDescriptor: ArchiveDescriptor,
+    descriptor: ChanDescriptor.ThreadDescriptor,
+    archiveThreadResult: ModularResult.Error<ArchiveThread>
+  ) {
+    val fetchResult = ThirdPartyArchiveFetchResult.error(
+      archiveDescriptor,
+      descriptor,
+      archiveThreadResult.error.errorMessageOrClassName()
+    )
+
+    archivesManager.insertFetchHistory(fetchResult).unwrap()
+  }
+
+  private suspend fun insertSuccessFetchResult(
+    archiveDescriptor: ArchiveDescriptor,
+    descriptor: ChanDescriptor.ThreadDescriptor
+  ) {
+    val fetchResult = ThirdPartyArchiveFetchResult.success(
+      archiveDescriptor,
+      descriptor
+    )
+
+    archivesManager.insertFetchHistory(fetchResult).unwrap()
   }
 
   /**
