@@ -568,7 +568,6 @@ class ThreadPresenter @Inject constructor(
 
   override fun onChanLoaderError(error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "onChanLoaderError()")
     threadPresenterCallback?.showError(error)
   }
 

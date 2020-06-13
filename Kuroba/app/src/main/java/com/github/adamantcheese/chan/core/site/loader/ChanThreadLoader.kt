@@ -460,7 +460,7 @@ class ChanThreadLoader(val loadable: Loadable) {
       return
     }
 
-    Logger.e(TAG, "notifyAboutError()", error)
+    Logger.e(TAG, "onChanLoaderError()", error)
     listeners.forEach { listener -> listener.onChanLoaderError(error) }
   }
 

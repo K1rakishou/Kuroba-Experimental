@@ -934,7 +934,6 @@ public class WatchManager
         @Override
         public void onChanLoaderError(ChanLoaderException error) {
             BackgroundUtils.ensureMainThread();
-            Logger.d(TAG, "onChanLoaderError()");
 
             // Ignore normal network errors, we only pause pins when there is absolutely no way
             // we'll ever need watching again: a 404.
