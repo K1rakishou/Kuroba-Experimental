@@ -87,7 +87,7 @@ abstract class KurobaDatabase : RoomDatabase() {
         KurobaDatabase::class.java,
         DATABASE_NAME
       )
-        .fallbackToDestructiveMigrationOnDowngrade()
+        .fallbackToDestructiveMigration()
         .build()
     }
   }
