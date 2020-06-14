@@ -41,14 +41,14 @@ abstract class SiteBase : Site, CoroutineScope {
   private var siteConfig: SiteConfig? = null
   private val job = SupervisorJob()
 
-  protected val httpCallManager: HttpCallManager
-  protected val okHttpClient: NetModule.ProxiedOkHttpClient
-  protected val siteService: SiteService
-  protected val siteRepository: SiteRepository
-  protected val imageLoaderV2: ImageLoaderV2
-  protected val archivesManager: ArchivesManager
-  protected val boardManager: BoardManager
-  protected val postFilterManager: PostFilterManager
+  protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
+  protected val okHttpClient: NetModule.ProxiedOkHttpClient by lazy { instance(NetModule.ProxiedOkHttpClient::class.java) }
+  protected val siteService: SiteService by lazy { instance(SiteService::class.java) }
+  protected val siteRepository: SiteRepository by lazy { instance(SiteRepository::class.java) }
+  protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
+  protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }
+  protected val boardManager: BoardManager by lazy { instance(BoardManager::class.java) }
+  protected val postFilterManager: PostFilterManager by lazy { instance(PostFilterManager::class.java) }
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -57,17 +57,6 @@ abstract class SiteBase : Site, CoroutineScope {
   protected var settingsProvider: SettingProvider? = null
   private var userSettings: JsonSettings? = null
   private var initialized = false
-
-  init {
-    httpCallManager = instance(HttpCallManager::class.java)
-    okHttpClient = instance(NetModule.ProxiedOkHttpClient::class.java)
-    siteService = instance(SiteService::class.java)
-    siteRepository = instance(SiteRepository::class.java)
-    imageLoaderV2 = instance(ImageLoaderV2::class.java)
-    archivesManager = instance(ArchivesManager::class.java)
-    boardManager = instance(BoardManager::class.java)
-    postFilterManager = instance(PostFilterManager::class.java)
-  }
 
   override fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings) {
     if (initialized) {

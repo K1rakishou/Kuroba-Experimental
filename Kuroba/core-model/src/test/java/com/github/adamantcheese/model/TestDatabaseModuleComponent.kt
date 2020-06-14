@@ -14,111 +14,111 @@ import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
 
 class TestDatabaseModuleComponent(
-        private val application: Application = RuntimeEnvironment.application
+  private val application: Application = RuntimeEnvironment.application
 ) {
-    private val logger = Logger(true)
-    private var inMemoryDatabase: KurobaDatabase? = null
-    private var onDiskDatabase: KurobaDatabase? = null
-    private var okHttpClient: OkHttpClient? = null
-    private var gson: Gson? = null
+  private val logger = Logger(true)
+  private var inMemoryDatabase: KurobaDatabase? = null
+  private var onDiskDatabase: KurobaDatabase? = null
+  private var okHttpClient: OkHttpClient? = null
+  private var gson: Gson? = null
 
-    fun provideLogger() = logger
+  fun provideLogger() = logger
 
-    fun provideGson(): Gson {
-        if (gson == null) {
-            gson = Gson().newBuilder().create()
-        }
-
-        return gson!!
+  fun provideGson(): Gson {
+    if (gson == null) {
+      gson = Gson().newBuilder().create()
     }
 
-    fun provideOkHttpClient(): OkHttpClient {
-        if (okHttpClient == null) {
-            okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .writeTimeout(5, TimeUnit.SECONDS)
-                    .build()
-        }
+    return gson!!
+  }
 
-        return okHttpClient!!
+  fun provideOkHttpClient(): OkHttpClient {
+    if (okHttpClient == null) {
+      okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .writeTimeout(5, TimeUnit.SECONDS)
+        .build()
     }
 
-    fun provideInMemoryKurobaDatabase(): KurobaDatabase {
-        if (inMemoryDatabase != null) {
-            return inMemoryDatabase!!
-        }
+    return okHttpClient!!
+  }
 
-        inMemoryDatabase = Room.inMemoryDatabaseBuilder(
-                        application.applicationContext,
-                        KurobaDatabase::class.java
-                )
-                .build()
-
-        return inMemoryDatabase!!
+  fun provideInMemoryKurobaDatabase(): KurobaDatabase {
+    if (inMemoryDatabase != null) {
+      return inMemoryDatabase!!
     }
 
-    fun provideOnDiskKurobaDatabase(): KurobaDatabase {
-        if (onDiskDatabase != null) {
-            return onDiskDatabase!!
-        }
+    inMemoryDatabase = Room.inMemoryDatabaseBuilder(
+      application.applicationContext,
+      KurobaDatabase::class.java
+    )
+      .build()
 
-        onDiskDatabase = Room.databaseBuilder(
-          application.applicationContext,
-          KurobaDatabase::class.java,
-          "kuroba-test.db"
-        )
-          .build()
+    return inMemoryDatabase!!
+  }
 
-        return onDiskDatabase!!
+  fun provideOnDiskKurobaDatabase(): KurobaDatabase {
+    if (onDiskDatabase != null) {
+      return onDiskDatabase!!
     }
 
-    /**
-     * Local source
-     * */
+    onDiskDatabase = Room.databaseBuilder(
+      application.applicationContext,
+      KurobaDatabase::class.java,
+      "kuroba-test.db"
+    )
+      .build()
 
-    fun provideInlinedFileInfoLocalSource(): InlinedFileInfoLocalSource {
-        return InlinedFileInfoLocalSource(
-                provideInMemoryKurobaDatabase(),
-                "InlinedFileInfoLocalSource",
-                provideLogger()
-        )
-    }
+    return onDiskDatabase!!
+  }
 
-    fun provideChanPostLocalSource(database: KurobaDatabase = provideInMemoryKurobaDatabase()): ChanPostLocalSource {
-        return ChanPostLocalSource(
-          database,
-          "ChanPostLocalSource",
-          provideLogger(),
-          provideGson()
-        )
-    }
+  /**
+   * Local source
+   * */
 
-    fun provideMediaServiceLinkExtraContentLocalSource(): MediaServiceLinkExtraContentLocalSource {
-        return MediaServiceLinkExtraContentLocalSource(
-                provideInMemoryKurobaDatabase(),
-                "MediaServiceLinkExtraContentLocalSource",
-                provideLogger()
-        )
-    }
+  fun provideInlinedFileInfoLocalSource(): InlinedFileInfoLocalSource {
+    return InlinedFileInfoLocalSource(
+      provideInMemoryKurobaDatabase(),
+      "InlinedFileInfoLocalSource",
+      provideLogger()
+    )
+  }
 
-    /**
-     * Remote source
-     * */
+  fun provideChanPostLocalSource(database: KurobaDatabase = provideInMemoryKurobaDatabase()): ChanPostLocalSource {
+    return ChanPostLocalSource(
+      database,
+      "ChanPostLocalSource",
+      provideLogger(),
+      provideGson()
+    )
+  }
 
-    fun provideInlinedFileInfoRemoteSource(): InlinedFileInfoRemoteSource {
-        return InlinedFileInfoRemoteSource(
-                provideOkHttpClient(),
-                "InlinedFileInfoRemoteSource",
-                provideLogger()
-        )
-    }
+  fun provideMediaServiceLinkExtraContentLocalSource(): MediaServiceLinkExtraContentLocalSource {
+    return MediaServiceLinkExtraContentLocalSource(
+      provideInMemoryKurobaDatabase(),
+      "MediaServiceLinkExtraContentLocalSource",
+      provideLogger()
+    )
+  }
 
-    fun provideMediaServiceLinkExtraContentRemoteSource(): MediaServiceLinkExtraContentRemoteSource {
-        return MediaServiceLinkExtraContentRemoteSource(
-                provideOkHttpClient(),
-                "MediaServiceLinkExtraContentRemoteSource",
-                provideLogger()
-        )
-    }
+  /**
+   * Remote source
+   * */
+
+  fun provideInlinedFileInfoRemoteSource(): InlinedFileInfoRemoteSource {
+    return InlinedFileInfoRemoteSource(
+      provideOkHttpClient(),
+      "InlinedFileInfoRemoteSource",
+      provideLogger()
+    )
+  }
+
+  fun provideMediaServiceLinkExtraContentRemoteSource(): MediaServiceLinkExtraContentRemoteSource {
+    return MediaServiceLinkExtraContentRemoteSource(
+      provideOkHttpClient(),
+      "MediaServiceLinkExtraContentRemoteSource",
+      provideLogger()
+    )
+  }
 }

@@ -6,11 +6,11 @@ import okhttp3.mockwebserver.MockWebServer
 
 @Suppress("BlockingMethodInNonBlockingContext")
 internal fun withServer(func: suspend (MockWebServer) -> Unit) {
-    val server = MockWebServer()
+  val server = MockWebServer()
 
-    try {
-        runBlocking(Dispatchers.Default) { func(server) }
-    } finally {
-        server.shutdown()
-    }
+  try {
+    runBlocking(Dispatchers.Default) { func(server) }
+  } finally {
+    server.shutdown()
+  }
 }

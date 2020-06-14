@@ -10,33 +10,33 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 
 open class InlinedFileInfoRemoteSource(
-        okHttpClient: OkHttpClient,
-        loggerTag: String,
-        logger: Logger
+  okHttpClient: OkHttpClient,
+  loggerTag: String,
+  logger: Logger
 ) : AbstractRemoteSource(okHttpClient, logger) {
-    private val TAG = "$loggerTag InlinedFileInfoRemoteSource"
+  private val TAG = "$loggerTag InlinedFileInfoRemoteSource"
 
-    open suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
-        logger.log(TAG, "fetchFromNetwork($fileUrl)")
-        ensureBackgroundThread()
+  open suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
+    logger.log(TAG, "fetchFromNetwork($fileUrl)")
+    ensureBackgroundThread()
 
-        return Try {
-            val httpRequest = Request.Builder()
-                    .url(fileUrl)
-                    .head()
-                    .build()
+    return Try {
+      val httpRequest = Request.Builder()
+        .url(fileUrl)
+        .head()
+        .build()
 
-            val response = okHttpClient.suspendCall(httpRequest)
-            if (!response.isSuccessful) {
-                return@Try InlinedFileInfo.empty(fileUrl)
-            }
+      val response = okHttpClient.suspendCall(httpRequest)
+      if (!response.isSuccessful) {
+        return@Try InlinedFileInfo.empty(fileUrl)
+      }
 
-            val result = InlinedFileInfoRemoteSourceHelper.extractInlinedFileInfo(
-                    fileUrl,
-                    response.headers
-            )
+      val result = InlinedFileInfoRemoteSourceHelper.extractInlinedFileInfo(
+        fileUrl,
+        response.headers
+      )
 
-            return@Try result.unwrap()
-        }
+      return@Try result.unwrap()
     }
+  }
 }

@@ -15,96 +15,96 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class MediaServiceLinkExtraContentRemoteSourceTest {
-    lateinit var okHttpClient: OkHttpClient
-    lateinit var remoteSource: MediaServiceLinkExtraContentRemoteSource
+  lateinit var okHttpClient: OkHttpClient
+  lateinit var remoteSource: MediaServiceLinkExtraContentRemoteSource
 
-    @Before
-    fun setUp() {
-        ShadowLog.stream = System.out
-        val testDatabaseModuleComponent = TestDatabaseModuleComponent()
+  @Before
+  fun setUp() {
+    ShadowLog.stream = System.out
+    val testDatabaseModuleComponent = TestDatabaseModuleComponent()
 
-        okHttpClient = testDatabaseModuleComponent.provideOkHttpClient()
-        remoteSource = testDatabaseModuleComponent.provideMediaServiceLinkExtraContentRemoteSource()
-    }
+    okHttpClient = testDatabaseModuleComponent.provideOkHttpClient()
+    remoteSource = testDatabaseModuleComponent.provideMediaServiceLinkExtraContentRemoteSource()
+  }
 
-    @After
-    fun tearDown() {
-        okHttpClient.dispatcher.cancelAll()
-    }
+  @After
+  fun tearDown() {
+    okHttpClient.dispatcher.cancelAll()
+  }
 
-    @Test
-    fun `test with good response`() {
-        withServer { server ->
-            val youtubeLink = "/test_video_id"
-            val testTitle = "test title"
-            val testDuration = "P1M"
+  @Test
+  fun `test with good response`() {
+    withServer { server ->
+      val youtubeLink = "/test_video_id"
+      val testTitle = "test title"
+      val testDuration = "P1M"
 
-            server.enqueue(
-                    MockResponse()
-                            .setResponseCode(200)
-                            .setBody("""
-                                {
-                                    "items": [
-                                        {
-                                            "snippet": {
-                                                "title": "$testTitle"
-                                            },
-                                            "contentDetails": {
-                                                "duration": "$testDuration"
-                                            }
-                                        }
-                                    ]
-                                }
-                            """.trimIndent())
-            )
-
-            server.start()
-
-            kotlin.run {
-                val url = server.url(youtubeLink).toString()
-
-                val info = remoteSource.fetchFromNetwork(url, MediaServiceType.Youtube).unwrap()
-                assertEquals(info.videoTitle, testTitle)
-                assertEquals(info.videoDuration, Period.parse(testDuration))
+      server.enqueue(
+        MockResponse()
+          .setResponseCode(200)
+          .setBody("""
+    {
+        "items": [
+            {
+                "snippet": {
+                    "title": "$testTitle"
+                },
+                "contentDetails": {
+                    "duration": "$testDuration"
+                }
             }
-        }
+        ]
     }
+""".trimIndent())
+      )
 
-    @Test
-    fun `test with bad response`() {
-        withServer { server ->
-            val youtubeLink = "/test_video_id"
-            val testTitle = "test title"
-            val testDuration = "P1M"
+      server.start()
 
-            server.enqueue(
-                    MockResponse()
-                            .setResponseCode(200)
-                            .setBody("""
-                                {
-                                    "items": [
-                                        {
-                                            "snippet": {
-                                                "corrupted title": "$testTitle"
-                                            },
-                                            "contentDetails": {
-                                                "corrupted duration": "$testDuration"
-                                            }
-                                        }
-                                    ]
-                                }
-                            """.trimIndent())
-            )
+      kotlin.run {
+        val url = server.url(youtubeLink).toString()
 
-            server.start()
+        val info = remoteSource.fetchFromNetwork(url, MediaServiceType.Youtube).unwrap()
+        assertEquals(info.videoTitle, testTitle)
+        assertEquals(info.videoDuration, Period.parse(testDuration))
+      }
+    }
+  }
 
-            kotlin.run {
-                val url = server.url(youtubeLink).toString()
+  @Test
+  fun `test with bad response`() {
+    withServer { server ->
+      val youtubeLink = "/test_video_id"
+      val testTitle = "test title"
+      val testDuration = "P1M"
 
-                val info = remoteSource.fetchFromNetwork(url, MediaServiceType.Youtube).unwrap()
-                assertEquals(info.videoTitle, null)
-                assertEquals(info.videoDuration, null)
+      server.enqueue(
+        MockResponse()
+          .setResponseCode(200)
+          .setBody("""
+    {
+        "items": [
+            {
+                "snippet": {
+                    "corrupted title": "$testTitle"
+                },
+                "contentDetails": {
+                    "corrupted duration": "$testDuration"
+                }
             }
-        }
+        ]
     }
+""".trimIndent())
+      )
+
+      server.start()
+
+      kotlin.run {
+        val url = server.url(youtubeLink).toString()
+
+        val info = remoteSource.fetchFromNetwork(url, MediaServiceType.Youtube).unwrap()
+        assertEquals(info.videoTitle, null)
+        assertEquals(info.videoDuration, null)
+      }
+    }
+  }
 }

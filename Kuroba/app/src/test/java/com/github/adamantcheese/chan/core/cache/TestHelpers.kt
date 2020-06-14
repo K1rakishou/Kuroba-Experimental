@@ -13,36 +13,35 @@ import java.util.concurrent.atomic.AtomicLong
 private val executor = Executors.newSingleThreadExecutor()
 
 internal fun withServer(func: (MockWebServer) -> Unit) {
-    val server = MockWebServer()
+  val server = MockWebServer()
 
-    try {
-        func(server)
-    } finally {
-        server.shutdown()
-    }
+  try {
+    func(server)
+  } finally {
+    server.shutdown()
+  }
 }
 
 internal fun createFileDownloadRequest(
-        url: String,
-        chunksCount: Int = 1,
-        isBatchDownload: Boolean = false,
-        file: RawFile
+  url: String,
+  chunksCount: Int = 1,
+  isBatchDownload: Boolean = false,
+  file: RawFile
 ): FileDownloadRequest {
-    val cancelableDownload = CancelableDownload(
-            url,
-            CancelableDownload.DownloadType(isPrefetchDownload = false, isGalleryBatchDownload = isBatchDownload),
-            executor
-    )
+  val cancelableDownload = CancelableDownload(
+    url,
+    CancelableDownload.DownloadType(isPrefetchDownload = false, isGalleryBatchDownload = isBatchDownload),
+    executor
+  )
 
-    return spy(
-            FileDownloadRequest(
-                    url,
-                    file,
-                    AtomicInteger(chunksCount),
-                    AtomicLong(0),
-                    AtomicLong(0),
-                    cancelableDownload,
-                    DownloadRequestExtraInfo()
-            )
-    )
+  return spy(
+    FileDownloadRequest(
+      url,
+      AtomicInteger(chunksCount),
+      AtomicLong(0),
+      AtomicLong(0),
+      cancelableDownload,
+      DownloadRequestExtraInfo()
+    ).apply { setOutputFile(file) }
+  )
 }

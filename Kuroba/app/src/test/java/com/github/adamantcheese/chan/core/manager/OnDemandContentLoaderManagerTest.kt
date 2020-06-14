@@ -23,321 +23,321 @@ import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 class OnDemandContentLoaderManagerTest {
-    private val workerScheduler = TestScheduler()
+  private val workerScheduler = TestScheduler()
 
-    @Before
-    fun init() {
-        AndroidUtils.init(RuntimeEnvironment.application)
-        ShadowLog.stream = System.out
+  @Before
+  fun init() {
+    AndroidUtils.init(RuntimeEnvironment.application)
+    ShadowLog.stream = System.out
+  }
+
+  @Test
+  fun `test simple post event should return one update in two seconds`() {
+    val (loadable, post) = createTestData()
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader),
+        DummyLoader(LoaderType.PostExtraContentLoader),
+        DummyLoader(LoaderType.InlinedFileInfoLoader)
+      )
+    )
+
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    loaderManager.onPostBind(loadable, post)
+
+    workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
+    testSubscriber.assertNoValues()
+    workerScheduler.advanceTimeBy(
+      OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS,
+      TimeUnit.MILLISECONDS
+    )
+
+    testSubscriber.assertValueCount(1)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+
+    val event = testSubscriber.values().first()
+    assertTrue(event.results.first() is LoaderResult.Succeeded)
+  }
+
+  @Test
+  fun `test should return update right away when every loader has cached data`() {
+    val (loadable, post) = createTestData()
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader, cached = true),
+        DummyLoader(LoaderType.PostExtraContentLoader, cached = true),
+        DummyLoader(LoaderType.InlinedFileInfoLoader, cached = true)
+      )
+    )
+
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    loaderManager.onPostBind(loadable, post)
+    workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
+
+    testSubscriber.assertValueCount(1)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+
+    val event = testSubscriber.values().first()
+    assertTrue(event.results.first() is LoaderResult.Succeeded)
+  }
+
+  @Test
+  fun `test should not be able to add the same post more than once`() {
+    val (loadable, post) = createTestData()
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader),
+        DummyLoader(LoaderType.PostExtraContentLoader),
+        DummyLoader(LoaderType.InlinedFileInfoLoader)
+      )
+    )
+
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    loaderManager.onPostBind(loadable, post)
+    loaderManager.onPostBind(loadable, post)
+    loaderManager.onPostBind(loadable, post)
+    loaderManager.onPostBind(loadable, post)
+    workerScheduler.advanceTimeBy(
+      advanceByALot(),
+      TimeUnit.MILLISECONDS
+    )
+
+    testSubscriber.assertValueCount(1)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+
+    val event = testSubscriber.values().first()
+    assertTrue(event.results.first() is LoaderResult.Succeeded)
+  }
+
+  @Test
+  fun `test should not return any updates when unbind was called`() {
+    val (loadable, post) = createTestData()
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader),
+        DummyLoader(LoaderType.PostExtraContentLoader),
+        DummyLoader(LoaderType.InlinedFileInfoLoader)
+      )
+    )
+
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    loaderManager.onPostBind(loadable, post)
+
+    workerScheduler.advanceTimeBy(900, TimeUnit.MILLISECONDS)
+    testSubscriber.assertNoValues()
+    loaderManager.onPostUnbind(loadable, post, true)
+    workerScheduler.advanceTimeBy(
+      OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS,
+      TimeUnit.MILLISECONDS
+    )
+
+    testSubscriber.assertNoValues()
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+  }
+
+  @Test
+  fun `test should return error for loader that failed to load post content`() {
+    val (loadable, post) = createTestData()
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader),
+        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true)
+      )
+    )
+
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    loaderManager.onPostBind(loadable, post)
+    workerScheduler.advanceTimeBy(
+      advanceByALot(),
+      TimeUnit.MILLISECONDS
+    )
+
+    testSubscriber.assertValueCount(1)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+
+    val events = testSubscriber.values().first()
+    assertEquals(2, events.results.size)
+
+    val eventMap = hashMapOf<LoaderType, Boolean>().apply {
+      put(LoaderType.PrefetchLoader, false)
+      put(LoaderType.PostExtraContentLoader, false)
     }
 
-    @Test
-    fun `test simple post event should return one update in two seconds`() {
-        val (loadable, post) = createTestData()
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.PostExtraContentLoader),
-                        DummyLoader(LoaderType.InlinedFileInfoLoader)
-                )
-        )
+    events.results.forEach { event ->
+      eventMap[event.loaderType] = true
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-        loaderManager.onPostBind(loadable, post)
-
-        workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
-        testSubscriber.assertNoValues()
-        workerScheduler.advanceTimeBy(
-                OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS,
-                TimeUnit.MILLISECONDS
-        )
-
-        testSubscriber.assertValueCount(1)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
-
-        val event = testSubscriber.values().first()
-        assertTrue(event.results.first() is LoaderResult.Succeeded)
+      when (event.loaderType) {
+        LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Succeeded)
+        LoaderType.PostExtraContentLoader -> assertTrue(event is LoaderResult.Failed)
+        LoaderType.InlinedFileInfoLoader -> throw RuntimeException("Shouldn't happen")
+      }.exhaustive
     }
 
-    @Test
-    fun `test should return update right away when every loader has cached data`() {
-        val (loadable, post) = createTestData()
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader, cached = true),
-                        DummyLoader(LoaderType.PostExtraContentLoader, cached = true),
-                        DummyLoader(LoaderType.InlinedFileInfoLoader, cached = true)
-                )
-        )
+    assertTrue(eventMap.values.all { eventPresent -> eventPresent })
+  }
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-        loaderManager.onPostBind(loadable, post)
-        workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
+  @Test
+  fun `test bind 1000 posts check no backpressure exception`() {
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      setOf(
+        DummyLoader(LoaderType.PrefetchLoader),
+        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true),
+        DummyLoader(LoaderType.InlinedFileInfoLoader)
+      )
+    )
 
-        testSubscriber.assertValueCount(1)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
 
-        val event = testSubscriber.values().first()
-        assertTrue(event.results.first() is LoaderResult.Succeeded)
+    repeat(1000) { i ->
+      val (loadable, post) = createTestData(i + 1000L)
+      loaderManager.onPostBind(loadable, post)
     }
 
-    @Test
-    fun `test should not be able to add the same post more than once`() {
-        val (loadable, post) = createTestData()
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.PostExtraContentLoader),
-                        DummyLoader(LoaderType.InlinedFileInfoLoader)
-                )
-        )
+    workerScheduler.advanceTimeBy(15000, TimeUnit.MILLISECONDS)
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-        loaderManager.onPostBind(loadable, post)
-        loaderManager.onPostBind(loadable, post)
-        loaderManager.onPostBind(loadable, post)
-        loaderManager.onPostBind(loadable, post)
-        workerScheduler.advanceTimeBy(
-                advanceByALot(),
-                TimeUnit.MILLISECONDS
-        )
+    testSubscriber.assertValueCount(1000)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+  }
 
-        testSubscriber.assertValueCount(1)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+  @Test
+  fun `test startLoading is never called when canceling before delay passed`() {
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaders = setOf(
+      spy(DummyLoader(LoaderType.PrefetchLoader)),
+      spy(DummyLoader(LoaderType.PostExtraContentLoader))
+    )
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      loaders
+    )
 
-        val event = testSubscriber.values().first()
-        assertTrue(event.results.first() is LoaderResult.Succeeded)
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+
+    repeat(10) { i ->
+      val (loadable, post) = createTestData(i + 1000L)
+      loaderManager.onPostBind(loadable, post)
     }
 
-    @Test
-    fun `test should not return any updates when unbind was called`() {
-        val (loadable, post) = createTestData()
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.PostExtraContentLoader),
-                        DummyLoader(LoaderType.InlinedFileInfoLoader)
-                )
-        )
+    val (_, loadable) = createTestLoadable()
+    loaderManager.cancelAllForLoadable(loadable)
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-        loaderManager.onPostBind(loadable, post)
+    workerScheduler.advanceTimeBy(
+      advanceByALot(),
+      TimeUnit.MILLISECONDS
+    )
 
-        workerScheduler.advanceTimeBy(900, TimeUnit.MILLISECONDS)
-        testSubscriber.assertNoValues()
-        loaderManager.onPostUnbind(loadable, post, true)
-        workerScheduler.advanceTimeBy(
-                OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS,
-                TimeUnit.MILLISECONDS
-        )
-
-        testSubscriber.assertNoValues()
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    loaders.forEach { loader ->
+      verify(loader, never()).startLoading(any())
+      verify(loader, times(10)).cancelLoading(any())
     }
 
-    @Test
-    fun `test should return error for loader that failed to load post content`() {
-        val (loadable, post) = createTestData()
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true)
-                )
-        )
+    testSubscriber.assertNoValues()
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+  }
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-        loaderManager.onPostBind(loadable, post)
-        workerScheduler.advanceTimeBy(
-                advanceByALot(),
-                TimeUnit.MILLISECONDS
-        )
+  @Test
+  fun `test startLoading and cancelLoading are called when canceling after delay passed`() {
+    val testSubscriber = TestSubscriber<LoaderBatchResult>()
+    val loaders = setOf(
+      spy(DummyLoader(LoaderType.PrefetchLoader)),
+      spy(DummyLoader(LoaderType.PostExtraContentLoader))
+    )
+    val loaderManager = OnDemandContentLoaderManager(
+      workerScheduler,
+      loaders
+    )
 
-        testSubscriber.assertValueCount(1)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
 
-        val events = testSubscriber.values().first()
-        assertEquals(2, events.results.size)
-
-        val eventMap = hashMapOf<LoaderType, Boolean>().apply {
-            put(LoaderType.PrefetchLoader, false)
-            put(LoaderType.PostExtraContentLoader, false)
-        }
-
-        events.results.forEach { event ->
-            eventMap[event.loaderType] = true
-
-            when (event.loaderType) {
-                LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Succeeded)
-                LoaderType.PostExtraContentLoader -> assertTrue(event is LoaderResult.Failed)
-                LoaderType.InlinedFileInfoLoader -> throw RuntimeException("Shouldn't happen")
-            }.exhaustive
-        }
-
-        assertTrue(eventMap.values.all { eventPresent -> eventPresent })
+    repeat(10) { i ->
+      val (loadable, post) = createTestData(i + 1000L)
+      loaderManager.onPostBind(loadable, post)
     }
 
-    @Test
-    fun `test bind 1000 posts check no backpressure exception`() {
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                setOf(
-                        DummyLoader(LoaderType.PrefetchLoader),
-                        DummyLoader(LoaderType.PostExtraContentLoader, failLoading = true),
-                        DummyLoader(LoaderType.InlinedFileInfoLoader)
-                )
-        )
+    val (_, loadable) = createTestLoadable()
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+    workerScheduler.advanceTimeBy(
+      advanceByALot(),
+      TimeUnit.MILLISECONDS
+    )
+    loaderManager.cancelAllForLoadable(loadable)
 
-        repeat(1000) { i ->
-            val (loadable, post) = createTestData(i + 1000)
-            loaderManager.onPostBind(loadable, post)
-        }
-
-        workerScheduler.advanceTimeBy(15000, TimeUnit.MILLISECONDS)
-
-        testSubscriber.assertValueCount(1000)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    loaders.forEach { loader ->
+      verify(loader, times(10)).startLoading(any())
+      verify(loader, times(10)).cancelLoading(any())
     }
 
-    @Test
-    fun `test startLoading is never called when canceling before delay passed`() {
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaders = setOf(
-                spy(DummyLoader(LoaderType.PrefetchLoader)),
-                spy(DummyLoader(LoaderType.PostExtraContentLoader))
-        )
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                loaders
-        )
+    testSubscriber.assertValueCount(10)
+    testSubscriber.assertNoErrors()
+    testSubscriber.assertNotComplete()
+  }
 
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
+  private fun advanceByALot() = OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300
 
-        repeat(10) { i ->
-            val (loadable, post) = createTestData(i + 1000)
-            loaderManager.onPostBind(loadable, post)
-        }
+  private fun createTestData(postNo: Long = 1): TestData {
+    val (board, loadable) = createTestLoadable()
 
-        val (_, loadable) = createTestLoadable()
-        loaderManager.cancelAllForLoadable(loadable)
+    val post = Post.Builder()
+      .board(board)
+      .id(postNo)
+      .opId(postNo)
+      .setUnixTimestampSeconds(System.currentTimeMillis())
+      .comment("Test comment")
+      .build()
 
-        workerScheduler.advanceTimeBy(
-                advanceByALot(),
-                TimeUnit.MILLISECONDS
-        )
+    return TestData(loadable, post)
+  }
 
-        loaders.forEach { loader ->
-            verify(loader, never()).startLoading(any())
-            verify(loader, times(10)).cancelLoading(any())
-        }
+  private fun createTestLoadable(): Pair<Board, Loadable> {
+    val site = Chan4()
 
-        testSubscriber.assertNoValues()
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    val board = Board.fromSiteNameCode(site, "4chan", "test")
+    val loadable = Loadable.forThread(site, board, 1, "Test")
+
+    return Pair(board, loadable)
+  }
+
+  data class TestData(val loadable: Loadable, val post: Post)
+
+  open class DummyLoader(
+    loaderType: LoaderType,
+    private val failLoading: Boolean = false,
+    private val cached: Boolean = false
+  ) : OnDemandContentLoader(loaderType) {
+
+    override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
+      return Single.just(cached)
     }
 
-    @Test
-    fun `test startLoading and cancelLoading are called when canceling after delay passed`() {
-        val testSubscriber = TestSubscriber<LoaderBatchResult>()
-        val loaders = setOf(
-                spy(DummyLoader(LoaderType.PrefetchLoader)),
-                spy(DummyLoader(LoaderType.PostExtraContentLoader))
-        )
-        val loaderManager = OnDemandContentLoaderManager(
-                workerScheduler,
-                loaders
-        )
-
-        loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
-
-        repeat(10) { i ->
-            val (loadable, post) = createTestData(i + 1000)
-            loaderManager.onPostBind(loadable, post)
-        }
-
-        val (_, loadable) = createTestLoadable()
-
-        workerScheduler.advanceTimeBy(
-                advanceByALot(),
-                TimeUnit.MILLISECONDS
-        )
-        loaderManager.cancelAllForLoadable(loadable)
-
-        loaders.forEach { loader ->
-            verify(loader, times(10)).startLoading(any())
-            verify(loader, times(10)).cancelLoading(any())
-        }
-
-        testSubscriber.assertValueCount(10)
-        testSubscriber.assertNoErrors()
-        testSubscriber.assertNotComplete()
+    override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+      return if (failLoading) {
+        Single.just(LoaderResult.Failed(loaderType))
+      } else {
+        Single.just(LoaderResult.Succeeded(loaderType, true))
+      }
     }
 
-    private fun advanceByALot() = OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300
-
-    private fun createTestData(postNo: Int = 1): TestData {
-        val (board, loadable) = createTestLoadable()
-
-        val post = Post.Builder()
-                .board(board)
-                .id(postNo)
-                .opId(postNo)
-                .setUnixTimestampSeconds(System.currentTimeMillis())
-                .comment("Test comment")
-                .build()
-
-        return TestData(loadable, post)
+    override fun cancelLoading(postLoaderData: PostLoaderData) {
     }
-
-    private fun createTestLoadable(): Pair<Board, Loadable> {
-        val site = Chan4()
-
-        val board = Board.fromSiteNameCode(site, "4chan", "test")
-        val loadable = Loadable.forThread(site, board, 1, "Test")
-
-        return Pair(board, loadable)
-    }
-
-    data class TestData(val loadable: Loadable, val post: Post)
-
-    open class DummyLoader(
-            loaderType: LoaderType,
-            private val failLoading: Boolean = false,
-            private val cached: Boolean = false
-    ) : OnDemandContentLoader(loaderType) {
-
-        override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-            return Single.just(cached)
-        }
-
-        override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
-            return if (failLoading) {
-                Single.just(LoaderResult.Failed(loaderType))
-            } else {
-                Single.just(LoaderResult.Succeeded(loaderType, true))
-            }
-        }
-
-        override fun cancelLoading(postLoaderData: PostLoaderData) {
-        }
-    }
+  }
 
 }

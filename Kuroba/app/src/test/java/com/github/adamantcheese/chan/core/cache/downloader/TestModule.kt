@@ -16,166 +16,166 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 class TestModule {
-    private var okHttpClient: OkHttpClient? = null
-    private var fileManager: FileManager? = null
-    private var cacheHandler: CacheHandler? = null
-    private var chunkDownloader: ChunkDownloader? = null
-    private var activeDownloads: ActiveDownloads? = null
-    private var concurrentChunkedFileDownloader: ConcurrentChunkedFileDownloader? = null
-    private var partialContentSupportChecker: PartialContentSupportChecker? = null
-    private var chunkPersister: ChunkPersister? = null
-    private var chunkMerger: ChunkMerger? = null
-    private var siteResolver: SiteResolver? = null
+  private var okHttpClient: OkHttpClient? = null
+  private var fileManager: FileManager? = null
+  private var cacheHandler: CacheHandler? = null
+  private var chunkDownloader: ChunkDownloader? = null
+  private var activeDownloads: ActiveDownloads? = null
+  private var concurrentChunkedFileDownloader: ConcurrentChunkedFileDownloader? = null
+  private var partialContentSupportChecker: PartialContentSupportChecker? = null
+  private var chunkPersister: ChunkPersister? = null
+  private var chunkMerger: ChunkMerger? = null
+  private var siteResolver: SiteResolver? = null
 
-    private var cacheDirFile: RawFile? = null
-    private var chunksCacheDirFile: RawFile? = null
+  private var cacheDirFile: RawFile? = null
+  private var chunksCacheDirFile: RawFile? = null
 
-    fun provideApplication() = RuntimeEnvironment.application
-    fun provideContext() = provideApplication().applicationContext
+  fun provideApplication() = RuntimeEnvironment.application
+  fun provideContext() = provideApplication().applicationContext
 
-    internal fun provideChunkReader(): ChunkPersister {
-        if (chunkPersister == null) {
-            chunkPersister = ChunkPersister(
-                    provideFileManager(),
-                    provideCacheHandler(),
-                    provideActiveDownloads(),
-                    false
-            )
-        }
-
-        return chunkPersister!!
+  internal fun provideChunkReader(): ChunkPersister {
+    if (chunkPersister == null) {
+      chunkPersister = ChunkPersister(
+        provideFileManager(),
+        provideCacheHandler(),
+        provideActiveDownloads(),
+        false
+      )
     }
 
-    internal fun provideSiteResolver(): SiteResolver {
-        if (siteResolver == null) {
-            siteResolver = mock()
-        }
+    return chunkPersister!!
+  }
 
-        return siteResolver!!
+  internal fun provideSiteResolver(): SiteResolver {
+    if (siteResolver == null) {
+      siteResolver = mock()
     }
 
-    internal fun provideChunkPersister(): ChunkMerger {
-        if (chunkMerger == null) {
-            chunkMerger = ChunkMerger(
-                    provideFileManager(),
-                    provideCacheHandler(),
-                    provideSiteResolver(),
-                    provideActiveDownloads(),
-                    false
-            )
-        }
+    return siteResolver!!
+  }
 
-        return chunkMerger!!
+  internal fun provideChunkPersister(): ChunkMerger {
+    if (chunkMerger == null) {
+      chunkMerger = ChunkMerger(
+        provideFileManager(),
+        provideCacheHandler(),
+        provideSiteResolver(),
+        provideActiveDownloads(),
+        false
+      )
     }
 
-    internal fun providePartialContentSupportChecker(): PartialContentSupportChecker {
-        if (partialContentSupportChecker == null) {
-            partialContentSupportChecker = PartialContentSupportChecker(
-                    provideOkHttpClient(),
-                    provideActiveDownloads(),
-                    provideSiteResolver(),
-                    250L
-            )
-        }
+    return chunkMerger!!
+  }
 
-        return partialContentSupportChecker!!
+  internal fun providePartialContentSupportChecker(): PartialContentSupportChecker {
+    if (partialContentSupportChecker == null) {
+      partialContentSupportChecker = PartialContentSupportChecker(
+        provideOkHttpClient(),
+        provideActiveDownloads(),
+        provideSiteResolver(),
+        250L
+      )
     }
 
-    internal fun provideConcurrentChunkDownloader(): ConcurrentChunkedFileDownloader {
-        if (concurrentChunkedFileDownloader == null) {
-            concurrentChunkedFileDownloader = ConcurrentChunkedFileDownloader(
-                    provideFileManager(),
-                    provideChunkDownloader(),
-                    provideChunkReader(),
-                    provideChunkPersister(),
-                    Schedulers.single(),
-                    false,
-                    provideActiveDownloads(),
-                    provideCacheHandler()
-            )
-        }
+    return partialContentSupportChecker!!
+  }
 
-        return concurrentChunkedFileDownloader!!
+  internal fun provideConcurrentChunkDownloader(): ConcurrentChunkedFileDownloader {
+    if (concurrentChunkedFileDownloader == null) {
+      concurrentChunkedFileDownloader = ConcurrentChunkedFileDownloader(
+        provideFileManager(),
+        provideChunkDownloader(),
+        provideChunkReader(),
+        provideChunkPersister(),
+        Schedulers.single(),
+        false,
+        provideActiveDownloads(),
+        provideCacheHandler()
+      )
     }
 
-    internal fun provideActiveDownloads(): ActiveDownloads {
-        if (activeDownloads == null) {
-            activeDownloads = ActiveDownloads()
-        }
+    return concurrentChunkedFileDownloader!!
+  }
 
-        return activeDownloads!!
+  internal fun provideActiveDownloads(): ActiveDownloads {
+    if (activeDownloads == null) {
+      activeDownloads = ActiveDownloads()
     }
 
-    internal fun provideChunkDownloader(): ChunkDownloader {
-        if (chunkDownloader == null) {
-            chunkDownloader = ChunkDownloader(
-                    provideOkHttpClient(),
-                    provideActiveDownloads(),
-                    false
-            )
-        }
+    return activeDownloads!!
+  }
 
-        return chunkDownloader!!
+  internal fun provideChunkDownloader(): ChunkDownloader {
+    if (chunkDownloader == null) {
+      chunkDownloader = ChunkDownloader(
+        provideOkHttpClient(),
+        provideActiveDownloads(),
+        false
+      )
     }
 
-    fun provideFileManager(): FileManager {
-        if (fileManager == null) {
-            fileManager = FileManager(
-                    provideContext(),
-                    BadPathSymbolResolutionStrategy.ThrowAnException,
-                    DirectoryManager(provideContext())
-            )
-        }
+    return chunkDownloader!!
+  }
 
-        return fileManager!!
+  fun provideFileManager(): FileManager {
+    if (fileManager == null) {
+      fileManager = FileManager(
+        provideContext(),
+        BadPathSymbolResolutionStrategy.ThrowAnException,
+        DirectoryManager(provideContext())
+      )
     }
 
-    fun provideCacheHandler(): CacheHandler {
-        if (cacheHandler == null) {
-            cacheHandler = CacheHandler(
-                    provideFileManager(),
-                    provideCacheDirFile(),
-                    provideChunksCacheDirFile(),
-                    false
-            )
-        }
+    return fileManager!!
+  }
 
-        return cacheHandler!!
+  fun provideCacheHandler(): CacheHandler {
+    if (cacheHandler == null) {
+      cacheHandler = CacheHandler(
+        provideFileManager(),
+        provideCacheDirFile(),
+        provideChunksCacheDirFile(),
+        false
+      )
     }
 
-    fun provideCacheDirFile(): RawFile {
-        if (cacheDirFile == null) {
-            val fileMan = provideFileManager()
+    return cacheHandler!!
+  }
 
-            cacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "cache_dir"))
-            assertNotNull(fileMan.create(cacheDirFile!!))
-            assertTrue(fileMan.deleteContent(cacheDirFile!!))
-        }
+  fun provideCacheDirFile(): RawFile {
+    if (cacheDirFile == null) {
+      val fileMan = provideFileManager()
 
-        return cacheDirFile!!
+      cacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "cache_dir"))
+      assertNotNull(fileMan.create(cacheDirFile!!))
+      assertTrue(fileMan.deleteContent(cacheDirFile!!))
     }
 
-    fun provideChunksCacheDirFile(): RawFile {
-        if (chunksCacheDirFile == null) {
-            val fileMan = provideFileManager()
+    return cacheDirFile!!
+  }
 
-            chunksCacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "chunks_cache_dir"))
-            assertNotNull(fileMan.create(chunksCacheDirFile!!))
-            assertTrue(fileMan.deleteContent(chunksCacheDirFile!!))
-        }
+  fun provideChunksCacheDirFile(): RawFile {
+    if (chunksCacheDirFile == null) {
+      val fileMan = provideFileManager()
 
-        return chunksCacheDirFile!!
+      chunksCacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "chunks_cache_dir"))
+      assertNotNull(fileMan.create(chunksCacheDirFile!!))
+      assertTrue(fileMan.deleteContent(chunksCacheDirFile!!))
     }
 
-    fun provideOkHttpClient(): OkHttpClient {
-        if (okHttpClient == null) {
-            okHttpClient = OkHttpClient.Builder()
-                    .connectTimeout(5, TimeUnit.SECONDS)
-                    .readTimeout(5, TimeUnit.SECONDS)
-                    .writeTimeout(5, TimeUnit.SECONDS)
-                    .build()
-        }
+    return chunksCacheDirFile!!
+  }
 
-        return okHttpClient!!
+  fun provideOkHttpClient(): OkHttpClient {
+    if (okHttpClient == null) {
+      okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(5, TimeUnit.SECONDS)
+        .readTimeout(5, TimeUnit.SECONDS)
+        .writeTimeout(5, TimeUnit.SECONDS)
+        .build()
     }
+
+    return okHttpClient!!
+  }
 }
