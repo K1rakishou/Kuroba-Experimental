@@ -1,11 +1,9 @@
 package com.github.adamantcheese.chan.core.image
 
 import android.content.Context
-import android.content.ContextWrapper
 import android.graphics.drawable.BitmapDrawable
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.Lifecycle
 import coil.ImageLoader
 import coil.network.HttpException
 import coil.request.LoadRequest
@@ -13,25 +11,14 @@ import coil.request.RequestDisposable
 import coil.size.Scale
 import coil.transform.Transformation
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.getLifecycleFromContext
 import java.util.concurrent.atomic.AtomicReference
 
 class ImageLoaderV2(private val imageLoader: ImageLoader) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
-
-  private fun getLifecycleFromContext(context: Context): Lifecycle {
-    return when (context) {
-      is StartActivity -> context.lifecycle
-      is ContextWrapper -> (context.baseContext as? StartActivity)?.lifecycle
-        ?: throw IllegalArgumentException("context.baseContext is not StartActivity context, " +
-          "actual: " + context::class.java.simpleName)
-      else -> throw IllegalArgumentException("Bad context type! Must be either StartActivity " +
-        "or ContextThemeWrapper, actual: " + context::class.java.simpleName)
-    }
-  }
 
   fun loadFromNetwork(
     context: Context,
@@ -52,7 +39,7 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
   ): RequestDisposable {
     val listenerRef = AtomicReference(listener)
     val contextRef = AtomicReference(context)
-    val lifecycle = getLifecycleFromContext(context)
+    val lifecycle = context.getLifecycleFromContext()
 
     val request = with(LoadRequest.Builder(context)) {
       data(url)
@@ -112,7 +99,7 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
     listener: ImageListener
   ): RequestDisposable {
     val localListener = AtomicReference(listener)
-    val lifecycle = getLifecycleFromContext(context)
+    val lifecycle = context.getLifecycleFromContext()
 
     val request = with(LoadRequest.Builder(context)) {
       data(url)

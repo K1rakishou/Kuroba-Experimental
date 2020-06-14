@@ -1,9 +1,13 @@
 package com.github.adamantcheese.chan.utils
 
+import android.content.Context
+import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.*
+import com.github.adamantcheese.chan.StartActivity
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import java.util.*
@@ -184,4 +188,15 @@ fun View.updateHeight(newHeight: Int) {
   val updatedLayoutParams = layoutParams
   updatedLayoutParams.height = newHeight
   layoutParams = updatedLayoutParams
+}
+
+fun Context.getLifecycleFromContext(): Lifecycle {
+  return when (this) {
+    is StartActivity -> this.lifecycle
+    is ContextWrapper -> (this.baseContext as? StartActivity)?.lifecycle
+      ?: throw IllegalArgumentException("context.baseContext is not StartActivity context, " +
+        "actual: " + this::class.java.simpleName)
+    else -> throw IllegalArgumentException("Bad context type! Must be either StartActivity " +
+      "or ContextThemeWrapper, actual: " + this::class.java.simpleName)
+  }
 }
