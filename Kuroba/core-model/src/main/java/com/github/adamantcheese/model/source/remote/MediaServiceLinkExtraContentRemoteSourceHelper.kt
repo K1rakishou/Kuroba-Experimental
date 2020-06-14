@@ -9,59 +9,59 @@ import org.joda.time.Period
 
 internal object MediaServiceLinkExtraContentRemoteSourceHelper {
 
-    fun tryExtractVideoDuration(
-            mediaServiceType: MediaServiceType,
-            parser: JsonElement
-    ): ModularResult<Period> {
-        ensureBackgroundThread()
+  fun tryExtractVideoDuration(
+    mediaServiceType: MediaServiceType,
+    parser: JsonElement
+  ): ModularResult<Period> {
+    ensureBackgroundThread()
 
-        return Try {
-            return@Try when (mediaServiceType) {
-                MediaServiceType.Youtube -> tryExtractYoutubeVideoDuration(parser)
-            }
-        }
+    return Try {
+      return@Try when (mediaServiceType) {
+        MediaServiceType.Youtube -> tryExtractYoutubeVideoDuration(parser)
+      }
     }
+  }
 
-    fun tryExtractVideoTitle(
-            mediaServiceType: MediaServiceType,
-            parser: JsonElement
-    ): ModularResult<String> {
-        ensureBackgroundThread()
+  fun tryExtractVideoTitle(
+    mediaServiceType: MediaServiceType,
+    parser: JsonElement
+  ): ModularResult<String> {
+    ensureBackgroundThread()
 
-        return Try {
-            return@Try when (mediaServiceType) {
-                MediaServiceType.Youtube -> tryExtractYoutubeVideoTitle(parser)
-            }
-        }
+    return Try {
+      return@Try when (mediaServiceType) {
+        MediaServiceType.Youtube -> tryExtractYoutubeVideoTitle(parser)
+      }
     }
+  }
 
-    private fun tryExtractYoutubeVideoTitle(parser: JsonElement): String {
-        ensureBackgroundThread()
+  private fun tryExtractYoutubeVideoTitle(parser: JsonElement): String {
+    ensureBackgroundThread()
 
-        return parser.asJsonObject
-                .get("items")
-                .asJsonArray
-                .get(0)
-                .asJsonObject
-                .get("snippet")
-                .asJsonObject
-                .get("title")
-                .asString
-    }
+    return parser.asJsonObject
+      .get("items")
+      .asJsonArray
+      .get(0)
+      .asJsonObject
+      .get("snippet")
+      .asJsonObject
+      .get("title")
+      .asString
+  }
 
-    private fun tryExtractYoutubeVideoDuration(parser: JsonElement): Period {
-        ensureBackgroundThread()
+  private fun tryExtractYoutubeVideoDuration(parser: JsonElement): Period {
+    ensureBackgroundThread()
 
-        val durationUnparsed = parser.asJsonObject
-                .get("items")
-                .asJsonArray
-                .get(0)
-                .asJsonObject
-                .get("contentDetails")
-                .asJsonObject
-                .get("duration")
-                .asString
+    val durationUnparsed = parser.asJsonObject
+      .get("items")
+      .asJsonArray
+      .get(0)
+      .asJsonObject
+      .get("contentDetails")
+      .asJsonObject
+      .get("duration")
+      .asString
 
-        return Period.parse(durationUnparsed)
-    }
+    return Period.parse(durationUnparsed)
+  }
 }

@@ -11,25 +11,25 @@ import okhttp3.Protocol
 
 object DatabaseModuleInjector {
 
-    @JvmStatic
-    fun build(
-            application: Application,
-            dns: Dns,
-            protocols: List<Protocol>,
-            loggerTagPrefix: String,
-            verboseLogs: Boolean,
-            appConstants: AppConstants,
-            scope: CoroutineScope
-    ): ModelMainComponent {
-        return DaggerModelMainComponent.builder()
-                .application(application)
-                .okHttpDns(dns)
-                .okHttpProtocols(NetworkModule.OkHttpProtocolList(protocols))
-                .loggerTagPrefix(loggerTagPrefix)
-                .verboseLogs(verboseLogs)
-                .appConstants(appConstants)
-                .appCoroutineScope(scope)
-                .build()
-    }
+  @JvmStatic
+  fun build(
+    application: Application,
+    dns: Dns,
+    protocols: List<Protocol>,
+    loggerTagPrefix: String,
+    verboseLogs: Boolean,
+    appConstants: AppConstants,
+    scope: CoroutineScope
+  ): ModelMainComponent {
+    return DaggerModelMainComponent.builder()
+      .application(application)
+      .okHttpDns(dns)
+      .okHttpProtocols(NetworkModule.OkHttpProtocolList(protocols))
+      .loggerTagPrefix(loggerTagPrefix)
+      .verboseLogs(verboseLogs)
+      .appConstants(appConstants)
+      .appCoroutineScope(scope)
+      .build()
+  }
 
 }

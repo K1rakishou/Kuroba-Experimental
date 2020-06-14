@@ -5,10 +5,10 @@ import com.github.adamantcheese.common.loadable.LoadableType
 
 class LoadableTypeConverter {
 
-    @TypeConverter
-    fun toLoadableType(value: Int) = LoadableType.fromTypeValue(value)
+  @TypeConverter
+  fun toLoadableType(value: Int) = LoadableType.fromTypeValue(value)
 
-    @TypeConverter
-    fun fromLoadableType(loadableType: LoadableType) = loadableType.typeValue
+  @TypeConverter
+  fun fromLoadableType(loadableType: LoadableType) = loadableType.typeValue
 
 }

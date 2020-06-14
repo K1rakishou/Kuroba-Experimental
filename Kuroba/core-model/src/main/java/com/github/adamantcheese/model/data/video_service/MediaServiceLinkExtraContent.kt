@@ -9,41 +9,41 @@ import org.joda.time.Period
  * But maybe in the future?)
  * */
 open class MediaServiceLinkExtraContent(
-        // May be anything. For youtube it's the youtube's videoId but for different services it
-        // may as well be the whole URL if the service doesn't have a unique id
-        val videoId: String,
-        val mediaServiceType: MediaServiceType,
-        val videoTitle: String?,
-        val videoDuration: Period?
+  // May be anything. For youtube it's the youtube's videoId but for different services it
+  // may as well be the whole URL if the service doesn't have a unique id
+  val videoId: String,
+  val mediaServiceType: MediaServiceType,
+  val videoTitle: String?,
+  val videoDuration: Period?
 ) {
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is MediaServiceLinkExtraContent) return false
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is MediaServiceLinkExtraContent) return false
 
-        if (videoId != other.videoId) return false
-        if (mediaServiceType != other.mediaServiceType) return false
-        if (videoTitle != other.videoTitle) return false
-        if (videoDuration != other.videoDuration) return false
+    if (videoId != other.videoId) return false
+    if (mediaServiceType != other.mediaServiceType) return false
+    if (videoTitle != other.videoTitle) return false
+    if (videoDuration != other.videoDuration) return false
 
-        return true
-    }
+    return true
+  }
 
-    override fun hashCode(): Int {
-        var result = videoId.hashCode()
-        result = 31 * result + mediaServiceType.hashCode()
-        result = 31 * result + (videoTitle?.hashCode() ?: 0)
-        result = 31 * result + (videoDuration?.hashCode() ?: 0)
-        return result
-    }
+  override fun hashCode(): Int {
+    var result = videoId.hashCode()
+    result = 31 * result + mediaServiceType.hashCode()
+    result = 31 * result + (videoTitle?.hashCode() ?: 0)
+    result = 31 * result + (videoDuration?.hashCode() ?: 0)
+    return result
+  }
 
-    override fun toString(): String {
-        return "MediaServiceLinkExtraContent(videoId='$videoId', mediaServiceType=$mediaServiceType, " +
-                "videoTitle=$videoTitle, videoDuration=$videoDuration)"
-    }
+  override fun toString(): String {
+    return "MediaServiceLinkExtraContent(videoId='$videoId', mediaServiceType=$mediaServiceType, " +
+      "videoTitle=$videoTitle, videoDuration=$videoDuration)"
+  }
 
-    fun isValid(): Boolean {
-        return videoDuration != null || videoTitle != null
-    }
+  fun isValid(): Boolean {
+    return videoDuration != null || videoTitle != null
+  }
 
 }

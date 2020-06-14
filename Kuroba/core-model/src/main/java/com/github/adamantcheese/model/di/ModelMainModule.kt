@@ -294,7 +294,7 @@ class ModelMainModule {
     @AppCoroutineScope scope: CoroutineScope,
     @LoggerTagPrefix loggerTag: String,
     navHistoryLocalSource: NavHistoryLocalSource
-  ) : HistoryNavigationRepository {
+  ): HistoryNavigationRepository {
     return HistoryNavigationRepository(
       database,
       loggerTag,

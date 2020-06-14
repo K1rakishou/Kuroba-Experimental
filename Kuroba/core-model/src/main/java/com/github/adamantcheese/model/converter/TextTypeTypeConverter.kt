@@ -5,13 +5,14 @@ import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
 
 class TextTypeTypeConverter {
 
-    @TypeConverter
-    fun toTextType(value: Int): ChanTextSpanEntity.TextType {
-        return ChanTextSpanEntity.TextType.fromValue(value)
-    }
+  @TypeConverter
+  fun toTextType(value: Int): ChanTextSpanEntity.TextType {
+    return ChanTextSpanEntity.TextType.fromValue(value)
+  }
 
-    @TypeConverter
-    fun fromTextType(textType: ChanTextSpanEntity.TextType): Int {
-        return textType.value
-    }
+  @TypeConverter
+  fun fromTextType(textType: ChanTextSpanEntity.TextType): Int {
+    return textType.value
+  }
+
 }

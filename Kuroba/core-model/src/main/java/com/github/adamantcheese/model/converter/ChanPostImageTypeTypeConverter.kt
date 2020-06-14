@@ -5,14 +5,14 @@ import com.github.adamantcheese.model.data.post.ChanPostImageType
 
 class ChanPostImageTypeTypeConverter {
 
-    @TypeConverter
-    fun toChanPostImageType(value: Int): ChanPostImageType {
-        return ChanPostImageType.fromValue(value)
-    }
+  @TypeConverter
+  fun toChanPostImageType(value: Int): ChanPostImageType {
+    return ChanPostImageType.fromValue(value)
+  }
 
-    @TypeConverter
-    fun fromChanPostImageType(chanPostImageType: ChanPostImageType): Int {
-        return chanPostImageType.value
-    }
+  @TypeConverter
+  fun fromChanPostImageType(chanPostImageType: ChanPostImageType): Int {
+    return chanPostImageType.value
+  }
 
 }

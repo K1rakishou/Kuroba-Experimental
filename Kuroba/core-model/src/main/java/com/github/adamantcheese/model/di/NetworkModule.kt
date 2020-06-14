@@ -13,20 +13,20 @@ import javax.inject.Singleton
 @Module
 class NetworkModule {
 
-    @Singleton
-    @Provides
-    fun provideOkHttpClient(
-            @OkHttpDns dns: Dns,
-            @OkHttpProtocols okHttpProtocols: OkHttpProtocolList
-    ): OkHttpClient {
-        return OkHttpClient().newBuilder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .protocols(okHttpProtocols.protocols)
-                .dns(dns)
-                .build()
-    }
+  @Singleton
+  @Provides
+  fun provideOkHttpClient(
+    @OkHttpDns dns: Dns,
+    @OkHttpProtocols okHttpProtocols: OkHttpProtocolList
+  ): OkHttpClient {
+    return OkHttpClient().newBuilder()
+      .connectTimeout(30, TimeUnit.SECONDS)
+      .readTimeout(30, TimeUnit.SECONDS)
+      .writeTimeout(30, TimeUnit.SECONDS)
+      .protocols(okHttpProtocols.protocols)
+      .dns(dns)
+      .build()
+  }
 
-    class OkHttpProtocolList(val protocols: List<Protocol>)
+  class OkHttpProtocolList(val protocols: List<Protocol>)
 }

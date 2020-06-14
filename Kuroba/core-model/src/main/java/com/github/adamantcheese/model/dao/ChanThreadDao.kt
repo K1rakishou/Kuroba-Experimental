@@ -10,10 +10,10 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 @Dao
 abstract class ChanThreadDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(chanThreadEntity: ChanThreadEntity): Long
+  @Insert(onConflict = OnConflictStrategy.ABORT)
+  abstract suspend fun insert(chanThreadEntity: ChanThreadEntity): Long
 
-    @Query("""
+  @Query("""
         UPDATE ${ChanThreadEntity.TABLE_NAME}
         SET ${ChanThreadEntity.STICKY_COLUMN_NAME} = :sticky,
             ${ChanThreadEntity.CLOSED_COLUMN_NAME} = :closed,
@@ -44,18 +44,18 @@ abstract class ChanThreadDao {
             END
         WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
     """)
-    abstract suspend fun update(
-      threadId: Long,
-      replies: Int,
-      threadImagesCount: Int,
-      uniqueIps: Int,
-      sticky: Boolean,
-      closed: Boolean,
-      archived: Boolean,
-      lastModified: Long
-    )
+  abstract suspend fun update(
+    threadId: Long,
+    replies: Int,
+    threadImagesCount: Int,
+    uniqueIps: Int,
+    sticky: Boolean,
+    closed: Boolean,
+    archived: Boolean,
+    lastModified: Long
+  )
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE 
@@ -63,43 +63,43 @@ abstract class ChanThreadDao {
         AND
             ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
     """)
-    abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
+  abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
 
-    suspend fun insertDefaultOrIgnore(ownerBoardId: Long, threadNo: Long): Long {
-        val prev = select(ownerBoardId, threadNo)
-        if (prev != null) {
-            return prev.threadId
-        }
-
-        return insert(ChanThreadEntity(0L, threadNo, ownerBoardId))
+  suspend fun insertDefaultOrIgnore(ownerBoardId: Long, threadNo: Long): Long {
+    val prev = select(ownerBoardId, threadNo)
+    if (prev != null) {
+      return prev.threadId
     }
 
-    suspend fun insertOrUpdate(
-            ownerBoardId: Long,
-            threadNo: Long,
-            chanThreadEntity: ChanThreadEntity
-    ): Long {
-        val prev = select(ownerBoardId, threadNo)
-        if (prev != null) {
-            chanThreadEntity.threadId = prev.threadId
+    return insert(ChanThreadEntity(0L, threadNo, ownerBoardId))
+  }
 
-            update(
-              chanThreadEntity.threadId,
-              chanThreadEntity.replies,
-              chanThreadEntity.threadImagesCount,
-              chanThreadEntity.uniqueIps,
-              chanThreadEntity.sticky,
-              chanThreadEntity.closed,
-              chanThreadEntity.archived,
-              chanThreadEntity.lastModified
-            )
-            return prev.threadId
-        }
+  suspend fun insertOrUpdate(
+    ownerBoardId: Long,
+    threadNo: Long,
+    chanThreadEntity: ChanThreadEntity
+  ): Long {
+    val prev = select(ownerBoardId, threadNo)
+    if (prev != null) {
+      chanThreadEntity.threadId = prev.threadId
 
-        return insert(chanThreadEntity)
+      update(
+        chanThreadEntity.threadId,
+        chanThreadEntity.replies,
+        chanThreadEntity.threadImagesCount,
+        chanThreadEntity.uniqueIps,
+        chanThreadEntity.sticky,
+        chanThreadEntity.closed,
+        chanThreadEntity.archived,
+        chanThreadEntity.lastModified
+      )
+      return prev.threadId
     }
 
-    @Query("""
+    return insert(chanThreadEntity)
+  }
+
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE 
@@ -107,37 +107,37 @@ abstract class ChanThreadDao {
         AND
             ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNoList)
     """)
-    abstract suspend fun selectManyByThreadNoList(
-            ownerBoardId: Long,
-            threadNoList: List<Long>
-    ): List<ChanThreadEntity>
+  abstract suspend fun selectManyByThreadNoList(
+    ownerBoardId: Long,
+    threadNoList: List<Long>
+  ): List<ChanThreadEntity>
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
         ORDER BY ${ChanThreadEntity.LAST_MODIFIED_COLUMN_NAME} DESC
         LIMIT :count
     """)
-    abstract suspend fun selectLatestThreads(ownerBoardId: Long, count: Int): List<ChanThreadEntity>
+  abstract suspend fun selectLatestThreads(ownerBoardId: Long, count: Int): List<ChanThreadEntity>
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} IN (:chanThreadIdList)
     """)
-    abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
+  abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
 
-    @Query("""
+  @Query("""
         DELETE FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE 
             ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
         AND
             ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
     """)
-    abstract suspend fun deleteThread(ownerBoardId: Long, threadNo: Long)
+  abstract suspend fun deleteThread(ownerBoardId: Long, threadNo: Long)
 
-    @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
-    abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
+  @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
+  abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
 
 }

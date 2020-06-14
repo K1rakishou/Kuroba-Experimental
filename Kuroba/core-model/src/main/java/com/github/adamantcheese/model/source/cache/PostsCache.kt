@@ -9,17 +9,19 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class PostsCache(private val maxValueCount: Int) {
-    private val mutex = Mutex()
-    private val currentValuesCount = AtomicInteger(0)
+  private val mutex = Mutex()
+  private val currentValuesCount = AtomicInteger(0)
 
-    @GuardedBy("mutex")
-    private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, NavigableMap<PostDescriptor, ChanPost>>()
-    @GuardedBy("mutex")
-    private val originalPostsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
-    @GuardedBy("mutex")
-    private val accessTimes = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+  @GuardedBy("mutex")
+  private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, NavigableMap<PostDescriptor, ChanPost>>()
 
-    suspend fun putIntoCache(postDescriptor: PostDescriptor, post: ChanPost) {
+  @GuardedBy("mutex")
+  private val originalPostsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+
+  @GuardedBy("mutex")
+  private val accessTimes = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+
+  suspend fun putIntoCache(postDescriptor: PostDescriptor, post: ChanPost) {
 //        mutex.withLock {
 //            val threadDescriptor = post.postDescriptor.getThreadDescriptor()
 //
@@ -52,10 +54,10 @@ class PostsCache(private val maxValueCount: Int) {
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
 //            postsCache[threadDescriptor]!![postDescriptor] = post
 //        }
-    }
+  }
 
-    suspend fun getPostFromCache(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
-        return null
+  suspend fun getPostFromCache(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
+    return null
 //        return mutex.withLock {
 //            val threadDescriptor = postDescriptor.getThreadDescriptor()
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
@@ -74,13 +76,13 @@ class PostsCache(private val maxValueCount: Int) {
 //            return@withLock post
 //              .apply { isFromCache = true }
 //        }
-    }
+  }
 
-    suspend fun getLatestOriginalPostsFromCache(
-      descriptor: ChanDescriptor.CatalogDescriptor,
-      count: Int
-    ): List<ChanPost> {
-        return emptyList()
+  suspend fun getLatestOriginalPostsFromCache(
+    descriptor: ChanDescriptor.CatalogDescriptor,
+    count: Int
+  ): List<ChanPost> {
+    return emptyList()
 //        return mutex.withLock {
 //            accessTimes.entries
 //              .asSequence()
@@ -91,10 +93,10 @@ class PostsCache(private val maxValueCount: Int) {
 //              .onEach { post -> post.isFromCache = true }
 //              .toList()
 //        }
-    }
+  }
 
-    suspend fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanPost? {
-        return null
+  suspend fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanPost? {
+    return null
 //        return mutex.withLock {
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
 //
@@ -108,13 +110,13 @@ class PostsCache(private val maxValueCount: Int) {
 //            return@withLock merge(post, originalPost)
 //              ?.apply { isFromCache = true }
 //        }
-    }
+  }
 
-    suspend fun getPostsFromCache(
-            threadDescriptor: ChanDescriptor.ThreadDescriptor,
-            postNoSet: Set<Long>
-    ): List<ChanPost> {
-        return emptyList()
+  suspend fun getPostsFromCache(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postNoSet: Set<Long>
+  ): List<ChanPost> {
+    return emptyList()
 //        return mutex.withLock {
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
 //
@@ -138,10 +140,10 @@ class PostsCache(private val maxValueCount: Int) {
 //            return@withLock resultList
 //              .onEach { post -> post.isFromCache = true }
 //        }
-    }
+  }
 
-    suspend fun getLatest(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
-        return emptyList()
+  suspend fun getLatest(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
+    return emptyList()
 //        return mutex.withLock {
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
 //
@@ -170,97 +172,97 @@ class PostsCache(private val maxValueCount: Int) {
 //
 //            return@withLock resultList
 //        }
-    }
+  }
 
-    suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
-        return emptyList()
+  suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    return emptyList()
 //        return mutex.withLock {
 //            accessTimes[threadDescriptor] = System.currentTimeMillis()
 //            val posts = postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
 //
 //            return@withLock posts.onEach { post -> post.isFromCache = true }
 //        }
-    }
+  }
 
-    suspend fun getCachedValuesCount(): Int {
-        return 0
+  suspend fun getCachedValuesCount(): Int {
+    return 0
 //        return mutex.withLock {
 //            return@withLock currentValuesCount.get()
 //        }
+  }
+
+  private fun evictOld(amountToEvictParam: Int) {
+    require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
+    require(mutex.isLocked) { "mutex must be locked!" }
+
+    val keysSorted = accessTimes.entries
+      // We will get the latest accessed key in the beginning of the list
+      .sortedBy { (_, lastAccessTime) -> lastAccessTime }
+      .map { (key, _) -> key }
+
+    val keysToEvict = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+    var amountToEvict = amountToEvictParam
+
+    for (key in keysSorted) {
+      if (amountToEvict <= 0) {
+        break
+      }
+
+      val count = postsCache[key]?.size ?: 0
+
+      keysToEvict += key
+      amountToEvict -= count
+      currentValuesCount.addAndGet(-count)
     }
 
-    private fun evictOld(amountToEvictParam: Int) {
-        require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
-        require(mutex.isLocked) { "mutex must be locked!" }
-
-        val keysSorted = accessTimes.entries
-                // We will get the latest accessed key in the beginning of the list
-                .sortedBy { (_, lastAccessTime) -> lastAccessTime }
-                .map { (key, _) -> key }
-
-        val keysToEvict = mutableListOf<ChanDescriptor.ThreadDescriptor>()
-        var amountToEvict = amountToEvictParam
-
-        for (key in keysSorted) {
-            if (amountToEvict <= 0) {
-                break
-            }
-
-            val count = postsCache[key]?.size ?: 0
-
-            keysToEvict += key
-            amountToEvict -= count
-            currentValuesCount.addAndGet(-count)
-        }
-
-        if (currentValuesCount.get() < 0) {
-            currentValuesCount.set(0)
-        }
-
-        if (keysToEvict.isEmpty()) {
-            return
-        }
-
-        keysToEvict.forEach { key ->
-            postsCache.remove(key)?.clear()
-            accessTimes.remove(key)
-        }
+    if (currentValuesCount.get() < 0) {
+      currentValuesCount.set(0)
     }
 
-    private fun merge(post: ChanPost, originalPost: ChanPost): ChanPost? {
-        require(originalPost.isOp) { "originalPost is not OP" }
-        require(post.isOp) { "post is not OP" }
-        require(originalPost.postDescriptor == post.postDescriptor) {
-            "post descriptor differ (${originalPost.postDescriptor}, ${post.postDescriptor})"
-        }
-
-        return ChanPost(
-                chanPostId = post.chanPostId,
-                postDescriptor = post.postDescriptor,
-                postImages = post.postImages,
-                postIcons = post.postIcons,
-                replies = originalPost.replies,
-                threadImagesCount = originalPost.threadImagesCount,
-                uniqueIps = originalPost.uniqueIps,
-                lastModified = originalPost.lastModified,
-                sticky = originalPost.sticky,
-                closed = originalPost.closed,
-                archived = originalPost.archived,
-                timestamp = post.timestamp,
-                name = post.name,
-                postComment = post.postComment,
-                subject = post.subject,
-                tripcode = post.tripcode,
-                posterId = post.posterId,
-                moderatorCapcode = post.moderatorCapcode,
-                isOp = post.isOp,
-                isSavedReply = post.isSavedReply
-        )
+    if (keysToEvict.isEmpty()) {
+      return
     }
 
-    companion object {
-        private val POST_COMPARATOR = kotlin.Comparator<PostDescriptor> { desc1, desc2 ->
-            return@Comparator desc1.postNo.compareTo(desc2.postNo)
-        }
+    keysToEvict.forEach { key ->
+      postsCache.remove(key)?.clear()
+      accessTimes.remove(key)
     }
+  }
+
+  private fun merge(post: ChanPost, originalPost: ChanPost): ChanPost? {
+    require(originalPost.isOp) { "originalPost is not OP" }
+    require(post.isOp) { "post is not OP" }
+    require(originalPost.postDescriptor == post.postDescriptor) {
+      "post descriptor differ (${originalPost.postDescriptor}, ${post.postDescriptor})"
+    }
+
+    return ChanPost(
+      chanPostId = post.chanPostId,
+      postDescriptor = post.postDescriptor,
+      postImages = post.postImages,
+      postIcons = post.postIcons,
+      replies = originalPost.replies,
+      threadImagesCount = originalPost.threadImagesCount,
+      uniqueIps = originalPost.uniqueIps,
+      lastModified = originalPost.lastModified,
+      sticky = originalPost.sticky,
+      closed = originalPost.closed,
+      archived = originalPost.archived,
+      timestamp = post.timestamp,
+      name = post.name,
+      postComment = post.postComment,
+      subject = post.subject,
+      tripcode = post.tripcode,
+      posterId = post.posterId,
+      moderatorCapcode = post.moderatorCapcode,
+      isOp = post.isOp,
+      isSavedReply = post.isSavedReply
+    )
+  }
+
+  companion object {
+    private val POST_COMPARATOR = kotlin.Comparator<PostDescriptor> { desc1, desc2 ->
+      return@Comparator desc1.postNo.compareTo(desc2.postNo)
+    }
+  }
 }

@@ -9,10 +9,10 @@ import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
 @Dao
 abstract class ChanBoardDao {
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    abstract suspend fun insert(chanBoardEntity: ChanBoardEntity): Long
+  @Insert(onConflict = OnConflictStrategy.ABORT)
+  abstract suspend fun insert(chanBoardEntity: ChanBoardEntity): Long
 
-    @Query("""
+  @Query("""
         SELECT * 
         FROM ${ChanBoardEntity.TABLE_NAME}
         WHERE 
@@ -20,42 +20,42 @@ abstract class ChanBoardDao {
         AND
             ${ChanBoardEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
-    abstract suspend fun select(siteName: String, boardCode: String): ChanBoardEntity?
+  abstract suspend fun select(siteName: String, boardCode: String): ChanBoardEntity?
 
-    suspend fun contains(siteName: String, boardCode: String): Boolean {
-        return select(siteName, boardCode) != null
-    }
+  suspend fun contains(siteName: String, boardCode: String): Boolean {
+    return select(siteName, boardCode) != null
+  }
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanBoardEntity.TABLE_NAME}
         WHERE ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} = :boardId
     """)
-    abstract suspend fun select(boardId: Long): ChanBoardEntity?
+  abstract suspend fun select(boardId: Long): ChanBoardEntity?
 
-    @Query("""
+  @Query("""
         SELECT *
         FROM ${ChanBoardEntity.TABLE_NAME}
         WHERE ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} IN (:boardIdList)
     """)
-    abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardEntity>
+  abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardEntity>
 
-    suspend fun insert(siteName: String, boardCode: String): ChanBoardEntity {
-        val prev = select(siteName, boardCode)
-        if (prev != null) {
-            return prev
-        }
-
-        val chanBoardEntity = ChanBoardEntity(
-          boardId = 0L,
-          siteName = siteName,
-          boardCode = boardCode
-        )
-
-        val insertedId = insert(chanBoardEntity)
-        check(insertedId >= 0L) { "Couldn't insert entity, insert() returned ${insertedId}" }
-
-        chanBoardEntity.boardId = insertedId
-        return chanBoardEntity
+  suspend fun insert(siteName: String, boardCode: String): ChanBoardEntity {
+    val prev = select(siteName, boardCode)
+    if (prev != null) {
+      return prev
     }
+
+    val chanBoardEntity = ChanBoardEntity(
+      boardId = 0L,
+      siteName = siteName,
+      boardCode = boardCode
+    )
+
+    val insertedId = insert(chanBoardEntity)
+    check(insertedId >= 0L) { "Couldn't insert entity, insert() returned ${insertedId}" }
+
+    chanBoardEntity.boardId = insertedId
+    return chanBoardEntity
+  }
 }

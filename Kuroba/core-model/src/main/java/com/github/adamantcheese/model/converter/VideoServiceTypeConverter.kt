@@ -5,13 +5,14 @@ import com.github.adamantcheese.model.data.video_service.MediaServiceType
 
 class VideoServiceTypeConverter {
 
-    @TypeConverter
-    fun toVideoServiceType(value: Int): MediaServiceType {
-        return MediaServiceType.fromTypeValue(value)
-    }
+  @TypeConverter
+  fun toVideoServiceType(value: Int): MediaServiceType {
+    return MediaServiceType.fromTypeValue(value)
+  }
 
-    @TypeConverter
-    fun fromVideoServiceType(mediaServiceType: MediaServiceType): Int {
-        return mediaServiceType.typeValue
-    }
+  @TypeConverter
+  fun fromVideoServiceType(mediaServiceType: MediaServiceType): Int {
+    return mediaServiceType.typeValue
+  }
+
 }
