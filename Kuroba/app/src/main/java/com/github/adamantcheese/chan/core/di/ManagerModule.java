@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
+import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
@@ -322,5 +323,13 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "PostFilterManager");
 
         return new PostFilterManager();
+    }
+
+    @Provides
+    @Singleton
+    public ReplyViewStateManager provideReplyViewStateManager() {
+        Logger.d(AppModule.DI_TAG, "ReplyViewStateManager");
+
+        return new ReplyViewStateManager();
     }
 }

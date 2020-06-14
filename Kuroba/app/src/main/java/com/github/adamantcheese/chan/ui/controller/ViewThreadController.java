@@ -100,7 +100,6 @@ public class ViewThreadController
     private static final int ACTION_SCROLL_TO_BOTTOM = 9009;
     private static final int ACTION_FORCE_RELOAD = 9010;
 
-
     private DatabaseLoadableManager databaseLoadableManager;
 
     @Inject

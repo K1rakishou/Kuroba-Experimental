@@ -33,7 +33,6 @@ public class ImageOptionsHelper
     private ImageOptionsController imageOptionsController = null;
     private ImageReencodeOptionsController imageReencodeOptionsController = null;
     private final ImageReencodingHelperCallback callbacks;
-
     private ImageReencodingPresenter.ImageOptions lastImageOptions;
 
     public ImageOptionsHelper(Context context, ImageReencodingHelperCallback callbacks) {

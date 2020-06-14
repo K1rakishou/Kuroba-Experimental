@@ -268,6 +268,8 @@ public class ReplyLayout
             presenter.onAttachClicked(true);
             return true;
         });
+        attach.setClickable(true);
+        attach.setFocusable(true);
 
         ImageView captchaImage = replyInputLayout.findViewById(R.id.captcha);
         AndroidUtils.setBoundlessRoundRippleBackground(captchaImage);
@@ -363,7 +365,8 @@ public class ReplyLayout
         } else if (v == submit) {
             presenter.onSubmitClicked(false);
         } else if (v == previewHolder) {
-            attach.setClickable(false); // prevent immediately removing the file
+            // prevent immediately removing the file
+            attach.setClickable(false);
             callback.showImageReencodingWindow(presenter.isAttachedFileSupportedForReencoding());
         } else if (v == captchaHardReset) {
             if (authenticationLayout != null) {

@@ -41,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
+import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
@@ -101,6 +102,8 @@ public class ThreadListLayout
     ThemeHelper themeHelper;
     @Inject
     PostFilterManager postFilterManager;
+    @Inject
+    ReplyViewStateManager replyViewStateManager;
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -415,6 +418,15 @@ public class ThreadListLayout
     public void openReply(boolean open) {
         if (showingThread == null || replyOpen == open) {
             return;
+        }
+
+        Loadable loadable = getThread().getLoadable();
+        if (loadable != null) {
+            if (loadable.mode == Loadable.Mode.INVALID) {
+                throw new RuntimeException("Bad loadable mode");
+            }
+
+            replyViewStateManager.replyViewStateChanged(loadable.isCatalogMode(), open);
         }
 
         this.replyOpen = open;

@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -26,7 +27,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class ImageReencodeOptionsController
         extends BaseFloatingController
-        implements View.OnClickListener, RadioGroup.OnCheckedChangeListener {
+        implements View.OnClickListener,
+        RadioGroup.OnCheckedChangeListener,
+        RequiresNoBottomNavBar {
     private final static String TAG = "ImageReencodeOptionsController";
 
     @Inject

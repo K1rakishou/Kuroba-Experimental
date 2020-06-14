@@ -16,8 +16,6 @@
  */
 package com.github.adamantcheese.chan.ui.view;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
@@ -154,6 +152,9 @@ public class HidingFloatingActionButton
             return;
         }
 
+        setClickable(!collapse);
+        setFocusable(!collapse);
+
         float scale = collapse ? 0f : 1f;
         if (scale != currentCollapseScale) {
             currentCollapseScale = scale;
@@ -164,18 +165,6 @@ public class HidingFloatingActionButton
                     .setDuration(300)
                     .setStartDelay(0)
                     .setInterpolator(SLOWDOWN)
-                    .setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            super.onAnimationEnd(animation);
-
-                            if (collapse) {
-                                setVisibility(ViewGroup.GONE);
-                            } else {
-                                setVisibility(ViewGroup.VISIBLE);
-                            }
-                        }
-                    })
                     .start();
         }
     }

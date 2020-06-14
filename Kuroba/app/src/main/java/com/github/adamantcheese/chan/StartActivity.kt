@@ -34,10 +34,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager
-import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
-import com.github.adamantcheese.chan.core.manager.UpdateManager
-import com.github.adamantcheese.chan.core.manager.WatchManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.repository.SiteRepository
@@ -92,6 +89,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var controllerNavigationManager: ControllerNavigationManager
+  @Inject
+  lateinit var replyViewStateManager: ReplyViewStateManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -199,10 +198,26 @@ class StartActivity : AppCompatActivity(),
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
       coroutineScope {
         launch {
+          listenForReplyViewStatesChanges()
+        }
+
+        launch {
           listenForControllerNavigationChanges()
         }
       }
     }
+  }
+
+  private suspend fun listenForReplyViewStatesChanges() {
+    replyViewStateManager.listenForReplyViewsStateUpdates()
+      .asFlow()
+      .collect {
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+          return@collect
+        }
+
+        updateBottomNavBar()
+      }
   }
 
   private suspend fun listenForControllerNavigationChanges() {
@@ -218,23 +233,27 @@ class StartActivity : AppCompatActivity(),
           is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
           is ControllerNavigationManager.ControllerNavigationChange.Pushed,
           is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
-            val hasNoBottomNavBarControllers = stack.any { navController ->
-              return@any isControllerPresent(navController) { controller ->
-                return@isControllerPresent controller is RequiresNoBottomNavBar
-              }
-            }
-
-            if (hasNoBottomNavBarControllers) {
-              drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
-            } else {
-              drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
-            }
+            updateBottomNavBar()
           }
           else -> {
             // no-op
           }
         }
       }
+  }
+
+  private fun updateBottomNavBar() {
+    val hasRequiresNoBottomNavBarControllers = stack.any { navController ->
+      return@any isControllerPresent(navController) { controller ->
+        return@isControllerPresent controller is RequiresNoBottomNavBar
+      }
+    }
+
+    if (hasRequiresNoBottomNavBarControllers) {
+      drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
+    } else if (!replyViewStateManager.anyReplyViewVisible()) {
+      drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
+    }
   }
 
   private fun isControllerPresent(

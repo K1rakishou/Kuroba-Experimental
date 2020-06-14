@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.manager
 
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -9,32 +10,40 @@ class ControllerNavigationManager {
   private val controllerNavigationSubject = PublishProcessor.create<ControllerNavigationChange>()
 
   fun listenForControllerNavigationChanges(): Flowable<ControllerNavigationChange> {
+    BackgroundUtils.ensureMainThread()
+
     return controllerNavigationSubject
       .observeOn(AndroidSchedulers.mainThread())
       .hide()
   }
 
   fun onControllerPushed(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.Pushed(controller))
   }
 
   fun onControllerPopped(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.Popped(controller))
   }
 
   fun onControllerPresented(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.Presented(controller))
   }
 
   fun onControllerUnpresented(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.Unpresented(controller))
   }
 
   fun onControllerSwipedTo(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.SwipedTo(controller))
   }
 
   fun onControllerSwipedFrom(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     controllerNavigationSubject.onNext(ControllerNavigationChange.SwipedFrom(controller))
   }
 

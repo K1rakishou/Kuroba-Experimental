@@ -34,6 +34,7 @@ import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
@@ -53,8 +54,10 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class ImageOptionsController
         extends BaseFloatingController
-        implements View.OnClickListener, CompoundButton.OnCheckedChangeListener,
-                   ImageReencodingPresenter.ImageReencodingPresenterCallback {
+        implements View.OnClickListener,
+        CompoundButton.OnCheckedChangeListener,
+        ImageReencodingPresenter.ImageReencodingPresenterCallback,
+        RequiresNoBottomNavBar {
     private final static String TAG = "ImageOptionsController";
 
     @Inject
