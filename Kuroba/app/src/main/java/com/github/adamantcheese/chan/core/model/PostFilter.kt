@@ -8,10 +8,4 @@ data class PostFilter(
   var filterReplies: Boolean = false,
   var filterOnlyOP: Boolean = false,
   var filterSaved: Boolean = false
-) {
-
-  fun hasFilterParameters(): Boolean {
-    return filterRemove || filterHighlightedColor != 0 || filterReplies || filterStub
-  }
-
-}
+)

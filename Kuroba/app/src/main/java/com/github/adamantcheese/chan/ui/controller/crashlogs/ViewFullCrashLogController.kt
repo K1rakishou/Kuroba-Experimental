@@ -6,26 +6,26 @@ import com.github.adamantcheese.chan.ui.layout.crashlogs.CrashLog
 import com.github.adamantcheese.chan.ui.layout.crashlogs.ViewFullCrashLogLayout
 
 class ViewFullCrashLogController(
-        context: Context,
-        private val crashLog: CrashLog
+  context: Context,
+  private val crashLog: CrashLog
 ) : Controller(context), ViewFullCrashLogLayout.ViewFullCrashLogLayoutCallbacks {
 
-    override fun onCreate() {
-        super.onCreate()
-        navigation.setTitle(crashLog.fileName)
+  override fun onCreate() {
+    super.onCreate()
+    navigation.setTitle(crashLog.fileName)
 
-        view = ViewFullCrashLogLayout(context, crashLog).apply {
-            onCreate(this@ViewFullCrashLogController)
-        }
+    view = ViewFullCrashLogLayout(context, crashLog).apply {
+      onCreate(this@ViewFullCrashLogController)
     }
+  }
 
-    override fun onDestroy() {
-        super.onDestroy()
+  override fun onDestroy() {
+    super.onDestroy()
 
-        (view as ViewFullCrashLogLayout).onDestroy()
-    }
+    (view as ViewFullCrashLogLayout).onDestroy()
+  }
 
-    override fun onFinished() {
-        navigationController!!.popController()
-    }
+  override fun onFinished() {
+    navigationController!!.popController()
+  }
 }

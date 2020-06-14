@@ -6,20 +6,20 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 
 class JsCaptchaCookiesEditorController(context: Context) :
-        Controller(context), JsCaptchaCookiesEditorLayout.JsCaptchaCookiesEditorControllerCallbacks {
+  Controller(context), JsCaptchaCookiesEditorLayout.JsCaptchaCookiesEditorControllerCallbacks {
 
-    override fun onCreate() {
-        super.onCreate()
-        inject(this)
+  override fun onCreate() {
+    super.onCreate()
+    inject(this)
 
-        navigation.setTitle(R.string.js_captcha_cookies_editor_controller_title)
-        view = JsCaptchaCookiesEditorLayout(context).apply {
-            onReady(this@JsCaptchaCookiesEditorController)
-        }
+    navigation.setTitle(R.string.js_captcha_cookies_editor_controller_title)
+    view = JsCaptchaCookiesEditorLayout(context).apply {
+      onReady(this@JsCaptchaCookiesEditorController)
     }
+  }
 
-    override fun onFinished() {
-        navigationController!!.popController()
-    }
+  override fun onFinished() {
+    navigationController!!.popController()
+  }
 
 }

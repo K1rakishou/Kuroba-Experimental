@@ -108,13 +108,15 @@ public class WebmStreamingDataSource extends BaseDataSource {
             for (Range<Long> r : cachedRanges) {
                 try {
                     cached.add(region.intersect(r));
-                } catch (IllegalArgumentException ignored) {} // Disjoint ranges.
+                } catch (IllegalArgumentException ignored) {
+                } // Disjoint ranges.
             }
 
             for (Range<Long> r : determineMissingRanges()) {
                 try {
                     missing.add(region.intersect(r));
-                } catch (IllegalArgumentException ignored) {} // Disjoint ranges.
+                } catch (IllegalArgumentException ignored) {
+                } // Disjoint ranges.
             }
 
             return new RegionStats(cached, missing);

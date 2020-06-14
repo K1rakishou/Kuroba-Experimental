@@ -26,8 +26,10 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
   @Inject
   lateinit var archivesManager: ArchivesManager
+
   @Inject
   lateinit var appConstants: AppConstants
+
   @Inject
   lateinit var loadArchiveInfoListInteractor: LoadArchiveInfoListInteractor
 

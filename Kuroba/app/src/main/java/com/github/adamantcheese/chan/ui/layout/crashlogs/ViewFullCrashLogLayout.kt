@@ -10,38 +10,38 @@ import com.github.adamantcheese.chan.R
 @SuppressLint("ViewConstructor")
 class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) : FrameLayout(context) {
 
-    private var callbacks: ViewFullCrashLogLayoutCallbacks? = null
+  private var callbacks: ViewFullCrashLogLayoutCallbacks? = null
 
-    private val crashLogText: AppCompatEditText
-    private val save: AppCompatButton
+  private val crashLogText: AppCompatEditText
+  private val save: AppCompatButton
 
-    init {
-        inflate(context, R.layout.layout_view_full_crashlog, this).apply {
-            crashLogText = findViewById(R.id.view_full_crashlog_text)
-            save = findViewById(R.id.view_full_crashlog_save)
-            crashLogText.setText(crashLog.file.readText())
+  init {
+    inflate(context, R.layout.layout_view_full_crashlog, this).apply {
+      crashLogText = findViewById(R.id.view_full_crashlog_text)
+      save = findViewById(R.id.view_full_crashlog_save)
+      crashLogText.setText(crashLog.file.readText())
 
-            save.setOnClickListener {
-                val text = crashLogText.text.toString()
+      save.setOnClickListener {
+        val text = crashLogText.text.toString()
 
-                if (text.isNotEmpty()) {
-                    crashLog.file.writeText(text)
-                }
-
-                callbacks?.onFinished()
-            }
+        if (text.isNotEmpty()) {
+          crashLog.file.writeText(text)
         }
-    }
 
-    fun onCreate(callbacks: ViewFullCrashLogLayoutCallbacks) {
-        this.callbacks = callbacks
+        callbacks?.onFinished()
+      }
     }
+  }
 
-    fun onDestroy() {
-        this.callbacks = null
-    }
+  fun onCreate(callbacks: ViewFullCrashLogLayoutCallbacks) {
+    this.callbacks = callbacks
+  }
 
-    interface ViewFullCrashLogLayoutCallbacks {
-        fun onFinished()
-    }
+  fun onDestroy() {
+    this.callbacks = null
+  }
+
+  interface ViewFullCrashLogLayoutCallbacks {
+    fun onFinished()
+  }
 }

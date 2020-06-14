@@ -7,80 +7,80 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class BasePresenter<V> {
-    private var view: V? = null
-    private val initialized = AtomicBoolean(false)
+  private var view: V? = null
+  private val initialized = AtomicBoolean(false)
 
-    protected val scope = MainScope() + CoroutineName("BasePresenter")
-    protected val compositeDisposable = CompositeDisposable()
+  protected val scope = MainScope() + CoroutineName("BasePresenter")
+  protected val compositeDisposable = CompositeDisposable()
 
-    @CallSuper
-    open fun onCreate(view: V) {
-        if (!initialized.compareAndSet(false, true)) {
-            throw RuntimeException("Attempt to double create")
-        }
-
-        this.view = view
+  @CallSuper
+  open fun onCreate(view: V) {
+    if (!initialized.compareAndSet(false, true)) {
+      throw RuntimeException("Attempt to double create")
     }
 
-    @CallSuper
-    open fun onDestroy() {
-        if (!initialized.compareAndSet(true, false)) {
-            throw RuntimeException("Attempt to destroy without creating first")
-        }
+    this.view = view
+  }
 
-        this.view = null
-
-        scope.cancel()
-        compositeDisposable.clear()
+  @CallSuper
+  open fun onDestroy() {
+    if (!initialized.compareAndSet(true, false)) {
+      throw RuntimeException("Attempt to destroy without creating first")
     }
 
-    fun withViewNormal(func: V.() -> Unit) {
-        if (!initialized.get()) {
-            throw RuntimeException("Not initialized!")
-        }
+    this.view = null
 
-        view?.let { v -> func(v) }
+    scope.cancel()
+    compositeDisposable.clear()
+  }
+
+  fun withViewNormal(func: V.() -> Unit) {
+    if (!initialized.get()) {
+      throw RuntimeException("Not initialized!")
     }
 
-    /**
-     * This version of withView method does not block anything so you can call any other suspend
-     * method from it without the fear of ANRing the app.
-     *
-     * We do not allow returning anything from these two methods on purpose because UI code should
-     * be "stupidly simple". It should just do whatever it's told to do. It shouldn't return anything
-     * back to presenter.
-     * */
-    suspend fun withView(func: suspend V.() -> Unit) {
-        if (!initialized.get()) {
-            throw RuntimeException("Not initialized!")
-        }
+    view?.let { v -> func(v) }
+  }
 
-        view?.let { v ->
-            withContext(scope.coroutineContext) {
-                val result = ModularResult.Try { func(v) }
-                handleResult(result)
-            }
-        }
+  /**
+   * This version of withView method does not block anything so you can call any other suspend
+   * method from it without the fear of ANRing the app.
+   *
+   * We do not allow returning anything from these two methods on purpose because UI code should
+   * be "stupidly simple". It should just do whatever it's told to do. It shouldn't return anything
+   * back to presenter.
+   * */
+  suspend fun withView(func: suspend V.() -> Unit) {
+    if (!initialized.get()) {
+      throw RuntimeException("Not initialized!")
     }
 
-    private fun handleResult(result: ModularResult<Unit>) {
-        if (result is ModularResult.Error) {
-            when (result.error) {
-                is InterruptedException -> {
-                    // Restore the interrupt flag.
-                    Thread.currentThread().interrupt()
+    view?.let { v ->
+      withContext(scope.coroutineContext) {
+        val result = ModularResult.Try { func(v) }
+        handleResult(result)
+      }
+    }
+  }
 
-                    // Fine, blocking code threw InterruptedException. Don't do anything.
-                }
-                is CancellationException -> {
-                    // Fine, the coroutine was canceled. Don't do anything.
-                }
-                else -> throw result.error
-            }
+  private fun handleResult(result: ModularResult<Unit>) {
+    if (result is ModularResult.Error) {
+      when (result.error) {
+        is InterruptedException -> {
+          // Restore the interrupt flag.
+          Thread.currentThread().interrupt()
+
+          // Fine, blocking code threw InterruptedException. Don't do anything.
         }
+        is CancellationException -> {
+          // Fine, the coroutine was canceled. Don't do anything.
+        }
+        else -> throw result.error
+      }
     }
+  }
 
-    companion object {
-        private const val TAG = "BasePresenter"
-    }
+  companion object {
+    private const val TAG = "BasePresenter"
+  }
 }

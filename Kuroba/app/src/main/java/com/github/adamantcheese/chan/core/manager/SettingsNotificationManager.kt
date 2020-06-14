@@ -8,90 +8,90 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 
 class SettingsNotificationManager {
-    @GuardedBy("this")
-    private val notifications: MutableSet<SettingNotificationType> = mutableSetOf()
+  @GuardedBy("this")
+  private val notifications: MutableSet<SettingNotificationType> = mutableSetOf()
 
-    /**
-     * A reactive stream that is being used to notify observers about [notifications] changes
-     * */
-    private val activeNotificationsSubject = BehaviorProcessor.createDefault(Unit)
+  /**
+   * A reactive stream that is being used to notify observers about [notifications] changes
+   * */
+  private val activeNotificationsSubject = BehaviorProcessor.createDefault(Unit)
 
-    /**
-     * If [notifications] doesn't contain [notificationType] yet, then notifies
-     * all observers that there is a new notification
-     * */
-    @Synchronized
-    fun notify(notificationType: SettingNotificationType) {
-        if (notifications.add(notificationType)) {
-            Logger.d(TAG, "Added ${notificationType.name} notification")
-            activeNotificationsSubject.onNext(Unit)
-        }
+  /**
+   * If [notifications] doesn't contain [notificationType] yet, then notifies
+   * all observers that there is a new notification
+   * */
+  @Synchronized
+  fun notify(notificationType: SettingNotificationType) {
+    if (notifications.add(notificationType)) {
+      Logger.d(TAG, "Added ${notificationType.name} notification")
+      activeNotificationsSubject.onNext(Unit)
+    }
+  }
+
+  @Synchronized
+  fun getNotificationByPriority(): SettingNotificationType? {
+    if (contains(SettingNotificationType.ApkUpdate)) {
+      return SettingNotificationType.ApkUpdate
     }
 
-    @Synchronized
-    fun getNotificationByPriority(): SettingNotificationType? {
-        if (contains(SettingNotificationType.ApkUpdate)) {
-            return SettingNotificationType.ApkUpdate
-        }
-
-        if (contains(SettingNotificationType.CrashLog)) {
-            return SettingNotificationType.CrashLog
-        }
-
-        // Add new notifications here. Don't forget that order matters! The order affects priority.
-        // For now "Apk update" has higher priority than "Crash log".
-
-        return null
+    if (contains(SettingNotificationType.CrashLog)) {
+      return SettingNotificationType.CrashLog
     }
 
+    // Add new notifications here. Don't forget that order matters! The order affects priority.
+    // For now "Apk update" has higher priority than "Crash log".
 
-    @Synchronized
-    fun notificationsCount(): Int = notifications.count()
+    return null
+  }
 
-    @Synchronized
-    fun getOrDefault(notificationType: SettingNotificationType): SettingNotificationType {
-        if (!contains(notificationType)) {
-            return SettingNotificationType.Default
-        }
 
-        return notificationType
+  @Synchronized
+  fun notificationsCount(): Int = notifications.count()
+
+  @Synchronized
+  fun getOrDefault(notificationType: SettingNotificationType): SettingNotificationType {
+    if (!contains(notificationType)) {
+      return SettingNotificationType.Default
     }
 
-    @Synchronized
-    fun count(): Int = notifications.size
+    return notificationType
+  }
 
-    @Synchronized
-    fun contains(notificationType: SettingNotificationType?): Boolean {
-        if (notificationType == null) {
-            return false
-        }
+  @Synchronized
+  fun count(): Int = notifications.size
 
-        return notifications.contains(notificationType)
+  @Synchronized
+  fun contains(notificationType: SettingNotificationType?): Boolean {
+    if (notificationType == null) {
+      return false
     }
 
-    /**
-     * If [notifications] contains [notificationType], then notifies all observers that this
-     * notification has been canceled
-     * */
-    @Synchronized
-    fun cancel(notificationType: SettingNotificationType) {
-        if (notifications.remove(notificationType)) {
-            Logger.d(TAG, "Removed ${notificationType.name} notification")
-            activeNotificationsSubject.onNext(Unit)
-        }
-    }
+    return notifications.contains(notificationType)
+  }
 
-    /**
-     * Use this to observe current notification state. Duplicates checks and everything else is done
-     * internally so you don't have to worry that you will get the same state twice. All updates
-     * come on main thread so there is no need to worry about that as well.
-     * */
-    fun listenForNotificationUpdates(): Flowable<Unit> = activeNotificationsSubject
-            .onBackpressureBuffer()
-            .observeOn(AndroidSchedulers.mainThread())
-            .hide()
-
-    companion object {
-        private const val TAG = "SettingsNotificationManager"
+  /**
+   * If [notifications] contains [notificationType], then notifies all observers that this
+   * notification has been canceled
+   * */
+  @Synchronized
+  fun cancel(notificationType: SettingNotificationType) {
+    if (notifications.remove(notificationType)) {
+      Logger.d(TAG, "Removed ${notificationType.name} notification")
+      activeNotificationsSubject.onNext(Unit)
     }
+  }
+
+  /**
+   * Use this to observe current notification state. Duplicates checks and everything else is done
+   * internally so you don't have to worry that you will get the same state twice. All updates
+   * come on main thread so there is no need to worry about that as well.
+   * */
+  fun listenForNotificationUpdates(): Flowable<Unit> = activeNotificationsSubject
+    .onBackpressureBuffer()
+    .observeOn(AndroidSchedulers.mainThread())
+    .hide()
+
+  companion object {
+    private const val TAG = "SettingsNotificationManager"
+  }
 }

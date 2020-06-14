@@ -10,39 +10,39 @@ import com.github.adamantcheese.common.VoidFunction
 
 object PostCellAnimator {
 
-    @JvmStatic
-    fun createUnseenPostIndicatorFadeAnimation() = UnseenPostIndicatorFadeAnimation()
+  @JvmStatic
+  fun createUnseenPostIndicatorFadeAnimation() = UnseenPostIndicatorFadeAnimation()
 
-    class UnseenPostIndicatorFadeAnimation : BaseAnimation() {
+  class UnseenPostIndicatorFadeAnimation : BaseAnimation() {
 
-        fun start(alphaFunc: ModularFunction<Float>, onAnimationEndFunc: VoidFunction) {
-            end()
+    fun start(alphaFunc: ModularFunction<Float>, onAnimationEndFunc: VoidFunction) {
+      end()
 
-            animatorSet = AnimatorSet().apply {
-                val alphaAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
-                    addUpdateListener { valueAnimator ->
-                        alphaFunc.invoke(valueAnimator.animatedValue as Float)
-                    }
-                    addListener(object : SimpleAnimatorListener() {
-                        override fun onAnimationEnd(animation: Animator?) {
-                            onAnimationEndFunc.invoke()
-                        }
-                    })
-
-                    startDelay = ALPHA_ANIMATION_DELAY_MS
-                    duration = ALPHA_ANIMATION_DURATION
-                    interpolator = LinearInterpolator()
-                }
-
-                play(alphaAnimation)
-                start()
+      animatorSet = AnimatorSet().apply {
+        val alphaAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
+          addUpdateListener { valueAnimator ->
+            alphaFunc.invoke(valueAnimator.animatedValue as Float)
+          }
+          addListener(object : SimpleAnimatorListener() {
+            override fun onAnimationEnd(animation: Animator?) {
+              onAnimationEndFunc.invoke()
             }
+          })
+
+          startDelay = ALPHA_ANIMATION_DELAY_MS
+          duration = ALPHA_ANIMATION_DURATION
+          interpolator = LinearInterpolator()
         }
 
-        companion object {
-            private const val ALPHA_ANIMATION_DELAY_MS = 5_000L
-            private const val ALPHA_ANIMATION_DURATION = 3_000L
-        }
+        play(alphaAnimation)
+        start()
+      }
     }
+
+    companion object {
+      private const val ALPHA_ANIMATION_DELAY_MS = 5_000L
+      private const val ALPHA_ANIMATION_DURATION = 3_000L
+    }
+  }
 
 }

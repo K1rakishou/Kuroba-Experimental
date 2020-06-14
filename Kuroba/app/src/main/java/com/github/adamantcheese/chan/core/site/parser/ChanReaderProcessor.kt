@@ -23,69 +23,69 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 
 class ChanReaderProcessor(
-        private val chanPostRepository: ChanPostRepository,
-        val loadable: Loadable
+  private val chanPostRepository: ChanPostRepository,
+  val loadable: Loadable
 ) {
-    private val toParse = ArrayList<Post.Builder>()
-    private val postNoOrderedList = mutableListOf<Long>()
+  private val toParse = ArrayList<Post.Builder>()
+  private val postNoOrderedList = mutableListOf<Long>()
 
-    var op: Post.Builder? = null
+  var op: Post.Builder? = null
 
-    fun getThreadCap(): Int {
-        var maxCount = op?.stickyCap ?: Int.MAX_VALUE
-        if (maxCount < 0) {
-            maxCount = Int.MAX_VALUE
-        }
-
-        return maxCount
+  fun getThreadCap(): Int {
+    var maxCount = op?.stickyCap ?: Int.MAX_VALUE
+    if (maxCount < 0) {
+      maxCount = Int.MAX_VALUE
     }
 
-    suspend fun addPost(postBuilder: Post.Builder) {
-        if (differsFromCached(postBuilder)) {
-            addForParse(postBuilder)
-        }
+    return maxCount
+  }
 
-        postNoOrderedList.add(postBuilder.id)
+  suspend fun addPost(postBuilder: Post.Builder) {
+    if (differsFromCached(postBuilder)) {
+      addForParse(postBuilder)
     }
 
-    private suspend fun differsFromCached(builder: Post.Builder): Boolean {
-        val postDescriptor = if (builder.op) {
-            PostDescriptor.create(
-                    builder.board!!.site.name(),
-                    builder.board!!.code,
-                    builder.id
-            )
-        } else {
-            PostDescriptor.create(
-                    builder.board!!.site.name(),
-                    builder.board!!.code,
-                    builder.opId,
-                    builder.id
-            )
-        }
+    postNoOrderedList.add(postBuilder.id)
+  }
 
-        val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
-                ?: return true
-
-        return PostUtils.postsDiffer(builder, chanPost)
+  private suspend fun differsFromCached(builder: Post.Builder): Boolean {
+    val postDescriptor = if (builder.op) {
+      PostDescriptor.create(
+        builder.board!!.site.name(),
+        builder.board!!.code,
+        builder.id
+      )
+    } else {
+      PostDescriptor.create(
+        builder.board!!.site.name(),
+        builder.board!!.code,
+        builder.opId,
+        builder.id
+      )
     }
 
+    val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
+      ?: return true
 
-    private fun addForParse(postBuilder: Post.Builder) {
-        toParse.add(postBuilder)
-    }
+    return PostUtils.postsDiffer(builder, chanPost)
+  }
 
-    fun getToParse(): List<Post.Builder> {
-        return toParse
-    }
 
-    fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
-        return postNoOrderedList.mapNotNull { postNo ->
-            return@mapNotNull posts.firstOrNull { post -> post.no == postNo }
-        }
-    }
+  private fun addForParse(postBuilder: Post.Builder) {
+    toParse.add(postBuilder)
+  }
 
-    fun getPostNoListOrdered(): List<Long> {
-        return postNoOrderedList
+  fun getToParse(): List<Post.Builder> {
+    return toParse
+  }
+
+  fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
+    return postNoOrderedList.mapNotNull { postNo ->
+      return@mapNotNull posts.firstOrNull { post -> post.no == postNo }
     }
+  }
+
+  fun getPostNoListOrdered(): List<Long> {
+    return postNoOrderedList
+  }
 }

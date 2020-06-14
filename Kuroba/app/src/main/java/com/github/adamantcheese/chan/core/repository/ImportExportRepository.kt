@@ -42,509 +42,509 @@ import javax.inject.Inject
 
 class ImportExportRepository @Inject
 constructor(
-        private val databaseManager: DatabaseManager,
-        private val databaseHelper: DatabaseHelper,
-        private val gson: Gson,
-        private val fileManager: FileManager
+  private val databaseManager: DatabaseManager,
+  private val databaseHelper: DatabaseHelper,
+  private val gson: Gson,
+  private val fileManager: FileManager
 ) {
 
-    fun exportTo(settingsFile: ExternalFile, isNewFile: Boolean, callbacks: ImportExportCallbacks) {
-        databaseManager.runTask {
-            try {
-                val appSettings = readSettingsFromDatabase()
-                if (appSettings.isEmpty) {
-                    callbacks.onNothingToImportExport(Export)
-                    return@runTask
-                }
-
-                val json = gson.toJson(appSettings)
-
-                if (!fileManager.exists(settingsFile) || !fileManager.canWrite(settingsFile)) {
-                    throw IOException(
-                            "Something wrong with export file (Can't write or it doesn't exist) "
-                                    + settingsFile.getFullPath()
-                    )
-                }
-
-                // If the user has opened an old settings file we need to use WriteTruncate mode
-                // so that there no leftovers of the old file after writing the settings.
-                // Otherwise use Write mode
-                var fdm = FileDescriptorMode.WriteTruncate
-                if (isNewFile) {
-                    fdm = FileDescriptorMode.Write
-                }
-
-                fileManager.withFileDescriptor(settingsFile, fdm) { fileDescriptor ->
-                    FileWriter(fileDescriptor).use { writer ->
-                        writer.write(json)
-                        writer.flush()
-                    }
-
-                    Logger.d(TAG, "Exporting done!")
-                    callbacks.onSuccess(Export)
-                }
-
-            } catch (error: Throwable) {
-                Logger.e(TAG, "Error while trying to export settings", error)
-
-                deleteExportFile(settingsFile)
-                callbacks.onError(error, Export)
-            }
+  fun exportTo(settingsFile: ExternalFile, isNewFile: Boolean, callbacks: ImportExportCallbacks) {
+    databaseManager.runTask {
+      try {
+        val appSettings = readSettingsFromDatabase()
+        if (appSettings.isEmpty) {
+          callbacks.onNothingToImportExport(Export)
+          return@runTask
         }
+
+        val json = gson.toJson(appSettings)
+
+        if (!fileManager.exists(settingsFile) || !fileManager.canWrite(settingsFile)) {
+          throw IOException(
+            "Something wrong with export file (Can't write or it doesn't exist) "
+              + settingsFile.getFullPath()
+          )
+        }
+
+        // If the user has opened an old settings file we need to use WriteTruncate mode
+        // so that there no leftovers of the old file after writing the settings.
+        // Otherwise use Write mode
+        var fdm = FileDescriptorMode.WriteTruncate
+        if (isNewFile) {
+          fdm = FileDescriptorMode.Write
+        }
+
+        fileManager.withFileDescriptor(settingsFile, fdm) { fileDescriptor ->
+          FileWriter(fileDescriptor).use { writer ->
+            writer.write(json)
+            writer.flush()
+          }
+
+          Logger.d(TAG, "Exporting done!")
+          callbacks.onSuccess(Export)
+        }
+
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to export settings", error)
+
+        deleteExportFile(settingsFile)
+        callbacks.onError(error, Export)
+      }
+    }
+  }
+
+  fun importFrom(settingsFile: ExternalFile, callbacks: ImportExportCallbacks) {
+    databaseManager.runTask {
+      try {
+        if (!fileManager.exists(settingsFile)) {
+          Logger.i(TAG, "There is nothing to import, importFile does not exist "
+            + settingsFile.getFullPath())
+          callbacks.onNothingToImportExport(Import)
+          return@runTask
+        }
+
+        if (!fileManager.canRead(settingsFile)) {
+          throw IOException(
+            "Something wrong with import file (Can't read or it doesn't exist) "
+              + settingsFile.getFullPath()
+          )
+        }
+
+        fileManager.withFileDescriptor(
+          settingsFile,
+          FileDescriptorMode.Read
+        ) { fileDescriptor ->
+          FileReader(fileDescriptor).use { reader ->
+            val appSettings = gson.fromJson(reader, ExportedAppSettings::class.java)
+
+            if (appSettings.isEmpty) {
+              Logger.i(TAG, "There is nothing to import, appSettings is empty")
+              callbacks.onNothingToImportExport(Import)
+              return@use
+            }
+
+            writeSettingsToDatabase(appSettings)
+
+            Logger.d(TAG, "Importing done!")
+            callbacks.onSuccess(Import)
+          }
+        }
+
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to import settings", error)
+        callbacks.onError(error, Import)
+      }
+    }
+  }
+
+  private fun deleteExportFile(exportFile: AbstractFile) {
+    if (!fileManager.delete(exportFile)) {
+      Logger.w(TAG, "Could not delete export file " + exportFile.getFullPath())
+    }
+  }
+
+  @Throws(SQLException::class, IOException::class, DowngradeNotSupportedException::class)
+  private fun writeSettingsToDatabase(appSettingsParam: ExportedAppSettings) {
+    var appSettings = appSettingsParam
+
+    if (appSettings.version < CURRENT_EXPORT_SETTINGS_VERSION) {
+      appSettings = onUpgrade(appSettings.version, appSettings)
+    } else if (appSettings.version > CURRENT_EXPORT_SETTINGS_VERSION) {
+      // we don't support settings downgrade so just notify the user about it
+      throw DowngradeNotSupportedException("You are attempting to import settings with " +
+        "version higher than the current app's settings version (downgrade). " +
+        "This is not supported so nothing will be imported."
+      )
     }
 
-    fun importFrom(settingsFile: ExternalFile, callbacks: ImportExportCallbacks) {
-        databaseManager.runTask {
-            try {
-                if (!fileManager.exists(settingsFile)) {
-                    Logger.i(TAG, "There is nothing to import, importFile does not exist "
-                            + settingsFile.getFullPath())
-                    callbacks.onNothingToImportExport(Import)
-                    return@runTask
-                }
-
-                if (!fileManager.canRead(settingsFile)) {
-                    throw IOException(
-                            "Something wrong with import file (Can't read or it doesn't exist) "
-                                    + settingsFile.getFullPath()
-                    )
-                }
-
-                fileManager.withFileDescriptor(
-                        settingsFile,
-                        FileDescriptorMode.Read
-                ) { fileDescriptor ->
-                    FileReader(fileDescriptor).use { reader ->
-                        val appSettings = gson.fromJson(reader, ExportedAppSettings::class.java)
-
-                        if (appSettings.isEmpty) {
-                            Logger.i(TAG, "There is nothing to import, appSettings is empty")
-                            callbacks.onNothingToImportExport(Import)
-                            return@use
-                        }
-
-                        writeSettingsToDatabase(appSettings)
-
-                        Logger.d(TAG, "Importing done!")
-                        callbacks.onSuccess(Import)
-                    }
-                }
-
-            } catch (error: Throwable) {
-                Logger.e(TAG, "Error while trying to import settings", error)
-                callbacks.onError(error, Import)
-            }
-        }
+    // recreate tables from scratch, because we need to reset database IDs as well
+    databaseHelper.connectionSource.use { cs ->
+      databaseHelper.dropTables(cs)
+      databaseHelper.createTables(cs)
     }
 
-    private fun deleteExportFile(exportFile: AbstractFile) {
-        if (!fileManager.delete(exportFile)) {
-            Logger.w(TAG, "Could not delete export file " + exportFile.getFullPath())
-        }
+    for (exportedBoard in appSettings.exportedBoards) {
+      assert(exportedBoard.description != null)
+      databaseHelper.boardsDao.createIfNotExists(Board(
+        exportedBoard.siteId,
+        exportedBoard.isSaved,
+        exportedBoard.order,
+        exportedBoard.name,
+        exportedBoard.code,
+        exportedBoard.isWorkSafe,
+        exportedBoard.perPage,
+        exportedBoard.pages,
+        exportedBoard.maxFileSize,
+        exportedBoard.maxWebmSize,
+        exportedBoard.maxCommentChars,
+        exportedBoard.bumpLimit,
+        exportedBoard.imageLimit,
+        exportedBoard.cooldownThreads,
+        exportedBoard.cooldownReplies,
+        exportedBoard.cooldownImages,
+        exportedBoard.isSpoilers,
+        exportedBoard.customSpoilers,
+        exportedBoard.isUserIds,
+        exportedBoard.isCodeTags,
+        exportedBoard.isPreuploadCaptcha,
+        exportedBoard.isCountryFlags,
+        exportedBoard.isMathTags,
+        exportedBoard.description ?: "",
+        exportedBoard.isArchive
+      ))
     }
 
-    @Throws(SQLException::class, IOException::class, DowngradeNotSupportedException::class)
-    private fun writeSettingsToDatabase(appSettingsParam: ExportedAppSettings) {
-        var appSettings = appSettingsParam
+    for (exportedSite in appSettings.exportedSites) {
+      val inserted = databaseHelper.siteDao.createIfNotExists(SiteModel(
+        exportedSite.siteId,
+        exportedSite.configuration,
+        exportedSite.userSettings,
+        exportedSite.order
+      ))
 
-        if (appSettings.version < CURRENT_EXPORT_SETTINGS_VERSION) {
-            appSettings = onUpgrade(appSettings.version, appSettings)
-        } else if (appSettings.version > CURRENT_EXPORT_SETTINGS_VERSION) {
-            // we don't support settings downgrade so just notify the user about it
-            throw DowngradeNotSupportedException("You are attempting to import settings with " +
-                    "version higher than the current app's settings version (downgrade). " +
-                    "This is not supported so nothing will be imported."
-            )
-        }
+      for (exportedPin in exportedSite.exportedPins) {
+        val exportedLoadable = exportedPin.exportedLoadable ?: continue
 
-        // recreate tables from scratch, because we need to reset database IDs as well
-        databaseHelper.connectionSource.use { cs ->
-            databaseHelper.dropTables(cs)
-            databaseHelper.createTables(cs)
-        }
-
-        for (exportedBoard in appSettings.exportedBoards) {
-            assert(exportedBoard.description != null)
-            databaseHelper.boardsDao.createIfNotExists(Board(
-                    exportedBoard.siteId,
-                    exportedBoard.isSaved,
-                    exportedBoard.order,
-                    exportedBoard.name,
-                    exportedBoard.code,
-                    exportedBoard.isWorkSafe,
-                    exportedBoard.perPage,
-                    exportedBoard.pages,
-                    exportedBoard.maxFileSize,
-                    exportedBoard.maxWebmSize,
-                    exportedBoard.maxCommentChars,
-                    exportedBoard.bumpLimit,
-                    exportedBoard.imageLimit,
-                    exportedBoard.cooldownThreads,
-                    exportedBoard.cooldownReplies,
-                    exportedBoard.cooldownImages,
-                    exportedBoard.isSpoilers,
-                    exportedBoard.customSpoilers,
-                    exportedBoard.isUserIds,
-                    exportedBoard.isCodeTags,
-                    exportedBoard.isPreuploadCaptcha,
-                    exportedBoard.isCountryFlags,
-                    exportedBoard.isMathTags,
-                    exportedBoard.description ?: "",
-                    exportedBoard.isArchive
-            ))
-        }
-
-        for (exportedSite in appSettings.exportedSites) {
-            val inserted = databaseHelper.siteDao.createIfNotExists(SiteModel(
-                    exportedSite.siteId,
-                    exportedSite.configuration,
-                    exportedSite.userSettings,
-                    exportedSite.order
-            ))
-
-            for (exportedPin in exportedSite.exportedPins) {
-                val exportedLoadable = exportedPin.exportedLoadable ?: continue
-
-                val loadable = Loadable.importLoadable(
-                        inserted.id,
-                        exportedLoadable.mode,
-                        exportedLoadable.boardCode,
-                        exportedLoadable.no,
-                        exportedLoadable.title,
-                        exportedLoadable.listViewIndex,
-                        exportedLoadable.listViewTop,
-                        exportedLoadable.lastViewed,
-                        exportedLoadable.lastLoaded
-                )
-
-                val insertedLoadable = databaseHelper.loadableDao.createIfNotExists(loadable)
-
-                val pin = Pin(
-                        insertedLoadable,
-                        exportedPin.isWatching,
-                        exportedPin.watchLastCount,
-                        exportedPin.watchNewCount,
-                        exportedPin.quoteLastCount,
-                        exportedPin.quoteNewCount,
-                        exportedPin.isError,
-                        exportedPin.thumbnailUrl,
-                        exportedPin.order,
-                        exportedPin.isArchived
-                )
-                databaseHelper.pinDao.createIfNotExists(pin)
-            }
-        }
-
-        for (exportedFilter in appSettings.exportedFilters) {
-            databaseHelper.filterDao.createIfNotExists(Filter(
-                    exportedFilter.isEnabled,
-                    exportedFilter.type,
-                    exportedFilter.pattern,
-                    exportedFilter.isAllBoards,
-                    exportedFilter.boards,
-                    exportedFilter.action,
-                    exportedFilter.color,
-                    exportedFilter.applyToReplies,
-                    exportedFilter.order,
-                    exportedFilter.onlyOnOP,
-                    exportedFilter.applyToSaved
-            ))
-        }
-
-        for (exportedPostHide in appSettings.exportedPostHides) {
-            databaseHelper.postHideDao.createIfNotExists(PostHide(
-                    exportedPostHide.site,
-                    exportedPostHide.board,
-                    exportedPostHide.no))
-        }
-
-        ChanSettings.deserializeFromString(appSettingsParam.settings)
-    }
-
-    private fun onUpgrade(version: Int, appSettings: ExportedAppSettings): ExportedAppSettings {
-        if (version < 2) {
-            //clear the post hides for version 1, threadNo field was added
-            appSettings.exportedPostHides = ArrayList()
-        }
-
-        if (version < 3) {
-            //clear the site model usersettings to be an empty JSON map for version 2,
-            // as they won't parse correctly otherwise
-            for (site in appSettings.exportedSites) {
-                site.userSettings = EMPTY_JSON
-            }
-        }
-
-        if (version < 4) {
-            //55chan and 8chan were removed for this version
-            var chan8: ExportedSite? = null
-            var chan55: ExportedSite? = null
-
-            for (site in appSettings.exportedSites) {
-                val config = gson.fromJson(site.configuration, SiteConfig::class.java)
-
-                if (config.classId == 1 && chan8 == null) {
-                    chan8 = site
-                }
-
-                if (config.classId == 7 && chan55 == null) {
-                    chan55 = site
-                }
-            }
-
-            if (chan55 != null) {
-                deleteExportedSite(chan55, appSettings)
-            }
-
-            if (chan8 != null) {
-                deleteExportedSite(chan8, appSettings)
-            }
-        }
-
-        return appSettings
-    }
-
-    @Throws(java.sql.SQLException::class, IOException::class)
-    private fun readSettingsFromDatabase(): ExportedAppSettings {
-        @SuppressLint("UseSparseArrays")
-        val sitesMap = fillSitesMap()
-
-        @SuppressLint("UseSparseArrays")
-        val loadableMap = fillLoadablesMap()
-
-        val pins = HashSet(databaseHelper.pinDao.queryForAll())
-        val toExportMap = HashMap<SiteModel, MutableList<ExportedPin>>()
-
-        for (siteModel in sitesMap.values) {
-            toExportMap[siteModel] = ArrayList()
-        }
-
-        for (pin in pins) {
-            val loadable = loadableMap[pin.loadable.id]
-                    ?: throw NullPointerException("Could not find Loadable by pin.loadable.id "
-                            + pin.loadable.id)
-
-            val siteModel = sitesMap[loadable.siteId]
-                    ?: throw NullPointerException("Could not find siteModel by loadable.siteId "
-                            + loadable.siteId)
-
-            val exportedLoadable = ExportedLoadable(
-                    loadable.boardCode,
-                    loadable.id.toLong(),
-                    loadable.lastLoaded,
-                    loadable.lastViewed,
-                    loadable.listViewIndex,
-                    loadable.listViewTop,
-                    loadable.mode,
-                    loadable.no,
-                    loadable.siteId,
-                    loadable.title
-            )
-
-            val exportedPin = ExportedPin(
-                    pin.archived,
-                    pin.id,
-                    pin.isError,
-                    loadable.id,
-                    pin.order,
-                    pin.quoteLastCount,
-                    pin.quoteNewCount,
-                    pin.thumbnailUrl,
-                    pin.watchLastCount,
-                    pin.watchNewCount,
-                    pin.watching,
-                    exportedLoadable
-            )
-
-            toExportMap[siteModel]!!.add(exportedPin)
-        }
-
-        val exportedSites = ArrayList<ExportedSite>()
-
-        for ((key, value) in toExportMap) {
-            val exportedSite = ExportedSite(
-                    key.id,
-                    key.configuration,
-                    key.order,
-                    key.userSettings,
-                    value
-            )
-
-            exportedSites.add(exportedSite)
-        }
-
-        val exportedBoards = ArrayList<ExportedBoard>()
-
-        for (board in databaseHelper.boardsDao.queryForAll()) {
-            exportedBoards.add(ExportedBoard(
-                    board.siteId,
-                    board.saved,
-                    board.order,
-                    board.name,
-                    board.code,
-                    board.workSafe,
-                    board.perPage,
-                    board.pages,
-                    board.maxFileSize,
-                    board.maxWebmSize,
-                    board.maxCommentChars,
-                    board.bumpLimit,
-                    board.imageLimit,
-                    board.cooldownThreads,
-                    board.cooldownReplies,
-                    board.cooldownImages,
-                    board.spoilers,
-                    board.customSpoilers,
-                    board.userIds,
-                    board.codeTags,
-                    board.preuploadCaptcha,
-                    board.countryFlags,
-                    board.mathTags,
-                    board.description,
-                    board.archive
-            ))
-        }
-
-        val exportedFilters = ArrayList<ExportedFilter>()
-
-        for (filter in databaseHelper.filterDao.queryForAll()) {
-            exportedFilters.add(ExportedFilter(
-                    filter.enabled,
-                    filter.type,
-                    filter.pattern,
-                    filter.allBoards,
-                    filter.boards,
-                    filter.action,
-                    filter.color,
-                    filter.applyToReplies,
-                    filter.order,
-                    filter.onlyOnOP,
-                    filter.applyToSaved
-            ))
-        }
-
-        val exportedPostHides = ArrayList<ExportedPostHide>()
-
-        for (threadHide in databaseHelper.postHideDao.queryForAll()) {
-            exportedPostHides.add(ExportedPostHide(
-                    threadHide.site,
-                    threadHide.board,
-                    threadHide.no,
-                    threadHide.wholeThread,
-                    threadHide.hide,
-                    threadHide.hideRepliesToThisPost,
-                    threadHide.threadNo
-            ))
-        }
-
-        val settings = ChanSettings.serializeToString()
-
-        return ExportedAppSettings(
-                exportedSites,
-                exportedBoards,
-                exportedFilters,
-                exportedPostHides,
-                settings
+        val loadable = Loadable.importLoadable(
+          inserted.id,
+          exportedLoadable.mode,
+          exportedLoadable.boardCode,
+          exportedLoadable.no,
+          exportedLoadable.title,
+          exportedLoadable.listViewIndex,
+          exportedLoadable.listViewTop,
+          exportedLoadable.lastViewed,
+          exportedLoadable.lastLoaded
         )
+
+        val insertedLoadable = databaseHelper.loadableDao.createIfNotExists(loadable)
+
+        val pin = Pin(
+          insertedLoadable,
+          exportedPin.isWatching,
+          exportedPin.watchLastCount,
+          exportedPin.watchNewCount,
+          exportedPin.quoteLastCount,
+          exportedPin.quoteNewCount,
+          exportedPin.isError,
+          exportedPin.thumbnailUrl,
+          exportedPin.order,
+          exportedPin.isArchived
+        )
+        databaseHelper.pinDao.createIfNotExists(pin)
+      }
     }
 
-    private fun fillLoadablesMap(): Map<Int, Loadable> {
-        val map = hashMapOf<Int, Loadable>()
-        val loadables = databaseHelper.loadableDao.queryForAll()
+    for (exportedFilter in appSettings.exportedFilters) {
+      databaseHelper.filterDao.createIfNotExists(Filter(
+        exportedFilter.isEnabled,
+        exportedFilter.type,
+        exportedFilter.pattern,
+        exportedFilter.isAllBoards,
+        exportedFilter.boards,
+        exportedFilter.action,
+        exportedFilter.color,
+        exportedFilter.applyToReplies,
+        exportedFilter.order,
+        exportedFilter.onlyOnOP,
+        exportedFilter.applyToSaved
+      ))
+    }
 
-        for (loadable in loadables) {
-            map[loadable.id] = loadable
+    for (exportedPostHide in appSettings.exportedPostHides) {
+      databaseHelper.postHideDao.createIfNotExists(PostHide(
+        exportedPostHide.site,
+        exportedPostHide.board,
+        exportedPostHide.no))
+    }
+
+    ChanSettings.deserializeFromString(appSettingsParam.settings)
+  }
+
+  private fun onUpgrade(version: Int, appSettings: ExportedAppSettings): ExportedAppSettings {
+    if (version < 2) {
+      //clear the post hides for version 1, threadNo field was added
+      appSettings.exportedPostHides = ArrayList()
+    }
+
+    if (version < 3) {
+      //clear the site model usersettings to be an empty JSON map for version 2,
+      // as they won't parse correctly otherwise
+      for (site in appSettings.exportedSites) {
+        site.userSettings = EMPTY_JSON
+      }
+    }
+
+    if (version < 4) {
+      //55chan and 8chan were removed for this version
+      var chan8: ExportedSite? = null
+      var chan55: ExportedSite? = null
+
+      for (site in appSettings.exportedSites) {
+        val config = gson.fromJson(site.configuration, SiteConfig::class.java)
+
+        if (config.classId == 1 && chan8 == null) {
+          chan8 = site
         }
 
-        return map
-    }
-
-    private fun fillSitesMap(): Map<Int, SiteModel> {
-        val map = hashMapOf<Int, SiteModel>()
-        val sites = databaseHelper.siteDao.queryForAll()
-
-        for (site in sites) {
-            map[site.id] = site
+        if (config.classId == 7 && chan55 == null) {
+          chan55 = site
         }
+      }
 
-        return map
+      if (chan55 != null) {
+        deleteExportedSite(chan55, appSettings)
+      }
+
+      if (chan8 != null) {
+        deleteExportedSite(chan8, appSettings)
+      }
     }
 
-    private fun deleteExportedSite(site: ExportedSite, appSettings: ExportedAppSettings) {
-        //filters
-        val filtersToDelete = ArrayList<ExportedFilter>()
-        for (filter in appSettings.exportedFilters) {
-            if (filter.isAllBoards || TextUtils.isEmpty(filter.boards)) {
-                continue
-            }
+    return appSettings
+  }
 
-            val boards = checkNotNull(filter.boards)
-            val splitBoards = boards.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+  @Throws(java.sql.SQLException::class, IOException::class)
+  private fun readSettingsFromDatabase(): ExportedAppSettings {
+    @SuppressLint("UseSparseArrays")
+    val sitesMap = fillSitesMap()
 
-            for (uniqueId in splitBoards) {
-                val split = uniqueId.split(":".toRegex()).dropLastWhile { it.isEmpty() }
+    @SuppressLint("UseSparseArrays")
+    val loadableMap = fillLoadablesMap()
 
-                if (split.size == 2 && Integer.parseInt(split[0]) == site.siteId) {
-                    filtersToDelete.add(filter)
-                    break
-                }
-            }
+    val pins = HashSet(databaseHelper.pinDao.queryForAll())
+    val toExportMap = HashMap<SiteModel, MutableList<ExportedPin>>()
+
+    for (siteModel in sitesMap.values) {
+      toExportMap[siteModel] = ArrayList()
+    }
+
+    for (pin in pins) {
+      val loadable = loadableMap[pin.loadable.id]
+        ?: throw NullPointerException("Could not find Loadable by pin.loadable.id "
+          + pin.loadable.id)
+
+      val siteModel = sitesMap[loadable.siteId]
+        ?: throw NullPointerException("Could not find siteModel by loadable.siteId "
+          + loadable.siteId)
+
+      val exportedLoadable = ExportedLoadable(
+        loadable.boardCode,
+        loadable.id.toLong(),
+        loadable.lastLoaded,
+        loadable.lastViewed,
+        loadable.listViewIndex,
+        loadable.listViewTop,
+        loadable.mode,
+        loadable.no,
+        loadable.siteId,
+        loadable.title
+      )
+
+      val exportedPin = ExportedPin(
+        pin.archived,
+        pin.id,
+        pin.isError,
+        loadable.id,
+        pin.order,
+        pin.quoteLastCount,
+        pin.quoteNewCount,
+        pin.thumbnailUrl,
+        pin.watchLastCount,
+        pin.watchNewCount,
+        pin.watching,
+        exportedLoadable
+      )
+
+      toExportMap[siteModel]!!.add(exportedPin)
+    }
+
+    val exportedSites = ArrayList<ExportedSite>()
+
+    for ((key, value) in toExportMap) {
+      val exportedSite = ExportedSite(
+        key.id,
+        key.configuration,
+        key.order,
+        key.userSettings,
+        value
+      )
+
+      exportedSites.add(exportedSite)
+    }
+
+    val exportedBoards = ArrayList<ExportedBoard>()
+
+    for (board in databaseHelper.boardsDao.queryForAll()) {
+      exportedBoards.add(ExportedBoard(
+        board.siteId,
+        board.saved,
+        board.order,
+        board.name,
+        board.code,
+        board.workSafe,
+        board.perPage,
+        board.pages,
+        board.maxFileSize,
+        board.maxWebmSize,
+        board.maxCommentChars,
+        board.bumpLimit,
+        board.imageLimit,
+        board.cooldownThreads,
+        board.cooldownReplies,
+        board.cooldownImages,
+        board.spoilers,
+        board.customSpoilers,
+        board.userIds,
+        board.codeTags,
+        board.preuploadCaptcha,
+        board.countryFlags,
+        board.mathTags,
+        board.description,
+        board.archive
+      ))
+    }
+
+    val exportedFilters = ArrayList<ExportedFilter>()
+
+    for (filter in databaseHelper.filterDao.queryForAll()) {
+      exportedFilters.add(ExportedFilter(
+        filter.enabled,
+        filter.type,
+        filter.pattern,
+        filter.allBoards,
+        filter.boards,
+        filter.action,
+        filter.color,
+        filter.applyToReplies,
+        filter.order,
+        filter.onlyOnOP,
+        filter.applyToSaved
+      ))
+    }
+
+    val exportedPostHides = ArrayList<ExportedPostHide>()
+
+    for (threadHide in databaseHelper.postHideDao.queryForAll()) {
+      exportedPostHides.add(ExportedPostHide(
+        threadHide.site,
+        threadHide.board,
+        threadHide.no,
+        threadHide.wholeThread,
+        threadHide.hide,
+        threadHide.hideRepliesToThisPost,
+        threadHide.threadNo
+      ))
+    }
+
+    val settings = ChanSettings.serializeToString()
+
+    return ExportedAppSettings(
+      exportedSites,
+      exportedBoards,
+      exportedFilters,
+      exportedPostHides,
+      settings
+    )
+  }
+
+  private fun fillLoadablesMap(): Map<Int, Loadable> {
+    val map = hashMapOf<Int, Loadable>()
+    val loadables = databaseHelper.loadableDao.queryForAll()
+
+    for (loadable in loadables) {
+      map[loadable.id] = loadable
+    }
+
+    return map
+  }
+
+  private fun fillSitesMap(): Map<Int, SiteModel> {
+    val map = hashMapOf<Int, SiteModel>()
+    val sites = databaseHelper.siteDao.queryForAll()
+
+    for (site in sites) {
+      map[site.id] = site
+    }
+
+    return map
+  }
+
+  private fun deleteExportedSite(site: ExportedSite, appSettings: ExportedAppSettings) {
+    //filters
+    val filtersToDelete = ArrayList<ExportedFilter>()
+    for (filter in appSettings.exportedFilters) {
+      if (filter.isAllBoards || TextUtils.isEmpty(filter.boards)) {
+        continue
+      }
+
+      val boards = checkNotNull(filter.boards)
+      val splitBoards = boards.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+
+      for (uniqueId in splitBoards) {
+        val split = uniqueId.split(":".toRegex()).dropLastWhile { it.isEmpty() }
+
+        if (split.size == 2 && Integer.parseInt(split[0]) == site.siteId) {
+          filtersToDelete.add(filter)
+          break
         }
-
-        appSettings.exportedFilters.removeAll(filtersToDelete)
-
-        //boards
-        val boardsToDelete = ArrayList<ExportedBoard>()
-        for (board in appSettings.exportedBoards) {
-            if (board.siteId == site.siteId) {
-                boardsToDelete.add(board)
-            }
-        }
-        appSettings.exportedBoards.removeAll(boardsToDelete)
-
-        //loadables for saved threads
-        val loadables = ArrayList<ExportedLoadable>()
-        for (pin in site.exportedPins) {
-            val loadable = pin.exportedLoadable
-                    ?: continue
-
-            if (loadable.siteId == site.siteId) {
-                loadables.add(loadable)
-            }
-        }
-
-        //post hides
-        val hidesToDelete = ArrayList<ExportedPostHide>()
-        for (hide in appSettings.exportedPostHides) {
-            if (hide.site == site.siteId) {
-                hidesToDelete.add(hide)
-            }
-        }
-
-        appSettings.exportedPostHides.removeAll(hidesToDelete)
-
-        //site (also removes pins and loadables)
-        appSettings.exportedSites.remove(site)
+      }
     }
 
-    enum class ImportExport {
-        Import,
-        Export
+    appSettings.exportedFilters.removeAll(filtersToDelete)
+
+    //boards
+    val boardsToDelete = ArrayList<ExportedBoard>()
+    for (board in appSettings.exportedBoards) {
+      if (board.siteId == site.siteId) {
+        boardsToDelete.add(board)
+      }
+    }
+    appSettings.exportedBoards.removeAll(boardsToDelete)
+
+    //loadables for saved threads
+    val loadables = ArrayList<ExportedLoadable>()
+    for (pin in site.exportedPins) {
+      val loadable = pin.exportedLoadable
+        ?: continue
+
+      if (loadable.siteId == site.siteId) {
+        loadables.add(loadable)
+      }
     }
 
-    interface ImportExportCallbacks {
-        fun onSuccess(importExport: ImportExport)
-        fun onNothingToImportExport(importExport: ImportExport)
-        fun onError(error: Throwable, importExport: ImportExport)
+    //post hides
+    val hidesToDelete = ArrayList<ExportedPostHide>()
+    for (hide in appSettings.exportedPostHides) {
+      if (hide.site == site.siteId) {
+        hidesToDelete.add(hide)
+      }
     }
 
-    class DowngradeNotSupportedException(message: String) : Exception(message)
+    appSettings.exportedPostHides.removeAll(hidesToDelete)
 
-    companion object {
-        private const val TAG = "ImportExportRepository"
+    //site (also removes pins and loadables)
+    appSettings.exportedSites.remove(site)
+  }
 
-        // Don't forget to change this when changing any of the Export models.
-        // Also, don't forget to handle the change in the onUpgrade or onDowngrade methods
-        const val CURRENT_EXPORT_SETTINGS_VERSION = 5
-    }
+  enum class ImportExport {
+    Import,
+    Export
+  }
+
+  interface ImportExportCallbacks {
+    fun onSuccess(importExport: ImportExport)
+    fun onNothingToImportExport(importExport: ImportExport)
+    fun onError(error: Throwable, importExport: ImportExport)
+  }
+
+  class DowngradeNotSupportedException(message: String) : Exception(message)
+
+  companion object {
+    private const val TAG = "ImportExportRepository"
+
+    // Don't forget to change this when changing any of the Export models.
+    // Also, don't forget to handle the change in the onUpgrade or onDowngrade methods
+    const val CURRENT_EXPORT_SETTINGS_VERSION = 5
+  }
 }

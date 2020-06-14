@@ -7,29 +7,29 @@ import java.io.File
 
 class SavedFilesBaseDirectory : BaseDirectory() {
 
-    override fun getDirFile(): File? {
-        val path = ChanSettings.saveLocation.fileApiBaseDir.get()
-        if (path.isEmpty()) {
-            return null
-        }
-
-        return File(path)
+  override fun getDirFile(): File? {
+    val path = ChanSettings.saveLocation.fileApiBaseDir.get()
+    if (path.isEmpty()) {
+      return null
     }
 
-    override fun getDirUri(): Uri? {
-        val path = ChanSettings.saveLocation.safBaseDir.get()
-        if (path.isEmpty()) {
-            return null
-        }
+    return File(path)
+  }
 
-        return Uri.parse(path)
+  override fun getDirUri(): Uri? {
+    val path = ChanSettings.saveLocation.safBaseDir.get()
+    if (path.isEmpty()) {
+      return null
     }
 
-    override fun currentActiveBaseDirType(): ActiveBaseDirType {
-        return when {
-            ChanSettings.saveLocation.isSafDirActive() -> ActiveBaseDirType.SafBaseDir
-            ChanSettings.saveLocation.isFileDirActive() -> ActiveBaseDirType.JavaFileBaseDir
-            else -> throw IllegalStateException("SavedFilesBaseDirectory: No active base directory!!!")
-        }
+    return Uri.parse(path)
+  }
+
+  override fun currentActiveBaseDirType(): ActiveBaseDirType {
+    return when {
+      ChanSettings.saveLocation.isSafDirActive() -> ActiveBaseDirType.SafBaseDir
+      ChanSettings.saveLocation.isFileDirActive() -> ActiveBaseDirType.JavaFileBaseDir
+      else -> throw IllegalStateException("SavedFilesBaseDirectory: No active base directory!!!")
     }
+  }
 }

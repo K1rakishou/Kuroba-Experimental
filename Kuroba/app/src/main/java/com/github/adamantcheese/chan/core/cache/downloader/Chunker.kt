@@ -2,49 +2,49 @@ package com.github.adamantcheese.chan.core.cache.downloader
 
 
 fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
-    require(chunksCount > 0) { "ChunksCount ($chunksCount) must be greater than zero!" }
-    require(value >= chunksCount) { "Value ($value) must be greater or equal to chunksCount ($chunksCount)" }
+  require(chunksCount > 0) { "ChunksCount ($chunksCount) must be greater than zero!" }
+  require(value >= chunksCount) { "Value ($value) must be greater or equal to chunksCount ($chunksCount)" }
 
-    if (value < minChunkSize) {
-        return listOf(Chunk(0, value))
-    }
+  if (value < minChunkSize) {
+    return listOf(Chunk(0, value))
+  }
 
-    val chunks = mutableListOf<Chunk>()
-    val chunkSize = value / chunksCount
-    var current = 0L
+  val chunks = mutableListOf<Chunk>()
+  val chunkSize = value / chunksCount
+  var current = 0L
 
-    for (i in 0 until chunksCount) {
-        chunks += Chunk(current, (current + chunkSize).coerceAtMost(value))
-        current += chunkSize
-    }
+  for (i in 0 until chunksCount) {
+    chunks += Chunk(current, (current + chunkSize).coerceAtMost(value))
+    current += chunkSize
+  }
 
-    if (current < value) {
-        val lastChunk = chunks.removeAt(chunks.lastIndex)
-        chunks += Chunk(lastChunk.start, value)
-    }
+  if (current < value) {
+    val lastChunk = chunks.removeAt(chunks.lastIndex)
+    chunks += Chunk(lastChunk.start, value)
+  }
 
-    return chunks
+  return chunks
 }
 
 /**
  * [realEnd] is only being used in tests.
  * */
 data class Chunk(val start: Long, val realEnd: Long) {
-    // Must be 1 less than actual _end
-    val end: Long
-        get() = realEnd - 1
+  // Must be 1 less than actual _end
+  val end: Long
+    get() = realEnd - 1
 
-    fun isWholeFile(): Boolean {
-        return start == 0L && realEnd == Long.MAX_VALUE
-    }
+  fun isWholeFile(): Boolean {
+    return start == 0L && realEnd == Long.MAX_VALUE
+  }
 
-    fun chunkSize(): Long = realEnd - start
+  fun chunkSize(): Long = realEnd - start
 
-    override fun toString(): String {
-        return "Chunk(start=$start, end=$end)"
-    }
+  override fun toString(): String {
+    return "Chunk(start=$start, end=$end)"
+  }
 
-    companion object {
-        fun wholeFile(): Chunk = Chunk(0, Long.MAX_VALUE)
-    }
+  companion object {
+    fun wholeFile(): Chunk = Chunk(0, Long.MAX_VALUE)
+  }
 }

@@ -21,47 +21,54 @@ import java.util.*
  * ThreadSafe.
  * */
 class MockReplyManager {
-    @GuardedBy("this")
-    private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
+  @GuardedBy("this")
+  private val mockReplyMultiMap =
+    mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
 
-    fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
-        synchronized(this) {
-            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo)
+  fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
+    synchronized(this) {
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor(
+        BoardDescriptor.create(siteName, boardCode),
+        opNo
+      )
 
-            if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
-                mockReplyMultiMap[threadDescriptor] = LinkedList()
-            }
+      if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
+        mockReplyMultiMap[threadDescriptor] = LinkedList()
+      }
 
-            mockReplyMultiMap[threadDescriptor]!!.addFirst(postNo)
-            Logger.d(TAG, "addMockReply() mock replies count = ${mockReplyMultiMap.size}")
-        }
+      mockReplyMultiMap[threadDescriptor]!!.addFirst(postNo)
+      Logger.d(TAG, "addMockReply() mock replies count = ${mockReplyMultiMap.size}")
     }
+  }
 
-    fun getLastMockReply(siteName: String, boardCode: String, opNo: Long): Long {
-        return synchronized(this) {
-            val threadDescriptor = ChanDescriptor.ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), opNo)
+  fun getLastMockReply(siteName: String, boardCode: String, opNo: Long): Long {
+    return synchronized(this) {
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor(
+        BoardDescriptor.create(siteName, boardCode),
+        opNo
+      )
 
-            val repliesQueue = mockReplyMultiMap[threadDescriptor]
-                    ?: return@synchronized -1
+      val repliesQueue = mockReplyMultiMap[threadDescriptor]
+        ?: return@synchronized -1
 
-            if (repliesQueue.isEmpty()) {
-                mockReplyMultiMap.remove(threadDescriptor)
-                return@synchronized -1
-            }
+      if (repliesQueue.isEmpty()) {
+        mockReplyMultiMap.remove(threadDescriptor)
+        return@synchronized -1
+      }
 
-            val lastReply = repliesQueue.removeLast()
-            Logger.d(TAG, "getLastMockReplyOrNull() mock replies " +
-                    "count = ${mockReplyMultiMap.values.sumBy { queue -> queue.size }}")
+      val lastReply = repliesQueue.removeLast()
+      Logger.d(TAG, "getLastMockReplyOrNull() mock replies " +
+        "count = ${mockReplyMultiMap.values.sumBy { queue -> queue.size }}")
 
-            if (repliesQueue.isEmpty()) {
-                mockReplyMultiMap.remove(threadDescriptor)
-            }
+      if (repliesQueue.isEmpty()) {
+        mockReplyMultiMap.remove(threadDescriptor)
+      }
 
-            return@synchronized lastReply
-        }
+      return@synchronized lastReply
     }
+  }
 
-    companion object {
-        private const val TAG = "MockReplyManager"
-    }
+  companion object {
+    private const val TAG = "MockReplyManager"
+  }
 }

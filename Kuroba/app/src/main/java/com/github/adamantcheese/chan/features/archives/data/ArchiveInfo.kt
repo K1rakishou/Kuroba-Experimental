@@ -10,16 +10,16 @@ data class ArchiveInfo(
   val supportedBoards: String,
   val supportedBoardsMedia: String
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ArchiveInfo) return false
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ArchiveInfo) return false
 
-        if (archiveDescriptor != other.archiveDescriptor) return false
+    if (archiveDescriptor != other.archiveDescriptor) return false
 
-        return true
-    }
+    return true
+  }
 
-    override fun hashCode(): Int {
-        return archiveDescriptor.hashCode()
-    }
+  override fun hashCode(): Int {
+    return archiveDescriptor.hashCode()
+  }
 }

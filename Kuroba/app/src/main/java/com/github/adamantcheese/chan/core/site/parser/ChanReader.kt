@@ -19,14 +19,14 @@ package com.github.adamantcheese.chan.core.site.parser
 import android.util.JsonReader
 
 interface ChanReader {
-    suspend fun getParser(): PostParser?
+  suspend fun getParser(): PostParser?
 
-    @Throws(Exception::class)
-    suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
+  @Throws(Exception::class)
+  suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 
-    @Throws(Exception::class)
-    suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
+  @Throws(Exception::class)
+  suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 
-    @Throws(Exception::class)
-    suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
+  @Throws(Exception::class)
+  suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 }

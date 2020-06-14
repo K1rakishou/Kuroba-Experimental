@@ -6,37 +6,37 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.ui.layout.ReportProblemLayout
 
 class ReportProblemController(context: Context)
-    : Controller(context), ReportProblemLayout.ReportProblemControllerCallbacks {
-    private var loadingViewController: LoadingViewController? = null
+  : Controller(context), ReportProblemLayout.ReportProblemControllerCallbacks {
+  private var loadingViewController: LoadingViewController? = null
 
-    override fun onCreate() {
-        super.onCreate()
-        navigation.setTitle(R.string.report_controller_report_an_error_problem)
+  override fun onCreate() {
+    super.onCreate()
+    navigation.setTitle(R.string.report_controller_report_an_error_problem)
 
-        view = ReportProblemLayout(context).apply {
-            onReady(this@ReportProblemController)
-        }
+    view = ReportProblemLayout(context).apply {
+      onReady(this@ReportProblemController)
     }
+  }
 
-    override fun onDestroy() {
-        super.onDestroy()
+  override fun onDestroy() {
+    super.onDestroy()
 
-        (view as ReportProblemLayout).destroy()
-    }
+    (view as ReportProblemLayout).destroy()
+  }
 
-    override fun showProgressDialog() {
-        hideProgressDialog()
+  override fun showProgressDialog() {
+    hideProgressDialog()
 
-        loadingViewController = LoadingViewController(context, true)
-        presentController(loadingViewController!!)
-    }
+    loadingViewController = LoadingViewController(context, true)
+    presentController(loadingViewController!!)
+  }
 
-    override fun hideProgressDialog() {
-        loadingViewController?.stopPresenting()
-        loadingViewController = null
-    }
+  override fun hideProgressDialog() {
+    loadingViewController?.stopPresenting()
+    loadingViewController = null
+  }
 
-    override fun onFinished() {
-        this.navigationController!!.popController()
-    }
+  override fun onFinished() {
+    this.navigationController!!.popController()
+  }
 }

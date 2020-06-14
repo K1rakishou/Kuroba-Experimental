@@ -21,15 +21,15 @@ import com.github.adamantcheese.chan.core.settings.StringSetting
 
 sealed class SiteSetting(val name: String) {
 
-    class SiteOptionsSetting(
-            name: String,
-            val options: OptionsSetting<*>,
-            val optionNames: List<String>
-    ) : SiteSetting(name)
+  class SiteOptionsSetting(
+    name: String,
+    val options: OptionsSetting<*>,
+    val optionNames: List<String>
+  ) : SiteSetting(name)
 
-    class SiteStringSetting(
-            name: String,
-            val setting: StringSetting
-    ) : SiteSetting(name)
+  class SiteStringSetting(
+    name: String,
+    val setting: StringSetting
+  ) : SiteSetting(name)
 
 }

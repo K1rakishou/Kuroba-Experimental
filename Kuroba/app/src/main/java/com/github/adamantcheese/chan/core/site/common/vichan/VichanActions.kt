@@ -31,9 +31,14 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import java.util.regex.Pattern
 
-open class VichanActions(commonSite: CommonSite?, private val okHttpClient: ProxiedOkHttpClient) : CommonActions(commonSite!!) {
+open class VichanActions(
+  commonSite: CommonSite,
+  private val okHttpClient: ProxiedOkHttpClient
+) : CommonActions(commonSite) {
+
   override fun setupPost(reply: Reply, call: MultipartHttpCall) {
     call.parameter("board", reply.loadable.boardCode)
+
     if (reply.loadable.isThreadMode) {
       call.parameter("thread", reply.loadable.no.toString())
     }
@@ -43,13 +48,17 @@ open class VichanActions(commonSite: CommonSite?, private val okHttpClient: Prox
     call.parameter("password", reply.password)
     call.parameter("name", reply.name)
     call.parameter("email", reply.options)
+
     if (!TextUtils.isEmpty(reply.subject)) {
       call.parameter("subject", reply.subject)
     }
+
     call.parameter("body", reply.comment)
+
     if (reply.file != null) {
       call.fileParameter("file", reply.fileName, reply.file)
     }
+
     if (reply.spoilerImage) {
       call.parameter("spoiler", "on")
     }
@@ -110,6 +119,7 @@ open class VichanActions(commonSite: CommonSite?, private val okHttpClient: Prox
     call.parameter("delete", "Delete")
     call.parameter("delete_" + deleteRequest.post.no, "on")
     call.parameter("password", deleteRequest.savedReply.password)
+
     if (deleteRequest.imageOnly) {
       call.parameter("file", "on")
     }

@@ -10,21 +10,21 @@ import com.github.adamantcheese.chan.R
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_MATCH_HEIGHT)
 class EpoxyErrorView @JvmOverloads constructor(
-        context: Context,
-        attrs: AttributeSet? = null,
-        defStyleAttr: Int = 0
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-    private val errorTextView: TextView
+  private val errorTextView: TextView
 
-    init {
-        inflate(context, R.layout.epoxy_error_view, this)
+  init {
+    inflate(context, R.layout.epoxy_error_view, this)
 
-        errorTextView = findViewById(R.id.error_text)
-    }
+    errorTextView = findViewById(R.id.error_text)
+  }
 
-    @ModelProp
-    fun setErrorMessage(text: String) {
-        errorTextView.text = text
-    }
+  @ModelProp
+  fun setErrorMessage(text: String) {
+    errorTextView.text = text
+  }
 
 }
