@@ -616,13 +616,16 @@ public class ThreadListLayout
                 PostCellInterface postView = (PostCellInterface) view;
                 Post post = postView.getPost();
 
-                for (PostImage image : post.getPostImages()) {
-                    if (image.equalUrl(postImage)) {
-                        return postView.getThumbnailView(postImage);
+                if (post != null) {
+                    for (PostImage image : post.getPostImages()) {
+                        if (image.equalUrl(postImage)) {
+                            return postView.getThumbnailView(postImage);
+                        }
                     }
                 }
             }
         }
+
         return null;
     }
 
@@ -849,16 +852,19 @@ public class ThreadListLayout
                 if (child instanceof PostCellInterface) {
                     PostCellInterface postView = (PostCellInterface) child;
                     Post post = postView.getPost();
-                    if (post.isOP && !post.getPostImages().isEmpty()) {
-                        RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
-                        int top = child.getTop() + params.topMargin;
-                        int left = child.getLeft() + params.leftMargin;
-                        c.drawBitmap(hat,
-                                left - parent.getPaddingLeft() - dp(25),
-                                top - dp(80) - parent.getPaddingTop() + toolbarHeight(),
-                                null
-                        );
+
+                    if (post == null || !post.isOP || post.getPostImages().isEmpty()) {
+                        continue;
                     }
+
+                    RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
+                    int top = child.getTop() + params.topMargin;
+                    int left = child.getLeft() + params.leftMargin;
+                    c.drawBitmap(hat,
+                            left - parent.getPaddingLeft() - dp(25),
+                            top - dp(80) - parent.getPaddingTop() + toolbarHeight(),
+                            null
+                    );
                 }
             }
         }

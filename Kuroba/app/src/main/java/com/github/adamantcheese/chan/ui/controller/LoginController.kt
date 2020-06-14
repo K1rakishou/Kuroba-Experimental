@@ -79,7 +79,6 @@ class LoginController(
       // Sanity check
       requireNotNull(parentController?.view?.windowToken) { "parentController.view not attached" }
   
-      // TODO: remove
       AndroidUtils.waitForLayout(view.viewTreeObserver, view) {
         crossfadeView.layoutParams.height = crossfadeView.height
         crossfadeView.requestLayout()

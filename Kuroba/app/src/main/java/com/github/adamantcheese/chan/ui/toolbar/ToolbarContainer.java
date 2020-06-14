@@ -159,7 +159,6 @@ public class ToolbarContainer extends FrameLayout {
     }
 
     public void update(NavigationItem item) {
-        // TODO
         View view = viewForItem(item);
         if (view != null) {
             TextView titleView = view.findViewById(R.id.title);

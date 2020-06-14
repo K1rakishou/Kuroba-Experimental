@@ -16,9 +16,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import org.joda.time.DateTime
 import kotlin.coroutines.CoroutineContext
 
@@ -28,7 +25,6 @@ class SeenPostsManager(
 ) : CoroutineScope {
   @GuardedBy("mutex")
   private val seenPostsMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>()
-  private val mutex = Mutex()
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob()
@@ -41,17 +37,7 @@ class SeenPostsManager(
 
           when (val result = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)) {
             is ModularResult.Value -> {
-              // FIXME: Using a mutex inside of an actor is not a good idea (it defeats
-              //  the whole point of using actors in the first place) but there is
-              //  no other way since there is one place where we need to call
-              //  hasAlreadySeenPost from Java code and we need to either use a mutex
-              //  while blocking the thread (via runBlocking) or mark is suspend
-              //  (which we can't because of the Java code). Must be changed in
-              //  the future when ThreadPresenter is converted into Kotlin
-              //  (probably not only ThreadPresenter but also a ton of other classes)
-              mutex.withLock {
-                seenPostsMap[threadDescriptor] = result.value.toMutableSet()
-              }
+              seenPostsMap[threadDescriptor] = result.value.toMutableSet()
             }
             is ModularResult.Error -> {
               Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
@@ -72,10 +58,8 @@ class SeenPostsManager(
 
           when (val result = seenPostsRepository.insert(seenPost)) {
             is ModularResult.Value -> {
-              mutex.withLock {
-                seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
-                seenPostsMap[threadDescriptor]!!.add(seenPost)
-              }
+              seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
+              seenPostsMap[threadDescriptor]!!.add(seenPost)
             }
             is ModularResult.Error -> {
               Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
@@ -86,7 +70,7 @@ class SeenPostsManager(
           Unit
         }
         ActorAction.Clear -> {
-          mutex.withLock { seenPostsMap.clear() }
+          seenPostsMap.clear()
 
           Unit
         }
@@ -94,7 +78,7 @@ class SeenPostsManager(
     }
   }
 
-  fun hasAlreadySeenPost(loadable: Loadable, post: Post): Boolean {
+  suspend fun hasAlreadySeenPost(loadable: Loadable, post: Post): Boolean {
     if (!loadable.isThreadMode) {
       return true
     }
@@ -106,18 +90,14 @@ class SeenPostsManager(
     val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
     val postNo = post.no
 
-    return runBlocking {
-      return@runBlocking mutex.withLock {
-        val seenPost = seenPostsMap[threadDescriptor]
-          ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
-          ?: return@withLock false
+    val seenPost = seenPostsMap[threadDescriptor]
+      ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
+      ?: return false
 
-        // We need this time check so that we don't remove the unseen post label right after
-        // all loaders have completed loading and updated the post.
-        val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-        return@withLock deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
-      }
-    }
+    // We need this time check so that we don't remove the unseen post label right after
+    // all loaders have completed loading and updated the post.
+    val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
+    return deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
   }
 
   fun preloadForThread(loadable: Loadable) {

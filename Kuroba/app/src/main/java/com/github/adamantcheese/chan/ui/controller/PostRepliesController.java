@@ -102,21 +102,28 @@ public class PostRepliesController
     }
 
     public ThumbnailView getThumbnail(PostImage postImage) {
-        if (repliesView == null) return null;
+        if (repliesView == null) {
+            return null;
+        }
+
         ThumbnailView thumbnail = null;
+
         for (int i = 0; i < repliesView.getChildCount(); i++) {
             View view = repliesView.getChildAt(i);
             if (view instanceof PostCellInterface) {
                 PostCellInterface postView = (PostCellInterface) view;
                 Post post = postView.getPost();
 
-                for (PostImage p : post.getPostImages()) {
-                    if (p.equalUrl(postImage)) {
-                        thumbnail = postView.getThumbnailView(postImage);
+                if (post != null) {
+                    for (PostImage image : post.getPostImages()) {
+                        if (image.equalUrl(postImage)) {
+                            thumbnail = postView.getThumbnailView(postImage);
+                        }
                     }
                 }
             }
         }
+
         return thumbnail;
     }
 

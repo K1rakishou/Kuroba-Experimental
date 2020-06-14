@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
@@ -282,7 +283,10 @@ public class PostAdapter
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder.itemView instanceof PostCellInterface) {
-            long postNo = ((PostCellInterface) holder.itemView).getPost().no;
+            Post post = ((PostCellInterface) holder.itemView).getPost();
+            Objects.requireNonNull(post);
+
+            long postNo = post.no;
             boolean isActuallyRecycling = !updatingPosts.remove(postNo);
 
             /**

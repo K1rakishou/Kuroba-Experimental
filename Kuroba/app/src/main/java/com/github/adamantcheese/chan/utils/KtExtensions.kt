@@ -194,9 +194,13 @@ fun Context.getLifecycleFromContext(): Lifecycle {
   return when (this) {
     is StartActivity -> this.lifecycle
     is ContextWrapper -> (this.baseContext as? StartActivity)?.lifecycle
-      ?: throw IllegalArgumentException("context.baseContext is not StartActivity context, " +
-        "actual: " + this::class.java.simpleName)
-    else -> throw IllegalArgumentException("Bad context type! Must be either StartActivity " +
-      "or ContextThemeWrapper, actual: " + this::class.java.simpleName)
+      ?: throw IllegalArgumentException(
+        "context.baseContext is not StartActivity context, " +
+        "actual: " + this::class.java.simpleName
+      )
+    else -> throw IllegalArgumentException(
+      "Bad context type! Must be either StartActivity " +
+      "or ContextWrapper, actual: " + this::class.java.simpleName
+    )
   }
 }

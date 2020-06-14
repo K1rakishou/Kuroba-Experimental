@@ -90,7 +90,7 @@ class ThreadPresenter @Inject constructor(
   CoroutineScope {
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
-  private var loadable: Loadable? = null
+  private var currentLoadable: Loadable? = null
   private var chanLoader: ChanThreadLoader? = null
   private var searchOpen = false
   private var searchQuery: String? = null
@@ -102,6 +102,10 @@ class ThreadPresenter @Inject constructor(
   private val job = SupervisorJob()
 
   private lateinit var context: Context
+
+  override fun getLoadable(): Loadable? {
+    return currentLoadable
+  }
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadPresenter")
@@ -146,7 +150,7 @@ class ThreadPresenter @Inject constructor(
         loadable = pin.loadable
       }
 
-      this.loadable = loadable
+      this.currentLoadable = loadable
       this.addToLocalBackHistory = addToLocalBackHistory
 
       chanLoader = chanLoaderManager.obtain(loadable, this)
@@ -178,7 +182,7 @@ class ThreadPresenter @Inject constructor(
       chanLoader!!.clearTimer()
       chanLoaderManager.release(chanLoader!!, this)
       chanLoader = null
-      loadable = null
+      currentLoadable = null
       historyAdded = false
       addToLocalBackHistory = true
       threadPresenterCallback?.showLoading()
@@ -415,10 +419,6 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.showAlbum(images, index)
-  }
-
-  override fun getLoadable(): Loadable? {
-    return loadable
   }
 
   override fun onPostBind(post: Post) {
@@ -1076,7 +1076,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, animate)
   }
 
-  override fun hasAlreadySeenPost(post: Post): Boolean {
+  override suspend fun hasAlreadySeenPost(post: Post): Boolean {
     if (loadable == null) {
       // Invalid loadable, hide the label
       return true

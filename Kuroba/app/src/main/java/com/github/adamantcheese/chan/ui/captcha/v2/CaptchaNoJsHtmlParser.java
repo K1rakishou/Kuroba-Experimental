@@ -51,8 +51,6 @@ public class CaptchaNoJsHtmlParser {
     private static final Pattern checkboxesPattern = Pattern.compile(
             "<input class=\"fbc-imageselect-checkbox-\\d+\" type=\"checkbox\" name=\"response\" value=\"(\\d+)\">");
 
-    // FIXME: this pattern captures the C parameter as many times as it is in the HTML.
-    // Should match only the first occurrence instead.
     private static final Pattern cParameterPattern =
             Pattern.compile("<input type=\"hidden\" name=\"c\" value=\"(.*?)\"/>");
     private static final Pattern challengeTitlePattern =
