@@ -98,9 +98,12 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class ReplyLayout
         extends LoadView
-        implements View.OnClickListener, ReplyPresenter.ReplyPresenterCallback, TextWatcher,
-                   ImageDecoder.ImageDecoderCallback, SelectionListeningEditText.SelectionChangedListener,
-                   CaptchaHolder.CaptchaValidationListener {
+        implements View.OnClickListener,
+        ReplyPresenter.ReplyPresenterCallback,
+        TextWatcher,
+        ImageDecoder.ImageDecoderCallback,
+        SelectionListeningEditText.SelectionChangedListener,
+        CaptchaHolder.CaptchaValidationListener {
     private static final String TAG = "ReplyLayout";
 
     @Inject
@@ -279,7 +282,13 @@ public class ReplyLayout
         });
 
         // Inflate captcha layout
-        captchaContainer = (FrameLayout) AndroidUtils.inflate(getContext(), R.layout.layout_reply_captcha, this, false);
+        captchaContainer = (FrameLayout) AndroidUtils.inflate(
+                getContext(),
+                R.layout.layout_reply_captcha,
+                this,
+                false
+        );
+
         captchaHardReset = captchaContainer.findViewById(R.id.reset);
 
         // Setup captcha layout views
@@ -379,14 +388,22 @@ public class ReplyLayout
     private boolean insertQuote() {
         int selectionStart = comment.getSelectionStart();
         int selectionEnd = comment.getSelectionEnd();
-        String[] textLines = comment.getText().subSequence(selectionStart, selectionEnd).toString().split("\n");
+
+        String[] textLines = comment.getText()
+                .subSequence(selectionStart, selectionEnd)
+                .toString()
+                .split("\n");
+
         StringBuilder rebuilder = new StringBuilder();
+
         for (int i = 0; i < textLines.length; i++) {
             rebuilder.append(">").append(textLines[i]);
+
             if (i != textLines.length - 1) {
                 rebuilder.append("\n");
             }
         }
+
         comment.getText().replace(selectionStart, selectionEnd, rebuilder.toString());
         return true;
     }
@@ -394,6 +411,7 @@ public class ReplyLayout
     @SuppressWarnings("ConstantConditions")
     private boolean insertTags(String before, String after) {
         int selectionStart = comment.getSelectionStart();
+
         comment.getText().insert(comment.getSelectionEnd(), after);
         comment.getText().insert(selectionStart, before);
         return true;
@@ -414,51 +432,7 @@ public class ReplyLayout
             boolean autoReply
     ) {
         if (authenticationLayout == null) {
-            switch (authentication.type) {
-                case CAPTCHA1:
-                    authenticationLayout = (LegacyCaptchaLayout) AndroidUtils.inflate(getContext(),
-                            R.layout.layout_captcha_legacy,
-                            captchaContainer,
-                            false
-                    );
-                    break;
-                case CAPTCHA2:
-                    authenticationLayout = new CaptchaLayout(getContext());
-                    break;
-                case CAPTCHA2_NOJS:
-                    if (useV2NoJsCaptcha) {
-                        // new captcha window without webview
-                        authenticationLayout = new CaptchaNoJsLayoutV2(getContext());
-                    } else {
-                        // default webview-based captcha view
-                        authenticationLayout = new CaptchaNojsLayoutV1(getContext());
-                    }
-
-                    ImageView resetButton = captchaContainer.findViewById(R.id.reset);
-                    if (resetButton != null) {
-                        if (useV2NoJsCaptcha) {
-                            // we don't need the default reset button because we have our own
-                            resetButton.setVisibility(GONE);
-                        } else {
-                            // restore the button's visibility when using old v1 captcha view
-                            resetButton.setVisibility(VISIBLE);
-                        }
-                    }
-
-                    break;
-                case GENERIC_WEBVIEW:
-                    GenericWebViewAuthenticationLayout view = new GenericWebViewAuthenticationLayout(getContext());
-
-                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
-                    view.setLayoutParams(params);
-
-                    authenticationLayout = view;
-                    break;
-                case NONE:
-                default:
-                    throw new IllegalArgumentException();
-            }
-
+            authenticationLayout = createAuthenticationLayout(authentication, useV2NoJsCaptcha);
             captchaContainer.addView((View) authenticationLayout, 0);
         }
 
@@ -468,6 +442,56 @@ public class ReplyLayout
 
         authenticationLayout.initialize(site, callback, autoReply);
         authenticationLayout.reset();
+    }
+
+    private AuthenticationLayoutInterface createAuthenticationLayout(
+            SiteAuthentication authentication,
+            boolean useV2NoJsCaptcha
+    ) {
+        switch (authentication.type) {
+            case CAPTCHA1:
+                return (LegacyCaptchaLayout) AndroidUtils.inflate(getContext(),
+                        R.layout.layout_captcha_legacy,
+                        captchaContainer,
+                        false
+                );
+            case CAPTCHA2:
+                return new CaptchaLayout(getContext());
+            case CAPTCHA2_NOJS:
+                AuthenticationLayoutInterface authenticationLayoutInterface;
+
+                if (useV2NoJsCaptcha) {
+                    // new captcha window without webview
+                    authenticationLayoutInterface = new CaptchaNoJsLayoutV2(getContext());
+                } else {
+                    // default webview-based captcha view
+                    authenticationLayoutInterface = new CaptchaNojsLayoutV1(getContext());
+                }
+
+                ImageView resetButton = captchaContainer.findViewById(R.id.reset);
+                if (resetButton != null) {
+                    if (useV2NoJsCaptcha) {
+                        // we don't need the default reset button because we have our own
+                        resetButton.setVisibility(GONE);
+                    } else {
+                        // restore the button's visibility when using old v1 captcha view
+                        resetButton.setVisibility(VISIBLE);
+                    }
+                }
+
+                return authenticationLayoutInterface;
+            case GENERIC_WEBVIEW:
+                GenericWebViewAuthenticationLayout view =
+                        new GenericWebViewAuthenticationLayout(getContext());
+
+                LayoutParams params = new LayoutParams(MATCH_PARENT, MATCH_PARENT);
+                view.setLayoutParams(params);
+
+                return view;
+            case NONE:
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
     @Override
@@ -585,13 +609,17 @@ public class ReplyLayout
         try {
             comment.setSelection(start + amount);
         } catch (Exception e) {
-            comment.setSelection(comment.getText().length()); // set selection to the end if it fails for any reason
+            // set selection to the end if it fails for any reason
+            comment.setSelection(comment.getText().length());
         }
     }
 
     @Override
     public void openMessage(String text) {
-        if (text == null) text = "";
+        if (text == null) {
+            text = "";
+        }
+
         removeCallbacks(closeMessageRunnable);
         message.setText(text);
         message.setVisibility(TextUtils.isEmpty(text) ? GONE : VISIBLE);
@@ -645,7 +673,10 @@ public class ReplyLayout
 
         animator.setInterpolator(new DecelerateInterpolator(2f));
         animator.setDuration(400);
-        animator.addUpdateListener(animation -> moreDropdown.setRotation((float) animation.getAnimatedValue()));
+        animator.addUpdateListener(animation -> {
+            moreDropdown.setRotation((float) animation.getAnimatedValue());
+        });
+
         animator.start();
     }
 
@@ -708,8 +739,12 @@ public class ReplyLayout
     @Override
     public void updateCommentCount(int count, int maxCount, boolean over) {
         commentCounter.setText(count + "/" + maxCount);
-        //noinspection ResourceAsColor
-        commentCounter.setTextColor(over ? 0xffff0000 : getAttrColor(getContext(), R.attr.text_color_secondary));
+
+        int textColor = over
+                ? 0xffff0000
+                : getAttrColor(getContext(), R.attr.text_color_secondary);
+
+        commentCounter.setTextColor(textColor);
     }
 
     public void focusComment() {
@@ -728,6 +763,7 @@ public class ReplyLayout
     @Override
     public void openPreview(boolean show, File previewFile) {
         previewHolder.setClickable(false);
+
         if (show) {
             ImageDecoder.decodeFileOnBackgroundThread(previewFile, dp(400), dp(300), this);
             themeHelper.getTheme().clearDrawable.apply(attach);
@@ -738,8 +774,9 @@ public class ReplyLayout
             callback.updatePadding();
             themeHelper.getTheme().imageDrawable.apply(attach);
         }
-        // the delay is taken from LayoutTransition, as this class is set to automatically animate layout changes
-        // only allow the preview to be clicked if it is fully visible
+
+        // the delay is taken from LayoutTransition, as this class is set to automatically animate
+        // layout changes only allow the preview to be clicked if it is fully visible
         postDelayed(() -> previewHolder.setClickable(true), 300);
     }
 
@@ -752,6 +789,7 @@ public class ReplyLayout
     @Override
     public void openSpoiler(boolean show, boolean setUnchecked) {
         spoiler.setVisibility(show ? VISIBLE : GONE);
+
         if (setUnchecked) {
             spoiler.setChecked(false);
         }
@@ -794,18 +832,24 @@ public class ReplyLayout
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                if (callback.getThread() == null) return true;
+                if (callback.getThread() == null) {
+                    return true;
+                }
+
                 Loadable threadLoadable = callback.getThread().getLoadable();
                 boolean is4chan = threadLoadable.board.site instanceof Chan4;
-                //menu item cleanup, these aren't needed for this
+
+                // menu item cleanup, these aren't needed for this
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (menu.size() > 0) {
                         menu.removeItem(android.R.id.shareText);
                     }
                 }
-                //setup standard items
+
+                // setup standard items
                 // >greentext
                 quoteMenuItem = menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote);
+
                 // [spoiler] tags
                 if (threadLoadable.board.spoilers) {
                     spoilerMenuItem = menu.add(Menu.NONE,
@@ -815,7 +859,7 @@ public class ReplyLayout
                     );
                 }
 
-                //setup specific items in a submenu
+                // setup specific items in a submenu
                 SubMenu otherMods = menu.addSubMenu("Modify");
                 // g [code]
                 if (is4chan && threadLoadable.boardCode.equals("g")) {
@@ -825,6 +869,7 @@ public class ReplyLayout
                             R.string.reply_comment_button_code
                     );
                 }
+
                 // sci [eqn] and [math]
                 if (is4chan && threadLoadable.boardCode.equals("sci")) {
                     eqnMenuItem = otherMods.add(Menu.NONE,
@@ -832,20 +877,26 @@ public class ReplyLayout
                             2,
                             R.string.reply_comment_button_eqn
                     );
-                    mathMenuItem = otherMods.add(Menu.NONE,
+
+                    mathMenuItem = otherMods.add(
+                            Menu.NONE,
                             R.id.reply_selection_action_math,
                             3,
                             R.string.reply_comment_button_math
                     );
                 }
+
                 // jp and vip [sjis]
-                if (is4chan && (threadLoadable.boardCode.equals("jp") || threadLoadable.boardCode.equals("vip"))) {
-                    sjisMenuItem = otherMods.add(Menu.NONE,
+                if (is4chan && (threadLoadable.boardCode.equals("jp")
+                        || threadLoadable.boardCode.equals("vip"))) {
+                    sjisMenuItem = otherMods.add(
+                            Menu.NONE,
                             R.id.reply_selection_action_sjis,
                             4,
                             R.string.reply_comment_button_sjis
                     );
                 }
+
                 return true;
             }
 
@@ -917,9 +968,10 @@ public class ReplyLayout
 
     public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
         if (filenameRemoved) {
-            fileName.setText(reply.fileName); //update edit field with new filename
+            // update edit field with new filename
+            fileName.setText(reply.fileName);
         } else {
-            //update reply with existing filename (may have been changed by user)
+            // update reply with existing filename (may have been changed by user)
             reply.fileName = fileName.getText().toString();
         }
 
@@ -927,23 +979,25 @@ public class ReplyLayout
     }
 
     public void onImageOptionsComplete() {
-        attach.setClickable(true); // reencode windows gone, allow the file to be removed
+        // reencode windows gone, allow the file to be removed
+        attach.setClickable(true);
     }
 
     private void showReencodeImageHint() {
-        if (!ChanSettings.reencodeHintShown.get()) {
-            String message = getString(R.string.click_image_for_extra_options);
-
-            if (hintPopup != null) {
-                hintPopup.dismiss();
-                hintPopup = null;
-            }
-
-            hintPopup = HintPopup.show(getContext(), preview, message, dp(-32), dp(16));
-            hintPopup.wiggle();
-
-            ChanSettings.reencodeHintShown.set(true);
+        if (ChanSettings.reencodeHintShown.get()) {
+            return;
         }
+
+        String message = getString(R.string.click_image_for_extra_options);
+        if (hintPopup != null) {
+            hintPopup.dismiss();
+            hintPopup = null;
+        }
+
+        hintPopup = HintPopup.show(getContext(), preview, message, dp(-32), dp(16));
+        hintPopup.wiggle();
+
+        ChanSettings.reencodeHintShown.set(true);
     }
 
     @Override

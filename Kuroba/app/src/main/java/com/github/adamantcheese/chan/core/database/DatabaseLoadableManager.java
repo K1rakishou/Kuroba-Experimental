@@ -279,9 +279,9 @@ public class DatabaseLoadableManager {
 
             int deletedCount = builder.delete();
             if (loadableIdSet.size() != deletedCount) {
-                throw new IllegalStateException(
-                        "Deleted count didn't equal loadableIdSet.size(). (deletedCount = " + deletedCount + "), "
-                                + "(loadableIdSet = " + loadableIdSet.size() + ")");
+                throw new IllegalStateException("Deleted count didn't equal loadableIdSet.size(). " +
+                        "(deletedCount = " + deletedCount + "), " +
+                        "(loadableIdSet = " + loadableIdSet.size() + ")");
             }
 
             return null;

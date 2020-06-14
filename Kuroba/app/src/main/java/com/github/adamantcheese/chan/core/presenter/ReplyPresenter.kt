@@ -82,6 +82,13 @@ class ReplyPresenter @Inject constructor(
   var isExpanded = false
     private set
 
+  val isAttachedFileSupportedForReencoding: Boolean
+    get() = if (!::draft.isInitialized || draft.file == null) {
+      false
+    } else {
+      BitmapUtils.isFileSupportedForReencoding(draft.file)
+    }
+
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ReplyPresenter")
 
@@ -204,25 +211,27 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onAttachClicked(longPressed: Boolean) {
-    if (!pickingFile) {
-      if (previewOpen) {
-        callback.openPreview(false, null)
+    if (pickingFile) {
+      return
+    }
 
-        draft.file = null
-        draft.fileName = ""
+    if (previewOpen) {
+      callback.openPreview(false, null)
 
-        if (isExpanded) {
-          callback.openFileName(false)
-          if (board.spoilers) {
-            callback.openSpoiler(false, true)
-          }
+      draft.file = null
+      draft.fileName = ""
+
+      if (isExpanded) {
+        callback.openFileName(false)
+        if (board.spoilers) {
+          callback.openSpoiler(false, true)
         }
-
-        previewOpen = false
-      } else {
-        pickingFile = true
-        callback.imagePickDelegate.pick(this, longPressed)
       }
+
+      previewOpen = false
+    } else {
+      pickingFile = true
+      callback.imagePickDelegate.pick(this, longPressed)
     }
   }
 
@@ -264,9 +273,11 @@ class ReplyPresenter @Inject constructor(
           callback.openMessage(errorMessage)
         }
       }
-    } else {
-      submitOrAuthenticate()
+
+      return
     }
+
+    submitOrAuthenticate()
   }
 
   private fun submitOrAuthenticate() {
@@ -280,7 +291,7 @@ class ReplyPresenter @Inject constructor(
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
     callback.loadViewsIntoDraft(draft)
 
-    if (!isAuthenticateOnly && draft.comment.trim { it <= ' ' }.isEmpty() && draft.file == null) {
+    if (!isAuthenticateOnly && draft.file == null && draft.comment.trim { it <= ' ' }.isEmpty()) {
       callback.openMessage(AndroidUtils.getString(R.string.reply_comment_empty))
       return false
     }
@@ -354,11 +365,18 @@ class ReplyPresenter @Inject constructor(
     val insert = StringBuilder()
     val selectStart = callback.selectionStart
 
-    if (selectStart - 1 >= 0 && selectStart - 1 < draft.comment.length && draft.comment[selectStart - 1] != '\n') {
-      insert.append('\n')
+    if (selectStart - 1 >= 0
+      && selectStart - 1 < draft.comment.length
+      && draft.comment[selectStart - 1] != '\n'
+    ) {
+      insert
+        .append('\n')
     }
     if (post != null && !draft.comment.contains(">>" + post.no)) {
-      insert.append(">>").append(post.no).append("\n")
+      insert
+        .append(">>")
+        .append(post.no)
+        .append("\n")
     }
 
     if (textQuote != null) {
@@ -369,12 +387,17 @@ class ReplyPresenter @Inject constructor(
       for (line in lines) {
         // do not include post no from quoted post
         if (!quotePattern.matcher(line).matches()) {
-          insert.append(">").append(line).append("\n")
+          insert
+            .append(">")
+            .append(line)
+            .append("\n")
         }
       }
     }
 
-    draft.comment = StringBuilder(draft.comment).insert(selectStart, insert).toString()
+    draft.comment = StringBuilder(draft.comment)
+      .insert(selectStart, insert)
+      .toString()
 
     callback.loadDraftIntoViews(draft)
     callback.adjustSelection(selectStart, insert.length)
@@ -412,6 +435,7 @@ class ReplyPresenter @Inject constructor(
     isExpanded = false
     previewOpen = false
     selectedQuote = -1
+
     callback.openMessage(null)
     callback.setExpanded(false)
     callback.openSubject(false)
@@ -454,89 +478,95 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun onPostComplete(replyResponse: ReplyResponse) {
-    if (replyResponse.posted) {
-      // if the thread being presented has changed in the time waiting for this call to
-      // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
-      // the loadable (local to this method) from the reply response
-      val localSite = siteRepository.forId(replyResponse.siteId)
-      val localBoard = requireNotNull(boardRepository.getFromCode(localSite, replyResponse.boardCode))
-
-      val loadableNo = if (replyResponse.threadNo == 0) {
-        replyResponse.postNo.toLong()
-      } else {
-        replyResponse.threadNo.toLong()
-      }
-
-      val newLoadable = Loadable.forThread(
-        localSite,
-        // this loadable is for the reply response's site and board
-        localBoard,
-        // for the time being, will be updated later when the watchmanager updates
-        loadableNo,
-        "/" + localBoard.code + "/"
-      )
-
-      val localLoadable = databaseManager.databaseLoadableManager[newLoadable]
-      lastReplyRepository.putLastReply(localLoadable.board)
-
-      if (loadable!!.isCatalogMode) {
-        lastReplyRepository.putLastThread(loadable!!.board)
-      }
-
-      if (ChanSettings.postPinThread.get()) {
-        if (localLoadable.isThreadMode) {
-          // reply
-          val thread = callback.thread
-          if (thread != null) {
-            watchManager.createPin(localLoadable, thread.op)
-          } else {
-            watchManager.createPin(localLoadable)
-          }
-        } else {
-          // new thread
-          watchManager.createPin(localLoadable, draft)
+    when {
+      replyResponse.posted -> onPostedSuccessfully(replyResponse)
+      replyResponse.requireAuthentication -> switchPage(Page.AUTHENTICATION)
+      else -> {
+        var errorMessage = AndroidUtils.getString(R.string.reply_error)
+        if (replyResponse.errorMessage != null) {
+          errorMessage = AndroidUtils.getString(
+            R.string.reply_error_message,
+            replyResponse.errorMessage
+          )
         }
+
+        Logger.e(TAG, "onPostComplete error: $errorMessage")
+        switchPage(Page.INPUT)
+        callback.openMessage(errorMessage)
       }
+    }
+  }
 
-      val savedReply = SavedReply.fromBoardNoPassword(
-        localLoadable.board,
-        replyResponse.postNo.toLong(),
-        replyResponse.password
-      )
+  private fun onPostedSuccessfully(replyResponse: ReplyResponse) {
+    // if the thread being presented has changed in the time waiting for this call to
+    // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
+    // the loadable (local to this method) from the reply response
+    val localSite = siteRepository.forId(replyResponse.siteId)
+    val localBoard = requireNotNull(boardRepository.getFromCode(localSite, replyResponse.boardCode))
 
-      databaseManager.runTaskAsync(
-        databaseManager.databaseSavedReplyManager.saveReply(savedReply)
-      )
-
-      switchPage(Page.INPUT)
-      closeAll()
-      highlightQuotes()
-
-      draft = Reply()
-      draft.name = draft.name
-
-      replyManager.putReply(localLoadable, draft)
-
-      callback.loadDraftIntoViews(draft)
-      callback.onPosted()
-
-      // special case for new threads, check if we were on the catalog with the nonlocal
-      // loadable
-      if (bound && loadable!!.isCatalogMode) {
-        callback.showThread(localLoadable)
-      }
-
-    } else if (replyResponse.requireAuthentication) {
-      switchPage(Page.AUTHENTICATION)
+    val loadableNo = if (replyResponse.threadNo == 0) {
+      replyResponse.postNo.toLong()
     } else {
-      var errorMessage = AndroidUtils.getString(R.string.reply_error)
-      if (replyResponse.errorMessage != null) {
-        errorMessage = AndroidUtils.getString(R.string.reply_error_message, replyResponse.errorMessage)
-      }
+      replyResponse.threadNo.toLong()
+    }
 
-      Logger.e(TAG, "onPostComplete error: $errorMessage")
-      switchPage(Page.INPUT)
-      callback.openMessage(errorMessage)
+    val newLoadable = Loadable.forThread(
+      localSite,
+      // this loadable is for the reply response's site and board
+      localBoard,
+      // for the time being, will be updated later when the watchmanager updates
+      loadableNo,
+      "/" + localBoard.code + "/"
+    )
+
+    val localLoadable = databaseManager.databaseLoadableManager.get(newLoadable)
+    lastReplyRepository.putLastReply(localLoadable.board)
+
+    if (loadable!!.isCatalogMode) {
+      lastReplyRepository.putLastThread(loadable!!.board)
+    }
+
+    if (ChanSettings.postPinThread.get()) {
+      if (localLoadable.isThreadMode) {
+        // reply
+        val thread = callback.thread
+        if (thread != null) {
+          watchManager.createPin(localLoadable, thread.op)
+        } else {
+          watchManager.createPin(localLoadable)
+        }
+      } else {
+        // new thread
+        watchManager.createPin(localLoadable, draft)
+      }
+    }
+
+    val savedReply = SavedReply.fromBoardNoPassword(
+      localLoadable.board,
+      replyResponse.postNo.toLong(),
+      replyResponse.password
+    )
+
+    databaseManager.runTaskAsync(
+      databaseManager.databaseSavedReplyManager.saveReply(savedReply)
+    )
+
+    switchPage(Page.INPUT)
+    closeAll()
+    highlightQuotes()
+
+    draft = Reply()
+    draft.name = draft.name
+
+    replyManager.putReply(localLoadable, draft)
+
+    callback.loadDraftIntoViews(draft)
+    callback.onPosted()
+
+    // special case for new threads, check if we were on the catalog with the nonlocal
+    // loadable
+    if (bound && loadable!!.isCatalogMode) {
+      callback.showThread(localLoadable)
     }
   }
 
@@ -569,13 +599,15 @@ class ReplyPresenter @Inject constructor(
     this.page = page
 
     when (page) {
-      Page.LOADING, Page.INPUT -> callback.setPage(page)
+      Page.LOADING,
+      Page.INPUT -> callback.setPage(page)
       Page.AUTHENTICATION -> {
         callback.setPage(Page.AUTHENTICATION)
         val authentication = loadable!!.site.actions().postAuthenticate()
 
         // cleanup resources tied to the new captcha layout/presenter
         callback.destroyCurrentAuthentication()
+
         try {
           // If the user doesn't have WebView installed it will throw an error
           callback.initializeAuthentication(
@@ -597,15 +629,13 @@ class ReplyPresenter @Inject constructor(
 
     // Find all occurrences of >>\d+ with start and end between selectionStart
     var no = -1
+
     while (matcher.find()) {
       val selectStart = callback.selectionStart
+
       if (matcher.start() <= selectStart && matcher.end() >= selectStart - 1) {
         val quote = matcher.group().substring(2)
-        try {
-          no = quote.toInt()
-          break
-        } catch (ignored: NumberFormatException) {
-        }
+        no = quote.toIntOrNull() ?: -1
       }
     }
 
@@ -630,7 +660,12 @@ class ReplyPresenter @Inject constructor(
     previewOpen = true
 
     val probablyWebm = "webm" == StringUtils.extractFileNameExtension(name)
-    val maxSize = if (probablyWebm) board.maxWebmSize else board.maxFileSize
+
+    val maxSize = if (probablyWebm) {
+      board.maxWebmSize
+    } else {
+      board.maxFileSize
+    }
 
     //if the max size is undefined for the board, ignore this message
     if (file != null && file.length() > maxSize && maxSize != -1) {
@@ -659,13 +694,6 @@ class ReplyPresenter @Inject constructor(
     draft.fileName = reply.fileName
     showPreview(draft.fileName, draft.file)
   }
-
-  val isAttachedFileSupportedForReencoding: Boolean
-    get() = if (!::draft.isInitialized || draft.file == null) {
-      false
-    } else {
-      BitmapUtils.isFileSupportedForReencoding(draft.file)
-    }
 
   interface ReplyPresenterCallback {
     val imagePickDelegate: ImagePickDelegate
