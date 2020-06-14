@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.ui.cell.AlbumViewCell;
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController;
@@ -46,7 +47,9 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class AlbumViewController
         extends Controller
-        implements ImageViewerController.ImageViewerCallback, ImageViewerController.GoPostCallback {
+        implements ImageViewerController.ImageViewerCallback,
+        ImageViewerController.GoPostCallback,
+        RequiresNoBottomNavBar {
     private GridRecyclerView recyclerView;
 
     private List<PostImage> postImages;

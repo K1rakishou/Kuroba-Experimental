@@ -10,6 +10,7 @@ import coil.ImageLoader
 import coil.network.HttpException
 import coil.request.LoadRequest
 import coil.request.RequestDisposable
+import coil.size.Scale
 import coil.transform.Transformation
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
@@ -57,11 +58,12 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
       data(url)
       lifecycle(lifecycle)
       transformations(transformations)
+      allowHardware(true)
+      scale(Scale.FIT)
 
-      // TODO(KurobaEx): disabled for now because some images cause crashes
-//      if ((width != null && width > 0) && (height != null && height > 0)) {
-//        size(width, height)
-//      }
+      if ((width != null && width > 0) && (height != null && height > 0)) {
+        size(width, height)
+      }
 
       listener(
         onError = { _, throwable ->
@@ -115,11 +117,12 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
     val request = with(LoadRequest.Builder(context)) {
       data(url)
       lifecycle(lifecycle)
+      scale(Scale.FIT)
+      allowHardware(true)
 
-      // TODO(KurobaEx): disabled for now because some images cause crashes
-//      if ((width != null && width > 0) && (height != null && height > 0)) {
-//        size(width, height)
-//      }
+      if ((width != null && width > 0) && (height != null && height > 0)) {
+        size(width, height)
+      }
 
       listener(
         onError = { _, throwable ->
