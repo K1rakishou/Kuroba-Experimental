@@ -7,6 +7,8 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.adamantcheese.model.source.local.NavHistoryLocalSource
 import kotlinx.coroutines.CoroutineScope
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 class HistoryNavigationRepository(
   database: KurobaDatabase,
@@ -17,18 +19,30 @@ class HistoryNavigationRepository(
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag HistoryNavigationRepository"
 
+  @OptIn(ExperimentalTime::class)
   suspend fun initialize(maxCount: Int): ModularResult<List<NavHistoryElement>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.selectAll(maxCount)
+        val (navHistoryStack, duration) = measureTimedValue {
+          return@measureTimedValue localSource.selectAll(maxCount)
+        }
+
+        logger.log(TAG, "initialize() -> ${navHistoryStack.size} took $duration")
+        return@tryWithTransaction navHistoryStack
       }
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun persist(navHistoryStack: List<NavHistoryElement>): ModularResult<Unit> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.persist(navHistoryStack)
+        val (result, duration) = measureTimedValue {
+          return@measureTimedValue localSource.persist(navHistoryStack)
+        }
+
+        logger.log(TAG, "persist(${navHistoryStack.size}) took $duration")
+        return@tryWithTransaction result
       }
     }
   }

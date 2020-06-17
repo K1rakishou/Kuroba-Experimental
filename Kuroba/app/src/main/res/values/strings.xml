@@ -314,16 +314,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>
 
-    <string name="history_clear">Clear history</string>
-    <string name="history_clear_confirm">Clear history?</string>
-    <string name="history_clear_confirm_button">Clear</string>
-    <string name="history_toggle_hint">Enable or disable history</string>
-    <string name="history_empty_info">No history</string>
-
-    <string name="saved_reply_clear">Clear posting history</string>
-    <string name="saved_reply_clear_confirm">Clear posting history?</string>
-    <string name="saved_reply_clear_confirm_button">Clear</string>
-
     <string name="archive_title">%s archive</string>
     <string name="archive_error">Error loading archive</string>
 
@@ -393,7 +383,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="watch_pause_pins">Stop watching</string>
     <string name="watch_idle">No new posts</string>
 
-    <string name="history_screen">History</string>
     <string name="filters_screen">Filters</string>
 
     <string name="album_download_screen">Select images (%1$d / %2$d)</string>
@@ -780,6 +769,8 @@ Don't have a 4chan Pass?<br>
     <string name="reencode_image_reduce_default_text">Reduce: 0%</string>
     <string name="click_image_for_extra_options">Click image for extra options</string>
 
+    <string name="controller_bookmarks">Bookmarks</string>
+
     <string name="successfully_exported_text">Exported successfully"</string>
     <string name="import_warning_title">Warning</string>
     <string name="import_warning_text">You are about to import settings/saved pins/filters/hidden posts from a file.
@@ -974,7 +965,8 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
-    <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here.</string>
+    <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here</string>
+    <string name="bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
 
 </resources>

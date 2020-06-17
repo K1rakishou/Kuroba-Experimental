@@ -26,6 +26,7 @@ import com.github.adamantcheese.chan.core.loader.impl.PrefetchLoader;
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
+import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
@@ -51,6 +52,7 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDi
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
+import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
@@ -331,5 +333,22 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ReplyViewStateManager");
 
         return new ReplyViewStateManager();
+    }
+
+    @Provides
+    @Singleton
+    public BookmarksManager provideBookmarksManager(
+            CoroutineScope appScope,
+            ApplicationVisibilityManager applicationVisibilityManager,
+            BookmarksRepository bookmarksRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "BookmarksManager");
+
+        return new BookmarksManager(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                appScope,
+                applicationVisibilityManager,
+                bookmarksRepository
+        );
     }
 }

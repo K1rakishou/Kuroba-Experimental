@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.features.drawer
+package com.github.adamantcheese.chan.features.drawer.data
 
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl

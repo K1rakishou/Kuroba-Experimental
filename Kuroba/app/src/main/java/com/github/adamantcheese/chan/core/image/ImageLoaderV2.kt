@@ -31,7 +31,7 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
 
   fun loadFromNetwork(
     context: Context,
-    url: String,
+    url: String?,
     width: Int?,
     height: Int?,
     transformations: List<Transformation>,
@@ -42,7 +42,12 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
     val lifecycle = context.getLifecycleFromContext()
 
     val request = with(LoadRequest.Builder(context)) {
-      data(url)
+      if (url != null) {
+        data(url)
+      } else {
+        data(getImageNotFoundDrawable(context))
+      }
+
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(true)
@@ -93,7 +98,7 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
 
   fun loadFromNetwork(
     context: Context,
-    url: String,
+    url: String?,
     width: Int?,
     height: Int?,
     listener: ImageListener
@@ -102,7 +107,12 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
     val lifecycle = context.getLifecycleFromContext()
 
     val request = with(LoadRequest.Builder(context)) {
-      data(url)
+      if (url != null) {
+        data(url)
+      } else {
+        data(getImageNotFoundDrawable(context))
+      }
+
       lifecycle(lifecycle)
       scale(Scale.FIT)
       allowHardware(true)

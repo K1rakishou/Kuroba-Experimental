@@ -204,3 +204,11 @@ fun Context.getLifecycleFromContext(): Lifecycle {
     )
   }
 }
+
+fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
+  if (isEmpty()) {
+    return null
+  }
+
+  return firstKey()
+}

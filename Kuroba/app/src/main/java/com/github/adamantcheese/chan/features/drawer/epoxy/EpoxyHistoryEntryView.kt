@@ -80,8 +80,6 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @AfterPropsSet
   fun afterPropsSet() {
     val url = imageLoaderRequestData?.url
-      ?: return
-
     val thumbnailImageRef = WeakReference(thumbnailImage)
 
     requestDisposable = imageLoaderV2.loadFromNetwork(

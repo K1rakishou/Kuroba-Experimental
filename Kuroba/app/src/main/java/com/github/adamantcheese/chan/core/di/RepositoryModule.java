@@ -60,4 +60,5 @@ public class RepositoryModule {
         Logger.d(AppModule.DI_TAG, "Last reply repository");
         return new LastReplyRepository();
     }
+
 }

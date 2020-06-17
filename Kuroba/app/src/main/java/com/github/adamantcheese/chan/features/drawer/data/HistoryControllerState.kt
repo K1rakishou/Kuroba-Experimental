@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.features.drawer
+package com.github.adamantcheese.chan.features.drawer.data
 
 sealed class HistoryControllerState {
   object Loading : HistoryControllerState()

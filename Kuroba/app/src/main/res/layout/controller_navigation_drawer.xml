@@ -59,18 +59,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_height="match_parent"
                 android:scrollbars="vertical"/>
 
-<!--     TODO(KurobaEx): move bookmarks to some other place       -->
-<!--            <androidx.recyclerview.widget.RecyclerView-->
-<!--                android:id="@+id/drawer_recycler_view"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="0dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:clipToPadding="false"-->
-<!--                android:paddingTop="8dp"-->
-<!--                android:paddingBottom="8dp"-->
-<!--                android:scrollbarStyle="outsideOverlay"-->
-<!--                android:scrollbars="vertical" />-->
-
             <View
                 android:id="@+id/divider"
                 android:layout_width="match_parent"

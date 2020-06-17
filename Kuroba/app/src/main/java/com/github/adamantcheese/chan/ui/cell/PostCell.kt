@@ -40,6 +40,7 @@ import coil.request.RequestDisposable
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
@@ -121,6 +122,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
+  private val serializedCoroutineExecutor by lazy { SerializedCoroutineExecutor(this) }
 
   private val job = SupervisorJob()
 
@@ -385,50 +387,56 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   }
 
   private fun startAttentionLabelFadeOutAnimation() {
-    if (hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
-      return
-    }
+    serializedCoroutineExecutor.post {
+      if (callback == null) {
+        return@post
+      }
 
-    if (!ChanSettings.markUnseenPosts.get()) {
-      return
-    }
+      if (hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
+        return@post
+      }
 
-    callback?.let { callback ->
-      launch {
+      if (!ChanSettings.markUnseenPosts.get()) {
+        return@post
+      }
+
+      callback?.let { callback ->
         if (!callback.hasAlreadySeenPost(post!!)) {
           unseenPostIndicatorFadeOutAnimation.start(
             { alpha -> postAttentionLabel.alpha = alpha },
-            { postAttentionLabel.visibility = View.GONE }
+            { postAttentionLabel.visibility = View.INVISIBLE }
           )
         }
       }
     }
-
   }
 
   private fun bindPostAttentionLabel(theme: Theme, post: Post) {
-    // Filter label is more important than unseen post label
-    if (hasColoredFilter) {
-      postAttentionLabel.visibility = View.VISIBLE
-      postAttentionLabel.setBackgroundColor(
-        postFilterManager.getFilterHighlightedColor(post.postDescriptor)
-      )
-      return
-    }
+    serializedCoroutineExecutor.post {
+      if (callback == null) {
+        return@post
+      }
 
-    launch {
+      // Filter label is more important than unseen post label
+      if (hasColoredFilter) {
+        postAttentionLabel.visibility = View.VISIBLE
+        postAttentionLabel.setBackgroundColor(
+          postFilterManager.getFilterHighlightedColor(post.postDescriptor)
+        )
+        return@post
+      }
+
       if (ChanSettings.markUnseenPosts.get()) {
         if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
           postAttentionLabel.visibility = View.VISIBLE
           postAttentionLabel.setBackgroundColor(theme.subjectColor)
-          return@launch
+          return@post
         }
       }
 
       // No filters for this post and the user has already seen it
       postAttentionLabel.visibility = View.GONE
     }
-
   }
 
   private fun bindBackgroundColor(theme: Theme, post: Post) {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.reactive.collect
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
@@ -30,6 +31,7 @@ class HistoryNavigationManager(
   private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+  private val persistRunning = AtomicBoolean(false)
 
   private val navigationStack = mutableListOf<NavHistoryElement>()
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
@@ -48,7 +50,7 @@ class HistoryNavigationManager(
       persistTaskSubject
         .throttleFirst(5, TimeUnit.SECONDS)
         .collect {
-          persisNavigationStack(false)
+          persisNavigationStack()
         }
     }
 
@@ -61,10 +63,12 @@ class HistoryNavigationManager(
 
           navigationStack.addAll(loadedNavElementsResult.value)
           suspendableInitializer.initWithValue(Unit)
+
+          Logger.d(TAG, "HistoryNavigationManager initialized!")
         }
         is ModularResult.Error -> {
           Logger.e(TAG, "Exception while initializing HistoryNavigationManager", loadedNavElementsResult.error)
-          suspendableInitializer.initWithValue(Unit)
+          suspendableInitializer.initWithError(loadedNavElementsResult.error)
         }
       }
 
@@ -177,32 +181,42 @@ class HistoryNavigationManager(
     return topNavElementDescriptor == descriptor
   }
 
-  private fun persisNavigationStack(blocking: Boolean) {
+  private fun persisNavigationStack(blocking: Boolean = false) {
     BackgroundUtils.ensureMainThread()
+
+    if (!persistRunning.compareAndSet(false, true)) {
+      return
+    }
 
     if (blocking) {
       runBlocking {
         Logger.d(TAG, "persistNavigationStack blocking called")
 
-        historyNavigationRepository.persist(navigationStack.toList())
-          .safeUnwrap { error ->
-            Logger.e(TAG, "Error while trying to persist navigation stack", error)
-            return@runBlocking
-          }
-
-        Logger.d(TAG, "persistNavigationStack blocking finished")
+        try {
+          historyNavigationRepository.persist(navigationStack.toList())
+            .safeUnwrap { error ->
+              Logger.e(TAG, "Error while trying to persist navigation stack", error)
+              return@runBlocking
+            }
+        } finally {
+          Logger.d(TAG, "persistNavigationStack blocking finished")
+          persistRunning.set(false)
+        }
       }
     } else {
       serializedCoroutineExecutor.post {
         Logger.d(TAG, "persistNavigationStack async called")
 
-        historyNavigationRepository.persist(navigationStack.toList())
-          .safeUnwrap { error ->
-            Logger.e(TAG, "Error while trying to persist navigation stack", error)
-            return@post
-          }
-
-        Logger.d(TAG, "persistNavigationStack async finished")
+        try {
+          historyNavigationRepository.persist(navigationStack.toList())
+            .safeUnwrap { error ->
+              Logger.e(TAG, "Error while trying to persist navigation stack", error)
+              return@post
+            }
+        } finally {
+          Logger.d(TAG, "persistNavigationStack async finished")
+          persistRunning.set(false)
+        }
       }
     }
   }

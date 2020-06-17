@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <LinearLayout
+        android:id="@+id/thread_bookmark_view_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/thread_bookmark_image"
+            android:layout_width="@dimen/thread_bookmark_view_image_size"
+            android:layout_height="@dimen/thread_bookmark_view_image_size"
+            android:padding="4dp"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/ic_baseline_settings" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/thread_bookmark_title"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/thread_bookmark_view_image_size"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="18sp"
+            tools:text="@string/lorem_ipsum" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/thread_bookmark_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/thread_bookmark_view_image_size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="18sp"
+            tools:text="123 (15) / 6666" />
+
+    </LinearLayout>
+
+</merge>

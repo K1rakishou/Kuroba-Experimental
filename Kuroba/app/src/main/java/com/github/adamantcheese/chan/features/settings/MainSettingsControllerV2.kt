@@ -60,7 +60,7 @@ class MainSettingsControllerV2(context: Context)
     super.onCreate()
     Chan.inject(this)
 
-    view = inflate(context, R.layout.controller_developer_settings)
+    view = inflate(context, R.layout.controller_settings_main)
     recyclerView = view.findViewById(R.id.settings_recycler_view)
 
     navigation.buildMenu()

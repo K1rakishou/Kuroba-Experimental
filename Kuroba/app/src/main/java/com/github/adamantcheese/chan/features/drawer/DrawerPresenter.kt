@@ -5,6 +5,8 @@ import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.features.drawer.data.HistoryControllerState
+import com.github.adamantcheese.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
@@ -28,7 +30,8 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
   @Inject
   lateinit var boardRepository: BoardRepository
 
-  private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>().toSerialized()
+  private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
+    .toSerialized()
 
   override fun onCreate(view: DrawerView) {
     super.onCreate(view)

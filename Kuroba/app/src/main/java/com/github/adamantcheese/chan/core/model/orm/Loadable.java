@@ -19,6 +19,8 @@ package com.github.adamantcheese.chan.core.model.orm;
 import android.os.Parcel;
 import android.text.TextUtils;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -108,6 +110,16 @@ public class Loadable
         }
 
         return this.chanDescriptor;
+    }
+
+    @Nullable
+    public synchronized ChanDescriptor.ThreadDescriptor getThreadDescriptorOrNull() {
+        ChanDescriptor descriptor = getChanDescriptor();
+        if (descriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            return (ChanDescriptor.ThreadDescriptor) descriptor;
+        }
+
+        return null;
     }
 
     public synchronized BoardDescriptor getBoardDescriptor() {

@@ -71,6 +71,7 @@ class ThreadPresenter @Inject constructor(
   private val cacheHandler: CacheHandler,
   private val filterWatchManager: FilterWatchManager,
   private val watchManager: WatchManager,
+  private val bookmarksManager: BookmarksManager,
   private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
@@ -119,7 +120,10 @@ class ThreadPresenter @Inject constructor(
         return false
       }
 
-      return watchManager.findPinByLoadableId(loadable!!.id) != null
+      val threadDescriptor = loadable?.threadDescriptorOrNull
+        ?: return false
+
+      return bookmarksManager.exists(threadDescriptor)
     }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback?) {
@@ -332,19 +336,26 @@ class ThreadPresenter @Inject constructor(
       return false
     }
 
-    val pin = watchManager.findPinByLoadableId(loadable!!.id)
-    if (pin == null) {
-      if (chanLoader!!.thread != null) {
-        val op = chanLoader!!.thread!!.op
-        watchManager.createPin(loadable, op)
-      } else {
-        watchManager.createPin(loadable)
-      }
-
-      return true
+    if (!bookmarksManager.isReady()) {
+      return false
     }
 
-    watchManager.deletePin(pin)
+    val op = chanLoader?.thread?.op
+      ?: return false
+
+    val threadDescriptor = loadable?.threadDescriptorOrNull
+      ?: return false
+
+    if (bookmarksManager.exists(threadDescriptor)) {
+      bookmarksManager.deleteBookmark(threadDescriptor)
+    } else {
+      bookmarksManager.createBookmark(
+        threadDescriptor,
+        PostHelper.getTitle(op, loadable),
+        op.firstImage()?.thumbnailUrl
+      )
+    }
+
     return true
   }
 

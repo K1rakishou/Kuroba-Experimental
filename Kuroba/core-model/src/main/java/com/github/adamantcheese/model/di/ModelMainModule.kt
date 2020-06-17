@@ -303,4 +303,20 @@ class ModelMainModule {
       navHistoryLocalSource
     )
   }
+
+  @Singleton
+  @Provides
+  fun provideBookmarksRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String
+  ): BookmarksRepository {
+    return BookmarksRepository(
+      database,
+      loggerTag,
+      logger,
+      scope
+    )
+  }
 }

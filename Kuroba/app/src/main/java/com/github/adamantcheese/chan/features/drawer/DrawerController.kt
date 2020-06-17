@@ -38,13 +38,19 @@ import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
 import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
+import com.github.adamantcheese.chan.features.drawer.data.HistoryControllerState
+import com.github.adamantcheese.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter
 import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.HeaderAction
-import com.github.adamantcheese.chan.ui.controller.*
+import com.github.adamantcheese.chan.ui.controller.BrowseController
+import com.github.adamantcheese.chan.ui.controller.ThreadController
+import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
+import com.github.adamantcheese.chan.ui.controller.ViewThreadController
 import com.github.adamantcheese.chan.ui.controller.navigation.*
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
@@ -60,7 +66,11 @@ import javax.inject.Inject
 
 class DrawerController(
   context: Context
-) : Controller(context), DrawerView, DrawerCallbacks, DrawerAdapter.Callback, View.OnClickListener {
+) : Controller(context),
+  DrawerView,
+  DrawerCallbacks,
+  DrawerAdapter.Callback,
+  View.OnClickListener {
 
   @Inject
   lateinit var watchManager: WatchManager
@@ -205,10 +215,10 @@ class DrawerController(
     compositeDisposable += drawerPresenter.listenForStateChanges()
       .subscribe(
         { state -> onDrawerStateChanged(state) },
-        { error -> Logger.e(TAG, "Unknown error subscribed to listenForStateChanges()", error) }
+        { error ->
+          Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForStateChanges()", error)
+        }
       )
-
-
 
     // TODO(KurobaEx): pins, move to some other place
 //    compositeDisposable += settingsNotificationManager.listenForNotificationUpdates()
@@ -260,7 +270,7 @@ class DrawerController(
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> openController(HistoryController(context))
+      R.id.action_bookmarks -> openController(BookmarksController(context))
       R.id.action_settings -> openController(MainSettingsControllerV2(context))
     }
   }
