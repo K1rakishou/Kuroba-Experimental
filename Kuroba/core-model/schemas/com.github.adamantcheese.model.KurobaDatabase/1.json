@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d3a3a81b310172f02a311e50a697acff",
+    "identityHash": "a9aa01931445b98124ad225c42c50c7b",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1149,6 +1149,80 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "thread_bookmark",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `watch_last_count` INTEGER NOT NULL, `watch_new_count` INTEGER NOT NULL, `quote_last_count` INTEGER NOT NULL, `quote_new_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "watchLastCount",
+            "columnName": "watch_last_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "watchNewCount",
+            "columnName": "watch_new_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quoteLastCount",
+            "columnName": "quote_last_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quoteNewCount",
+            "columnName": "quote_new_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "thumbnailUrl",
+            "columnName": "thumbnail_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "owner_thread_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "chan_thread",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
       }
     ],
     "views": [
@@ -1159,7 +1233,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd3a3a81b310172f02a311e50a697acff')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a9aa01931445b98124ad225c42c50c7b')"
     ]
   }
 }

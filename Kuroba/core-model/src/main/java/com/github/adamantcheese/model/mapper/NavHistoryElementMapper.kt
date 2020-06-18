@@ -3,6 +3,7 @@ package com.github.adamantcheese.model.mapper
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.adamantcheese.model.data.navigation.NavHistoryElementInfo
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryFullDto
@@ -43,7 +44,7 @@ object NavHistoryElementMapper {
   }
 
   fun fromNavHistoryEntity(navHistoryEntity: NavHistoryFullDto): NavHistoryElement {
-    if (navHistoryEntity.navHistoryElementIdEntity.threadNo == NavHistoryElementIdEntity.NO_THREAD_ID) {
+    if (navHistoryEntity.navHistoryElementIdEntity.threadNo == ChanThreadEntity.NO_THREAD_ID) {
       return NavHistoryElement.Catalog(
         ChanDescriptor.CatalogDescriptor.create(
           navHistoryEntity.navHistoryElementIdEntity.siteName,

@@ -55,6 +55,7 @@ data class ChanThreadEntity(
 
   companion object {
     const val TABLE_NAME = "chan_thread"
+    const val NO_THREAD_ID = -1L
 
     const val THREAD_ID_COLUMN_NAME = "thread_id"
     const val THREAD_NO_COLUMN_NAME = "thread_no"

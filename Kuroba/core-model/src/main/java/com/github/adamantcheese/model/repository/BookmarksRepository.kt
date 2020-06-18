@@ -5,6 +5,7 @@ import com.github.adamantcheese.common.myAsync
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
+import com.github.adamantcheese.model.source.local.ThreadBookmarkLocalSource
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -13,7 +14,8 @@ class BookmarksRepository(
   database: KurobaDatabase,
   loggerTag: String,
   logger: Logger,
-  private val applicationScope: CoroutineScope
+  private val applicationScope: CoroutineScope,
+  private val localSource: ThreadBookmarkLocalSource
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag BookmarksRepository"
 
@@ -22,8 +24,7 @@ class BookmarksRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val (bookmarks, duration) = measureTimedValue {
-          // TODO(KurobaEx):
-          return@measureTimedValue emptyList<ThreadBookmark>()
+          return@measureTimedValue localSource.selectAll()
         }
 
         logger.log(TAG, "initialize() -> ${bookmarks.size} took $duration")
@@ -37,8 +38,7 @@ class BookmarksRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val (result, duration) = measureTimedValue {
-          // TODO(KurobaEx):
-          return@measureTimedValue Unit
+          return@measureTimedValue localSource.persist(bookmarks)
         }
 
         logger.log(TAG, "persist(${bookmarks.size}) took $duration")

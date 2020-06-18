@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 
 @Entity(
   tableName = NavHistoryElementIdEntity.TABLE_NAME,
@@ -27,12 +28,10 @@ data class NavHistoryElementIdEntity(
   @ColumnInfo(name = BOARD_CODE_COLUMN_NAME)
   val boardCode: String,
   @ColumnInfo(name = THREAD_NO_COLUMN_NAME)
-  val threadNo: Long = NO_THREAD_ID
+  val threadNo: Long = ChanThreadEntity.NO_THREAD_ID
 ) {
 
   companion object {
-    const val NO_THREAD_ID = -1L
-
     const val TABLE_NAME = "nav_history_element"
     const val ID_COLUMN_NAME = "id"
     const val SITE_NAME_COLUMN_NAME = "site_name"

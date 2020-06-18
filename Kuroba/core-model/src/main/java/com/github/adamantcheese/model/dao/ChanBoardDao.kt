@@ -22,6 +22,16 @@ abstract class ChanBoardDao {
     """)
   abstract suspend fun select(siteName: String, boardCode: String): ChanBoardEntity?
 
+  @Query("""
+        SELECT ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} 
+        FROM ${ChanBoardEntity.TABLE_NAME}
+        WHERE 
+            ${ChanBoardEntity.SITE_NAME_COLUMN_NAME} = :siteName
+        AND
+            ${ChanBoardEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
+    """)
+  abstract suspend fun selectBoardId(siteName: String, boardCode: String): Long?
+
   suspend fun contains(siteName: String, boardCode: String): Boolean {
     return select(siteName, boardCode) != null
   }

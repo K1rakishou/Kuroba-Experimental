@@ -65,6 +65,16 @@ abstract class ChanThreadDao {
     """)
   abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
 
+  @Query("""
+        SELECT ${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
+        FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE 
+            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        AND
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
+    """)
+  abstract suspend fun selectThreadId(ownerBoardId: Long, threadNo: Long): Long?
+
   suspend fun insertDefaultOrIgnore(ownerBoardId: Long, threadNo: Long): Long {
     val prev = select(ownerBoardId, threadNo)
     if (prev != null) {

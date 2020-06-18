@@ -9,6 +9,7 @@ import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
 import com.github.adamantcheese.model.parser.ArchivesJsonParser
 import com.github.adamantcheese.model.repository.*
+import com.github.adamantcheese.model.source.cache.ChanDescriptorCache
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 import com.github.adamantcheese.model.source.local.*
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
@@ -40,6 +41,12 @@ class ModelMainModule {
   @Provides
   fun provideGson(): Gson {
     return Gson().newBuilder().create()
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanDescriptorCache(database: KurobaDatabase): ChanDescriptorCache {
+    return ChanDescriptorCache(database)
   }
 
   /**
@@ -142,6 +149,22 @@ class ModelMainModule {
       database,
       loggerTag,
       logger
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideThreadBookmarkLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger,
+    chanDescriptorCache: ChanDescriptorCache
+  ): ThreadBookmarkLocalSource {
+    return ThreadBookmarkLocalSource(
+      database,
+      loggerTag,
+      logger,
+      chanDescriptorCache
     )
   }
 
@@ -310,13 +333,15 @@ class ModelMainModule {
     logger: Logger,
     database: KurobaDatabase,
     @AppCoroutineScope scope: CoroutineScope,
-    @LoggerTagPrefix loggerTag: String
+    @LoggerTagPrefix loggerTag: String,
+    threadBookmarkLocalSource: ThreadBookmarkLocalSource
   ): BookmarksRepository {
     return BookmarksRepository(
       database,
       loggerTag,
       logger,
-      scope
+      scope,
+      threadBookmarkLocalSource
     )
   }
 }

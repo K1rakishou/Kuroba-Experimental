@@ -32,11 +32,69 @@ open class GenericCacheSource<Key, Value>(
 
     consumeEach { action ->
       when (action) {
-        is CacheAction.Get<Key, Value> -> {
+        is CacheAction.Get -> {
           action.deferred.complete(cache[action.key])
+        }
+        is CacheAction.GetMany -> {
+          val result = mutableMapOf<Key, Value>()
+
+          for (key in action.keys) {
+            val value = cache[key] ?: continue
+
+            result[key] = value
+          }
+
+          action.deferred.complete(result)
+        }
+        is CacheAction.GetAll -> {
+          action.deferred.complete(cache.toMap())
+        }
+        is CacheAction.FilterValues -> {
+          val filteredValues = cache.values.filter { value -> action.filterFunc(value) }
+          action.deferred.complete(filteredValues)
         }
         is CacheAction.Store -> {
           cache[action.key] = action.value
+          action.deferred.complete(Unit)
+        }
+        is CacheAction.StoreMany -> {
+          for (entry in action.entries) {
+            cache[entry.key] = entry.value
+          }
+
+          action.deferred.complete(Unit)
+        }
+        is CacheAction.FirstOrNull -> {
+          var found = false
+
+          for (value in cache.values) {
+            if (action.predicate(value)) {
+              found = true
+              action.deferred.complete(value)
+              break
+            }
+          }
+
+          if (!found) {
+            action.deferred.complete(null)
+          }
+        }
+        is CacheAction.IterateWhile -> {
+          for (value in cache.values) {
+            if (!action.iteratorFunc(value)) {
+              break
+            }
+          }
+
+          action.deferred.complete(Unit)
+        }
+        is CacheAction.UpdateMany -> {
+          for (key in action.keys) {
+            val value = cache[key] ?: continue
+
+            action.updateFunc(value)
+          }
+
           action.deferred.complete(Unit)
         }
         is CacheAction.Contains -> {
@@ -47,6 +105,10 @@ open class GenericCacheSource<Key, Value>(
         }
         is CacheAction.Delete -> {
           cache.remove(action.key)
+          action.deferred.complete(Unit)
+        }
+        is CacheAction.Clear -> {
+          cache.clear()
           action.deferred.complete(Unit)
         }
       }
@@ -74,9 +136,58 @@ open class GenericCacheSource<Key, Value>(
     return deferred.await()
   }
 
+  override suspend fun getMany(keys: List<Key>): Map<Key, Value> {
+    val deferred = CompletableDeferred<Map<Key, Value>>()
+    actor.send(CacheAction.GetMany(keys, deferred))
+
+    return deferred.await()
+  }
+
+  override suspend fun getAll(): Map<Key, Value> {
+    val deferred = CompletableDeferred<Map<Key, Value>>()
+    actor.send(CacheAction.GetAll(deferred))
+
+    return deferred.await()
+  }
+
+  override suspend fun filterValues(filterFunc: (Value) -> Boolean): List<Value> {
+    val deferred = CompletableDeferred<List<Value>>()
+    actor.send(CacheAction.FilterValues(filterFunc, deferred))
+
+    return deferred.await()
+  }
+
   override suspend fun store(key: Key, value: Value) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.Store(key, value, deferred))
+
+    deferred.await()
+  }
+
+  override suspend fun storeMany(entries: Map<Key, Value>) {
+    val deferred = CompletableDeferred<Unit>()
+    actor.send(CacheAction.StoreMany(entries, deferred))
+
+    deferred.await()
+  }
+
+  override suspend fun firstOrNull(predicate: suspend (Value) -> Boolean): Value? {
+    val deferred = CompletableDeferred<Value?>()
+    actor.send(CacheAction.FirstOrNull(predicate, deferred))
+
+    return deferred.await()
+  }
+
+  override suspend fun iterateWhile(iteratorFunc: suspend (Value) -> Boolean) {
+    val deferred = CompletableDeferred<Unit>()
+    actor.send(CacheAction.IterateWhile(iteratorFunc, deferred))
+
+    deferred.await()
+  }
+
+  override suspend fun updateMany(keys: List<Key>, updateFunc: (Value) -> Unit) {
+    val deferred = CompletableDeferred<Unit>()
+    actor.send(CacheAction.UpdateMany(keys, updateFunc, deferred))
 
     deferred.await()
   }
@@ -102,15 +213,57 @@ open class GenericCacheSource<Key, Value>(
     deferred.await()
   }
 
+  override suspend fun clear() {
+    val deferred = CompletableDeferred<Unit>()
+    actor.send(CacheAction.Clear(deferred))
+
+    deferred.await()
+  }
+
   private sealed class CacheAction<out K, out V> {
     class Get<out K, V>(
       val key: K,
       val deferred: CompletableDeferred<V?>
     ) : CacheAction<K, V>()
 
+    class GetMany<K, V>(
+      val keys: List<K>,
+      val deferred: CompletableDeferred<Map<K, V>>
+    ) : CacheAction<K, V>()
+
+    class GetAll<K, V>(
+      val deferred: CompletableDeferred<Map<K, V>>
+    ) : CacheAction<K, V>()
+
+    class FilterValues<out K, V>(
+      val filterFunc: (V) -> Boolean,
+      val deferred: CompletableDeferred<List<V>>
+    ) : CacheAction<K, V>()
+
     class Store<out K, out V>(
       val key: K,
       val value: V,
+      val deferred: CompletableDeferred<Unit>
+    ) : CacheAction<K, V>()
+
+    class StoreMany<K, out V>(
+      val entries: Map<K, V>,
+      val deferred: CompletableDeferred<Unit>
+    ) : CacheAction<K, V>()
+
+    class FirstOrNull<out K, V>(
+      val predicate: suspend (V) -> Boolean,
+      val deferred: CompletableDeferred<V?>
+    ) : CacheAction<K, V>()
+
+    class IterateWhile<out K, V>(
+      val iteratorFunc: suspend (V) -> Boolean,
+      val deferred: CompletableDeferred<Unit>
+    ) : CacheAction<K, V>()
+
+    class UpdateMany<K, V>(
+      val keys: List<K>,
+      val updateFunc: (V) -> Unit,
       val deferred: CompletableDeferred<Unit>
     ) : CacheAction<K, V>()
 
@@ -125,6 +278,10 @@ open class GenericCacheSource<Key, Value>(
 
     class Delete<out K, out V>(
       val key: K,
+      val deferred: CompletableDeferred<Unit>
+    ) : CacheAction<K, V>()
+
+    class Clear<out K, out V>(
       val deferred: CompletableDeferred<Unit>
     ) : CacheAction<K, V>()
   }
