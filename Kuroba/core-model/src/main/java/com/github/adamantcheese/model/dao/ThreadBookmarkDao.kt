@@ -11,10 +11,10 @@ import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 abstract class ThreadBookmarkDao {
 
   @Insert(onConflict = OnConflictStrategy.ABORT)
-  abstract suspend fun insertManyOrIgnore(threadBookmarkEntities: Collection<ThreadBookmarkEntity>): List<Long>
+  abstract suspend fun insertManyOrAbort(threadBookmarkEntities: Collection<ThreadBookmarkEntity>): List<Long>
 
   @Update(onConflict = OnConflictStrategy.ABORT)
-  abstract suspend fun updateManyOrIgnore(threadBookmarkEntities: Collection<ThreadBookmarkEntity>)
+  abstract suspend fun updateManyOrAbort(threadBookmarkEntities: Collection<ThreadBookmarkEntity>)
 
   @Query("""
     SELECT * 
@@ -37,8 +37,9 @@ abstract class ThreadBookmarkDao {
         ON bookmarks.${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
     INNER JOIN ${ChanBoardEntity.TABLE_NAME} boards
         ON boards.${ChanBoardEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
+    ORDER BY ${ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME} DESC
   """)
-  abstract suspend fun selectAll(): List<ThreadBookmarkFull>
+  abstract suspend fun selectAllOrderedDesc(): List<ThreadBookmarkFull>
 
   @Transaction
   open suspend fun insertOrUpdateMany(threadBookmarkEntities: Collection<ThreadBookmarkEntity>) {
@@ -56,11 +57,18 @@ abstract class ThreadBookmarkDao {
 
     toInsert
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .forEach { chunk -> insertManyOrIgnore(chunk) }
+      .forEach { chunk -> insertManyOrAbort(chunk) }
 
     toUpdate
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .forEach { chunk -> updateManyOrIgnore(chunk) }
+      .forEach { chunk -> updateManyOrAbort(chunk) }
   }
+
+  @Query("""
+    DELETE 
+    FROM ${ThreadBookmarkEntity.TABLE_NAME} 
+    WHERE ${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:threadIdSet)
+""")
+  abstract fun deleteMany(threadIdSet: Set<Long>)
 
 }

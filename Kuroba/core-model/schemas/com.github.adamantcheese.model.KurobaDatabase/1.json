@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a9aa01931445b98124ad225c42c50c7b",
+    "identityHash": "63f9668bde490d835723c0bf6b085194",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1152,7 +1152,7 @@
       },
       {
         "tableName": "thread_bookmark",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `watch_last_count` INTEGER NOT NULL, `watch_new_count` INTEGER NOT NULL, `quote_last_count` INTEGER NOT NULL, `quote_new_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `watch_last_count` INTEGER NOT NULL, `watch_new_count` INTEGER NOT NULL, `quote_last_count` INTEGER NOT NULL, `quote_new_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, `bookmark_order` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "ownerThreadId",
@@ -1201,6 +1201,12 @@
             "columnName": "state",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "bookmarkOrder",
+            "columnName": "bookmark_order",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -1209,7 +1215,16 @@
           ],
           "autoGenerate": false
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_thread_bookmark_bookmark_order",
+            "unique": false,
+            "columnNames": [
+              "bookmark_order"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_thread_bookmark_bookmark_order` ON `${TABLE_NAME}` (`bookmark_order`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "chan_thread",
@@ -1233,7 +1248,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a9aa01931445b98124ad225c42c50c7b')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '63f9668bde490d835723c0bf6b085194')"
     ]
   }
 }

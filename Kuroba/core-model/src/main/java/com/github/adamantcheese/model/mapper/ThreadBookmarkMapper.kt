@@ -7,7 +7,7 @@ import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkFull
 
 object ThreadBookmarkMapper {
 
-  fun toThreadBookmarkEntity(threadBookmark: ThreadBookmark, ownerThreadId: Long): ThreadBookmarkEntity {
+  fun toThreadBookmarkEntity(threadBookmark: ThreadBookmark, ownerThreadId: Long, order: Int): ThreadBookmarkEntity {
     require(ownerThreadId != 0L) { "Database id cannot be 0" }
 
     return ThreadBookmarkEntity(
@@ -18,7 +18,8 @@ object ThreadBookmarkMapper {
       quoteNewCount = threadBookmark.quoteNewCount,
       title = threadBookmark.title,
       thumbnailUrl = threadBookmark.thumbnailUrl,
-      state = threadBookmark.state
+      state = threadBookmark.state,
+      bookmarkOrder = order
     )
   }
 

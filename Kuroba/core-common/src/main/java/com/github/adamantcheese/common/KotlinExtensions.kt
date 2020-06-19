@@ -70,3 +70,24 @@ public suspend fun <T> CoroutineScope.myAsync(func: suspend () -> T): T {
     async { func() }.await()
   }
 }
+
+public inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T) -> Unit): Unit {
+  if (this.isEmpty()) {
+    return
+  }
+
+  var index = this.size - 1
+
+  for (item in this) {
+    action(index--, item)
+  }
+}
+
+public inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(destination: C, transform: (index: Int, T) -> R?): C {
+  forEachReverseIndexed { index, element -> transform(index, element)?.let { destination.add(it) } }
+  return destination
+}
+
+public inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index: Int, T) -> R?): List<R> {
+  return mapReverseIndexedNotNullTo(ArrayList<R>(), transform)
+}

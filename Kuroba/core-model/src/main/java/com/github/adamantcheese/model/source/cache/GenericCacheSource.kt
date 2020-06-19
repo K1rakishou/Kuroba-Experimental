@@ -1,5 +1,6 @@
 package com.github.adamantcheese.model.source.cache
 
+import com.github.adamantcheese.common.ModularResult
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,13 +81,24 @@ open class GenericCacheSource<Key, Value>(
           }
         }
         is CacheAction.IterateWhile -> {
+          var exception: Throwable? = null
+
           for (value in cache.values) {
-            if (!action.iteratorFunc(value)) {
+            try {
+              if (!action.iteratorFunc(value)) {
+                break
+              }
+            } catch (error: Throwable) {
+              exception = error
               break
             }
           }
 
-          action.deferred.complete(Unit)
+          if (exception == null) {
+            action.deferred.complete(ModularResult.value(Unit))
+          } else {
+            action.deferred.complete(ModularResult.error(exception))
+          }
         }
         is CacheAction.UpdateMany -> {
           for (key in action.keys) {
@@ -105,6 +117,10 @@ open class GenericCacheSource<Key, Value>(
         }
         is CacheAction.Delete -> {
           cache.remove(action.key)
+          action.deferred.complete(Unit)
+        }
+        is CacheAction.DeleteMany -> {
+          action.keys.forEach { key -> cache.remove(key) }
           action.deferred.complete(Unit)
         }
         is CacheAction.Clear -> {
@@ -178,11 +194,11 @@ open class GenericCacheSource<Key, Value>(
     return deferred.await()
   }
 
-  override suspend fun iterateWhile(iteratorFunc: suspend (Value) -> Boolean) {
-    val deferred = CompletableDeferred<Unit>()
+  override suspend fun iterateWhile(iteratorFunc: suspend (Value) -> Boolean): ModularResult<Unit> {
+    val deferred = CompletableDeferred<ModularResult<Unit>>()
     actor.send(CacheAction.IterateWhile(iteratorFunc, deferred))
 
-    deferred.await()
+    return deferred.await()
   }
 
   override suspend fun updateMany(keys: List<Key>, updateFunc: (Value) -> Unit) {
@@ -209,6 +225,13 @@ open class GenericCacheSource<Key, Value>(
   override suspend fun delete(key: Key) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.Delete(key, deferred))
+
+    deferred.await()
+  }
+
+  override suspend fun deleteMany(keys: List<Key>) {
+    val deferred = CompletableDeferred<Unit>()
+    actor.send(CacheAction.DeleteMany(keys, deferred))
 
     deferred.await()
   }
@@ -258,7 +281,7 @@ open class GenericCacheSource<Key, Value>(
 
     class IterateWhile<out K, V>(
       val iteratorFunc: suspend (V) -> Boolean,
-      val deferred: CompletableDeferred<Unit>
+      val deferred: CompletableDeferred<ModularResult<Unit>>
     ) : CacheAction<K, V>()
 
     class UpdateMany<K, V>(
@@ -278,6 +301,11 @@ open class GenericCacheSource<Key, Value>(
 
     class Delete<out K, out V>(
       val key: K,
+      val deferred: CompletableDeferred<Unit>
+    ) : CacheAction<K, V>()
+
+    class DeleteMany<out K, out V>(
+      val keys: List<K>,
       val deferred: CompletableDeferred<Unit>
     ) : CacheAction<K, V>()
 

@@ -1,9 +1,6 @@
 package com.github.adamantcheese.model.entity.bookmark
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
 import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 import okhttp3.HttpUrl
 import java.util.*
@@ -18,6 +15,9 @@ import java.util.*
       onDelete = ForeignKey.CASCADE,
       onUpdate = ForeignKey.CASCADE
     )
+  ],
+  indices = [
+    Index(ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME)
   ]
 )
 data class ThreadBookmarkEntity(
@@ -37,7 +37,9 @@ data class ThreadBookmarkEntity(
   @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
   val thumbnailUrl: HttpUrl? = null,
   @ColumnInfo(name = STATE_COLUMN_NAME)
-  val state: BitSet
+  val state: BitSet,
+  @ColumnInfo(name = BOOKMARK_ORDER_COLUMN_NAME)
+  val bookmarkOrder: Int
 ) {
 
   companion object {
@@ -51,5 +53,6 @@ data class ThreadBookmarkEntity(
     const val TITLE_COLUMN_NAME = "title"
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val STATE_COLUMN_NAME = "state"
+    const val BOOKMARK_ORDER_COLUMN_NAME = "bookmark_order"
   }
 }

@@ -808,7 +808,15 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (loadable!!.isCatalogMode) {
-      menu.add(createMenuItem(POST_OPTION_PIN, R.string.action_pin))
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        loadable!!.site.name(),
+        post.board.code,
+        post.no
+      )
+
+      if (!bookmarksManager.exists(threadDescriptor)) {
+        menu.add(createMenuItem(POST_OPTION_PIN, R.string.action_pin))
+      }
     } else {
       menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote))
       menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text))
@@ -933,8 +941,18 @@ class ThreadPresenter @Inject constructor(
       POST_OPTION_PIN -> {
         val title = PostHelper.getTitle(post, loadable)
         val loadable = Loadable.forThread(loadable!!.site, post.board, post.no, title)
-        val pinLoadable = databaseManager.databaseLoadableManager.get(loadable)
-        watchManager.createPin(pinLoadable, post)
+
+        val threadDescriptor = loadable.threadDescriptorOrNull
+        if (threadDescriptor == null) {
+          Logger.e(TAG, "Couldn't convert loadable into thread descriptor, mode = ${loadable.mode}")
+          return
+        }
+
+        bookmarksManager.createBookmark(
+          threadDescriptor,
+          title,
+          post.firstImage()?.thumbnailUrl
+        )
       }
       POST_OPTION_OPEN_BROWSER -> if (isBound) {
         AndroidUtils.openLink(loadable!!.site.resolvable().desktopUrl(loadable!!, post.no))
