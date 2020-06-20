@@ -119,7 +119,7 @@ public class DatabaseLoadableManager {
      */
     public Loadable get(final Loadable loadable) {
         if (loadable.id != 0) {
-            throw new IllegalArgumentException("get() only works for transient loadables");
+            return loadable;
         }
 
         // We only cache THREAD loadables in the db
