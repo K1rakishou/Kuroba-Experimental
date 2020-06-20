@@ -15,7 +15,6 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -46,10 +45,6 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     inject(this)
 
     scope.launch {
-      // TODO(KurobaEx): without this delay we won't see anything in the recycler. Figure out how
-      //  to get rid of it.
-      delay(250)
-
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
           .asFlow()
@@ -63,22 +58,6 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
               }
             }
           }
-      }
-
-      scope.launch(Dispatchers.Default) {
-        if (bookmarksManager.bookmarksCount() <= 0) {
-          setState(BookmarksControllerState.Empty)
-          return@launch
-        }
-
-        setState(BookmarksControllerState.Loading)
-
-        ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
-          Logger.e(TAG, "showBookmarks() error", error)
-          setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
-
-          return@launch
-        }
       }
 
       scope.launch {
@@ -102,6 +81,26 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
               }
             }
           }
+      }
+
+      reloadBookmarks()
+    }
+  }
+
+  private fun reloadBookmarks() {
+    scope.launch(Dispatchers.Default) {
+      if (bookmarksManager.bookmarksCount() <= 0) {
+        setState(BookmarksControllerState.Empty)
+        return@launch
+      }
+
+      setState(BookmarksControllerState.Loading)
+
+      ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+        Logger.e(TAG, "showBookmarks() error", error)
+        setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
+
+        return@launch
       }
     }
   }
@@ -133,6 +132,10 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
 
   fun onSearchEntered(query: String) {
     searchSubject.onNext(query)
+  }
+
+  fun onViewBookmarksModeChanged() {
+    reloadBookmarks()
   }
 
   fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {

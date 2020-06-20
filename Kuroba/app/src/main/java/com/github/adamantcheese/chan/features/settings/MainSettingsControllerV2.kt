@@ -55,6 +55,9 @@ class MainSettingsControllerV2(context: Context)
   private var hasPendingRestart = false
   private var hasPendingUiRefresh = false
 
+  // TODO(KurobaEx): Implement Save/Restore recycler position.
+  //  See https://github.com/K1rakishou/MvRxTest/blob/master/app/src/main/java/com/kirakishou/mvrxtest/ui/MainFragment.kt#L58
+
   @OptIn(FlowPreview::class)
   override fun onCreate() {
     super.onCreate()

@@ -1,30 +1,33 @@
 package com.github.adamantcheese.chan.features.bookmarks
 
 import android.content.Context
+import android.content.res.Configuration
 import android.view.View
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
+import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
-import com.github.adamantcheese.chan.features.bookmarks.epoxy.EpoxyThreadBookmarkView
-import com.github.adamantcheese.chan.features.bookmarks.epoxy.EpoxyThreadBookmarkViewModel_
-import com.github.adamantcheese.chan.features.bookmarks.epoxy.epoxyThreadBookmarkView
+import com.github.adamantcheese.chan.features.bookmarks.epoxy.*
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
-import com.github.adamantcheese.chan.utils.AndroidUtils.getString
-import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
+import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 class BookmarksController(context: Context)
   : Controller(context),
@@ -35,6 +38,7 @@ class BookmarksController(context: Context)
 
   private val bookmarksPresenter = BookmarksPresenter()
   private val controller = BookmarksEpoxyController()
+  private val viewModeChanged = AtomicBoolean(false)
 
   override fun onCreate() {
     super.onCreate()
@@ -46,9 +50,20 @@ class BookmarksController(context: Context)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }
+      .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, R.drawable.ic_baseline_view_list_24) {
+        PersistableChanState.viewThreadBookmarksGridMode.set(
+          PersistableChanState.viewThreadBookmarksGridMode.get().not()
+        )
+
+        onViewBookmarksModeChanged()
+
+        viewModeChanged.set(true)
+        bookmarksPresenter.onViewBookmarksModeChanged()
+      }
       .build()
 
     view = inflate(context, R.layout.controller_bookmarks)
+
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
 
@@ -61,40 +76,42 @@ class BookmarksController(context: Context)
         .collect { state -> onStateChanged(state) }
     }
 
-    EpoxyTouchHelper
-      .initSwiping(epoxyRecyclerView)
-      .right()
-      .withTarget(EpoxyThreadBookmarkViewModel_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyThreadBookmarkViewModel_>() {
-        override fun onSwipeCompleted(
-          model: EpoxyThreadBookmarkViewModel_,
-          itemView: View?,
-          position: Int,
-          direction: Int
-        ) {
-          super.onSwipeCompleted(model, itemView, position, direction)
+    if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      setupRecyclerSwipingAndDraggingForGridMode()
+    } else {
+      setupRecyclerSwipingAndDraggingForListMode()
+    }
 
-          bookmarksPresenter.onBookmarkSwipedAway(model.descriptor())
-        }
-      })
-
-    EpoxyTouchHelper
-      .initDragging(controller)
-      .withRecyclerView(epoxyRecyclerView)
-      .forVerticalList()
-      .withTarget(EpoxyThreadBookmarkViewModel_::class.java)
-      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyThreadBookmarkViewModel_>() {
-        override fun onModelMoved(
-          fromPosition: Int,
-          toPosition: Int,
-          modelBeingMoved: EpoxyThreadBookmarkViewModel_,
-          itemView: View?
-        ) {
-          bookmarksPresenter.onBookmarkMoved(fromPosition, toPosition)
-        }
-      })
+    onViewBookmarksModeChanged()
+    updateLayoutManager()
 
     bookmarksPresenter.onCreate(this)
+  }
+
+  private fun updateLayoutManager(forced: Boolean = false) {
+    if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      if (!forced && epoxyRecyclerView.layoutManager is GridLayoutManager) {
+        return
+      }
+
+      val gridModeBookmarkWidth =
+        context.resources.getDimension(R.dimen.thread_grid_bookmark_view_size).toInt()
+
+      val screenWidth = getDisplaySize().x
+      val spanCount = (screenWidth / gridModeBookmarkWidth)
+        .coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+
+      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
+        spanSizeLookup = controller.spanSizeLookup
+      }
+    } else {
+      if (epoxyRecyclerView.layoutManager is LinearLayoutManager
+        && epoxyRecyclerView.layoutManager !is GridLayoutManager) {
+        return
+      }
+
+      epoxyRecyclerView.layoutManager = LinearLayoutManager(context)
+    }
   }
 
   override fun onDestroy() {
@@ -111,7 +128,21 @@ class BookmarksController(context: Context)
     bookmarksPresenter.onSearchEntered(entered ?: "")
   }
 
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    updateLayoutManager(forced = true)
+  }
+
   private fun onStateChanged(state: BookmarksControllerState) {
+    controller.addOneshotModelBuildListener {
+      if (viewModeChanged.compareAndSet(true, false)) {
+        updateLayoutManager()
+      }
+    }
+
+    val isGridMode = PersistableChanState.viewThreadBookmarksGridMode.get()
+
     controller.callback = {
       when (state) {
         BookmarksControllerState.Loading -> {
@@ -139,15 +170,29 @@ class BookmarksController(context: Context)
         }
         is BookmarksControllerState.Data -> {
           state.bookmarks.forEach { bookmark ->
-            val requestData = EpoxyThreadBookmarkView.ImageLoaderRequestData(bookmark.thumbnailUrl)
+            val requestData =
+              BaseThreadBookmarkViewHolder.ImageLoaderRequestData(bookmark.thumbnailUrl)
 
-            epoxyThreadBookmarkView {
-              id("thread_bookmark_view_${bookmark.hashCode()}")
-              imageLoaderRequestData(requestData)
-              descriptor(bookmark.threadDescriptor)
-              title(bookmark.title)
-              threadBookmarkStats(bookmark.threadBookmarkStats)
-              clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
+            if (isGridMode) {
+              epoxyGridThreadBookmarkViewHolder {
+                id("thread_grid_bookmark_view_${bookmark.hashCode()}")
+                context(context)
+                imageLoaderRequestData(requestData)
+                threadDescriptor(bookmark.threadDescriptor)
+                titleString(bookmark.title)
+                threadBookmarkStats(bookmark.threadBookmarkStats)
+                clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
+              }
+            } else {
+              epoxyListThreadBookmarkViewHolder {
+                id("thread_list_bookmark_view_${bookmark.hashCode()}")
+                context(context)
+                imageLoaderRequestData(requestData)
+                threadDescriptor(bookmark.threadDescriptor)
+                titleString(bookmark.title)
+                threadBookmarkStats(bookmark.threadBookmarkStats)
+                clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
+              }
             }
           }
         }
@@ -155,6 +200,96 @@ class BookmarksController(context: Context)
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun onViewBookmarksModeChanged() {
+    val menuItem = navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)
+      ?: return
+
+    val drawableId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
+      // button's meaning is to switch into that mode, not show the current mode
+      false -> R.drawable.ic_baseline_view_comfy_24
+      true -> R.drawable.ic_baseline_view_list_24
+    }
+
+    menuItem.setImage(drawableId)
+  }
+
+  private fun setupRecyclerSwipingAndDraggingForListMode() {
+    EpoxyTouchHelper
+      .initSwiping(epoxyRecyclerView)
+      .right()
+      .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
+      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
+        override fun onSwipeCompleted(
+          model: EpoxyListThreadBookmarkViewHolder_,
+          itemView: View?,
+          position: Int,
+          direction: Int
+        ) {
+          super.onSwipeCompleted(model, itemView, position, direction)
+
+          val threadDescriptor = model.threadDescriptor()
+          if (threadDescriptor != null) {
+            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
+          }
+        }
+      })
+
+    EpoxyTouchHelper
+      .initDragging(controller)
+      .withRecyclerView(epoxyRecyclerView)
+      .forVerticalList()
+      .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
+      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
+        override fun onModelMoved(
+          fromPosition: Int,
+          toPosition: Int,
+          modelBeingMoved: EpoxyListThreadBookmarkViewHolder_,
+          itemView: View?
+        ) {
+          bookmarksPresenter.onBookmarkMoved(fromPosition, toPosition)
+        }
+      })
+  }
+
+  private fun setupRecyclerSwipingAndDraggingForGridMode() {
+//    EpoxyTouchHelper
+//      .initSwiping(epoxyRecyclerView)
+//      .right()
+//      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
+//      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
+//        override fun onSwipeCompleted(
+//          model: EpoxyGridThreadBookmarkViewHolder_,
+//          itemView: View?,
+//          position: Int,
+//          direction: Int
+//        ) {
+//          super.onSwipeCompleted(model, itemView, position, direction)
+//
+//          val threadDescriptor = model.threadDescriptor()
+//          if (threadDescriptor != null) {
+//            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
+//          }
+//        }
+//      })
+
+    EpoxyTouchHelper
+      .initDragging(controller)
+      .withRecyclerView(epoxyRecyclerView)
+      .forGrid()
+      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
+      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
+        override fun onModelMoved(
+          fromPosition: Int,
+          toPosition: Int,
+          modelBeingMoved: EpoxyGridThreadBookmarkViewHolder_,
+          itemView: View?
+        ) {
+          bookmarksPresenter.onBookmarkMoved(fromPosition, toPosition)
+        }
+      })
   }
 
   private class BookmarksEpoxyController : EpoxyController() {
@@ -167,5 +302,10 @@ class BookmarksController(context: Context)
 
   companion object {
     private const val TAG = "BookmarksController"
+
+    private const val MIN_SPAN_COUNT = 1
+    private const val MAX_SPAN_COUNT = 6
+
+    private const val ACTION_CHANGE_VIEW_BOOKMARK_MODE = 1000
   }
 }

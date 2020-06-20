@@ -19,25 +19,24 @@ public class PersistableChanState {
     private static final String TAG = "ChanState";
 
     public static IntegerSetting watchLastCount;
-
     public static BooleanSetting hasNewApkUpdate;
     public static IntegerSetting previousVersion;
     public static LongSetting updateCheckTime;
     public static StringSetting previousDevHash;
-
     public static StringSetting filterWatchIgnored;
+    public static BooleanSetting viewThreadBookmarksGridMode;
 
     static {
         try {
             SharedPreferencesSettingProvider p = new SharedPreferencesSettingProvider(AndroidUtils.getAppState());
-            watchLastCount = new IntegerSetting(p, "watch_last_count", 0);
 
+            watchLastCount = new IntegerSetting(p, "watch_last_count", 0);
             hasNewApkUpdate = new BooleanSetting(p, "has_new_apk_update", false);
             previousVersion = new IntegerSetting(p, "previous_version", BuildConfig.VERSION_CODE);
             updateCheckTime = new LongSetting(p, "update_check_time", 0L);
             previousDevHash = new StringSetting(p, "previous_dev_hash", BuildConfig.COMMIT_HASH);
-
             filterWatchIgnored = new StringSetting(p, "filter_watch_last_ignored_set", "");
+            viewThreadBookmarksGridMode = new BooleanSetting(p, "view_thread_bookmarks_grid_mode", false);
         } catch (Exception e) {
             Logger.e(TAG, "Error while initializing the state", e);
             throw e;

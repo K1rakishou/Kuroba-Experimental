@@ -4,31 +4,30 @@ import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
-import android.util.AttributeSet
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import coil.request.RequestDisposable
 import coil.transform.CircleCropTransformation
-import com.airbnb.epoxy.*
-import com.github.adamantcheese.chan.Chan.inject
+import coil.transform.RoundedCornersTransformation
+import com.airbnb.epoxy.EpoxyHolder
+import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
+import com.github.adamantcheese.chan.utils.AndroidUtils.dp
+import com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyThreadBookmarkView @JvmOverloads constructor(
-  context: Context,
-  attrs: AttributeSet? = null,
-  defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+@Suppress("LeakingThis")
+open class BaseThreadBookmarkViewHolder(
+  private val imageSize: Int
+) : EpoxyHolder() {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -39,40 +38,51 @@ class EpoxyThreadBookmarkView @JvmOverloads constructor(
   private var requestDisposable: RequestDisposable? = null
   private var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
 
-  private val viewHolder: LinearLayout
-  private val bookmarkImage: AppCompatImageView
-  private val bookmarkTitle: AppCompatTextView
-  private val bookmarkStats: AppCompatTextView
-  private val imageSize: Int
+  private lateinit var viewHolder: LinearLayout
+  private lateinit var bookmarkImage: AppCompatImageView
+  private lateinit var bookmarkTitle: AppCompatTextView
+  private lateinit var bookmarkStats: AppCompatTextView
 
   init {
-    inflate(context, R.layout.epoxy_thread_bookmark_view, this)
-    inject(this)
-
-    viewHolder = findViewById(R.id.thread_bookmark_view_holder)
-    bookmarkImage = findViewById(R.id.thread_bookmark_image)
-    bookmarkTitle = findViewById(R.id.thread_bookmark_title)
-    bookmarkStats = findViewById(R.id.thread_bookmark_stats)
-    imageSize = context.resources.getDimension(R.dimen.thread_bookmark_view_image_size).toInt()
+    Chan.inject(this)
   }
 
-  @ModelProp(ModelProp.Option.DoNotHash)
+  override fun bindView(itemView: View) {
+    viewHolder = itemView.findViewById(R.id.thread_bookmark_view_holder)
+    bookmarkImage = itemView.findViewById(R.id.thread_bookmark_image)
+    bookmarkTitle = itemView.findViewById(R.id.thread_bookmark_title)
+    bookmarkStats = itemView.findViewById(R.id.thread_bookmark_stats)
+  }
+
+  fun unbind() {
+    this.clickListener(null)
+
+    this.imageLoaderRequestData = null
+    this.threadDescriptor = null
+    this.bookmarkImage.setImageBitmap(null)
+
+    this.requestDisposable?.dispose()
+    this.requestDisposable = null
+  }
+
   fun setImageLoaderRequestData(imageLoaderRequestData: ImageLoaderRequestData?) {
     this.imageLoaderRequestData = imageLoaderRequestData
   }
 
-  @ModelProp(options = [ModelProp.Option.DoNotHash])
-  fun setDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  fun setDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor?) {
     this.threadDescriptor = threadDescriptor
   }
 
-  @ModelProp
-  fun setTitle(titleText: String) {
+  fun setTitle(titleText: String?) {
     bookmarkTitle.text = titleText
   }
 
-  @ModelProp
-  fun setThreadBookmarkStats(threadBookmarkStats: ThreadBookmarkStats) {
+  fun setThreadBookmarkStats(threadBookmarkStats: ThreadBookmarkStats?) {
+    if (threadBookmarkStats == null) {
+      bookmarkStats.visibility = View.GONE
+      return
+    }
+
     if (!threadBookmarkStats.showBookmarkStats) {
       bookmarkStats.visibility = View.GONE
       return
@@ -116,7 +126,6 @@ class EpoxyThreadBookmarkView @JvmOverloads constructor(
     }
   }
 
-  @CallbackProp
   fun clickListener(func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
     if (func == null) {
       viewHolder.setOnClickListener(null)
@@ -125,23 +134,29 @@ class EpoxyThreadBookmarkView @JvmOverloads constructor(
     }
   }
 
-  @OnViewRecycled
-  fun onRecycled() {
-    disposeRequest()
-    imageLoaderRequestData = null
+  fun bindImage(isGridMode: Boolean, context: Context) {
+    waitForLayout(bookmarkImage) {
+      bindImageInternal(isGridMode, context)
+      return@waitForLayout true
+    }
   }
 
-  @AfterPropsSet
-  fun afterPropsSet() {
+  private fun bindImageInternal(isGridMode: Boolean, context: Context) {
     val url = imageLoaderRequestData?.url
     val thumbnailImageRef = WeakReference(bookmarkImage)
+
+    val transformations = if (isGridMode) {
+      listOf(ROUNDED_CORNERS)
+    } else {
+      listOf(CIRCLE_CROP)
+    }
 
     requestDisposable = imageLoaderV2.loadFromNetwork(
       context,
       url.toString(),
+      bookmarkImage.width,
       imageSize,
-      imageSize,
-      listOf(CIRCLE_CROP),
+      transformations,
       object : ImageLoaderV2.SimpleImageListener {
         override fun onResponse(drawable: BitmapDrawable) {
           thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
@@ -149,14 +164,16 @@ class EpoxyThreadBookmarkView @JvmOverloads constructor(
       })
   }
 
-  private fun disposeRequest() {
-    requestDisposable?.dispose()
-    requestDisposable = null
-  }
-
   data class ImageLoaderRequestData(val url: HttpUrl?)
 
   companion object {
     private val CIRCLE_CROP = CircleCropTransformation()
+    private val ROUNDED_CORNERS = RoundedCornersTransformation(
+      dp(1f).toFloat(),
+      dp(1f).toFloat(),
+      dp(1f).toFloat(),
+      dp(1f).toFloat()
+    )
   }
+
 }
