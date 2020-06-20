@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.ParserRepository
+import com.github.adamantcheese.chan.core.site.sites.Lainchan
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.dvach.Dvach
 import com.github.adamantcheese.chan.utils.AndroidUtils
@@ -66,14 +67,37 @@ class ReplyParserTest {
     assertEquals(296404782, (replies[2] as ReplyParser.ExtractedQuote.Quote).postId)
   }
 
-  companion object {
-    private const val DVACH_PARSER_TEST_COMMENT = "<a href=\\\"/b/res/223016610.html#223019606\\\" class=\\\"post-reply-link\\\" data-thread=\\\"223016610\\\" data-num=\\\"223019606\\\">>>223019606</a><br>" +
-      "<a href=\\\"/b/res/223016610.html#223019770\\\" class=\\\"post-reply-link\\\" data-thread=\\\"223016610\\\" data-num=\\\"223019770\\\">>>223019770</a><br><br>" +
-      "Лол. Вспоминаю Лиона Эль Джонса, который родную планету почти уничтожил, что бы добраться до глав гада, а потом решил его не убивать.<br>Тоже херовый сюжет, мм?<br>Или звёздные войны, " +
-      "где Люк хотел отомстить за смерть родителей, учителя, целой планеты, но потом ВНИЗАПНО передумывает убивать Дарт Вэйдэра.<br>А ну точно, ЭТО ДРУГОЕ РЯЯ. Извините. " +
-      "Как я сразу не заметил.<br><span class=\\\"spoiler\\\">и тебе добра, няша</span>"
+  @Test
+  fun `test extract quotes from lainchan_org comment`() {
+    whenever(siteRepository.bySiteDescriptor(any())).thenReturn(Lainchan())
 
-    private const val COMMON_PARSER_TEST_COMMENT = "<a href=\\\"#p296403883\\\" class=\\\"quotelink\\\">&gt;&gt;296403883</a><br><a href=\\\"#p296404474\\\" " +
-      "class=\\\"quotelink\\\">&gt;&gt;296404474</a><br><a href=\\\"#p296404782\\\" class=\\\"quotelink\\\">&gt;&gt;296404782</a>"
+    val replies = replyParser.extractCommentReplies(SiteDescriptor("lainchan.org"), VICHAN_PARSER_TEST_COMMENT)
+    assertEquals(2, replies.size)
+    assertTrue(replies.all { it is ReplyParser.ExtractedQuote.Quote })
+
+    assertEquals(28948, (replies[0] as ReplyParser.ExtractedQuote.Quote).postId)
+    assertEquals(28950, (replies[1] as ReplyParser.ExtractedQuote.Quote).postId)
+  }
+
+  companion object {
+    private const val DVACH_PARSER_TEST_COMMENT = "<a href=\\\"/b/res/223016610.html#223019606\\\" " +
+      "class=\\\"post-reply-link\\\" data-thread=\\\"223016610\\\" data-num=\\\"223019606\\\">>>223019606</a><br>" +
+      "<a href=\\\"/b/res/223016610.html#223019770\\\" class=\\\"post-reply-link\\\" data-thread=\\\"223016610\\\" " +
+      "data-num=\\\"223019770\\\">>>223019770</a><br><br>Лол. Вспоминаю Лиона Эль Джонса, который " +
+      "родную планету почти уничтожил, что бы добраться до глав гада, а потом решил его не убивать." +
+      "<br>Тоже херовый сюжет, мм?<br>Или звёздные войны, где Люк хотел отомстить за смерть родителей, " +
+      "учителя, целой планеты, но потом ВНИЗАПНО передумывает убивать Дарт Вэйдэра.<br>А ну точно, " +
+      "ЭТО ДРУГОЕ РЯЯ. Извините. Как я сразу не заметил.<br><span class=\\\"spoiler\\\">и тебе добра, " +
+      "няша</span>"
+
+    private const val COMMON_PARSER_TEST_COMMENT = "<a href=\\\"#p296403883\\\" class=\\\"quotelink\\\">" +
+      "&gt;&gt;296403883</a><br><a href=\\\"#p296404474\\\" class=\\\"quotelink\\\">&gt;&gt;296404474</a>" +
+      "<br><a href=\\\"#p296404782\\\" class=\\\"quotelink\\\">&gt;&gt;296404782</a>"
+
+    private const val VICHAN_PARSER_TEST_COMMENT = "<a onclick=\\\"highlightReply('28948', event);" +
+      "\\\" href=\\\"/Ω/res/28808.html#28948\\\">&gt;&gt;28948</a><br/><a onclick=\\\"" +
+      "highlightReply('28950', event);\\\" href=\\\"/Ω/res/28808.html#28950\\\">&gt;&gt;28950</a><br/>" +
+      "oh, also, you don't *necessarily* get the same coins out as you put in. " +
+      "The tumbler just gives you some coins."
   }
 }

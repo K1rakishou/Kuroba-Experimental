@@ -28,9 +28,8 @@ import java.util.regex.Pattern;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 public class TaimabaCommentParser extends CommentParser implements ICommentParser {
-    private static final Pattern QUOTE_PATTERN = Pattern.compile(".*#(\\d+)");
+    private static final Pattern QUOTE_PATTERN = Pattern.compile("#(\\d+)");
     private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/thread/(\\d+)#(\\d+)");
-
 
     public TaimabaCommentParser(MockReplyManager mockReplyManager) {
         super(mockReplyManager);

@@ -86,11 +86,14 @@ public class Kun8
         });
 
         setEndpoints(new VichanEndpoints(this, "https://8kun.top", "https://sys.8kun.top") {
+
+            @NonNull
             @Override
             public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
                 return HttpUrl.parse("https://media.8kun.top/" + "file_store/" + (arg.get("tim") + "." + arg.get("ext")));
             }
 
+            @NonNull
             @Override
             public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, Map<String, String> arg) {
                 String ext;

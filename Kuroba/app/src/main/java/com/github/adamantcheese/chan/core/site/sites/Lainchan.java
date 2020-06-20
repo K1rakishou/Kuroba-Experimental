@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
-public class Lainchan
-        extends CommonSite {
+public class Lainchan extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
