@@ -255,25 +255,25 @@ class BookmarksController(context: Context)
   }
 
   private fun setupRecyclerSwipingAndDraggingForGridMode() {
-//    EpoxyTouchHelper
-//      .initSwiping(epoxyRecyclerView)
-//      .right()
-//      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
-//      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
-//        override fun onSwipeCompleted(
-//          model: EpoxyGridThreadBookmarkViewHolder_,
-//          itemView: View?,
-//          position: Int,
-//          direction: Int
-//        ) {
-//          super.onSwipeCompleted(model, itemView, position, direction)
-//
-//          val threadDescriptor = model.threadDescriptor()
-//          if (threadDescriptor != null) {
-//            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
-//          }
-//        }
-//      })
+    EpoxyTouchHelper
+      .initSwiping(epoxyRecyclerView)
+      .right()
+      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
+      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
+        override fun onSwipeCompleted(
+          model: EpoxyGridThreadBookmarkViewHolder_,
+          itemView: View?,
+          position: Int,
+          direction: Int
+        ) {
+          super.onSwipeCompleted(model, itemView, position, direction)
+
+          val threadDescriptor = model.threadDescriptor()
+          if (threadDescriptor != null) {
+            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
+          }
+        }
+      })
 
     EpoxyTouchHelper
       .initDragging(controller)
