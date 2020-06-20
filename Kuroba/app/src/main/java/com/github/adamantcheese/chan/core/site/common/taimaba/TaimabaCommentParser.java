@@ -16,24 +16,44 @@
  */
 package com.github.adamantcheese.chan.core.site.common.taimaba;
 
+import androidx.annotation.NonNull;
+
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
+import com.github.adamantcheese.chan.core.site.parser.ICommentParser;
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.parser.StyleRule;
 
 import java.util.regex.Pattern;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
-public class TaimabaCommentParser
-        extends CommentParser {
-    public TaimabaCommentParser() {
+public class TaimabaCommentParser extends CommentParser implements ICommentParser {
+    private static final Pattern QUOTE_PATTERN = Pattern.compile(".*#(\\d+)");
+    private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/thread/(\\d+)#(\\d+)");
+
+
+    public TaimabaCommentParser(MockReplyManager mockReplyManager) {
+        super(mockReplyManager);
         addDefaultRules();
-        setQuotePattern(Pattern.compile(".*#(\\d+)"));
-        setFullQuotePattern(Pattern.compile("/(\\w+)/thread/(\\d+)#(\\d+)"));
+
         rule(StyleRule.tagRule("strike").strikeThrough());
         rule(StyleRule.tagRule("pre").monospace().size(sp(12f)));
+
         rule(StyleRule.tagRule("blockquote")
                 .cssClass("unkfunc")
                 .foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE)
                 .linkify());
+    }
+
+    @NonNull
+    @Override
+    public Pattern getQuotePattern() {
+        return QUOTE_PATTERN;
+    }
+
+    @NonNull
+    @Override
+    public Pattern getFullQuotePattern() {
+        return FULL_QUOTE_PATTERN;
     }
 }

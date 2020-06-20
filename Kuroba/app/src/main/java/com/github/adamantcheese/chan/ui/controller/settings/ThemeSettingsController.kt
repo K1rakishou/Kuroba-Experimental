@@ -49,6 +49,7 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.common.DefaultPostParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
@@ -80,9 +81,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
   @Inject
   lateinit var themeHelper: ThemeHelper
-
   @Inject
   lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var mockReplyManager: MockReplyManager
 
   private val dummyBoard = Board().apply {
     site = Chan4()
@@ -254,7 +256,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     override fun getView(position: Int, parent: ViewGroup): View {
       val theme = themes[position]
       val themeContext: Context = ContextThemeWrapper(context, theme.resValue)
-      val parser = CommentParser().addDefaultRules()
+      val parser = CommentParser(mockReplyManager).addDefaultRules()
 
       val postParser = DefaultPostParser(parser, postFilterManager)
       val builder1 = Post.Builder()

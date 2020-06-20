@@ -16,20 +16,38 @@
  */
 package com.github.adamantcheese.chan.core.site.common.vichan;
 
+import androidx.annotation.NonNull;
+
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
+import com.github.adamantcheese.chan.core.site.parser.ICommentParser;
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.parser.StyleRule;
 
 import java.util.regex.Pattern;
 
-public class VichanCommentParser extends CommentParser {
+public class VichanCommentParser extends CommentParser implements ICommentParser {
+    private static final Pattern QUOTE_PATTERN = Pattern.compile(".*#(\\d+)");
+    private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)\\.html#(\\d+)");
 
-    public VichanCommentParser() {
+    public VichanCommentParser(MockReplyManager mockReplyManager) {
+        super(mockReplyManager);
         addDefaultRules();
-        setQuotePattern(Pattern.compile(".*#(\\d+)"));
-        setFullQuotePattern(Pattern.compile("/(\\w+)/\\w+/(\\d+)\\.html#(\\d+)"));
+
         rule(StyleRule.tagRule("p")
                 .cssClass("quote")
                 .foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE)
                 .linkify());
+    }
+
+    @NonNull
+    @Override
+    public Pattern getQuotePattern() {
+        return QUOTE_PATTERN;
+    }
+
+    @NonNull
+    @Override
+    public Pattern getFullQuotePattern() {
+        return FULL_QUOTE_PATTERN;
     }
 }

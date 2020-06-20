@@ -28,6 +28,9 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanActions;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+
+import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
@@ -116,7 +119,13 @@ public class Lainchan
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
         setActions(new VichanActions(this, getOkHttpClient()));
         setApi(new VichanApi(this));
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getMockReplyManager()));
+    }
+
+    @NotNull
+    @Override
+    public CommentParserType commentParserType() {
+        return CommentParserType.VichanParser;
     }
 
     @NonNull

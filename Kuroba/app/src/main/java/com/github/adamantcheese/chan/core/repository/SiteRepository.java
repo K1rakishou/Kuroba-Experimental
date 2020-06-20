@@ -92,7 +92,9 @@ public class SiteRepository {
     public void initialize() {
         List<Site> sites = new ArrayList<>();
 
-        List<SiteModel> models = databaseManager.runTask(databaseManager.getDatabaseSiteManager().getAll());
+        List<SiteModel> models = databaseManager.runTask(
+                databaseManager.getDatabaseSiteManager().getAll()
+        );
 
         for (SiteModel siteModel : models) {
             SiteConfigSettingsHolder holder;

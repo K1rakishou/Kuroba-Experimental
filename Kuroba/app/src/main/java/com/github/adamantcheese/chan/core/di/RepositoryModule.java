@@ -22,6 +22,8 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.site.ParserRepository;
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -45,6 +47,13 @@ public class RepositoryModule {
     public SiteRepository provideSiteRepository(DatabaseManager databaseManager) {
         Logger.d(AppModule.DI_TAG, "Site repository");
         return new SiteRepository(databaseManager);
+    }
+
+    @Provides
+    @Singleton
+    public ParserRepository provideParserRepository(MockReplyManager mockReplyManager) {
+        Logger.d(AppModule.DI_TAG, "ParserRepository");
+        return new ParserRepository(mockReplyManager);
     }
 
     @Provides

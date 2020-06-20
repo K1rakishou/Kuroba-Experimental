@@ -53,9 +53,12 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -191,7 +194,13 @@ public class BrowseBoardsFloatingMenu
                     });
                     setActions(new CommonActions(null) {
                     });
-                    setParser(new CommentParser());
+                    setParser(new CommentParser(getMockReplyManager()));
+                }
+
+                @NotNull
+                @Override
+                public CommentParserType commentParserType() {
+                    return CommentParserType.Default;
                 }
 
                 @NonNull

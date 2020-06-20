@@ -20,7 +20,7 @@ import java.util.*
  *
  * ThreadSafe.
  * */
-class MockReplyManager {
+open class MockReplyManager {
   @GuardedBy("this")
   private val mockReplyMultiMap =
     mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()

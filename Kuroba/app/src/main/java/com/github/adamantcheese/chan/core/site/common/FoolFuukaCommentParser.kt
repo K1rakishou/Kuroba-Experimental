@@ -2,15 +2,18 @@ package com.github.adamantcheese.chan.core.site.common
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
+import com.github.adamantcheese.chan.core.site.parser.ICommentParser
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import org.jsoup.nodes.Element
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class FoolFuukaCommentParser : CommentParser() {
+class FoolFuukaCommentParser(
+  mockReplyManager: MockReplyManager
+) : CommentParser(mockReplyManager), ICommentParser {
 
   init {
     addDefaultRules()
@@ -36,12 +39,12 @@ class FoolFuukaCommentParser : CommentParser() {
     return super.handleTag(callback, theme, post, newTag, text, newElement)
   }
 
-  override fun matchInternalQuote(href: String, post: Post.Builder): Matcher {
-    return FULL_QUOTE_PATTERN.matcher(href)
+  override fun getQuotePattern(): Pattern {
+    return FULL_QUOTE_PATTERN
   }
 
-  override fun matchExternalQuote(href: String, post: Post.Builder): Matcher {
-    return FULL_QUOTE_PATTERN.matcher(href)
+  override fun getFullQuotePattern(): Pattern {
+    return FULL_QUOTE_PATTERN
   }
 
   override fun extractQuote(href: String, post: Post.Builder): String {

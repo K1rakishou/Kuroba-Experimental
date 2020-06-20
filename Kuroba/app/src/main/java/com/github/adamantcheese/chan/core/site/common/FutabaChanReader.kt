@@ -7,10 +7,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
-import com.github.adamantcheese.chan.core.site.parser.ChanReader
-import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
-import com.github.adamantcheese.chan.core.site.parser.CommentParser
-import com.github.adamantcheese.chan.core.site.parser.PostParser
+import com.github.adamantcheese.chan.core.site.parser.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jsoup.parser.Parser
@@ -20,7 +17,8 @@ import java.util.*
 @Suppress("BlockingMethodInNonBlockingContext")
 class FutabaChanReader(
   private val archivesManager: ArchivesManager,
-  private val postFilterManager: PostFilterManager
+  private val postFilterManager: PostFilterManager,
+  private val mockReplyManager: MockReplyManager
 ) : ChanReader {
   private val mutex = Mutex()
   private var parser: PostParser? = null
@@ -28,8 +26,8 @@ class FutabaChanReader(
   override suspend fun getParser(): PostParser {
     return mutex.withLock {
       if (parser == null) {
-        val commentParser = CommentParser().addDefaultRules()
-        val foolFuukaCommentParser = FoolFuukaCommentParser()
+        val commentParser = CommentParser(mockReplyManager).addDefaultRules()
+        val foolFuukaCommentParser = FoolFuukaCommentParser(mockReplyManager)
         val defaultPostParser = DefaultPostParser(commentParser, postFilterManager)
 
         for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {

@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.settings.SettingProvider
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.settings.json.JsonSettingsProvider
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager
+import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.utils.Logger
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
@@ -49,6 +50,7 @@ abstract class SiteBase : Site, CoroutineScope {
   protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }
   protected val boardManager: BoardManager by lazy { instance(BoardManager::class.java) }
   protected val postFilterManager: PostFilterManager by lazy { instance(PostFilterManager::class.java) }
+  protected val mockReplyManager: MockReplyManager by lazy { instance(MockReplyManager::class.java) }
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

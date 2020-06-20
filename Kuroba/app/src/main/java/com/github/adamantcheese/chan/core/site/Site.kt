@@ -20,6 +20,7 @@ import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
 interface Site {
@@ -156,6 +157,7 @@ interface Site {
   fun requestModifier(): SiteRequestModifier
   fun chanReader(): ChanReader?
   fun actions(): SiteActions
+  fun commentParserType(): CommentParserType
 
   /**
    * Return the board for this site with the given `code`.

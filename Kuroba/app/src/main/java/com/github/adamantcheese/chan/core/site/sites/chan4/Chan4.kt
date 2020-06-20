@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.core.site.http.HttpCall
 import com.github.adamantcheese.chan.core.site.http.LoginRequest
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -405,11 +406,15 @@ class Chan4 : SiteBase() {
   }
 
   override fun chanReader(): ChanReader {
-    return FutabaChanReader(archivesManager, postFilterManager)
+    return FutabaChanReader(archivesManager, postFilterManager, mockReplyManager)
   }
 
   override fun actions(): SiteActions {
     return actions
+  }
+
+  override fun commentParserType(): CommentParserType {
+    return CommentParserType.Default
   }
 
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {

@@ -25,6 +25,7 @@ import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
@@ -48,14 +49,11 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.site.parser.StyleRule.tagRule;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 @AnyThread
-public class CommentParser {
+public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
 
     private static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
@@ -64,22 +62,20 @@ public class CommentParser {
     private static final String DEAD_REPLY_SUFFIX = " (DEAD)";
     private static final String EXTERN_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
 
-    @Inject
-    MockReplyManager mockReplyManager;
-
+    private MockReplyManager mockReplyManager;
     private Map<String, List<StyleRule>> rules = new HashMap<>();
 
     private String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
     private Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
     private Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
-    private Pattern quotePattern = Pattern.compile(".*#p(\\d+)");
+    private Pattern quotePattern = Pattern.compile("#p(\\d+)");
     private Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
     private Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
     private Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
     private Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
 
-    public CommentParser() {
-        inject(this);
+    public CommentParser(MockReplyManager mockReplyManager) {
+        this.mockReplyManager = mockReplyManager;
 
         // Required tags.
         rule(tagRule("p"));
@@ -129,12 +125,16 @@ public class CommentParser {
         list.add(rule);
     }
 
-    public void setQuotePattern(Pattern quotePattern) {
-        this.quotePattern = quotePattern;
+    @NonNull
+    @Override
+    public Pattern getQuotePattern() {
+        return quotePattern;
     }
 
-    public void setFullQuotePattern(Pattern fullQuotePattern) {
-        this.fullQuotePattern = fullQuotePattern;
+    @NonNull
+    @Override
+    public Pattern getFullQuotePattern() {
+        return fullQuotePattern;
     }
 
     @Nullable
@@ -233,7 +233,6 @@ public class CommentParser {
                         post.board.code,
                         post.opId
                 );
-
 
                 if (mockReplyPostNo >= 0) {
                     addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
@@ -534,12 +533,12 @@ public class CommentParser {
         return boardLinkPattern8Chan.matcher(href);
     }
 
-    protected Matcher matchInternalQuote(String href, Post.Builder post) {
-        return quotePattern.matcher(href);
+    private Matcher matchInternalQuote(String href, Post.Builder post) {
+        return getQuotePattern().matcher(href);
     }
 
-    protected Matcher matchExternalQuote(String href, Post.Builder post) {
-        return fullQuotePattern.matcher(href);
+    private Matcher matchExternalQuote(String href, Post.Builder post) {
+        return getFullQuotePattern().matcher(href);
     }
 
     protected String extractQuote(String href, Post.Builder post) {

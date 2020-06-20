@@ -25,8 +25,6 @@ public class DvachPostParser extends DefaultPostParser {
     private Pattern colorPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\);");
     private static final String TAG = "DvachPostParser";
 
-    private CommentParser commentParser;
-
     public DvachPostParser(CommentParser commentParser, PostFilterManager postFilterManager) {
         super(commentParser, postFilterManager);
     }

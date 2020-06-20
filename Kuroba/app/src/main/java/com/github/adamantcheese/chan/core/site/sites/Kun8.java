@@ -15,6 +15,9 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -139,7 +142,13 @@ public class Kun8
 
         setApi(new VichanApi(this));
 
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getMockReplyManager()));
+    }
+
+    @NotNull
+    @Override
+    public CommentParserType commentParserType() {
+        return CommentParserType.VichanParser;
     }
 
     @NonNull

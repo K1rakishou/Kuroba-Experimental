@@ -32,7 +32,9 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
 
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 
 import java.util.regex.Matcher;
@@ -128,7 +130,7 @@ public class Wired7
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
         setActions(new Wired7Actions(this, getOkHttpClient()));
         setApi(new VichanApi(this));
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getMockReplyManager()));
     }
 
     private static class Wired7Actions extends VichanActions {
@@ -195,6 +197,12 @@ public class Wired7
                 }
             }
         }
+    }
+
+    @NotNull
+    @Override
+    public CommentParserType commentParserType() {
+        return CommentParserType.VichanParser;
     }
 
     @NonNull

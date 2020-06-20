@@ -28,6 +28,7 @@ import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaActions
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaApi
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaEndpoints
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -80,9 +81,13 @@ class Chan420 : CommonSite() {
       }
     })
     setApi(TaimabaApi(this))
-    setParser(TaimabaCommentParser())
+    setParser(TaimabaCommentParser(mockReplyManager))
   }
-  
+
+  override fun commentParserType(): CommentParserType {
+    return CommentParserType.TaimabaParser
+  }
+
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
     return chunkDownloaderSiteProperties
   }

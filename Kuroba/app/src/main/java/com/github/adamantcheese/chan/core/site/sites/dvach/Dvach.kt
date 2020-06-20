@@ -18,6 +18,7 @@ import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.HttpCall
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -35,6 +36,7 @@ class Dvach : CommonSite() {
   )
 
   private var captchaType: OptionsSetting<Chan4.CaptchaType>? = null
+
   override fun initializeSettings() {
     super.initializeSettings()
     captchaType = OptionsSetting(
@@ -92,6 +94,8 @@ class Dvach : CommonSite() {
           .build()
       }
     })
+
+
 
     setActions(object : VichanActions(this, okHttpClient) {
       override fun setupPost(reply: Reply, call: MultipartHttpCall) {
@@ -183,7 +187,11 @@ class Dvach : CommonSite() {
     })
 
     setApi(DvachApi(this))
-    setParser(DvachCommentParser())
+    setParser(DvachCommentParser(mockReplyManager))
+  }
+
+  override fun commentParserType(): CommentParserType {
+    return CommentParserType.DvachParser
   }
 
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
