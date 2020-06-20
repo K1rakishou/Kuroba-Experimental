@@ -217,6 +217,18 @@ class BookmarksManager(
     }
   }
 
+  fun <T : Any> mapNotNullBookmarksOrdered(mapper: (ThreadBookmarkView) -> T?): List<T> {
+    return lock.read {
+      return@read orders.mapNotNull { threadDescriptor ->
+        val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
+          "Bookmarks does not contain ${threadDescriptor} even though orders does"
+        }
+
+        return@mapNotNull mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
+      }
+    }
+  }
+
   fun onBookmarkMoved(from: Int, to: Int) {
     require(from >= 0) { "Bad from: $from" }
     require(to >= 0) { "Bad to: $to" }

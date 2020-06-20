@@ -12,6 +12,7 @@ import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksController
 import com.github.adamantcheese.chan.features.bookmarks.epoxy.EpoxyThreadBookmarkView
 import com.github.adamantcheese.chan.features.bookmarks.epoxy.EpoxyThreadBookmarkViewModel_
 import com.github.adamantcheese.chan.features.bookmarks.epoxy.epoxyThreadBookmarkView
+import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
@@ -19,12 +20,17 @@ import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.exhaustive
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 
-class BookmarksController(context: Context) : Controller(context), BookmarksView, RequiresNoBottomNavBar {
+class BookmarksController(context: Context)
+  : Controller(context),
+  BookmarksView,
+  RequiresNoBottomNavBar,
+  ToolbarNavigationController.ToolbarSearchCallback {
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
   private val bookmarksPresenter = BookmarksPresenter()
@@ -35,6 +41,12 @@ class BookmarksController(context: Context) : Controller(context), BookmarksView
 
     navigation.title = getString(R.string.controller_bookmarks)
     navigation.swipeable = false
+
+    navigation.buildMenu()
+      .withItem(R.drawable.ic_search_white_24dp) {
+        (navigationController as ToolbarNavigationController).showSearch()
+      }
+      .build()
 
     view = inflate(context, R.layout.controller_bookmarks)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -91,6 +103,14 @@ class BookmarksController(context: Context) : Controller(context), BookmarksView
     bookmarksPresenter.onDestroy()
   }
 
+  override fun onSearchVisibilityChanged(visible: Boolean) {
+    bookmarksPresenter.onSearchModeChanged(visible)
+  }
+
+  override fun onSearchEntered(entered: String?) {
+    bookmarksPresenter.onSearchEntered(entered ?: "")
+  }
+
   private fun onStateChanged(state: BookmarksControllerState) {
     controller.callback = {
       when (state) {
@@ -103,6 +123,12 @@ class BookmarksController(context: Context) : Controller(context), BookmarksView
           epoxyTextView {
             id("bookmarks_are_empty_text_view")
             message(context.getString(R.string.bookmarks_are_empty))
+          }
+        }
+        is BookmarksControllerState.NothingFound -> {
+          epoxyTextView {
+            id("bookmarks_nothing_found_by_search_query")
+            message(context.getString(R.string.bookmarks_nothing_found_by_search_query, state.searchQuery))
           }
         }
         is BookmarksControllerState.Error -> {
@@ -121,11 +147,11 @@ class BookmarksController(context: Context) : Controller(context), BookmarksView
               descriptor(bookmark.threadDescriptor)
               title(bookmark.title)
               threadBookmarkStats(bookmark.threadBookmarkStats)
-              clickListener { bookmarksPresenter.onBookmarkClicked() }
+              clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
             }
           }
         }
-      }
+      }.exhaustive
     }
 
     controller.requestModelBuild()

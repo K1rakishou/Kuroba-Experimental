@@ -967,6 +967,7 @@ Don't have a 4chan Pass?<br>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here</string>
     <string name="bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
+    <string name="bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
 
 </resources>

@@ -17,20 +17,30 @@ import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.math.max
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
 class BookmarksPresenter : BasePresenter<BookmarksView>() {
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
 
+  private val isSearchMode = AtomicBoolean(false)
+
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
+  private val searchSubject = PublishProcessor.create<String>()
+    .toSerialized()
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: BookmarksView) {
     super.onCreate(view)
     inject(this)
@@ -45,8 +55,8 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
           .asFlow()
           .collect {
             withContext(Dispatchers.Default) {
-              ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
-                Logger.e(TAG, "showBookmarks() error", error)
+              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+                Logger.e(TAG, "showBookmarks() listenForBookmarksChanges error", error)
                 setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
                 return@withContext
@@ -63,12 +73,35 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
 
         setState(BookmarksControllerState.Loading)
 
-        ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
+        ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
           Logger.e(TAG, "showBookmarks() error", error)
           setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
           return@launch
         }
+      }
+
+      scope.launch {
+        searchSubject.asFlow()
+          .debounce(350.milliseconds)
+          .collect { query ->
+            setState(BookmarksControllerState.Loading)
+
+            withContext(Dispatchers.Default) {
+              val searchQuery = if (isSearchMode.get() && query.length >= 3) {
+                query
+              } else {
+                null
+              }
+
+              ModularResult.Try { showBookmarks(searchQuery) }.safeUnwrap { error ->
+                Logger.e(TAG, "showBookmarks() searchSubject error", error)
+                setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
+
+                return@withContext
+              }
+            }
+          }
       }
     }
   }
@@ -77,6 +110,7 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     return bookmarksControllerStateSubject
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
+      .debounce(250, TimeUnit.MILLISECONDS)
       .hide()
   }
 
@@ -88,35 +122,60 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     bookmarksManager.onBookmarkMoved(fromPosition, toPosition)
   }
 
-  fun onBookmarkClicked() {
-    // TODO(KurobaEx):
-    println("TTTAAA bookmark clicked")
+  fun onSearchModeChanged(visible: Boolean) {
+    isSearchMode.set(visible)
+
+    if (!visible) {
+      // Reset back to normal state when pressing hardware back button
+      searchSubject.onNext("")
+    }
   }
 
-  private suspend fun showBookmarks() {
+  fun onSearchEntered(query: String) {
+    searchSubject.onNext(query)
+  }
+
+  fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    // TODO(KurobaEx):
+    println("TTTAAA bookmark clicked $threadDescriptor")
+  }
+
+  private suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
 
-    val bookmarks = bookmarksManager.mapBookmarksOrdered { threadBookmarkView ->
-      ThreadBookmarkItemView(
-        threadDescriptor = threadBookmarkView.threadDescriptor,
-        title = threadBookmarkView.title ?: "No title",
-        thumbnailUrl = threadBookmarkView.thumbnailUrl,
-        threadBookmarkStats = ThreadBookmarkStats(
-          showBookmarkStats = true,
-          watching = true,
-          newPosts = max(0, threadBookmarkView.watchNewCount - threadBookmarkView.watchLastCount),
-          newQuotes = max(0, threadBookmarkView.quoteNewCount - threadBookmarkView.quoteLastCount),
-          totalPosts = threadBookmarkView.watchNewCount,
-          isBumpLimit = false,
-          isImageLimit = false,
-          isLastPage = false
+    val bookmarks = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
+      val title = threadBookmarkView.title
+        ?: "No title"
+
+      if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
+        return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
+          threadDescriptor = threadBookmarkView.threadDescriptor,
+          title = title,
+          thumbnailUrl = threadBookmarkView.thumbnailUrl,
+          threadBookmarkStats = ThreadBookmarkStats(
+            showBookmarkStats = true,
+            watching = true,
+            newPosts = max(0, threadBookmarkView.watchNewCount - threadBookmarkView.watchLastCount),
+            newQuotes = max(0, threadBookmarkView.quoteNewCount - threadBookmarkView.quoteLastCount),
+            totalPosts = threadBookmarkView.watchNewCount,
+            isBumpLimit = false,
+            isImageLimit = false,
+            isLastPage = false
+          )
         )
-      )
+      }
+
+      return@mapNotNullBookmarksOrdered null
     }
 
     if (bookmarks.isEmpty()) {
-      setState(BookmarksControllerState.Empty)
+      if (isSearchMode.get()) {
+        setState(BookmarksControllerState.NothingFound(searchQuery ?: ""))
+      } else {
+        setState(BookmarksControllerState.Empty)
+      }
+
       return
     }
 
