@@ -58,7 +58,7 @@ class BookmarksManager(
 
     appScope.launch {
       persistTaskSubject
-        .throttleFirst(5, TimeUnit.SECONDS)
+        .debounce(5, TimeUnit.SECONDS)
         .collect { persistBookmarks() }
     }
 

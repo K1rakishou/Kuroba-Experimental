@@ -49,8 +49,7 @@ sealed class ChanDescriptor {
     }
 
     override fun toString(): String {
-      return "ThreadDescriptor(siteName='${boardDescriptor.siteDescriptor.siteName}', " +
-        "boardCode='${boardDescriptor.boardCode}', opNo=$opNo)"
+      return "TD{'${boardDescriptor.siteDescriptor.siteName}'/'${boardDescriptor.boardCode}'/$opNo}"
     }
 
     companion object {
@@ -90,8 +89,7 @@ sealed class ChanDescriptor {
     }
 
     override fun toString(): String {
-      return "CatalogDescriptor(siteName='${boardDescriptor.siteDescriptor.siteName}', " +
-        "boardCode='${boardDescriptor.boardCode}')"
+      return "CD{'${boardDescriptor.siteDescriptor.siteName}'/'${boardDescriptor.boardCode}'}"
     }
 
     companion object {
