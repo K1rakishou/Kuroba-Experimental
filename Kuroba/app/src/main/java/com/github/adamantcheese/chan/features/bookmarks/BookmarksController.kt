@@ -9,6 +9,7 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
@@ -23,6 +24,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -181,7 +183,7 @@ class BookmarksController(context: Context)
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
-                clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
+                clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
               }
             } else {
               epoxyListThreadBookmarkViewHolder {
@@ -191,7 +193,7 @@ class BookmarksController(context: Context)
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
-                clickListener { bookmarksPresenter.onBookmarkClicked(bookmark.threadDescriptor) }
+                clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
               }
             }
           }
@@ -200,6 +202,10 @@ class BookmarksController(context: Context)
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    (context as? StartActivity)?.loadThread(threadDescriptor)
   }
 
   private fun onViewBookmarksModeChanged() {

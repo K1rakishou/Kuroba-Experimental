@@ -349,6 +349,9 @@ class ThreadPresenter @Inject constructor(
     if (bookmarksManager.exists(threadDescriptor)) {
       bookmarksManager.deleteBookmark(threadDescriptor)
     } else {
+      // We still need this so that we can open the thread by this bookmark later
+      databaseManager.databaseLoadableManager.get(loadable)
+
       bookmarksManager.createBookmark(
         threadDescriptor,
         PostHelper.getTitle(op, loadable),
@@ -947,6 +950,9 @@ class ThreadPresenter @Inject constructor(
           Logger.e(TAG, "Couldn't convert loadable into thread descriptor, mode = ${loadable.mode}")
           return
         }
+
+        // We still need this so that we can open the thread by this bookmark later
+        databaseManager.databaseLoadableManager.get(loadable)
 
         bookmarksManager.createBookmark(
           threadDescriptor,

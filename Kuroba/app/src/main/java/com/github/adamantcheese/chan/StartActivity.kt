@@ -56,6 +56,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.setupFullscreen
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -313,10 +314,14 @@ class StartActivity : AppCompatActivity(),
             browseController?.loadWithDefaultBoard()
           }
 
-          drawerController.loadThread(topNavElement.descriptor)
+          loadThread(topNavElement.descriptor)
         }
       }
     }
+  }
+
+  fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    drawerController.loadThread(threadDescriptor, true)
   }
 
   private fun restoreFromUrl(): Boolean {

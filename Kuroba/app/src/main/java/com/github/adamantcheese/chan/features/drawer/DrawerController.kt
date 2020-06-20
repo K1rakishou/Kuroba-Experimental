@@ -263,7 +263,14 @@ class DrawerController(
     }
   }
 
-  fun loadThread(descriptor: ChanDescriptor.ThreadDescriptor) {
+  fun loadThread(
+    descriptor: ChanDescriptor.ThreadDescriptor,
+    closeAllNonMainControllers: Boolean = false
+  ) {
+    if (closeAllNonMainControllers) {
+      closeAllNonMainControllers()
+    }
+
     topThreadController?.showThread(descriptor)
   }
 

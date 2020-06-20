@@ -138,11 +138,6 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     reloadBookmarks()
   }
 
-  fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    // TODO(KurobaEx):
-    println("TTTAAA bookmark clicked $threadDescriptor")
-  }
-
   private suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
