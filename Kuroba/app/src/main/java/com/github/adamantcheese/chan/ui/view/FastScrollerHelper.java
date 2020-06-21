@@ -1,10 +1,12 @@
 package com.github.adamantcheese.chan.ui.view;
 
+import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.StateListDrawable;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
@@ -14,16 +16,20 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
  * make it look like a normal scrollbar.
  */
 public class FastScrollerHelper {
+
     public static FastScroller create(RecyclerView recyclerView, Theme currentTheme) {
+        Context context = recyclerView.getContext();
         StateListDrawable thumb = getThumb(currentTheme);
         StateListDrawable track = getTrack(currentTheme);
 
-        final int defaultThickness = dp(4);
+        final int defaultThickness = dp(8);
         final int targetWidth = dp(8);
         final int minimumRange = dp(50);
         final int margin = dp(0);
-        final int thumbMinLength = dp(23);
+        final int thumbMinLength = dp(32);
 
+        // TODO(KurobaEx): Test with SPLIT mode, probably I don't need to consider the bottomNavBar
+        //  when using it.
         return new FastScroller(
                 recyclerView,
                 thumb,
@@ -34,7 +40,8 @@ public class FastScrollerHelper {
                 minimumRange,
                 margin,
                 thumbMinLength,
-                targetWidth
+                targetWidth,
+                (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height)
         );
     }
 

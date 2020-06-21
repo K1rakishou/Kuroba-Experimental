@@ -88,6 +88,8 @@ public class FastScroller
     private final int mThumbMinLength;
     private final int mTargetWidth;
 
+    private final int bottomNavBarHeight;
+
     // Final values for the vertical scroll bar
     private final StateListDrawable mVerticalThumbDrawable;
     private final Drawable mVerticalTrackDrawable;
@@ -157,7 +159,8 @@ public class FastScroller
             int scrollbarMinimumRange,
             int margin,
             int thumbMinLength,
-            int targetWidth
+            int targetWidth,
+            int bottomNavBarHeight
     ) {
         mVerticalThumbDrawable = verticalThumbDrawable;
         mVerticalTrackDrawable = verticalTrackDrawable;
@@ -168,9 +171,12 @@ public class FastScroller
         mHorizontalThumbHeight = Math.max(defaultWidth, horizontalThumbDrawable.getIntrinsicWidth());
         mHorizontalTrackHeight = Math.max(defaultWidth, horizontalTrackDrawable.getIntrinsicWidth());
         mScrollbarMinimumRange = scrollbarMinimumRange;
+
         mMargin = margin;
         mThumbMinLength = thumbMinLength;
         mTargetWidth = targetWidth;
+        this.bottomNavBarHeight = bottomNavBarHeight;
+
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
         mVerticalTrackDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
 
@@ -337,7 +343,7 @@ public class FastScroller
     private int getRecyclerViewHeight() {
         return mNeedHorizontalScrollbar
                 ? mRecyclerView.getHeight()
-                : mRecyclerView.getHeight() - mRecyclerView.getPaddingTop() - mRecyclerView.getPaddingBottom();
+                : mRecyclerView.getHeight() - getRecyclerViewTopPadding() - getRecyclerViewBottomPadding();
     }
 
     private int getRecyclerViewLeftPadding() {
@@ -345,7 +351,9 @@ public class FastScroller
     }
 
     private int getRecyclerViewTopPadding() {
-        return mNeedHorizontalScrollbar ? 0 : mRecyclerView.getPaddingTop();
+        return mNeedHorizontalScrollbar
+                ? 0
+                : mRecyclerView.getPaddingTop() + (mVerticalThumbHeight / 2);
     }
 
     private int getRecyclerViewRightPadding() {
@@ -353,7 +361,9 @@ public class FastScroller
     }
 
     private int getRecyclerViewBottomPadding() {
-        return mNeedHorizontalScrollbar ? 0 : mRecyclerView.getPaddingBottom();
+        return mNeedHorizontalScrollbar
+                ? 0
+                : mRecyclerView.getPaddingBottom() + bottomNavBarHeight + (mVerticalThumbHeight / 2);
     }
 
     private void drawVerticalScrollbar(Canvas canvas) {

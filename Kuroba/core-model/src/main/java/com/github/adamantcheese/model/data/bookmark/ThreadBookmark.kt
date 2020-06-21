@@ -93,7 +93,7 @@ class ThreadBookmark private constructor(
     const val BOOKMARK_STATE_THREAD_DELETED = 1 shl 1
 
     /**
-     * A flag for thread that got archived (IIRC only 4chan's archive is supported)
+     * A flag for threads that got archived by first-party archives (like the archive that 4chan has)
      * */
     const val BOOKMARK_STATE_THREAD_ARCHIVED = 1 shl 2
 
