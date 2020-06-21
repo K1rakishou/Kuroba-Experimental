@@ -193,14 +193,16 @@ class BookmarksManager(
     }
   }
 
-  fun viewAllBookmarksOrdered(viewer: (ThreadBookmarkView) -> Unit) {
+  fun iterateBookmarksOrderedWhile(viewer: (ThreadBookmarkView) -> Boolean) {
     lock.read {
-      orders.forEach { threadDescriptor ->
+      for (threadDescriptor in orders) {
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
           "Bookmarks does not contain ${threadDescriptor} even though orders does"
         }
 
-        viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
+        if (!viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))) {
+          break
+        }
       }
     }
   }
@@ -250,6 +252,14 @@ class BookmarksManager(
       }
 
       return@read bookmarks.size
+    }
+  }
+
+  fun hasActiveBookmarks(): Boolean {
+    return lock.read {
+      return@read bookmarks.any { (_, bookmark) ->
+        return@any bookmark.isActive()
+      }
     }
   }
 

@@ -15,9 +15,13 @@ class ThreadBookmarkView private constructor(
   private val state: BitSet
 ) {
 
+  /**
+   * Bookmark is being watched (not paused) and the thread it's watching is not archived/deleted
+   * */
+  fun isActive(): Boolean = isWatching() && !isThreadArchived() && !isThreadDeleted()
   fun isWatching(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_WATCHING)
-  fun isError(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_ERROR)
-  fun isArchived(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_ARCHIVED)
+  fun isThreadDeleted(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_DELETED)
+  fun isThreadArchived(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_ARCHIVED)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

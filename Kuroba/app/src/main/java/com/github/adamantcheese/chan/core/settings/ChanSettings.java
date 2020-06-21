@@ -320,10 +320,8 @@ public class ChanSettings {
             shortPinInfo = new BooleanSetting(p, "preference_short_pin_info", true);
             watchBackground = new BooleanSetting(p, "preference_watch_background_enabled", false);
             watchBackground.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(watchBackground)));
-            watchBackgroundInterval =
-                    new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(15));
-            watchBackgroundInterval.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(
-                    watchBackgroundInterval)));
+            watchBackgroundInterval = new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
+            watchBackgroundInterval.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(watchBackgroundInterval)));
             removeWatchedFromCatalog = new BooleanSetting(p, "remove_catalog_watch", false);
             watchLastPageNotify = new BooleanSetting(p, "preference_watch_last_page_notify", false);
             watchNotifyMode = new StringSetting(p, "preference_watch_notify_mode", NOTIFY_ALL_POSTS);

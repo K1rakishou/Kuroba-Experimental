@@ -15,6 +15,12 @@ class ThreadBookmark private constructor(
   var state: BitSet
 ) {
 
+  fun isActive(): Boolean = isWatching() && !isThreadArchived() && !isThreadDeleted()
+  fun isWatching(): Boolean = state.get(BOOKMARK_STATE_WATCHING)
+  fun isThreadDeleted(): Boolean = state.get(BOOKMARK_STATE_THREAD_DELETED)
+  fun isThreadArchived(): Boolean = state.get(BOOKMARK_STATE_THREAD_ARCHIVED)
+
+
   fun fill(oldThreadBookmark: ThreadBookmark) {
     this.watchLastCount = oldThreadBookmark.watchLastCount
     this.watchNewCount = oldThreadBookmark.watchNewCount
@@ -75,9 +81,21 @@ class ThreadBookmark private constructor(
   }
 
   companion object {
+    /**
+     * A flag for bookmarks that are being watched (not paused). Default flag when bookmarking any
+     * thread.
+     * */
     const val BOOKMARK_STATE_WATCHING = 1 shl 0
-    const val BOOKMARK_STATE_ERROR = 1 shl 1
-    const val BOOKMARK_STATE_ARCHIVED = 1 shl 2
+
+    /**
+     * A flag for threads that are probably got deleted (404ed) from the server
+     * */
+    const val BOOKMARK_STATE_THREAD_DELETED = 1 shl 1
+
+    /**
+     * A flag for thread that got archived (IIRC only 4chan's archive is supported)
+     * */
+    const val BOOKMARK_STATE_THREAD_ARCHIVED = 1 shl 2
 
     fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadBookmark {
       val bookmarkInitialState = BitSet()

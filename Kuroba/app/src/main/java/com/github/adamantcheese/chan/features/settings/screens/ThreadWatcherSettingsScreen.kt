@@ -64,18 +64,26 @@ class ThreadWatcherSettingsScreen(context: Context) : BaseSettingsScreen(
           bottomDescriptionStringFunc = { itemName ->
             getString(R.string.setting_watch_background_timeout_description).toString() + "\n\n" + itemName
           },
-          items = listOf(
-            TimeUnit.MINUTES.toMillis(2).toInt(),
-            TimeUnit.MINUTES.toMillis(5).toInt(),
-            TimeUnit.MINUTES.toMillis(10).toInt(),
-            TimeUnit.MINUTES.toMillis(15).toInt(),
-            TimeUnit.MINUTES.toMillis(30).toInt(),
-            TimeUnit.MINUTES.toMillis(45).toInt(),
-            TimeUnit.HOURS.toMillis(1).toInt(),
-            TimeUnit.HOURS.toMillis(2).toInt()
-          ),
+          items = INTERVALS,
           itemNameMapper = { timeout ->
-            getString(R.string.minutes, TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt())
+            val timeoutString = getString(
+              R.string.minutes,
+              TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()
+            )
+
+            if (timeout == FIRST_TIMEOUT_OPTION) {
+              return@createBuilder getString(
+                R.string.setting_background_watcher_first_option,
+                timeoutString
+              )
+            } else if (timeout == LAST_TIMEOUT_OPTION) {
+              return@createBuilder getString(
+                R.string.setting_background_watcher_last_option,
+                timeoutString
+              )
+            }
+
+            return@createBuilder timeoutString
           },
           setting = ChanSettings.watchBackgroundInterval,
           dependsOnSetting = ChanSettings.watchBackground
@@ -149,5 +157,17 @@ class ThreadWatcherSettingsScreen(context: Context) : BaseSettingsScreen(
   companion object {
     const val NOTIFY_ALL_POSTS = "all"
     const val NOTIFY_ONLY_QUOTES = "quotes"
+
+    private val INTERVALS = listOf(
+      TimeUnit.MINUTES.toMillis(15).toInt(),
+      TimeUnit.MINUTES.toMillis(30).toInt(),
+      TimeUnit.MINUTES.toMillis(45).toInt(),
+      TimeUnit.MINUTES.toMillis(60).toInt(),
+      TimeUnit.MINUTES.toMillis(90).toInt(),
+      TimeUnit.MINUTES.toMillis(120).toInt()
+    )
+
+    private val FIRST_TIMEOUT_OPTION = INTERVALS.first()
+    private val LAST_TIMEOUT_OPTION = INTERVALS.last()
   }
 }

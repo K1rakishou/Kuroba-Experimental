@@ -142,6 +142,12 @@ public class WatchNotification extends Service {
     @SuppressLint("NewApi")
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (true) {
+            // TODO(KurobaEx): This whole class needs to be deleted once new version of bookmark
+            //  watcher is implemented
+            return START_NOT_STICKY;
+        }
+
         setupChannel();
 
         // start with a blank notification, to ensure it is made within 5 seconds

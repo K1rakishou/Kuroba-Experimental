@@ -938,6 +938,7 @@ class ThreadPresenter @Inject constructor(
             watchedPin.quoteLastCount += post.repliesFromCount
           }
         }
+
         //force reload for reply highlighting
         requestData()
       }

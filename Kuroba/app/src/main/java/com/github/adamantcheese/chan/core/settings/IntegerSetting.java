@@ -16,13 +16,21 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.processors.BehaviorProcessor;
+
 public class IntegerSetting
         extends Setting<Integer> {
+    private BehaviorProcessor<Integer> settingState = BehaviorProcessor.create();
+
     private boolean hasCached = false;
     private Integer cached;
 
     public IntegerSetting(SettingProvider settingProvider, String key, Integer def) {
         super(settingProvider, key, def);
+
+        settingState.onNext(settingProvider.getInt(key, def));
     }
 
     @Override
@@ -52,5 +60,11 @@ public class IntegerSetting
             cached = value;
             onValueChanged();
         }
+    }
+
+    public Flowable<Integer> listenForChanges() {
+        return settingState
+                .hide()
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }

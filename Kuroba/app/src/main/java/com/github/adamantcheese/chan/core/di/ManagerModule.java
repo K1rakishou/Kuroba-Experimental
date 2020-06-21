@@ -48,6 +48,7 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -350,5 +351,17 @@ public class ManagerModule {
                 applicationVisibilityManager,
                 bookmarksRepository
         );
+    }
+
+    @Provides
+    @Singleton
+    public BookmarkWatcherController provideBookmarkWatcherController(
+            Context appContext,
+            CoroutineScope appScope,
+            BookmarksManager bookmarksManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
+
+        return new BookmarkWatcherController(appContext, appScope, bookmarksManager);
     }
 }

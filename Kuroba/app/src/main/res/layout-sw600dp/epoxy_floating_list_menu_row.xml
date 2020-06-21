@@ -19,11 +19,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:singleLine="true"
+            android:maxLines="2"
             android:ellipsize="end"
             android:textColor="?setting_description_top"
             android:textSize="20sp"
-            tools:text="Test item 1 2 3 4 5 6 7 i78 4745 745 7457 457 45 6456 457 457 457 457 "/>
+            tools:text="@string/lorem_ipsum"/>
 
     </LinearLayout>
 

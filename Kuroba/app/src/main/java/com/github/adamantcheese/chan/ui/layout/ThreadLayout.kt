@@ -363,7 +363,6 @@ class ThreadLayout @JvmOverloads constructor(
     postPopupHelper.popAll()
   }
 
-
   override fun showImages(images: List<PostImage>, index: Int, loadable: Loadable, thumbnail: ThumbnailView) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
@@ -821,5 +820,4 @@ class ThreadLayout @JvmOverloads constructor(
     fun openFilterForType(type: FilterType?, filterText: String?)
     fun threadBackPressed(): Boolean
   }
-
 }

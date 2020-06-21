@@ -392,6 +392,9 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <string name="report_screen">Report %1$s</string>
 
+    <string name="bookmark_watcher_summary">Watching %1$d thread(s) (%2$d deleted, %3$d archived)</string>
+    <string name="bookmark_watcher_title">Watching thread(s)</string>
+
     <string name="image_save_notification_downloading">Downloading images…</string>
     <string name="image_save_notification_cancel">Tap to cancel</string>
     <string name="image_save_saved">Image saved</string>
@@ -434,6 +437,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_background_timeout">Background update interval</string>
     <string name="setting_watch_background_timeout_description">The interval between updates when placed in the background</string>
     <string name="setting_remove_watched">Remove watched threads from the catalog</string>
+    <string name="setting_background_watcher_first_option">%1$s (More frequent updates, worse for battery)</string>
+    <string name="setting_background_watcher_last_option">%1$s (Less frequent updates, better for battery)</string>
+
     <string name="setting_thread_page_limit_notify">Last page notifications</string>
     <string name="setting_thread_page_limit_notify_description">Notify when threads hit the last page</string>
     <string name="setting_watch_notify_mode">Notify about</string>
@@ -836,6 +842,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
     <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
+
     <string name="warning">Warning</string>
 
     <string name="drawer_controller_at_least_one_pin_has_download_flag">At least one pin has the \"Download\" flag, which makes this delete operation irreversible (because this operation will delete all of the saved thread\'s files from the disk). Do you really want to delete all pins?</string>

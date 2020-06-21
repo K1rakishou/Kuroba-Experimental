@@ -39,6 +39,7 @@ import com.github.adamantcheese.chan.core.di.RoomDatabaseModule;
 import com.github.adamantcheese.chan.core.di.SiteModule;
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
+import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
@@ -46,6 +47,7 @@ import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.net.DnsSelector;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteService;
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.service.WatchNotification;
@@ -102,6 +104,10 @@ public class Chan
     ApplicationVisibilityManager applicationVisibilityManager;
     @Inject
     HistoryNavigationManager historyNavigationManager;
+    @Inject
+    BookmarksManager bookmarksManager;
+    @Inject
+    BookmarkWatcherController bookmarkWatcherController;
 
     @NotNull
     @Override
