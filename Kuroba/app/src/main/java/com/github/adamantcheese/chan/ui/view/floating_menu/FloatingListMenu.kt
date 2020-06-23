@@ -16,6 +16,7 @@ class FloatingListMenu @JvmOverloads constructor(
   private val menuItems = mutableListOf<FloatingListMenuItem>()
 
   private var itemClickListener: ((item: FloatingListMenuItem) -> Unit)? = null
+  private var stackCallback: ((moreItems: List<FloatingListMenuItem>) -> Unit)? = null
 
   init {
     inflate(context, R.layout.floating_list_menu, this)
@@ -25,6 +26,10 @@ class FloatingListMenu @JvmOverloads constructor(
 
   fun setClickListener(listener: ((item: FloatingListMenuItem) -> Unit)?) {
     this.itemClickListener = listener
+  }
+
+  fun setStackCallback(callback: ((moreItems: List<FloatingListMenuItem>) -> Unit)?) {
+    this.stackCallback = callback
   }
 
   fun setItems(newItems: List<FloatingListMenuItem>) {
@@ -53,7 +58,7 @@ class FloatingListMenu @JvmOverloads constructor(
 
             callback {
               if (item.more.isNotEmpty()) {
-                rebuild(item.more)
+                stackCallback?.invoke(item.more)
               } else {
                 itemClickListener?.invoke(item)
               }

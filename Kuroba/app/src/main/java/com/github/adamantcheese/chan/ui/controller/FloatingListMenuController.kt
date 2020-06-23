@@ -21,12 +21,30 @@ class FloatingListMenuController @JvmOverloads constructor(
     clickableArea = view.findViewById(R.id.clickable_area)
 
     clickableArea.setOnClickListener { stopPresenting(true) }
+    floatingListMenu.setStackCallback { moreItems -> stack(moreItems) }
 
     floatingListMenu.setItems(items)
     floatingListMenu.setClickListener { clickedItem ->
-      stopPresenting(true)
+      popAll()
       itemClickListener.invoke(clickedItem)
     }
+  }
+
+  private fun popAll() {
+    stopPresenting(false)
+
+    var parent = presentedByController
+
+    while (parent is FloatingListMenuController && parent.alive) {
+      parent.stopPresenting()
+      parent = parent.presentedByController
+    }
+  }
+
+  private fun stack(moreItems: List<FloatingListMenu.FloatingListMenuItem>) {
+    presentController(
+      FloatingListMenuController(context, moreItems, itemClickListener, menuDismissListener)
+    )
   }
 
   override fun onDestroy() {
@@ -34,6 +52,7 @@ class FloatingListMenuController @JvmOverloads constructor(
 
     menuDismissListener?.invoke()
     floatingListMenu.setClickListener(null)
+    floatingListMenu.setStackCallback(null)
   }
 
   override fun onBack(): Boolean {
