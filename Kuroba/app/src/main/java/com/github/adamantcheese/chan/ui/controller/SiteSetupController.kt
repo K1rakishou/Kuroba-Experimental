@@ -20,7 +20,7 @@ import android.content.Context
 import android.view.View
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListInteractor
+import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.presenter.SiteSetupPresenter
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
@@ -49,7 +49,7 @@ class SiteSetupController(
   @Inject
   lateinit var presenter: SiteSetupPresenter
   @Inject
-  lateinit var loadArchiveInfoListInteractor: LoadArchiveInfoListInteractor
+  lateinit var loadArchiveInfoListUseCase: LoadArchiveInfoListUseCase
 
   private var boardsLink: LinkSettingView? = null
   private var loginLink: LinkSettingView? = null
@@ -165,7 +165,7 @@ class SiteSetupController(
   }
 
   override suspend fun showArchivesSettings() {
-    val archiveInfoList = loadArchiveInfoListInteractor.execute(Unit)
+    val archiveInfoList = loadArchiveInfoListUseCase.execute(Unit)
       .safeUnwrap { error ->
         Logger.e(TAG, "Error executing LoadArchiveInfoListInteractor", error)
         return

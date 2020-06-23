@@ -96,9 +96,13 @@ public class ViewThreadController
     private static final int ACTION_OPEN_BROWSER = 9005;
     private static final int ACTION_SHARE = 9006;
     private static final int ACTION_GO_TO_POST = 9007;
-    private static final int ACTION_SCROLL_TO_TOP = 9008;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 9009;
-    private static final int ACTION_FORCE_RELOAD = 9010;
+    private static final int ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS = 9008;
+    private static final int ACTION_SCROLL_TO_TOP = 9009;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 9010;
+    private static final int ACTION_FORCE_RELOAD = 9011;
+
+    private static final int ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9100;
+    private static final int ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9101;
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -253,6 +257,28 @@ public class ViewThreadController
                         getFlavorType() == AndroidUtils.FlavorType.Dev,
                         this::onGoToPostClicked
                 )
+                .withNestedOverflow(
+                        ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS,
+                        R.string.action_scrollbar_labels,
+                        true
+                )
+                .addNestedItem(
+                        ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR,
+                        R.string.action_mark_replies_to_your_posts_on_scrollbar,
+                        true,
+                        ChanSettings.markRepliesToYourPostOnScrollbar.get(),
+                        ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR,
+                        this::onScrollbarLabelingOptionClicked
+                )
+                .addNestedItem(
+                        ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR,
+                        R.string.action_mark_cross_thread_quotes_on_scrollbar,
+                        true,
+                        ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
+                        ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR,
+                        this::onScrollbarLabelingOptionClicked
+                )
+                .build()
                 .withSubItem(
                         ACTION_SCROLL_TO_TOP,
                         R.string.action_scroll_to_top,
@@ -344,6 +370,27 @@ public class ViewThreadController
                 },
                 InputType.TYPE_CLASS_NUMBER
         ).show();
+    }
+
+    private void onScrollbarLabelingOptionClicked(ToolbarMenuSubItem item) {
+        Integer clickedItemId = (Integer) item.value;
+        if (clickedItemId == null) {
+            return;
+        }
+
+        if (clickedItemId == ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR) {
+            boolean markReplies = !ChanSettings.markRepliesToYourPostOnScrollbar.get();
+            ChanSettings.markRepliesToYourPostOnScrollbar.set(markReplies);
+
+            item.isCurrentlySelected = markReplies;
+        } else if (clickedItemId == ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR) {
+            boolean markCrossThreadQuotes = !ChanSettings.markCrossThreadQuotesOnScrollbar.get();
+            ChanSettings.markCrossThreadQuotesOnScrollbar.set(markCrossThreadQuotes);
+
+            item.isCurrentlySelected = markCrossThreadQuotes;
+        }
+
+        threadLayout.presenter.requestData();
     }
 
     private void upClicked(ToolbarMenuSubItem item) {

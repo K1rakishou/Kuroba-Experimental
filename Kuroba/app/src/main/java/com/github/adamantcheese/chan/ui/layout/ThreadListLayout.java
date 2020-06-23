@@ -40,8 +40,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
+import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
@@ -73,10 +72,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -111,7 +107,7 @@ public class ThreadListLayout
     @Inject
     ReplyViewStateManager replyViewStateManager;
     @Inject
-    DatabaseManager databaseManager;
+    ExtractPostMapInfoHolderUseCase extractPostMapInfoHolderUseCase;
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -391,32 +387,6 @@ public class ThreadListLayout
                 filteredPosts,
                 refreshAfterHideOrRemovePosts
         );
-    }
-
-    private List<Integer> extractReplyPositions(List<Post> posts) {
-        DatabaseSavedReplyManager databaseSavedReplyManager =
-                databaseManager.getDatabaseSavedReplyManager();
-
-        Set<Long> savedPostNoSet = new HashSet<>(databaseSavedReplyManager.retainSavedPostNos(posts));
-        if (savedPostNoSet.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Integer> replyPositions = new ArrayList<>(savedPostNoSet.size());
-        Set<Integer> duplicateChecker = new HashSet<>(savedPostNoSet.size());
-        int index = 0;
-
-        for (Post post : posts) {
-            for (Long replyTo : post.getRepliesTo()) {
-                if (savedPostNoSet.contains(replyTo) && duplicateChecker.add(index)) {
-                    replyPositions.add(index);
-                }
-            }
-
-            ++index;
-        }
-
-        return replyPositions;
     }
 
     public boolean onBack() {
@@ -820,7 +790,7 @@ public class ThreadListLayout
             }
 
             postInfoMapItemDecoration.setItems(
-                    extractReplyPositions(getThread().getPosts()),
+                    extractPostMapInfoHolderUseCase.execute(getThread().getPosts()),
                     getThread().getPostsCount()
             );
 

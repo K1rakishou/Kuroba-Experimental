@@ -314,10 +314,10 @@ public class BrowseController
         presenter.setOrder(order);
     }
 
-    private void resetSelectedSortOrderItem(ToolbarMenuSubItem sortSubItem) {
-        sortSubItem.isCurrentlySelected = false;
+    private void resetSelectedSortOrderItem(ToolbarMenuSubItem item) {
+        item.isCurrentlySelected = false;
 
-        for (ToolbarMenuSubItem nestedItem : sortSubItem.moreItems) {
+        for (ToolbarMenuSubItem nestedItem : item.moreItems) {
             resetSelectedSortOrderItem(nestedItem);
         }
     }

@@ -1,7 +1,9 @@
 package com.github.adamantcheese.chan.core.mapper
 
+import androidx.core.text.toSpanned
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
@@ -134,6 +136,10 @@ object ChanPostMapper {
                 .fromCache(chanPost.isFromCache)
 
         postBuilder.postCommentBuilder.setComment(postComment)
+        postBuilder.linkables(
+          postComment.toSpanned().getSpans(0, postComment.length, PostLinkable::class.java).toList()
+        )
+
         postBuilder.setArchiveDescriptor(archiveDescriptor)
 
         return postBuilder.build()

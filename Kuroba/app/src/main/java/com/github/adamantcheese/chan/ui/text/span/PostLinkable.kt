@@ -35,7 +35,13 @@ class PostLinkable(
 ) : ClickableSpan() {
 
   enum class Type {
-    QUOTE, LINK, SPOILER, THREAD, BOARD, SEARCH, DEAD
+    QUOTE,
+    LINK,
+    SPOILER,
+    THREAD,
+    BOARD,
+    SEARCH,
+    DEAD
   }
 
   var isSpoilerVisible: Boolean = ChanSettings.revealTextSpoilers.get()

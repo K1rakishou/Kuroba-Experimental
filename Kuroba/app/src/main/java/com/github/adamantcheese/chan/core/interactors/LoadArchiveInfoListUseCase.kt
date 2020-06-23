@@ -11,10 +11,10 @@ import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import java.util.*
 
-class LoadArchiveInfoListInteractor(
+class LoadArchiveInfoListUseCase(
   private val appConstants: AppConstants,
   private val archivesManager: ArchivesManager
-) : SuspendIntercator<Unit, ModularResult<List<ArchiveInfo>>> {
+) : SuspendUseCase<Unit, ModularResult<List<ArchiveInfo>>> {
 
   override suspend fun execute(params: Unit): ModularResult<List<ArchiveInfo>> {
     return loadArchives()

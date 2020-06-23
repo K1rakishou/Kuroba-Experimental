@@ -17,6 +17,7 @@
 package com.github.adamantcheese.chan.core.database;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -153,6 +154,7 @@ public class DatabaseSavedReplyManager {
         }
     }
 
+    @NonNull
     public List<Long> retainSavedPostNos(List<Post> postList) {
         if (postList.isEmpty()) {
             return Collections.emptyList();

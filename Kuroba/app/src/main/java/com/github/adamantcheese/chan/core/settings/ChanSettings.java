@@ -209,6 +209,8 @@ public class ChanSettings {
     public static final BooleanSetting parseYoutubeTitlesAndDuration;
     public static final BooleanSetting showYoutubeLinkAlongWithTitleAndDuration;
     public static final BooleanSetting enableEmoji;
+    public static final BooleanSetting markRepliesToYourPostOnScrollbar;
+    public static final BooleanSetting markCrossThreadQuotesOnScrollbar;
 
     // Images
     public static final BooleanSetting hideImages;
@@ -357,6 +359,8 @@ public class ChanSettings {
             parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
             showYoutubeLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_youtube_link_along_with_title_and_duration", true);
             enableEmoji = new BooleanSetting(p, "enable_emoji", false);
+            markRepliesToYourPostOnScrollbar = new BooleanSetting(p, "mark_replies_to_your_posts_on_scrollbar", true);
+            markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);
 
             // Images
             hideImages = new BooleanSetting(p, "preference_hide_images", false);

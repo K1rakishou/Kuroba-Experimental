@@ -2,7 +2,7 @@ package com.github.adamantcheese.chan.features.archives
 
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
-import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListInteractor
+import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.features.archives.data.ArchiveInfo
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
@@ -31,7 +31,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
   lateinit var appConstants: AppConstants
 
   @Inject
-  lateinit var loadArchiveInfoListInteractor: LoadArchiveInfoListInteractor
+  lateinit var loadArchiveInfoListUseCase: LoadArchiveInfoListUseCase
 
   private val archivesSettingsStateSubject =
     BehaviorProcessor.createDefault<ArchivesSettingsState>(ArchivesSettingsState.Default)
@@ -149,7 +149,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
   fun onArchiveStatusHelpClicked(selectedArchiveInfo: ArchiveInfo) {
     scope.launch {
       withView {
-        val allArchives = loadArchiveInfoListInteractor.execute(Unit)
+        val allArchives = loadArchiveInfoListUseCase.execute(Unit)
           .safeUnwrap { error ->
             Logger.e(TAG, "Failed to load all archives", error)
 
@@ -204,7 +204,7 @@ internal class ArchivesSettingsPresenter : BasePresenter<ArchivesSettingsControl
 
   private suspend fun loadArchivesAndShow() {
     withView {
-      val archiveInfoList = loadArchiveInfoListInteractor.execute(Unit)
+      val archiveInfoList = loadArchiveInfoListUseCase.execute(Unit)
         .safeUnwrap { error ->
           Logger.e(TAG, "Failed to load all archives", error)
 
