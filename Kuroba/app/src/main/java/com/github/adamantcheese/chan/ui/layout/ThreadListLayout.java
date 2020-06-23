@@ -40,6 +40,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
@@ -62,6 +64,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.FastScroller;
 import com.github.adamantcheese.chan.ui.view.FastScrollerHelper;
+import com.github.adamantcheese.chan.ui.view.PostInfoMapItemDecoration;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -70,7 +73,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -104,12 +110,15 @@ public class ThreadListLayout
     PostFilterManager postFilterManager;
     @Inject
     ReplyViewStateManager replyViewStateManager;
+    @Inject
+    DatabaseManager databaseManager;
 
     private ReplyLayout reply;
     private TextView searchStatus;
     private RecyclerView recyclerView;
     private RecyclerView.LayoutManager layoutManager;
     private FastScroller fastScroller;
+    private PostInfoMapItemDecoration postInfoMapItemDecoration;
     private PostAdapter postAdapter;
     private ChanThread showingThread;
     private ThreadListLayoutPresenterCallback callback;
@@ -382,6 +391,32 @@ public class ThreadListLayout
                 filteredPosts,
                 refreshAfterHideOrRemovePosts
         );
+    }
+
+    private List<Integer> extractReplyPositions(List<Post> posts) {
+        DatabaseSavedReplyManager databaseSavedReplyManager =
+                databaseManager.getDatabaseSavedReplyManager();
+
+        Set<Long> savedPostNoSet = new HashSet<>(databaseSavedReplyManager.retainSavedPostNos(posts));
+        if (savedPostNoSet.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Integer> replyPositions = new ArrayList<>(savedPostNoSet.size());
+        Set<Integer> duplicateChecker = new HashSet<>(savedPostNoSet.size());
+        int index = 0;
+
+        for (Post post : posts) {
+            for (Long replyTo : post.getRepliesTo()) {
+                if (savedPostNoSet.contains(replyTo) && duplicateChecker.add(index)) {
+                    replyPositions.add(index);
+                }
+            }
+
+            ++index;
+        }
+
+        return replyPositions;
     }
 
     public boolean onBack() {
@@ -780,10 +815,24 @@ public class ThreadListLayout
                 fastScroller = null;
             }
         } else {
+            if (postInfoMapItemDecoration == null) {
+                postInfoMapItemDecoration = new PostInfoMapItemDecoration(getContext());
+            }
+
+            postInfoMapItemDecoration.setItems(
+                    extractReplyPositions(getThread().getPosts()),
+                    getThread().getPostsCount()
+            );
+
             if (fastScroller == null) {
-                fastScroller = FastScrollerHelper.create(recyclerView, themeHelper.getTheme());
+                fastScroller = FastScrollerHelper.create(
+                        recyclerView,
+                        postInfoMapItemDecoration,
+                        themeHelper.getTheme()
+                );
             }
         }
+
         recyclerView.setVerticalScrollBarEnabled(!enabled);
     }
 
@@ -796,12 +845,14 @@ public class ThreadListLayout
 
         // measurements
         if (replyOpen) {
-            reply.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+            reply.measure(
+                    MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             );
         }
         if (searchOpen) {
-            searchStatus.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+            searchStatus.measure(
+                    MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
                     MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
             );
         }
@@ -811,7 +862,8 @@ public class ThreadListLayout
             recyclerBottom += reply.getMeasuredHeight();
         }
         if (searchOpen) {
-            recyclerTop += searchStatus.getMeasuredHeight(); //search status has built-in padding for the toolbar height
+            // search status has built-in padding for the toolbar height
+            recyclerTop += searchStatus.getMeasuredHeight();
             recyclerTop -= toolbarHeight();
         }
         recyclerView.setPadding(defaultPadding, recyclerTop, defaultPadding, recyclerBottom);

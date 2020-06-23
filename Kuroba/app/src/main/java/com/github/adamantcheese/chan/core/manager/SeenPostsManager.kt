@@ -10,9 +10,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
@@ -32,6 +30,25 @@ class SeenPostsManager(
   private val actor = actor<ActorAction>(capacity = Channel.UNLIMITED) {
     consumeEach { action ->
       when (action) {
+        is ActorAction.CheckSeenPost -> {
+          val threadDescriptor = action.threadDescriptor
+          val postNo = action.postNo
+
+          val seenPost = seenPostsMap[threadDescriptor]
+            ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
+
+          var hasSeenPost = false
+
+          if (seenPost != null) {
+            // We need this time check so that we don't remove the unseen post label right after
+            // all loaders have completed loading and updated the post.
+            val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
+            hasSeenPost = deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
+          }
+
+          action.cd.complete(hasSeenPost)
+          Unit
+        }
         is ActorAction.Preload -> {
           val threadDescriptor = action.threadDescriptor
 
@@ -89,15 +106,15 @@ class SeenPostsManager(
 
     val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
     val postNo = post.no
+    val cd = CompletableDeferred<Boolean>()
 
-    val seenPost = seenPostsMap[threadDescriptor]
-      ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
-      ?: return false
+    actor.send(ActorAction.CheckSeenPost(threadDescriptor, postNo, cd))
 
-    // We need this time check so that we don't remove the unseen post label right after
-    // all loaders have completed loading and updated the post.
-    val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-    return deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
+    return try {
+      cd.await()
+    } catch (error: CancellationException) {
+      return false
+    }
   }
 
   fun preloadForThread(loadable: Loadable) {
@@ -137,6 +154,13 @@ class SeenPostsManager(
   private sealed class ActorAction {
     class Preload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : ActorAction()
     class MarkPostAsSeen(val postDescriptor: PostDescriptor) : ActorAction()
+
+    class CheckSeenPost(
+      val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      val postNo: Long,
+      val cd: CompletableDeferred<Boolean>
+    ) : ActorAction()
+
     object Clear : ActorAction()
   }
 

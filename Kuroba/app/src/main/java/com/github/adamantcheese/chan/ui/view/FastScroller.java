@@ -26,6 +26,7 @@ import android.graphics.drawable.StateListDrawable;
 import android.view.MotionEvent;
 
 import androidx.annotation.IntDef;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.view.ViewCompat;
@@ -83,12 +84,15 @@ public class FastScroller
     private static final int[] PRESSED_STATE_SET = new int[]{android.R.attr.state_pressed};
     private static final int[] EMPTY_STATE_SET = new int[]{};
 
+    @Nullable
+    private final PostInfoMapItemDecoration postInfoMapItemDecoration;
     private final int mScrollbarMinimumRange;
     private final int mMargin;
     private final int mThumbMinLength;
     private final int mTargetWidth;
 
     private final int bottomNavBarHeight;
+    private final int toolbarHeight;
 
     // Final values for the vertical scroll bar
     private final StateListDrawable mVerticalThumbDrawable;
@@ -104,6 +108,7 @@ public class FastScroller
 
     // Dynamic values for the vertical scroll bar
     int mVerticalThumbHeight;
+    int realVerticalThumbHeight;
     int mVerticalThumbCenterY;
     float mVerticalDragY;
     int mVerticalDragThumbHeight;
@@ -143,7 +148,8 @@ public class FastScroller
     private final OnScrollListener mOnScrollListener = new OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            updateScrollPosition(recyclerView.computeHorizontalScrollOffset(),
+            updateScrollPosition(
+                    recyclerView.computeHorizontalScrollOffset(),
                     recyclerView.computeVerticalScrollOffset()
             );
         }
@@ -151,6 +157,8 @@ public class FastScroller
 
     public FastScroller(
             RecyclerView recyclerView,
+            @Nullable
+            PostInfoMapItemDecoration postInfoMapItemDecoration,
             StateListDrawable verticalThumbDrawable,
             Drawable verticalTrackDrawable,
             StateListDrawable horizontalThumbDrawable,
@@ -160,7 +168,8 @@ public class FastScroller
             int margin,
             int thumbMinLength,
             int targetWidth,
-            int bottomNavBarHeight
+            int bottomNavBarHeight,
+            int toolbarHeight
     ) {
         mVerticalThumbDrawable = verticalThumbDrawable;
         mVerticalTrackDrawable = verticalTrackDrawable;
@@ -175,7 +184,10 @@ public class FastScroller
         mMargin = margin;
         mThumbMinLength = thumbMinLength;
         mTargetWidth = targetWidth;
+
+        this.postInfoMapItemDecoration = postInfoMapItemDecoration;
         this.bottomNavBarHeight = bottomNavBarHeight;
+        this.toolbarHeight = toolbarHeight;
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
         mVerticalTrackDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
@@ -261,6 +273,10 @@ public class FastScroller
         switch (mAnimationState) {
             case ANIMATION_STATE_FADING_OUT:
                 mShowHideAnimator.cancel();
+
+                if (postInfoMapItemDecoration != null) {
+                    postInfoMapItemDecoration.cancelShow();
+                }
                 // fall through
             case ANIMATION_STATE_OUT:
                 mAnimationState = ANIMATION_STATE_FADING_IN;
@@ -268,6 +284,10 @@ public class FastScroller
                 mShowHideAnimator.setDuration(SHOW_DURATION_MS);
                 mShowHideAnimator.setStartDelay(0);
                 mShowHideAnimator.start();
+
+                if (postInfoMapItemDecoration != null) {
+                    postInfoMapItemDecoration.show();
+                }
                 break;
             case ANIMATION_STATE_FADING_IN:
             case ANIMATION_STATE_IN:
@@ -284,12 +304,21 @@ public class FastScroller
         switch (mAnimationState) {
             case ANIMATION_STATE_FADING_IN:
                 mShowHideAnimator.cancel();
+
+                if (postInfoMapItemDecoration != null) {
+                    postInfoMapItemDecoration.cancelHide();
+                }
                 // fall through
             case ANIMATION_STATE_IN:
                 mAnimationState = ANIMATION_STATE_FADING_OUT;
                 mShowHideAnimator.setFloatValues((float) mShowHideAnimator.getAnimatedValue(), 0);
                 mShowHideAnimator.setDuration(duration);
                 mShowHideAnimator.start();
+
+                if (postInfoMapItemDecoration != null) {
+                    postInfoMapItemDecoration.hide(duration);
+                }
+
                 break;
             case ANIMATION_STATE_FADING_OUT:
             case ANIMATION_STATE_OUT:
@@ -307,7 +336,7 @@ public class FastScroller
     }
 
     @Override
-    public void onDrawOver(Canvas canvas, RecyclerView parent, RecyclerView.State state) {
+    public void onDrawOver(@NonNull Canvas canvas, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
         if (mRecyclerViewWidth != getRecyclerViewWidth() || mRecyclerViewHeight != getRecyclerViewHeight()) {
             mRecyclerViewWidth = getRecyclerViewWidth();
             mRecyclerViewHeight = getRecyclerViewHeight();
@@ -322,6 +351,20 @@ public class FastScroller
             // before showing it back.
             setState(STATE_HIDDEN);
             return;
+        }
+
+        if (postInfoMapItemDecoration != null) {
+            float delta = mVerticalThumbHeight / 2f;
+            float topOffset = (bottomNavBarHeight + toolbarHeight) / 2f;
+
+            // Draw under scrollbar
+            postInfoMapItemDecoration.onDrawOver(
+                    canvas,
+                    delta,
+                    topOffset,
+                    getRecyclerViewHeight(),
+                    getRecyclerViewWidth()
+            );
         }
 
         if (mAnimationState != ANIMATION_STATE_OUT) {
@@ -438,10 +481,14 @@ public class FastScroller
             float middleScreenPos = offsetY + verticalVisibleLength / 2.0f;
             mVerticalThumbCenterY =
                     mRecyclerViewTopPadding + (int) ((verticalVisibleLength * middleScreenPos) / verticalContentLength);
-            int length = Math.min(verticalVisibleLength,
+
+            int length = Math.min(
+                    verticalVisibleLength,
                     (verticalVisibleLength * verticalVisibleLength) / verticalContentLength
             );
+
             mVerticalThumbHeight = Math.max(mThumbMinLength, length);
+            realVerticalThumbHeight = length;
         }
 
         if (mNeedHorizontalScrollbar) {
@@ -460,7 +507,7 @@ public class FastScroller
     }
 
     @Override
-    public boolean onInterceptTouchEvent(RecyclerView recyclerView, MotionEvent ev) {
+    public boolean onInterceptTouchEvent(@NonNull RecyclerView recyclerView, @NonNull MotionEvent ev) {
         final boolean handled;
         if (mState == STATE_VISIBLE) {
             boolean insideVerticalThumb = isPointInsideVerticalThumb(ev.getX(), ev.getY());
@@ -488,7 +535,7 @@ public class FastScroller
     }
 
     @Override
-    public void onTouchEvent(RecyclerView recyclerView, MotionEvent me) {
+    public void onTouchEvent(@NonNull RecyclerView recyclerView, @NonNull MotionEvent me) {
         if (mState == STATE_HIDDEN) {
             return;
         }
@@ -610,26 +657,6 @@ public class FastScroller
         return (y >= mRecyclerViewTopPadding + mRecyclerViewHeight - mTargetWidth)
                 && x >= mHorizontalThumbCenterX - mHorizontalThumbWidth / 2.0f - mTargetWidth
                 && x <= mHorizontalThumbCenterX + mHorizontalThumbWidth / 2.0f + mTargetWidth;
-    }
-
-    @VisibleForTesting
-    Drawable getHorizontalTrackDrawable() {
-        return mHorizontalTrackDrawable;
-    }
-
-    @VisibleForTesting
-    Drawable getHorizontalThumbDrawable() {
-        return mHorizontalThumbDrawable;
-    }
-
-    @VisibleForTesting
-    Drawable getVerticalTrackDrawable() {
-        return mVerticalTrackDrawable;
-    }
-
-    @VisibleForTesting
-    Drawable getVerticalThumbDrawable() {
-        return mVerticalThumbDrawable;
     }
 
     /**

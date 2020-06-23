@@ -536,6 +536,11 @@ public class WatchManager
     private void updateState(boolean watchEnabled, boolean backgroundEnabled) {
         BackgroundUtils.ensureMainThread();
 
+        // TODO(KurobaEx): remove me once new bookmarks are implemented
+        if (true) {
+            return;
+        }
+
         // updateState() (which is now called updateStateInternal) was called way too often. It was
         // called once per every active pin. Because of that startService/stopService was called way
         // too often too, which also led to notification being updated too often, etc.

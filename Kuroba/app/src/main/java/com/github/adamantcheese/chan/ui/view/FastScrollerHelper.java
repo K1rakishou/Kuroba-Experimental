@@ -17,7 +17,11 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
  */
 public class FastScrollerHelper {
 
-    public static FastScroller create(RecyclerView recyclerView, Theme currentTheme) {
+    public static FastScroller create(
+            RecyclerView recyclerView,
+            PostInfoMapItemDecoration postInfoMapItemDecoration,
+            Theme currentTheme
+    ) {
         Context context = recyclerView.getContext();
         StateListDrawable thumb = getThumb(currentTheme);
         StateListDrawable track = getTrack(currentTheme);
@@ -32,6 +36,7 @@ public class FastScrollerHelper {
         //  when using it.
         return new FastScroller(
                 recyclerView,
+                postInfoMapItemDecoration,
                 thumb,
                 track,
                 thumb,
@@ -41,7 +46,8 @@ public class FastScrollerHelper {
                 margin,
                 thumbMinLength,
                 targetWidth,
-                (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height)
+                (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height),
+                (int) context.getResources().getDimension(R.dimen.toolbar_height)
         );
     }
 

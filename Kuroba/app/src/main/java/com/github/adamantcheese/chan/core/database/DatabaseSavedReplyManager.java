@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.database;
 
 import androidx.annotation.AnyThread;
 
+import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -25,6 +26,7 @@ import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -149,6 +151,37 @@ public class DatabaseSavedReplyManager {
             }
             return null;
         }
+    }
+
+    public List<Long> retainSavedPostNos(List<Post> postList) {
+        if (postList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> resultList = new ArrayList<>(16);
+
+        synchronized (savedRepliesByNo) {
+            for (Post post : postList) {
+                if (!savedRepliesByNo.containsKey(post.no)) {
+                    continue;
+                }
+
+                List<SavedReply> items = savedRepliesByNo.get(post.no);
+                if (items == null) {
+                    continue;
+                }
+
+                for (SavedReply item : items) {
+                    Board postBoard = post.board;
+
+                    if (item.board.equals(postBoard.code) && item.siteId == postBoard.siteId) {
+                        resultList.add(post.no);
+                    }
+                }
+            }
+        }
+
+        return resultList;
     }
 
     public Callable<Void> deleteSavedReplies(Site site) {
