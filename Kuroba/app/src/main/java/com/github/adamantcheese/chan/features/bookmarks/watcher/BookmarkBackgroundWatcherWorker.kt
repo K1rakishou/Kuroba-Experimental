@@ -9,14 +9,15 @@ import com.github.adamantcheese.chan.utils.Logger
 import javax.inject.Inject
 
 
-class BookmarkWatcherWorker(
+class BookmarkBackgroundWatcherWorker(
   context: Context,
   params: WorkerParameters
 ) : CoroutineWorker(context, params) {
-  private val bookmarkWatcherDelegate = BookmarkWatcherDelegate()
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
 
   init {
     Chan.inject(this)
@@ -33,7 +34,7 @@ class BookmarkWatcherWorker(
       return Result.success()
     }
 
-    return if (bookmarkWatcherDelegate.doWork()) {
+    return if (bookmarkWatcherDelegate.doWork(false)) {
       Result.success()
     } else {
       Result.failure()

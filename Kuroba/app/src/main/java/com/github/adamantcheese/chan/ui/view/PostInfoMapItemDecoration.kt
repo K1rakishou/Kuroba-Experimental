@@ -26,6 +26,7 @@ class PostInfoMapItemDecoration(
 
   private var postsTotal = 0
 
+  // TODO(KurobaEx): disable this thing in catalogs
   fun setItems(
     newPostMapInfoHolder: PostMapInfoHolder,
     newPostsTotal: Int

@@ -24,7 +24,7 @@ class BoardDescriptor(
   }
 
   override fun toString(): String {
-    return "BD{'${siteDescriptor.siteName}'/'$boardCode'}"
+    return "BD{${siteDescriptor.siteName}/$boardCode}"
   }
 
   companion object {

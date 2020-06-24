@@ -24,9 +24,21 @@ class ApplicationVisibilityManager {
     appVisibilityStateSubject.onNext(ApplicationVisibility.Background)
   }
 
+  fun getCurrentAppVisibility(): ApplicationVisibility = appVisibilityStateSubject.value
+    ?: ApplicationVisibility.Background
+
 }
 
 sealed class ApplicationVisibility {
-  object Foreground: ApplicationVisibility()
-  object Background: ApplicationVisibility()
+  object Foreground: ApplicationVisibility() {
+    override fun toString(): String {
+      return "Foreground"
+    }
+  }
+
+  object Background: ApplicationVisibility() {
+    override fun toString(): String {
+      return "Background"
+    }
+  }
 }

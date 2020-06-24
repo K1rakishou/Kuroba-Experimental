@@ -1,43 +1,48 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
-import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import javax.inject.Inject
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-class BookmarkWatcherDelegate {
-
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
-
-  init {
-    Chan.inject(this)
-  }
+class BookmarkWatcherDelegate(
+  private val bookmarksManager: BookmarksManager
+) {
 
   @OptIn(ExperimentalTime::class)
-  suspend fun doWork(): Boolean {
+  suspend fun doWork(isCalledFromForeground: Boolean): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
+
     val (result, duration) = measureTimedValue {
       Try {
-        Logger.d(TAG, "BookmarkWatcherDelegate.doWork() called")
-
+        Logger.d(TAG, "BookmarkWatcherDelegate.doWork($isCalledFromForeground) called")
         doWorkInternal()
+        Logger.d(TAG, "BookmarkWatcherDelegate.doWork($isCalledFromForeground) success")
 
-        Logger.d(TAG, "BookmarkWatcherDelegate.doWork() success")
         return@Try true
       }.mapErrorToValue { error ->
-        Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", error)
+        Logger.e(TAG, "BookmarkWatcherDelegate.doWork($isCalledFromForeground) failure", error)
         return@mapErrorToValue false
       }
     }
 
-    Logger.d(TAG, "doWork() took $duration")
+    Logger.d(TAG, "doWork($isCalledFromForeground) took $duration")
     return result
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun doWorkInternal() {
+    BackgroundUtils.ensureBackgroundThread()
+
+    if (!bookmarksManager.isReady()) {
+      Logger.d(TAG, "BookmarksManager is not ready yet, waiting...")
+      val duration = measureTime { bookmarksManager.awaitUntilInitialized() }
+      Logger.d(TAG, "BookmarksManager initialization completed, took $duration")
+    }
+
     val watchingBookmarkDescriptors = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
       if (threadBookmarkView.isActive()) {
         return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor

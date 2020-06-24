@@ -48,7 +48,9 @@ import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -355,13 +357,45 @@ public class ManagerModule {
 
     @Provides
     @Singleton
+    public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
+            BookmarksManager bookmarksManager
+    ) {
+        return new BookmarkWatcherDelegate(bookmarksManager);
+    }
+
+    @Provides
+    @Singleton
+    public BookmarkForegroundWatcher provideBookmarkForegroundWatcher(
+            CoroutineScope appScope,
+            BookmarksManager bookmarksManager,
+            BookmarkWatcherDelegate bookmarkWatcherDelegate
+    ) {
+        return new BookmarkForegroundWatcher(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                appScope,
+                bookmarksManager,
+                bookmarkWatcherDelegate
+        );
+    }
+
+    @Provides
+    @Singleton
     public BookmarkWatcherController provideBookmarkWatcherController(
             Context appContext,
             CoroutineScope appScope,
-            BookmarksManager bookmarksManager
+            BookmarksManager bookmarksManager,
+            BookmarkForegroundWatcher bookmarkForegroundWatcher,
+            ApplicationVisibilityManager applicationVisibilityManager
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
 
-        return new BookmarkWatcherController(appContext, appScope, bookmarksManager);
+        return new BookmarkWatcherController(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                appContext,
+                appScope,
+                bookmarksManager,
+                bookmarkForegroundWatcher,
+                applicationVisibilityManager
+        );
     }
 }

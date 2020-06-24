@@ -27,9 +27,9 @@ class ExtractPostMapInfoHolderUseCase(
     var prevIndex = 0
 
     for ((index, post) in posts.withIndex()) {
-      post.linkables.forEach { postLinkable ->
+      for (postLinkable in post.linkables) {
         if (postLinkable.type != PostLinkable.Type.THREAD || !duplicateChecker.add(index)) {
-          return@forEach
+          continue
         }
 
         if (prevIndex == index - 1 && crossThreadReplyRanges.size > 0) {
@@ -40,6 +40,7 @@ class ExtractPostMapInfoHolderUseCase(
         }
 
         prevIndex = index
+        break
       }
     }
 

@@ -110,6 +110,8 @@ class BookmarksManager(
     title: String? = null,
     thumbnailUrl: HttpUrl? = null
   ) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     lock.write {
       require(!bookmarks.containsKey(threadDescriptor)) {
         "Bookmark already exists ($threadDescriptor)"
@@ -133,6 +135,8 @@ class BookmarksManager(
   }
 
   fun deleteBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     lock.write {
       require(bookmarks.containsKey(threadDescriptor)) {
         "Bookmark does not exist ($threadDescriptor)"
@@ -150,6 +154,8 @@ class BookmarksManager(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     mutator: (ThreadBookmark) -> Unit
   ): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     return lock.write {
       if (!bookmarks.containsKey(threadDescriptor)) {
         ensureNotContainsOrder(threadDescriptor)
@@ -180,6 +186,8 @@ class BookmarksManager(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     viewer: (ThreadBookmarkView) -> Unit
   ) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     lock.read {
       if (!bookmarks.containsKey(threadDescriptor)) {
         ensureNotContainsOrder(threadDescriptor)
@@ -194,6 +202,8 @@ class BookmarksManager(
   }
 
   fun iterateBookmarksOrderedWhile(viewer: (ThreadBookmarkView) -> Boolean) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     lock.read {
       for (threadDescriptor in orders) {
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
@@ -208,6 +218,8 @@ class BookmarksManager(
   }
 
   fun <T> mapBookmarksOrdered(mapper: (ThreadBookmarkView) -> T): List<T> {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     return lock.read {
       return@read orders.map { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
@@ -220,6 +232,8 @@ class BookmarksManager(
   }
 
   fun <T : Any> mapNotNullBookmarksOrdered(mapper: (ThreadBookmarkView) -> T?): List<T> {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     return lock.read {
       return@read orders.mapNotNull { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
@@ -232,6 +246,8 @@ class BookmarksManager(
   }
 
   fun onBookmarkMoved(from: Int, to: Int) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     require(from >= 0) { "Bad from: $from" }
     require(to >= 0) { "Bad to: $to" }
 
@@ -244,6 +260,8 @@ class BookmarksManager(
   }
 
   fun bookmarksCount(): Int {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     return lock.read {
       if (isDevAppFlavor) {
         check(bookmarks.size == orders.size) {
@@ -255,7 +273,23 @@ class BookmarksManager(
     }
   }
 
+  fun activeBookmarksCount(): Int {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    return lock.read {
+      if (isDevAppFlavor) {
+        check(bookmarks.size == orders.size) {
+          "Inconsistency detected! bookmarks.size (${bookmarks.size}) != orders.size (${orders.size})"
+        }
+      }
+
+      return@read bookmarks.values.count { threadBookmark -> threadBookmark.isActive() }
+    }
+  }
+
   fun hasActiveBookmarks(): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     return lock.read {
       return@read bookmarks.any { (_, bookmark) ->
         return@any bookmark.isActive()
@@ -304,6 +338,10 @@ class BookmarksManager(
 
   private fun persistBookmarks(blocking: Boolean = false) {
     BackgroundUtils.ensureMainThread()
+
+    if (!isReady()) {
+      return
+    }
 
     if (!persistRunning.compareAndSet(false, true)) {
       return

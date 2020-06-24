@@ -23,7 +23,7 @@ class SiteDescriptor(
   }
 
   override fun toString(): String {
-    return "SD{'$siteName'}"
+    return "SD{$siteName}"
   }
 
 }
