@@ -322,7 +322,7 @@ class ChanThreadLoader(val loadable: Loadable) {
       retrieveDeletedPostsFromArchives
     )
 
-    val url = getChanUrl(loadable).toString()
+    val url = getChanUrl(loadable.getSite(), loadable.chanDescriptor).toString()
 
     return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
       when (chanLoaderResponseResult) {

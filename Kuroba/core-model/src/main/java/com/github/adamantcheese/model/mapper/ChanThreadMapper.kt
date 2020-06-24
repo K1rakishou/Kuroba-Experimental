@@ -55,7 +55,7 @@ object ChanThreadMapper {
       is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
         chanDescriptor.siteName(),
         chanDescriptor.boardCode(),
-        chanDescriptor.opNo,
+        chanDescriptor.threadNo,
         chanPostFull.chanPostIdEntity.postNo
       )
       is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(

@@ -59,11 +59,11 @@ class PageRequestManager(
     return if (threadDescriptor == null) {
       null
     } else {
-      if (threadDescriptor.opNo < 0) {
+      if (threadDescriptor.threadNo < 0) {
         return null
       }
       
-      findPage(threadDescriptor.boardDescriptor, threadDescriptor.opNo)
+      findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
     }
   }
 

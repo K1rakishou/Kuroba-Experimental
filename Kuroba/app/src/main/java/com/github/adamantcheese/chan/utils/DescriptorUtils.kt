@@ -33,7 +33,7 @@ object DescriptorUtils {
       is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
         descriptor.siteName(),
         descriptor.boardCode(),
-        descriptor.opNo,
+        descriptor.threadNo,
         post.no
       )
       is ChanDescriptor.CatalogDescriptor -> {

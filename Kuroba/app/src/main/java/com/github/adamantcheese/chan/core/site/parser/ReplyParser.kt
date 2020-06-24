@@ -65,9 +65,7 @@ class ReplyParser(
     val site = siteRepository.bySiteDescriptor(siteDescriptor)
       ?: return null
 
-    val commentParser = parserRepository.parsers[site.commentParserType()]
-      ?: return null
-
+    val commentParser = parserRepository.getCommentParser(site.commentParserType())
     if (commentParser !is HasQuotePatterns) {
       return null
     }

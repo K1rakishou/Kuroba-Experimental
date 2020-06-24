@@ -8,11 +8,17 @@ import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.parser.*
+import com.github.adamantcheese.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jsoup.parser.Parser
 import java.io.IOException
-import java.util.*
+import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class FutabaChanReader(
@@ -43,54 +49,16 @@ class FutabaChanReader(
 
   @Throws(Exception::class)
   override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    reader.beginObject()
-
-    // Page object
-    while (reader.hasNext()) {
-      val key = reader.nextName()
-      if (key == "posts") {
-        reader.beginArray()
-
-        // Thread array
-        while (reader.hasNext()) {
-          // Thread object
-          readPostObject(reader, chanReaderProcessor)
-        }
-
-        reader.endArray()
-      } else {
-        reader.skipValue()
-      }
+    iteratePostsInThread(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
     }
-
-    reader.endObject()
   }
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    reader.beginArray() // Array of pages
-
-    while (reader.hasNext()) {
-      reader.beginObject() // Page object
-
-      while (reader.hasNext()) {
-        if (reader.nextName() == "threads") {
-          reader.beginArray() // Threads array
-
-          while (reader.hasNext()) {
-            readPostObject(reader, chanReaderProcessor)
-          }
-
-          reader.endArray()
-        } else {
-          reader.skipValue()
-        }
-      }
-
-      reader.endObject()
+    iterateThreadsInCatalog(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
     }
-
-    reader.endArray()
   }
 
   @Throws(Exception::class)
@@ -285,4 +253,137 @@ class FutabaChanReader(
     return null
   }
 
+  override suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject> {
+    return ModularResult.Try {
+      val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
+        max(expectedCapacity, DEFAULT_POST_LIST_CAPACITY)
+      )
+
+      iteratePostsInThread(reader) { reader ->
+        val postObject = readThreadBookmarkInfoPostObject(reader)
+        if (postObject != null) {
+          postObjects += postObject
+        }
+      }
+
+      val originalPost = postObjects.firstOrNull { postObject ->
+        postObject is ThreadBookmarkInfoPostObject.OriginalPost
+      } as? ThreadBookmarkInfoPostObject.OriginalPost
+
+      if (originalPost == null) {
+        throw IllegalStateException("Thread $threadDescriptor has no OP")
+      }
+
+      check(threadDescriptor.threadNo == originalPost.postNo) {
+        "Original post has incorrect postNo, " +
+          "expected: ${threadDescriptor.threadNo}, actual: ${originalPost.postNo}"
+      }
+
+      return@Try ThreadBookmarkInfoObject(threadDescriptor, postObjects)
+    }
+  }
+
+  @Throws(Exception::class)
+  private suspend fun readThreadBookmarkInfoPostObject(reader: JsonReader): ThreadBookmarkInfoPostObject? {
+    var isOp: Boolean = false
+    var postNo: Long? = null
+    var closed: Boolean = false
+    var archived: Boolean = false
+    var comment: String = ""
+
+    reader.beginObject()
+
+    while (reader.hasNext()) {
+      when (reader.nextName()) {
+        "no" -> postNo = reader.nextInt().toLong()
+        "closed" -> closed = reader.nextInt() == 1
+        "archived" -> archived = reader.nextInt() == 1
+        "com" -> comment = reader.nextString()
+        "resto" -> {
+          val opId = reader.nextInt()
+          isOp = opId == 0
+        }
+        else -> {
+          // Unknown/ignored key
+          reader.skipValue()
+        }
+      }
+    }
+
+    reader.endObject()
+
+    if (isOp) {
+      if (postNo == null) {
+        Logger.e(TAG, "Error reading OriginalPost (postNo=$postNo, closed=$closed, archived=$archived)")
+        return null
+      }
+
+      return ThreadBookmarkInfoPostObject.OriginalPost(postNo, closed, archived, comment)
+    } else {
+      if (postNo == null) {
+        Logger.e(TAG, "Error reading RegularPost (isOp=$isOp, postNo=$postNo)")
+        return null
+      }
+
+      return ThreadBookmarkInfoPostObject.RegularPost(postNo, comment)
+    }
+  }
+
+  private suspend fun iteratePostsInThread(reader: JsonReader, iterator: suspend (JsonReader) -> Unit) {
+    reader.beginObject()
+
+    // Page object
+    while (reader.hasNext()) {
+      val key = reader.nextName()
+      if (key == "posts") {
+        reader.beginArray()
+
+        // Thread array
+        while (reader.hasNext()) {
+          // Thread object
+          iterator(reader)
+        }
+
+        reader.endArray()
+      } else {
+        reader.skipValue()
+      }
+    }
+
+    reader.endObject()
+  }
+
+  private suspend fun iterateThreadsInCatalog(reader: JsonReader, iterator: suspend (JsonReader) -> Unit) {
+    reader.beginArray() // Array of pages
+
+    while (reader.hasNext()) {
+      reader.beginObject() // Page object
+
+      while (reader.hasNext()) {
+        if (reader.nextName() == "threads") {
+          reader.beginArray() // Threads array
+
+          while (reader.hasNext()) {
+            iterator(reader)
+          }
+
+          reader.endArray()
+        } else {
+          reader.skipValue()
+        }
+      }
+
+      reader.endObject()
+    }
+
+    reader.endArray()
+  }
+
+  companion object {
+    private const val TAG = "FutabaChanReader"
+  }
 }

@@ -22,7 +22,7 @@ import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.NormalPostLoader
@@ -286,17 +286,10 @@ class ChanThreadLoaderCoordinator(
     }
 
     @JvmStatic
-    fun getChanUrl(loadable: Loadable): HttpUrl {
-      if (loadable.site == null) {
-        throw NullPointerException("Loadable.site == null")
-      }
-      if (loadable.board == null) {
-        throw NullPointerException("Loadable.board == null")
-      }
-
-      return when {
-        loadable.isThreadMode -> loadable.site.endpoints().thread(loadable.board, loadable)
-        loadable.isCatalogMode -> loadable.site.endpoints().catalog(loadable.board)
+    fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): HttpUrl {
+      return when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor -> site.endpoints().thread(chanDescriptor)
+        is ChanDescriptor.CatalogDescriptor -> site.endpoints().catalog(chanDescriptor.boardDescriptor)
         else -> throw IllegalArgumentException("Unknown mode")
       }
     }

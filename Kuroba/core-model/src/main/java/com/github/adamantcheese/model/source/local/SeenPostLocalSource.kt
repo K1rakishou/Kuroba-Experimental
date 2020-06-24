@@ -27,7 +27,7 @@ open class SeenPostLocalSource(
 
     val chanThreadEntityId = chanThreadDao.insertDefaultOrIgnore(
       chanBoardEntity.boardId,
-      seenPost.threadDescriptor.opNo
+      seenPost.threadDescriptor.threadNo
     )
 
     seenPostDao.insert(
@@ -48,7 +48,7 @@ open class SeenPostLocalSource(
 
     val chanThreadEntity = chanThreadDao.select(
       chanBoardEntity.boardId,
-      threadDescriptor.opNo
+      threadDescriptor.threadNo
     ) ?: return emptyList()
 
     return seenPostDao.selectAllByThreadId(chanThreadEntity.threadId)

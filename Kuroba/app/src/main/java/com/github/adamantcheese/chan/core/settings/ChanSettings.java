@@ -38,6 +38,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppDir;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getPreferences;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getRes;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.isConnected;
@@ -469,7 +470,12 @@ public class ChanSettings {
 
             //region DEVELOPER
             crashOnSafeThrow = new BooleanSetting(p, "crash_on_safe_throw", true);
-            verboseLogs = new BooleanSetting(p, "verbose_logs", false);
+            verboseLogs = new BooleanSetting(
+                    p,
+                    "verbose_logs",
+                    // Always true by default for dev flavor
+                    getFlavorType() == AndroidUtils.FlavorType.Dev
+            );
             //endregion
 
             //region DATA

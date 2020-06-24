@@ -17,6 +17,9 @@
 package com.github.adamantcheese.chan.core.site.parser
 
 import android.util.JsonReader
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 
 interface ChanReader {
   suspend fun getParser(): PostParser?
@@ -29,4 +32,14 @@ interface ChanReader {
 
   @Throws(Exception::class)
   suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
+
+  suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject>
+
+  companion object {
+    const val DEFAULT_POST_LIST_CAPACITY = 16
+  }
 }

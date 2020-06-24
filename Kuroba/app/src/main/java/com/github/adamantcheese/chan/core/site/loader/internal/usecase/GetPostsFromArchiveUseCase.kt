@@ -65,7 +65,7 @@ class GetPostsFromArchiveUseCase(
 
       val archiveThreadResult = thirdPartyArchiveInfoRepository.fetchThreadFromNetwork(
         threadArchiveRequestLink,
-        descriptor.opNo
+        descriptor.threadNo
       )
 
       // In case of the user opening a thread via "Open thread by it's ID" menu we need to create

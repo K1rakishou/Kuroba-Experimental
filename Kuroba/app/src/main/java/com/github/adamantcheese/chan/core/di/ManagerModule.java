@@ -47,7 +47,9 @@ import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
+import com.github.adamantcheese.chan.core.site.ParserRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
+import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
@@ -357,10 +359,39 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
-            BookmarksManager bookmarksManager
+    public ReplyParser provideReplyParser(
+            SiteRepository siteRepository,
+            ParserRepository parserRepository
     ) {
-        return new BookmarkWatcherDelegate(bookmarksManager);
+        Logger.d(AppModule.DI_TAG, "ReplyParser");
+
+        return new ReplyParser(
+                siteRepository,
+                parserRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
+            CoroutineScope appScope,
+            NetModule.ProxiedOkHttpClient okHttpClient,
+            BookmarksManager bookmarksManager,
+            SiteRepository siteRepository,
+            ReplyParser replyParser,
+            DatabaseManager databaseManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
+
+        return new BookmarkWatcherDelegate(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                appScope,
+                okHttpClient,
+                bookmarksManager,
+                siteRepository,
+                replyParser,
+                databaseManager.getDatabaseSavedReplyManager()
+        );
     }
 
     @Provides
@@ -370,6 +401,8 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             BookmarkWatcherDelegate bookmarkWatcherDelegate
     ) {
+        Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
+
         return new BookmarkForegroundWatcher(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
                 appScope,

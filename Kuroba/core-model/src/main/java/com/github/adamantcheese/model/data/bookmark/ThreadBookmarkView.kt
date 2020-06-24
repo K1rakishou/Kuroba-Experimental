@@ -3,6 +3,7 @@ package com.github.adamantcheese.model.data.bookmark
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.util.*
+import kotlin.math.max
 
 class ThreadBookmarkView private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -22,6 +23,8 @@ class ThreadBookmarkView private constructor(
   fun isWatching(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_WATCHING)
   fun isThreadDeleted(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_DELETED)
   fun isThreadArchived(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_ARCHIVED)
+
+  fun postsCount(): Int = max(watchLastCount, watchNewCount)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

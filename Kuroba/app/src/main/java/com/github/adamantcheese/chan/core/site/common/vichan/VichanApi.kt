@@ -8,6 +8,9 @@ import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
@@ -248,5 +251,14 @@ class VichanApi(commonSite: CommonSite) : CommonApi(commonSite) {
     }
 
     return null
+  }
+
+  override suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject> {
+    // TODO(KurobaEx):
+    TODO("Not yet implemented")
   }
 }

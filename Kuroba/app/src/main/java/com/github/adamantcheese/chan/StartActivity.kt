@@ -291,7 +291,11 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    historyNavigationManager.runAfterInitialized {
+    historyNavigationManager.runAfterInitialized { error ->
+      if (error != null) {
+        throw error
+      }
+
       val topNavElement = historyNavigationManager.getNavElementAtTop()
       if (topNavElement == null) {
         browseController?.loadWithDefaultBoard()

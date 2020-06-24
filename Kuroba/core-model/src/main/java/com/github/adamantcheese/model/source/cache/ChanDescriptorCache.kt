@@ -46,7 +46,7 @@ class ChanDescriptorCache(
     val boardId = getBoardIdByBoardDescriptor(threadDescriptor.boardDescriptor)
       ?: return null
 
-    val fromDatabase = chanThreadDao.selectThreadId(boardId, threadDescriptor.opNo)
+    val fromDatabase = chanThreadDao.selectThreadId(boardId, threadDescriptor.threadNo)
       ?: return null
 
     mutex.withLock { threadIdCache[threadDescriptor] = fromDatabase }
@@ -92,7 +92,7 @@ class ChanDescriptorCache(
     notCached.forEach { threadDescriptor ->
       val boardId = requireNotNull(boardIdsMap[threadDescriptor.boardDescriptor])
 
-      val threadId = chanThreadDao.selectThreadId(boardId, threadDescriptor.opNo)
+      val threadId = chanThreadDao.selectThreadId(boardId, threadDescriptor.threadNo)
         ?: return@forEach
 
       resultMap[threadDescriptor] = threadId

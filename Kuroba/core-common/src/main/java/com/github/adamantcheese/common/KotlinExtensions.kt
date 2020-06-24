@@ -15,7 +15,7 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
     val call = newCall(request)
 
     continuation.invokeOnCancellation {
-      ModularResult.Try { call.cancel() }.ignore()
+      Try { call.cancel() }.ignore()
     }
 
     call.enqueue(object : Callback {

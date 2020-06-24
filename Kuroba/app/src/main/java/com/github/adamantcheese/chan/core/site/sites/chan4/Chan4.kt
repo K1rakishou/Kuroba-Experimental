@@ -23,6 +23,8 @@ import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -68,18 +70,18 @@ class Chan4 : SiteBase() {
     private val sys = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
 
-    override fun catalog(board: Board): HttpUrl {
-      return a.newBuilder().addPathSegment(board.code).addPathSegment("catalog.json").build()
+    override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+      return a.newBuilder()
+        .addPathSegment(boardDescriptor.boardCode)
+        .addPathSegment("catalog.json")
+        .build()
     }
 
-    override fun thread(board: Board, loadable: Loadable): HttpUrl {
-      require(loadable.isThreadMode) { "Not a thread" }
-      require(loadable.no != -1) { "opId is not set" }
-
+    override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       return a.newBuilder()
-        .addPathSegment(board.code)
+        .addPathSegment(threadDescriptor.boardCode())
         .addPathSegment("thread")
-        .addPathSegment(loadable.no.toString() + ".json")
+        .addPathSegment(threadDescriptor.threadNo.toString() + ".json")
         .build()
     }
 

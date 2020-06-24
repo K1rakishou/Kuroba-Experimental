@@ -8,6 +8,9 @@ import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
@@ -194,20 +197,18 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
   private fun readComment(reader: JsonReader): String {
     var postcom = reader.nextString()
-    postcom = postcom.replace(">(.*+)".toRegex(), "<blockquote class=\"unkfunc\">&gt;$1</blockquote>")
-    postcom = postcom.replace("<blockquote class=\"unkfunc\">&gt;>(\\d+)</blockquote>".toRegex(),
-      "<a href=\"#$1\">&gt;&gt;$1</a>"
-    )
-    postcom = postcom.replace("\n".toRegex(), "<br/>")
-    postcom = postcom.replace("(?i)\\[b](.*?)\\[/b]".toRegex(), "<b>$1</b>")
-    postcom = postcom.replace("(?i)\\[\\*\\*](.*?)\\[/\\*\\*]".toRegex(), "<b>$1</b>")
-    postcom = postcom.replace("(?i)\\[i](.*?)\\[/i]".toRegex(), "<i>$1</i>")
-    postcom = postcom.replace("(?i)\\[\\*](.*?)\\[/\\*]".toRegex(), "<i>$1</i>")
-    postcom = postcom.replace("(?i)\\[spoiler](.*?)\\[/spoiler]".toRegex(), "<span class=\"spoiler\">$1</span>")
-    postcom = postcom.replace("(?i)\\[%](.*?)\\[/%]".toRegex(), "<span class=\"spoiler\">$1</span>")
-    postcom = postcom.replace("(?i)\\[s](.*?)\\[/s]".toRegex(), "<strike>$1</strike>")
-    postcom = postcom.replace("(?i)\\[pre](.*?)\\[/pre]".toRegex(), "<pre>$1</pre>")
-    postcom = postcom.replace("(?i)\\[sub](.*?)\\[/sub]".toRegex(), "<pre>$1</pre>")
+    postcom = postcom.replace(GREEN_TEXT_REPLACE_REGEX, "<blockquote class=\"unkfunc\">&gt;$1</blockquote>")
+    postcom = postcom.replace(QUOTE_REPLACE_REGEX, "<a href=\"#$1\">&gt;&gt;$1</a>")
+    postcom = postcom.replace(NEWLINE_REPLACE_REGEX, "<br/>")
+    postcom = postcom.replace(BOLD_TAG_REPLACE_REGEX1, "<b>$1</b>")
+    postcom = postcom.replace(BOLD_TAG_REPLACE_REGEX2, "<b>$1</b>")
+    postcom = postcom.replace(ITALIC_TAG_REPLACE_REGEX1, "<i>$1</i>")
+    postcom = postcom.replace(ITALIC_TAG_REPLACE_REGEX2, "<i>$1</i>")
+    postcom = postcom.replace(SPOILER_TAG_REPLACE_REGEX1, "<span class=\"spoiler\">$1</span>")
+    postcom = postcom.replace(SPOILER_TAG_REPLACE_REGEX2, "<span class=\"spoiler\">$1</span>")
+    postcom = postcom.replace(STRIKE_TROUGH_TAG_REPLACE_REGEX, "<strike>$1</strike>")
+    postcom = postcom.replace(PRE_TAG_REPLACE_REGEX1, "<pre>$1</pre>")
+    postcom = postcom.replace(PRE_TAG_REPLACE_REGEX2, "<pre>$1</pre>")
 
     return postcom
   }
@@ -254,5 +255,29 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
     }
 
     return null
+  }
+
+  override suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject> {
+    // TODO(KurobaEx):
+    TODO("Not yet implemented")
+  }
+
+  companion object {
+    private val GREEN_TEXT_REPLACE_REGEX = ">(.*+)".toRegex()
+    private val QUOTE_REPLACE_REGEX = "<blockquote class=\"unkfunc\">&gt;>(\\d+)</blockquote>".toRegex()
+    private val NEWLINE_REPLACE_REGEX = "\n".toRegex()
+    private val BOLD_TAG_REPLACE_REGEX1 = "(?i)\\[b](.*?)\\[/b]".toRegex()
+    private val BOLD_TAG_REPLACE_REGEX2 = "(?i)\\[\\*\\*](.*?)\\[/\\*\\*]".toRegex()
+    private val ITALIC_TAG_REPLACE_REGEX1 = "(?i)\\[i](.*?)\\[/i]".toRegex()
+    private val ITALIC_TAG_REPLACE_REGEX2 = "(?i)\\[\\*](.*?)\\[/\\*]".toRegex()
+    private val SPOILER_TAG_REPLACE_REGEX1 = "(?i)\\[spoiler](.*?)\\[/spoiler]".toRegex()
+    private val SPOILER_TAG_REPLACE_REGEX2 = "(?i)\\[%](.*?)\\[/%]".toRegex()
+    private val STRIKE_TROUGH_TAG_REPLACE_REGEX = "(?i)\\[s](.*?)\\[/s]".toRegex()
+    private val PRE_TAG_REPLACE_REGEX1 = "(?i)\\[pre](.*?)\\[/pre]".toRegex()
+    private val PRE_TAG_REPLACE_REGEX2 = "(?i)\\[sub](.*?)\\[/sub]".toRegex()
   }
 }

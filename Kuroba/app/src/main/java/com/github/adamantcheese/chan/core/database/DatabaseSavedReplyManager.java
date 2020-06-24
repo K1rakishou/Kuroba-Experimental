@@ -23,15 +23,21 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
 import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.common.SuspendableInitializer;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 /**
  * Saved replies are posts-password combinations used to track what posts are posted by the app,
@@ -49,12 +55,23 @@ public class DatabaseSavedReplyManager {
     // map of post number to saved replies
     private final Map<Long, List<SavedReply>> savedRepliesByNo = new HashMap<>();
 
+    private SuspendableInitializer<Unit> suspendableInitializer =
+            new SuspendableInitializer<>("DatabaseSavedReplyManager");
+
     public DatabaseSavedReplyManager(
             DatabaseHelper databaseHelper,
             DatabaseManager databaseManager
     ) {
         this.helper = databaseHelper;
         this.databaseManager = databaseManager;
+    }
+
+    public boolean isReady() {
+        return suspendableInitializer.isInitialized();
+    }
+
+    public void invokeAfterInitialized(Function1<Throwable, Unit> func) {
+        suspendableInitializer.invokeAfterInitialized(func);
     }
 
     /**
@@ -73,26 +90,33 @@ public class DatabaseSavedReplyManager {
 
     public Callable<Void> load() {
         return () -> {
-            databaseManager.trimTable(helper.getSavedDao(),
-                    "savedreply",
-                    SAVED_REPLY_TRIM_TRIGGER,
-                    SAVED_REPLY_TRIM_COUNT
-            );
+            try {
+                databaseManager.trimTable(helper.getSavedDao(),
+                        "savedreply",
+                        SAVED_REPLY_TRIM_TRIGGER,
+                        SAVED_REPLY_TRIM_COUNT
+                );
 
-            final List<SavedReply> all = helper.getSavedDao().queryForAll();
+                final List<SavedReply> all = helper.getSavedDao().queryForAll();
 
-            synchronized (savedRepliesByNo) {
-                savedRepliesByNo.clear();
-                for (SavedReply savedReply : all) {
-                    List<SavedReply> list = savedRepliesByNo.get((long) savedReply.no);
-                    if (list == null) {
-                        list = new ArrayList<>(1);
-                        savedRepliesByNo.put((long) savedReply.no, list);
+                synchronized (savedRepliesByNo) {
+                    savedRepliesByNo.clear();
+                    for (SavedReply savedReply : all) {
+                        List<SavedReply> list = savedRepliesByNo.get((long) savedReply.no);
+                        if (list == null) {
+                            list = new ArrayList<>(1);
+                            savedRepliesByNo.put((long) savedReply.no, list);
+                        }
+
+                        list.add(savedReply);
                     }
-
-                    list.add(savedReply);
                 }
+
+                suspendableInitializer.initWithValue(Unit.INSTANCE);
+            } catch (Throwable error) {
+                suspendableInitializer.initWithError(error);
             }
+
             return null;
         };
     }
@@ -152,6 +176,50 @@ public class DatabaseSavedReplyManager {
             }
             return null;
         }
+    }
+
+    @NonNull
+    public Set<Long> retainSavedPostNos(
+            Set<Long> postSet,
+            Map<Long, Set<Long>> quoteOwnerPostsMap,
+            String boardCode,
+            int siteId
+    ) {
+        if (postSet.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        Set<Long> resultSet = new HashSet<>(16);
+
+        synchronized (savedRepliesByNo) {
+            for (Long postNo : postSet) {
+                if (!savedRepliesByNo.containsKey(postNo)) {
+                    continue;
+                }
+
+                List<SavedReply> items = savedRepliesByNo.get(postNo);
+                if (items == null) {
+                    continue;
+                }
+
+                for (SavedReply item : items) {
+                    if (!item.board.equals(boardCode) || item.siteId != siteId) {
+                        continue;
+                    }
+
+                    if (!quoteOwnerPostsMap.containsKey(postNo)) {
+                        continue;
+                    }
+
+                    Set<Long> quoteOwnerPostNos = quoteOwnerPostsMap.get(postNo);
+                    if (quoteOwnerPostNos != null) {
+                        resultSet.addAll(quoteOwnerPostNos);
+                    }
+                }
+            }
+        }
+
+        return resultSet;
     }
 
     @NonNull

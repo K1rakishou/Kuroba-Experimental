@@ -19,7 +19,7 @@ sealed class ChanDescriptor {
 
   class ThreadDescriptor(
     val boardDescriptor: BoardDescriptor,
-    val opNo: Long
+    val threadNo: Long
   ) : ChanDescriptor() {
 
     override fun isThreadDescriptor(): Boolean = true
@@ -37,19 +37,19 @@ sealed class ChanDescriptor {
       if (other !is ThreadDescriptor) return false
 
       if (boardDescriptor != other.boardDescriptor) return false
-      if (opNo != other.opNo) return false
+      if (threadNo != other.threadNo) return false
 
       return true
     }
 
     override fun hashCode(): Int {
       var result = boardDescriptor.hashCode()
-      result = 31 * result + opNo.hashCode()
+      result = 31 * result + threadNo.hashCode()
       return result
     }
 
     override fun toString(): String {
-      return "TD{${boardDescriptor.siteDescriptor.siteName}/${boardDescriptor.boardCode}/$opNo}"
+      return "TD{${boardDescriptor.siteDescriptor.siteName}/${boardDescriptor.boardCode}/$threadNo}"
     }
 
     companion object {

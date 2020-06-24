@@ -24,7 +24,6 @@ import androidx.annotation.NonNull;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.k1rakishou.fsaf.FileManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
 
@@ -60,8 +59,6 @@ public class DatabaseManager {
 
     @Inject
     DatabaseHelper helper;
-    @Inject
-    FileManager fileManager;
     @Inject
     PostFilterManager postFilterManager;
 

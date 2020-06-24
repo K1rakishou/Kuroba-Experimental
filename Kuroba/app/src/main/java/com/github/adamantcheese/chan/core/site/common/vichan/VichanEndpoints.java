@@ -20,6 +20,8 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.Locale;
 import java.util.Map;
@@ -38,13 +40,19 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl catalog(Board board) {
-        return root.builder().s(board.code).s("catalog.json").url();
+    public HttpUrl catalog(BoardDescriptor boardDescriptor) {
+        return root.builder()
+                .s(boardDescriptor.getBoardCode())
+                .s("catalog.json").url();
     }
 
     @Override
-    public HttpUrl thread(Board board, Loadable loadable) {
-        return root.builder().s(board.code).s("res").s(loadable.no + ".json").url();
+    public HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        return root.builder()
+                .s(threadDescriptor.boardCode())
+                .s("res")
+                .s(threadDescriptor.getThreadNo() + ".json")
+                .url();
     }
 
     @Override

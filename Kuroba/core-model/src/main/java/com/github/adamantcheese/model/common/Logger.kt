@@ -3,6 +3,7 @@ package com.github.adamantcheese.model.common
 import android.util.Log
 
 open class Logger(private val verboseLogs: Boolean) {
+  
   internal open fun log(tag: String, message: String) {
     if (!verboseLogs) {
       return

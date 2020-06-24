@@ -258,7 +258,7 @@ class ThirdPartyArchiveInfoLocalSource(
 
     return chanThreadDao.select(
       chanBoardEntity.boardId,
-      threadDescriptor.opNo
+      threadDescriptor.threadNo
     )?.threadId
   }
 

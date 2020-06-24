@@ -8,6 +8,10 @@ interface ModularFunction<T> {
     fun invoke(param: T)
 }
 
+interface ModularFunction2<T1, T2> {
+    fun invoke(param1: T1, param2: T2)
+}
+
 interface GenericFunction<R> {
     fun invoke(): R
 }

@@ -76,7 +76,7 @@ class HistoryNavigationManager(
     }
   }
 
-  fun runAfterInitialized(func: () -> Unit) {
+  fun runAfterInitialized(func: (Throwable?) -> Unit) {
     suspendableInitializer.invokeAfterInitialized(func)
   }
 

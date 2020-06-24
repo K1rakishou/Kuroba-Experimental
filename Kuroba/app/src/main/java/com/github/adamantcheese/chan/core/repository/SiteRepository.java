@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 
@@ -31,6 +33,8 @@ public class SiteRepository {
 
     private DatabaseManager databaseManager;
     private Sites sitesObservable = new Sites();
+    private AtomicBoolean sitesInitialized = new AtomicBoolean(false);
+    private CopyOnWriteArrayList<SitesInitializationListener> listeners = new CopyOnWriteArrayList<>();
 
     public Site forId(int id) {
         return sitesObservable.forId(id);
@@ -89,38 +93,78 @@ public class SiteRepository {
         });
     }
 
+    public boolean isReady() {
+        return sitesInitialized.get();
+    }
+
+    public void runWhenSitesAreInitialized(SitesInitializationListener listener) {
+        if (sitesInitialized.get()) {
+            listener.onSitesInitialized();
+            return;
+        }
+
+        listeners.add(listener);
+    }
+
     public void initialize() {
-        List<Site> sites = new ArrayList<>();
+        Throwable exception = null;
 
-        List<SiteModel> models = databaseManager.runTask(
-                databaseManager.getDatabaseSiteManager().getAll()
-        );
+        try {
+            List<Site> sites = new ArrayList<>();
 
-        for (SiteModel siteModel : models) {
-            SiteConfigSettingsHolder holder;
-            try {
-                holder = instantiateSiteFromModel(siteModel);
-            } catch (IllegalArgumentException e) {
-                Logger.e(TAG, "instantiateSiteFromModel", e);
-                break;
+            List<SiteModel> models = databaseManager.runTask(
+                    databaseManager.getDatabaseSiteManager().getAll()
+            );
+
+            for (SiteModel siteModel : models) {
+                SiteConfigSettingsHolder holder;
+                try {
+                    holder = instantiateSiteFromModel(siteModel);
+                } catch (IllegalArgumentException e) {
+                    Logger.e(TAG, "instantiateSiteFromModel", e);
+                    break;
+                }
+
+                Site site = holder.site;
+                SiteConfig config = holder.config;
+                JsonSettings settings = holder.settings;
+                site.initialize(siteModel.id, config, settings);
+
+                sites.add(site);
             }
 
-            Site site = holder.site;
-            SiteConfig config = holder.config;
-            JsonSettings settings = holder.settings;
+            sitesObservable.addAll(sites);
 
-            site.initialize(siteModel.id, config, settings);
+            for (Site site : sites) {
+                site.postInitialize();
+            }
 
-            sites.add(site);
+            sitesObservable.notifyObservers();
+        } catch (Throwable error) {
+            exception = error;
         }
 
-        sitesObservable.addAll(sites);
+        if (sitesInitialized.compareAndSet(false, true)) {
+            fireCallbacksAndThrowExceptionIfNeeded(exception);
+        }
+    }
 
-        for (Site site : sites) {
-            site.postInitialize();
+    private void fireCallbacksAndThrowExceptionIfNeeded(Throwable exception) {
+        if (exception == null) {
+            for (SitesInitializationListener listener : listeners) {
+                listener.onSitesInitialized();
+            }
+        } else {
+            for (SitesInitializationListener listener : listeners) {
+                listener.onFailedToInitialize(exception);
+            }
         }
 
-        sitesObservable.notifyObservers();
+        listeners.clear();
+
+        if (exception != null) {
+            throw new RuntimeException(exception);
+        }
     }
 
     public Site createFromClass(Class<? extends Site> siteClass) {
@@ -284,5 +328,10 @@ public class SiteRepository {
             this.config = config;
             this.settings = settings;
         }
+    }
+
+    public interface SitesInitializationListener {
+        void onSitesInitialized();
+        void onFailedToInitialize(Throwable error);
     }
 }

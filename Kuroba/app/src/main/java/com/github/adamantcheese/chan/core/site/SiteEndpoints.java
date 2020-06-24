@@ -21,6 +21,8 @@ import androidx.collection.ArrayMap;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.Map;
 
@@ -31,9 +33,9 @@ import okhttp3.HttpUrl;
  */
 public interface SiteEndpoints {
 
-    HttpUrl catalog(Board board);
+    HttpUrl catalog(BoardDescriptor boardDescriptor);
 
-    HttpUrl thread(Board board, Loadable loadable);
+    HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
     HttpUrl imageUrl(Post.Builder post, Map<String, String> arg);
 

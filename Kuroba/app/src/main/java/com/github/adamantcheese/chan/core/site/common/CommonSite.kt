@@ -33,6 +33,8 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -296,11 +298,11 @@ abstract class CommonSite : SiteBase() {
       return SimpleHttpUrl(url)
     }
     
-    override fun catalog(board: Board): HttpUrl {
+    override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun thread(board: Board, loadableDescriptor: Loadable): HttpUrl {
+    override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     

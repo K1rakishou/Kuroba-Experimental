@@ -263,7 +263,7 @@ class ArchivesManager(
       FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
       archiveData.domain,
       threadDescriptor.boardCode(),
-      threadDescriptor.opNo
+      threadDescriptor.threadNo
     )
   }
 

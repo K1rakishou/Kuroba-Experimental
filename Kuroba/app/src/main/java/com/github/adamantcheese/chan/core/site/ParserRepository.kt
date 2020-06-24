@@ -12,8 +12,7 @@ import com.github.adamantcheese.chan.core.site.sites.dvach.DvachCommentParser
 class ParserRepository(
   private val mockReplyManager: MockReplyManager
 ) {
-  @JvmField
-  val parsers = mutableMapOf<CommentParserType, ICommentParser>()
+  private val parsers = mutableMapOf<CommentParserType, ICommentParser>()
 
   init {
     parsers[CommentParserType.Default] = CommentParser(mockReplyManager)
@@ -21,5 +20,13 @@ class ParserRepository(
     parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(mockReplyManager)
     parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(mockReplyManager)
     parsers[CommentParserType.VichanParser] = VichanCommentParser(mockReplyManager)
+  }
+
+  @Synchronized
+  fun getCommentParser(commentParserType: CommentParserType): ICommentParser {
+    return requireNotNull(parsers[commentParserType]) {
+      "No parser found for commentParserType: ${commentParserType}! " +
+        "You probably forgot to add it parsers in ParserRepository constructor"
+    }
   }
 }

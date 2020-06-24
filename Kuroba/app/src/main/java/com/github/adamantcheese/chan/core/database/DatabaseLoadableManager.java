@@ -155,7 +155,7 @@ public class DatabaseLoadableManager {
                     .and()
                     .eq("board", board.code)
                     .and()
-                    .eq("no", descriptor.getOpNo())
+                    .eq("no", descriptor.getThreadNo())
                     .query();
 
             if (results.size() > 1) {

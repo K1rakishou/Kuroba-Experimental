@@ -24,7 +24,7 @@ object NavHistoryElementMapper {
           0L,
           navHistoryElement.descriptor.siteName(),
           navHistoryElement.descriptor.boardCode(),
-          navHistoryElement.descriptor.opNo
+          navHistoryElement.descriptor.threadNo
         )
       }
     }

@@ -44,7 +44,7 @@ class ChanPostLocalSource(
 
     return chanThreadDao.insertDefaultOrIgnore(
       chanBoardEntity.boardId,
-      threadDescriptor.opNo
+      threadDescriptor.threadNo
     )
   }
 
@@ -535,7 +535,7 @@ class ChanPostLocalSource(
       return null
     }
 
-    return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.opNo)
+    return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)
   }
 
   suspend fun countTotalAmountOfPosts(): Int {
@@ -562,7 +562,7 @@ class ChanPostLocalSource(
       return
     }
 
-    chanThreadDao.deleteThread(chanBoardEntity.boardId, threadDescriptor.opNo)
+    chanThreadDao.deleteThread(chanBoardEntity.boardId, threadDescriptor.threadNo)
   }
 
   suspend fun deleteOldPosts(toDeleteCount: Int): Int {

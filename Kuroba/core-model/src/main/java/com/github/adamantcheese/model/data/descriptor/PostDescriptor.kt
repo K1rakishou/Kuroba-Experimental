@@ -19,7 +19,7 @@ open class PostDescriptor protected constructor(
 
   fun getThreadNo(): Long {
     return when (descriptor) {
-      is ChanDescriptor.ThreadDescriptor -> descriptor.opNo
+      is ChanDescriptor.ThreadDescriptor -> descriptor.threadNo
       is ChanDescriptor.CatalogDescriptor -> {
         require(postNo > 0) { "Bad postNo: $postNo" }
         postNo
@@ -46,14 +46,13 @@ open class PostDescriptor protected constructor(
   }
 
   override fun toString(): String {
-    val opNo = if (descriptor is ChanDescriptor.ThreadDescriptor) {
-      descriptor.opNo.toString()
+    val threadNo = if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      descriptor.threadNo.toString()
     } else {
       postNo.toString()
     }
 
-    return "PostDescriptor(siteName='${descriptor.siteName()}', " +
-      "boardCode='${descriptor.boardCode()}', opNo=$opNo, postNo=$postNo, postSubNo=$postSubNo)"
+    return "PD(${descriptor.siteName()}/${descriptor.boardCode()}/$threadNo/$postNo/$postSubNo)"
   }
 
   companion object {

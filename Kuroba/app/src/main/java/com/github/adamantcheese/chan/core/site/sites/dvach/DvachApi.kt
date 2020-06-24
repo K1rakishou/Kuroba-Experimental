@@ -7,6 +7,9 @@ import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
@@ -160,8 +163,10 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
       when (reader.nextName()) {
         "path" -> path = reader.nextString()
         "name" -> fileName = reader.nextString()
-        "size" ->                     //2ch is in kB
+        "size" -> {
+          // 2ch is in kB
           fileSize = reader.nextLong() * 1024
+        }
         "width" -> fileWidth = reader.nextInt()
         "height" -> fileHeight = reader.nextInt()
         "thumbnail" -> thumbnail = reader.nextString()
@@ -193,5 +198,14 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     }
 
     return null
+  }
+
+  override suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject> {
+    // TODO(KurobaEx):
+    TODO("Not yet implemented")
   }
 }
