@@ -155,7 +155,7 @@ interface Site {
   fun settings(): List<SiteSetting>
   fun endpoints(): SiteEndpoints
   fun requestModifier(): SiteRequestModifier
-  fun chanReader(): ChanReader?
+  fun chanReader(): ChanReader
   fun actions(): SiteActions
   fun commentParserType(): CommentParserType
 

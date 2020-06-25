@@ -52,10 +52,21 @@ open class PostDescriptor protected constructor(
       postNo.toString()
     }
 
-    return "PD(${descriptor.siteName()}/${descriptor.boardCode()}/$threadNo/$postNo/$postSubNo)"
+    return "PD(${descriptor.siteName()}/${descriptor.boardCode()}/$threadNo/$postNo,$postSubNo)"
   }
 
   companion object {
+
+    @JvmStatic
+    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, postNo: Long): PostDescriptor {
+      return create(
+        threadDescriptor.siteName(),
+        threadDescriptor.boardCode(),
+        threadDescriptor.threadNo,
+        postNo
+      )
+    }
+
     @JvmStatic
     fun create(siteName: String, boardCode: String, threadNo: Long): PostDescriptor {
       require(threadNo > 0) { "Bad threadNo: $threadNo" }

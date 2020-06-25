@@ -179,17 +179,17 @@ public class DatabaseSavedReplyManager {
     }
 
     @NonNull
-    public Set<Long> retainSavedPostNos(
+    public Map<Long, Set<Long>> retainSavedPostNos(
             Set<Long> postSet,
             Map<Long, Set<Long>> quoteOwnerPostsMap,
             String boardCode,
             int siteId
     ) {
         if (postSet.isEmpty()) {
-            return Collections.emptySet();
+            return Collections.emptyMap();
         }
 
-        Set<Long> resultSet = new HashSet<>(16);
+        Map<Long, Set<Long>> resultMap = new HashMap<>(16);
 
         synchronized (savedRepliesByNo) {
             for (Long postNo : postSet) {
@@ -213,13 +213,17 @@ public class DatabaseSavedReplyManager {
 
                     Set<Long> quoteOwnerPostNos = quoteOwnerPostsMap.get(postNo);
                     if (quoteOwnerPostNos != null) {
-                        resultSet.addAll(quoteOwnerPostNos);
+                        if (!resultMap.containsKey(postNo)) {
+                            resultMap.put(postNo, new HashSet<>());
+                        }
+
+                        resultMap.get(postNo).addAll(quoteOwnerPostNos);
                     }
                 }
             }
         }
 
-        return resultSet;
+        return resultMap;
     }
 
     @NonNull

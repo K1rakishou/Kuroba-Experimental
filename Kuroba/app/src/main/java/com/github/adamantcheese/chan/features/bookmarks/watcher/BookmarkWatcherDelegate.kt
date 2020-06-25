@@ -1,31 +1,21 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase
+import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase
+import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.repository.SiteRepository
-import com.github.adamantcheese.chan.core.site.parser.ChanReader
-import com.github.adamantcheese.chan.core.site.parser.ReplyParser
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
-import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.common.suspendCall
-import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.PostDescriptor
-import kotlinx.coroutines.*
-import okhttp3.HttpUrl
-import okhttp3.Request
-import java.io.IOException
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.math.max
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -33,11 +23,11 @@ import kotlin.time.measureTimedValue
 class BookmarkWatcherDelegate(
   private val isDevFlavor: Boolean,
   private val appScope: CoroutineScope,
-  private val okHttpClient: NetModule.ProxiedOkHttpClient,
   private val bookmarksManager: BookmarksManager,
   private val siteRepository: SiteRepository,
-  private val replyParser: ReplyParser,
-  private val savedReplyManager: DatabaseSavedReplyManager
+  private val savedReplyManager: DatabaseSavedReplyManager,
+  private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
+  private val parsePostRepliesUseCase: ParsePostRepliesUseCase
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -96,107 +86,41 @@ class BookmarkWatcherDelegate(
       Logger.d(TAG, "watching $bookmarkDescriptor")
     }
 
-    val fetchResults = fetchThreadBookmarkInfoBatched(watchingBookmarkDescriptors)
+    val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
     printDebugLogs(fetchResults)
 
     if (fetchResults.isEmpty()) {
       return
     }
 
-    val successFetchResults = fetchResults.filterIsInstance(FetchResult.Success::class.java)
-    if (successFetchResults.isEmpty()) {
-      return
+    val successFetchResults = fetchResults.filterIsInstance<ThreadBookmarkFetchResult.Success>()
+    val unsuccessFetchResults = fetchResults.filter { result ->
+      result !is ThreadBookmarkFetchResult.Success
     }
 
-    val postsQuotingMe = parsePostReplies(fetchResults as List<FetchResult.Success>)
+    if (successFetchResults.isNotEmpty()) {
+      val postsQuotingMe = parsePostRepliesUseCase.execute(
+        fetchResults as List<ThreadBookmarkFetchResult.Success>
+      )
 
-    postsQuotingMe.forEach { postDescriptor ->
-      println("TTTAAA postDescriptor=$postDescriptor")
-    }
-  }
-
-  private fun parsePostReplies(
-    successFetchResults: List<FetchResult.Success>
-  ): List<PostDescriptor> {
-    val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Set<Long>>()
-
-    successFetchResults.forEach { successFetchResult ->
-      val threadDescriptor = successFetchResult.threadDescriptor
-      val allQuotesInThread = hashSetOf<Long>(32)
-      val quoteOwnerPostsMap = mutableMapOf<Long, MutableSet<Long>>()
-
-      successFetchResult.threadBookmarkInfoObject.simplePostObjects.forEach { simplePostObject ->
-        val extractedQuotes = replyParser.extractCommentReplies(
-          threadDescriptor.siteDescriptor(),
-          simplePostObject.comment()
-        )
-
-        extractedQuotes.forEach { extractedQuote ->
-          when (extractedQuote) {
-            is ReplyParser.ExtractedQuote.FullQuote -> {
-              val isQuotedPostInTheSameThread = extractedQuote.boardCode == threadDescriptor.boardCode()
-                && extractedQuote.threadId == threadDescriptor.threadNo
-
-              if (isQuotedPostInTheSameThread) {
-                allQuotesInThread += extractedQuote.postId
-
-                quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetOf())
-                quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
-              }
-
-              // TODO(KurobaEx): cross-thread quotes are not supported for now
-            }
-            is ReplyParser.ExtractedQuote.Quote -> {
-              allQuotesInThread += extractedQuote.postId
-
-              quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetOf())
-              quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
-            }
+      postsQuotingMe.forEach { (threadDescriptor, quotesToMeInThreadMap) ->
+        quotesToMeInThreadMap.entries.forEach { (myPostNo, repliesToMyPost) ->
+          repliesToMyPost.sortedBy { it.postNo }.forEach { postDescriptor ->
+            println("TTTAAA threadDescriptor: $threadDescriptor, myPostNo: $myPostNo, repliyToMyPost: $postDescriptor")
           }
         }
       }
 
-      if (allQuotesInThread.isEmpty() || quoteOwnerPostsMap.isEmpty()) {
-        return@forEach
-      }
-
-      val boardDescriptor = threadDescriptor.boardDescriptor
-      val siteId = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())?.id()
-
-      checkNotNull(siteId) {
-        "Site with descriptor ${threadDescriptor.siteDescriptor()} not found in SiteRepository"
-      }
-
-      val quotesToMe = savedReplyManager.retainSavedPostNos(
-        allQuotesInThread,
-        quoteOwnerPostsMap,
-        boardDescriptor.boardCode,
-        siteId
-      )
-
-      resultMap[threadDescriptor] = quotesToMe
+      // TODO(KurobaEx): handle success fetch results
     }
 
-    if (resultMap.isEmpty()) {
-      return emptyList()
-    }
-
-    // TODO(KurobaEx): filter out posts that quote me that we have already notified the user about
-
-    return resultMap.flatMap { (threadDescriptor, postNoSetThatQuoteMe) ->
-      return@flatMap postNoSetThatQuoteMe.map { postNoQuotingMe ->
-        return@map PostDescriptor.create(
-          threadDescriptor.siteName(),
-          threadDescriptor.boardCode(),
-          threadDescriptor.threadNo,
-          postNoQuotingMe
-        )
-      }
+    if (unsuccessFetchResults.isNotEmpty()) {
+      // TODO(KurobaEx): handle unsuccess fetch results
     }
   }
 
-  private fun printDebugLogs(fetchResults: List<FetchResult>) {
-    if (fetchResults.isEmpty()) {
+  private fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {
+    if (threadBookmarkFetchResults.isEmpty()) {
       Logger.d(TAG, "printDebugLogs() no fetch results")
       return
     }
@@ -207,9 +131,9 @@ class BookmarkWatcherDelegate(
     var badStatusCount = 0
     var successCount = 0
 
-    fetchResults.forEach { fetchResult ->
+    threadBookmarkFetchResults.forEach { fetchResult ->
       when (fetchResult) {
-        is FetchResult.Error -> {
+        is ThreadBookmarkFetchResult.Error -> {
           if (isDevFlavor) {
             Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}", fetchResult.error)
           } else {
@@ -219,21 +143,21 @@ class BookmarkWatcherDelegate(
 
           ++errorsCount
         }
-        is FetchResult.AlreadyDeleted -> {
+        is ThreadBookmarkFetchResult.AlreadyDeleted -> {
           if (isDevFlavor) {
             Logger.d(TAG, "FetchResult.AlreadyDeleted: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++alreadyDeletedCount
         }
-        is FetchResult.NotFoundOnServer -> {
+        is ThreadBookmarkFetchResult.NotFoundOnServer -> {
           if (isDevFlavor) {
             Logger.d(TAG, "FetchResult.NotFoundOnServer: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++notFoundOnServerCount
         }
-        is FetchResult.BadStatusCode -> {
+        is ThreadBookmarkFetchResult.BadStatusCode -> {
           if (isDevFlavor) {
             Logger.d(TAG, "FetchResult.BadStatusCode: descriptor=${fetchResult.threadDescriptor}, " +
               "status=${fetchResult.statusCode}")
@@ -241,7 +165,7 @@ class BookmarkWatcherDelegate(
 
           ++badStatusCount
         }
-        is FetchResult.Success -> {
+        is ThreadBookmarkFetchResult.Success -> {
           if (isDevFlavor) {
             val originalPost = fetchResult.threadBookmarkInfoObject.simplePostObjects.firstOrNull { post ->
               post is ThreadBookmarkInfoPostObject.OriginalPost
@@ -250,7 +174,8 @@ class BookmarkWatcherDelegate(
             requireNotNull(originalPost) { "No OP!" }
 
             Logger.d(TAG, "FetchResult.Success: descriptor=${fetchResult.threadDescriptor}, " +
-              "threadNo = ${originalPost.postNo}, closed = ${originalPost.closed}, archive = ${originalPost.archived}")
+              "threadNo = ${originalPost.postNo}, closed = ${originalPost.closed}, " +
+              "archive = ${originalPost.archived}")
           }
 
           ++successCount
@@ -258,90 +183,10 @@ class BookmarkWatcherDelegate(
       }
     }
 
-    Logger.d(TAG, "fetchThreadBookmarkInfo stats: total results=${fetchResults.size}, " +
+    Logger.d(TAG, "fetchThreadBookmarkInfo stats: total results=${threadBookmarkFetchResults.size}, " +
       "errorsCount=$errorsCount, alreadyDeletedCount=$alreadyDeletedCount, " +
       "notFoundOnServerCount=$notFoundOnServerCount, badStatusCount=$badStatusCount, " +
       "successCount=$successCount")
-  }
-
-  private suspend fun fetchThreadBookmarkInfoBatched(
-    watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>
-  ): List<FetchResult> {
-    return watchingBookmarkDescriptors
-      .chunked(BATCH_SIZE)
-      .flatMap { chunk ->
-        return@flatMap chunk.map { threadDescriptor ->
-          return@map appScope.async(Dispatchers.IO) {
-            val site = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())
-              ?: return@async null
-
-            val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
-            val chanReader = site.chanReader()
-              ?: return@async null
-
-            return@async fetchThreadBookmarkInfo(
-              threadDescriptor,
-              threadJsonEndpoint,
-              chanReader
-            )
-          }
-        }
-          .awaitAll()
-          .filterNotNull()
-      }
-  }
-
-  private suspend fun fetchThreadBookmarkInfo(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    threadJsonEndpoint: HttpUrl,
-    chanReader: ChanReader
-  ): FetchResult {
-    if (isDevFlavor) {
-      Logger.d(TAG, "fetchThreadBookmarkInfo() threadJsonEndpoint = $threadJsonEndpoint")
-    }
-
-    val request = Request.Builder()
-      .url(threadJsonEndpoint)
-      .get()
-      .build()
-
-    val response = try {
-      okHttpClient.suspendCall(request)
-    } catch (error: IOException) {
-      return FetchResult.Error(error, threadDescriptor)
-    }
-
-    if (!response.isSuccessful) {
-      if (response.code == NOT_FOUND_STATUS) {
-        return FetchResult.NotFoundOnServer(threadDescriptor)
-      }
-
-      return FetchResult.BadStatusCode(response.code, threadDescriptor)
-    }
-
-    val body = response.body
-      ?: return FetchResult.Error(IOException("Response has no body"), threadDescriptor)
-
-    return body.byteStream().use { inputStream ->
-      return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-        .use { jsonReader ->
-          val postsCount = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-            threadBookmarkView.postsCount()
-          }
-
-          if (postsCount == null) {
-            return@use FetchResult.AlreadyDeleted(threadDescriptor)
-          }
-
-          val threadBookmarkInfoObject = chanReader.readThreadBookmarkInfoObject(
-            threadDescriptor,
-            max(postsCount, ChanReader.DEFAULT_POST_LIST_CAPACITY),
-            jsonReader
-          ).safeUnwrap { error -> return@use FetchResult.Error(error, threadDescriptor) }
-
-          return@use FetchResult.Success(threadBookmarkInfoObject, threadDescriptor)
-        }
-    }
   }
 
   private suspend fun SiteRepository.awaitUntilInitialized() {
@@ -370,35 +215,8 @@ class BookmarkWatcherDelegate(
     }
   }
 
-  sealed class FetchResult(val threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    class Error(
-      val error: Throwable,
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ) : FetchResult(threadDescriptor)
-
-    class AlreadyDeleted(
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ) : FetchResult(threadDescriptor)
-
-    class NotFoundOnServer(
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ) : FetchResult(threadDescriptor)
-
-    class BadStatusCode(
-      val statusCode: Int,
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ) : FetchResult(threadDescriptor)
-
-    class Success(
-      val threadBookmarkInfoObject: ThreadBookmarkInfoObject,
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    ) : FetchResult(threadDescriptor)
-  }
-
   companion object {
     private const val TAG = "BookmarkWatcherDelegate"
-    private const val BATCH_SIZE = 8
-    private const val NOT_FOUND_STATUS = 404
   }
 
 }

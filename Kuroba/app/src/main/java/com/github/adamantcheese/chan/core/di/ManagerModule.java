@@ -19,6 +19,8 @@ package com.github.adamantcheese.chan.core.di;
 import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase;
+import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
@@ -375,22 +377,22 @@ public class ManagerModule {
     @Singleton
     public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
             CoroutineScope appScope,
-            NetModule.ProxiedOkHttpClient okHttpClient,
             BookmarksManager bookmarksManager,
             SiteRepository siteRepository,
-            ReplyParser replyParser,
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
+            ParsePostRepliesUseCase parsePostRepliesUseCase
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
 
         return new BookmarkWatcherDelegate(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
                 appScope,
-                okHttpClient,
                 bookmarksManager,
                 siteRepository,
-                replyParser,
-                databaseManager.getDatabaseSavedReplyManager()
+                databaseManager.getDatabaseSavedReplyManager(),
+                fetchThreadBookmarkInfoUseCase,
+                parsePostRepliesUseCase
         );
     }
 

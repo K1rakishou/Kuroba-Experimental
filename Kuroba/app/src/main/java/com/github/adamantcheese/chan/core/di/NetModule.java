@@ -134,7 +134,8 @@ public class NetModule {
         public OkHttpClient getProxiedClient() {
             if (proxiedClient == null) {
                 // Proxies are usually slow, so they have increased timeouts
-                proxiedClient = newBuilder().proxy(ChanSettings.getProxy())
+                proxiedClient = newBuilder()
+                        .proxy(ChanSettings.getProxy())
                         .connectTimeout(30, SECONDS)
                         .readTimeout(30, SECONDS)
                         .writeTimeout(30, SECONDS)

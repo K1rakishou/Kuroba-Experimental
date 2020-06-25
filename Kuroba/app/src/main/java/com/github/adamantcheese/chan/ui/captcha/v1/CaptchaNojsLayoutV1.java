@@ -173,7 +173,7 @@ public class CaptchaNojsLayoutV1
                 .header("Referer", baseUrl)
                 .build();
 
-        okHttpClient.newCall(request).enqueue(new Callback() {
+        okHttpClient.getProxiedClient().newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
             }

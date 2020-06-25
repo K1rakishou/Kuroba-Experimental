@@ -158,7 +158,7 @@ class ChanThreadLoaderCoordinator(
           .build()
 
         val response = try {
-          okHttpClient.suspendCall(request)
+          okHttpClient.proxiedClient.suspendCall(request)
         } catch (error: IOException) {
           return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }

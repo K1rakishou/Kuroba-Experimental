@@ -14,9 +14,9 @@ import java.util.*
 class LoadArchiveInfoListUseCase(
   private val appConstants: AppConstants,
   private val archivesManager: ArchivesManager
-) : SuspendUseCase<Unit, ModularResult<List<ArchiveInfo>>> {
+) : ISuspendUseCase<Unit, ModularResult<List<ArchiveInfo>>> {
 
-  override suspend fun execute(params: Unit): ModularResult<List<ArchiveInfo>> {
+  override suspend fun execute(parameter: Unit): ModularResult<List<ArchiveInfo>> {
     return loadArchives()
   }
 
