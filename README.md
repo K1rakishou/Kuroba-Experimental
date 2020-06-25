@@ -39,6 +39,11 @@ etc). (This one is already implemented and tested).
 Because Github does not allow creating two separate forks of the same repo. So I decided to create a new, standalone
  repository. This, actually, has benifits, like, it's now possible to use repository search function which Github does
  not allow for forks.
+ 
+### When will it be available?
+The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
+October-November maybe even a little bit later. But there will be beta builds, before release. Expect them some time 
+in the end of the summer, maybe earlier.
 
 # 
 
