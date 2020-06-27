@@ -11,6 +11,7 @@ import com.github.adamantcheese.chan.core.site.parser.*
 import com.github.adamantcheese.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -293,7 +294,11 @@ class FutabaChanReader(
     var postNo: Long? = null
     var closed: Boolean = false
     var archived: Boolean = false
+    var bumpLimit: Boolean = false
+    var imageLimit: Boolean = false
     var comment: String = ""
+    var sticky: Boolean = false
+    var stickyCap: Int = -1
 
     reader.beginObject()
 
@@ -307,6 +312,10 @@ class FutabaChanReader(
           val opId = reader.nextInt()
           isOp = opId == 0
         }
+        "bumplimit" -> bumpLimit = reader.nextInt() == 1
+        "imagelimit" -> imageLimit = reader.nextInt() == 1
+        "sticky" -> sticky = reader.nextInt() == 1
+        "sticky_cap" -> stickyCap = reader.nextInt()
         else -> {
           // Unknown/ignored key
           reader.skipValue()
@@ -322,7 +331,17 @@ class FutabaChanReader(
         return null
       }
 
-      return ThreadBookmarkInfoPostObject.OriginalPost(postNo, closed, archived, comment)
+      val stickyPost = StickyThread.create(sticky, stickyCap)
+
+      return ThreadBookmarkInfoPostObject.OriginalPost(
+        postNo,
+        closed,
+        archived,
+        bumpLimit,
+        imageLimit,
+        stickyPost,
+        comment
+      )
     } else {
       if (postNo == null) {
         Logger.e(TAG, "Error reading RegularPost (isOp=$isOp, postNo=$postNo)")

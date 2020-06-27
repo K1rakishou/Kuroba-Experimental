@@ -524,6 +524,7 @@ public class AndroidUtils {
     public static void fixSnackbarText(Context context, Snackbar snackbar) {
         ((TextView) snackbar.getView().findViewById(R.id.snackbar_text)).setTextColor(Color.WHITE);
         snackbar.setActionTextColor(getAttrColor(context, R.attr.colorAccent));
+        snackbar.getView().setBackgroundColor(getAttrColor(context, R.attr.backcolor_secondary));
     }
 
     /**

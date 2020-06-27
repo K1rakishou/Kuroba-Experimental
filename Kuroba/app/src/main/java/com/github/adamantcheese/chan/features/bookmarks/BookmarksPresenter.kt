@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.features.bookmarks
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.adamantcheese.chan.features.bookmarks.data.ThreadBookmarkItemView
 import com.github.adamantcheese.chan.features.bookmarks.data.ThreadBookmarkStats
@@ -138,9 +139,11 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     reloadBookmarks()
   }
 
-  private suspend fun showBookmarks(searchQuery: String?) {
+  suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
+
+    val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
     val bookmarks = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
       val title = threadBookmarkView.title
@@ -152,14 +155,14 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
           title = title,
           thumbnailUrl = threadBookmarkView.thumbnailUrl,
           threadBookmarkStats = ThreadBookmarkStats(
-            showBookmarkStats = true,
-            watching = true,
-            newPosts = max(0, threadBookmarkView.watchNewCount - threadBookmarkView.watchLastCount),
-            newQuotes = max(0, threadBookmarkView.quoteNewCount - threadBookmarkView.quoteLastCount),
-            totalPosts = threadBookmarkView.watchNewCount,
-            isBumpLimit = false,
-            isImageLimit = false,
-            isLastPage = false
+            showBookmarkStats = isWatcherEnabled,
+            watching = threadBookmarkView.isWatching(),
+            newPosts = max(0, threadBookmarkView.totalPostsCount - threadBookmarkView.seenPostsCount),
+            newQuotes = threadBookmarkView.threadBookmarkReplyViews.values.count { reply -> !reply.seen },
+            totalPosts = threadBookmarkView.totalPostsCount,
+            isBumpLimit = threadBookmarkView.isBumpLimit(),
+            isImageLimit = threadBookmarkView.isImageLimit(),
+            isOnLastPage = false
           )
         )
       }

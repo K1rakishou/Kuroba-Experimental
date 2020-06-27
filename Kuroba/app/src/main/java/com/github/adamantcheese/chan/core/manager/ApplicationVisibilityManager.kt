@@ -12,7 +12,7 @@ class ApplicationVisibilityManager {
     return appVisibilityStateSubject
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
-      .onBackpressureDrop()
+      .onBackpressureLatest()
       .hide()
   }
 

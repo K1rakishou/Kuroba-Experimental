@@ -59,6 +59,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -89,7 +90,7 @@ class DrawerController(
   private lateinit var drawerAdapter: DrawerAdapter
   private lateinit var bottomNavView: HidingBottomNavigationView
 
-  private val drawerPresenter = DrawerPresenter()
+  private val drawerPresenter = DrawerPresenter(getFlavorType() == AndroidUtils.FlavorType.Dev)
 
   private val topThreadController: ThreadController?
     get() {
@@ -158,6 +159,7 @@ class DrawerController(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
       intArrayOf(themeHelper.theme.textPrimary, themeHelper.theme.textSecondary)
     )
+    bottomNavView.setBackgroundColor(themeHelper.theme.backColorSecondary)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       onNavigationItemSelectedListener(menuItem)
@@ -217,6 +219,14 @@ class DrawerController(
         { state -> onDrawerStateChanged(state) },
         { error ->
           Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForStateChanges()", error)
+        }
+      )
+
+    compositeDisposable += drawerPresenter.listenForBookmarksBadgeStateChanges()
+      .subscribe(
+        { state -> onBookmarksBadgeStateChanged(state) },
+        { error ->
+          Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForBookmarksBadgeStateChanges()", error)
         }
       )
 
@@ -367,6 +377,27 @@ class DrawerController(
     bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
   }
 
+  private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
+    if (state.totalUnseenPostsCount > 0) {
+      val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
+
+      badgeDrawable.number = state.totalUnseenPostsCount
+
+      if (state.hasUnseenReplies) {
+        badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
+      } else {
+        badgeDrawable.backgroundColor = themeHelper.theme.backColor
+      }
+
+      badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+      return
+    }
+
+    if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
+      bottomNavView.removeBadge(R.id.action_bookmarks)
+    }
+  }
+
   private fun onDrawerStateChanged(state: HistoryControllerState) {
     epoxyRecyclerView.withModels {
       addOneshotModelBuildListener {
@@ -513,36 +544,36 @@ class DrawerController(
 
   // TODO(KurobaEx): pins, move to some other place
   private fun onHeaderClickedInternal(all: Boolean, hasDownloadFlag: Boolean) {
-  //        final List<Pin> pins = watchManager.clearPins(all);
-  //        if (!pins.isEmpty()) {
-  //            if (!hasDownloadFlag) {
-  //                // We can't undo this operation when there is at least one pin that downloads a thread
-  //                // because we will be deleting files from the disk. We don't want to warn the user
-  //                // every time he deletes one pin.
-  //                String text = getQuantityString(R.plurals.bookmark, pins.size(), pins.size());
-  //                Snackbar snackbar = Snackbar.make(
-  //                        drawerLayout,
-  //                        getString(R.string.drawer_pins_cleared, text),
-  //                        4000
-  //                );
-  //
-  //                snackbar.setGestureInsetBottomIgnored(true);
-  //                fixSnackbarText(context, snackbar);
-  //                fixSnackbarInsets(snackbar, globalWindowInsetsManager);
-  //                snackbar.setAction(R.string.undo, v -> watchManager.addAll(pins));
-  //                snackbar.show();
-  //            }
-  //        } else {
-  //            int text = watchManager.getAllPins().isEmpty()
-  //                    ? R.string.drawer_pins_non_cleared
-  //                    : R.string.drawer_pins_non_cleared_try_all;
-  //            Snackbar snackbar = Snackbar.make(drawerLayout, text, Snackbar.LENGTH_LONG);
-  //            snackbar.setGestureInsetBottomIgnored(true);
-  //            fixSnackbarText(context, snackbar);
-  //            fixSnackbarInsets(snackbar, globalWindowInsetsManager);
-  //            snackbar.show();
-  //        }
-      }
+    //        final List<Pin> pins = watchManager.clearPins(all);
+    //        if (!pins.isEmpty()) {
+    //            if (!hasDownloadFlag) {
+    //                // We can't undo this operation when there is at least one pin that downloads a thread
+    //                // because we will be deleting files from the disk. We don't want to warn the user
+    //                // every time he deletes one pin.
+    //                String text = getQuantityString(R.plurals.bookmark, pins.size(), pins.size());
+    //                Snackbar snackbar = Snackbar.make(
+    //                        drawerLayout,
+    //                        getString(R.string.drawer_pins_cleared, text),
+    //                        4000
+    //                );
+    //
+    //                snackbar.setGestureInsetBottomIgnored(true);
+    //                fixSnackbarText(context, snackbar);
+    //                fixSnackbarInsets(snackbar, globalWindowInsetsManager);
+    //                snackbar.setAction(R.string.undo, v -> watchManager.addAll(pins));
+    //                snackbar.show();
+    //            }
+    //        } else {
+    //            int text = watchManager.getAllPins().isEmpty()
+    //                    ? R.string.drawer_pins_non_cleared
+    //                    : R.string.drawer_pins_non_cleared_try_all;
+    //            Snackbar snackbar = Snackbar.make(drawerLayout, text, Snackbar.LENGTH_LONG);
+    //            snackbar.setGestureInsetBottomIgnored(true);
+    //            fixSnackbarText(context, snackbar);
+    //            fixSnackbarInsets(snackbar, globalWindowInsetsManager);
+    //            snackbar.show();
+    //        }
+  }
 
   override fun onPinRemoved(pin: Pin) {
     // TODO(KurobaEx): pins, move to some other place

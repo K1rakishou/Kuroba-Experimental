@@ -3,9 +3,12 @@ package com.github.adamantcheese.chan.features.bookmarks.watcher
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -30,7 +33,7 @@ class BookmarkForegroundWatcher(
 
           workJob = appScope.launch(Dispatchers.Default) {
             try {
-              doWorkAndWaitUntilNext()
+              updateBookmarks()
             } catch (error: Throwable) {
               logErrorIfNeeded(error)
             } finally {
@@ -39,6 +42,16 @@ class BookmarkForegroundWatcher(
           }
         }
       }
+    }
+
+    appScope.launch {
+      bookmarksManager.listenForFetchEventsFromActiveThreads()
+        .asFlow()
+        .collect { threadDescriptor ->
+          withContext(Dispatchers.Default) {
+            updateBookmarkForOpenedThread(threadDescriptor)
+          }
+        }
     }
   }
 
@@ -51,12 +64,50 @@ class BookmarkForegroundWatcher(
     workJob = null
   }
 
-  private suspend fun CoroutineScope.doWorkAndWaitUntilNext() {
+  private suspend fun updateBookmarkForOpenedThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) {
+    if (bookmarksManager.currentOpenedThread() != threadDescriptor) {
+      return
+    }
+
+    if (!bookmarksManager.exists(threadDescriptor)) {
+      return
+    }
+
+    val isBookmarkActive = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
+      threadBookmarkView.isActive()
+    } ?: false
+
+    if (!isBookmarkActive) {
+      return
+    }
+
+    try {
+      bookmarkWatcherDelegate.doWork(
+        isCalledFromForeground = true,
+        isUpdatingCurrentlyOpenedThread = true
+      )
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Unhandled exception in " +
+        "bookmarkWatcherDelegate.doWork(isUpdatingCurrentlyOpenedThread=true)", error)
+    }
+  }
+
+  private suspend fun CoroutineScope.updateBookmarks() {
     while (true) {
+      if (!bookmarksManager.hasActiveBookmarks()) {
+        return
+      }
+
       try {
-        bookmarkWatcherDelegate.doWork(true)
+        bookmarkWatcherDelegate.doWork(
+          isCalledFromForeground = true,
+          isUpdatingCurrentlyOpenedThread = false
+        )
       } catch (error: Throwable) {
-        Logger.e(TAG, "Unhandled exception in bookmarkWatcherDelegate.doWork()")
+        Logger.e(TAG, "Unhandled exception in " +
+          "bookmarkWatcherDelegate.doWork(isUpdatingCurrentlyOpenedThread=false)", error)
       }
 
       if (!isActive) {

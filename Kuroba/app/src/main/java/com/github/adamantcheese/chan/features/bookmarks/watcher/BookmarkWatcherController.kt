@@ -10,6 +10,7 @@ import com.github.adamantcheese.chan.utils.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
@@ -26,7 +27,9 @@ class BookmarkWatcherController(
   init {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
+        .debounce(1, TimeUnit.SECONDS)
         .asFlow()
+        .filter { bookmarkChange -> isDesiredBookmarkChange(bookmarkChange) }
         .catch { error -> Logger.e(TAG, "Error while listenForBookmarksChanges()", error) }
         .collect {
           if (isDevFlavor) {
@@ -174,6 +177,15 @@ class BookmarkWatcherController(
     WorkManager
       .getInstance(appContext)
       .cancelUniqueWork(TAG)
+  }
+
+  private fun isDesiredBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
+    return when (bookmarkChange) {
+      BookmarksManager.BookmarkChange.BookmarksInitialized,
+      BookmarksManager.BookmarkChange.BookmarkCreated,
+      BookmarksManager.BookmarkChange.BookmarkDeleted -> true
+      BookmarksManager.BookmarkChange.BookmarkUpdated -> false
+    }
   }
 
   companion object {

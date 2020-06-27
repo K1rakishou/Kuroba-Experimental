@@ -5,7 +5,16 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 class ThreadBookmarkInfoObject(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
   val simplePostObjects: List<ThreadBookmarkInfoPostObject>
-)
+) {
+
+  fun getPostsCountWithoutOP(): Int {
+    check(simplePostObjects.first() is ThreadBookmarkInfoPostObject.OriginalPost) {
+      "First post of ThreadBookmarkInfoObject is not OP"
+    }
+
+    return simplePostObjects.size - 1
+  }
+}
 
 sealed class ThreadBookmarkInfoPostObject {
 
@@ -23,15 +32,53 @@ sealed class ThreadBookmarkInfoPostObject {
     }
   }
 
-  class OriginalPost(
+  data class OriginalPost(
     val postNo: Long,
     val closed: Boolean,
     val archived: Boolean,
+    val isBumpLimit: Boolean,
+    val isImageLimit: Boolean,
+    val stickyThread: StickyThread,
     val comment: String
-  ) : ThreadBookmarkInfoPostObject()
+  ) : ThreadBookmarkInfoPostObject() {
 
-  class RegularPost(
+    override fun toString(): String {
+      return "OriginalPost(postNo=$postNo, closed=$closed, archived=$archived, " +
+        "isBumpLimit=$isBumpLimit, isImageLimit=$isImageLimit, stickyThread=$stickyThread)"
+    }
+  }
+
+  data class RegularPost(
     val postNo: Long,
     val comment: String
-  ) : ThreadBookmarkInfoPostObject()
+  ) : ThreadBookmarkInfoPostObject() {
+
+    override fun toString(): String {
+      return "RegularPost(postNo=$postNo)"
+    }
+  }
+}
+
+sealed class StickyThread {
+  object NotSticky : StickyThread()
+  object StickyUnlimited : StickyThread()
+  data class StickyWithCap(val cap: Int) : StickyThread()
+
+  companion object {
+    fun create(isSticky: Boolean, stickyCap: Int): StickyThread {
+      if (!isSticky) {
+        return NotSticky
+      }
+
+      if (isSticky && stickyCap <= 0) {
+        return StickyUnlimited
+      }
+
+      if (isSticky && stickyCap > 0) {
+        return StickyWithCap(stickyCap)
+      }
+
+      throw IllegalStateException("Bad StickyThread, isSticky: $isSticky, stickyCap: $stickyCap")
+    }
+  }
 }

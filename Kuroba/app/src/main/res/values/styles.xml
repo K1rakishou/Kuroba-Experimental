@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="new_apk_update_icon_color">#009000</color>
     <color name="new_crash_log_icon_color">#E54545</color>
 
-    <style name="Chan.Theme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Chan.Theme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorAccent">#009688</item>
 
         <item name="android:windowBackground">#1d1f21</item>
@@ -81,7 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="pin_posts_normal_color">#33B5E5</item>
     </style>
 
-    <style name="Chan.Theme.Dark" parent="Theme.AppCompat.NoActionBar">
+    <style name="Chan.Theme.Dark" parent="Theme.MaterialComponents.NoActionBar">
         <item name="dropdown_dark_color">#ffffff</item>
         <item name="dropdown_dark_pressed_color">#88ffffff</item>
 

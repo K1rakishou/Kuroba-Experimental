@@ -68,7 +68,7 @@ public class CardPostCell
     private Post post;
     private Loadable loadable;
     private PostCellInterface.PostCellCallback callback;
-    PostPreloadedInfoHolder postPreloadedInfoHolder;
+    private PostPreloadedInfoHolder postPreloadedInfoHolder;
     private boolean compact = false;
     private boolean inPopup = false;
 
@@ -163,7 +163,8 @@ public class CardPostCell
     public void setPost(
             Loadable loadable,
             final Post post,
-            final int postIndex,
+            final int currentPostIndex,
+            final int realPostIndex,
             PostCellInterface.PostCellCallback callback,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,

@@ -9,6 +9,7 @@ import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 
@@ -37,7 +38,7 @@ class ParsePostRepliesUseCase(
       .chunked(BATCH_SIZE)
       .forEach { chunk ->
         chunk.map { successFetchResult ->
-          appScope.async {
+          appScope.async(Dispatchers.IO) {
             return@async ModularResult.Try {
               val threadDescriptor = successFetchResult.threadDescriptor
               val quotesToMeInThreadMap = parsePostRepliesWorker(successFetchResult)

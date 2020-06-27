@@ -32,7 +32,8 @@ interface PostCellInterface {
   fun setPost(
     loadable: Loadable,
     post: Post,
-    postIndex: Int,
+    currentPostIndex: Int,
+    realPostIndex: Int,
     callback: PostCellCallback,
     postPreloadedInfoHolder: PostPreloadedInfoHolder,
     inPopup: Boolean,

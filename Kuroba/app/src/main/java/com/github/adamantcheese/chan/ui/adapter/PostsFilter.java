@@ -19,15 +19,23 @@ package com.github.adamantcheese.chan.ui.adapter;
 import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
+import com.github.adamantcheese.chan.core.model.PostIndexed;
+import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.model.orm.Pin;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.inject.Inject;
 
@@ -58,6 +66,8 @@ public class PostsFilter {
 
     @Inject
     DatabaseManager databaseManager;
+    @Inject
+    WatchManager watchManager;
 
     private Order order;
     private String query;
@@ -68,16 +78,12 @@ public class PostsFilter {
         inject(this);
     }
 
-    /**
-     * Creates a copy of {@code original} and applies any sorting or filtering to it.
-     *
-     * @param original List of {@link Post}s to filter.
-     * @param siteId   to get rid of collisions when figuring out if a post is hidden.
-     * @param board    to get rid of collisions when figuring out if a post is hidden.
-     * @return a new filtered List
-     */
-    public List<Post> apply(List<Post> original, int siteId, String board) {
+    public List<PostIndexed> apply(List<Post> original, Loadable loadable) {
+        int siteId = loadable.siteId;
+        String board = loadable.boardCode;
+
         List<Post> posts = new ArrayList<>(original);
+        Map<Long, Integer> originalPostIndexes = calculateOriginalPostIndexes(original);
 
         if (order != PostsFilter.Order.BUMP) {
             processOrder(posts);
@@ -88,7 +94,63 @@ public class PostsFilter {
         }
 
         // Process hidden by filter and post/thread hiding
-        return databaseManager.getDatabaseHideManager().filterHiddenPosts(posts, siteId, board);
+        List<Post> retainedPosts = databaseManager.getDatabaseHideManager().filterHiddenPosts(
+                posts,
+                siteId,
+                board
+        );
+
+        // Filter out any bookmarked threads from the catalog
+        if (ChanSettings.removeWatchedFromCatalog.get() && loadable.isCatalogMode()) {
+            filterOutBookmarkedPosts(loadable, retainedPosts);
+        }
+
+        List<PostIndexed> indexedPosts = new ArrayList<>(retainedPosts.size());
+
+        for (int currentPostIndex = 0; currentPostIndex < retainedPosts.size(); currentPostIndex++) {
+            Post retainedPost = retainedPosts.get(currentPostIndex);
+            int realIndex = Objects.requireNonNull(originalPostIndexes.get(retainedPost.no));
+            indexedPosts.add(new PostIndexed(retainedPost, currentPostIndex, realIndex));
+        }
+
+        return indexedPosts;
+    }
+
+    private Map<Long, Integer> calculateOriginalPostIndexes(List<Post> original) {
+        if (original.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<Long, Integer> originalPostIndexes = new HashMap<>(original.size());
+
+        for (int postIndex = 0; postIndex < original.size(); postIndex++) {
+            Post post = original.get(postIndex);
+
+            originalPostIndexes.put(post.no, postIndex);
+        }
+
+        return originalPostIndexes;
+    }
+
+    private void filterOutBookmarkedPosts(Loadable loadable, List<Post> retainedPosts) {
+        List<Post> toRemove = new ArrayList<>();
+
+        for (Pin pin : watchManager.getAllPins()) {
+            for (Post post : retainedPosts) {
+                Loadable pinLoadable = Loadable.forThread(
+                        loadable.site,
+                        loadable.board,
+                        post.no,
+                        ""
+                );
+
+                if (pin.loadable.equals(pinLoadable)) {
+                    toRemove.add(post);
+                }
+            }
+        }
+
+        retainedPosts.removeAll(toRemove);
     }
 
     private void processOrder(List<Post> posts) {

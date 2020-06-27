@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder
 import com.github.adamantcheese.chan.core.model.Post
@@ -87,6 +88,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
 
   private lateinit var relativeLayoutContainer: RelativeLayout
   private lateinit var title: FastTextView
@@ -107,7 +110,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private var detailsSizePx = 0
   private var iconSizePx = 0
   private var paddingPx = 0
-  private var postIndex = 0
+  private var currentPostIndex = 0
+  private var realPostIndex = 0
   private var markedNo: Long = 0
 
   private var threadMode = false
@@ -235,7 +239,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   override fun setPost(
     loadable: Loadable,
     post: Post,
-    postIndex: Int,
+    currentPostIndex: Int,
+    realPostIndex: Int,
     callback: PostCellCallback,
     postPreloadedInfoHolder: PostPreloadedInfoHolder,
     inPopup: Boolean,
@@ -261,7 +266,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
     this.loadable = loadable
     this.post = post
-    this.postIndex = postIndex
+    this.currentPostIndex = currentPostIndex
+    this.realPostIndex = realPostIndex
     this.callback = callback
     this.postPreloadedInfoHolder = postPreloadedInfoHolder
     this.inPopup = inPopup
@@ -323,6 +329,10 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       callback?.onPostUnbind(post, isActuallyRecycling)
     }
 
+    if (loadable.isThreadMode && post != null) {
+      threadBookmarkViewPost(post)
+    }
+
     job.cancelChildren()
     callback = null
   }
@@ -382,7 +392,18 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     startAttentionLabelFadeOutAnimation()
 
     if (callback != null) {
-      callback!!.onPostBind(post)
+      callback?.onPostBind(post)
+    }
+
+    if (loadable.isThreadMode) {
+      threadBookmarkViewPost(post)
+    }
+  }
+
+  private fun threadBookmarkViewPost(post: Post) {
+    val threadDescriptor = loadable.threadDescriptorOrNull
+    if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
+      bookmarksManager.onPostViewed(threadDescriptor, post.no, currentPostIndex, realPostIndex)
     }
   }
 
@@ -453,8 +474,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
     var postIndexText = ""
 
-    if (loadable.isThreadMode && postIndex >= 0) {
-      postIndexText = String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
+    if (loadable.isThreadMode && currentPostIndex >= 0) {
+      postIndexText = String.format(Locale.ENGLISH, "#%d, ", currentPostIndex + 1)
     }
 
     if (post.subject != null && post.subject.isNotEmpty()) {
@@ -620,13 +641,14 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     }
   }
 
+  @Suppress("ReplaceGetOrSet")
   private fun bindIcons(theme: Theme, post: Post) {
     icons.edit()
-    icons[PostIcons.STICKY] = post.isSticky
-    icons[PostIcons.CLOSED] = post.isClosed
-    icons[PostIcons.DELETED] = post.deleted.get()
-    icons[PostIcons.ARCHIVED] = post.isArchived
-    icons[PostIcons.HTTP_ICONS] = post.httpIcons != null && post.httpIcons.size > 0
+    icons.set(PostIcons.STICKY, post.isSticky)
+    icons.set(PostIcons.CLOSED, post.isClosed)
+    icons.set(PostIcons.DELETED, post.deleted.get())
+    icons.set(PostIcons.ARCHIVED, post.isArchived)
+    icons.set(PostIcons.HTTP_ICONS, post.httpIcons != null && post.httpIcons.size > 0)
 
     if (post.httpIcons != null && post.httpIcons.size > 0) {
       icons.setHttpIcons(imageLoaderV2, post.httpIcons, theme, iconSizePx)

@@ -20,10 +20,7 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.ChanLoaderManager
-import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
@@ -89,6 +86,8 @@ class ChanThreadLoader(val loadable: Loadable) {
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
 
   @Volatile
   var thread: ChanThread? = null
@@ -170,18 +169,10 @@ class ChanThreadLoader(val loadable: Loadable) {
 
       requestJob?.cancel()
       requestJob = null
-
-      // Since chan thread loaders are cached in ChanThreadLoaderManager, instead of being
-      // destroyed, and thus can be reused, we need to reset them before they are put into
-      // cache.
-      resetLoader()
       true
     } else {
       false
     }
-  }
-
-  private fun resetLoader() {
   }
 
   fun requestDataWithDeletedPosts() {
@@ -328,7 +319,14 @@ class ChanThreadLoader(val loadable: Loadable) {
       when (chanLoaderResponseResult) {
         is ModularResult.Value -> {
           val chanLoaderResponse = when (val threadLoadResult = chanLoaderResponseResult.value) {
-            is ThreadLoadResult.LoadedNormally -> threadLoadResult.chanLoaderResponse
+            is ThreadLoadResult.LoadedNormally -> {
+              // Notify the listeners that loader is starting fetching data from the server
+              loadable.threadDescriptorOrNull?.let { threadDescriptor ->
+                bookmarksManager.onThreadIsFetchingData(threadDescriptor)
+              }
+
+              threadLoadResult.chanLoaderResponse
+            }
             is ThreadLoadResult.LoadedFromDatabaseCopy -> threadLoadResult.chanLoaderResponse
             is ThreadLoadResult.LoadedFromArchive -> {
                 threadLoadResult.chanLoaderResponse.op.archived = true

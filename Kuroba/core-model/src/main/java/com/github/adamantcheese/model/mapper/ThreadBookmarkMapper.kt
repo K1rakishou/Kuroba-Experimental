@@ -12,10 +12,12 @@ object ThreadBookmarkMapper {
 
     return ThreadBookmarkEntity(
       ownerThreadId = ownerThreadId,
-      watchLastCount = threadBookmark.watchLastCount,
-      watchNewCount = threadBookmark.watchNewCount,
-      quoteLastCount = threadBookmark.quoteLastCount,
-      quoteNewCount = threadBookmark.quoteNewCount,
+      seenPostsCount = threadBookmark.seenPostsCount,
+      totalPostsCount = threadBookmark.totalPostsCount,
+      lastLoadedPostNo = threadBookmark.lastLoadedPostNo,
+      lastViewedPostNo = threadBookmark.lastViewedPostNo,
+      seenQuotesCount = 0,
+      totalQuotesCount = 0,
       title = threadBookmark.title,
       thumbnailUrl = threadBookmark.thumbnailUrl,
       state = threadBookmark.state,
@@ -31,10 +33,10 @@ object ThreadBookmarkMapper {
         threadNo = threadBookmarkFull.threadNo
       )
     ).apply {
-      this.watchLastCount = threadBookmarkFull.threadBookmarkEntity.watchLastCount
-      this.watchNewCount = threadBookmarkFull.threadBookmarkEntity.watchNewCount
-      this.quoteLastCount = threadBookmarkFull.threadBookmarkEntity.quoteLastCount
-      this.quoteNewCount = threadBookmarkFull.threadBookmarkEntity.quoteNewCount
+      this.seenPostsCount = threadBookmarkFull.threadBookmarkEntity.seenPostsCount
+      this.totalPostsCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount
+      this.lastLoadedPostNo = threadBookmarkFull.threadBookmarkEntity.lastLoadedPostNo
+      this.lastViewedPostNo = threadBookmarkFull.threadBookmarkEntity.lastViewedPostNo
       this.title = threadBookmarkFull.threadBookmarkEntity.title
       this.thumbnailUrl = threadBookmarkFull.threadBookmarkEntity.thumbnailUrl
       this.state = threadBookmarkFull.threadBookmarkEntity.state

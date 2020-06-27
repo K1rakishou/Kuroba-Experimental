@@ -192,10 +192,6 @@ public class Loadable
         return site;
     }
 
-    public Board getBoard() {
-        return board;
-    }
-
     public void setTitle(String title) {
         if (!TextUtils.equals(this.title, title)) {
             this.title = title;

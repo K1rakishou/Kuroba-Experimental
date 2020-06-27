@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.core.model.PostIndexed
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -344,7 +345,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       val postPreloadedInfoHolder = PostPreloadedInfoHolder()
       postPreloadedInfoHolder.preloadPostsInfo(posts)
-      adapter.setThread(dummyLoadable, postPreloadedInfoHolder, posts, false)
+      adapter.setThread(dummyLoadable, postPreloadedInfoHolder, indexPosts(posts), false)
       adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
       postsView.adapter = adapter
 
@@ -408,6 +409,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       )
 
       return linearLayout
+    }
+
+    private fun indexPosts(posts: List<Post>): List<PostIndexed> {
+      return posts.mapIndexed { index, post -> PostIndexed(post, index, index) }
     }
 
     override fun getCount(): Int {

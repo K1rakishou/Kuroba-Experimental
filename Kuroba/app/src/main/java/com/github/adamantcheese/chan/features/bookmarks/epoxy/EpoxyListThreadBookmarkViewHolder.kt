@@ -33,7 +33,8 @@ abstract class EpoxyListThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
     holder.clickListener(clickListener)
     holder.setTitle(titleString)
 
-    context?.let { holder.bindImage(false, it) }
+    val watching = threadBookmarkStats?.watching ?: true
+    context?.let { holder.bindImage(false, watching, it) }
   }
 
   override fun unbind(holder: BaseThreadBookmarkViewHolder) {

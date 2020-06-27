@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -110,8 +111,30 @@ class FetchThreadBookmarkInfoUseCase(
             jsonReader
           ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
 
+          if (isDevFlavor) {
+            ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
+          }
+
           return@use ThreadBookmarkFetchResult.Success(threadBookmarkInfoObject, threadDescriptor)
         }
+    }
+  }
+
+  private fun ensureCorrectPostOrder(simplePostObjects: List<ThreadBookmarkInfoPostObject>) {
+    if (simplePostObjects.isEmpty()) {
+      return
+    }
+
+    var prevPostNo = 0L
+
+    simplePostObjects.forEach { threadBookmarkInfoPostObject ->
+      val currentPostNo = threadBookmarkInfoPostObject.postNo()
+
+      check(prevPostNo <= currentPostNo) {
+        "Incorrect post ordering detected: (prevPostNo=$prevPostNo, currentPostNo=${currentPostNo}"
+      }
+
+      prevPostNo = currentPostNo
     }
   }
 

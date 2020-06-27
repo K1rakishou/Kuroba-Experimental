@@ -391,6 +391,7 @@ public class ManagerModule {
                 bookmarksManager,
                 siteRepository,
                 databaseManager.getDatabaseSavedReplyManager(),
+                databaseManager.getDatabaseLoadableManager(),
                 fetchThreadBookmarkInfoUseCase,
                 parsePostRepliesUseCase
         );

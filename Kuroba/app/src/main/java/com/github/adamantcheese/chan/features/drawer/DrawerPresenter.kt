@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.features.drawer
 
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.base.BasePresenter
+import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
@@ -15,13 +16,17 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class DrawerPresenter : BasePresenter<DrawerView>() {
+class DrawerPresenter(
+  private val isDevFlavor: Boolean
+) : BasePresenter<DrawerView>() {
 
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
@@ -29,9 +34,12 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
   lateinit var siteRepository: SiteRepository
   @Inject
   lateinit var boardRepository: BoardRepository
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
 
   private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
     .toSerialized()
+  private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
 
   override fun onCreate(view: DrawerView) {
     super.onCreate(view)
@@ -52,12 +60,28 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
           }
         }
     }
+
+    scope.launch {
+      bookmarksManager.listenForBookmarksChanges()
+        .debounce(1, TimeUnit.SECONDS)
+        .asFlow()
+        .collect { onBookmarksChanged() }
+    }
   }
 
   fun listenForStateChanges(): Flowable<HistoryControllerState> {
     return historyControllerStateSubject
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
+      .onBackpressureLatest()
+      .hide()
+  }
+
+  fun listenForBookmarksBadgeStateChanges(): Flowable<BookmarksBadgeState> {
+    return bookmarksBadgeStateSubject
+      .observeOn(AndroidSchedulers.mainThread())
+      .distinctUntilChanged()
+      .onBackpressureLatest()
       .hide()
   }
 
@@ -112,9 +136,26 @@ class DrawerPresenter : BasePresenter<DrawerView>() {
     setState(HistoryControllerState.Data(navHistoryList))
   }
 
+  private fun onBookmarksChanged() {
+    val totalUnseenPostsCount = bookmarksManager.getTotalUnseenPostsCount()
+    val hasUnseenReplies = bookmarksManager.hasUnseenReplies()
+
+    if (isDevFlavor && totalUnseenPostsCount == 0) {
+      // TODO(KurobaEx): enable this check after reply persistence is implemented
+//      check(!hasUnseenReplies) { "Bookmarks have no unseen posts but have unseen replies!" }
+    }
+
+    bookmarksBadgeStateSubject.onNext(BookmarksBadgeState(totalUnseenPostsCount, hasUnseenReplies))
+  }
+
   private fun setState(state: HistoryControllerState) {
     historyControllerStateSubject.onNext(state)
   }
+
+  data class BookmarksBadgeState(
+    val totalUnseenPostsCount: Int,
+    val hasUnseenReplies: Boolean
+  )
 
   companion object {
     private const val TAG = "DrawerPresenter"

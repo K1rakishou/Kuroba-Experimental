@@ -154,7 +154,8 @@ public class PostStubCell
     public void setPost(
             Loadable loadable,
             final Post post,
-            final int postIndex,
+            final int currentPostIndex,
+            final int realPostIndex,
             PostCellInterface.PostCellCallback callback,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,

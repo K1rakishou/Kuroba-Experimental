@@ -157,6 +157,10 @@ class ThreadPresenter @Inject constructor(
       this.currentLoadable = loadable
       this.addToLocalBackHistory = addToLocalBackHistory
 
+      loadable.threadDescriptorOrNull?.let { threadDescriptor ->
+        bookmarksManager.setCurrentOpenThreadDescriptor(threadDescriptor)
+      }
+
       chanLoader = chanLoaderManager.obtain(loadable, this)
       threadPresenterCallback?.showLoading()
       seenPostsManager.preloadForThread(loadable)
@@ -380,6 +384,7 @@ class ThreadPresenter @Inject constructor(
 
     if (chanLoader != null && chanLoader!!.thread != null) {
       showPosts()
+
       if (TextUtils.isEmpty(entered)) {
         threadPresenterCallback?.setSearchStatus(
           query = null,
@@ -593,10 +598,7 @@ class ThreadPresenter @Inject constructor(
     val thread = chanLoader?.thread
       ?: return
 
-    if (
-      loadable?.isThreadMode == true &&
-      thread.postsCount > 0
-    ) {
+    if (loadable?.isThreadMode == true && thread.postsCount > 0) {
       val posts = thread.posts
       loadable!!.setLastViewed(posts[posts.size - 1].no)
     }

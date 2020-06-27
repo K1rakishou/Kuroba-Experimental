@@ -835,11 +835,12 @@ public class ReplyLayout
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                if (callback.getThread() == null) {
+                ChanThread thread = callback.getThread();
+                if (thread == null) {
                     return true;
                 }
 
-                Loadable threadLoadable = callback.getThread().getLoadable();
+                Loadable threadLoadable = thread.getLoadable();
                 boolean is4chan = threadLoadable.board.site instanceof Chan4;
 
                 // menu item cleanup, these aren't needed for this
@@ -1034,6 +1035,7 @@ public class ReplyLayout
 
         void requestNewPostLoad();
 
+        @Nullable
         ChanThread getThread();
 
         void showImageReencodingWindow(boolean supportsReencode);

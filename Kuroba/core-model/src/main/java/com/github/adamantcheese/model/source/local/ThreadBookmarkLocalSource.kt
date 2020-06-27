@@ -129,7 +129,7 @@ class ThreadBookmarkLocalSource(
       }
 
       return@mapReverseIndexedNotNull OrderedThreadBookmark(
-        orderedThreadBookmark.threadBookmark,
+        threadBookmark.copy(),
         order
       )
     }

@@ -34,11 +34,12 @@ class BookmarkBackgroundWatcherWorker(
       return Result.success()
     }
 
-    return if (bookmarkWatcherDelegate.doWork(false)) {
-      Result.success()
-    } else {
-      Result.failure()
-    }
+    bookmarkWatcherDelegate.doWork(
+      isCalledFromForeground = false,
+      isUpdatingCurrentlyOpenedThread = false
+    )
+
+    return Result.success()
   }
 
   companion object {

@@ -21,14 +21,6 @@ class PostPreloadedInfoHolder {
     posts.forEach { post -> preloadPostInfo(post) }
   }
 
-  private fun preloadPostInfo(post: Post) {
-    val postTime = calculatePostTime(post)
-
-    synchronized(this) {
-      postPreloadedTimeMap[post.no] = postTime
-    }
-  }
-
   fun getPostTime(post: Post): CharSequence {
     BackgroundUtils.ensureMainThread()
 
@@ -36,6 +28,14 @@ class PostPreloadedInfoHolder {
       return@synchronized requireNotNull(postPreloadedTimeMap[post.no]) {
         "Post time was not preloaded for post with no ${post.no}"
       }
+    }
+  }
+
+  private fun preloadPostInfo(post: Post) {
+    val postTime = calculatePostTime(post)
+
+    synchronized(this) {
+      postPreloadedTimeMap[post.no] = postTime
     }
   }
 

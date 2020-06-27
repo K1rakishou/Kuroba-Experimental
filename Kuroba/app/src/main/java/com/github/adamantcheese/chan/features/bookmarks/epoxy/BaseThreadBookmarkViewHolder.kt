@@ -10,7 +10,9 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import coil.request.RequestDisposable
 import coil.transform.CircleCropTransformation
+import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
+import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
@@ -91,14 +93,14 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkStats.visibility = View.VISIBLE
 
     bookmarkStats.text = buildString {
+      append(threadBookmarkStats.totalPosts)
+      append(" / ")
       append(threadBookmarkStats.newPosts)
 
       if (threadBookmarkStats.newQuotes > 0) {
-        append(" (").append(threadBookmarkStats.newQuotes).append(")")
-      }
-
-      if (threadBookmarkStats.totalPosts > 0) {
-        append(" / ").append(threadBookmarkStats.totalPosts)
+        append(" (")
+        append(threadBookmarkStats.newQuotes)
+        append(")")
       }
     }
 
@@ -121,7 +123,7 @@ open class BaseThreadBookmarkViewHolder(
       bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD)
     }
 
-    if (threadBookmarkStats.isLastPage) {
+    if (threadBookmarkStats.isOnLastPage) {
       bookmarkStats.paintFlags = bookmarkStats.paintFlags or Paint.UNDERLINE_TEXT_FLAG
     }
   }
@@ -134,21 +136,25 @@ open class BaseThreadBookmarkViewHolder(
     }
   }
 
-  fun bindImage(isGridMode: Boolean, context: Context) {
+  fun bindImage(isGridMode: Boolean, watching: Boolean, context: Context) {
     waitForLayout(bookmarkImage) {
-      bindImageInternal(isGridMode, context)
+      bindImageInternal(isGridMode, watching, context)
       return@waitForLayout true
     }
   }
 
-  private fun bindImageInternal(isGridMode: Boolean, context: Context) {
+  private fun bindImageInternal(isGridMode: Boolean, watching: Boolean, context: Context) {
     val url = imageLoaderRequestData?.url
     val thumbnailImageRef = WeakReference(bookmarkImage)
 
-    val transformations = if (isGridMode) {
-      listOf(ROUNDED_CORNERS)
+    val transformations: MutableList<Transformation> = if (isGridMode) {
+      mutableListOf(ROUNDED_CORNERS)
     } else {
-      listOf(CIRCLE_CROP)
+      mutableListOf(CIRCLE_CROP)
+    }
+
+    if (!watching) {
+      transformations.add(GRAYSCALE)
     }
 
     requestDisposable = imageLoaderV2.loadFromNetwork(
@@ -167,6 +173,7 @@ open class BaseThreadBookmarkViewHolder(
   data class ImageLoaderRequestData(val url: HttpUrl?)
 
   companion object {
+    private val GRAYSCALE = GrayscaleTransformation()
     private val CIRCLE_CROP = CircleCropTransformation()
     private val ROUNDED_CORNERS = RoundedCornersTransformation(
       dp(1f).toFloat(),

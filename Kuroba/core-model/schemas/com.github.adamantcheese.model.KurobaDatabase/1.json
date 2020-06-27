@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "63f9668bde490d835723c0bf6b085194",
+    "identityHash": "c35023245bff36666f00d106ea992648",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1152,7 +1152,7 @@
       },
       {
         "tableName": "thread_bookmark",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `watch_last_count` INTEGER NOT NULL, `watch_new_count` INTEGER NOT NULL, `quote_last_count` INTEGER NOT NULL, `quote_new_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, `bookmark_order` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `seen_posts_count` INTEGER NOT NULL, `total_posts_count` INTEGER NOT NULL, `last_loaded_post_no` INTEGER NOT NULL, `last_viewed_post_no` INTEGER NOT NULL, `seen_quotes_count` INTEGER NOT NULL, `total_quotes_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, `bookmark_order` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "ownerThreadId",
@@ -1161,26 +1161,38 @@
             "notNull": true
           },
           {
-            "fieldPath": "watchLastCount",
-            "columnName": "watch_last_count",
+            "fieldPath": "seenPostsCount",
+            "columnName": "seen_posts_count",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "watchNewCount",
-            "columnName": "watch_new_count",
+            "fieldPath": "totalPostsCount",
+            "columnName": "total_posts_count",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "quoteLastCount",
-            "columnName": "quote_last_count",
+            "fieldPath": "lastLoadedPostNo",
+            "columnName": "last_loaded_post_no",
             "affinity": "INTEGER",
             "notNull": true
           },
           {
-            "fieldPath": "quoteNewCount",
-            "columnName": "quote_new_count",
+            "fieldPath": "lastViewedPostNo",
+            "columnName": "last_viewed_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seenQuotesCount",
+            "columnName": "seen_quotes_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalQuotesCount",
+            "columnName": "total_quotes_count",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1248,7 +1260,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '63f9668bde490d835723c0bf6b085194')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c35023245bff36666f00d106ea992648')"
     ]
   }
 }

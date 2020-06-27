@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.model.PostIndexed;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
@@ -40,10 +41,9 @@ import com.github.adamantcheese.chan.utils.PostUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -66,7 +66,7 @@ public class PostAdapter
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
-    private final Map<Long, Integer> postIndexMap = new HashMap<>();
+    private final List<PostIndexed> indexedDisplayList = new ArrayList<>();
     /**
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
      */
@@ -169,19 +169,18 @@ public class PostAdapter
                 }
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
-                Post post = displayList.get(getPostPosition(position));
+                int postPosition = getPostPosition(position);
+                Post post = displayList.get(postPosition);
+                PostIndexed postIndexed = indexedDisplayList.get(postPosition);
                 boolean highlight = shouldHighlightPost(post);
 
                 PostCellInterface postCell = ((PostCellInterface) postViewHolder.itemView);
-                Integer postIndex = postIndexMap.get(post.no);
-                if (postIndex == null || postIndex < 0) {
-                    postIndex = 0;
-                }
 
                 postCell.setPost(
                         loadable,
                         post,
-                        postIndex,
+                        postIndexed.getCurrentPostIndex(),
+                        postIndexed.getRealPostIndex(),
                         postCellCallback,
                         postPreloadedInfoHolder,
                         false,
@@ -309,7 +308,7 @@ public class PostAdapter
     public void setThread(
             Loadable threadLoadable,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
-            List<Post> posts,
+            List<PostIndexed> indexedPosts,
             boolean refreshAfterHideOrRemovePosts
     ) {
         BackgroundUtils.ensureMainThread();
@@ -323,15 +322,15 @@ public class PostAdapter
 
         showError(null);
 
+        List<Post> posts = extractPosts(indexedPosts);
         changed = hasChangedPosts(posts, changed);
 
         updatingPosts.clear();
 
         displayList.clear();
         displayList.addAll(posts);
-
-        postIndexMap.clear();
-        fillPostIndexMap(postIndexMap, posts);
+        indexedDisplayList.clear();
+        indexedDisplayList.addAll(indexedPosts);
 
         lastSeenIndicatorPosition = getLastSeenIndicatorPosition(threadLoadable);
 
@@ -348,10 +347,18 @@ public class PostAdapter
         }
     }
 
-    private void fillPostIndexMap(Map<Long, Integer> postIndexMap, List<Post> posts) {
-        for (int index = 0; index < posts.size(); index++) {
-            postIndexMap.put(posts.get(index).no, index);
+    private List<Post> extractPosts(List<PostIndexed> indexedPosts) {
+        if (indexedPosts.isEmpty()) {
+            return Collections.emptyList();
         }
+
+        List<Post> posts = new ArrayList<>(indexedPosts.size());
+
+        for (PostIndexed indexedPost : indexedPosts) {
+            posts.add(indexedPost.getPost());
+        }
+
+        return posts;
     }
 
     private boolean hasChangedPosts(List<Post> posts, boolean changed) {
@@ -403,7 +410,7 @@ public class PostAdapter
 
         updatingPosts.clear();
         displayList.clear();
-        postIndexMap.clear();
+        indexedDisplayList.clear();
 
         notifyDataSetChanged();
     }

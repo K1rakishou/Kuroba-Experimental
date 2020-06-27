@@ -48,7 +48,6 @@ import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
@@ -70,7 +69,6 @@ import com.github.adamantcheese.chan.utils.Logger;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -116,7 +114,6 @@ public class ThreadListLayout
     private FastScroller fastScroller;
     private PostInfoMapItemDecoration postInfoMapItemDecoration;
     private PostAdapter postAdapter;
-    private ChanThread showingThread;
     private ThreadListLayoutPresenterCallback callback;
     private ThreadListLayoutCallback threadListLayoutCallback;
     private boolean replyOpen;
@@ -125,6 +122,9 @@ public class ThreadListLayout
     private int background;
     private boolean searchOpen;
     private int lastPostCount;
+
+    @Nullable
+    private ChanThread showingThread;
 
     private Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -340,51 +340,10 @@ public class ThreadListLayout
 
         setFastScroll(true);
 
-        /*
-         * We call a blocking function that accesses the database from a background thread but doesn't
-         * throw an exception here. Why, you would ask? Because we can't use callbacks here, otherwise
-         * everything in ThreadPresenter.onChanLoaderData() below showPosts will be executed BEFORE
-         * filtered posts are shown in the RecyclerView. This will break scrolling to the last seen
-         * post as well as introduce some visual posts jiggling. This can be fixed by executing everything
-         * in ThreadPresenter.onChanLoaderData() below showPosts in a callback that is called after
-         * posts are assigned to the adapter. But that's a lot of code and it may break something else.
-         *
-         * This solution works but it will hang the main thread for some time (it shouldn't be for very
-         * long since we have like 300-500 posts in a thread to filter in the database).
-         * BUT if for some reason it starts to cause ANRs then we will have to apply the callback solution.
-         */
-        List<Post> filteredPosts = filter.apply(
-                thread.getPosts(),
-                thread.getLoadable().siteId,
-                thread.getLoadable().boardCode
-        );
-
-        // Filter out any bookmarked threads from the catalog
-        if (ChanSettings.removeWatchedFromCatalog.get() && thread.getLoadable().isCatalogMode()) {
-            List<Post> toRemove = new ArrayList<>();
-
-            for (Pin pin : watchManager.getAllPins()) {
-                for (Post post : filteredPosts) {
-                    Loadable loadable = Loadable.forThread(
-                            thread.getLoadable().site,
-                            thread.getLoadable().board,
-                            post.no,
-                            ""
-                    );
-
-                    if (pin.loadable.equals(loadable)) {
-                        toRemove.add(post);
-                    }
-                }
-            }
-
-            filteredPosts.removeAll(toRemove);
-        }
-
         postAdapter.setThread(
                 thread.getLoadable(),
                 thread.getPostPreloadedInfoHolder(),
-                filteredPosts,
+                filter.apply(thread.getPosts(), thread.getLoadable()),
                 refreshAfterHideOrRemovePosts
         );
     }
@@ -425,7 +384,12 @@ public class ThreadListLayout
             return;
         }
 
-        Loadable loadable = getThread().getLoadable();
+        ChanThread thread = getThread();
+        if (thread == null) {
+            return;
+        }
+
+        Loadable loadable = thread.getLoadable();
         if (loadable != null) {
             if (loadable.mode == Loadable.Mode.INVALID) {
                 throw new RuntimeException("Bad loadable mode");
@@ -494,44 +458,48 @@ public class ThreadListLayout
     }
 
     public void openSearch(boolean open) {
-        if (showingThread != null && searchOpen != open) {
-            searchOpen = open;
-
-            searchStatus.measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
-                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-            );
-            int height = searchStatus.getMeasuredHeight();
-
-            final ViewPropertyAnimator viewPropertyAnimator = searchStatus.animate();
-            viewPropertyAnimator.setListener(null);
-            viewPropertyAnimator.setInterpolator(new DecelerateInterpolator(2f));
-            viewPropertyAnimator.setDuration(600);
-
-            if (open) {
-                searchStatus.setVisibility(VISIBLE);
-                searchStatus.setTranslationY(-height);
-                viewPropertyAnimator.translationY(0f);
-            } else {
-                searchStatus.setTranslationY(0f);
-                viewPropertyAnimator.translationY(-height);
-                viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        viewPropertyAnimator.setListener(null);
-                        searchStatus.setVisibility(GONE);
-                    }
-                });
-            }
-
-            setRecyclerViewPadding();
-            if (open) {
-                searchStatus.setText(R.string.search_empty);
-            } else {
-                threadListLayoutCallback.getToolbar().closeSearchPhoneMode();
-            }
-
-            attachToolbarScroll(!(open || replyOpen));
+        if (showingThread == null || searchOpen == open) {
+            return;
         }
+
+        searchOpen = open;
+
+        searchStatus.measure(
+                MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+        );
+
+        int height = searchStatus.getMeasuredHeight();
+
+        final ViewPropertyAnimator viewPropertyAnimator = searchStatus.animate();
+        viewPropertyAnimator.setListener(null);
+        viewPropertyAnimator.setInterpolator(new DecelerateInterpolator(2f));
+        viewPropertyAnimator.setDuration(600);
+
+        if (open) {
+            searchStatus.setVisibility(VISIBLE);
+            searchStatus.setTranslationY(-height);
+            viewPropertyAnimator.translationY(0f);
+        } else {
+            searchStatus.setTranslationY(0f);
+            viewPropertyAnimator.translationY(-height);
+            viewPropertyAnimator.setListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    viewPropertyAnimator.setListener(null);
+                    searchStatus.setVisibility(GONE);
+                }
+            });
+        }
+
+        setRecyclerViewPadding();
+        if (open) {
+            searchStatus.setText(R.string.search_empty);
+        } else {
+            threadListLayoutCallback.getToolbar().closeSearchPhoneMode();
+        }
+
+        attachToolbarScroll(!(open || replyOpen));
     }
 
     @SuppressLint("StringFormatMatches")
@@ -611,7 +579,7 @@ public class ThreadListLayout
         reply.cleanup();
         openReply(false);
 
-        if (showingThread.getLoadable().isThreadMode()) {
+        if (showingThread != null && showingThread.getLoadable().isThreadMode()) {
             openSearch(false);
         }
 
@@ -626,6 +594,9 @@ public class ThreadListLayout
 
     public ThumbnailView getThumbnail(PostImage postImage) {
         RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager == null) {
+            return null;
+        }
 
         for (int i = 0; i < layoutManager.getChildCount(); i++) {
             View view = layoutManager.getChildAt(i);
@@ -718,6 +689,7 @@ public class ThreadListLayout
         callback.requestNewPostLoad();
     }
 
+    @Nullable
     @Override
     public ChanThread getThread() {
         return showingThread;
@@ -789,17 +761,20 @@ public class ThreadListLayout
                 postInfoMapItemDecoration = new PostInfoMapItemDecoration(getContext());
             }
 
-            postInfoMapItemDecoration.setItems(
-                    extractPostMapInfoHolderUseCase.execute(getThread().getPosts()),
-                    getThread().getPostsCount()
-            );
-
-            if (fastScroller == null) {
-                fastScroller = FastScrollerHelper.create(
-                        recyclerView,
-                        postInfoMapItemDecoration,
-                        themeHelper.getTheme()
+            ChanThread thread = getThread();
+            if (thread != null) {
+                postInfoMapItemDecoration.setItems(
+                        extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
+                        thread.getPostsCount()
                 );
+
+                if (fastScroller == null) {
+                    fastScroller = FastScrollerHelper.create(
+                            recyclerView,
+                            postInfoMapItemDecoration,
+                            themeHelper.getTheme()
+                    );
+                }
             }
         }
 
