@@ -216,6 +216,9 @@ class BookmarksController(context: Context)
           }
         }
         is BookmarksControllerState.Data -> {
+          navigation.title = formatTitleWithStats(state)
+          requireNavController().requireToolbar().updateTitle(navigation)
+
           state.bookmarks.forEach { bookmark ->
             val requestData =
               BaseThreadBookmarkViewHolder.ImageLoaderRequestData(bookmark.thumbnailUrl)
@@ -247,6 +250,22 @@ class BookmarksController(context: Context)
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun formatTitleWithStats(state: BookmarksControllerState.Data): String {
+    val totalBookmarksCount = state.bookmarks.size
+    if (totalBookmarksCount <= 0) {
+      return context.getString(R.string.controller_bookmarks)
+    }
+
+    val watchingBookmarksCount = state.bookmarks.count { threadBookmarkItemView ->
+      threadBookmarkItemView.threadBookmarkStats.watching
+    }
+
+    return context.getString(
+      R.string.controller_bookmarks_with_stats,
+      watchingBookmarksCount, totalBookmarksCount
+    )
   }
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {

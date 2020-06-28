@@ -779,6 +779,7 @@ Don't have a 4chan Pass?<br>
     <string name="click_image_for_extra_options">Click image for extra options</string>
 
     <string name="controller_bookmarks">Bookmarks</string>
+    <string name="controller_bookmarks_with_stats">Bookmarks (%1$d/%2$d)</string>
     <string name="controller_bookmarks_bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
     <string name="controller_bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
     <string name="controller_bookmarks_prune_inactive_bookmarks">Prune inactive bookmarks</string>
