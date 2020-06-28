@@ -178,6 +178,7 @@ public class Chan
                 okHttpDns,
                 okHttpProtocols.protocols,
                 Logger.TAG_PREFIX,
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
                 ChanSettings.verboseLogs.get(),
                 appConstants,
                 this

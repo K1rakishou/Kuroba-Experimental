@@ -5,6 +5,7 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.AppCoroutineScope
+import com.github.adamantcheese.model.di.annotation.IsDevFlavor
 import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
 import com.github.adamantcheese.model.di.annotation.VerboseLogs
 import com.github.adamantcheese.model.parser.ArchivesJsonParser
@@ -157,12 +158,14 @@ class ModelMainModule {
   fun provideThreadBookmarkLocalSource(
     database: KurobaDatabase,
     @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
     logger: Logger,
     chanDescriptorCache: ChanDescriptorCache
   ): ThreadBookmarkLocalSource {
     return ThreadBookmarkLocalSource(
       database,
       loggerTag,
+      isDevFlavor,
       logger,
       chanDescriptorCache
     )

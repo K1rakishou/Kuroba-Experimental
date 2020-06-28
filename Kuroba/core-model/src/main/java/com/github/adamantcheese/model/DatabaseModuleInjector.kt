@@ -18,6 +18,7 @@ object DatabaseModuleInjector {
     protocols: List<Protocol>,
     loggerTagPrefix: String,
     verboseLogs: Boolean,
+    isDevFlavor: Boolean,
     appConstants: AppConstants,
     scope: CoroutineScope
   ): ModelMainComponent {
@@ -27,6 +28,7 @@ object DatabaseModuleInjector {
       .okHttpProtocols(NetworkModule.OkHttpProtocolList(protocols))
       .loggerTagPrefix(loggerTagPrefix)
       .verboseLogs(verboseLogs)
+      .isDevFlavor(isDevFlavor)
       .appConstants(appConstants)
       .appCoroutineScope(scope)
       .build()

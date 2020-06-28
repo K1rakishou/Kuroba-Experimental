@@ -10,7 +10,6 @@ class ThreadBookmark private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
   var seenPostsCount: Int = 0,
   var totalPostsCount: Int = 0,
-  var lastLoadedPostNo: Long = 0,
   var lastViewedPostNo: Long = 0,
   val threadBookmarkReplies: MutableMap<PostDescriptor, ThreadBookmarkReply> = mutableMapOf(),
   var title: String? = null,
@@ -26,7 +25,6 @@ class ThreadBookmark private constructor(
       threadDescriptor = threadDescriptor,
       seenPostsCount = seenPostsCount,
       totalPostsCount = totalPostsCount,
-      lastLoadedPostNo = lastLoadedPostNo,
       lastViewedPostNo = lastViewedPostNo,
       threadBookmarkReplies = HashMap(threadBookmarkReplies),
       title = title,
@@ -36,7 +34,11 @@ class ThreadBookmark private constructor(
     )
   }
 
-  fun clearFirstFetchFlag() = state.clear(BOOKMARK_STATE_FIRST_FETCH)
+  fun clearFirstFetchFlag() {
+    if (state.get(BOOKMARK_STATE_FIRST_FETCH)) {
+      state.clear(BOOKMARK_STATE_FIRST_FETCH)
+    }
+  }
 
   fun hasUnseenReplies(): Boolean {
     return threadBookmarkReplies.values.any { threadBookmarkReply -> !threadBookmarkReply.alreadySeen }
@@ -44,10 +46,6 @@ class ThreadBookmark private constructor(
 
   fun unseenPostsCount(): Int {
     return Math.max(0, totalPostsCount - seenPostsCount)
-  }
-
-  fun updateLastLoadedPostNo(newLastLoadedPostNo: Long) {
-    lastLoadedPostNo = Math.max(lastLoadedPostNo, newLastLoadedPostNo)
   }
 
   fun updateLastViewedPostNo(newLastViewedPostNo: Long) {
@@ -73,6 +71,22 @@ class ThreadBookmark private constructor(
         threadBookmarkReply.postDescriptor.postNo <= lastSeenPostNo && !threadBookmarkReply.alreadySeen
       }
       .forEach { threadBookmarkReply -> threadBookmarkReply.alreadySeen = true }
+  }
+
+  fun setBumpLimit(bumpLimit: Boolean) {
+    if (bumpLimit) {
+      state.set(BOOKMARK_STATE_THREAD_BUMP_LIMIT)
+    } else {
+      state.clear(BOOKMARK_STATE_THREAD_BUMP_LIMIT)
+    }
+  }
+
+  fun setImageLimit(imageLimit: Boolean) {
+    if (imageLimit) {
+      state.set(BOOKMARK_STATE_THREAD_IMAGE_LIMIT)
+    } else {
+      state.clear(BOOKMARK_STATE_THREAD_IMAGE_LIMIT)
+    }
   }
 
   fun markAsSeen() {
@@ -143,7 +157,6 @@ class ThreadBookmark private constructor(
     if (threadDescriptor != other.threadDescriptor) return false
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
-    if (lastLoadedPostNo != other.lastLoadedPostNo) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
     if (threadBookmarkReplies != other.threadBookmarkReplies) return false
     if (title != other.title) return false
@@ -158,7 +171,6 @@ class ThreadBookmark private constructor(
     var result = threadDescriptor.hashCode()
     result = 31 * result + seenPostsCount
     result = 31 * result + totalPostsCount
-    result = 31 * result + lastLoadedPostNo.hashCode()
     result = 31 * result + lastViewedPostNo.hashCode()
     result = 31 * result + threadBookmarkReplies.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
@@ -170,7 +182,7 @@ class ThreadBookmark private constructor(
 
   override fun toString(): String {
     return "ThreadBookmark(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
-      "totalPostsCount=$totalPostsCount, lastLoadedPostNo=$lastLoadedPostNo, lastViewedPostNo=$lastViewedPostNo, " +
+      "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
       "stickyThread=$stickyThread, state=$state)"
   }

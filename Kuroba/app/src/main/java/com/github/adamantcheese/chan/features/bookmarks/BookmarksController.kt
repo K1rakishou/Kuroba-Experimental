@@ -193,31 +193,38 @@ class BookmarksController(context: Context)
     controller.callback = {
       when (state) {
         BookmarksControllerState.Loading -> {
+          updateTitleWithoutStats()
+
           epoxyLoadingView {
             id("bookmarks_loading_view")
           }
         }
         BookmarksControllerState.Empty -> {
+          updateTitleWithoutStats()
+
           epoxyTextView {
             id("bookmarks_are_empty_text_view")
             message(context.getString(R.string.controller_bookmarks_bookmarks_are_empty))
           }
         }
         is BookmarksControllerState.NothingFound -> {
+          updateTitleWithoutStats()
+
           epoxyTextView {
             id("bookmarks_nothing_found_by_search_query")
             message(context.getString(R.string.controller_bookmarks_nothing_found_by_search_query, state.searchQuery))
           }
         }
         is BookmarksControllerState.Error -> {
+          updateTitleWithoutStats()
+
           epoxyErrorView {
             id("bookmarks_error_view")
             errorMessage(state.errorText)
           }
         }
         is BookmarksControllerState.Data -> {
-          navigation.title = formatTitleWithStats(state)
-          requireNavController().requireToolbar().updateTitle(navigation)
+          updateTitleWithStats(state)
 
           state.bookmarks.forEach { bookmark ->
             val requestData =
@@ -250,6 +257,16 @@ class BookmarksController(context: Context)
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun updateTitleWithoutStats() {
+    navigation.title = getString(R.string.controller_bookmarks)
+    requireNavController().requireToolbar().updateTitle(navigation)
+  }
+
+  private fun updateTitleWithStats(state: BookmarksControllerState.Data) {
+    navigation.title = formatTitleWithStats(state)
+    requireNavController().requireToolbar().updateTitle(navigation)
   }
 
   private fun formatTitleWithStats(state: BookmarksControllerState.Data): String {

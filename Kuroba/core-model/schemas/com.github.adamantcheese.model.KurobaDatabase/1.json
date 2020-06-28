@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c35023245bff36666f00d106ea992648",
+    "identityHash": "0885e2cf3df5df01ae376c7659016177",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1152,8 +1152,14 @@
       },
       {
         "tableName": "thread_bookmark",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_id` INTEGER NOT NULL, `seen_posts_count` INTEGER NOT NULL, `total_posts_count` INTEGER NOT NULL, `last_loaded_post_no` INTEGER NOT NULL, `last_viewed_post_no` INTEGER NOT NULL, `seen_quotes_count` INTEGER NOT NULL, `total_quotes_count` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, `bookmark_order` INTEGER NOT NULL, PRIMARY KEY(`owner_thread_id`), FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_bookmark_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_id` INTEGER NOT NULL, `seen_posts_count` INTEGER NOT NULL, `total_posts_count` INTEGER NOT NULL, `last_loaded_post_no` INTEGER NOT NULL, `last_viewed_post_no` INTEGER NOT NULL, `title` TEXT, `thumbnail_url` TEXT, `state` INTEGER NOT NULL, `bookmark_order` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
+          {
+            "fieldPath": "threadBookmarkId",
+            "columnName": "thread_bookmark_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
           {
             "fieldPath": "ownerThreadId",
             "columnName": "owner_thread_id",
@@ -1185,18 +1191,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "seenQuotesCount",
-            "columnName": "seen_quotes_count",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "totalQuotesCount",
-            "columnName": "total_quotes_count",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "title",
             "columnName": "title",
             "affinity": "TEXT",
@@ -1223,9 +1217,9 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "owner_thread_id"
+            "thread_bookmark_id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
         "indices": [
           {
@@ -1235,6 +1229,14 @@
               "bookmark_order"
             ],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_thread_bookmark_bookmark_order` ON `${TABLE_NAME}` (`bookmark_order`)"
+          },
+          {
+            "name": "index_thread_bookmark_owner_thread_id",
+            "unique": true,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_thread_bookmark_owner_thread_id` ON `${TABLE_NAME}` (`owner_thread_id`)"
           }
         ],
         "foreignKeys": [
@@ -1250,6 +1252,86 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "thread_bookmark_reply",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_bookmark_reply_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_bookmark_id` INTEGER NOT NULL, `reply_post_no` INTEGER NOT NULL, `replies_to_post_no` INTEGER NOT NULL, `already_seen` INTEGER NOT NULL, `already_notified` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "threadBookmarkReplyId",
+            "columnName": "thread_bookmark_reply_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerThreadBookmarkId",
+            "columnName": "owner_thread_bookmark_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replyPostNo",
+            "columnName": "reply_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "repliesToPostNo",
+            "columnName": "replies_to_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alreadySeen",
+            "columnName": "already_seen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alreadyNotified",
+            "columnName": "already_notified",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "thread_bookmark_reply_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_thread_bookmark_reply_owner_thread_bookmark_id",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_bookmark_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_thread_bookmark_reply_owner_thread_bookmark_id` ON `${TABLE_NAME}` (`owner_thread_bookmark_id`)"
+          },
+          {
+            "name": "index_thread_bookmark_reply_thread_bookmark_reply_id_owner_thread_bookmark_id",
+            "unique": true,
+            "columnNames": [
+              "thread_bookmark_reply_id",
+              "owner_thread_bookmark_id"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_thread_bookmark_reply_thread_bookmark_reply_id_owner_thread_bookmark_id` ON `${TABLE_NAME}` (`thread_bookmark_reply_id`, `owner_thread_bookmark_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "thread_bookmark",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_bookmark_id"
+            ],
+            "referencedColumns": [
+              "thread_bookmark_id"
+            ]
+          }
+        ]
       }
     ],
     "views": [
@@ -1260,7 +1342,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c35023245bff36666f00d106ea992648')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0885e2cf3df5df01ae376c7659016177')"
     ]
   }
 }

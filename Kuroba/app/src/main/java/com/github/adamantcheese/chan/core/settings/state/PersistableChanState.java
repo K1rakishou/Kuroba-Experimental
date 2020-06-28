@@ -36,7 +36,7 @@ public class PersistableChanState {
             updateCheckTime = new LongSetting(p, "update_check_time", 0L);
             previousDevHash = new StringSetting(p, "previous_dev_hash", BuildConfig.COMMIT_HASH);
             filterWatchIgnored = new StringSetting(p, "filter_watch_last_ignored_set", "");
-            viewThreadBookmarksGridMode = new BooleanSetting(p, "view_thread_bookmarks_grid_mode", false);
+            viewThreadBookmarksGridMode = new BooleanSetting(p, "view_thread_bookmarks_grid_mode", true);
         } catch (Exception e) {
             Logger.e(TAG, "Error while initializing the state", e);
             throw e;

@@ -14,6 +14,17 @@ class ThreadBookmarkInfoObject(
 
     return simplePostObjects.size - 1
   }
+
+  fun countAmountOfSeenPosts(lastViewedPostNo: Long): Int {
+    check(simplePostObjects.first() is ThreadBookmarkInfoPostObject.OriginalPost) {
+      "First post of ThreadBookmarkInfoObject is not OP"
+    }
+
+    return simplePostObjects.count { threadBookmarkInfoPostObject ->
+      threadBookmarkInfoPostObject.postNo() <= lastViewedPostNo
+    }
+  }
+
 }
 
 sealed class ThreadBookmarkInfoPostObject {

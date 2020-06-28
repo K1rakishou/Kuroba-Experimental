@@ -522,6 +522,21 @@ public class PostAdapter
         notifyItemChanged(postIndex);
     }
 
+    public long getPostNo(int itemPosition) {
+        int itemViewType = getItemViewType(itemPosition);
+        if (itemViewType != TYPE_POST && itemViewType != TYPE_POST_STUB) {
+            return -1L;
+        }
+
+        int postPosition = getPostPosition(itemPosition);
+        if (postPosition < 0 || postPosition >= displayList.size()) {
+            return -1L;
+        }
+
+        Post post = displayList.get(postPosition);
+        return post.no;
+    }
+
     public static class PostViewHolder
             extends RecyclerView.ViewHolder {
         public PostViewHolder(PostCellInterface postView) {

@@ -24,11 +24,11 @@ abstract class ThreadBookmarkDao {
   abstract suspend fun selectMany(ownerThreadIds: Collection<Long>): List<ThreadBookmarkEntity>
 
   @Query("""
-    SELECT ${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} 
+    SELECT ${ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME}, ${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} 
     FROM ${ThreadBookmarkEntity.TABLE_NAME}
     WHERE ${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
   """)
-  abstract suspend fun selectManyIds(ownerThreadIds: Collection<Long>): List<Long>
+  abstract suspend fun selectManyThreadBookmarkIdPairs(ownerThreadIds: Collection<Long>): List<ThreadBookmarkIdPair>
 
   @Query("""
     SELECT * 
@@ -43,25 +43,43 @@ abstract class ThreadBookmarkDao {
 
   @Transaction
   open suspend fun insertOrUpdateMany(threadBookmarkEntities: Collection<ThreadBookmarkEntity>) {
-    val alreadyInsertedIds = selectManyIds(
+    val alreadyInsertedIdsMap = selectManyIds(
       threadBookmarkEntities.map { threadBookmarkEntity -> threadBookmarkEntity.ownerThreadId }
-    ).toSet()
+    )
 
     val toUpdate = threadBookmarkEntities.filter { threadBookmarkEntity ->
-      alreadyInsertedIds.contains(threadBookmarkEntity.ownerThreadId)
+      alreadyInsertedIdsMap.contains(threadBookmarkEntity.ownerThreadId)
     }
 
     val toInsert = threadBookmarkEntities.filter { threadBookmarkEntity ->
-      !alreadyInsertedIds.contains(threadBookmarkEntity.ownerThreadId)
+      !alreadyInsertedIdsMap.contains(threadBookmarkEntity.ownerThreadId)
     }
 
     toInsert
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .forEach { chunk -> insertManyOrAbort(chunk) }
+      .forEach { chunk ->
+        val insertedIds = insertManyOrAbort(chunk)
+
+        chunk.forEachIndexed { index, threadBookmarkEntity ->
+          threadBookmarkEntity.threadBookmarkId = insertedIds[index]
+        }
+      }
 
     toUpdate
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .forEach { chunk -> updateManyOrAbort(chunk) }
+      .forEach { chunk ->
+        chunk.forEach { threadBookmarkEntity ->
+          val threadBookmarkId = alreadyInsertedIdsMap[threadBookmarkEntity.ownerThreadId] ?: -1L
+          check(threadBookmarkId > 0L) {
+            "Bad threadBookmarkId: $threadBookmarkId, probably alreadyInsertedIdsMap " +
+              "does not contain it for some reason"
+          }
+
+          threadBookmarkEntity.threadBookmarkId = threadBookmarkId
+        }
+
+        updateManyOrAbort(chunk)
+      }
   }
 
   @Query("""
@@ -71,4 +89,22 @@ abstract class ThreadBookmarkDao {
 """)
   abstract fun deleteMany(threadIdSet: Set<Long>)
 
+  private suspend fun selectManyIds(ownerThreadIds: Collection<Long>): Map<Long, Long> {
+    val pairs = selectManyThreadBookmarkIdPairs(ownerThreadIds)
+    if (pairs.isEmpty()) {
+      return emptyMap()
+    }
+
+    val resultMap = HashMap<Long, Long>(pairs.size)
+
+    pairs.forEach { (threadBookmarkId, ownerThreadId) -> resultMap[ownerThreadId] = threadBookmarkId }
+    return resultMap
+  }
+
+  data class ThreadBookmarkIdPair(
+    @ColumnInfo(name = ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME)
+    val threadBookmarkId: Long,
+    @ColumnInfo(name = ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME)
+    val ownerThreadId: Long
+  )
 }

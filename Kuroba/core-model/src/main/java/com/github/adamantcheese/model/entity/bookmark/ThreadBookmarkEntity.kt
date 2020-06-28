@@ -17,25 +17,25 @@ import java.util.*
     )
   ],
   indices = [
-    Index(ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME)
+    Index(ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME),
+    Index(
+      value = [ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME],
+      unique = true
+    )
   ]
 )
 data class ThreadBookmarkEntity(
-  @PrimaryKey(autoGenerate = false)
+  @PrimaryKey(autoGenerate = true)
+  @ColumnInfo(name = THREAD_BOOKMARK_ID_COLUMN_NAME)
+  var threadBookmarkId: Long = 0L,
   @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
-  val ownerThreadId: Long = ChanThreadEntity.NO_THREAD_ID,
+  val ownerThreadId: Long = 0L,
   @ColumnInfo(name = SEEN_POSTS_COUNT_COLUMN_NAME)
   val seenPostsCount: Int = -1,
   @ColumnInfo(name = TOTAL_POSTS_COUNT_COLUMN_NAME)
   val totalPostsCount: Int = -1,
-  @ColumnInfo(name = LAST_LOADED_POST_NO_COLUMN_NAME)
-  val lastLoadedPostNo: Long = 0L,
   @ColumnInfo(name = LAST_VIEWED_POST_NO_COLUMN_NAME)
   val lastViewedPostNo: Long = 0L,
-  @ColumnInfo(name = SEEN_QUOTES_COUNT_COLUMN_NAME)
-  val seenQuotesCount: Int = -1,
-  @ColumnInfo(name = TOTAL_QUOTES_COUNT_COLUMN_NAME)
-  val totalQuotesCount: Int = -1,
   @ColumnInfo(name = TITLE_COLUMN_NAME)
   val title: String? = null,
   @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
@@ -49,13 +49,11 @@ data class ThreadBookmarkEntity(
   companion object {
     const val TABLE_NAME = "thread_bookmark"
 
+    const val THREAD_BOOKMARK_ID_COLUMN_NAME = "thread_bookmark_id"
     const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
     const val SEEN_POSTS_COUNT_COLUMN_NAME = "seen_posts_count"
     const val TOTAL_POSTS_COUNT_COLUMN_NAME = "total_posts_count"
-    const val LAST_LOADED_POST_NO_COLUMN_NAME = "last_loaded_post_no"
     const val LAST_VIEWED_POST_NO_COLUMN_NAME = "last_viewed_post_no"
-    const val SEEN_QUOTES_COUNT_COLUMN_NAME = "seen_quotes_count"
-    const val TOTAL_QUOTES_COUNT_COLUMN_NAME = "total_quotes_count"
     const val TITLE_COLUMN_NAME = "title"
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val STATE_COLUMN_NAME = "state"

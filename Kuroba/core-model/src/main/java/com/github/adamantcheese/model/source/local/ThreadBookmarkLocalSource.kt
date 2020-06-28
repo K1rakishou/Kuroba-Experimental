@@ -1,22 +1,26 @@
 package com.github.adamantcheese.model.source.local
 
+import com.github.adamantcheese.common.flatMapIndexed
 import com.github.adamantcheese.common.mapReverseIndexedNotNull
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.mapper.ThreadBookmarkMapper
+import com.github.adamantcheese.model.mapper.ThreadBookmarkReplyMapper
 import com.github.adamantcheese.model.source.cache.ChanDescriptorCache
 import com.github.adamantcheese.model.source.cache.GenericCacheSource
 
 class ThreadBookmarkLocalSource(
   database: KurobaDatabase,
   loggerTag: String,
+  private val isDevFlavor: Boolean,
   private val logger: Logger,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
   private val TAG = "$loggerTag ThreadBookmarkLocalSource"
   private val threadBookmarkDao = database.threadBookmarkDao()
+  private val threadBookmarkReplyDao = database.threadBookmarkReplyDao()
   private val bookmarksCache = GenericCacheSource<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>()
 
   suspend fun selectAll(): List<ThreadBookmark> {
@@ -74,7 +78,7 @@ class ThreadBookmarkLocalSource(
       toInsertOrUpdateThreadDescriptors
     )
 
-    val toInsertOrUpdateEntities = toInsertOrUpdateInDatabase.map { orderedThreadBookmark ->
+    val toInsertOrUpdateThreadBookmarkEntities = toInsertOrUpdateInDatabase.map { orderedThreadBookmark ->
       val threadBookmark = orderedThreadBookmark.threadBookmark
       val threadId = threadIdMap[threadBookmark.threadDescriptor] ?: -1L
 
@@ -85,7 +89,28 @@ class ThreadBookmarkLocalSource(
       )
     }
 
-    threadBookmarkDao.insertOrUpdateMany(toInsertOrUpdateEntities)
+    threadBookmarkDao.insertOrUpdateMany(toInsertOrUpdateThreadBookmarkEntities)
+
+    if (isDevFlavor) {
+      toInsertOrUpdateThreadBookmarkEntities.forEach { entity ->
+        check(entity.threadBookmarkId > 0L) {
+          "ThreadBookmark's databaseId is not set! entity.threadBookmarkId: ${entity.threadBookmarkId}"
+        }
+      }
+    }
+
+    val toInsertOrUpdateBookmarkReplyEntities = toInsertOrUpdateInDatabase.flatMapIndexed { index, orderedThreadBookmark ->
+      val threadBookmarkId = toInsertOrUpdateThreadBookmarkEntities[index].threadBookmarkId
+
+      return@flatMapIndexed orderedThreadBookmark.threadBookmark.threadBookmarkReplies.values.map { threadBookmarkReply ->
+        ThreadBookmarkReplyMapper.toThreadBookmarkReplyEntity(
+          threadBookmarkId,
+          threadBookmarkReply
+        )
+      }
+    }
+
+    threadBookmarkReplyDao.insertOrUpdateMany(toInsertOrUpdateBookmarkReplyEntities)
 
     bookmarksCache.storeMany(
       toInsertOrUpdateInDatabase.associateBy { orderedThreadBookmark ->
@@ -152,7 +177,7 @@ class ThreadBookmarkLocalSource(
     return map
   }
 
-  internal data class OrderedThreadBookmark(
+  data class OrderedThreadBookmark(
     val threadBookmark: ThreadBookmark,
     val order: Int
   )

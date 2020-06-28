@@ -40,6 +40,9 @@ interface ModelMainComponent {
     fun verboseLogs(@VerboseLogs verboseLogs: Boolean): Builder
 
     @BindsInstance
+    fun isDevFlavor(@IsDevFlavor isDevFlavor: Boolean): Builder
+
+    @BindsInstance
     fun okHttpDns(@OkHttpDns dns: Dns): Builder
 
     @BindsInstance

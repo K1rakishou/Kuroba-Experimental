@@ -35,6 +35,7 @@ import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
+import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
@@ -380,6 +381,7 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             SiteRepository siteRepository,
             DatabaseManager databaseManager,
+            LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
             ParsePostRepliesUseCase parsePostRepliesUseCase
     ) {
@@ -391,7 +393,7 @@ public class ManagerModule {
                 bookmarksManager,
                 siteRepository,
                 databaseManager.getDatabaseSavedReplyManager(),
-                databaseManager.getDatabaseLoadableManager(),
+                lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,
                 parsePostRepliesUseCase
         );
@@ -433,5 +435,13 @@ public class ManagerModule {
                 bookmarkForegroundWatcher,
                 applicationVisibilityManager
         );
+    }
+
+    @Provides
+    @Singleton
+    public LastViewedPostNoInfoHolder provideLastViewedPostNoInfoHolder() {
+        Logger.d(AppModule.DI_TAG, "LastViewedPostNoInfoHolder");
+
+        return new LastViewedPostNoInfoHolder();
     }
 }

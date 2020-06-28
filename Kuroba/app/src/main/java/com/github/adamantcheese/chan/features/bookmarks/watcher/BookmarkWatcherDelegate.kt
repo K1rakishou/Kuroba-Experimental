@@ -1,20 +1,21 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
-import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase
 import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase
 import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.bookmark.StickyThread
-import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReply
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -29,7 +30,7 @@ class BookmarkWatcherDelegate(
   private val bookmarksManager: BookmarksManager,
   private val siteRepository: SiteRepository,
   private val savedReplyManager: DatabaseSavedReplyManager,
-  private val loadableManager: DatabaseLoadableManager,
+  private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
   private val parsePostRepliesUseCase: ParsePostRepliesUseCase
 ) {
@@ -81,6 +82,7 @@ class BookmarkWatcherDelegate(
     }
 
     if (watchingBookmarkDescriptors.isEmpty()) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, exiting now")
       return
     }
 
@@ -106,6 +108,8 @@ class BookmarkWatcherDelegate(
     if (unsuccessFetchResults.isNotEmpty()) {
       processUnsuccessFetchResults(unsuccessFetchResults)
     }
+
+    // TODO(KurobaEx): show/update notifications for quotes to me
   }
 
   private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {
@@ -125,7 +129,8 @@ class BookmarkWatcherDelegate(
               threadBookmark.updateState(deleted = true)
           }
           is ThreadBookmarkFetchResult.AlreadyDeleted -> {
-            // no-op
+            // No-op. This means that the user has deleted this bookmark while it was fetching info
+            // so we have nothing to do.
           }
           is ThreadBookmarkFetchResult.Success -> {
             throw IllegalStateException("Shouldn't be handled here")
@@ -140,7 +145,6 @@ class BookmarkWatcherDelegate(
 
   private suspend fun processSuccessFetchResults(successFetchResults: List<ThreadBookmarkFetchResult.Success>) {
     val postsQuotingMe = parsePostRepliesUseCase.execute(successFetchResults)
-    // TODO(KurobaEx): store quotes to my posts in the database
 
     val fetchResultPairsList = successFetchResults.map { fetchResult ->
       fetchResult.threadDescriptor to fetchResult.threadBookmarkInfoObject
@@ -155,60 +159,64 @@ class BookmarkWatcherDelegate(
         postObject is ThreadBookmarkInfoPostObject.OriginalPost
       } as? ThreadBookmarkInfoPostObject.OriginalPost
 
-      val newLastLoadedPostNo = threadBookmarkInfoObject.simplePostObjects
-        .lastOrNull()?.postNo() ?: 0L
-
-      if (isDevFlavor) {
-        ensureLastPostCorrectPostNo(threadBookmarkInfoObject, newLastLoadedPostNo)
-      }
-
       checkNotNull(originalPost) { "threadBookmarkInfoObject has no OP!" }
-
-      val loadable = loadableManager.getByThreadDescriptor(threadDescriptor)
-      val lastViewedPostNoInLoadable = loadable?.lastViewed?.toLong() ?: 0L
 
       bookmarksManager.updateBookmark(
         threadDescriptor,
         BookmarksManager.NotifyListenersOption.NotifyDelayed
       ) { threadBookmark ->
+        // If we have just bookmarked this thread then use the last viewed post no to mark all posts
+        // with postNo less than lastViewedPostNo as seen (as well as replies and notifications). We
+        // need to do this to handle a case when you open a thread, then scroll to the bottom and
+        // bookmark that thread. In such case, if we don't mark those posts then all posts will be
+        // considered "unseen yet" so the user will see notifications and other stuff.
         val lastViewedPostNo = if (threadBookmark.lastViewedPostNo > 0) {
           threadBookmark.lastViewedPostNo
         } else {
-          lastViewedPostNoInLoadable
+          lastViewedPostNoInfoHolder.getLastViewedPostNoOrZero(threadDescriptor)
         }
 
         threadBookmark.updateTotalPostsCount(threadBookmarkInfoObject.getPostsCountWithoutOP())
-        threadBookmark.updateLastLoadedPostNo(newLastLoadedPostNo)
+
+        // We need to handle rolling sticky (sticky threads with max posts cap) a little bit
+        // differently so store this information for now (we don't need to persist it though)
         threadBookmark.stickyThread = originalPost.stickyThread
 
+        // seenPostsCount must never be greater than totalPostsCount, but it may actually be greater
+        // for couple of moments in case when we are at the very bottom of a bookmarked thread and
+        // we fetch a new post. In such case we will first update seenPostsCount in BookmarksManager,
+        // but we won't update totalPostsCount until we fetch bookmark info, so for that short amount
+        // of time seenPostsCount will be greater than totalPostsCount so we need to correct that
+        // info here. If we don't do that, then in the previous case there will be one unseen post
+        // left and it will be impossible to get rid of it by scrolling to the bottom of the thread.
         if (threadBookmark.seenPostsCount > threadBookmark.totalPostsCount) {
           threadBookmark.seenPostsCount = threadBookmark.totalPostsCount
         }
 
+        // When seenPostsCount is zero we can update it seen post information we get by calculating
+        // the amount of posts which postNo is less or equals to lastViewedPostNo
         if (threadBookmark.seenPostsCount == 0) {
-          threadBookmark.seenPostsCount = threadBookmarkInfoObject.getPostsCountWithoutOP()
+          threadBookmark.seenPostsCount = threadBookmarkInfoObject.countAmountOfSeenPosts(lastViewedPostNo)
         }
 
         quotesToMeMap.forEach { (myPostNo, replyDescriptors) ->
           replyDescriptors.forEach { postReplyDescriptor ->
-            if (threadBookmark.threadBookmarkReplies.containsKey(postReplyDescriptor)) {
-              return@forEach
-            }
-
-            threadBookmark.threadBookmarkReplies.put(
+            createOrUpdateReplyToMyPosts(
+              threadBookmark,
               postReplyDescriptor,
-              ThreadBookmarkReply(
-                postDescriptor = postReplyDescriptor,
-                repliesTo = PostDescriptor.create(threadDescriptor, myPostNo),
-                // If lastViewPostNo is greater or equal to reply's postNo then we have already seen
-                // that reply and we don't need to notify the user about it.
-                alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo,
-                alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo
-              )
+              threadDescriptor,
+              myPostNo,
+              lastViewedPostNo
             )
           }
         }
 
+        // In case of rolling sticky thread the total amount of posts will mostly be the same
+        // (from the point it reaches the cap and on) and once seenPostsCount becomes equal to
+        // totalPostsCount it will stuck there forever and the user won't see new posts marker from
+        // rolling sticky threads. So we need to update it a little bit differently. We need to
+        // calculate the amount of new posts (by counting every post which postNo is greater than
+        // lastViewedPostNo) and then subtracting it from seenPostsCount
         if (originalPost.stickyThread is StickyThread.StickyWithCap) {
           val newPostsCount = threadBookmarkInfoObject.simplePostObjects
             .filter { threadBookmarkInfoPostObject ->
@@ -221,6 +229,9 @@ class BookmarkWatcherDelegate(
           threadBookmark.updateSeenPostCountInRollingSticky(newPostsCount)
         }
 
+        threadBookmark.setBumpLimit(originalPost.isBumpLimit)
+        threadBookmark.setImageLimit(originalPost.isImageLimit)
+
         threadBookmark.updateState(
           archived = originalPost.closed,
           closed = originalPost.archived
@@ -231,9 +242,39 @@ class BookmarkWatcherDelegate(
 
       ++index
     }
+  }
 
-    // TODO(KurobaEx): filter out quotes to my posts that we have already shown notifications for
-    // TODO(KurobaEx): show notifications for new quotes
+  private fun createOrUpdateReplyToMyPosts(
+    threadBookmark: ThreadBookmark,
+    postReplyDescriptor: PostDescriptor,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    myPostNo: Long,
+    lastViewedPostNo: Long
+  ) {
+    if (!threadBookmark.threadBookmarkReplies.containsKey(postReplyDescriptor)) {
+      threadBookmark.threadBookmarkReplies.put(
+        postReplyDescriptor,
+        ThreadBookmarkReply(
+          postDescriptor = postReplyDescriptor,
+          repliesTo = PostDescriptor.create(threadDescriptor, myPostNo),
+          // If lastViewPostNo is greater or equal to reply's postNo then we have already seen
+          // that reply and we don't need to notify the user about it.
+          alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo,
+          alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo
+        )
+      )
+    } else {
+      val existingReply = checkNotNull(threadBookmark.threadBookmarkReplies[postReplyDescriptor])
+
+      // Mark replies as seen and notified if necessary
+      if (!existingReply.alreadySeen) {
+        existingReply.alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo
+      }
+
+      if (!existingReply.alreadyNotified) {
+        existingReply.alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo
+      }
+    }
   }
 
   @OptIn(ExperimentalTime::class)
@@ -353,21 +394,7 @@ class BookmarkWatcherDelegate(
     }
   }
 
-  private fun ensureLastPostCorrectPostNo(
-    threadBookmarkInfoObject: ThreadBookmarkInfoObject,
-    lastLoadedPostNo: Long
-  ) {
-    val maxPostNo = threadBookmarkInfoObject.simplePostObjects
-      .map { it.postNo() }
-      .maxBy { postNo -> postNo } ?: 0L
-
-    check(lastLoadedPostNo == maxPostNo) {
-      "lastLoadedPostNo ($lastLoadedPostNo) != maxPostNo ($maxPostNo)"
-    }
-  }
-
   companion object {
     private const val TAG = "BookmarkWatcherDelegate"
   }
-
 }

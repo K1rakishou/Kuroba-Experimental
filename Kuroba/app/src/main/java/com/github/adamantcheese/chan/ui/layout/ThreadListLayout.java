@@ -41,9 +41,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase;
+import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
-import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -66,6 +66,7 @@ import com.github.adamantcheese.chan.ui.view.PostInfoMapItemDecoration;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -97,8 +98,6 @@ public class ThreadListLayout
     public static final int MAX_SMOOTH_SCROLL_DISTANCE = 20;
 
     @Inject
-    WatchManager watchManager;
-    @Inject
     ThemeHelper themeHelper;
     @Inject
     PostFilterManager postFilterManager;
@@ -106,6 +105,8 @@ public class ThreadListLayout
     ReplyViewStateManager replyViewStateManager;
     @Inject
     ExtractPostMapInfoHolderUseCase extractPostMapInfoHolderUseCase;
+    @Inject
+    LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder;
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -134,6 +135,21 @@ public class ThreadListLayout
             onRecyclerViewScrolled();
         }
     };
+
+    @Nullable
+    private ChanDescriptor.ThreadDescriptor currentThreadDescriptorOrNull() {
+        ChanThread thread = showingThread;
+        if (thread == null) {
+            return null;
+        }
+
+        Loadable loadable = thread.getLoadable();
+        if (loadable == null) {
+            return null;
+        }
+
+        return loadable.getThreadDescriptorOrNull();
+    }
 
     public ThreadListLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -220,6 +236,20 @@ public class ThreadListLayout
                 // As requested by the RecyclerView, make sure that the adapter isn't changed
                 // while in a layout pass. Postpone to the next frame.
                 mainHandler.post(() -> ThreadListLayout.this.callback.onListScrolledToBottom());
+            }
+
+            updateLastViewedPostNo(last);
+        }
+    }
+
+    private void updateLastViewedPostNo(int last) {
+        if (last > lastPostCount) {
+            ChanDescriptor.ThreadDescriptor threadDescriptor = currentThreadDescriptorOrNull();
+            if (threadDescriptor != null) {
+                long postNo = postAdapter.getPostNo(last);
+                if (postNo >= 0L) {
+                    lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo);
+                }
             }
         }
     }
