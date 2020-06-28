@@ -65,6 +65,8 @@ class SettingsCoordinator(
   lateinit var fileManager: FileManager
   @Inject
   lateinit var watchManager: WatchManager
+  @Inject
+  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -78,7 +80,8 @@ class SettingsCoordinator(
 
   private val threadWatcherSettingsScreen by lazy {
     ThreadWatcherSettingsScreen(
-      context
+      context,
+      applicationVisibilityManager
     )
   }
 

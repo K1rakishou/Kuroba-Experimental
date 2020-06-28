@@ -1,16 +1,28 @@
 package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.ThreadWatcherScreen
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
+import com.github.adamantcheese.chan.utils.PhoneWithBackgroundLimitationsHelper
 import java.util.concurrent.TimeUnit
 
-class ThreadWatcherSettingsScreen(context: Context) : BaseSettingsScreen(
+
+class ThreadWatcherSettingsScreen(
+  context: Context,
+  private val applicationVisibilityManager: ApplicationVisibilityManager
+) : BaseSettingsScreen(
   context,
   ThreadWatcherScreen,
   R.string.settings_screen_watch
@@ -53,6 +65,7 @@ class ThreadWatcherSettingsScreen(context: Context) : BaseSettingsScreen(
           identifier = ThreadWatcherScreen.MainGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_background_description },
+          checkChangedCallback = { checked -> showShittyPhonesBackgroundLimitationsExplanationDialog(checked) },
           setting = ChanSettings.watchBackground,
           dependsOnSetting = ChanSettings.watchEnabled
         )
@@ -152,6 +165,44 @@ class ThreadWatcherSettingsScreen(context: Context) : BaseSettingsScreen(
         return group
       }
     )
+  }
+
+  private fun showShittyPhonesBackgroundLimitationsExplanationDialog(checked: Boolean) {
+    if (!PhoneWithBackgroundLimitationsHelper.isPhoneWithPossibleBackgroundLimitations()) {
+      return
+    }
+
+    if (!checked) {
+      return
+    }
+
+    if (PersistableChanState.shittyPhonesBackgroundLimitationsExplanationDialogShown.get()) {
+      return
+    }
+
+    if (!applicationVisibilityManager.isAppInForeground()) {
+      return
+    }
+
+    val descriptionText = SpannableString(
+      context.getString(
+        R.string.setting_watch_background_limitations_dialog_description,
+        PhoneWithBackgroundLimitationsHelper.getFormattedLink()
+      )
+    )
+
+    Linkify.addLinks(descriptionText, Linkify.WEB_URLS);
+
+    val dialog = AlertDialog.Builder(context)
+      .setTitle(R.string.setting_watch_background_limitations_dialog_title)
+      .setPositiveButton(R.string.ok) { _, _ ->
+        PersistableChanState.shittyPhonesBackgroundLimitationsExplanationDialogShown.set(true)
+      }
+      .setMessage(descriptionText)
+      .create()
+
+    dialog.show()
+    (dialog.findViewById<TextView>(android.R.id.message))?.movementMethod = LinkMovementMethod.getInstance()
   }
 
   companion object {

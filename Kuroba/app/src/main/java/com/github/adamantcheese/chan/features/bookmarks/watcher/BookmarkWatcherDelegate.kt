@@ -109,7 +109,13 @@ class BookmarkWatcherDelegate(
       processUnsuccessFetchResults(unsuccessFetchResults)
     }
 
-    // TODO(KurobaEx): show/update notifications for quotes to me
+    if (!isUpdatingCurrentlyOpenedThread) {
+      showOrUpdateNotifications()
+    }
+  }
+
+  private fun showOrUpdateNotifications() {
+    TODO("Not yet implemented")
   }
 
   private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {

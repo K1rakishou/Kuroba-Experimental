@@ -454,6 +454,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_peek">Heads-up notification on quotes</string>
     <string name="setting_watch_peek_description">Show a heads-up notification when quoted</string>
     <string name="setting_watch_led">Notification light</string>
+    <string name="setting_watch_background_limitations_dialog_title">Regarding background limitation of certain phone models…</string>
+    <string name="setting_watch_background_limitations_dialog_description">It appears that your phone model is one of the models with known problems related to app background execution limitations. If you ever notice that you have no notifications (even though they are supposed to be) when the app is in background, then check this link out for possible solutions:\n\n%1$s"</string>
+
     <string name="settings_group_about">About</string>
     <string name="settings_update_check">Tap to check for updates</string>
     <string name="settings_updates_are_disabled">Updates are disabled</string>
