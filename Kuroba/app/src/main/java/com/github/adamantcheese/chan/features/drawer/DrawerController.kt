@@ -381,6 +381,7 @@ class DrawerController(
     if (state.totalUnseenPostsCount > 0) {
       val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
 
+      badgeDrawable.maxCharacterCount = 5
       badgeDrawable.number = state.totalUnseenPostsCount
 
       if (state.hasUnseenReplies) {

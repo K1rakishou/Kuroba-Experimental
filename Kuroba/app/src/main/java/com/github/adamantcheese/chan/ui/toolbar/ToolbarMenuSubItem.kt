@@ -46,7 +46,7 @@ class ToolbarMenuSubItem {
     clicked: ClickCallback? = null,
     visible: Boolean = true,
     isCurrentlySelected: Boolean = false,
-    value: Any?  = null
+    value: Any? = null
   ) {
     this.id = id
     this.text = AndroidUtils.getString(textId)
@@ -63,7 +63,7 @@ class ToolbarMenuSubItem {
     clicked: ClickCallback? = null,
     visible: Boolean = true,
     isCurrentlySelected: Boolean = false,
-    value: Any?  = null
+    value: Any? = null
   ) {
     this.id = id
     this.text = text
@@ -78,12 +78,10 @@ class ToolbarMenuSubItem {
   }
 
   fun performClick() {
-    if (clickCallback != null) {
-      clickCallback!!.clicked(this)
-    }
+    clickCallback?.clicked(this)
   }
 
   interface ClickCallback {
-    fun clicked(subItem: ToolbarMenuSubItem?)
+    fun clicked(subItem: ToolbarMenuSubItem)
   }
 }

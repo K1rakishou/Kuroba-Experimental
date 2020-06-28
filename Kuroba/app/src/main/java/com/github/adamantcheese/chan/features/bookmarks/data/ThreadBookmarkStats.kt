@@ -8,5 +8,6 @@ data class ThreadBookmarkStats(
   val totalPosts: Int = 0,
   val isBumpLimit: Boolean = false,
   val isImageLimit: Boolean = false,
-  val isOnLastPage: Boolean = false
+  val isOnLastPage: Boolean = false,
+  val isFirstFetch: Boolean = false
 )

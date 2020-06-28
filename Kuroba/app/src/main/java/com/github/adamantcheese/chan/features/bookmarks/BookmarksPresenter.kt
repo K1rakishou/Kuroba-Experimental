@@ -122,6 +122,16 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     bookmarksManager.onBookmarkMoved(fromPosition, toPosition)
   }
 
+  fun pruneNonActive() {
+    bookmarksManager.pruneNonActive()
+  }
+
+  fun markAllAsSeen() {
+    bookmarksManager.markAllAsSeen()
+
+    // TODO(KurobaEx): update notifications
+  }
+
   fun onSearchModeChanged(visible: Boolean) {
     isSearchMode.set(visible)
 
@@ -139,7 +149,7 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
     reloadBookmarks()
   }
 
-  suspend fun showBookmarks(searchQuery: String?) {
+  private suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
 
@@ -162,7 +172,8 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
             totalPosts = threadBookmarkView.totalPostsCount,
             isBumpLimit = threadBookmarkView.isBumpLimit(),
             isImageLimit = threadBookmarkView.isImageLimit(),
-            isOnLastPage = false
+            isOnLastPage = false,
+            isFirstFetch = threadBookmarkView.isFirstFetch()
           )
         )
       }

@@ -112,28 +112,28 @@ class BookmarkWatcherDelegate(
     unsuccessFetchResults.forEachIndexed { index, unsuccessFetchResult ->
       val threadDescriptor = unsuccessFetchResult.threadDescriptor
 
-      when (unsuccessFetchResult) {
-        is ThreadBookmarkFetchResult.Error,
-        is ThreadBookmarkFetchResult.BadStatusCode -> {
-          bookmarksManager.updateBookmark(
-            threadDescriptor,
-            BookmarksManager.NotifyListenersOption.NotifyDelayed
-          ) { threadBookmark ->
-            threadBookmark.updateState(error = true)
+      bookmarksManager.updateBookmark(
+        threadDescriptor,
+        BookmarksManager.NotifyListenersOption.NotifyDelayed
+      ) { threadBookmark ->
+        when (unsuccessFetchResult) {
+          is ThreadBookmarkFetchResult.Error,
+          is ThreadBookmarkFetchResult.BadStatusCode -> {
+              threadBookmark.updateState(error = true)
+          }
+          is ThreadBookmarkFetchResult.NotFoundOnServer -> {
+              threadBookmark.updateState(deleted = true)
+          }
+          is ThreadBookmarkFetchResult.AlreadyDeleted -> {
+            // no-op
+          }
+          is ThreadBookmarkFetchResult.Success -> {
+            throw IllegalStateException("Shouldn't be handled here")
           }
         }
-        is ThreadBookmarkFetchResult.NotFoundOnServer -> {
-          bookmarksManager.updateBookmark(
-            threadDescriptor,
-            BookmarksManager.NotifyListenersOption.NotifyDelayed
-          ) { threadBookmark ->
-            threadBookmark.updateState(deleted = true)
-          }
-        }
-        is ThreadBookmarkFetchResult.AlreadyDeleted -> {
-          // no-op
-        }
-        is ThreadBookmarkFetchResult.Success -> throw IllegalStateException("Shouldn't be handled here")
+
+        // Clear first fetch flag even in case of an error
+        threadBookmark.clearFirstFetchFlag()
       }
     }
   }
@@ -171,7 +171,6 @@ class BookmarkWatcherDelegate(
         threadDescriptor,
         BookmarksManager.NotifyListenersOption.NotifyDelayed
       ) { threadBookmark ->
-
         val lastViewedPostNo = if (threadBookmark.lastViewedPostNo > 0) {
           threadBookmark.lastViewedPostNo
         } else {
@@ -226,6 +225,8 @@ class BookmarkWatcherDelegate(
           archived = originalPost.closed,
           closed = originalPost.archived
         )
+
+        threadBookmark.clearFirstFetchFlag()
       }
 
       ++index

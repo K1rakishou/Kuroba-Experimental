@@ -29,6 +29,7 @@ class ThreadBookmarkView private constructor(
   fun isBumpLimit(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_BUMP_LIMIT)
   fun isImageLimit(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_IMAGE_LIMIT)
   fun isRollingSticky(): Boolean = stickyThread is StickyThread.StickyWithCap
+  fun isFirstFetch(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_FIRST_FETCH)
 
   fun postsCount(): Int = totalPostsCount
 

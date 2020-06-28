@@ -182,9 +182,9 @@ class BookmarkWatcherController(
   private fun isDesiredBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
     return when (bookmarkChange) {
       BookmarksManager.BookmarkChange.BookmarksInitialized,
-      BookmarksManager.BookmarkChange.BookmarkCreated,
-      BookmarksManager.BookmarkChange.BookmarkDeleted -> true
-      BookmarksManager.BookmarkChange.BookmarkUpdated -> false
+      BookmarksManager.BookmarkChange.BookmarksCreated,
+      BookmarksManager.BookmarkChange.BookmarksDeleted -> true
+      BookmarksManager.BookmarkChange.BookmarksUpdated -> false
     }
   }
 

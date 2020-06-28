@@ -36,6 +36,8 @@ class ThreadBookmark private constructor(
     )
   }
 
+  fun clearFirstFetchFlag() = state.clear(BOOKMARK_STATE_FIRST_FETCH)
+
   fun hasUnseenReplies(): Boolean {
     return threadBookmarkReplies.values.any { threadBookmarkReply -> !threadBookmarkReply.alreadySeen }
   }
@@ -71,6 +73,15 @@ class ThreadBookmark private constructor(
         threadBookmarkReply.postDescriptor.postNo <= lastSeenPostNo && !threadBookmarkReply.alreadySeen
       }
       .forEach { threadBookmarkReply -> threadBookmarkReply.alreadySeen = true }
+  }
+
+  fun markAsSeen() {
+    seenPostsCount = totalPostsCount
+
+    threadBookmarkReplies.values.forEach { threadBookmarkReply ->
+      threadBookmarkReply.alreadySeen = true
+      threadBookmarkReply.alreadyNotified = true
+    }
   }
 
   fun updateState(
@@ -202,9 +213,17 @@ class ThreadBookmark private constructor(
      * */
     const val BOOKMARK_STATE_THREAD_IMAGE_LIMIT = 1 shl 6
 
+    /**
+     * Default bookmark state that is getting cleared once the very first fetch is completed with
+     * any result (success/error). We need this flag to show the "Loading" label for bookmarks we
+     * have no info yet (before their very first fetch).
+     * */
+    const val BOOKMARK_STATE_FIRST_FETCH = 1 shl 7
+
     fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadBookmark {
       val bookmarkInitialState = BitSet()
       bookmarkInitialState.set(BOOKMARK_STATE_WATCHING)
+      bookmarkInitialState.set(BOOKMARK_STATE_FIRST_FETCH)
 
       return ThreadBookmark(
         threadDescriptor = threadDescriptor,

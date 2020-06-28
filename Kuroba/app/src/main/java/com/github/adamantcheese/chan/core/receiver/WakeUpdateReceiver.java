@@ -20,30 +20,20 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import com.github.adamantcheese.chan.core.manager.WakeManager;
-import com.github.adamantcheese.chan.utils.Logger;
-
-import java.text.DateFormat;
-import java.util.Date;
-
-import javax.inject.Inject;
-
-import static com.github.adamantcheese.chan.Chan.inject;
-
 public class WakeUpdateReceiver
         extends BroadcastReceiver {
     private static final String TAG = "WakeUpdateReceiver";
 
-    @Inject
-    WakeManager wakeManager;
+//    @Inject
+//    WakeManager wakeManager;
 
     public WakeUpdateReceiver() {
-        inject(this);
+//        inject(this);
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Logger.d(TAG, "Alarm trigger at " + DateFormat.getTimeInstance().format(new Date()));
-        wakeManager.onBroadcastReceived();
+//        Logger.d(TAG, "Alarm trigger at " + DateFormat.getTimeInstance().format(new Date()));
+//        wakeManager.onBroadcastReceived();
     }
 }

@@ -68,6 +68,11 @@ class BookmarksManager(
     appScope.launch {
       delayedBookmarksChangedSubject
         .debounce(1, TimeUnit.SECONDS)
+        .doOnNext { bookmarkChange ->
+          if (isDevAppFlavor) {
+            Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
+          }
+        }
         .onBackpressureLatest()
         .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
     }
@@ -103,6 +108,11 @@ class BookmarksManager(
   fun listenForBookmarksChanges(): Flowable<BookmarkChange> {
     return bookmarksChangedSubject
       .observeOn(AndroidSchedulers.mainThread())
+      .doOnNext { bookmarkChange ->
+        if (isDevAppFlavor) {
+          Logger.d(TAG, "bookmarksChanged(${bookmarkChange::class.java.simpleName})")
+        }
+      }
       .onBackpressureLatest()
       .hide()
   }
@@ -159,7 +169,7 @@ class BookmarksManager(
       orders.add(0, threadDescriptor)
       bookmarks[threadDescriptor] = threadBookmark
 
-      bookmarksChanged(BookmarkChange.BookmarkCreated)
+      bookmarksChanged(BookmarkChange.BookmarksCreated)
       Logger.d(TAG, "Bookmark created ($threadDescriptor)")
     }
   }
@@ -175,7 +185,7 @@ class BookmarksManager(
       bookmarks.remove(threadDescriptor)
       orders.remove(threadDescriptor)
 
-      bookmarksChanged(BookmarkChange.BookmarkDeleted)
+      bookmarksChanged(BookmarkChange.BookmarksDeleted)
       Logger.d(TAG, "Bookmark deleted ($threadDescriptor)")
     }
   }
@@ -214,11 +224,46 @@ class BookmarksManager(
 
       if (notifyListenersOption != NotifyListenersOption.DoNotNotify) {
         if (notifyListenersOption == NotifyListenersOption.Notify) {
-          bookmarksChanged(BookmarkChange.BookmarkUpdated)
+          bookmarksChanged(BookmarkChange.BookmarksUpdated)
         } else {
-          delayedBookmarksChanged(BookmarkChange.BookmarkUpdated)
+          delayedBookmarksChanged(BookmarkChange.BookmarksUpdated)
         }
       }
+    }
+  }
+
+  fun pruneNonActive() {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    lock.write {
+      val toDelete = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+
+      bookmarks.entries.forEach { (threadDescriptor, threadBookmark) ->
+        if (!threadBookmark.isActive()) {
+          toDelete += threadDescriptor
+        }
+      }
+
+      if (toDelete.size > 0) {
+        toDelete.forEach { threadDescriptor ->
+          bookmarks.remove(threadDescriptor)
+          orders.remove(threadDescriptor)
+        }
+      }
+
+      bookmarksChanged(BookmarkChange.BookmarksDeleted)
+    }
+  }
+
+  fun markAllAsSeen() {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    lock.write {
+      bookmarks.entries.forEach { (_, threadBookmark) ->
+        threadBookmark.markAsSeen()
+      }
+
+      bookmarksChanged(BookmarkChange.BookmarksUpdated)
     }
   }
 
@@ -310,7 +355,7 @@ class BookmarksManager(
 
     lock.write {
       orders.add(to, orders.removeAt(from))
-      bookmarksChanged(BookmarkChange.BookmarkUpdated)
+      bookmarksChanged(BookmarkChange.BookmarksUpdated)
 
       Logger.d(TAG, "Bookmark moved (from=$from, to=$to)")
     }
@@ -422,7 +467,7 @@ class BookmarksManager(
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
     if (isDevAppFlavor) {
-      Logger.d(TAG, "bookmarksChanged(${bookmarkChange::class.java.simpleName})")
+      ensureBookmarksAndOrdersConsistency()
     }
 
     persistTaskSubject.onNext(Unit)
@@ -431,7 +476,7 @@ class BookmarksManager(
 
   private fun delayedBookmarksChanged(bookmarkChange: BookmarkChange) {
     if (isDevAppFlavor) {
-      Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
+      ensureBookmarksAndOrdersConsistency()
     }
 
     delayedBookmarksChangedSubject.onNext(bookmarkChange)
@@ -499,9 +544,9 @@ class BookmarksManager(
 
   sealed class BookmarkChange {
     object BookmarksInitialized : BookmarkChange()
-    object BookmarkCreated : BookmarkChange()
-    object BookmarkDeleted : BookmarkChange()
-    object BookmarkUpdated : BookmarkChange()
+    object BookmarksCreated : BookmarkChange()
+    object BookmarksDeleted : BookmarkChange()
+    object BookmarksUpdated : BookmarkChange()
   }
 
   companion object {

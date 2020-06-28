@@ -27,6 +27,7 @@ class ApplicationVisibilityManager {
   fun getCurrentAppVisibility(): ApplicationVisibility = appVisibilityStateSubject.value
     ?: ApplicationVisibility.Background
 
+  fun isAppInForeground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Foreground
 }
 
 sealed class ApplicationVisibility {

@@ -15,6 +15,38 @@ object DialogUtils {
 
   @JvmStatic
   @JvmOverloads
+  fun createSimpleConfirmationDialog(
+    context: Context,
+    isAppInForeground: Boolean,
+    titleTextId: Int,
+    descriptionTextId: Int? = null,
+    onPositiveButtonClickListener: (() -> Unit),
+    positiveButtonTextId: Int = R.string.ok,
+    onNegativeButtonClickListener: (() -> Unit) = { },
+    negativeButtonTextId: Int = R.string.cancel
+  ) {
+    if (!isAppInForeground) {
+      return
+    }
+
+    val builder = AlertDialog.Builder(context)
+      .setTitle(titleTextId)
+      .setPositiveButton(positiveButtonTextId) { _, _ ->
+        onPositiveButtonClickListener.invoke()
+      }
+      .setNegativeButton(negativeButtonTextId) { _, _ -> onNegativeButtonClickListener.invoke() }
+
+    if (descriptionTextId != null) {
+      builder.setMessage(descriptionTextId)
+    }
+
+    builder
+      .create()
+      .show()
+  }
+
+  @JvmStatic
+  @JvmOverloads
   fun createSimpleDialogWithInput(
     context: Context,
     dialogTitleTextId: Int,

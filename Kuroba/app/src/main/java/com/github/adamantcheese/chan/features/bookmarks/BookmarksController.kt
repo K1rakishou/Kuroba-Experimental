@@ -8,9 +8,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
+import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
@@ -19,8 +21,10 @@ import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationC
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
+import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
+import com.github.adamantcheese.chan.utils.DialogUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.exhaustive
@@ -30,12 +34,17 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 
 class BookmarksController(context: Context)
   : Controller(context),
   BookmarksView,
   RequiresNoBottomNavBar,
   ToolbarNavigationController.ToolbarSearchCallback {
+
+  @Inject
+  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
   private val bookmarksPresenter = BookmarksPresenter()
@@ -44,6 +53,8 @@ class BookmarksController(context: Context)
 
   override fun onCreate() {
     super.onCreate()
+
+    inject(this)
 
     navigation.title = getString(R.string.controller_bookmarks)
     navigation.swipeable = false
@@ -62,6 +73,24 @@ class BookmarksController(context: Context)
         viewModeChanged.set(true)
         bookmarksPresenter.onViewBookmarksModeChanged()
       }
+      .withOverflow(navigationController)
+      .withSubItem(
+        ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
+        R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
+        object : ToolbarMenuSubItem.ClickCallback {
+          override fun clicked(subItem: ToolbarMenuSubItem) {
+            onMarkAllBookmarksAsSeenClicked(subItem)
+          }
+        })
+      .withSubItem(
+        ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
+        R.string.controller_bookmarks_prune_inactive_bookmarks,
+        object : ToolbarMenuSubItem.ClickCallback {
+          override fun clicked(subItem: ToolbarMenuSubItem) {
+            onPruneNonActiveBookmarksClicked(subItem)
+          }
+        })
+      .build()
       .build()
 
     view = inflate(context, R.layout.controller_bookmarks)
@@ -88,6 +117,22 @@ class BookmarksController(context: Context)
     updateLayoutManager()
 
     bookmarksPresenter.onCreate(this)
+  }
+
+  private fun onPruneNonActiveBookmarksClicked(subItem: ToolbarMenuSubItem) {
+    DialogUtils.createSimpleConfirmationDialog(
+      context,
+      applicationVisibilityManager.isAppInForeground(),
+      R.string.controller_bookmarks_prune_confirmation_message,
+      positiveButtonTextId = R.string.controller_bookmarks_prune,
+      onPositiveButtonClickListener = {
+        bookmarksPresenter.pruneNonActive()
+      }
+    )
+  }
+
+  private fun onMarkAllBookmarksAsSeenClicked(subItem: ToolbarMenuSubItem) {
+    bookmarksPresenter.markAllAsSeen()
   }
 
   private fun updateLayoutManager(forced: Boolean = false) {
@@ -155,13 +200,13 @@ class BookmarksController(context: Context)
         BookmarksControllerState.Empty -> {
           epoxyTextView {
             id("bookmarks_are_empty_text_view")
-            message(context.getString(R.string.bookmarks_are_empty))
+            message(context.getString(R.string.controller_bookmarks_bookmarks_are_empty))
           }
         }
         is BookmarksControllerState.NothingFound -> {
           epoxyTextView {
             id("bookmarks_nothing_found_by_search_query")
-            message(context.getString(R.string.bookmarks_nothing_found_by_search_query, state.searchQuery))
+            message(context.getString(R.string.controller_bookmarks_nothing_found_by_search_query, state.searchQuery))
           }
         }
         is BookmarksControllerState.Error -> {
@@ -313,5 +358,8 @@ class BookmarksController(context: Context)
     private const val MAX_SPAN_COUNT = 6
 
     private const val ACTION_CHANGE_VIEW_BOOKMARK_MODE = 1000
+
+    private const val ACTION_PRUNE_NON_ACTIVE_BOOKMARKS = 2000
+    private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001
   }
 }

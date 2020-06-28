@@ -779,6 +779,12 @@ Don't have a 4chan Pass?<br>
     <string name="click_image_for_extra_options">Click image for extra options</string>
 
     <string name="controller_bookmarks">Bookmarks</string>
+    <string name="controller_bookmarks_bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
+    <string name="controller_bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
+    <string name="controller_bookmarks_prune_inactive_bookmarks">Prune inactive bookmarks</string>
+    <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
+    <string name="controller_bookmarks_prune_confirmation_message">Are you sure you want to prune all inactive bookmarks?</string>
+    <string name="controller_bookmarks_prune">Prune</string>
 
     <string name="successfully_exported_text">Exported successfully"</string>
     <string name="import_warning_title">Warning</string>
@@ -976,8 +982,6 @@ Don't have a 4chan Pass?<br>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here</string>
-    <string name="bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
-    <string name="bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
 
 </resources>

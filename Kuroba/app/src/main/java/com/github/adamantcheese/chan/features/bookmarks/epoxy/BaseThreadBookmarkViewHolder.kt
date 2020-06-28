@@ -93,6 +93,11 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkStats.visibility = View.VISIBLE
 
     bookmarkStats.text = buildString {
+      if (threadBookmarkStats.isFirstFetch) {
+        append("Loading...")
+        return@buildString
+      }
+
       append(threadBookmarkStats.totalPosts)
       append(" / ")
       append(threadBookmarkStats.newPosts)
