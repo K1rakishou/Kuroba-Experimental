@@ -199,7 +199,7 @@ class BookmarksManager(
   }
 
   fun updateBookmarks(
-    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
     notifyListenersOption: NotifyListenersOption,
     mutator: (ThreadBookmark) -> Unit
   ) {

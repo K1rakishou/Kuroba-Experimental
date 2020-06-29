@@ -59,6 +59,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
@@ -180,6 +181,19 @@ public class AndroidUtils {
                 return FlavorType.Dev;
             default:
                 throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
+        }
+    }
+
+    public static String getUniqueAppName() {
+        switch (getFlavorType()) {
+            case Release:
+                return "KurobaEx";
+            case Beta:
+                return "KurobaEx-beta";
+            case Dev:
+                return "KurobaEx-dev";
+            default:
+                throw new IllegalStateException("Unknown flavor type: " + getFlavorType().name());
         }
     }
 
@@ -619,6 +633,10 @@ public class AndroidUtils {
         return (NotificationManager) application.getSystemService(NOTIFICATION_SERVICE);
     }
 
+    public static NotificationManagerCompat getNotificationManagerCompat() {
+        return NotificationManagerCompat.from(application);
+    }
+
     public static JobScheduler getJobScheduler() {
         return (JobScheduler) application.getSystemService(JOB_SCHEDULER_SERVICE);
     }
@@ -645,6 +663,10 @@ public class AndroidUtils {
 
     public static boolean isAndroid10() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+    }
+
+    public static boolean isAndroidO() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
     public static int getScreenOrientation() {

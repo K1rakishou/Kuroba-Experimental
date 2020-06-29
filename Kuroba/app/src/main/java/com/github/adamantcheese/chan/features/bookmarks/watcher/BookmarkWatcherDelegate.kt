@@ -7,14 +7,9 @@ import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
 import com.github.adamantcheese.chan.core.repository.SiteRepository
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.model.data.bookmark.StickyThread
-import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
-import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
-import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReply
+import com.github.adamantcheese.model.data.bookmark.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +27,8 @@ class BookmarkWatcherDelegate(
   private val savedReplyManager: DatabaseSavedReplyManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
-  private val parsePostRepliesUseCase: ParsePostRepliesUseCase
+  private val parsePostRepliesUseCase: ParsePostRepliesUseCase,
+  private val replyNotificationsHelper: ReplyNotificationsHelper
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -86,12 +82,6 @@ class BookmarkWatcherDelegate(
       return
     }
 
-    if (isDevFlavor) {
-      watchingBookmarkDescriptors.forEach { bookmarkDescriptor ->
-        Logger.d(TAG, "watching $bookmarkDescriptor")
-      }
-    }
-
     val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
     printDebugLogs(fetchResults)
 
@@ -109,13 +99,44 @@ class BookmarkWatcherDelegate(
       processUnsuccessFetchResults(unsuccessFetchResults)
     }
 
-    if (!isUpdatingCurrentlyOpenedThread) {
-      showOrUpdateNotifications()
+    // Do not show notifications for the thread we are currently watching
+    if (isUpdatingCurrentlyOpenedThread) {
+      return
     }
+
+    showOrUpdateNotifications()
   }
 
   private fun showOrUpdateNotifications() {
-    TODO("Not yet implemented")
+    val unseenNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
+
+    bookmarksManager.mapBookmarksOrdered { threadBookmarkView ->
+      val threadDescriptor = threadBookmarkView.threadDescriptor
+
+      return@mapBookmarksOrdered threadBookmarkView.threadBookmarkReplyViews.forEach { (_, threadBookmarkReplyView) ->
+        if (threadBookmarkReplyView.notified) {
+          return@forEach
+        }
+
+        unseenNotificationsGrouped.putIfNotContains(threadDescriptor, mutableSetOf())
+        unseenNotificationsGrouped[threadDescriptor]!!.add(threadBookmarkReplyView)
+      }
+    }
+
+    val shownNotifications = replyNotificationsHelper.showNotificationForReplies(unseenNotificationsGrouped)
+    if (shownNotifications.isEmpty()) {
+      return
+    }
+
+    // Mark all shown notifications as notified so we won't show them again
+    bookmarksManager.updateBookmarks(
+      shownNotifications.keys,
+      BookmarksManager.NotifyListenersOption.NotifyDelayed
+    ) { threadBookmark ->
+      shownNotifications[threadBookmark.threadDescriptor]?.forEach { threadBookmarkReplyView ->
+        threadBookmark.threadBookmarkReplies[threadBookmarkReplyView.postDescriptor]?.alreadyNotified = true
+      }
+    }
   }
 
   private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {
@@ -129,14 +150,14 @@ class BookmarkWatcherDelegate(
         when (unsuccessFetchResult) {
           is ThreadBookmarkFetchResult.Error,
           is ThreadBookmarkFetchResult.BadStatusCode -> {
-              threadBookmark.updateState(error = true)
+            threadBookmark.updateState(error = true)
           }
           is ThreadBookmarkFetchResult.NotFoundOnServer -> {
-              threadBookmark.updateState(deleted = true)
+            threadBookmark.updateState(deleted = true)
           }
           is ThreadBookmarkFetchResult.AlreadyDeleted -> {
-            // No-op. This means that the user has deleted this bookmark while it was fetching info
-            // so we have nothing to do.
+            // No-op. This just means that the user has deleted this bookmark while it was fetching
+            // info so we have nothing to do.
           }
           is ThreadBookmarkFetchResult.Success -> {
             throw IllegalStateException("Shouldn't be handled here")
@@ -155,8 +176,6 @@ class BookmarkWatcherDelegate(
     val fetchResultPairsList = successFetchResults.map { fetchResult ->
       fetchResult.threadDescriptor to fetchResult.threadBookmarkInfoObject
     }.toList()
-
-    var index = 0
 
     fetchResultPairsList.forEach { (threadDescriptor, threadBookmarkInfoObject) ->
       val quotesToMeMap = postsQuotingMe[threadDescriptor] ?: emptyMap()
@@ -245,8 +264,6 @@ class BookmarkWatcherDelegate(
 
         threadBookmark.clearFirstFetchFlag()
       }
-
-      ++index
     }
   }
 

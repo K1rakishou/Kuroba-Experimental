@@ -27,6 +27,10 @@ open class PostDescriptor protected constructor(
     }
   }
 
+  fun serializeToString(): String {
+    return "PD_${descriptor.serializeToString()}_${postNo}_${postSubNo}"
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is PostDescriptor) return false

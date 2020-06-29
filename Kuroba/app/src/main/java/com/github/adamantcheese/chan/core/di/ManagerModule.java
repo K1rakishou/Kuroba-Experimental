@@ -59,6 +59,7 @@ import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherD
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
@@ -82,6 +83,8 @@ import kotlinx.coroutines.CoroutineScope;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManagerCompat;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
 
@@ -383,7 +386,8 @@ public class ManagerModule {
             DatabaseManager databaseManager,
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
-            ParsePostRepliesUseCase parsePostRepliesUseCase
+            ParsePostRepliesUseCase parsePostRepliesUseCase,
+            ReplyNotificationsHelper replyNotificationsHelper
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
 
@@ -395,7 +399,8 @@ public class ManagerModule {
                 databaseManager.getDatabaseSavedReplyManager(),
                 lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,
-                parsePostRepliesUseCase
+                parsePostRepliesUseCase,
+                replyNotificationsHelper
         );
     }
 
@@ -443,5 +448,19 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "LastViewedPostNoInfoHolder");
 
         return new LastViewedPostNoInfoHolder();
+    }
+
+    @Provides
+    @Singleton
+    public ReplyNotificationsHelper provideReplyNotificationsHelper(
+            Context appContext
+    ) {
+        Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
+
+        return new ReplyNotificationsHelper(
+                appContext,
+                getNotificationManagerCompat(),
+                getNotificationManager()
+        );
     }
 }

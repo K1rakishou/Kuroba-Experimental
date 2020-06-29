@@ -8,6 +8,7 @@ sealed class ChanDescriptor {
   abstract fun boardCode(): String
 
   abstract fun siteDescriptor(): SiteDescriptor
+  abstract fun serializeToString(): String
 
   @JvmOverloads
   fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
@@ -30,6 +31,10 @@ sealed class ChanDescriptor {
 
     override fun siteDescriptor(): SiteDescriptor {
       return boardDescriptor.siteDescriptor
+    }
+
+    override fun serializeToString(): String {
+      return "TD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}_${threadNo}"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -73,6 +78,10 @@ sealed class ChanDescriptor {
 
     override fun siteDescriptor(): SiteDescriptor {
       return boardDescriptor.siteDescriptor
+    }
+
+    override fun serializeToString(): String {
+      return "CD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
     }
 
     override fun equals(other: Any?): Boolean {

@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
+import io.reactivex.Flowable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -29,7 +30,7 @@ class BookmarkWatcherController(
       bookmarksManager.listenForBookmarksChanges()
         .debounce(1, TimeUnit.SECONDS)
         .asFlow()
-        .filter { bookmarkChange -> isDesiredBookmarkChange(bookmarkChange) }
+        .filter { bookmarkChange -> isExpectedBookmarkChange(bookmarkChange) }
         .catch { error -> Logger.e(TAG, "Error while listenForBookmarksChanges()", error) }
         .collect {
           if (isDevFlavor) {
@@ -41,26 +42,37 @@ class BookmarkWatcherController(
     }
 
     appScope.launch {
-      ChanSettings.watchEnabled.listenForChanges()
+      val watchEnabledFlowable = ChanSettings.watchEnabled.listenForChanges()
+        .map { WatchSettingChange.WatcherSettingChanged }
+      val watchBackgroundFlowable = ChanSettings.watchBackground.listenForChanges()
+        .map { WatchSettingChange.BackgroundWatcherSettingChanged }
+      val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChanges()
+        .map { WatchSettingChange.BackgroundWatcherIntervalSettingChanged }
+
+      Flowable.merge(watchEnabledFlowable, watchBackgroundFlowable, watchBackgroundIntervalFlowable)
         .asFlow()
-        .collect {
+        .collect { watchSettingChange ->
           if (isDevFlavor) {
-            Logger.d(TAG, "Calling onBookmarksChanged() watchEnabled setting changed")
+            when (watchSettingChange) {
+              WatchSettingChange.WatcherSettingChanged -> {
+                Logger.d(TAG, "Calling onBookmarksChanged() watchEnabled setting changed")
+              }
+              WatchSettingChange.BackgroundWatcherSettingChanged -> {
+                Logger.d(TAG, "Calling onBookmarksChanged() watchBackground setting changed")
+              }
+              WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> {
+                Logger.d(TAG, "Calling onBookmarksChanged() watchBackgroundInterval setting changed")
+              }
+            }
           }
 
-          onBookmarksChanged()
-        }
-    }
-
-    appScope.launch {
-      ChanSettings.watchBackgroundInterval.listenForChanges()
-        .asFlow()
-        .collect {
-          if (isDevFlavor) {
-            Logger.d(TAG, "Calling onBookmarksChanged() watchBackgroundInterval setting changed")
+          val replaceCurrent = when (watchSettingChange) {
+            WatchSettingChange.WatcherSettingChanged,
+            WatchSettingChange.BackgroundWatcherSettingChanged -> false
+            WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> true
           }
 
-          onBookmarksChanged(replaceCurrent = true)
+          onBookmarksChanged(replaceCurrent = replaceCurrent)
         }
     }
 
@@ -73,7 +85,7 @@ class BookmarkWatcherController(
               "(applicationVisibility = $applicationVisibility)")
           }
 
-          onBookmarksChanged(applicationVisibility, replaceCurrent = true)
+          onBookmarksChanged(replaceCurrent = true)
         }
     }
   }
@@ -82,18 +94,10 @@ class BookmarkWatcherController(
     applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility(),
     replaceCurrent: Boolean = false
   ) {
-    if (!ChanSettings.watchEnabled.get()) {
-      Logger.d(TAG, "onBookmarksChanged() watcher disabled, nothing to do")
-
-      cancelForegroundBookmarkWatching()
-      cancelBackgroundBookmarkWatching()
-      return
-    }
-
     bookmarksManager.awaitUntilInitialized()
 
     if (!bookmarksManager.hasActiveBookmarks()) {
-      Logger.d(TAG, "onBookmarksChanged() no active bookmarks that require service, nothing to do")
+      Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
       cancelForegroundBookmarkWatching()
       cancelBackgroundBookmarkWatching()
@@ -101,19 +105,35 @@ class BookmarkWatcherController(
     }
 
     if (applicationVisibility == ApplicationVisibility.Foreground) {
-      cancelBackgroundBookmarkWatching()
-      startForegroundBookmarkWatchingIfNeeded()
+      Logger.d(TAG, "Switching to foreground watcher")
+      switchToForegroundWatcher()
     } else {
-      cancelForegroundBookmarkWatching()
-      startBackgroundBookmarkWatchingWorkIfNeeded(replaceCurrent)
+      Logger.d(TAG, "Switching to background watcher, replaceCurrent=$replaceCurrent")
+      switchToBackgroundWatcher(replaceCurrent)
     }
   }
 
-  private fun startForegroundBookmarkWatchingIfNeeded() {
-    bookmarkForegroundWatcher.startWatching()
+  private fun switchToForegroundWatcher() {
+    cancelBackgroundBookmarkWatching()
 
-    if (isDevFlavor) {
-      Logger.d(TAG, "startForegroundBookmarkWatchingIfNeeded() called")
+    if (ChanSettings.watchEnabled.get()) {
+      bookmarkForegroundWatcher.startWatching()
+      Logger.d(TAG, "bookmarkForegroundWatcher.startWatching() called")
+    } else {
+      Logger.d(TAG, "Can't start foreground watching because watchEnabled setting is disabled")
+      cancelForegroundBookmarkWatching()
+    }
+  }
+
+  private fun switchToBackgroundWatcher(replaceCurrent: Boolean) {
+    cancelForegroundBookmarkWatching()
+
+    if (ChanSettings.watchBackground.get()) {
+      startBackgroundBookmarkWatchingWorkIfNeeded(replaceCurrent)
+      Logger.d(TAG, "startBackgroundBookmarkWatchingWorkIfNeeded() called")
+    } else {
+      Logger.d(TAG, "Can't start background watching because watchBackground setting is disabled")
+      cancelBackgroundBookmarkWatching()
     }
   }
 
@@ -142,15 +162,11 @@ class BookmarkWatcherController(
     WorkManager
       .getInstance(appContext)
       .enqueueUniquePeriodicWork(TAG, existingPeriodicWorkPolicy, workRequest)
-
-    if (isDevFlavor) {
-      Logger.d(TAG, "startBookmarkWatchingWorkIfNeeded() " +
-        "existingPeriodicWorkPolicy=${existingPeriodicWorkPolicy.name}, " +
-        "backgroundIntervalMillis=$backgroundIntervalMillis")
-    }
   }
 
-  private fun PeriodicWorkRequest.Builder.setInitialDelayEx(backgroundIntervalMillis: Long): PeriodicWorkRequest.Builder {
+  private fun PeriodicWorkRequest.Builder.setInitialDelayEx(
+    backgroundIntervalMillis: Long
+  ): PeriodicWorkRequest.Builder {
     if (isDevFlavor) {
       // Disable initial delay for dev builds for easy testing
       setInitialDelay(0, TimeUnit.MILLISECONDS)
@@ -162,30 +178,31 @@ class BookmarkWatcherController(
   }
 
   private fun cancelForegroundBookmarkWatching() {
-    if (isDevFlavor) {
-      Logger.d(TAG, "cancelForegroundBookmarkWatching() called")
-    }
-
+    Logger.d(TAG, "cancelForegroundBookmarkWatching() called")
     bookmarkForegroundWatcher.stopWatching()
   }
 
   private fun cancelBackgroundBookmarkWatching() {
-    if (isDevFlavor) {
-      Logger.d(TAG, "cancelBackgroundBookmarkWatching() called")
-    }
+    Logger.d(TAG, "cancelBackgroundBookmarkWatching() called")
 
     WorkManager
       .getInstance(appContext)
       .cancelUniqueWork(TAG)
   }
 
-  private fun isDesiredBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
+  private fun isExpectedBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
     return when (bookmarkChange) {
       BookmarksManager.BookmarkChange.BookmarksInitialized,
       BookmarksManager.BookmarkChange.BookmarksCreated,
       BookmarksManager.BookmarkChange.BookmarksDeleted -> true
       BookmarksManager.BookmarkChange.BookmarksUpdated -> false
     }
+  }
+
+  sealed class WatchSettingChange {
+    object WatcherSettingChanged : WatchSettingChange()
+    object BackgroundWatcherSettingChanged : WatchSettingChange()
+    object BackgroundWatcherIntervalSettingChanged : WatchSettingChange()
   }
 
   companion object {
