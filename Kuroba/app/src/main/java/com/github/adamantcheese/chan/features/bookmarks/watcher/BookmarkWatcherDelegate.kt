@@ -104,6 +104,7 @@ class BookmarkWatcherDelegate(
       return
     }
 
+    // TODO(KurobaEx): debouncer
     showOrUpdateNotifications()
   }
 
@@ -114,7 +115,7 @@ class BookmarkWatcherDelegate(
       val threadDescriptor = threadBookmarkView.threadDescriptor
 
       return@mapBookmarksOrdered threadBookmarkView.threadBookmarkReplyViews.forEach { (_, threadBookmarkReplyView) ->
-        if (threadBookmarkReplyView.notified) {
+        if (threadBookmarkReplyView.seen) {
           return@forEach
         }
 

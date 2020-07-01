@@ -45,25 +45,3 @@ private fun getUIShownFlags(): Int {
     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
 }
-
-@ScreenOrientation
-fun getScreenOrientation(context: Context): Int {
-  val windowManager = ContextCompat.getSystemService(context, WindowManager::class.java)
-
-  return when (windowManager?.defaultDisplay?.rotation) {
-    Surface.ROTATION_90 -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-    Surface.ROTATION_180 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
-    Surface.ROTATION_270 -> ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE
-    Surface.ROTATION_0 -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-    else -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-  }
-}
-
-@IntDef(
-  ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
-  ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
-  ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
-  ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT
-)
-@Retention(AnnotationRetention.SOURCE)
-annotation class ScreenOrientation

@@ -13,8 +13,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
-import com.github.adamantcheese.chan.utils.AndroidUtils.getUniqueAppName
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReplyView
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicInteger
@@ -36,15 +36,14 @@ class ReplyNotificationsHelper(
       return emptyMap()
     }
 
+    val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
+
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-      showNotificationsForAndroidNougatAndBelow(unseenNotificationsGrouped)
-      return emptyMap()
+      return showNotificationsForAndroidNougatAndBelow(notificationsGroup, unseenNotificationsGrouped)
     }
 
     setupChannels()
     restoreNotificationIdMap(unseenNotificationsGrouped)
-
-    val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
 
     showSummaryNotification(notificationsGroup, unseenNotificationsGrouped)
     val shownNotifications = showNotificationsForAndroidOreoAndAbove(
@@ -52,10 +51,13 @@ class ReplyNotificationsHelper(
       unseenNotificationsGrouped
     )
 
+    // TODO(KurobaEx): delete me
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       notificationManager.activeNotifications.forEach { notification ->
-        Logger.d(TAG, "active notification, id: ${notification.id}, group=${notification.isGroup}, " +
-          "groupKey=${notification.notification.group}, behavior=${notification.notification.groupAlertBehavior}")
+        Logger.d(TAG, "active notification, id: ${notification.id}, " +
+          "group=${notification.isGroup}, " +
+          "groupKey=${notification.notification.group}, " +
+          "behavior=${notification.notification.groupAlertBehavior}")
       }
     }
 
@@ -89,10 +91,56 @@ class ReplyNotificationsHelper(
   }
 
   private fun showNotificationsForAndroidNougatAndBelow(
+    notificationsGroup: String,
     unseenNotificationsGrouped: MutableMap<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>
-  ) {
+  ): Map<ChanDescriptor.ThreadDescriptor, Set<ThreadBookmarkReplyView>> {
     Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() " +
       "unseenNotificationsGrouped = ${unseenNotificationsGrouped.size}")
+
+    val threadsWithUnseenRepliesCount = unseenNotificationsGrouped.size
+    val totalUnseenRepliesCount = unseenNotificationsGrouped.values.sumBy { replies -> replies.size }
+    val titleText = "You have $totalUnseenRepliesCount replies in $threadsWithUnseenRepliesCount thread(s)"
+
+    val threadBookmarkReplies = unseenNotificationsGrouped
+      .flatMap { (_, replies) -> replies }
+      .sortedByDescending { reply -> reply.postDescriptor.postNo }
+      .take(MAX_LINES_IN_NOTIFICATION)
+
+    val hasNewReplies = unseenNotificationsGrouped.values
+      .flatten()
+      .any { threadBookmarkReplyView -> !threadBookmarkReplyView.notified }
+
+    val icon = if (hasNewReplies) {
+      R.drawable.ic_stat_notify_alert
+    } else {
+      R.drawable.ic_stat_notify
+    }
+
+    val preOreoNotificationBuilder = NotificationCompat.Builder(appContext)
+      .setWhen(System.currentTimeMillis())
+      .setShowWhen(true)
+      .setContentTitle(getApplicationLabel())
+      .setContentText(titleText)
+      .setSmallIcon(icon)
+      // TODO(KurobaEx):
+//      .setContentIntent(TODO)
+      .setAutoCancel(true)
+      .setAllowSystemGeneratedContextualActions(false)
+      // TODO(KurobaEx): min pririty if there are no new unnotified replies
+      .setPriority(NotificationCompat.PRIORITY_MAX)
+      .setupReplyNotificationsStyle(threadBookmarkReplies)
+      .setGroup(notificationsGroup)
+      .setGroupSummary(true)
+
+    notificationManagerCompat.notify(
+      REPLIES_PRE_OREO_NOTIFICATION_TAG,
+      REPLIES_PRE_OREO_NOTIFICATION_ID,
+      preOreoNotificationBuilder.build()
+    )
+
+    Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() called")
+
+    return unseenNotificationsGrouped
   }
 
   @RequiresApi(Build.VERSION_CODES.O)
@@ -111,10 +159,12 @@ class ReplyNotificationsHelper(
     summaryNotificationBuilder
       .setWhen(System.currentTimeMillis())
       .setShowWhen(true)
-      .setContentTitle(getUniqueAppName())
+      .setContentTitle(getApplicationLabel())
       .setContentText(titleText)
+      // TODO(KurobaEx): show alert icon if there are any new replies
       .setSmallIcon(R.drawable.ic_stat_notify)
       .setupSummaryNotificationsStyle()
+      .setAllowSystemGeneratedContextualActions(false)
       // TODO(KurobaEx):
 //      .setContentIntent(TODO)
       .setAutoCancel(true)
@@ -140,8 +190,8 @@ class ReplyNotificationsHelper(
     val shownNotifications = mutableMapOf<ChanDescriptor.ThreadDescriptor, HashSet<ThreadBookmarkReplyView>>()
     var notificationCounter = 0
 
-    for ((threadDescriptor, threadBookmarkReplyViewSet) in unseenNotificationsGrouped) {
-      val repliesCountText = "You have ${threadBookmarkReplyViewSet.size} new replies in thread ${threadDescriptor.threadNo}"
+    for ((threadDescriptor, threadBookmarkReplies) in unseenNotificationsGrouped) {
+      val repliesCountText = "You have ${threadBookmarkReplies.size} new replies in thread ${threadDescriptor.threadNo}"
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
 
       val notificationBuilder = NotificationCompat.Builder(appContext, REPLY_NOTIFICATION_CHANNEL_ID)
@@ -152,7 +202,8 @@ class ReplyNotificationsHelper(
   //        .setContentIntent(TODO)
         .setSmallIcon(R.drawable.ic_stat_notify_alert)
         .setAutoCancel(true)
-        .setupReplyNotificationsStyle(threadBookmarkReplyViewSet)
+        .setupReplyNotificationsStyle(threadBookmarkReplies)
+        .setAllowSystemGeneratedContextualActions(false)
         .setCategory(Notification.CATEGORY_MESSAGE)
         .setGroup(notificationsGroup)
         .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
@@ -169,7 +220,7 @@ class ReplyNotificationsHelper(
       ++notificationCounter
 
       shownNotifications.putIfNotContains(threadDescriptor, hashSetOf())
-      shownNotifications[threadDescriptor]!!.addAll(threadBookmarkReplyViewSet)
+      shownNotifications[threadDescriptor]!!.addAll(threadBookmarkReplies)
 
       if (notificationCounter > MAX_VISIBLE_NOTIFICATIONS) {
         break
@@ -180,20 +231,21 @@ class ReplyNotificationsHelper(
   }
 
   private fun NotificationCompat.Builder.setupSummaryNotificationsStyle(): NotificationCompat.Builder {
+    // TODO(KurobaEx):
     setStyle(NotificationCompat.InboxStyle(this).setSummaryText("Test"))
     return this
   }
 
   private fun NotificationCompat.Builder.setupReplyNotificationsStyle(
-    threadBookmarkReplyViewSet: MutableSet<ThreadBookmarkReplyView>
+    threadBookmarkReplyViewSet: Collection<ThreadBookmarkReplyView>
   ): NotificationCompat.Builder {
     val notificationStyle = NotificationCompat.InboxStyle(this)
     val repliesSorted = threadBookmarkReplyViewSet
-      .sortedByDescending { reply -> reply.postDescriptor.postNo }
+      .sortedBy { reply -> reply.postDescriptor.postNo }
       .take(MAX_LINES_IN_NOTIFICATION)
 
     repliesSorted.forEach { reply ->
-      notificationStyle.addLine("Reply from ${reply.postDescriptor.postNo} to ${reply.repliesTo.postNo}")
+      notificationStyle.addLine("Reply from ${reply.postDescriptor.postNo} to post ${reply.repliesTo.postNo}")
     }
 
     setStyle(notificationStyle)
@@ -276,8 +328,9 @@ class ReplyNotificationsHelper(
     private const val REPLY_NOTIFICATION_CHANNEL_NAME = "Notification channel for replies (Yous)"
 
     private val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${getFlavorType().name}"
+    private val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${getFlavorType().name}"
 
     private const val SUMMARY_NOTIFICATION_ID = 0
-
+    private const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
   }
 }

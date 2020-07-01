@@ -146,10 +146,19 @@ public class AndroidUtils {
     public static VerifiedBuildType getVerifiedBuildType() {
         try {
             @SuppressLint("PackageManagerGetSignatures")
-            Signature sig = application.getPackageManager().getPackageInfo(
-                    application.getPackageName(),
-                    PackageManager.GET_SIGNING_CERTIFICATES
-            ).signingInfo.getApkContentsSigners()[0];
+            Signature sig;
+
+            if (isAndroidP()) {
+                sig = application.getPackageManager().getPackageInfo(
+                        application.getPackageName(),
+                        PackageManager.GET_SIGNING_CERTIFICATES
+                ).signingInfo.getApkContentsSigners()[0];
+            } else {
+                sig = application.getPackageManager().getPackageInfo(
+                        application.getPackageName(),
+                        PackageManager.GET_SIGNATURES
+                ).signatures[0];
+            }
 
             String signatureHexString =
                     HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
@@ -181,19 +190,6 @@ public class AndroidUtils {
                 return FlavorType.Dev;
             default:
                 throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
-        }
-    }
-
-    public static String getUniqueAppName() {
-        switch (getFlavorType()) {
-            case Release:
-                return "KurobaEx";
-            case Beta:
-                return "KurobaEx-beta";
-            case Dev:
-                return "KurobaEx-dev";
-            default:
-                throw new IllegalStateException("Unknown flavor type: " + getFlavorType().name());
         }
     }
 
@@ -544,7 +540,7 @@ public class AndroidUtils {
     /**
      * We only need to use this method in DrawerController. Snackbar "should" work normally in all
      * other places.
-     * */
+     */
     public static void fixSnackbarInsets(
             @NonNull Snackbar snackbar,
             @NonNull GlobalWindowInsetsManager globalWindowInsetsManager
@@ -667,6 +663,10 @@ public class AndroidUtils {
 
     public static boolean isAndroidO() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+    }
+
+    public static boolean isAndroidP() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
     }
 
     public static int getScreenOrientation() {
