@@ -19,14 +19,26 @@ class ThreadBookmark private constructor(
 ) {
 
   fun isActive(): Boolean = state.get(BOOKMARK_STATE_WATCHING)
+  fun isArchived(): Boolean = state.get(BOOKMARK_STATE_THREAD_ARCHIVED)
+  fun isClosed(): Boolean = state.get(BOOKMARK_STATE_THREAD_CLOSED)
 
-  fun copy(): ThreadBookmark {
+  fun deepCopy(): ThreadBookmark {
+    val threadBookmarkRepliesCopy = if (threadBookmarkReplies.isNotEmpty()) {
+      HashMap<PostDescriptor, ThreadBookmarkReply>(threadBookmarkReplies.size)
+    } else {
+      HashMap<PostDescriptor, ThreadBookmarkReply>()
+    }
+
+    threadBookmarkReplies.forEach { (postDescriptor, threadBookmarkReply) ->
+      threadBookmarkRepliesCopy[postDescriptor] = threadBookmarkReply.copy()
+    }
+
     return ThreadBookmark(
       threadDescriptor = threadDescriptor,
       seenPostsCount = seenPostsCount,
       totalPostsCount = totalPostsCount,
       lastViewedPostNo = lastViewedPostNo,
-      threadBookmarkReplies = HashMap(threadBookmarkReplies),
+      threadBookmarkReplies = threadBookmarkRepliesCopy,
       title = title,
       thumbnailUrl = thumbnailUrl,
       stickyThread = stickyThread,

@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages;
@@ -116,6 +117,8 @@ public class ViewThreadController
     BoardRepository boardRepository;
     @Inject
     HistoryNavigationManager historyNavigationManager;
+    @Inject
+    BookmarksManager bookmarksManager;
 
     private boolean pinItemPinned = false;
     private Loadable loadable;
@@ -399,6 +402,13 @@ public class ViewThreadController
 
     private void downClicked(ToolbarMenuSubItem item) {
         threadLayout.scrollTo(-1, false);
+
+        ChanDescriptor.ThreadDescriptor threadDescriptor = threadLayout.presenter.threadDescriptorOrNull();
+        if (threadDescriptor != null) {
+            // Force mark all posts in this thread as seen (because sometimes the very last post
+            // ends up staying unseen for some unknown reason).
+            bookmarksManager.markAllPostsAsSeen(threadDescriptor);
+        }
     }
 
     @Override

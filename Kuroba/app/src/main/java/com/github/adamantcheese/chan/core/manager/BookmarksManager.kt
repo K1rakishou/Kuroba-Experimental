@@ -93,7 +93,8 @@ class BookmarksManager(
 
           suspendableInitializer.initWithValue(Unit)
 
-          Logger.d(TAG, "BookmarksManager initialized!")
+          Logger.d(TAG, "BookmarksManager initialized! Loaded ${bookmarks.size} total " +
+            "bookmarks and ${activeBookmarksCount()} active bookmarks")
         }
         is ModularResult.Error -> {
           Logger.e(TAG, "Exception while initializing BookmarksManager", bookmarksResult.error)
@@ -210,16 +211,23 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.write {
+      var updated = false
+
       threadDescriptors.forEach { threadDescriptor ->
         val oldThreadBookmark = bookmarks[threadDescriptor]!!
         ensureContainsOrder(threadDescriptor)
 
-        val mutatedBookmark = oldThreadBookmark.copy()
+        val mutatedBookmark = oldThreadBookmark.deepCopy()
         mutator(mutatedBookmark)
 
         if (oldThreadBookmark != mutatedBookmark) {
           bookmarks[threadDescriptor] = mutatedBookmark
+          updated = true
         }
+      }
+
+      if (!updated) {
+        return@write
       }
 
       if (notifyListenersOption != NotifyListenersOption.DoNotNotify) {
@@ -243,6 +251,8 @@ class BookmarksManager(
           toDelete += threadDescriptor
         }
       }
+      ensureBookmarksAndOrdersConsistency()
+
 
       if (toDelete.size > 0) {
         toDelete.forEach { threadDescriptor ->
@@ -255,6 +265,17 @@ class BookmarksManager(
     }
   }
 
+  fun markAllPostsAsSeen(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    lock.write {
+      bookmarks[threadDescriptor]?.markAsSeen()
+      ensureBookmarksAndOrdersConsistency()
+
+      bookmarksChanged(BookmarkChange.BookmarksUpdated)
+    }
+  }
+
   fun markAllAsSeen() {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -262,6 +283,7 @@ class BookmarksManager(
       bookmarks.entries.forEach { (_, threadBookmark) ->
         threadBookmark.markAsSeen()
       }
+      ensureBookmarksAndOrdersConsistency()
 
       bookmarksChanged(BookmarkChange.BookmarksUpdated)
     }
@@ -364,7 +386,6 @@ class BookmarksManager(
   fun onPostViewed(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postNo: Long,
-    currentPostIndex: Int,
     realPostIndex: Int
   ) {
     if (!isReady()) {
@@ -383,7 +404,6 @@ class BookmarksManager(
       return
     }
 
-    // TODO(KurobaEx): when using fast scroller this method will be called A LOT, needs debouncing
     updateBookmark(threadDescriptor, NotifyListenersOption.NotifyDelayed) { threadBookmark ->
       threadBookmark.updateSeenPostCount(realPostIndex)
       threadBookmark.updateSeenReplies(postNo)
@@ -531,7 +551,7 @@ class BookmarksManager(
           "Bookmarks does not contain ${threadDescriptor} even though orders does"
         }
 
-        return@map threadBookmark.copy()
+        return@map threadBookmark.deepCopy()
       }
     }
   }

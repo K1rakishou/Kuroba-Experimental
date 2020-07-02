@@ -31,6 +31,7 @@ class FetchThreadBookmarkInfoUseCase(
 ) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, List<ThreadBookmarkFetchResult>> {
 
   override suspend fun execute(parameter: List<ChanDescriptor.ThreadDescriptor>): List<ThreadBookmarkFetchResult> {
+    Logger.d(TAG, "FetchThreadBookmarkInfoUseCase.execute(${parameter.size})")
     return fetchThreadBookmarkInfoBatched(parameter)
   }
 

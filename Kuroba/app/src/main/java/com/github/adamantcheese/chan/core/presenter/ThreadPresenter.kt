@@ -344,7 +344,10 @@ class ThreadPresenter @Inject constructor(
       return false
     }
 
-    val op = chanLoader?.thread?.op
+    val thread = chanLoader?.thread
+      ?: return false
+
+    val op = thread.op
       ?: return false
 
     val threadDescriptor = loadable?.threadDescriptorOrNull
@@ -1170,6 +1173,10 @@ class ThreadPresenter @Inject constructor(
     } else {
       null
     }
+  }
+
+  fun threadDescriptorOrNull(): ChanDescriptor.ThreadDescriptor? {
+    return chanThread?.loadable?.threadDescriptorOrNull
   }
 
   override fun getPage(op: Post): BoardPage? {

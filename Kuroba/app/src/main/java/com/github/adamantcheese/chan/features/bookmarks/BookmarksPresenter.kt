@@ -128,8 +128,6 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
 
   fun markAllAsSeen() {
     bookmarksManager.markAllAsSeen()
-
-    // TODO(KurobaEx): update notifications
   }
 
   fun onSearchModeChanged(visible: Boolean) {

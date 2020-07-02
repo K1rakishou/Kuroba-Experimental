@@ -7,9 +7,15 @@ import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
 import com.github.adamantcheese.chan.core.repository.SiteRepository
-import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper
+import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.model.data.bookmark.*
+import com.github.adamantcheese.model.data.bookmark.StickyThread
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReply
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
@@ -64,21 +70,30 @@ class BookmarkWatcherDelegate(
           return@mapNotNullBookmarksOrdered null
         }
       } else {
-        if (threadBookmarkView.threadDescriptor == bookmarksManager.currentOpenedThread()) {
+        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == bookmarksManager.currentOpenedThread()
+          // Always update bookmark at least once! If we don't do this then the bookmark will never
+          // receive any information from the server if the user bookmarks already archived/deleted/etc.
+          // thread.
+          && !threadBookmarkView.isFirstFetch()
+
+        if (shouldSkipThisBookmark) {
           // Skip the currently opened thread because we will update it differently
           return@mapNotNullBookmarksOrdered null
         }
       }
 
-      if (threadBookmarkView.isActive()) {
-        return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
+      if (!threadBookmarkView.isActive()) {
+        return@mapNotNullBookmarksOrdered null
       }
 
-      return@mapNotNullBookmarksOrdered null
+      return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
     }
 
-    if (watchingBookmarkDescriptors.isEmpty()) {
-      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, exiting now")
+    if (watchingBookmarkDescriptors.isEmpty()
+      && bookmarksManager.activeBookmarksCount() == 0
+      && !isUpdatingCurrentlyOpenedThread) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering")
+      replyNotificationsHelper.showOrUpdateNotifications()
       return
     }
 
@@ -86,6 +101,8 @@ class BookmarkWatcherDelegate(
     printDebugLogs(fetchResults)
 
     if (fetchResults.isEmpty()) {
+      Logger.d(TAG, "fetchThreadBookmarkInfoUseCase.execute() returned no fetch results")
+      replyNotificationsHelper.showOrUpdateNotifications()
       return
     }
 
@@ -102,41 +119,6 @@ class BookmarkWatcherDelegate(
     // Do not show notifications for the thread we are currently watching
     if (isUpdatingCurrentlyOpenedThread) {
       return
-    }
-
-    // TODO(KurobaEx): debouncer
-    showOrUpdateNotifications()
-  }
-
-  private fun showOrUpdateNotifications() {
-    val unseenNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
-
-    bookmarksManager.mapBookmarksOrdered { threadBookmarkView ->
-      val threadDescriptor = threadBookmarkView.threadDescriptor
-
-      return@mapBookmarksOrdered threadBookmarkView.threadBookmarkReplyViews.forEach { (_, threadBookmarkReplyView) ->
-        if (threadBookmarkReplyView.seen) {
-          return@forEach
-        }
-
-        unseenNotificationsGrouped.putIfNotContains(threadDescriptor, mutableSetOf())
-        unseenNotificationsGrouped[threadDescriptor]!!.add(threadBookmarkReplyView)
-      }
-    }
-
-    val shownNotifications = replyNotificationsHelper.showNotificationForReplies(unseenNotificationsGrouped)
-    if (shownNotifications.isEmpty()) {
-      return
-    }
-
-    // Mark all shown notifications as notified so we won't show them again
-    bookmarksManager.updateBookmarks(
-      shownNotifications.keys,
-      BookmarksManager.NotifyListenersOption.NotifyDelayed
-    ) { threadBookmark ->
-      shownNotifications[threadBookmark.threadDescriptor]?.forEach { threadBookmarkReplyView ->
-        threadBookmark.threadBookmarkReplies[threadBookmarkReplyView.postDescriptor]?.alreadyNotified = true
-      }
     }
   }
 

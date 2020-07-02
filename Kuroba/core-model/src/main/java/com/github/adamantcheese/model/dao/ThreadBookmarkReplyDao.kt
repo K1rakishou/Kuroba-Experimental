@@ -29,20 +29,30 @@ abstract class ThreadBookmarkReplyDao {
       val alreadyInsertedEntities = alreadyInsertedEntitiesMap[replyEntity.ownerThreadBookmarkId]
         ?: return@filter false
 
-      return@filter alreadyInsertedEntities.any { threadBookmarkReplyEntity ->
-        return@filter threadBookmarkReplyEntity.repliesToPostNo == replyEntity.repliesToPostNo
-          && threadBookmarkReplyEntity.replyPostNo == replyEntity.replyPostNo
+      for (alreadyInsertedEntity in alreadyInsertedEntities) {
+        if (alreadyInsertedEntity.replyPostNo == replyEntity.replyPostNo) {
+          if (alreadyInsertedEntity.repliesToPostNo == replyEntity.repliesToPostNo) {
+            return@filter true
+          }
+        }
       }
+
+      return@filter false
     }
 
     val toInsert = replyEntities.filter { replyEntity ->
       val alreadyInsertedEntities = alreadyInsertedEntitiesMap[replyEntity.ownerThreadBookmarkId]
         ?: return@filter true
 
-      return@filter alreadyInsertedEntities.none { threadBookmarkReplyEntity ->
-        return@filter threadBookmarkReplyEntity.repliesToPostNo == replyEntity.repliesToPostNo
-          && threadBookmarkReplyEntity.replyPostNo == replyEntity.replyPostNo
+      for (alreadyInsertedEntity in alreadyInsertedEntities) {
+        if (alreadyInsertedEntity.replyPostNo == replyEntity.replyPostNo) {
+          if (alreadyInsertedEntity.repliesToPostNo == replyEntity.repliesToPostNo) {
+            return@filter false
+          }
+        }
       }
+
+      return@filter true
     }
 
     toInsert
@@ -88,11 +98,11 @@ abstract class ThreadBookmarkReplyDao {
     val resultMap = HashMap<Long, MutableSet<ThreadBookmarkReplyEntity>>(threadBookmarkReplyEntities.size)
 
     threadBookmarkReplyEntities.forEach { threadBookmarkReplyEntity ->
-      if (!resultMap.containsKey(threadBookmarkReplyEntity.threadBookmarkReplyId)) {
-        resultMap[threadBookmarkReplyEntity.threadBookmarkReplyId] = mutableSetOf()
+      if (!resultMap.containsKey(threadBookmarkReplyEntity.ownerThreadBookmarkId)) {
+        resultMap[threadBookmarkReplyEntity.ownerThreadBookmarkId] = mutableSetOf()
       }
 
-      resultMap[threadBookmarkReplyEntity.threadBookmarkReplyId]!!.add(threadBookmarkReplyEntity)
+      resultMap[threadBookmarkReplyEntity.ownerThreadBookmarkId]!!.add(threadBookmarkReplyEntity)
     }
 
     return resultMap

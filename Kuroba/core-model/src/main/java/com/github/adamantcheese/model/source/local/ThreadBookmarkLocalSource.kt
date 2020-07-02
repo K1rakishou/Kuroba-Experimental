@@ -117,6 +117,8 @@ class ThreadBookmarkLocalSource(
         return@associateBy orderedThreadBookmark.threadBookmark.threadDescriptor
       }
     )
+
+    logger.log(TAG, "persist() inserted/updated ${toInsertOrUpdateBookmarkReplyEntities.size} replies")
   }
 
   private fun retainDeletedBookmarks(
@@ -154,7 +156,7 @@ class ThreadBookmarkLocalSource(
       }
 
       return@mapReverseIndexedNotNull OrderedThreadBookmark(
-        threadBookmark.copy(),
+        threadBookmark.deepCopy(),
         order
       )
     }
@@ -171,7 +173,7 @@ class ThreadBookmarkLocalSource(
     var order = bookmarks.lastIndex
 
     bookmarks.forEach { bookmark ->
-      map[bookmark.threadDescriptor] = OrderedThreadBookmark(bookmark, order--)
+      map[bookmark.threadDescriptor] = OrderedThreadBookmark(bookmark.deepCopy(), order--)
     }
 
     return map

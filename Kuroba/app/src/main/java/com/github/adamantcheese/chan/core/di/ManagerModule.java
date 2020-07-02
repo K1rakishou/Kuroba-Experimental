@@ -453,14 +453,18 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReplyNotificationsHelper provideReplyNotificationsHelper(
-            Context appContext
+            Context appContext,
+            CoroutineScope appScope,
+            BookmarksManager bookmarksManager
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
         return new ReplyNotificationsHelper(
                 appContext,
+                appScope,
                 getNotificationManagerCompat(),
-                getNotificationManager()
+                getNotificationManager(),
+                bookmarksManager
         );
     }
 }
