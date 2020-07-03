@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.data.bookmark
 
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import org.joda.time.DateTime
 
 data class ThreadBookmarkReply(
   val postDescriptor: PostDescriptor,
@@ -9,7 +10,8 @@ data class ThreadBookmarkReply(
   // (or more precise their amount)
   var alreadySeen: Boolean,
   // Used when showing notifications to not show a notification for the same reply more than once
-  var alreadyNotified: Boolean
+  var alreadyNotified: Boolean,
+  var time: DateTime
 ) {
 
   fun toThreadBookmarkReplyView(): ThreadBookmarkReplyView {
@@ -17,7 +19,8 @@ data class ThreadBookmarkReply(
       postDescriptor = postDescriptor,
       repliesTo = repliesTo,
       seen = alreadySeen,
-      notified = alreadyNotified
+      notified = alreadyNotified,
+      time = time
     )
   }
 

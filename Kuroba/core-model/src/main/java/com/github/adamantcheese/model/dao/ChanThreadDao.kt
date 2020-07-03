@@ -115,11 +115,11 @@ abstract class ChanThreadDao {
         WHERE 
             ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
         AND
-            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNoList)
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNos)
     """)
-  abstract suspend fun selectManyByThreadNoList(
+  abstract suspend fun selectManyByThreadNos(
     ownerBoardId: Long,
-    threadNoList: List<Long>
+    threadNos: Collection<Long>
   ): List<ChanThreadEntity>
 
   @Query("""

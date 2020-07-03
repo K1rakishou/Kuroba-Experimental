@@ -231,6 +231,56 @@ class ChanPostLocalSource(
   }
 
   suspend fun getCatalogOriginalPosts(
+    archiveIds: Set<Long>,
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+  ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
+    ensureInTransaction()
+
+    val catalogDescriptors = mutableMapOf<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>()
+
+    threadDescriptors.forEach { threadDescriptor ->
+      val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+        threadDescriptor.siteName(),
+        threadDescriptor.boardCode()
+      )
+
+      if (!catalogDescriptors.containsKey(catalogDescriptor)) {
+        catalogDescriptors[catalogDescriptor] = mutableSetOf()
+      }
+
+      catalogDescriptors[catalogDescriptor]!!.add(threadDescriptor.threadNo)
+    }
+
+    val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+
+    catalogDescriptors.forEach { (catalogDescriptor, postNoSet) ->
+      // Load catalog descriptor's board
+      val chanBoardEntity = chanBoardDao.select(catalogDescriptor.siteName(), catalogDescriptor.boardCode())
+        ?: return@forEach
+
+      // Load catalog descriptor's latest threads
+      val chanThreadEntityList = chanThreadDao.selectManyByThreadNos(
+        chanBoardEntity.boardId,
+        postNoSet
+      )
+
+      val posts = loadOriginalPostsInternal(chanThreadEntityList, catalogDescriptor, archiveIds)
+
+      posts.forEach { chanPost ->
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          catalogDescriptor.siteName(),
+          catalogDescriptor.boardCode(),
+          chanPost.postDescriptor.postNo
+        )
+
+        resultMap[threadDescriptor] = chanPost
+      }
+    }
+
+    return resultMap
+  }
+
+  suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
     archiveIds: Set<Long>,
     count: Int
@@ -274,7 +324,7 @@ class ChanPostLocalSource(
     val chanThreadEntityList = originalPostNoList
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk ->
-        chanThreadDao.selectManyByThreadNoList(chanBoardEntity.boardId, chunk)
+        chanThreadDao.selectManyByThreadNos(chanBoardEntity.boardId, chunk)
       }
 
     if (chanThreadEntityList.isEmpty()) {

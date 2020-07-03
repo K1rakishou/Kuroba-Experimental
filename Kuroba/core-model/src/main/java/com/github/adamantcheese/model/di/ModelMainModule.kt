@@ -276,6 +276,7 @@ class ModelMainModule {
     logger: Logger,
     database: KurobaDatabase,
     chanPostLocalSource: ChanPostLocalSource,
+    @IsDevFlavor isDevFlavor: Boolean,
     @LoggerTagPrefix loggerTag: String,
     @AppCoroutineScope scope: CoroutineScope,
     appConstants: AppConstants
@@ -284,6 +285,7 @@ class ModelMainModule {
       database,
       loggerTag,
       logger,
+      isDevFlavor,
       scope,
       chanPostLocalSource,
       appConstants

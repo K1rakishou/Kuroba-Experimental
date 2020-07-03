@@ -206,6 +206,6 @@ class BookmarkWatcherController(
   }
 
   companion object {
-    private const val TAG = "BookmarkWatcherInitializer"
+    private const val TAG = "BookmarkWatcherController"
   }
 }

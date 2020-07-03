@@ -20,6 +20,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.joda.time.DateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.time.ExperimentalTime
@@ -266,7 +267,8 @@ class BookmarkWatcherDelegate(
           // If lastViewPostNo is greater or equal to reply's postNo then we have already seen
           // that reply and we don't need to notify the user about it.
           alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo,
-          alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo
+          alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo,
+          time = DateTime.now()
         )
       )
     } else {

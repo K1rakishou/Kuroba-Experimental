@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.entity.bookmark
 
 import androidx.room.*
+import org.joda.time.DateTime
 
 @Entity(
   tableName = ThreadBookmarkReplyEntity.TABLE_NAME,
@@ -37,7 +38,9 @@ data class ThreadBookmarkReplyEntity(
   @ColumnInfo(name = ALREADY_SEEN_COLUMN_NAME)
   val alreadySeen: Boolean = false,
   @ColumnInfo(name = ALREADY_NOTIFIED_COLUMN_NAME)
-  val alreadyNotified: Boolean = false
+  val alreadyNotified: Boolean = false,
+  @ColumnInfo(name = TIME_COLUMN_NAME)
+  val time: DateTime
 ) {
 
   companion object {
@@ -49,6 +52,6 @@ data class ThreadBookmarkReplyEntity(
     const val REPLIES_TO_POST_NO_COLUMN_NAME = "replies_to_post_no"
     const val ALREADY_SEEN_COLUMN_NAME = "already_seen"
     const val ALREADY_NOTIFIED_COLUMN_NAME = "already_notified"
-
+    const val TIME_COLUMN_NAME = "time"
   }
 }

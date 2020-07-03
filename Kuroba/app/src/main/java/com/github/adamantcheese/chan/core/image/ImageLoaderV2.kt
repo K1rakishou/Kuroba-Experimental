@@ -13,10 +13,14 @@ import coil.transform.Transformation
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.getLifecycleFromContext
 import java.util.concurrent.atomic.AtomicReference
 
-class ImageLoaderV2(private val imageLoader: ImageLoader) {
+class ImageLoaderV2(
+  private val imageLoader: ImageLoader,
+  private val verboseLogsEnabled: Boolean
+) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
 
@@ -40,6 +44,10 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
     val listenerRef = AtomicReference(listener)
     val contextRef = AtomicReference(context)
     val lifecycle = context.getLifecycleFromContext()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
+    }
 
     val request = with(LoadRequest.Builder(context)) {
       if (url != null) {
@@ -105,6 +113,10 @@ class ImageLoaderV2(private val imageLoader: ImageLoader) {
   ): RequestDisposable {
     val localListener = AtomicReference(listener)
     val lifecycle = context.getLifecycleFromContext()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
+    }
 
     val request = with(LoadRequest.Builder(context)) {
       if (url != null) {

@@ -22,6 +22,7 @@ import android.net.ConnectivityManager;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -136,7 +137,10 @@ public class AppModule {
     @Singleton
     public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader) {
         Logger.d(DI_TAG, "Image loader v2");
-        return new ImageLoaderV2(coilImageLoader);
+        return new ImageLoaderV2(
+                coilImageLoader,
+                ChanSettings.verboseLogs.get()
+        );
     }
 
     @Provides

@@ -95,6 +95,12 @@ class PostsCache(private val maxValueCount: Int) {
 //        }
   }
 
+  suspend fun getOriginalPostsFromCache(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+  ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
+    return emptyMap()
+  }
+
   suspend fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanPost? {
     return null
 //        return mutex.withLock {

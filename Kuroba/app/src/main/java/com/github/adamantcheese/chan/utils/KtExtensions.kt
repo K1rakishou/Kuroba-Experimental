@@ -190,18 +190,11 @@ fun View.updateHeight(newHeight: Int) {
   layoutParams = updatedLayoutParams
 }
 
-fun Context.getLifecycleFromContext(): Lifecycle {
+fun Context.getLifecycleFromContext(): Lifecycle? {
   return when (this) {
     is StartActivity -> this.lifecycle
     is ContextWrapper -> (this.baseContext as? StartActivity)?.lifecycle
-      ?: throw IllegalArgumentException(
-        "context.baseContext is not StartActivity context, " +
-        "actual: " + this::class.java.simpleName
-      )
-    else -> throw IllegalArgumentException(
-      "Bad context type! Must be either StartActivity " +
-      "or ContextWrapper, actual: " + this::class.java.simpleName
-    )
+    else -> null
   }
 }
 
@@ -211,4 +204,19 @@ fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
   }
 
   return firstKey()
+}
+
+fun String.ellipsizeEnd(maxLength: Int): String {
+  val minStringLength = 5
+  val threeDotsLength = 3
+
+  if (maxLength < minStringLength) {
+    return this
+  }
+
+  if (this.length <= maxLength) {
+    return this
+  }
+
+  return this.take(maxLength - threeDotsLength) + "..."
 }

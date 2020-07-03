@@ -706,13 +706,13 @@ public class ViewThreadController
 
     @Override
     public boolean threadBackPressed() {
-        //clear the pool if the current thread isn't a part of this crosspost chain
-        //ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
-        //noinspection ConstantConditions
+        // clear the pool if the current thread isn't a part of this crosspost chain
+        // ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
+        // noinspection ConstantConditions
         if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != loadable.hashCode()) {
             threadFollowerpool.clear();
         }
-        //if the thread is new, it'll be empty here, so we'll get back-to-catalog functionality
+        // if the thread is new, it'll be empty here, so we'll get back-to-catalog functionality
         if (threadFollowerpool.isEmpty()) {
             return false;
         }

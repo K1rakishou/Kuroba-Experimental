@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.core.di;
 import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase;
 import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
@@ -62,6 +63,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
@@ -455,7 +457,9 @@ public class ManagerModule {
     public ReplyNotificationsHelper provideReplyNotificationsHelper(
             Context appContext,
             CoroutineScope appScope,
-            BookmarksManager bookmarksManager
+            BookmarksManager bookmarksManager,
+            ChanPostRepository chanPostRepository,
+            ImageLoaderV2 imageLoaderV2
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
@@ -464,7 +468,9 @@ public class ManagerModule {
                 appScope,
                 getNotificationManagerCompat(),
                 getNotificationManager(),
-                bookmarksManager
+                bookmarksManager,
+                chanPostRepository,
+                imageLoaderV2
         );
     }
 }

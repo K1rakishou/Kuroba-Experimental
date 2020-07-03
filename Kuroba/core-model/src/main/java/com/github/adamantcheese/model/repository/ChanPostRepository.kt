@@ -21,6 +21,7 @@ class ChanPostRepository(
   database: KurobaDatabase,
   loggerTag: String,
   logger: Logger,
+  private val isDevFlavor: Boolean,
   private val applicationScope: CoroutineScope,
   private val localSource: ChanPostLocalSource,
   private val appConstants: AppConstants
@@ -122,7 +123,7 @@ class ChanPostRepository(
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
     archiveId: Long,
-    threadNoList: List<Long>
+    threadNoList: Collection<Long>
   ): ModularResult<List<ChanPost>> {
     val archiveIds = toArchiveIdsSet(archiveId)
 
@@ -159,6 +160,53 @@ class ChanPostRepository(
           }
 
           return@tryWithTransaction originalPostsFromCache + originalPostsFromDatabase
+        }
+      }
+    }
+  }
+
+  suspend fun getCatalogOriginalPosts(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    archiveId: Long
+  ): ModularResult<Map<ChanDescriptor.ThreadDescriptor, ChanPost>> {
+    val archiveIds = toArchiveIdsSet(archiveId)
+
+    return applicationScope.myAsync {
+      return@myAsync suspendableInitializer.invokeWhenInitialized {
+        return@invokeWhenInitialized tryWithTransaction {
+          val originalPostsFromCache = postCache.getOriginalPostsFromCache(threadDescriptors)
+
+          val notCachedOriginalPostThreadDescriptors = threadDescriptors.filter { threadDescriptor ->
+            !originalPostsFromCache.containsKey(threadDescriptor)
+          }
+
+          if (notCachedOriginalPostThreadDescriptors.isEmpty()) {
+            // All posts were found in the cache
+            return@tryWithTransaction originalPostsFromCache
+          }
+
+          val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+            archiveIds,
+            notCachedOriginalPostThreadDescriptors
+          )
+
+          if (originalPostsFromDatabase.isNotEmpty()) {
+            originalPostsFromDatabase.forEach { (_, chanPost) ->
+              postCache.putIntoCache(chanPost.postDescriptor, chanPost)
+            }
+          }
+
+          val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+          resultMap.putAll(originalPostsFromCache)
+          resultMap.putAll(originalPostsFromDatabase)
+
+          if (isDevFlavor) {
+            resultMap.values.forEach { chanPost ->
+              check(chanPost.isOp) { "getCatalogOriginalPosts() is returning a non-OP post!" }
+            }
+          }
+
+          return@tryWithTransaction resultMap
         }
       }
     }
