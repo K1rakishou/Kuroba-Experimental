@@ -422,6 +422,10 @@ class BookmarksManager(
       threadBookmark.updateSeenPostCount(realPostIndex)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
+
+      if (isDevAppFlavor) {
+        Logger.d(TAG, "onPostViewed postNo=$postNo")
+      }
     }
   }
 

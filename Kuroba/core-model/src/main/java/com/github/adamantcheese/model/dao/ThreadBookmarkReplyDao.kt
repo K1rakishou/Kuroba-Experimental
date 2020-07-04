@@ -55,6 +55,10 @@ abstract class ThreadBookmarkReplyDao {
       return@filter true
     }
 
+    if (toUpdate.size + toInsert.size != replyEntities.size) {
+      throw IllegalStateException("toUpdate.size (${toUpdate.size}) + toInsert.size (${toInsert.size}) != replyEntities.size (${replyEntities.size})")
+    }
+
     toInsert
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> insertManyOrAbort(chunk) }

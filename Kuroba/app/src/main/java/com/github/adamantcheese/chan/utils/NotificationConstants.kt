@@ -28,11 +28,11 @@ object NotificationConstants {
     const val SUMMARY_NOTIFICATION_ID = 0
     const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
 
-    const val SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "summary_notification_click_thread_descriptors"
-    const val SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE = 1
+    const val NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "notification_click_thread_descriptors"
+    const val NOTIFICATION_CLICK_REQUEST_CODE = 1
 
-    const val SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "summary_notification_swipe_thread_descriptors"
-    const val SUMMARY_NOTIFICATION_SWIPE_REQUEST_CODE = 2
+    const val NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "notification_swipe_thread_descriptors"
+    const val NOTIFICATION_SWIPE_REQUEST_CODE = 2
   }
 
 }

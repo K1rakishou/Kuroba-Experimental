@@ -25,6 +25,10 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.adamantcheese.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_REQUEST_CODE
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_REQUEST_CODE
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID
@@ -33,11 +37,7 @@ import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotificati
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_NAME
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_SWIPE_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReplyView
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -98,10 +98,13 @@ class ReplyNotificationsHelper(
       return
     }
 
+    Logger.d(TAG, "closeNotifications(${bookmarkChange.threadDescriptors.size}) called")
+
     bookmarkChange.threadDescriptors.forEach { threadDescriptor ->
       val notificationId = NotificationConstants.ReplyNotifications.notificationIdMap[threadDescriptor]
         ?: return@forEach
 
+      Logger.d(TAG, "closeNotifications() closing $threadDescriptor, $notificationId")
       notificationManagerCompat.cancel(getUniqueNotificationTag(threadDescriptor), notificationId)
     }
 
@@ -255,6 +258,8 @@ class ReplyNotificationsHelper(
       .count { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadyNotified }
     val hasNewReplies = newRepliesCount > 0
 
+    unreadNotificationsGrouped.values.flatten().forEach { reply -> Logger.d(TAG, "reply=$reply") }
+
     Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() " +
       "unreadNotificationsGrouped = ${unreadNotificationsGrouped.size}, " +
       "unseenRepliesCount=$unseenRepliesCount, newRepliesCount=$newRepliesCount")
@@ -303,8 +308,8 @@ class ReplyNotificationsHelper(
       .setContentTitle(getApplicationLabel())
       .setContentText(titleText)
       .setSmallIcon(iconId)
-      .setupClickOnSummaryNotificationIntent(unreadNotificationsGrouped)
-      .setupDeleteSummaryNotificationIntent(unreadNotificationsGrouped)
+      .setupClickOnNotificationIntent(unreadNotificationsGrouped.keys)
+      .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAutoCancel(true)
       .setAllowSystemGeneratedContextualActions(false)
       .setPriority(notificationPriority)
@@ -381,8 +386,8 @@ class ReplyNotificationsHelper(
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupSummaryNotificationsStyle(titleText)
-      .setupClickOnSummaryNotificationIntent(unreadNotificationsGrouped)
-      .setupDeleteSummaryNotificationIntent(unreadNotificationsGrouped)
+      .setupClickOnNotificationIntent(unreadNotificationsGrouped.keys)
+      .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAllowSystemGeneratedContextualActions(false)
       .setAutoCancel(true)
       .setGroup(notificationsGroup)
@@ -416,6 +421,14 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "Loaded ${thumbnailBitmaps.size} thumbnail bitmaps")
 
     for ((threadDescriptor, threadBookmarkReplies) in unreadNotificationsGrouped) {
+      val hasUnseenReplies = threadBookmarkReplies.any { threadBookmarkReplyView ->
+        !threadBookmarkReplyView.alreadySeen
+      }
+
+      if (!hasUnseenReplies) {
+        continue
+      }
+
       val threadTitle = getThreadTitle(originalPosts, threadDescriptor)
 
       // TODO(KurobaEx): strings
@@ -423,24 +436,16 @@ class ReplyNotificationsHelper(
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
       val notificationId = getOrCalculateNotificationId(threadDescriptor)
 
-      if (isDevFlavor) {
-        val hasUnseenReplies = threadBookmarkReplies.any { threadBookmarkReplyView ->
-          !threadBookmarkReplyView.alreadySeen
-        }
-
-        check(hasUnseenReplies) { "hasUnseenReplies must always be true here!" }
-      }
-
       val notificationBuilder = NotificationCompat.Builder(appContext, REPLY_NOTIFICATION_CHANNEL_ID)
         .setContentTitle(titleText)
         .setWhen(notificationTime.millis)
         .setShowWhen(true)
         .setupLargeIcon(thumbnailBitmaps[threadDescriptor])
-        // TODO(KurobaEx):
-        //        .setContentIntent(TODO)
         .setSmallIcon(R.drawable.ic_stat_notify_alert)
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
+        .setupClickOnNotificationIntent(listOf(threadDescriptor))
+        .setupDeleteNotificationIntent(listOf(threadDescriptor))
         .setAllowSystemGeneratedContextualActions(false)
         .setCategory(Notification.CATEGORY_MESSAGE)
         .setGroup(notificationsGroup)
@@ -549,12 +554,12 @@ class ReplyNotificationsHelper(
     }
   }
 
-  private fun NotificationCompat.Builder.setupClickOnSummaryNotificationIntent(
-    unreadNotificationsGrouped: Map<ChanDescriptor.ThreadDescriptor, Collection<ThreadBookmarkReplyView>>
+  private fun NotificationCompat.Builder.setupClickOnNotificationIntent(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): NotificationCompat.Builder {
     val intent = Intent(appContext, StartActivity::class.java)
 
-    val threadDescriptors = unreadNotificationsGrouped.keys.map { threadDescriptor ->
+    val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
       ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
     }
 
@@ -568,13 +573,13 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
-        ArrayList(threadDescriptors)
+        NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
+        ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE,
+      NOTIFICATION_CLICK_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -583,12 +588,12 @@ class ReplyNotificationsHelper(
     return this
   }
 
-  private fun NotificationCompat.Builder.setupDeleteSummaryNotificationIntent(
-    unreadNotificationsGrouped: Map<ChanDescriptor.ThreadDescriptor, Collection<ThreadBookmarkReplyView>>
+  private fun NotificationCompat.Builder.setupDeleteNotificationIntent(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): NotificationCompat.Builder {
     val intent = Intent(appContext, StartActivity::class.java)
 
-    val threadDescriptors = unreadNotificationsGrouped.keys.map { threadDescriptor ->
+    val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
       ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
     }
 
@@ -602,13 +607,13 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
-        ArrayList(threadDescriptors)
+        NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
+        ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      SUMMARY_NOTIFICATION_SWIPE_REQUEST_CODE,
+      NOTIFICATION_SWIPE_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
