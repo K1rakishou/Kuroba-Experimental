@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
+import org.jetbrains.annotations.Nullable;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 
 /**
@@ -19,6 +21,7 @@ public class FastScrollerHelper {
 
     public static FastScroller create(
             RecyclerView recyclerView,
+            @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             Theme currentTheme
     ) {

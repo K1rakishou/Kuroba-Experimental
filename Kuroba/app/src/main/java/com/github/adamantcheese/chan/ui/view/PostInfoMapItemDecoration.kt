@@ -14,6 +14,11 @@ class PostInfoMapItemDecoration(
   private var postInfoHolder = PostMapInfoHolder()
   private val showHideAnimator = ValueAnimator.ofFloat(0f, 1f)
 
+  private val myPostsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = context.resources.getColor(R.color.my_posts_map_color)
+    alpha = DEFAULT_ALPHA
+  }
+
   private val yousPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = context.resources.getColor(R.color.reply_map_quote_color)
     alpha = DEFAULT_ALPHA
@@ -26,7 +31,6 @@ class PostInfoMapItemDecoration(
 
   private var postsTotal = 0
 
-  // TODO(KurobaEx): disable this thing in catalogs
   fun setItems(
     newPostMapInfoHolder: PostMapInfoHolder,
     newPostsTotal: Int
@@ -47,6 +51,16 @@ class PostInfoMapItemDecoration(
     recyclerViewWidth: Int
   ) {
     var labelWidth = DEFAULT_LABEL_WIDTH
+
+    drawMyPosts(
+      canvas,
+      scrollbarHalfHeight,
+      topOffset,
+      recyclerViewHeight,
+      recyclerViewWidth,
+      labelWidth
+    )
+    labelWidth += LABEL_WIDTH_INC
 
     drawYous(
       canvas,
@@ -70,7 +84,7 @@ class PostInfoMapItemDecoration(
 
   }
 
-  private fun drawCrossThreadReplies(
+  private fun drawMyPosts(
     canvas: Canvas,
     scrollbarHalfHeight: Float,
     topOffset: Float,
@@ -78,17 +92,17 @@ class PostInfoMapItemDecoration(
     recyclerViewWidth: Int,
     labelWidth: Float
   ) {
-    val crossThreadQuotePositionRanges = postInfoHolder.crossThreadQuotePositionRanges
-    if (crossThreadQuotePositionRanges.isEmpty()) {
+    val myPostsPositionRanges = postInfoHolder.myPostsPositionRanges
+    if (myPostsPositionRanges.isEmpty()) {
       return
     }
 
-    crossThreadRepliesPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
+    myPostsPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
     val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceIn(MIN_LABEL_HEIGHT, MAX_LABEL_HEIGHT)
 
     canvas.translate(0f, topOffset)
 
-    crossThreadQuotePositionRanges.forEach { positionRange ->
+    myPostsPositionRanges.forEach { positionRange ->
       val startPosition = positionRange.first
       val endPosition = positionRange.last
 
@@ -100,7 +114,7 @@ class PostInfoMapItemDecoration(
         top + scrollbarHalfHeight,
         recyclerViewWidth.toFloat(),
         bottom + scrollbarHalfHeight,
-        crossThreadRepliesPaint
+        myPostsPaint
       )
     }
 
@@ -144,6 +158,42 @@ class PostInfoMapItemDecoration(
     canvas.translate(0f, -topOffset)
   }
 
+  private fun drawCrossThreadReplies(
+    canvas: Canvas,
+    scrollbarHalfHeight: Float,
+    topOffset: Float,
+    recyclerViewHeight: Int,
+    recyclerViewWidth: Int,
+    labelWidth: Float
+  ) {
+    val crossThreadQuotePositionRanges = postInfoHolder.crossThreadQuotePositionRanges
+    if (crossThreadQuotePositionRanges.isEmpty()) {
+      return
+    }
+
+    crossThreadRepliesPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
+    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceIn(MIN_LABEL_HEIGHT, MAX_LABEL_HEIGHT)
+
+    canvas.translate(0f, topOffset)
+
+    crossThreadQuotePositionRanges.forEach { positionRange ->
+      val startPosition = positionRange.first
+      val endPosition = positionRange.last
+
+      val top = startPosition * unit
+      val bottom = (endPosition * unit) + unit
+
+      canvas.drawRect(
+        recyclerViewWidth - labelWidth,
+        top + scrollbarHalfHeight,
+        recyclerViewWidth.toFloat(),
+        bottom + scrollbarHalfHeight,
+        crossThreadRepliesPaint
+      )
+    }
+
+    canvas.translate(0f, -topOffset)
+  }
 
   fun show() {
     showHideAnimator.setFloatValues(showHideAnimator.animatedValue as Float, 1f)

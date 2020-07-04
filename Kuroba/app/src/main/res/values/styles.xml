@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="gestures_zone_view_added_zones">#50FFB55B</color>
     <color name="gestures_zone_view_current_zone">#50FF4C82</color>
 
+    <color name="my_posts_map_color">#9bf853</color>
     <color name="reply_map_quote_color">#fa867e</color>
     <color name="cross_thread_reply_map_quote_color">#72ecfa</color>
 

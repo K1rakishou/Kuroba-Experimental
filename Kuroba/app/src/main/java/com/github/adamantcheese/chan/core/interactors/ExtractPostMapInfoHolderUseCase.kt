@@ -12,39 +12,36 @@ class ExtractPostMapInfoHolderUseCase(
 
   override fun execute(parameter: List<Post>): PostMapInfoHolder {
     return PostMapInfoHolder(
+      extractMyPostsPositionsFromPostList(parameter),
       extractReplyPositionsFromPostList(parameter),
       extractCrossThreadReplyPositionsFromPostList(parameter)
     )
   }
 
-  private fun extractCrossThreadReplyPositionsFromPostList(posts: List<Post>): List<IntRange> {
-    if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
+  private fun extractMyPostsPositionsFromPostList(posts: List<Post>): List<IntRange> {
+    if (!ChanSettings.markMyPostsOnScrollbar.get()) {
       return emptyList()
     }
 
-    val crossThreadReplyRanges: MutableList<IntRange> = ArrayList(16)
-    val duplicateChecker: MutableSet<Int> = HashSet(16)
+    val savedPostNoSet: Set<Long> = HashSet(databaseSavedReplyManager.retainSavedPostNos(posts))
+    if (savedPostNoSet.isEmpty()) {
+      return emptyList()
+    }
+
+    val replyRanges: MutableList<IntRange> = ArrayList(savedPostNoSet.size)
+    val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
     var prevIndex = 0
 
     for ((index, post) in posts.withIndex()) {
-      for (postLinkable in post.linkables) {
-        if (postLinkable.type != PostLinkable.Type.THREAD || !duplicateChecker.add(index)) {
-          continue
-        }
-
-        if (prevIndex == index - 1 && crossThreadReplyRanges.size > 0) {
-          val prevRange = crossThreadReplyRanges[crossThreadReplyRanges.lastIndex]
-          crossThreadReplyRanges[crossThreadReplyRanges.lastIndex] = IntRange(prevRange.first, index)
-        } else {
-          crossThreadReplyRanges.add(IntRange(index, index))
-        }
-
-        prevIndex = index
-        break
+      if (!savedPostNoSet.contains(post.no) || !duplicateChecker.add(index)) {
+        continue
       }
+
+      connectRangesIfContiguous(prevIndex, index, replyRanges)
+      prevIndex = index
     }
 
-    return crossThreadReplyRanges
+    return replyRanges
   }
 
   private fun extractReplyPositionsFromPostList(posts: List<Post>): List<IntRange> {
@@ -67,13 +64,7 @@ class ExtractPostMapInfoHolderUseCase(
           continue
         }
 
-        if (prevIndex == index - 1 && replyRanges.size > 0) {
-          val prevRange = replyRanges[replyRanges.lastIndex]
-          replyRanges[replyRanges.lastIndex] = IntRange(prevRange.first, index)
-        } else {
-          replyRanges.add(IntRange(index, index))
-        }
-
+        connectRangesIfContiguous(prevIndex, index, replyRanges)
         prevIndex = index
         break
       }
@@ -82,14 +73,52 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
+  private fun extractCrossThreadReplyPositionsFromPostList(posts: List<Post>): List<IntRange> {
+    if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
+      return emptyList()
+    }
+
+    val crossThreadReplyRanges: MutableList<IntRange> = ArrayList(16)
+    val duplicateChecker: MutableSet<Int> = HashSet(16)
+    var prevIndex = 0
+
+    for ((index, post) in posts.withIndex()) {
+      for (postLinkable in post.linkables) {
+        if (postLinkable.type != PostLinkable.Type.THREAD || !duplicateChecker.add(index)) {
+          continue
+        }
+
+        connectRangesIfContiguous(prevIndex, index, crossThreadReplyRanges)
+        prevIndex = index
+        break
+      }
+    }
+
+    return crossThreadReplyRanges
+  }
+
+  private fun connectRangesIfContiguous(prevIndex: Int, index: Int, ranges: MutableList<IntRange>) {
+    if (prevIndex == index - 1 && ranges.size > 0) {
+      val prevRange = ranges[ranges.lastIndex]
+      ranges[ranges.lastIndex] = IntRange(prevRange.first, index)
+    } else {
+      ranges.add(IntRange(index, index))
+    }
+  }
+
 }
 
 data class PostMapInfoHolder(
+  val myPostsPositionRanges: List<IntRange> = emptyList(),
   val replyPositionRanges: List<IntRange> = emptyList(),
   val crossThreadQuotePositionRanges: List<IntRange> = emptyList()
 ) {
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
+    if (!rangesTheSame(myPostsPositionRanges, otherPostMapInfoHolder.myPostsPositionRanges)) {
+      return false
+    }
+
     if (!rangesTheSame(replyPositionRanges, otherPostMapInfoHolder.replyPositionRanges)) {
       return false
     }

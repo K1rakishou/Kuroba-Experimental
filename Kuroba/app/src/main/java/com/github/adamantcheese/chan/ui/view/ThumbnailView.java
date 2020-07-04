@@ -44,11 +44,13 @@ import android.view.animation.Interpolator;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.base.Debouncer;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 
@@ -86,6 +88,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private Rect tmpTextRect = new Rect();
 
     private AnimatorSet alphaAnimator = new AnimatorSet();
+    private Debouncer debouncer = new Debouncer(false);
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -114,28 +117,35 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
         textPaint.setTextSize(sp(14));
     }
 
-    public void setUrl(String url, Integer maxWidth, Integer maxHeight) {
+    public void setUrl(@Nullable String url, Integer maxWidth, Integer maxHeight) {
         if (requestDisposable != null) {
             requestDisposable.dispose();
             requestDisposable = null;
 
             error = false;
             setImageBitmap(null);
+
             alphaAnimator.end();
         }
 
         if (!TextUtils.isEmpty(url)) {
-            requestDisposable = imageLoaderV2.loadFromNetwork(
-                    getContext(),
-                    url,
-                    maxWidth,
-                    maxHeight,
-                    this
-            );
+            debouncer.post(() -> {
+                requestDisposable = imageLoaderV2.loadFromNetwork(
+                        getContext(),
+                        url,
+                        maxWidth,
+                        maxHeight,
+                        this
+                );
+            }, 350);
         }
     }
 
-    public void setUrl(String url) {
+    public void setUrl(@Nullable String url) {
+        if (url == null) {
+            debouncer.clear();
+        }
+
         setUrl(url, null, null);
     }
 

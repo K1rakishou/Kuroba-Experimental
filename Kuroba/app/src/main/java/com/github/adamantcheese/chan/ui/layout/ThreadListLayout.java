@@ -786,17 +786,21 @@ public class ThreadListLayout
                 recyclerView.removeItemDecoration(fastScroller);
                 fastScroller = null;
             }
-        } else {
-            if (postInfoMapItemDecoration == null) {
-                postInfoMapItemDecoration = new PostInfoMapItemDecoration(getContext());
-            }
 
+            postInfoMapItemDecoration = null;
+        } else {
             ChanThread thread = getThread();
             if (thread != null) {
-                postInfoMapItemDecoration.setItems(
-                        extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
-                        thread.getPostsCount()
-                );
+                if (thread.getLoadable().isThreadMode() && postInfoMapItemDecoration == null) {
+                    postInfoMapItemDecoration = new PostInfoMapItemDecoration(getContext());
+                }
+
+                if (postInfoMapItemDecoration != null) {
+                    postInfoMapItemDecoration.setItems(
+                            extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
+                            thread.getPostsCount()
+                    );
+                }
 
                 if (fastScroller == null) {
                     fastScroller = FastScrollerHelper.create(

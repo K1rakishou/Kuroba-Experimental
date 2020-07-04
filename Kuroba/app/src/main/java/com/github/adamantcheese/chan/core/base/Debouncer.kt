@@ -24,4 +24,8 @@ open class Debouncer(
     handler.removeCallbacksAndMessages(null)
     handler.postDelayed(runnable, delayMs)
   }
+
+  fun clear() {
+    handler.removeCallbacksAndMessages(null)
+  }
 }
