@@ -402,7 +402,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private fun threadBookmarkViewPost(post: Post) {
     val threadDescriptor = loadable.threadDescriptorOrNull
     if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
-      bookmarksManager.onPostViewed(threadDescriptor, post.no, realPostIndex)
+      bookmarksManager.onPostViewed(threadDescriptor, post.no, currentPostIndex, realPostIndex)
       lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, post.no)
     }
   }

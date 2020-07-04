@@ -48,7 +48,7 @@ class HistoryNavigationManager(
 
     appScope.launch {
       persistTaskSubject
-        .debounce(5, TimeUnit.SECONDS)
+        .debounce(1, TimeUnit.SECONDS)
         .collect {
           persisNavigationStack()
         }

@@ -82,7 +82,8 @@ class ThreadPresenter @Inject constructor(
   private val seenPostsManager: SeenPostsManager,
   private val historyNavigationManager: HistoryNavigationManager,
   private val archivesManager: ArchivesManager,
-  private val postFilterManager: PostFilterManager
+  private val postFilterManager: PostFilterManager,
+  private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -603,7 +604,12 @@ class ThreadPresenter @Inject constructor(
 
     if (loadable?.isThreadMode == true && thread.postsCount > 0) {
       val posts = thread.posts
-      loadable!!.setLastViewed(posts[posts.size - 1].no)
+      val lastPostNo = posts.last().no
+
+      loadable?.setLastViewed(lastPostNo)
+      loadable?.threadDescriptorOrNull?.let { threadDescriptor ->
+        pastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, lastPostNo)
+      }
     }
 
     val pin = watchManager.findPinByLoadableId(loadable!!.id)
