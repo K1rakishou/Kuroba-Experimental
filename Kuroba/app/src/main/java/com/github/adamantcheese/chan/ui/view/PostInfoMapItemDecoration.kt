@@ -35,7 +35,7 @@ class PostInfoMapItemDecoration(
     newPostMapInfoHolder: PostMapInfoHolder,
     newPostsTotal: Int
   ) {
-    if (postInfoHolder.isTheSame(newPostMapInfoHolder)) {
+    if (postInfoHolder.isTheSame(newPostMapInfoHolder) && postsTotal == newPostsTotal) {
       return
     }
 
