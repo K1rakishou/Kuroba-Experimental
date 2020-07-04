@@ -65,6 +65,7 @@ class ReplyNotificationsHelper(
 ) {
   private val debouncer = SuspendDebouncer(appScope)
   private val working = AtomicBoolean(false)
+
   // For Adnroid O and above
   private val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
 
@@ -83,34 +84,8 @@ class ReplyNotificationsHelper(
           Logger.d(TAG, "bookmarksManager.listenForBookmarksChanges(), " +
             "bookmarkChange=${bookmarkChange.javaClass.simpleName}")
 
-          if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksDeleted) {
-            closeNotifications(bookmarkChange)
-          } else {
-            showOrUpdateNotifications()
-          }
+          showOrUpdateNotifications()
         }
-    }
-  }
-
-  private fun closeNotifications(bookmarkChange: BookmarksManager.BookmarkChange.BookmarksDeleted) {
-    if (!AndroidUtils.isAndroidO()) {
-      // Notifications for Android Nougat and below are handled differently
-      return
-    }
-
-    Logger.d(TAG, "closeNotifications(${bookmarkChange.threadDescriptors.size}) called")
-
-    bookmarkChange.threadDescriptors.forEach { threadDescriptor ->
-      val notificationId = NotificationConstants.ReplyNotifications.notificationIdMap[threadDescriptor]
-        ?: return@forEach
-
-      Logger.d(TAG, "closeNotifications() closing $threadDescriptor, $notificationId")
-      notificationManagerCompat.cancel(getUniqueNotificationTag(threadDescriptor), notificationId)
-    }
-
-    if (onlySummaryNotificationLeft()) {
-      Logger.d(TAG, "Only summary notification left visible, killing it")
-      notificationManagerCompat.cancelAll()
     }
   }
 
@@ -778,13 +753,6 @@ class ReplyNotificationsHelper(
           visibleNotificationsMap[tag]!!.id
       }
     }
-  }
-
-  @RequiresApi(Build.VERSION_CODES.M)
-  private fun onlySummaryNotificationLeft(): Boolean {
-    return notificationManager.activeNotifications
-      .filter { notification -> notification.groupKey == notificationsGroup }
-      .any { notification -> notification.id == SUMMARY_NOTIFICATION_ID }
   }
 
   companion object {

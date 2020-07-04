@@ -9,11 +9,13 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.Flowable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class BookmarkWatcherController(
@@ -94,22 +96,25 @@ class BookmarkWatcherController(
     applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility(),
     replaceCurrent: Boolean = false
   ) {
-    bookmarksManager.awaitUntilInitialized()
+    withContext(NonCancellable) {
+      bookmarksManager.awaitUntilInitialized()
 
-    if (!bookmarksManager.hasActiveBookmarks()) {
-      Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
+      if (!bookmarksManager.hasActiveBookmarks()) {
+        Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
-      cancelForegroundBookmarkWatching()
-      cancelBackgroundBookmarkWatching()
-      return
-    }
+        cancelForegroundBookmarkWatching()
+        cancelBackgroundBookmarkWatching()
 
-    if (applicationVisibility == ApplicationVisibility.Foreground) {
-      Logger.d(TAG, "Switching to foreground watcher")
-      switchToForegroundWatcher()
-    } else {
-      Logger.d(TAG, "Switching to background watcher, replaceCurrent=$replaceCurrent")
-      switchToBackgroundWatcher(replaceCurrent)
+        return@withContext
+      }
+
+      if (applicationVisibility == ApplicationVisibility.Foreground) {
+        Logger.d(TAG, "Switching to foreground watcher")
+        switchToForegroundWatcher()
+      } else {
+        Logger.d(TAG, "Switching to background watcher, replaceCurrent=$replaceCurrent")
+        switchToBackgroundWatcher(replaceCurrent)
+      }
     }
   }
 
