@@ -43,10 +43,7 @@ import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.BookmarksManager
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
-import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -90,6 +87,8 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
 
   private lateinit var relativeLayoutContainer: RelativeLayout
   private lateinit var title: FastTextView
@@ -404,6 +403,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     val threadDescriptor = loadable.threadDescriptorOrNull
     if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
       bookmarksManager.onPostViewed(threadDescriptor, post.no, realPostIndex)
+      lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, post.no)
     }
   }
 
