@@ -464,6 +464,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
         return new ReplyNotificationsHelper(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
                 appContext,
                 appScope,
                 getNotificationManagerCompat(),

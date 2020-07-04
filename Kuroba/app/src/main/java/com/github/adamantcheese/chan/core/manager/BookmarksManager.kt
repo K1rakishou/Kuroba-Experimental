@@ -26,6 +26,8 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class BookmarksManager(
   private val isDevAppFlavor: Boolean,
@@ -125,7 +127,12 @@ class BookmarksManager(
       .hide()
   }
 
-  suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
+  @OptIn(ExperimentalTime::class)
+  suspend fun awaitUntilInitialized() {
+    Logger.d(TAG, "BookmarksManager is not ready yet, waiting...")
+    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
+    Logger.d(TAG, "BookmarksManager initialization completed, took $duration")
+  }
 
   fun isReady() = suspendableInitializer.isInitialized()
 
@@ -170,7 +177,7 @@ class BookmarksManager(
       orders.add(0, threadDescriptor)
       bookmarks[threadDescriptor] = threadBookmark
 
-      bookmarksChanged(BookmarkChange.BookmarksCreated)
+      bookmarksChanged(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
       Logger.d(TAG, "Bookmark created ($threadDescriptor)")
     }
   }
@@ -186,7 +193,7 @@ class BookmarksManager(
       bookmarks.remove(threadDescriptor)
       orders.remove(threadDescriptor)
 
-      bookmarksChanged(BookmarkChange.BookmarksDeleted)
+      bookmarksChanged(BookmarkChange.BookmarksDeleted(listOf(threadDescriptor)))
       Logger.d(TAG, "Bookmark deleted ($threadDescriptor)")
     }
   }
@@ -214,7 +221,9 @@ class BookmarksManager(
       var updated = false
 
       threadDescriptors.forEach { threadDescriptor ->
-        val oldThreadBookmark = bookmarks[threadDescriptor]!!
+        val oldThreadBookmark = bookmarks[threadDescriptor]
+          ?: return@forEach
+
         ensureContainsOrder(threadDescriptor)
 
         val mutatedBookmark = oldThreadBookmark.deepCopy()
@@ -231,10 +240,10 @@ class BookmarksManager(
       }
 
       if (notifyListenersOption != NotifyListenersOption.DoNotNotify) {
-        if (notifyListenersOption == NotifyListenersOption.Notify) {
-          bookmarksChanged(BookmarkChange.BookmarksUpdated)
+        if (notifyListenersOption == NotifyListenersOption.NotifyEager) {
+          bookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
         } else {
-          delayedBookmarksChanged(BookmarkChange.BookmarksUpdated)
+          delayedBookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
         }
       }
     }
@@ -253,7 +262,6 @@ class BookmarksManager(
       }
       ensureBookmarksAndOrdersConsistency()
 
-
       if (toDelete.size > 0) {
         toDelete.forEach { threadDescriptor ->
           bookmarks.remove(threadDescriptor)
@@ -261,31 +269,31 @@ class BookmarksManager(
         }
       }
 
-      bookmarksChanged(BookmarkChange.BookmarksDeleted)
+      bookmarksChanged(BookmarkChange.BookmarksDeleted(toDelete))
     }
   }
 
-  fun markAllPostsAsSeen(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  fun readPostsAndNotificationsForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.write {
-      bookmarks[threadDescriptor]?.markAsSeen()
+      bookmarks[threadDescriptor]?.readAllPostsAndNotifications()
       ensureBookmarksAndOrdersConsistency()
 
-      bookmarksChanged(BookmarkChange.BookmarksUpdated)
+      bookmarksChanged(BookmarkChange.BookmarksUpdated(listOf(threadDescriptor)))
     }
   }
 
-  fun markAllAsSeen() {
+  fun readAllPostsAndNotifications() {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.write {
       bookmarks.entries.forEach { (_, threadBookmark) ->
-        threadBookmark.markAsSeen()
+        threadBookmark.readAllPostsAndNotifications()
       }
       ensureBookmarksAndOrdersConsistency()
 
-      bookmarksChanged(BookmarkChange.BookmarksUpdated)
+      bookmarksChanged(BookmarkChange.BookmarksUpdated(bookmarks.keys))
     }
   }
 
@@ -303,7 +311,9 @@ class BookmarksManager(
 
       ensureContainsOrder(threadDescriptor)
 
-      val threadBookmark = bookmarks[threadDescriptor]!!
+      val threadBookmark = bookmarks[threadDescriptor]
+        ?: return@read
+
       viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
     }
   }
@@ -320,7 +330,9 @@ class BookmarksManager(
 
       ensureContainsOrder(threadDescriptor)
 
-      val threadBookmark = bookmarks[threadDescriptor]!!
+      val threadBookmark = bookmarks[threadDescriptor]
+        ?: return@read null
+
       return@read mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
     }
   }
@@ -331,7 +343,7 @@ class BookmarksManager(
     lock.read {
       for (threadDescriptor in orders) {
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks does not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor} even though orders does"
         }
 
         if (!viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))) {
@@ -347,7 +359,7 @@ class BookmarksManager(
     return lock.read {
       return@read orders.map { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks does not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor} even though orders does"
         }
 
         return@map mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
@@ -361,7 +373,7 @@ class BookmarksManager(
     return lock.read {
       return@read orders.mapNotNull { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks does not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor} even though orders does"
         }
 
         return@mapNotNull mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
@@ -377,7 +389,9 @@ class BookmarksManager(
 
     lock.write {
       orders.add(to, orders.removeAt(from))
-      bookmarksChanged(BookmarkChange.BookmarksUpdated)
+
+      // TODO(KurobaEx): ??? What bookmark exactly should be used here?
+      bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
 
       Logger.d(TAG, "Bookmark moved (from=$from, to=$to)")
     }
@@ -406,8 +420,8 @@ class BookmarksManager(
 
     updateBookmark(threadDescriptor, NotifyListenersOption.NotifyDelayed) { threadBookmark ->
       threadBookmark.updateSeenPostCount(realPostIndex)
-      threadBookmark.updateSeenReplies(postNo)
       threadBookmark.updateLastViewedPostNo(postNo)
+      threadBookmark.readRepliesUpTo(postNo)
     }
   }
 
@@ -451,13 +465,13 @@ class BookmarksManager(
     }
   }
 
-  fun hasUnseenReplies(): Boolean {
+  fun hasUnreadReplies(): Boolean {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
       ensureBookmarksAndOrdersConsistency()
 
-      return@read bookmarks.values.any { threadBookmark -> threadBookmark.hasUnseenReplies() }
+      return@read bookmarks.values.any { threadBookmark -> threadBookmark.hasUnreadReplies() }
     }
   }
 
@@ -548,7 +562,7 @@ class BookmarksManager(
     return lock.read {
       return@read orders.map { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks does not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor} even though orders does"
         }
 
         return@map threadBookmark.deepCopy()
@@ -558,15 +572,18 @@ class BookmarksManager(
 
   enum class NotifyListenersOption {
     DoNotNotify,
-    Notify,
+    NotifyEager,
+    // Be very careful when using this option since it's using a debouncer with 1 second delay.
+    // So you may end up with a race condition. Always prefer NotifyEager. Right this options is only
+    // used in one place where it's really useful.
     NotifyDelayed
   }
 
   sealed class BookmarkChange {
     object BookmarksInitialized : BookmarkChange()
-    object BookmarksCreated : BookmarkChange()
-    object BookmarksDeleted : BookmarkChange()
-    object BookmarksUpdated : BookmarkChange()
+    class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
+    class BookmarksDeleted(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
+    class BookmarksUpdated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>?) : BookmarkChange()
   }
 
   companion object {

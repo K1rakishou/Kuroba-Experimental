@@ -6,10 +6,8 @@ import org.joda.time.DateTime
 data class ThreadBookmarkReplyView(
   val postDescriptor: PostDescriptor,
   val repliesTo: PostDescriptor,
-  // Used in BookmarksController, to filter out replies that the user has already seen
-  // (or more precise their amount)
-  val seen: Boolean,
-  // Used when showing notifications to not show a notification for the same reply more than once
-  val notified: Boolean,
+  val alreadyNotified: Boolean,
+  val alreadySeen: Boolean,
+  val alreadyRead: Boolean,
   val time: DateTime
 )

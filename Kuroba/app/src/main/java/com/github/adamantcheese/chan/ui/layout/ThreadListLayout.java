@@ -230,6 +230,8 @@ public class ThreadListLayout
             showingThread.getLoadable().setListViewTop(indexTop[1]);
 
             int last = getCompleteBottomAdapterPosition();
+            updateLastViewedPostNo(last);
+
             if (last == postAdapter.getItemCount() - 1 && last > lastPostCount) {
                 lastPostCount = last;
 
@@ -237,8 +239,6 @@ public class ThreadListLayout
                 // while in a layout pass. Postpone to the next frame.
                 mainHandler.post(() -> ThreadListLayout.this.callback.onListScrolledToBottom());
             }
-
-            updateLastViewedPostNo(last);
         }
     }
 

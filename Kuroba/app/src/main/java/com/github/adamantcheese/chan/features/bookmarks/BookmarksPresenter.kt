@@ -127,7 +127,7 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
   }
 
   fun markAllAsSeen() {
-    bookmarksManager.markAllAsSeen()
+    bookmarksManager.readAllPostsAndNotifications()
   }
 
   fun onSearchModeChanged(visible: Boolean) {
@@ -166,7 +166,7 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
             showBookmarkStats = isWatcherEnabled,
             watching = threadBookmarkView.isWatching(),
             newPosts = max(0, threadBookmarkView.totalPostsCount - threadBookmarkView.seenPostsCount),
-            newQuotes = threadBookmarkView.threadBookmarkReplyViews.values.count { reply -> !reply.seen },
+            newQuotes = threadBookmarkView.threadBookmarkReplyViews.values.count { reply -> !reply.alreadyRead },
             totalPosts = threadBookmarkView.totalPostsCount,
             isBumpLimit = threadBookmarkView.isBumpLimit(),
             isImageLimit = threadBookmarkView.isImageLimit(),

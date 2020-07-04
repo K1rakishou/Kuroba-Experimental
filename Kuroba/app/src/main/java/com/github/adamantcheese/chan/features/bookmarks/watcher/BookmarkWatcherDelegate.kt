@@ -121,15 +121,23 @@ class BookmarkWatcherDelegate(
     if (isUpdatingCurrentlyOpenedThread) {
       return
     }
+
+    replyNotificationsHelper.showOrUpdateNotifications()
   }
 
   private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {
     unsuccessFetchResults.forEachIndexed { index, unsuccessFetchResult ->
       val threadDescriptor = unsuccessFetchResult.threadDescriptor
 
+      val notifyListenersOption = if (index == unsuccessFetchResults.lastIndex) {
+        BookmarksManager.NotifyListenersOption.NotifyEager
+      } else {
+        BookmarksManager.NotifyListenersOption.DoNotNotify
+      }
+
       bookmarksManager.updateBookmark(
         threadDescriptor,
-        BookmarksManager.NotifyListenersOption.NotifyDelayed
+        notifyListenersOption
       ) { threadBookmark ->
         when (unsuccessFetchResult) {
           is ThreadBookmarkFetchResult.Error,
@@ -161,6 +169,8 @@ class BookmarkWatcherDelegate(
       fetchResult.threadDescriptor to fetchResult.threadBookmarkInfoObject
     }.toList()
 
+    var index = 0
+
     fetchResultPairsList.forEach { (threadDescriptor, threadBookmarkInfoObject) ->
       val quotesToMeMap = postsQuotingMe[threadDescriptor] ?: emptyMap()
 
@@ -170,9 +180,15 @@ class BookmarkWatcherDelegate(
 
       checkNotNull(originalPost) { "threadBookmarkInfoObject has no OP!" }
 
+      val notifyListenersOption = if (index == fetchResultPairsList.lastIndex) {
+        BookmarksManager.NotifyListenersOption.NotifyEager
+      } else {
+        BookmarksManager.NotifyListenersOption.DoNotNotify
+      }
+
       bookmarksManager.updateBookmark(
         threadDescriptor,
-        BookmarksManager.NotifyListenersOption.NotifyDelayed
+        notifyListenersOption
       ) { threadBookmark ->
         // If we have just bookmarked this thread then use the last viewed post no to mark all posts
         // with postNo less than lastViewedPostNo as seen (as well as replies and notifications). We
@@ -248,6 +264,8 @@ class BookmarkWatcherDelegate(
 
         threadBookmark.clearFirstFetchFlag()
       }
+
+      ++index
     }
   }
 
@@ -258,16 +276,22 @@ class BookmarkWatcherDelegate(
     myPostNo: Long,
     lastViewedPostNo: Long
   ) {
+    val alreadyRead = lastViewedPostNo >= postReplyDescriptor.postNo
+
     if (!threadBookmark.threadBookmarkReplies.containsKey(postReplyDescriptor)) {
       threadBookmark.threadBookmarkReplies.put(
         postReplyDescriptor,
         ThreadBookmarkReply(
           postDescriptor = postReplyDescriptor,
           repliesTo = PostDescriptor.create(threadDescriptor, myPostNo),
-          // If lastViewPostNo is greater or equal to reply's postNo then we have already seen
-          // that reply and we don't need to notify the user about it.
-          alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo,
-          alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo,
+          // If lastViewPostNo is greater or equal to reply's postNo then we have already seen/read
+          // that reply and we don't need to notify the user about it. This happens when the user
+          // replies to a thread then someone else replies to him and before we update the bookmarks
+          // the user scroll below the reply position. In such case we don't want to show any kind
+          // of notifications because the user has already seen/read the reply.
+          alreadySeen = alreadyRead,
+          alreadyNotified = alreadyRead,
+          alreadyRead = alreadyRead,
           time = DateTime.now()
         )
       )
@@ -276,22 +300,22 @@ class BookmarkWatcherDelegate(
 
       // Mark replies as seen and notified if necessary
       if (!existingReply.alreadySeen) {
-        existingReply.alreadySeen = lastViewedPostNo >= postReplyDescriptor.postNo
+        existingReply.alreadySeen = alreadyRead
       }
 
       if (!existingReply.alreadyNotified) {
-        existingReply.alreadyNotified = lastViewedPostNo >= postReplyDescriptor.postNo
+        existingReply.alreadyNotified = alreadyRead
+      }
+
+      if (!existingReply.alreadyRead) {
+        existingReply.alreadyRead = alreadyRead
       }
     }
   }
 
   @OptIn(ExperimentalTime::class)
   private suspend fun awaitUntilAllDependenciesAreReady() {
-    if (!bookmarksManager.isReady()) {
-      Logger.d(TAG, "BookmarksManager is not ready yet, waiting...")
-      val duration = measureTime { bookmarksManager.awaitUntilInitialized() }
-      Logger.d(TAG, "BookmarksManager initialization completed, took $duration")
-    }
+    bookmarksManager.awaitUntilInitialized()
 
     if (!siteRepository.isReady) {
       Logger.d(TAG, "siteRepository is not ready yet, waiting...")

@@ -138,14 +138,13 @@ class DrawerPresenter(
 
   private fun onBookmarksChanged() {
     val totalUnseenPostsCount = bookmarksManager.getTotalUnseenPostsCount()
-    val hasUnseenReplies = bookmarksManager.hasUnseenReplies()
+    val hasUnreadReplies = bookmarksManager.hasUnreadReplies()
 
     if (isDevFlavor && totalUnseenPostsCount == 0) {
-      // TODO(KurobaEx): enable this check after reply persistence is implemented
-//      check(!hasUnseenReplies) { "Bookmarks have no unseen posts but have unseen replies!" }
+      check(!hasUnreadReplies) { "Bookmarks have no unread posts but have unseen replies!" }
     }
 
-    bookmarksBadgeStateSubject.onNext(BookmarksBadgeState(totalUnseenPostsCount, hasUnseenReplies))
+    bookmarksBadgeStateSubject.onNext(BookmarksBadgeState(totalUnseenPostsCount, hasUnreadReplies))
   }
 
   private fun setState(state: HistoryControllerState) {
@@ -154,7 +153,7 @@ class DrawerPresenter(
 
   data class BookmarksBadgeState(
     val totalUnseenPostsCount: Int,
-    val hasUnseenReplies: Boolean
+    val hasUnreadReplies: Boolean
   )
 
   companion object {

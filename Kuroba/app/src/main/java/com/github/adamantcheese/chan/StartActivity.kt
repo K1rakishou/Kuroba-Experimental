@@ -55,8 +55,11 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.chan.utils.setupFullscreen
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -66,6 +69,7 @@ import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
 
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
@@ -92,6 +96,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var controllerNavigationManager: ControllerNavigationManager
   @Inject
   lateinit var replyViewStateManager: ReplyViewStateManager
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -459,59 +465,51 @@ class StartActivity : AppCompatActivity(),
     browseController!!.setDrawerCallbacks(drawerController)
   }
 
+  @OptIn(ExperimentalTime::class)
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
 
-    // Handle WatchNotification clicks
-    if (intent.extras != null) {
-      val pinId = intent.extras?.getInt("pin_id", -2) ?: -2
-      if (pinId != -2 && mainNavigationController.top is BrowseController) {
-        passIntentToBrowseController(pinId)
-      } else if (pinId != -2 && mainNavigationController.top is ThreadSlideController) {
-        passIntentToThreadSlideController(pinId)
-      }
-    }
-  }
-
-  private fun passIntentToThreadSlideController(pinId: Int) {
-    if (pinId == -1) {
-      drawerController.onMenuClicked()
-      return
-    }
-
-    val pin = watchManager.findPinById(pinId)
+    val extras = intent.extras
       ?: return
 
-    val controllers: List<Controller> = mainNavigationController.childControllers
+    launch {
+      bookmarksManager.awaitUntilInitialized()
 
-    for (controller in controllers) {
-      if (controller is ViewThreadController) {
-        controller.loadThread(pin.loadable)
-        break
-      } else if (controller is ThreadSlideController) {
-        if (controller.getRightController() is ViewThreadController) {
-          (controller.getRightController() as ViewThreadController).loadThread(pin.loadable)
-          controller.switchToController(false)
-          break
-        } else {
-          val viewThreadController = ViewThreadController(this, pin.loadable)
-          controller.setRightController(viewThreadController)
-          controller.switchToController(false)
-          break
+      if (intent.hasExtra(SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY)) {
+        val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+          SUMMARY_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+        )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+
+        if (threadDescriptors.isNullOrEmpty()) {
+          return@launch
         }
+
+        Logger.d(TAG, "onNewIntent() summary notification clicked, " +
+          "marking as seen ${threadDescriptors.size} bookmarks")
+
+        drawerController.showBookmarksController()
+
+        bookmarksManager.updateBookmarks(
+          threadDescriptors,
+          BookmarksManager.NotifyListenersOption.NotifyEager
+        ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
+      } else if (intent.hasExtra(SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY)) {
+        val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+          SUMMARY_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
+        )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+
+        if (threadDescriptors.isNullOrEmpty()) {
+          return@launch
+        }
+
+        Logger.d(TAG, "onNewIntent() summary notification swiped away, " +
+          "marking as seen ${threadDescriptors.size} bookmarks")
+
+        bookmarksManager.updateBookmarks(
+          threadDescriptors,
+          BookmarksManager.NotifyListenersOption.NotifyEager
+        ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
       }
-    }
-  }
-
-  private fun passIntentToBrowseController(pinId: Int) {
-    if (pinId == -1) {
-      drawerController.onMenuClicked()
-      return
-    }
-
-    val pin = watchManager.findPinById(pinId)
-    if (pin != null) {
-      browseController?.showThread(pin.loadable, false)
     }
   }
 

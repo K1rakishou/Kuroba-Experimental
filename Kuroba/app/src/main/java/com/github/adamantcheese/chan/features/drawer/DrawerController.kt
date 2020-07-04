@@ -273,6 +273,12 @@ class DrawerController(
     }
   }
 
+  fun showBookmarksController() {
+    closeAllNonMainControllers()
+
+    openController(BookmarksController(context))
+  }
+
   fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false
@@ -384,7 +390,7 @@ class DrawerController(
       badgeDrawable.maxCharacterCount = 5
       badgeDrawable.number = state.totalUnseenPostsCount
 
-      if (state.hasUnseenReplies) {
+      if (state.hasUnreadReplies) {
         badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
       } else {
         badgeDrawable.backgroundColor = themeHelper.theme.backColor

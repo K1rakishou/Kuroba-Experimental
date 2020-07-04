@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "90d87a1f199998b58f07cd1e48c911c9",
+    "identityHash": "22a9039dbaaabc3bd2f5ce0d0eb1c468",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1249,7 +1249,7 @@
       },
       {
         "tableName": "thread_bookmark_reply",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_bookmark_reply_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_bookmark_id` INTEGER NOT NULL, `reply_post_no` INTEGER NOT NULL, `replies_to_post_no` INTEGER NOT NULL, `already_seen` INTEGER NOT NULL, `already_notified` INTEGER NOT NULL, `time` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_bookmark_reply_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_bookmark_id` INTEGER NOT NULL, `reply_post_no` INTEGER NOT NULL, `replies_to_post_no` INTEGER NOT NULL, `already_seen` INTEGER NOT NULL, `already_notified` INTEGER NOT NULL, `already_read` INTEGER NOT NULL, `time` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "threadBookmarkReplyId",
@@ -1284,6 +1284,12 @@
           {
             "fieldPath": "alreadyNotified",
             "columnName": "already_notified",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "alreadyRead",
+            "columnName": "already_read",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -1342,7 +1348,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '90d87a1f199998b58f07cd1e48c911c9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22a9039dbaaabc3bd2f5ce0d0eb1c468')"
     ]
   }
 }

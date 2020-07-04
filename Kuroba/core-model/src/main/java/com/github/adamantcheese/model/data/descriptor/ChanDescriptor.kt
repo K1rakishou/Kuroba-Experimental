@@ -64,6 +64,14 @@ sealed class ChanDescriptor {
 
         return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadNo)
       }
+
+      fun fromThreadDescriptorParcelable(threadDescriptorParcelable: ThreadDescriptorParcelable): ThreadDescriptor {
+        return create(
+          threadDescriptorParcelable.siteName,
+          threadDescriptorParcelable.boardCode,
+          threadDescriptorParcelable.threadNo
+        )
+      }
     }
   }
 

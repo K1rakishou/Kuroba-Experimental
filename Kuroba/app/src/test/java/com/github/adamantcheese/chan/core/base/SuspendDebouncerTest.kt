@@ -40,7 +40,7 @@ class SuspendDebouncerTest {
   }
 
   @Test
-  fun `test debouncing should not call the callback `() {
+  fun `test debouncing should not call the callback`() {
     runBlockingTest {
       val suspendDebouncer = SuspendDebouncer(this)
       val counter = AtomicInteger(0)
@@ -52,6 +52,24 @@ class SuspendDebouncerTest {
       suspendDebouncer.post(500L) { counter.getAndIncrement() }
 
       assertEquals(0, counter.get())
+
+      suspendDebouncer.stop()
+    }
+  }
+
+  @Test
+  fun `test multiple post updates`() {
+    runBlockingTest {
+      val suspendDebouncer = SuspendDebouncer(this)
+      val counter = AtomicInteger(0)
+
+      repeat(10) {
+        suspendDebouncer.post(500L) { counter.getAndIncrement() }
+        advanceTimeBy(400L)
+      }
+
+      advanceUntilIdle()
+      assertEquals(1, counter.get())
 
       suspendDebouncer.stop()
     }

@@ -18,6 +18,7 @@ object ThreadBookmarkReplyMapper {
       repliesToPostNo = threadBookmarkReply.repliesTo.postNo,
       alreadySeen = threadBookmarkReply.alreadySeen,
       alreadyNotified = threadBookmarkReply.alreadyNotified,
+      alreadyRead = threadBookmarkReply.alreadyRead,
       time = threadBookmarkReply.time
     )
   }
@@ -44,11 +45,12 @@ object ThreadBookmarkReplyMapper {
       )
 
       resultMap[postDescriptor] = ThreadBookmarkReply(
-        postDescriptor,
-        repliesToPostDescriptor,
-        threadBookmarkReplyEntity.alreadySeen,
-        threadBookmarkReplyEntity.alreadyNotified,
-        threadBookmarkReplyEntity.time
+        postDescriptor = postDescriptor,
+        repliesTo = repliesToPostDescriptor,
+        alreadyNotified = threadBookmarkReplyEntity.alreadySeen,
+        alreadySeen = threadBookmarkReplyEntity.alreadyNotified,
+        alreadyRead = threadBookmarkReplyEntity.alreadyRead,
+        time = threadBookmarkReplyEntity.time
       )
     }
 

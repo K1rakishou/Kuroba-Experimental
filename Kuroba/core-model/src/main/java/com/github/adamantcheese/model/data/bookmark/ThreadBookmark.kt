@@ -52,8 +52,8 @@ class ThreadBookmark private constructor(
     }
   }
 
-  fun hasUnseenReplies(): Boolean {
-    return threadBookmarkReplies.values.any { threadBookmarkReply -> !threadBookmarkReply.alreadySeen }
+  fun hasUnreadReplies(): Boolean {
+    return threadBookmarkReplies.values.any { threadBookmarkReply -> !threadBookmarkReply.alreadyRead }
   }
 
   fun unseenPostsCount(): Int {
@@ -76,15 +76,6 @@ class ThreadBookmark private constructor(
     seenPostsCount = Math.max(0, seenPostsCount - newPostsInRollingStickyThreadCount)
   }
 
-  fun updateSeenReplies(lastSeenPostNo: Long) {
-    // Mark all quotes to me as seen which postNo is less than lastSeenPostNo
-    threadBookmarkReplies.values
-      .filter { threadBookmarkReply ->
-        threadBookmarkReply.postDescriptor.postNo <= lastSeenPostNo && !threadBookmarkReply.alreadySeen
-      }
-      .forEach { threadBookmarkReply -> threadBookmarkReply.alreadySeen = true }
-  }
-
   fun setBumpLimit(bumpLimit: Boolean) {
     if (bumpLimit) {
       state.set(BOOKMARK_STATE_THREAD_BUMP_LIMIT)
@@ -101,9 +92,28 @@ class ThreadBookmark private constructor(
     }
   }
 
-  fun markAsSeen() {
+  fun readRepliesUpTo(lastSeenPostNo: Long) {
+    // Mark all quotes to me as notified/seen/read which postNo is less or equals to lastSeenPostNo.
+    threadBookmarkReplies.values
+      .filter { threadBookmarkReply -> threadBookmarkReply.postDescriptor.postNo <= lastSeenPostNo }
+      .forEach { threadBookmarkReply ->
+        threadBookmarkReply.alreadyNotified = true
+        threadBookmarkReply.alreadySeen = true
+        threadBookmarkReply.alreadyRead = true
+      }
+  }
+
+  fun readAllPostsAndNotifications() {
     seenPostsCount = totalPostsCount
 
+    threadBookmarkReplies.values.forEach { threadBookmarkReply ->
+      threadBookmarkReply.alreadySeen = true
+      threadBookmarkReply.alreadyNotified = true
+      threadBookmarkReply.alreadyRead = true
+    }
+  }
+
+  fun markAsSeenAllReplies() {
     threadBookmarkReplies.values.forEach { threadBookmarkReply ->
       threadBookmarkReply.alreadySeen = true
       threadBookmarkReply.alreadyNotified = true

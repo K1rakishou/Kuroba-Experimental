@@ -523,17 +523,23 @@ public class PostAdapter
     }
 
     public long getPostNo(int itemPosition) {
-        int itemViewType = getItemViewType(itemPosition);
+        int correctedPosition = getPostPosition(itemPosition);
+        int itemViewType = getItemViewType(correctedPosition);
+
+        if (itemViewType == TYPE_STATUS) {
+            correctedPosition = getPostPosition(correctedPosition - 1);
+            itemViewType = getItemViewType(correctedPosition);
+        }
+
         if (itemViewType != TYPE_POST && itemViewType != TYPE_POST_STUB) {
             return -1L;
         }
 
-        int postPosition = getPostPosition(itemPosition);
-        if (postPosition < 0 || postPosition >= displayList.size()) {
+        if (correctedPosition < 0 || correctedPosition >= displayList.size()) {
             return -1L;
         }
 
-        Post post = displayList.get(postPosition);
+        Post post = displayList.get(correctedPosition);
         return post.no;
     }
 
