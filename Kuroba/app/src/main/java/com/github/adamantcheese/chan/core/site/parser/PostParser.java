@@ -22,7 +22,18 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
 public interface PostParser {
-    Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback);
+    Post parse(
+            @NonNull Theme theme,
+            Post.Builder builder,
+            Callback callback
+    );
+
+    CharSequence parseComment(
+            Theme theme,
+            Post.Builder post,
+            CharSequence commentRaw,
+            Callback callback
+    );
 
     interface Callback {
         boolean isSaved(long postNo);

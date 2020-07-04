@@ -227,7 +227,8 @@ public class DefaultPostParser implements PostParser {
         builder.tripcode = nameTripcodeIdCapcodeSpan;
     }
 
-    private CharSequence parseComment(
+    @Override
+    public CharSequence parseComment(
             Theme theme,
             Post.Builder post,
             CharSequence commentRaw,
