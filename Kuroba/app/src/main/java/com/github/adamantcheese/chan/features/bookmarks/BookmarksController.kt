@@ -13,7 +13,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.adamantcheese.chan.features.bookmarks.epoxy.*
@@ -39,7 +38,6 @@ import javax.inject.Inject
 class BookmarksController(context: Context)
   : Controller(context),
   BookmarksView,
-  RequiresNoBottomNavBar,
   ToolbarNavigationController.ToolbarSearchCallback {
 
   @Inject

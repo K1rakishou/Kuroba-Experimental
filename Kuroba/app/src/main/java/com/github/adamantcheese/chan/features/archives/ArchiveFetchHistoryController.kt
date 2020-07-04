@@ -4,7 +4,6 @@ import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.features.archives.epoxy.epoxyFetchHistoryRow
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
@@ -16,7 +15,7 @@ class ArchiveFetchHistoryController(
   context: Context,
   fetchResults: List<ThirdPartyArchiveFetchResult>,
   private val callback: OnFetchHistoryChanged
-) : Controller(context), ArchiveFetchHistoryControllerView, RequiresNoBottomNavBar {
+) : Controller(context), ArchiveFetchHistoryControllerView {
   lateinit var recyclerView: EpoxyRecyclerView
 
   private val presenter = ArchiveFetchHistoryPresenter(ArrayList(fetchResults))

@@ -25,7 +25,6 @@ import android.widget.EditText
 import android.widget.TextView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
 import com.github.adamantcheese.chan.core.site.http.HttpCall
@@ -38,7 +37,7 @@ import kotlinx.coroutines.launch
 class LoginController(
   context: Context,
   private val site: Site
-) : Controller(context), View.OnClickListener, RequiresNoBottomNavBar {
+) : Controller(context), View.OnClickListener {
   
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView

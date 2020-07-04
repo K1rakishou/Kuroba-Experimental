@@ -437,14 +437,14 @@ class StartActivity : AppCompatActivity(),
       ChanSettings.LayoutMode.SPLIT -> {
         val split = SplitNavigationController(this)
         split.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
-        drawerController.setChildController(split)
+        drawerController.pushChildController(split)
 
         split.setDrawerCallbacks(drawerController)
         split.setLeftController(mainNavigationController)
       }
       ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
-        drawerController.setChildController(mainNavigationController)
+        drawerController.pushChildController(mainNavigationController)
       }
       ChanSettings.LayoutMode.AUTO -> throw IllegalStateException("Shouldn't happen")
     }

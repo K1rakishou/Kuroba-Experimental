@@ -37,7 +37,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.BoardSetupPresenter;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
@@ -65,7 +64,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class BoardSetupController
         extends Controller
-        implements View.OnClickListener, BoardSetupPresenter.Callback, RequiresNoBottomNavBar {
+        implements View.OnClickListener, BoardSetupPresenter.Callback {
     @Inject
     BoardSetupPresenter presenter;
     @Inject

@@ -16,7 +16,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyNoSettingsFoundView
@@ -40,8 +39,7 @@ import javax.inject.Inject
 
 class MainSettingsControllerV2(context: Context)
   : Controller(context),
-  ToolbarSearchCallback,
-  RequiresNoBottomNavBar {
+  ToolbarSearchCallback {
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
@@ -71,6 +69,7 @@ class MainSettingsControllerV2(context: Context)
         (navigationController as ToolbarNavigationController).showSearch()
       }
       .build()
+
     navigation.swipeable = false
 
     settingsCoordinator = SettingsCoordinator(context, navigationController!!)

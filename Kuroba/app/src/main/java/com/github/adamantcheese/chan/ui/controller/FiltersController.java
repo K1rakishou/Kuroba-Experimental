@@ -40,7 +40,6 @@ import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterEngine.FilterAction;
 import com.github.adamantcheese.chan.core.manager.FilterType;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.FilterLayout;
@@ -70,8 +69,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 public class FiltersController
         extends Controller
         implements ToolbarNavigationController.ToolbarSearchCallback,
-        View.OnClickListener,
-        RequiresNoBottomNavBar {
+        View.OnClickListener {
 
     @Inject
     DatabaseManager databaseManager;

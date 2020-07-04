@@ -21,7 +21,6 @@ import android.view.View
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
-import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.presenter.SiteSetupPresenter
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.site.Site
@@ -43,8 +42,7 @@ class SiteSetupController(
   context: Context
 ) :
   SettingsController(context),
-  SiteSetupPresenter.Callback,
-  RequiresNoBottomNavBar {
+  SiteSetupPresenter.Callback {
 
   @Inject
   lateinit var presenter: SiteSetupPresenter

@@ -264,7 +264,10 @@ public class Toolbar
     }
 
     public void setNavigationItem(
-            final boolean animate, final boolean pushing, final NavigationItem item, Theme theme
+            final boolean animate,
+            final boolean pushing,
+            final NavigationItem item,
+            Theme theme
     ) {
         ToolbarPresenter.AnimationStyle animationStyle;
         if (!animate) {

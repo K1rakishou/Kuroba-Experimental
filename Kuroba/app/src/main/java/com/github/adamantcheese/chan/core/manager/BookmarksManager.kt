@@ -400,6 +400,7 @@ class BookmarksManager(
   fun onPostViewed(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postNo: Long,
+    currentPostIndex: Int,
     realPostIndex: Int
   ) {
     if (!isReady()) {
@@ -424,7 +425,10 @@ class BookmarksManager(
       threadBookmark.readRepliesUpTo(postNo)
 
       if (isDevAppFlavor) {
-        Logger.d(TAG, "onPostViewed postNo=$postNo")
+        // TODO(KurobaEx): this may not work when we have removed posts in a thread (removed by
+        //  filters)
+        Logger.d(TAG, "onPostViewed postNo=$postNo, currentPostIndex=$currentPostIndex, " +
+          "realPostIndex=$realPostIndex")
       }
     }
   }

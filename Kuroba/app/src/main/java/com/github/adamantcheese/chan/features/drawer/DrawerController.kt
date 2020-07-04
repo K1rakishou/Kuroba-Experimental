@@ -63,6 +63,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
+import java.util.*
 import javax.inject.Inject
 
 class DrawerController(
@@ -91,6 +92,7 @@ class DrawerController(
   private lateinit var bottomNavView: HidingBottomNavigationView
 
   private val drawerPresenter = DrawerPresenter(getFlavorType() == AndroidUtils.FlavorType.Dev)
+  private val childControllersStack = Stack<Controller>()
 
   private val topThreadController: ThreadController?
     get() {
@@ -254,10 +256,48 @@ class DrawerController(
     EventBus.getDefault().unregister(this)
   }
 
-  fun setChildController(childController: Controller) {
+  fun pushChildController(childController: Controller) {
+    if (childControllers.isNotEmpty()) {
+      childControllersStack.push(childControllers.last())
+    }
+
+    setCurrentChildController(childController)
+  }
+
+  private fun setCurrentChildController(childController: Controller) {
     addChildController(childController)
     childController.attachToParentView(container)
     childController.onShow()
+  }
+
+  private fun popChildController(isFromOnBack: Boolean): Boolean {
+    if (childControllers.isEmpty() || childControllersStack.isEmpty()) {
+      return false
+    }
+
+    val prevController = childControllers.last()
+
+    if (isFromOnBack) {
+      if (prevController is NavigationController && prevController.onBack()) {
+        return true
+      }
+    }
+
+    prevController.onHide()
+    removeChildController(prevController)
+
+    if (childControllersStack.isNotEmpty()) {
+      val newController = childControllersStack.pop()
+
+      newController.attachToParentView(container)
+      newController.onShow()
+    }
+
+    if (childControllersStack.isEmpty()) {
+      resetBottomNavViewCheckState()
+    }
+
+    return true
   }
 
   fun attachBottomNavViewToToolbar() {
@@ -293,17 +333,39 @@ class DrawerController(
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> openController(BookmarksController(context))
-      R.id.action_settings -> openController(MainSettingsControllerV2(context))
+      R.id.action_bookmarks -> {
+        // TODO(KurobaEx): SPLIT mode!
+        closeAllNonMainControllers()
+
+        val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
+        pushChildController(bottomNavBarAwareNavigationController)
+        bottomNavBarAwareNavigationController.pushController(BookmarksController(context))
+      }
+      R.id.action_settings -> {
+        closeAllNonMainControllers()
+
+        val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
+        pushChildController(bottomNavBarAwareNavigationController)
+        bottomNavBarAwareNavigationController.pushController(MainSettingsControllerV2(context))
+      }
     }
   }
 
   private fun closeAllNonMainControllers() {
-    val currentNavController = top
+    var currentNavController = top
       ?: return
     val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE
 
     while (true) {
+      if (currentNavController is BottomNavBarAwareNavigationController) {
+        popChildController(false)
+
+        currentNavController = top
+          ?: return
+
+        continue
+      }
+
       val topController = currentNavController.top
         ?: return
 
@@ -368,6 +430,10 @@ class DrawerController(
   }
 
   override fun onBack(): Boolean {
+    if (popChildController(true)) {
+      return true
+    }
+
     return if (drawerLayout.isDrawerOpen(drawer)) {
       drawerLayout.closeDrawer(drawer)
       true

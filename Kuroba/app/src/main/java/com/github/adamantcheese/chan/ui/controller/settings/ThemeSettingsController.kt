@@ -391,8 +391,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       val item = NavigationItem()
       item.title = theme.displayName
       item.hasBack = false
+
       toolbar.setNavigationItem(false, true, item, theme)
       toolbar.setOnClickListener(colorClick)
+
       linearLayout.addView(
         toolbar,
         LinearLayout.LayoutParams(
