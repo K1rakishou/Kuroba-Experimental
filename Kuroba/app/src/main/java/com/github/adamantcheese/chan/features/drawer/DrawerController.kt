@@ -307,6 +307,9 @@ class DrawerController(
       val topController = currentNavController.top
         ?: return
 
+      // Closing any "floating" controllers like ImageViewController
+      closeAllFloatingControllers(topController.childControllers)
+
       if (topController is HasNavigation) {
         return
       }
@@ -320,6 +323,16 @@ class DrawerController(
         currentNavController.popController(false)
       } else if (currentNavController is DoubleNavigationController) {
         currentNavController.popController(false)
+      }
+    }
+  }
+
+  private fun closeAllFloatingControllers(childControllers: List<Controller>) {
+    for (childController in childControllers) {
+      childController.presentingThisController?.stopPresenting(false)
+
+      if (childController.childControllers.isNotEmpty()) {
+        closeAllFloatingControllers(childController.childControllers)
       }
     }
   }
