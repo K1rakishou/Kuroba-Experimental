@@ -79,8 +79,6 @@ class StartActivity : AppCompatActivity(),
   @Inject
   lateinit var databaseManager: DatabaseManager
   @Inject
-  lateinit var watchManager: WatchManager
-  @Inject
   lateinit var siteResolver: SiteResolver
   @Inject
   lateinit var siteService: SiteService

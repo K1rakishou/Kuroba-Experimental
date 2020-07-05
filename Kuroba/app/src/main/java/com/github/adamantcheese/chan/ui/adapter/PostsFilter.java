@@ -19,13 +19,10 @@ package com.github.adamantcheese.chan.ui.adapter;
 import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
-import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.PostIndexed;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.orm.Pin;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,8 +63,6 @@ public class PostsFilter {
 
     @Inject
     DatabaseManager databaseManager;
-    @Inject
-    WatchManager watchManager;
 
     private Order order;
     private String query;
@@ -100,11 +95,6 @@ public class PostsFilter {
                 board
         );
 
-        // Filter out any bookmarked threads from the catalog
-        if (ChanSettings.removeWatchedFromCatalog.get() && loadable.isCatalogMode()) {
-            filterOutBookmarkedPosts(loadable, retainedPosts);
-        }
-
         List<PostIndexed> indexedPosts = new ArrayList<>(retainedPosts.size());
 
         for (int currentPostIndex = 0; currentPostIndex < retainedPosts.size(); currentPostIndex++) {
@@ -130,27 +120,6 @@ public class PostsFilter {
         }
 
         return originalPostIndexes;
-    }
-
-    private void filterOutBookmarkedPosts(Loadable loadable, List<Post> retainedPosts) {
-        List<Post> toRemove = new ArrayList<>();
-
-        for (Pin pin : watchManager.getAllPins()) {
-            for (Post post : retainedPosts) {
-                Loadable pinLoadable = Loadable.forThread(
-                        loadable.site,
-                        loadable.board,
-                        post.no,
-                        ""
-                );
-
-                if (pin.loadable.equals(pinLoadable)) {
-                    toRemove.add(post);
-                }
-            }
-        }
-
-        retainedPosts.removeAll(toRemove);
     }
 
     private void processOrder(List<Post> posts) {

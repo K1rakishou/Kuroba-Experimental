@@ -440,7 +440,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_enable_background_description">Watch bookmarks when app is either in foreground or background</string>
     <string name="setting_watch_background_timeout">Background update interval</string>
     <string name="setting_watch_background_timeout_description">The interval between updates when placed in the background</string>
-    <string name="setting_remove_watched">Remove watched threads from the catalog</string>
     <string name="setting_background_watcher_first_option">%1$s (More frequent updates, worse for battery)</string>
     <string name="setting_background_watcher_last_option">%1$s (Less frequent updates, better for battery)</string>
 
@@ -660,9 +659,7 @@ Tap the toolbar menu to change its color."
     <string name="settings_crash_app">Crash the app</string>
     <string name="settings_clear_file_cache">Clear file cache</string>
     <string name="settings_clear_file_cache_bottom_description">Currently %1$d MB</string>
-    <string name="settings_clear_ignored_filter_watches">Clear ignored filter watches</string>
     <string name="settings_dump_thread_stack">Dump active thread stack traces to log</string>
-    <string name="settings_force_wake_manager_wake">Force wake manager wake</string>
     <string name="settings_reset_thread_open_counter">Reset thread open counter</string>
     <string name="settings_crash_on_safe_throw_enabled">Crash on safe throw (ENABLED)</string>
     <string name="settings_crash_on_safe_throw_disabled">Crash on safe throw (DISABLED)</string>

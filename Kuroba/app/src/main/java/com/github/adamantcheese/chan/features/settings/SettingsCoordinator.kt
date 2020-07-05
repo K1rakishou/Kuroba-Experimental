@@ -6,7 +6,9 @@ import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
+import com.github.adamantcheese.chan.core.manager.ReportManager
+import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
@@ -48,10 +50,6 @@ class SettingsCoordinator(
   @Inject
   lateinit var inlinedFileInfoRepository: InlinedFileInfoRepository
   @Inject
-  lateinit var filterWatchManager: FilterWatchManager
-  @Inject
-  lateinit var wakeManager: WakeManager
-  @Inject
   lateinit var reportManager: ReportManager
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
@@ -63,8 +61,6 @@ class SettingsCoordinator(
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var fileManager: FileManager
-  @Inject
-  lateinit var watchManager: WatchManager
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
@@ -114,9 +110,7 @@ class SettingsCoordinator(
       context,
       navigationController,
       cacheHandler,
-      fileCacheV2,
-      filterWatchManager,
-      wakeManager
+      fileCacheV2
     )
   }
 

@@ -40,7 +40,6 @@ import com.github.adamantcheese.chan.core.di.UseCaseModule;
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
-import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
@@ -50,7 +49,6 @@ import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
 import com.github.adamantcheese.chan.ui.service.LastPageNotification;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
-import com.github.adamantcheese.chan.ui.service.WatchNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -102,6 +100,8 @@ public class Chan
     SettingsNotificationManager settingsNotificationManager;
     @Inject
     ApplicationVisibilityManager applicationVisibilityManager;
+
+    // These here are so that they start initializing as soon as the app starts.
     @Inject
     HistoryNavigationManager historyNavigationManager;
     @Inject
@@ -166,7 +166,6 @@ public class Chan
         AppConstants appConstants = new AppConstants(getApplicationContext());
         logAppConstants(appConstants);
 
-        WatchNotification.setupChannel();
         SavingNotification.setupChannel();
         LastPageNotification.setupChannel();
 
@@ -204,10 +203,16 @@ public class Chan
         boardManager.initialize();
         databaseManager.initializeAndTrim();
 
-        //create these classes here even if they aren't explicitly used, so they do their background startup tasks
-        //and so that they're available for feather later on for archives/filter watch waking
-        feather.instance(FilterWatchManager.class);
+        setupErrorHandlers();
 
+        if (ChanSettings.collectCrashLogs.get()) {
+            if (reportManager.hasCrashLogs()) {
+                settingsNotificationManager.notify(SettingNotificationType.CrashLog);
+            }
+        }
+    }
+
+    private void setupErrorHandlers() {
         RxJavaPlugins.setErrorHandler(e -> {
             if (e instanceof UndeliverableException) {
                 e = e.getCause();
@@ -270,12 +275,6 @@ public class Chan
             onUnhandledException(e, errorText);
             System.exit(999);
         });
-
-        if (ChanSettings.collectCrashLogs.get()) {
-            if (reportManager.hasCrashLogs()) {
-                settingsNotificationManager.notify(SettingNotificationType.CrashLog);
-            }
-        }
     }
 
     private void logAppConstants(AppConstants appConstants) {

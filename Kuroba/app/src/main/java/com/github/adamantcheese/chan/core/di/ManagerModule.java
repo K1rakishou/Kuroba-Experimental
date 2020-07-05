@@ -33,7 +33,6 @@ import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
-import com.github.adamantcheese.chan.core.manager.FilterWatchManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
@@ -46,8 +45,6 @@ import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
-import com.github.adamantcheese.chan.core.manager.WakeManager;
-import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -119,55 +116,6 @@ public class ManagerModule {
     public ChanLoaderManager provideChanLoaderFactory() {
         Logger.d(AppModule.DI_TAG, "Chan loader factory");
         return new ChanLoaderManager();
-    }
-
-    @Provides
-    @Singleton
-    public WatchManager provideWatchManager(
-            DatabaseManager databaseManager,
-            ChanLoaderManager chanLoaderManager,
-            WakeManager wakeManager,
-            PageRequestManager pageRequestManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "Watch manager");
-        return new WatchManager(
-                databaseManager,
-                chanLoaderManager,
-                wakeManager,
-                pageRequestManager
-        );
-    }
-
-    @Provides
-    @Singleton
-    public WakeManager provideWakeManager() {
-        Logger.d(AppModule.DI_TAG, "Wake manager");
-        return new WakeManager();
-    }
-
-    @Provides
-    @Singleton
-    public FilterWatchManager provideFilterWatchManager(
-            WakeManager wakeManager,
-            FilterEngine filterEngine,
-            WatchManager watchManager,
-            ChanLoaderManager chanLoaderManager,
-            BoardRepository boardRepository,
-            DatabaseManager databaseManager,
-            Gson gson,
-            PostFilterManager postFilterManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "Filter watch manager");
-        return new FilterWatchManager(
-                wakeManager,
-                filterEngine,
-                watchManager,
-                chanLoaderManager,
-                boardRepository,
-                databaseManager,
-                gson,
-                postFilterManager
-        );
     }
 
     @Provides

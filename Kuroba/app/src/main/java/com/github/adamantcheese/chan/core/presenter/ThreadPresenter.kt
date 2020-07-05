@@ -69,8 +69,6 @@ import kotlin.coroutines.CoroutineContext
 
 class ThreadPresenter @Inject constructor(
   private val cacheHandler: CacheHandler,
-  private val filterWatchManager: FilterWatchManager,
-  private val watchManager: WatchManager,
   private val bookmarksManager: BookmarksManager,
   private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
@@ -137,22 +135,12 @@ class ThreadPresenter @Inject constructor(
   }
 
   @Synchronized
-  fun bindLoadable(_loadable: Loadable, addToLocalBackHistory: Boolean) {
-    var loadable = _loadable
+  fun bindLoadable(loadable: Loadable, addToLocalBackHistory: Boolean) {
     job.cancelChildren()
 
     if (loadable != this.loadable) {
       if (isBound) {
         unbindLoadable()
-      }
-
-      val pin = watchManager.findPinByLoadableId(loadable.id)
-      // TODO this isn't true anymore, because all loadables come from one location.
-      if (pin != null) {
-        // Use the loadable from the pin.
-        // This way we can store the list position in the pin loadable,
-        // and not in a separate loadable instance.
-        loadable = pin.loadable
       }
 
       this.currentLoadable = loadable
@@ -554,10 +542,6 @@ class ThreadPresenter @Inject constructor(
 
     // Update loadable in the database
     databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(loadable))
-
-    if (result.loadable.isCatalogMode) {
-      filterWatchManager.onCatalogLoad(result)
-    }
   }
 
   private fun createNewNavHistoryElement(chanThread: ChanThread) {
@@ -610,11 +594,6 @@ class ThreadPresenter @Inject constructor(
       loadable?.threadDescriptorOrNull?.let { threadDescriptor ->
         pastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, lastPostNo)
       }
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable!!.id)
-    if (pin != null) {
-      watchManager.onBottomPostViewed(pin)
     }
 
     threadPresenterCallback?.showNewPostsNotification(false, -1)
@@ -938,16 +917,8 @@ class ThreadPresenter @Inject constructor(
         val savedReply = SavedReply.fromBoardNoPassword(post.board, post.no, "")
         if (databaseManager.databaseSavedReplyManager.isSaved(post.board, post.no)) {
           databaseManager.runTask(databaseManager.databaseSavedReplyManager.unsaveReply(savedReply))
-          val watchedPin = watchManager.getPinByLoadable(loadable)
-          if (watchedPin != null) {
-            watchedPin.quoteLastCount -= post.repliesFromCount
-          }
         } else {
           databaseManager.runTask(databaseManager.databaseSavedReplyManager.saveReply(savedReply))
-          val watchedPin = watchManager.getPinByLoadable(loadable)
-          if (watchedPin != null) {
-            watchedPin.quoteLastCount += post.repliesFromCount
-          }
         }
 
         //force reload for reply highlighting
@@ -1391,17 +1362,6 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.onRestoreRemovedPostsClicked(loadable!!, selectedPosts)
-  }
-
-  fun markAllPostsAsSeen() {
-    if (!isBound) {
-      return
-    }
-
-    val pin = watchManager.findPinByLoadableId(loadable!!.id)
-    if (pin != null) {
-      watchManager.onBottomPostViewed(pin)
-    }
   }
 
   interface ThreadPresenterCallback {

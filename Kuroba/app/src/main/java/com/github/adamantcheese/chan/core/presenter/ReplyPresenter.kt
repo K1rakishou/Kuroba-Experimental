@@ -23,7 +23,6 @@ import androidx.exifinterface.media.ExifInterface
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ReplyManager
-import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
@@ -56,7 +55,6 @@ import kotlin.coroutines.CoroutineContext
 class ReplyPresenter @Inject constructor(
   private val context: Context,
   private val replyManager: ReplyManager,
-  private val watchManager: WatchManager,
   private val databaseManager: DatabaseManager,
   private val lastReplyRepository: LastReplyRepository,
   private val siteRepository: SiteRepository,
@@ -527,18 +525,19 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (ChanSettings.postPinThread.get()) {
-      if (localLoadable.isThreadMode) {
-        // reply
-        val thread = callback.thread
-        if (thread != null) {
-          watchManager.createPin(localLoadable, thread.op)
-        } else {
-          watchManager.createPin(localLoadable)
-        }
-      } else {
-        // new thread
-        watchManager.createPin(localLoadable, draft)
-      }
+      // TODO(KurobaEx): bookmark on post
+//      if (localLoadable.isThreadMode) {
+//        // reply
+//        val thread = callback.thread
+//        if (thread != null) {
+//          watchManager.createPin(localLoadable, thread.op)
+//        } else {
+//          watchManager.createPin(localLoadable)
+//        }
+//      } else {
+//        // new thread
+//        watchManager.createPin(localLoadable, draft)
+//      }
     }
 
     val savedReply = SavedReply.fromBoardNoPassword(

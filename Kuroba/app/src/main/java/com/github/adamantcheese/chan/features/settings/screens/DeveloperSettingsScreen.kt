@@ -6,8 +6,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
-import com.github.adamantcheese.chan.core.manager.FilterWatchManager
-import com.github.adamantcheese.chan.core.manager.WakeManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.settings.DatabaseSummaryScreen
@@ -24,9 +22,7 @@ class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val cacheHandler: CacheHandler,
-  private val fileCacheV2: FileCacheV2,
-  private val filterWatchManager: FilterWatchManager,
-  private val wakeManager: WakeManager
+  private val fileCacheV2: FileCacheV2
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -108,31 +104,11 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = DeveloperScreen.MainGroup.FilterWatchIgnoreReset,
-          topDescriptionIdFunc = { R.string.settings_clear_ignored_filter_watches },
-          callback = {
-            filterWatchManager.clearFilterWatchIgnores()
-            AndroidUtils.showToast(context, "Cleared ignores")
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
           identifier = DeveloperScreen.MainGroup.DumpThreadStack,
           topDescriptionIdFunc = { R.string.settings_dump_thread_stack },
           callback = {
             dumpThreadStack()
             AndroidUtils.showToast(context, "Thread stack dumped")
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DeveloperScreen.MainGroup.ForceAwakeWakeables,
-          topDescriptionIdFunc = { R.string.settings_force_wake_manager_wake },
-          callback = {
-            wakeManager.forceWake()
-            AndroidUtils.showToast(context, "Woke all wakeables")
           }
         )
 

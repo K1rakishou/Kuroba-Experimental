@@ -33,7 +33,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
-import com.github.adamantcheese.chan.core.manager.WatchManager
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
@@ -68,8 +67,6 @@ class DrawerController(
   DrawerCallbacks,
   View.OnClickListener {
 
-  @Inject
-  lateinit var watchManager: WatchManager
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
@@ -158,8 +155,6 @@ class DrawerController(
       onNavigationItemSelectedListener(menuItem)
       return@setOnNavigationItemSelectedListener true
     }
-
-    updateBadge()
 
     ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
       globalWindowInsetsManager.updateInsets(insets)
@@ -531,20 +526,6 @@ class DrawerController(
 
     if (!enabled) {
       drawerLayout.closeDrawer(drawer)
-    }
-  }
-
-  private fun updateBadge() {
-    var total = 0
-    var color = false
-
-    for (pin in watchManager.watchingPins) {
-      total += pin.newPostCount
-      color = color or (pin.newQuoteCount > 0)
-    }
-
-    if (top != null) {
-      mainToolbarNavigationController.toolbar?.arrowMenuDrawable?.setBadge(total, color)
     }
   }
 

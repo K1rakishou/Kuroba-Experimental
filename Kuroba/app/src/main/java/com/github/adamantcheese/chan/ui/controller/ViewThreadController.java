@@ -32,7 +32,6 @@ import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
-import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -109,8 +108,6 @@ public class ViewThreadController
 
     private DatabaseLoadableManager databaseLoadableManager;
 
-    @Inject
-    WatchManager watchManager;
     @Inject
     ThemeHelper themeHelper;
     @Inject

@@ -273,9 +273,6 @@ class ThreadLayout @JvmOverloads constructor(
     } else {
       switchVisible(Visible.ERROR)
       errorText.text = errorMessage
-      if (error.errorMessage == R.string.thread_load_failed_not_found) {
-        presenter.markAllPostsAsSeen()
-      }
     }
   }
 

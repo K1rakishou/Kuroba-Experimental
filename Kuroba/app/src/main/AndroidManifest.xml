@@ -89,10 +89,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </activity>
 
         <service
-            android:name=".ui.service.WatchNotification"
-            android:exported="false" />
-
-        <service
             android:name=".ui.service.SavingNotification"
             android:exported="false" />
 
@@ -100,10 +96,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:name=".ui.service.LastPageNotification"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
-        <receiver
-            android:name=".core.receiver.WakeUpdateReceiver"
-            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

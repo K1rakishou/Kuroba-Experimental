@@ -95,14 +95,6 @@ class ThreadWatcherSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = ThreadWatcherScreen.MainGroup.RemoveWatchedThreadsFromCatalog,
-          topDescriptionIdFunc = { R.string.setting_remove_watched },
-          setting = ChanSettings.removeWatchedFromCatalog,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
           topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
           bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },

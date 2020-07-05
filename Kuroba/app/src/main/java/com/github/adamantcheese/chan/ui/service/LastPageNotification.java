@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.ui.service;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -16,7 +17,6 @@ import androidx.core.app.NotificationCompat;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
-import com.github.adamantcheese.chan.core.manager.WatchManager;
 import com.github.adamantcheese.chan.core.model.orm.Pin;
 
 import java.text.DateFormat;
@@ -24,21 +24,19 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import javax.inject.Inject;
-
 import static android.provider.Settings.System.DEFAULT_NOTIFICATION_URI;
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
 
+// TODO(KurobaEx): Rewrite me!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@SuppressLint("SpecifyJobSchedulerIdRange")
 public class LastPageNotification
         extends JobService {
     public static final String PIN_ID_KEY = "pin_id";
     public static final String NOTIFY_KEY = "notify";
     private static final String NOTIFICATION_ID_STR = "4";
 
-    @Inject
-    WatchManager watchManager;
 
     public LastPageNotification() {
         inject(this);
@@ -66,17 +64,19 @@ public class LastPageNotification
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        setupChannel();
-        int pinId = params.getExtras().getInt(PIN_ID_KEY);
-        boolean notify = params.getExtras().getInt(NOTIFY_KEY) == 1;
-        Pin forPin = watchManager.findPinById(pinId);
-        try {
-            if (notify) {
-                getNotificationManager().notify(forPin.loadable.no, getNotification(forPin, pinId));
-            } else {
-                getNotificationManager().cancel(forPin.loadable.no);
-            }
-        } catch (Exception ignored) {}
+//        setupChannel();
+//        int pinId = params.getExtras().getInt(PIN_ID_KEY);
+//        boolean notify = params.getExtras().getInt(NOTIFY_KEY) == 1;
+//        Pin forPin = watchManager.findPinById(pinId);
+//        try {
+//            if (notify) {
+//                getNotificationManager().notify(forPin.loadable.no, getNotification(forPin, pinId));
+//            } else {
+//                getNotificationManager().cancel(forPin.loadable.no);
+//            }
+//        } catch (Exception ignored) {}
+//        return false;
+
         return false;
     }
 
