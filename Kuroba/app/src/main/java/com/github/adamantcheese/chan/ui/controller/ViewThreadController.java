@@ -33,7 +33,6 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.WatchManager;
-import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
@@ -57,16 +56,19 @@ import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
+import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
-import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.Disposable;
 import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -102,8 +104,9 @@ public class ViewThreadController
     private static final int ACTION_SCROLL_TO_BOTTOM = 9010;
     private static final int ACTION_FORCE_RELOAD = 9011;
 
-    private static final int ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9100;
-    private static final int ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9101;
+    private static final int ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100;
+    private static final int ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101;
+    private static final int ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102;
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -148,6 +151,45 @@ public class ViewThreadController
 
         buildMenu();
         loadThread(loadable);
+
+        Disposable disposable = bookmarksManager.listenForBookmarksChanges()
+                .filter(bookmarkChange -> !(bookmarkChange instanceof BookmarksManager.BookmarkChange.BookmarksInitialized))
+                .debounce(250, TimeUnit.MILLISECONDS)
+                .onBackpressureLatest()
+                .subscribe(
+                        this::updatePinIconStateIfNeeded,
+                        error -> Logger.e(TAG, "Error while listening for bookmarks changes", error)
+                );
+
+        getCompositeDisposable().add(disposable);
+    }
+
+    private void updatePinIconStateIfNeeded(BookmarksManager.BookmarkChange bookmarkChange) {
+        ChanDescriptor.ThreadDescriptor currentThreadDescriptor =
+                threadLayout.presenter.threadDescriptorOrNull();
+
+        if (currentThreadDescriptor == null) {
+            return;
+        }
+
+        Collection<ChanDescriptor.ThreadDescriptor> changedBookmarkDescriptors = bookmarkChange.threadDescriptors();
+        if (changedBookmarkDescriptors.isEmpty()) {
+            return;
+        }
+
+        boolean animate = false;
+
+        if (bookmarkChange instanceof BookmarksManager.BookmarkChange.BookmarksCreated
+                || bookmarkChange instanceof BookmarksManager.BookmarkChange.BookmarksDeleted) {
+            animate = true;
+        }
+
+        for (ChanDescriptor.ThreadDescriptor changedBookmarkDescriptor : changedBookmarkDescriptors) {
+            if (changedBookmarkDescriptor.equals(currentThreadDescriptor)) {
+                setPinIconState(animate);
+                return;
+            }
+        }
     }
 
     @Override
@@ -262,8 +304,16 @@ public class ViewThreadController
                 )
                 .withNestedOverflow(
                         ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS,
-                        R.string.action_scrollbar_labels,
+                        R.string.action_scrollbar_post_highlights,
                         true
+                )
+                .addNestedItem(
+                        ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
+                        R.string.action_mark_replies_your_posts_on_scrollbar,
+                        true,
+                        ChanSettings.markYourPostsOnScrollbar.get(),
+                        ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
+                        this::onScrollbarLabelingOptionClicked
                 )
                 .addNestedItem(
                         ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR,
@@ -309,7 +359,9 @@ public class ViewThreadController
     }
 
     private void searchClicked(ToolbarMenuSubItem item) {
-        ((ToolbarNavigationController) navigationController).showSearch();
+        if (navigationController instanceof ToolbarNavigationController) {
+            ((ToolbarNavigationController) navigationController).showSearch();
+        }
     }
 
     private void replyClicked(ToolbarMenuSubItem item) {
@@ -391,6 +443,11 @@ public class ViewThreadController
             ChanSettings.markCrossThreadQuotesOnScrollbar.set(markCrossThreadQuotes);
 
             item.isCurrentlySelected = markCrossThreadQuotes;
+        } else if (clickedItemId == ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR) {
+            boolean markYourPostsOnScrollbar = !ChanSettings.markYourPostsOnScrollbar.get();
+            ChanSettings.markYourPostsOnScrollbar.set(markYourPostsOnScrollbar);
+
+            item.isCurrentlySelected = markYourPostsOnScrollbar;
         }
 
         threadLayout.presenter.requestData();
@@ -414,26 +471,6 @@ public class ViewThreadController
     @Override
     public void openPin(Pin pin) {
         loadThread(pin.loadable);
-    }
-
-    @Subscribe
-    public void onEvent(PinMessages.PinAddedMessage message) {
-        setPinIconState(true);
-    }
-
-    @Subscribe
-    public void onEvent(PinMessages.PinRemovedMessage message) {
-        setPinIconState(true);
-    }
-
-    @Subscribe
-    public void onEvent(PinMessages.PinChangedMessage message) {
-        setPinIconState(false);
-    }
-
-    @Subscribe
-    public void onEvent(PinMessages.PinsChangedMessage message) {
-        setPinIconState(true);
     }
 
     @Override

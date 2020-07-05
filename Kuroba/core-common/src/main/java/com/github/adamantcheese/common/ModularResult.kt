@@ -96,10 +96,10 @@ sealed class ModularResult<V : Any?> {
 
   override fun toString(): String {
     return when (this) {
-      is Value -> value?.toString() ?: "ModularResult.Value{null}"
+      is Value -> value?.toString() ?: "MR.Value{null}"
       is Error -> String.format(
         Locale.ENGLISH,
-        "ModularResult.Error{%s, message: %s}",
+        "MR.Error{%s, message: %s}",
         error.javaClass.simpleName,
         error.message ?: "No error message"
       )
@@ -119,6 +119,7 @@ sealed class ModularResult<V : Any?> {
       return Error(error)
     }
 
+    @CheckReturnValue
     @Suppress("FunctionName")
     inline fun <T> Try(func: () -> T): ModularResult<T> {
       return try {

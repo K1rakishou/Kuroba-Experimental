@@ -592,6 +592,15 @@ class BookmarksManager(
     class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
     class BookmarksDeleted(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
     class BookmarksUpdated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>?) : BookmarkChange()
+
+    fun threadDescriptors(): Collection<ChanDescriptor.ThreadDescriptor> {
+      return when (this) {
+        BookmarksInitialized -> emptyList()
+        is BookmarksCreated -> threadDescriptors
+        is BookmarksDeleted -> threadDescriptors
+        is BookmarksUpdated -> threadDescriptors ?: emptyList()
+      }
+    }
   }
 
   companion object {

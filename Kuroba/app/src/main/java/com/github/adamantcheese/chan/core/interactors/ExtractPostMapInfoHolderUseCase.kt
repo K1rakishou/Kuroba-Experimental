@@ -19,7 +19,7 @@ class ExtractPostMapInfoHolderUseCase(
   }
 
   private fun extractMyPostsPositionsFromPostList(posts: List<Post>): List<IntRange> {
-    if (!ChanSettings.markMyPostsOnScrollbar.get()) {
+    if (!ChanSettings.markYourPostsOnScrollbar.get()) {
       return emptyList()
     }
 

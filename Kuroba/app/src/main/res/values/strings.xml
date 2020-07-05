@@ -146,7 +146,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_open_thread_by_id">Open a thread by it\'s ID</string>
     <string name="action_share">Share</string>
     <string name="action_go_to_post">Go to post</string>
-    <string name="action_scrollbar_labels">Scrollbar labels</string>
+    <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
     <string name="action_download_album">Download album</string>
     <string name="action_transparency_toggle">Toggle opacity</string>
     <string name="action_image_rotate">Rotate image</string>
@@ -155,8 +155,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_switch_catalog">Catalog mode</string>
     <string name="action_switch_board">Board mode</string>
 
-    <string name="action_mark_replies_to_your_posts_on_scrollbar">Mark (You)s on scrollbar</string>
-    <string name="action_mark_cross_thread_quotes_on_scrollbar">Mark cross-thread replies on scrollbar</string>
+    <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts on scrollbar</string>
+    <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s on scrollbar</string>
+    <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies on scrollbar</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>
