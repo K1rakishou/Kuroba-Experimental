@@ -10,8 +10,8 @@ import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject

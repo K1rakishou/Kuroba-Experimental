@@ -38,7 +38,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.chan.utils.KtExtensionsKt;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 
 import javax.inject.Inject;
@@ -88,7 +88,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             int bottomNavViewHeight =
                     (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
 
-            KtExtensionsKt.updateMargins(this, null, null, null, null, null, bottomNavViewHeight);
+            KotlinExtensionsKt.updateMargins(this, null, null, null, null, null, bottomNavViewHeight);
         }
 
         setOnClickListener(this);

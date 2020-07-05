@@ -64,8 +64,14 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.ImageViewerController
 import com.github.adamantcheese.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
-import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.common.exhaustive
+import com.github.adamantcheese.common.findChild
+import com.github.adamantcheese.common.findChildren
+import com.github.adamantcheese.common.updateHeight
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.Player

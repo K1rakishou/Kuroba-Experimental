@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.cache
 
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.awaitSilently
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,98 +150,98 @@ open class GenericCacheSource<Key, Value>(
     val deferred = CompletableDeferred<Value?>()
     actor.send(CacheAction.Get(key, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(null)
   }
 
   override suspend fun getMany(keys: List<Key>): Map<Key, Value> {
     val deferred = CompletableDeferred<Map<Key, Value>>()
     actor.send(CacheAction.GetMany(keys, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(emptyMap())
   }
 
   override suspend fun getAll(): Map<Key, Value> {
     val deferred = CompletableDeferred<Map<Key, Value>>()
     actor.send(CacheAction.GetAll(deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(emptyMap())
   }
 
   override suspend fun filterValues(filterFunc: (Value) -> Boolean): List<Value> {
     val deferred = CompletableDeferred<List<Value>>()
     actor.send(CacheAction.FilterValues(filterFunc, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(emptyList())
   }
 
   override suspend fun store(key: Key, value: Value) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.Store(key, value, deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   override suspend fun storeMany(entries: Map<Key, Value>) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.StoreMany(entries, deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   override suspend fun firstOrNull(predicate: suspend (Value) -> Boolean): Value? {
     val deferred = CompletableDeferred<Value?>()
     actor.send(CacheAction.FirstOrNull(predicate, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(null)
   }
 
   override suspend fun iterateWhile(iteratorFunc: suspend (Value) -> Boolean): ModularResult<Unit> {
     val deferred = CompletableDeferred<ModularResult<Unit>>()
     actor.send(CacheAction.IterateWhile(iteratorFunc, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(ModularResult.value(Unit))
   }
 
   override suspend fun updateMany(keys: List<Key>, updateFunc: (Value) -> Unit) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.UpdateMany(keys, updateFunc, deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   override suspend fun contains(key: Key): Boolean {
     val deferred = CompletableDeferred<Boolean>()
     actor.send(CacheAction.Contains(key, deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(false)
   }
 
   override suspend fun size(): Int {
     val deferred = CompletableDeferred<Int>()
     actor.send(CacheAction.Size(deferred))
 
-    return deferred.await()
+    return deferred.awaitSilently(0)
   }
 
   override suspend fun delete(key: Key) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.Delete(key, deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   override suspend fun deleteMany(keys: List<Key>) {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.DeleteMany(keys, deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   override suspend fun clear() {
     val deferred = CompletableDeferred<Unit>()
     actor.send(CacheAction.Clear(deferred))
 
-    deferred.await()
+    deferred.awaitSilently()
   }
 
   private sealed class CacheAction<out K, out V> {

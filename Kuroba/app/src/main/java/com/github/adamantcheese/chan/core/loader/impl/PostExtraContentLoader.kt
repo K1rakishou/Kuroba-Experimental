@@ -13,8 +13,8 @@ import com.github.adamantcheese.chan.core.loader.impl.post_comment.SpanUpdateBat
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.putIfNotContains
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.Single

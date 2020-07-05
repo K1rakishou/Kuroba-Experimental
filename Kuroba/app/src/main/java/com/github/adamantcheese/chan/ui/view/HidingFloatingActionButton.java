@@ -27,7 +27,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
-import com.github.adamantcheese.chan.utils.KtExtensionsKt;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -75,7 +75,7 @@ public class HidingFloatingActionButton
 
         ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
 
-        KtExtensionsKt.updateMargins(
+        KotlinExtensionsKt.updateMargins(
                 this,
                 null,
                 null,

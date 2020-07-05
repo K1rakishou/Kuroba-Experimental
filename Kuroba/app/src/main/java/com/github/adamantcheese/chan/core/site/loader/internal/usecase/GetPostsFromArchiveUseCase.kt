@@ -7,8 +7,8 @@ import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchiveThread
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult

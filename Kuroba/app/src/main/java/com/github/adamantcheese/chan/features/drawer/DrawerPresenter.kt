@@ -10,8 +10,8 @@ import com.github.adamantcheese.chan.features.drawer.data.HistoryControllerState
 import com.github.adamantcheese.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import io.reactivex.Flowable

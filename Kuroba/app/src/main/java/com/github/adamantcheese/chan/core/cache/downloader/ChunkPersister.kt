@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.cache.downloader
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.StringUtils.maskImageUrl
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.BackpressureStrategy

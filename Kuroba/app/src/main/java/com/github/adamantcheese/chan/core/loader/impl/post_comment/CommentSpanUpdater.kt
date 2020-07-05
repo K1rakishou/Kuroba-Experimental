@@ -10,7 +10,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.sp
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.putIfNotContains
+import com.github.adamantcheese.common.putIfNotContains
 import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 

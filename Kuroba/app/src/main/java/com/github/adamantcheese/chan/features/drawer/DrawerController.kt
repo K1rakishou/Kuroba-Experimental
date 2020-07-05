@@ -60,6 +60,7 @@ import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
+import com.github.adamantcheese.common.updateMargins
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe

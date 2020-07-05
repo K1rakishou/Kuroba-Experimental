@@ -4,8 +4,8 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.putIfNotContains
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope

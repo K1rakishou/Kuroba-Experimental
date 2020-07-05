@@ -4,7 +4,7 @@ import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect

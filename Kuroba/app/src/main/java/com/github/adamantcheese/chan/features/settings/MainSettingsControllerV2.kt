@@ -30,7 +30,7 @@ import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch

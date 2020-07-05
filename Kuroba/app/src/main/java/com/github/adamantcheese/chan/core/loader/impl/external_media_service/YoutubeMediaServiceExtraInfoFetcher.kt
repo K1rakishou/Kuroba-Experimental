@@ -10,8 +10,8 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.groupOrNull
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.groupOrNull
 import com.github.adamantcheese.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.adamantcheese.model.data.video_service.MediaServiceType
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository

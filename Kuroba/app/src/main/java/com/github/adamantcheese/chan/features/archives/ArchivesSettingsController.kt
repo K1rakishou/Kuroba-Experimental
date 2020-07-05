@@ -15,8 +15,8 @@ import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.chan.utils.plusAssign
+import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 
 class ArchivesSettingsController(context: Context)

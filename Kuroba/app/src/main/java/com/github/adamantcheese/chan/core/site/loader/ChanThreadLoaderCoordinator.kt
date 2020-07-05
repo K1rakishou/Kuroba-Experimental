@@ -36,10 +36,10 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository

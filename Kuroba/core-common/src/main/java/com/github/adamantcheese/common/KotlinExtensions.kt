@@ -1,12 +1,14 @@
 package com.github.adamantcheese.common
 
+import android.view.View
+import android.view.ViewGroup
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import okhttp3.*
 import java.io.IOException
+import java.util.*
+import java.util.regex.Matcher
+import kotlin.collections.ArrayList
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -90,4 +92,195 @@ public inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapRev
 
 public inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index: Int, T) -> R?): List<R> {
   return mapReverseIndexedNotNullTo(ArrayList<R>(), transform)
+}
+
+/**
+ * Forces the kotlin compiler to require handling of all branches in the "when" operator
+ * */
+val <T : Any?> T.exhaustive: T
+  get() = this
+
+fun Matcher.groupOrNull(group: Int): String? {
+  return try {
+    if (group < 0 || group > groupCount()) {
+      return null
+    }
+
+    this.group(group)
+  } catch (error: Throwable) {
+    null
+  }
+}
+
+/**
+ * Not thread-safe!
+ * */
+fun <K, V> MutableMap<K, V>.putIfNotContains(key: K, value: V) {
+  if (!this.containsKey(key)) {
+    this[key] = value
+  }
+}
+
+/**
+ * Not thread-safe!
+ * */
+fun <K, V> HashMap<K, V>.putIfNotContains(key: K, value: V) {
+  if (!this.containsKey(key)) {
+    this[key] = value
+  }
+}
+
+fun Throwable.errorMessageOrClassName(): String {
+  if (!message.isNullOrBlank()) {
+    return message!!
+  }
+
+  return this::class.java.name
+}
+
+fun View.updateMargins(
+  left: Int? = null,
+  right: Int? = null,
+  start: Int? = null,
+  end: Int? = null,
+  top: Int? = null,
+  bottom: Int? = null
+) {
+  val layoutParams = layoutParams as? ViewGroup.MarginLayoutParams
+    ?: return
+
+  val newLeft = left ?: layoutParams.leftMargin
+  val newRight = right ?: layoutParams.rightMargin
+  val newStart = start ?: layoutParams.marginStart
+  val newEnd = end ?: layoutParams.marginEnd
+  val newTop = top ?: layoutParams.topMargin
+  val newBottom = bottom ?: layoutParams.bottomMargin
+
+  layoutParams.setMargins(
+    newLeft,
+    newTop,
+    newRight,
+    newBottom
+  )
+
+  layoutParams.marginStart = newStart
+  layoutParams.marginEnd = newEnd
+}
+
+fun View.updatePaddings(
+  left: Int? = null,
+  right: Int? = null,
+  top: Int? = null,
+  bottom: Int? = null
+) {
+  val newLeft = left ?: paddingLeft
+  val newRight = right ?: paddingRight
+  val newTop = top ?: paddingTop
+  val newBottom = bottom ?: paddingBottom
+
+  setPadding(newLeft, newTop, newRight, newBottom)
+}
+
+fun View.updatePaddings(
+  left: Int = paddingLeft,
+  right: Int = paddingRight,
+  top: Int = paddingTop,
+  bottom: Int = paddingBottom
+) {
+  setPadding(left, top, right, bottom)
+}
+
+fun ViewGroup.findChild(predicate: (View) -> Boolean): View? {
+  if (predicate(this)) {
+    return this
+  }
+
+  return findChildRecursively(this, predicate)
+}
+
+private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Boolean): View? {
+  for (index in 0 until viewGroup.childCount) {
+    val child = viewGroup.getChildAt(index)
+    if (predicate(child)) {
+      return child
+    }
+
+    if (child is ViewGroup) {
+      val result = findChildRecursively(child, predicate)
+      if (result != null) {
+        return result
+      }
+    }
+  }
+
+  return null
+}
+
+fun ViewGroup.findChildren(predicate: (View) -> Boolean): Set<View> {
+  val children = hashSetOf<View>()
+
+  if (predicate(this)) {
+    children += this
+  }
+
+  findChildrenRecursively(children, this, predicate)
+  return children
+}
+
+fun findChildrenRecursively(children: HashSet<View>, viewGroup: ViewGroup, predicate: (View) -> Boolean) {
+  for (index in 0 until viewGroup.childCount) {
+    val child = viewGroup.getChildAt(index)
+    if (predicate(child)) {
+      children += child
+    }
+
+    if (child is ViewGroup) {
+      findChildrenRecursively(children, child, predicate)
+    }
+  }
+}
+
+fun View.updateHeight(newHeight: Int) {
+  val updatedLayoutParams = layoutParams
+  updatedLayoutParams.height = newHeight
+  layoutParams = updatedLayoutParams
+}
+
+fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
+  if (isEmpty()) {
+    return null
+  }
+
+  return firstKey()
+}
+
+fun String.ellipsizeEnd(maxLength: Int): String {
+  val minStringLength = 5
+  val threeDotsLength = 3
+
+  if (maxLength < minStringLength) {
+    return this
+  }
+
+  if (this.length <= maxLength) {
+    return this
+  }
+
+  return this.take(maxLength - threeDotsLength) + "..."
+}
+
+suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
+  try {
+    return await()
+  } catch (ignored: CancellationException) {
+    return defaultValue
+  }
+}
+
+suspend fun CompletableDeferred<*>.awaitSilently() {
+  try {
+    await()
+  } catch (ignored: CancellationException) {
+    // no-op
+  }
 }

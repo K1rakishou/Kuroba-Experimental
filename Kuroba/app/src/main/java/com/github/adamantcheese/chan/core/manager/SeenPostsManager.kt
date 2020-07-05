@@ -4,13 +4,17 @@ import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.utils.*
-import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.chan.utils.DescriptorUtils
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
@@ -109,12 +113,7 @@ class SeenPostsManager(
     val cd = CompletableDeferred<Boolean>()
 
     actor.send(ActorAction.CheckSeenPost(threadDescriptor, postNo, cd))
-
-    return try {
-      cd.await()
-    } catch (error: CancellationException) {
-      return false
-    }
+    return cd.awaitSilently(false)
   }
 
   fun preloadForThread(loadable: Loadable) {

@@ -541,7 +541,7 @@ class BookmarksManager(
 
         try {
           bookmarksRepository.persist(getBookmarksOrdered()).safeUnwrap { error ->
-            Logger.e(TAG, "Failed to persist bookmarks blockingly", error)
+            Logger.e(TAG, "Failed to persist bookmarks blocking", error)
             return@runBlocking
           }
         } finally {

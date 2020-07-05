@@ -8,10 +8,10 @@ import com.github.adamantcheese.chan.features.archives.data.ArchiveInfo
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.errorMessageOrClassName
-import com.github.adamantcheese.chan.utils.exhaustive
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers

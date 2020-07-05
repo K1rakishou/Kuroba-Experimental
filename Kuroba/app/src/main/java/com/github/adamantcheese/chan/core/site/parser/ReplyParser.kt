@@ -2,7 +2,7 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.ParserRepository
-import com.github.adamantcheese.chan.utils.groupOrNull
+import com.github.adamantcheese.common.groupOrNull
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import java.util.regex.Matcher
 import java.util.regex.Pattern

@@ -75,7 +75,8 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       Log.d(tag, "awaitUntilInitialized() called when not initialized, awaiting...")
     }
 
-    value.await()
+    value.awaitSilently()
+    return
   }
 
   fun awaitUntilInitializedBlocking() {

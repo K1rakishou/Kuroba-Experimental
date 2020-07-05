@@ -39,6 +39,9 @@ import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotificati
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_NAME
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG
+import com.github.adamantcheese.common.ellipsizeEnd
+import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReplyView
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor

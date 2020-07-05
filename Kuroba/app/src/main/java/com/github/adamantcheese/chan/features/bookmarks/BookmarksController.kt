@@ -26,7 +26,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.chan.utils.DialogUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect

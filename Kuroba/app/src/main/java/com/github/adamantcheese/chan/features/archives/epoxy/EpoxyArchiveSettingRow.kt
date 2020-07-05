@@ -14,7 +14,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyArchiveSettingRow @JvmOverloads constructor(

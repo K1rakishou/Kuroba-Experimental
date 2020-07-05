@@ -32,7 +32,7 @@ import com.github.adamantcheese.chan.controller.transition.PushControllerTransit
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.PopupController;
 import com.github.adamantcheese.chan.ui.layout.SplitNavigationControllerLayout;
-import com.github.adamantcheese.chan.utils.KtExtensionsKt;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -79,7 +79,7 @@ public class SplitNavigationController
         rightControllerView = new FrameLayout(context);
 
         int bottomNavViewHeight = (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height);
-        KtExtensionsKt.updatePaddings(container, null, null, null, bottomNavViewHeight);
+        KotlinExtensionsKt.updatePaddings(container, null, null, null, bottomNavViewHeight);
 
         container.setLeftView(leftControllerView);
         container.setRightView(rightControllerView);
