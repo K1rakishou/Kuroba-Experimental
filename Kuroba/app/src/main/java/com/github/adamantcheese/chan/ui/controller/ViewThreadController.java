@@ -443,7 +443,7 @@ public class ViewThreadController
             item.isCurrentlySelected = markYourPostsOnScrollbar;
         }
 
-        threadLayout.presenter.requestData();
+        threadLayout.presenter.quickReload();
     }
 
     private void upClicked(ToolbarMenuSubItem item) {

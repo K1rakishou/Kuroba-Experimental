@@ -239,6 +239,15 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
+  fun quickReload() {
+    BackgroundUtils.ensureMainThread()
+
+    if (isBound) {
+      threadPresenterCallback?.showLoading()
+      chanLoader?.quickLoad()
+    }
+  }
+
   fun retrieveDeletedPosts() {
     BackgroundUtils.ensureMainThread()
     val descriptor = DescriptorUtils.getDescriptor(loadable!!)

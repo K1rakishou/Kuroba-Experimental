@@ -25,6 +25,7 @@ import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import java.util.*
 
 class LastPageNotificationsHelper(
+  private val isDevFlavor: Boolean,
   private val appContext: Context,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val pageRequestManager: PageRequestManager,
@@ -67,6 +68,12 @@ class LastPageNotificationsHelper(
     if (threadsWithTitles.isEmpty()) {
       Logger.d(TAG, "threadsWithTitles is empty")
       return
+    }
+
+    if (isDevFlavor) {
+      threadsWithTitles.forEach { (threadDescriptor, title) ->
+        Logger.d(TAG, "Thread $threadDescriptor (${title.take(50)}) hit last page")
+      }
     }
 
     setupChannel()

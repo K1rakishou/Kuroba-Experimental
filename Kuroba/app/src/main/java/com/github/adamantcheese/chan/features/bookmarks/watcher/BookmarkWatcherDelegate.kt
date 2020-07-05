@@ -102,6 +102,8 @@ class BookmarkWatcherDelegate(
       return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
     }
 
+    // TODO(KurobaEx): this condition is incorrect. We should only skip notifications for the thread
+    //  we are currently viewing.
     if (!isUpdatingCurrentlyOpenedThread) {
       // Only show last page notifications for threads that we are not currently viewing
       lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)

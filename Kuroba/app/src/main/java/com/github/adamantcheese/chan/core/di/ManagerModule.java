@@ -436,6 +436,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
 
         return new LastPageNotificationsHelper(
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
                 appContext,
                 getNotificationManagerCompat(),
                 pageRequestManager,

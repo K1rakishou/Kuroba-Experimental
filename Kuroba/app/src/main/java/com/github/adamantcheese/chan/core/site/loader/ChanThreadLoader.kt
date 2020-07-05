@@ -208,7 +208,7 @@ class ChanThreadLoader(val loadable: Loadable) {
    *
    * @return `true` if a new request was started, `false` otherwise.
    */
-  fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
+  private fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
     BackgroundUtils.ensureMainThread()
     clearPendingRunnable()
 
