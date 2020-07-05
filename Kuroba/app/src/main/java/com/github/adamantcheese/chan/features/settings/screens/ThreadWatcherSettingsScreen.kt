@@ -53,15 +53,6 @@ class ThreadWatcherSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = ThreadWatcherScreen.MainGroup.ShortPinInfo,
-          topDescriptionIdFunc = { R.string.setting_bookmark_short_info },
-          bottomDescriptionIdFunc = { R.string.setting_bookmark_short_info_description },
-          setting = ChanSettings.shortPinInfo,
-          dependsOnSetting = ChanSettings.watchEnabled
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = ThreadWatcherScreen.MainGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_background_description },

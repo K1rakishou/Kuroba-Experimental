@@ -42,7 +42,6 @@ import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
-import com.github.adamantcheese.chan.features.drawer.DrawerController;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -215,7 +214,6 @@ public class ViewThreadController
         super.onDestroy();
 
         dismissHintPopup();
-        updateDrawerHighlighting(null);
         updateLeftPaneHighlighting(null);
     }
 
@@ -353,8 +351,6 @@ public class ViewThreadController
     private void pinClicked(ToolbarMenuItem item) {
         if (threadLayout.presenter.pin()) {
             setPinIconState(true);
-
-            updateDrawerHighlighting(loadable);
         }
     }
 
@@ -616,7 +612,6 @@ public class ViewThreadController
 
         setPinIconState(false);
 
-        updateDrawerHighlighting(loadable);
         updateLeftPaneHighlighting(loadable);
         presenter.requestInitialData();
 
@@ -628,19 +623,13 @@ public class ViewThreadController
     }
 
     private void updateRetrievePostsFromArchivesMenuItem() {
-        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
-        boolean is4chan = descriptor.siteDescriptor().is4chan();
-
         ToolbarMenuSubItem retrieveDeletedPostsItem = navigation.findSubItem(ACTION_RETRIEVE_DELETED_POSTS);
         if (retrieveDeletedPostsItem == null) {
             return;
         }
 
-        if (is4chan) {
-            retrieveDeletedPostsItem.visible = true;
-        } else {
-            retrieveDeletedPostsItem.visible = false;
-        }
+        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
+        retrieveDeletedPostsItem.visible = descriptor.siteDescriptor().is4chan();
     }
 
     private void showHints() {
@@ -680,19 +669,6 @@ public class ViewThreadController
 
         requireNavController().requireToolbar().updateTitle(navigation);
         requireNavController().requireToolbar().updateViewForItem(navigation);
-    }
-
-    private void updateDrawerHighlighting(Loadable loadable) {
-        Pin pin = loadable == null ? null : watchManager.findPinByLoadableId(loadable.id);
-
-        if (navigationController.parentController instanceof DrawerController) {
-            ((DrawerController) navigationController.parentController).setPinHighlighted(pin);
-        } else if (doubleNavigationController != null) {
-            Controller doubleNav = (Controller) doubleNavigationController;
-            if (doubleNav.parentController instanceof DrawerController) {
-                ((DrawerController) doubleNav.parentController).setPinHighlighted(pin);
-            }
-        }
     }
 
     private void updateLeftPaneHighlighting(Loadable loadable) {

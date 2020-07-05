@@ -228,7 +228,6 @@ sealed class ThreadWatcherScreen(
     ThreadWatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object EnableThreadWatcher : MainGroup("enable_thread_watcher")
-    object ShortPinInfo : MainGroup("short_pin_info")
     object EnableBackgroundThreadWatcher : MainGroup("enable_background_thread_watcher")
     object ThreadWatcherTimeout : MainGroup("thread_watcher_timeout")
     object RemoveWatchedThreadsFromCatalog : MainGroup("remove_watched_threads_from_catalog")

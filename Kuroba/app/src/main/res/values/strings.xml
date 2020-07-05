@@ -847,8 +847,6 @@ Don't have a 4chan Pass?<br>
 
     <string name="reply_comment_empty">Comment body is empty.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
-    <string name="setting_bookmark_short_info">Short bookmark info</string>
-    <string name="setting_bookmark_short_info_description">Shorter information in the bookmark menu for unread and quoted posts</string>
     <string name="filter_removed_undo">Removed filter %1$s</string>
     <string name="image_url_get_attempt">Getting image from clipboard URL…</string>
     <string name="image_url_get_failed">Failed to get image from clipboard, reason = %1$s</string>

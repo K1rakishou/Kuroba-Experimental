@@ -34,8 +34,6 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WatchManager
-import com.github.adamantcheese.chan.core.manager.WatchManager.PinMessages.*
-import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
@@ -45,8 +43,6 @@ import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
-import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter
-import com.github.adamantcheese.chan.ui.adapter.DrawerAdapter.HeaderAction
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
@@ -62,8 +58,6 @@ import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.common.updateMargins
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
 import java.util.*
 import javax.inject.Inject
 
@@ -72,7 +66,6 @@ class DrawerController(
 ) : Controller(context),
   DrawerView,
   DrawerCallbacks,
-  DrawerAdapter.Callback,
   View.OnClickListener {
 
   @Inject
@@ -89,7 +82,6 @@ class DrawerController(
   private lateinit var drawerLayout: DrawerLayout
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var drawerAdapter: DrawerAdapter
   private lateinit var bottomNavView: HidingBottomNavigationView
 
   private val drawerPresenter = DrawerPresenter(getFlavorType() == AndroidUtils.FlavorType.Dev)
@@ -139,9 +131,7 @@ class DrawerController(
 
   override fun onCreate() {
     super.onCreate()
-
     Chan.inject(this)
-    EventBus.getDefault().register(this)
 
     view = AndroidUtils.inflate(context, R.layout.controller_navigation_drawer)
     rootLayout = view.findViewById(R.id.root_layout)
@@ -168,18 +158,6 @@ class DrawerController(
       onNavigationItemSelectedListener(menuItem)
       return@setOnNavigationItemSelectedListener true
     }
-
-//  TODO(KurobaEx): pins, move to some other place
-//  recyclerView = view.findViewById(R.id.drawer_recycler_view);
-//  recyclerView.setHasFixedSize(true);
-//  recyclerView.setLayoutManager(new LinearLayoutManager(context));
-//  recyclerView.getRecycledViewPool().setMaxRecycledViews(TYPE_PIN, 0);
-//
-//  drawerAdapter = new DrawerAdapter(this, context);
-//  recyclerView.setAdapter(drawerAdapter);
-
-//  ItemTouchHelper itemTouchHelper = new ItemTouchHelper(drawerAdapter.getItemTouchHelperCallback());
-//  itemTouchHelper.attachToRecyclerView(recyclerView);
 
     updateBadge()
 
@@ -233,13 +211,6 @@ class DrawerController(
         }
       )
 
-    // TODO(KurobaEx): pins, move to some other place
-//    compositeDisposable += settingsNotificationManager.listenForNotificationUpdates()
-//      .subscribe(
-//        { drawerAdapter.onNotificationsChanged() },
-//        { error -> Logger.e(TAG, "Unknown error while subscribed to listenForNotificationUpdates()", error) }
-//      )
-
     // Must be called after drawerPresenter.listenForStateChanges() so it receives the "Loading"
     // state as well as other states
     drawerPresenter.onCreate(this)
@@ -250,11 +221,6 @@ class DrawerController(
 
     drawerPresenter.onDestroy()
     compositeDisposable.clear()
-
-    // TODO(KurobaEx): pins, move to some other place
-//        recyclerView.setAdapter(null);
-
-    EventBus.getDefault().unregister(this)
   }
 
   fun pushChildController(childController: Controller) {
@@ -467,7 +433,7 @@ class DrawerController(
     if (state.totalUnseenPostsCount > 0) {
       val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
 
-      badgeDrawable.maxCharacterCount = 5
+      badgeDrawable.maxCharacterCount = BADGE_COUNTER_MAX_NUMBERS
       badgeDrawable.number = state.totalUnseenPostsCount
 
       if (state.hasUnreadReplies) {
@@ -554,191 +520,6 @@ class DrawerController(
     }
   }
 
-  override fun onPinClicked(pin: Pin) {
-    // TODO(KurobaEx): pins, move to some other place
-//        drawerLayout.post(() -> drawerLayout.post(() -> drawerLayout.closeDrawer(drawer)));
-//
-//        ThreadController threadController = getTopThreadController();
-//        if (threadController != null) {
-//            Loadable.LoadableDownloadingState state = Loadable.LoadableDownloadingState.NotDownloading;
-//
-//            if (PinType.hasDownloadFlag(pin.pinType)) {
-//                // Try to load saved copy of a thread if pinned thread has an error flag but only if
-//                // we are downloading this thread. Otherwise it will break archived threads that are not
-//                // being downloaded
-//                SavedThread savedThread = watchManager.findSavedThreadByLoadableId(pin.loadable.id);
-//                if (savedThread != null) {
-//                    // Do not check for isArchived here since we don't want to show archived threads
-//                    // as local threads
-//                    if (pin.isError) {
-//                        state = Loadable.LoadableDownloadingState.AlreadyDownloaded;
-//                    } else {
-//                        if (savedThread.isFullyDownloaded) {
-//                            state = Loadable.LoadableDownloadingState.AlreadyDownloaded;
-//                        } else {
-//                            boolean hasNoNetwork = !isConnected(ConnectivityManager.TYPE_MOBILE) && !isConnected(
-//                                    ConnectivityManager.TYPE_WIFI);
-//
-//                            if (hasNoNetwork) {
-//                                // No internet connection, but we have a local copy of this thread,
-//                                // so show it instead of an empty screen.
-//                                state = DownloadingAndViewable;
-//                            } else {
-//                                state = DownloadingAndNotViewable;
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            pin.loadable.setLoadableState(state);
-//            threadController.openPin(pin);
-//        }
-  }
-
-  override fun onWatchCountClicked(pin: Pin) {
-    // TODO(KurobaEx): pins, move to some other place
-//        watchManager.toggleWatch(pin);
-  }
-
-  override fun onHeaderClicked(headerAction: HeaderAction) {
-    // TODO(KurobaEx): pins, move to some other place
-
-//        if (headerAction == DrawerAdapter.HeaderAction.CLEAR || headerAction == DrawerAdapter.HeaderAction.CLEAR_ALL) {
-//            final boolean all =
-//                    headerAction == DrawerAdapter.HeaderAction.CLEAR_ALL || !ChanSettings.watchEnabled.get();
-//            final boolean hasDownloadFlag = watchManager.hasAtLeastOnePinWithDownloadFlag();
-//
-//            if (all && hasDownloadFlag) {
-//                // Some pins may have threads that have saved copies on the disk. We want to warn the
-//                // user that this action will delete them as well
-//                new AlertDialog.Builder(context).setTitle(R.string.warning)
-//                        .setMessage(R.string.drawer_controller_at_least_one_pin_has_download_flag)
-//                        .setNegativeButton(R.string.drawer_controller_do_not_delete,
-//                                (dialog, which) -> dialog.dismiss()
-//                        )
-//                        .setPositiveButton(R.string.drawer_controller_delete_all_pins,
-//                                ((dialog, which) -> onHeaderClickedInternal(true, true))
-//                        )
-//                        .create()
-//                        .show();
-//                return;
-//            }
-//
-//            onHeaderClickedInternal(all, hasDownloadFlag);
-//        }
-  }
-
-  // TODO(KurobaEx): pins, move to some other place
-  private fun onHeaderClickedInternal(all: Boolean, hasDownloadFlag: Boolean) {
-    //        final List<Pin> pins = watchManager.clearPins(all);
-    //        if (!pins.isEmpty()) {
-    //            if (!hasDownloadFlag) {
-    //                // We can't undo this operation when there is at least one pin that downloads a thread
-    //                // because we will be deleting files from the disk. We don't want to warn the user
-    //                // every time he deletes one pin.
-    //                String text = getQuantityString(R.plurals.bookmark, pins.size(), pins.size());
-    //                Snackbar snackbar = Snackbar.make(
-    //                        drawerLayout,
-    //                        getString(R.string.drawer_pins_cleared, text),
-    //                        4000
-    //                );
-    //
-    //                snackbar.setGestureInsetBottomIgnored(true);
-    //                fixSnackbarText(context, snackbar);
-    //                fixSnackbarInsets(snackbar, globalWindowInsetsManager);
-    //                snackbar.setAction(R.string.undo, v -> watchManager.addAll(pins));
-    //                snackbar.show();
-    //            }
-    //        } else {
-    //            int text = watchManager.getAllPins().isEmpty()
-    //                    ? R.string.drawer_pins_non_cleared
-    //                    : R.string.drawer_pins_non_cleared_try_all;
-    //            Snackbar snackbar = Snackbar.make(drawerLayout, text, Snackbar.LENGTH_LONG);
-    //            snackbar.setGestureInsetBottomIgnored(true);
-    //            fixSnackbarText(context, snackbar);
-    //            fixSnackbarInsets(snackbar, globalWindowInsetsManager);
-    //            snackbar.show();
-    //        }
-  }
-
-  override fun onPinRemoved(pin: Pin) {
-    // TODO(KurobaEx): pins, move to some other place
-
-//        final Pin undoPin = pin.clone();
-//        watchManager.deletePin(pin);
-//
-//        Snackbar snackbar;
-//
-//        if (!PinType.hasDownloadFlag(pin.pinType)) {
-//            snackbar = Snackbar.make(drawerLayout,
-//                    getString(R.string.drawer_pin_removed, pin.loadable.title),
-//                    Snackbar.LENGTH_LONG
-//            );
-//
-//            snackbar.setAction(R.string.undo, v -> watchManager.createPin(undoPin));
-//        } else {
-//            snackbar = Snackbar.make(drawerLayout,
-//                    getString(R.string.drawer_pin_with_saved_thread_removed, pin.loadable.title),
-//                    Snackbar.LENGTH_LONG
-//            );
-//        }
-//        snackbar.setGestureInsetBottomIgnored(true);
-//        fixSnackbarText(context, snackbar);
-//        fixSnackbarInsets(snackbar, globalWindowInsetsManager);
-//        snackbar.show();
-  }
-
-  fun setPinHighlighted(pin: Pin?) {
-    // TODO(KurobaEx): pins, move to some other place
-//        drawerAdapter.setPinHighlighted(pin);
-//        drawerAdapter.updateHighlighted(recyclerView);
-  }
-
-  @Subscribe
-  fun onEvent(message: PinAddedMessage?) {
-    // TODO(KurobaEx): pins, move to some other place
-
-//        drawerAdapter.onPinAdded(message.pin);
-//        if (ChanSettings.drawerAutoOpenCount.get() < 5 || ChanSettings.alwaysOpenDrawer.get()) {
-//            drawerLayout.openDrawer(drawer);
-//            //max out at 5
-//            int curCount = ChanSettings.drawerAutoOpenCount.get();
-//            ChanSettings.drawerAutoOpenCount.set(Math.min(curCount + 1, 5));
-//            if (ChanSettings.drawerAutoOpenCount.get() < 5 && !ChanSettings.alwaysOpenDrawer.get()) {
-//                int countLeft = 5 - ChanSettings.drawerAutoOpenCount.get();
-//                showToast(context,
-//                        "Drawer will auto-show " + countLeft + " more time" + (countLeft == 1 ? "" : "s")
-//                                + " as a reminder."
-//                );
-//            }
-//        }
-//        updateBadge();
-  }
-
-  @Subscribe
-  fun onEvent(message: PinRemovedMessage?) {
-    // TODO(KurobaEx): pins, move to some other place
-//        drawerAdapter.onPinRemoved(message.index);
-//        updateBadge();
-  }
-
-  @Subscribe
-  fun onEvent(message: PinChangedMessage?) {
-    // TODO(KurobaEx): pins, move to some other place
-
-//        drawerAdapter.onPinChanged(recyclerView, message.pin);
-//        updateBadge();
-  }
-
-  @Subscribe
-  fun onEvent(message: PinsChangedMessage?) {
-    // TODO(KurobaEx): pins, move to some other place
-
-//        drawerAdapter.notifyDataSetChanged();
-//        updateBadge();
-  }
-
   fun setDrawerEnabled(enabled: Boolean) {
     val lockMode = if (enabled) {
       DrawerLayout.LOCK_MODE_UNLOCKED
@@ -769,5 +550,6 @@ class DrawerController(
 
   companion object {
     private const val TAG = "DrawerController"
+    private const val BADGE_COUNTER_MAX_NUMBERS = 5
   }
 }
