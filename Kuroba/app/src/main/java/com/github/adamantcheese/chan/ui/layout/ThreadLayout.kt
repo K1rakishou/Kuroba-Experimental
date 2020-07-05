@@ -511,10 +511,6 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
     }).show()
 
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-    }
-
     AndroidUtils.fixSnackbarText(context, snackbar)
   }
 
@@ -545,10 +541,6 @@ class ThreadLayout @JvmOverloads constructor(
       databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(hideList))
       presenter.refreshUI()
     }.show()
-
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-    }
 
     AndroidUtils.fixSnackbarText(context, snackbar)
   }
@@ -581,10 +573,6 @@ class ThreadLayout @JvmOverloads constructor(
     snackbar.isGestureInsetBottomIgnored = true
     snackbar.show()
 
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-    }
-
     AndroidUtils.fixSnackbarText(context, snackbar)
   }
 
@@ -596,6 +584,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(floatingListMenuController, animate)
   }
 
+  // TODO(KurobaEx): handle bottom nav bar!!!
   override fun showNewPostsNotification(show: Boolean, more: Int) {
     if (!show) {
       dismissSnackbar()
@@ -603,10 +592,6 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (!threadListLayout.scrolledToBottom() && BackgroundUtils.isInForeground()) {
-      if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-        drawerCallbacks?.hideBottomNavBar(lockTranslation = false, lockCollapse = false)
-      }
-
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 
