@@ -15,6 +15,8 @@ object NotificationConstants {
     val notificationIdCounter = AtomicInteger(1000)
     val notificationIdMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Int>()
 
+    const val NOTIFICATION_TAG_PREFIX = "reply_"
+
     const val REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_reply_summary_notifications_channel"
     const val REPLY_SUMMARY_NOTIFICATION_NAME = "Notification channel for new replies summary"
     const val REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_reply_summary_silent_notifications_channel"
@@ -28,11 +30,23 @@ object NotificationConstants {
     const val SUMMARY_NOTIFICATION_ID = 0
     const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
 
-    const val NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "notification_click_thread_descriptors"
+    const val NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
     const val NOTIFICATION_CLICK_REQUEST_CODE = 1
 
-    const val NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "notification_swipe_thread_descriptors"
+    const val NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "reply_notification_swipe_thread_descriptors"
     const val NOTIFICATION_SWIPE_REQUEST_CODE = 2
+  }
+
+  object LastPageNotifications {
+    const val LAST_PAGE_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_last_page_notifications_channel"
+    const val LAST_PAGE_NOTIFICATION_NAME = "Notification channel for threads last pages alerts"
+
+    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
+
+    const val LAST_PAGE_NOTIFICATION_ID = 2
+
+    const val NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
+    const val NOTIFICATION_CLICK_REQUEST_CODE = 3
   }
 
 }

@@ -23,6 +23,8 @@ abstract class EpoxyListThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
   var threadBookmarkStats: ThreadBookmarkStats? = null
   @EpoxyAttribute
   var titleString: String? = null
+  @EpoxyAttribute
+  var highlightBookmark: Boolean = false
 
   override fun bind(holder: BaseThreadBookmarkViewHolder) {
     super.bind(holder)
@@ -32,6 +34,7 @@ abstract class EpoxyListThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
     holder.setThreadBookmarkStats(threadBookmarkStats)
     holder.clickListener(clickListener)
     holder.setTitle(titleString)
+    holder.highlightBookmark(highlightBookmark)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(false, watching, it) }

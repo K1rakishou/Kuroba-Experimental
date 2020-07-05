@@ -35,7 +35,10 @@ import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
-class BookmarksController(context: Context)
+class BookmarksController(
+  context: Context,
+  bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>
+)
   : Controller(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback {
@@ -45,7 +48,7 @@ class BookmarksController(context: Context)
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
-  private val bookmarksPresenter = BookmarksPresenter()
+  private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet())
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
 
@@ -236,6 +239,7 @@ class BookmarksController(context: Context)
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
+                highlightBookmark(bookmark.hightlight)
                 clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
               }
             } else {
@@ -246,6 +250,7 @@ class BookmarksController(context: Context)
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
+                highlightBookmark(bookmark.hightlight)
                 clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
               }
             }

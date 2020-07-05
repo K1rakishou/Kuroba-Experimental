@@ -5,12 +5,13 @@ import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUse
 import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase
 import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.manager.LastPageNotificationsHelper
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
+import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.bookmark.StickyThread
@@ -36,7 +37,8 @@ class BookmarkWatcherDelegate(
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
   private val parsePostRepliesUseCase: ParsePostRepliesUseCase,
-  private val replyNotificationsHelper: ReplyNotificationsHelper
+  private val replyNotificationsHelper: ReplyNotificationsHelper,
+  private val lastPageNotificationsHelper: LastPageNotificationsHelper
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -98,6 +100,11 @@ class BookmarkWatcherDelegate(
       }
 
       return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
+    }
+
+    if (!isUpdatingCurrentlyOpenedThread) {
+      // Only show last page notifications for threads that we are not currently viewing
+      lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)
     }
 
     if (watchingBookmarkDescriptors.isEmpty()

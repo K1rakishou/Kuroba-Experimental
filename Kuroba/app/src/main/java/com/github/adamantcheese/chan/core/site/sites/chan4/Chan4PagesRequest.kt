@@ -19,12 +19,14 @@ package com.github.adamantcheese.chan.core.site.sites.chan4
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.*
 
 class Chan4PagesRequest(
   private val boardDescriptor: BoardDescriptor,
+  private val boardTotalPagesCount: Int,
   request: Request,
   okHttpClient: OkHttpClient
 ) : JsonReaderRequest<Chan4PagesRequest.BoardPages>(
@@ -43,20 +45,24 @@ class Chan4PagesRequest(
   }
   
   private fun readPageEntry(reader: JsonReader): BoardPage {
-    var pageNo = -1
+    var pageIndex = -1
     var threadNoTimeModPairs: List<ThreadNoTimeModPair>? = null
     
     reader.withObject {
       while (hasNext()) {
         when (nextName()) {
-          "page" -> pageNo = nextInt()
+          "page" -> pageIndex = nextInt()
           "threads" -> threadNoTimeModPairs = readThreadTimes(this)
           else -> skipValue()
         }
       }
     }
     
-    return BoardPage(pageNo, threadNoTimeModPairs ?: emptyList())
+    return BoardPage(
+      pageIndex,
+      pageIndex >= boardTotalPagesCount,
+      threadNoTimeModPairs ?: emptyList()
+    )
   }
   
   private fun readThreadTimes(reader: JsonReader): List<ThreadNoTimeModPair> {
@@ -85,12 +91,24 @@ class Chan4PagesRequest(
       }
     }
     
-    return ThreadNoTimeModPair(no, modified)
+    return ThreadNoTimeModPair(ChanDescriptor.ThreadDescriptor(boardDescriptor, no), modified)
   }
   
-  class BoardPages(val boardDescriptor: BoardDescriptor, val boardPages: List<BoardPage>)
-  inner class BoardPage(val page: Int, val threads: List<ThreadNoTimeModPair>)
-  inner class ThreadNoTimeModPair(val no: Long, val modified: Long)
+  class BoardPages(
+    val boardDescriptor: BoardDescriptor,
+    val boardPages: List<BoardPage>
+  )
+
+  inner class BoardPage(
+    val page: Int,
+    val isOnLastPage: Boolean,
+    val threads: List<ThreadNoTimeModPair>
+  )
+
+  inner class ThreadNoTimeModPair(
+    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    val modified: Long
+  )
   
   companion object {
     private const val TAG = "Chan4PagesRequest"

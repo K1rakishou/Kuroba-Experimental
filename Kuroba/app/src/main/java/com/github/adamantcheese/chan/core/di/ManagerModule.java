@@ -35,12 +35,14 @@ import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
+import com.github.adamantcheese.chan.core.manager.LastPageNotificationsHelper;
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
+import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper;
 import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
@@ -57,7 +59,6 @@ import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherD
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
@@ -337,7 +338,8 @@ public class ManagerModule {
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
             ParsePostRepliesUseCase parsePostRepliesUseCase,
-            ReplyNotificationsHelper replyNotificationsHelper
+            ReplyNotificationsHelper replyNotificationsHelper,
+            LastPageNotificationsHelper lastPageNotificationsHelper
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
 
@@ -350,7 +352,8 @@ public class ManagerModule {
                 lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,
                 parsePostRepliesUseCase,
-                replyNotificationsHelper
+                replyNotificationsHelper,
+                lastPageNotificationsHelper
         );
     }
 
@@ -420,6 +423,23 @@ public class ManagerModule {
                 bookmarksManager,
                 chanPostRepository,
                 imageLoaderV2
+        );
+    }
+
+    @Provides
+    @Singleton
+    public LastPageNotificationsHelper provideLastPageNotificationsHelper(
+            Context appContext,
+            PageRequestManager pageRequestManager,
+            BookmarksManager bookmarksManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
+
+        return new LastPageNotificationsHelper(
+                appContext,
+                getNotificationManagerCompat(),
+                pageRequestManager,
+                bookmarksManager
         );
     }
 }

@@ -1177,7 +1177,7 @@ class ThreadPresenter @Inject constructor(
   override fun requestNewPostLoad() {
     if (isBound && loadable!!.isThreadMode) {
       chanLoader!!.requestMoreDataAndResetTimer()
-      //put in a "request" for a page update whenever the next set of data comes in
+      // put in a "request" for a page update whenever the next set of data comes in
       forcePageUpdate = true
     }
   }

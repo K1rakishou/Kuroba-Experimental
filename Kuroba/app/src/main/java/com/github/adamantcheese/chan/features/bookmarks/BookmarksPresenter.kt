@@ -28,7 +28,9 @@ import kotlin.math.max
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
-class BookmarksPresenter : BasePresenter<BookmarksView>() {
+class BookmarksPresenter(
+  private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>
+) : BasePresenter<BookmarksView>() {
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
@@ -161,6 +163,7 @@ class BookmarksPresenter : BasePresenter<BookmarksView>() {
         return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
           title = title,
+          hightlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
           thumbnailUrl = threadBookmarkView.thumbnailUrl,
           threadBookmarkStats = ThreadBookmarkStats(
             showBookmarkStats = isWatcherEnabled,

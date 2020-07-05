@@ -275,10 +275,10 @@ class DrawerController(
     }
   }
 
-  fun showBookmarksController() {
+  fun showBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
 
-    openController(BookmarksController(context))
+    openController(BookmarksController(context, threadDescriptors))
   }
 
   fun loadThread(
@@ -301,9 +301,10 @@ class DrawerController(
 
         val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
         pushChildController(bottomNavBarAwareNavigationController)
-        bottomNavBarAwareNavigationController.pushController(BookmarksController(context))
+        bottomNavBarAwareNavigationController.pushController(BookmarksController(context, emptyList()))
       }
       R.id.action_settings -> {
+        // TODO(KurobaEx): SPLIT mode!
         closeAllNonMainControllers()
 
         val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)

@@ -26,6 +26,9 @@ import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Boa
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -42,17 +45,26 @@ class PageRequestManager(
   private val savedBoards = Collections.synchronizedSet(HashSet<String>())
   private val boardPagesMap: ConcurrentMap<String, Chan4PagesRequest.BoardPages> = ConcurrentHashMap()
   private val boardTimeMap: ConcurrentMap<String, Long> = ConcurrentHashMap()
-  private val callbackList: MutableList<PageCallback> = ArrayList()
-  
+  private val notifyIntervals = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>()
+
+  private val boardPagesUpdateSubject = PublishProcessor.create<Unit>()
+
   override val coroutineContext: CoroutineContext
-    get() = Dispatchers.Default + CoroutineName("PageRequestManager")
+    get() = Dispatchers.Default + SupervisorJob() + CoroutineName("PageRequestManager")
+
+  fun listenForPagesUpdates(): Flowable<Unit> {
+    return boardPagesUpdateSubject
+      .observeOn(AndroidSchedulers.mainThread())
+      .hide()
+      .onBackpressureLatest()
+  }
   
   fun getPage(op: Post?): BoardPage? {
-    return if (op == null) {
-      null
-    } else {
-      findPage(op.board.boardDescriptor(), op.no)
+    if (op == null) {
+      return null
     }
+
+    return findPage(op.board.boardDescriptor(), op.no)
   }
 
   fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {
@@ -67,8 +79,33 @@ class PageRequestManager(
     }
   }
 
+  @Synchronized
+  fun canAlertAboutThreadBeingOnLastPage(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    val boardPage = findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
+      ?: return false
+
+    if (!boardPage.isOnLastPage) {
+      return false
+    }
+
+    val now = System.currentTimeMillis()
+    val lastNotifyTime = notifyIntervals[threadDescriptor] ?: -1L
+
+    if (lastNotifyTime < 0) {
+      notifyIntervals[threadDescriptor] = now
+      return true
+    }
+
+    if (now - lastNotifyTime < LAST_PAGE_NOTIFICATION_INTERVAL) {
+      return false
+    }
+
+    notifyIntervals[threadDescriptor] = now
+    return true
+  }
+
   fun forceUpdateForBoard(boardDescriptor: BoardDescriptor) {
-    Logger.d(TAG, "Requesting existing board pages, forced")
+    Logger.d(TAG, "Requesting existing board pages for /${boardDescriptor.boardCode}/, forced")
     
     launch { requestBoard(boardDescriptor) }
   }
@@ -79,7 +116,7 @@ class PageRequestManager(
     
     for (page in pages.boardPages) {
       for (threadNoTimeModPair in page.threads) {
-        if (opNo == threadNoTimeModPair.no) {
+        if (opNo == threadNoTimeModPair.threadDescriptor.threadNo) {
           return page
         }
       }
@@ -106,7 +143,7 @@ class PageRequestManager(
   
     launch {
       // Otherwise, get the site for the board and request the pages for it
-      Logger.d(TAG, "Requesting new board pages")
+      Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
       requestBoard(boardDescriptor)
     }
 
@@ -132,8 +169,8 @@ class PageRequestManager(
       val lastUpdate = boardTimeMap[board.code]
       val lastUpdateTime = lastUpdate ?: 0L
 
-      if (lastUpdateTime + TimeUnit.MINUTES.toMillis(3) <= System.currentTimeMillis()) {
-        Logger.d(TAG, "Requesting existing board pages for /" + board.code + "/, timeout")
+      if (lastUpdateTime + UPDATE_INTERVAL <= System.currentTimeMillis()) {
+        Logger.d(TAG, "Requesting existing board pages for /${board.code}/, timeout")
         requestBoard(boardDescriptor)
       }
     }
@@ -183,19 +220,8 @@ class PageRequestManager(
     }
   }
 
-  fun addListener(callback: PageCallback?) {
-    if (callback != null) {
-      callbackList.add(callback)
-    }
-  }
-
-  fun removeListener(callback: PageCallback?) {
-    if (callback != null) {
-      callbackList.remove(callback)
-    }
-  }
-
-  private suspend fun onPagesReceived(
+  @Synchronized
+  private fun onPagesReceived(
     boardDescriptor: BoardDescriptor,
     pages: Chan4PagesRequest.BoardPages
   ) {
@@ -206,20 +232,13 @@ class PageRequestManager(
     boardTimeMap[boardDescriptor.boardCode] = System.currentTimeMillis()
     boardPagesMap[boardDescriptor.boardCode] = pages
 
-    coroutineScope {
-      launch(Dispatchers.Main) {
-        for (callback in callbackList) {
-          callback.onPagesReceived()
-        }
-      }
-    }
-  }
-
-  interface PageCallback {
-    fun onPagesReceived()
+    boardPagesUpdateSubject.onNext(Unit)
   }
 
   companion object {
     private const val TAG = "PageRequestManager"
+
+    private val UPDATE_INTERVAL = TimeUnit.MINUTES.toMillis(5)
+    private val LAST_PAGE_NOTIFICATION_INTERVAL = TimeUnit.MINUTES.toMillis(5)
   }
 }

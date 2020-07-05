@@ -52,12 +52,7 @@ import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavig
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.setupFullscreen
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
@@ -428,6 +423,7 @@ class StartActivity : AppCompatActivity(),
     return stateLoadable
   }
 
+  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun setupLayout() {
     val layoutMode = ChanSettings.getCurrentLayoutMode()
 
@@ -473,46 +469,79 @@ class StartActivity : AppCompatActivity(),
     launch {
       bookmarksManager.awaitUntilInitialized()
 
-      if (intent.hasExtra(NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY)) {
-        val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
-          NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-        )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
-
-        if (threadDescriptors.isNullOrEmpty()) {
-          return@launch
+      when {
+        intent.hasExtra(NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+          replyNotificationClicked(extras)
         }
-
-        Logger.d(TAG, "onNewIntent() summary notification clicked, " +
-          "marking as seen ${threadDescriptors.size} bookmarks")
-
-        if (threadDescriptors.size == 1) {
-          drawerController.loadThread(threadDescriptors.first(), true)
-        } else {
-          drawerController.showBookmarksController()
+        intent.hasExtra(NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
+          replyNotificationSwipedAway(extras)
         }
-
-        bookmarksManager.updateBookmarks(
-          threadDescriptors,
-          BookmarksManager.NotifyListenersOption.NotifyEager
-        ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
-      } else if (intent.hasExtra(NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY)) {
-        val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
-          NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-        )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
-
-        if (threadDescriptors.isNullOrEmpty()) {
-          return@launch
+        intent.hasExtra(NotificationConstants.LastPageNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+          lastPageNotificationClicked(extras)
         }
-
-        Logger.d(TAG, "onNewIntent() summary notification swiped away, " +
-          "marking as seen ${threadDescriptors.size} bookmarks")
-
-        bookmarksManager.updateBookmarks(
-          threadDescriptors,
-          BookmarksManager.NotifyListenersOption.NotifyEager
-        ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
       }
     }
+  }
+
+  private fun lastPageNotificationClicked(extras: Bundle) {
+    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+      NotificationConstants.LastPageNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+
+    if (threadDescriptors.isNullOrEmpty()) {
+      return
+    }
+
+    Logger.d(TAG, "onNewIntent() last page notification clicked, " +
+      "marking as seen ${threadDescriptors.size} bookmarks")
+
+    if (threadDescriptors.size == 1) {
+      drawerController.loadThread(threadDescriptors.first(), true)
+    } else {
+      drawerController.showBookmarksController(threadDescriptors)
+    }
+  }
+
+  private fun replyNotificationSwipedAway(extras: Bundle) {
+    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+      NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+
+    if (threadDescriptors.isNullOrEmpty()) {
+      return
+    }
+
+    Logger.d(TAG, "onNewIntent() summary notification swiped away, " +
+      "marking as seen ${threadDescriptors.size} bookmarks")
+
+    bookmarksManager.updateBookmarks(
+      threadDescriptors,
+      BookmarksManager.NotifyListenersOption.NotifyEager
+    ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
+  }
+
+  private fun replyNotificationClicked(extras: Bundle) {
+    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+      NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+
+    if (threadDescriptors.isNullOrEmpty()) {
+      return
+    }
+
+    Logger.d(TAG, "onNewIntent() summary notification clicked, " +
+      "marking as seen ${threadDescriptors.size} bookmarks")
+
+    if (threadDescriptors.size == 1) {
+      drawerController.loadThread(threadDescriptors.first(), true)
+    } else {
+      drawerController.showBookmarksController(threadDescriptors)
+    }
+
+    bookmarksManager.updateBookmarks(
+      threadDescriptors,
+      BookmarksManager.NotifyListenersOption.NotifyEager
+    ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {

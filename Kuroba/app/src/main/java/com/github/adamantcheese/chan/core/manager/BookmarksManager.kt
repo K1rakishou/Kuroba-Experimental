@@ -318,7 +318,6 @@ class BookmarksManager(
     }
   }
 
-
   fun <T> mapBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor, mapper: (ThreadBookmarkView) -> T): T? {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -349,6 +348,23 @@ class BookmarksManager(
         if (!viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))) {
           break
         }
+      }
+    }
+  }
+
+  fun <T> mapBookmarks(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    mapper: (ThreadBookmarkView) -> T
+  ): List<T> {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    return lock.read {
+      return@read threadDescriptors.map { threadDescriptor ->
+        val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
+          "Bookmarks do not contain ${threadDescriptor} even though orders does"
+        }
+
+        return@map mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
       }
     }
   }

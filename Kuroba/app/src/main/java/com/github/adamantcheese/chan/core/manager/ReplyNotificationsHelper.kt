@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.utils
+package com.github.adamantcheese.chan.core.manager
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -19,9 +19,11 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
-import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.adamantcheese.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
@@ -145,11 +147,6 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "showNotificationForReplies(${unreadNotificationsGrouped.size})")
 
     if (unreadNotificationsGrouped.isEmpty()) {
-      // No bookmarks left, so close all notifications
-
-      Logger.d(TAG, "showNotificationForReplies(${unreadNotificationsGrouped.size}) " +
-        "unreadNotificationsGrouped is empty, closing all notifications")
-      notificationManagerCompat.cancelAll()
       return emptyMap()
     }
 
@@ -726,7 +723,7 @@ class ReplyNotificationsHelper(
   }
 
   private fun getUniqueNotificationTag(threadDescriptor: ChanDescriptor.ThreadDescriptor): String {
-    return threadDescriptor.serializeToString()
+    return NotificationConstants.ReplyNotifications.NOTIFICATION_TAG_PREFIX + threadDescriptor.serializeToString()
   }
 
   @RequiresApi(Build.VERSION_CODES.M)

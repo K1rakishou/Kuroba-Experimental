@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.features.bookmarks.epoxy
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
@@ -65,6 +67,17 @@ open class BaseThreadBookmarkViewHolder(
 
     this.requestDisposable?.dispose()
     this.requestDisposable = null
+  }
+
+  fun highlightBookmark(highlight: Boolean) {
+    if (highlight) {
+      val accent = ColorStateList.valueOf(themeHelper.theme.accentColor.color)
+        .withAlpha(HIGHLIGHT_COLOR_ALPHA)
+
+      viewHolder.setBackgroundColor(accent.defaultColor)
+    } else  {
+      viewHolder.setBackgroundColor(DEFAULT_ROOT_VIEW_COLOR)
+    }
   }
 
   fun setImageLoaderRequestData(imageLoaderRequestData: ImageLoaderRequestData?) {
@@ -186,6 +199,9 @@ open class BaseThreadBookmarkViewHolder(
       dp(1f).toFloat(),
       dp(1f).toFloat()
     )
+
+    private const val DEFAULT_ROOT_VIEW_COLOR = Color.TRANSPARENT
+    private const val HIGHLIGHT_COLOR_ALPHA = 50
   }
 
 }

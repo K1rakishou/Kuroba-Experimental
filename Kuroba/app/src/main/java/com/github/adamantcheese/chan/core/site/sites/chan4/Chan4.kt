@@ -238,6 +238,7 @@ class Chan4 : SiteBase() {
 
       return Chan4PagesRequest(
         board.boardDescriptor(),
+        board.pages,
         request,
         okHttpClient
       ).execute()

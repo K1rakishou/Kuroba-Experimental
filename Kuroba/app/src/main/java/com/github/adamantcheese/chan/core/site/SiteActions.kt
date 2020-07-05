@@ -28,12 +28,6 @@ interface SiteActions {
   suspend fun pages(board: Board): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
   suspend fun post(reply: Reply): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
-
-  /**
-   * TODO(multi-site) this login mechanism is probably not generic enough right now,
-   *  especially if we're thinking about what a login really is
-   *  We'll expand this later when we have a better idea of what other sites require.
-   * */
   suspend fun login(loginRequest: LoginRequest): LoginResult
   fun postRequiresAuthentication(): Boolean
 
