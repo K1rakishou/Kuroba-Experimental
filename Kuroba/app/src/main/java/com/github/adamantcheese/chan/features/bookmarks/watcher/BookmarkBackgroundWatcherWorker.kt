@@ -5,6 +5,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import javax.inject.Inject
 
@@ -24,6 +25,11 @@ class BookmarkBackgroundWatcherWorker(
   }
 
   override suspend fun doWork(): Result {
+    if (!ChanSettings.watchBackground.get()) {
+      Logger.e(TAG, "BookmarkBackgroundWatcherWorker.doWork() ChanSettings.watchBackground is false")
+      return Result.success()
+    }
+
     if (isStopped) {
       Logger.d(TAG, "Cannot start BookmarkWatcherWorker, already stopped")
       return Result.success()

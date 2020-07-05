@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -33,7 +34,7 @@ class BookmarkForegroundWatcher(
 
           workJob = appScope.launch(Dispatchers.Default) {
             try {
-              updateBookmarks()
+              updateBookmarksWorkerLoop()
             } catch (error: Throwable) {
               logErrorIfNeeded(error)
             } finally {
@@ -67,6 +68,11 @@ class BookmarkForegroundWatcher(
   private suspend fun updateBookmarkForOpenedThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ) {
+    if (!ChanSettings.watchEnabled.get()) {
+      Logger.d(TAG, "updateBookmarkForOpenedThread() ChanSettings.watchEnabled() is false")
+      return
+    }
+
     if (bookmarksManager.currentOpenedThread() != threadDescriptor) {
       return
     }
@@ -94,9 +100,14 @@ class BookmarkForegroundWatcher(
     }
   }
 
-  private suspend fun CoroutineScope.updateBookmarks() {
+  private suspend fun CoroutineScope.updateBookmarksWorkerLoop() {
     while (true) {
       if (!bookmarksManager.hasActiveBookmarks()) {
+        return
+      }
+
+      if (!ChanSettings.watchEnabled.get()) {
+        Logger.d(TAG, "updateBookmarks() ChanSettings.watchEnabled() is false")
         return
       }
 

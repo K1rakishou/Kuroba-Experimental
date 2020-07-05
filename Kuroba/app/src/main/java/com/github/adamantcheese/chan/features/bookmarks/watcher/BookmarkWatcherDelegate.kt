@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
 import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.ReplyNotificationsHelper
@@ -41,6 +42,15 @@ class BookmarkWatcherDelegate(
   @OptIn(ExperimentalTime::class)
   suspend fun doWork(isCalledFromForeground: Boolean, isUpdatingCurrentlyOpenedThread: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
+
+    if (isDevFlavor) {
+      if (isCalledFromForeground) {
+        check(ChanSettings.watchEnabled.get()) { "Watcher is disabled" }
+      } else {
+        check(ChanSettings.watchBackground.get()) { "Background watcher is disabled" }
+      }
+    }
+
     Logger.d(TAG, "BookmarkWatcherDelegate.doWork() called, " +
       "isCalledFromForeground=$isCalledFromForeground, " +
       "isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread")
