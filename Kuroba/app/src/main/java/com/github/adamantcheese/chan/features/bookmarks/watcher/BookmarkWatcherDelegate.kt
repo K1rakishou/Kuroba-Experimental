@@ -280,8 +280,9 @@ class BookmarkWatcherDelegate(
         threadBookmark.setImageLimit(originalPost.isImageLimit)
 
         threadBookmark.updateState(
-          archived = originalPost.closed,
-          closed = originalPost.archived
+          archived = originalPost.archived,
+          closed = originalPost.closed,
+          stickyNoCap = originalPost.stickyThread is StickyThread.StickyUnlimited
         )
 
         threadBookmark.clearFirstFetchFlag()

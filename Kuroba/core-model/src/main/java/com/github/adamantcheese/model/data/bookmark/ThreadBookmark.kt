@@ -124,9 +124,12 @@ class ThreadBookmark private constructor(
     error: Boolean? = null,
     deleted: Boolean? = null,
     archived: Boolean? = null,
-    closed: Boolean? = null
+    closed: Boolean? = null,
+    stickyNoCap: Boolean? = null
   ) {
     val oldStateHasTerminalFlags = state.get(BOOKMARK_STATE_THREAD_DELETED)
+      || (state.get(BOOKMARK_STATE_STICKY) && state.get(BOOKMARK_STATE_THREAD_CLOSED))
+
     if (oldStateHasTerminalFlags) {
       if (state.get(BOOKMARK_STATE_WATCHING)) {
         state.clear(BOOKMARK_STATE_WATCHING)
@@ -135,7 +138,13 @@ class ThreadBookmark private constructor(
       return
     }
 
-    val newStateHasTerminalFlags = deleted == true || archived == true
+    // We don't want to infinitely fetch information for pinned closed threads. Such threads may be
+    // active for years and they usually don't get any updates (or they do but very rarely). Pinning
+    // such a thread should result in us stopping watching it right after the very first success
+    // fetch.
+    val pinnedClosedThread = stickyNoCap == true && closed == true
+
+    val newStateHasTerminalFlags = deleted == true || archived == true || pinnedClosedThread
     if (newStateHasTerminalFlags) {
       // If any of the above - we don't watch that thread anymore
       state.clear(BOOKMARK_STATE_WATCHING)
@@ -166,6 +175,14 @@ class ThreadBookmark private constructor(
         state.set(BOOKMARK_STATE_THREAD_CLOSED)
       } else {
         state.clear(BOOKMARK_STATE_THREAD_CLOSED)
+      }
+    }
+
+    stickyNoCap?.let {
+      if (it) {
+        state.set(BOOKMARK_STATE_STICKY)
+      } else {
+        state.clear(BOOKMARK_STATE_STICKY)
       }
     }
   }
@@ -253,6 +270,13 @@ class ThreadBookmark private constructor(
      * have no info yet (before their very first fetch).
      * */
     const val BOOKMARK_STATE_FIRST_FETCH = 1 shl 7
+
+    /**
+     * The thread is sticky. We need this flag to handle cases when a thread is sticky and closed
+     * because such threads are "alive" threads but not really so if the user bookmarks such thread
+     * it will be fetching thread info infinitely.
+     * */
+    const val BOOKMARK_STATE_STICKY = 1 shl 8
 
     fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadBookmark {
       val bookmarkInitialState = BitSet()

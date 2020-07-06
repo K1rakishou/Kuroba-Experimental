@@ -72,7 +72,11 @@ sealed class ThreadBookmarkInfoPostObject {
 
 sealed class StickyThread {
   object NotSticky : StickyThread()
+
+  // Sticky thread without post cap.
   object StickyUnlimited : StickyThread()
+
+  // Rolling sticky thread
   data class StickyWithCap(val cap: Int) : StickyThread()
 
   companion object {
