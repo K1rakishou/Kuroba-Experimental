@@ -60,7 +60,7 @@ class Chan4PagesRequest(
     
     return BoardPage(
       pageIndex,
-      pageIndex >= boardTotalPagesCount,
+      boardTotalPagesCount,
       threadNoTimeModPairs ?: emptyList()
     )
   }
@@ -100,10 +100,12 @@ class Chan4PagesRequest(
   )
 
   data class BoardPage(
-    val page: Int,
-    val isOnLastPage: Boolean,
+    val currentPage: Int,
+    val totalPages: Int,
     val threads: List<ThreadNoTimeModPair>
-  )
+  ) {
+    fun isLastPage(): Boolean = currentPage >= totalPages
+  }
 
   data class ThreadNoTimeModPair(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,

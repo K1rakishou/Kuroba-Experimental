@@ -21,6 +21,7 @@ class ThreadBookmark private constructor(
   fun isActive(): Boolean = state.get(BOOKMARK_STATE_WATCHING)
   fun isArchived(): Boolean = state.get(BOOKMARK_STATE_THREAD_ARCHIVED)
   fun isClosed(): Boolean = state.get(BOOKMARK_STATE_THREAD_CLOSED)
+  fun isStickyClosed(): Boolean = state.get(BOOKMARK_STATE_STICKY_NO_CAP) && state.get(BOOKMARK_STATE_THREAD_CLOSED)
 
   fun deepCopy(): ThreadBookmark {
     val threadBookmarkRepliesCopy = if (threadBookmarkReplies.isNotEmpty()) {
@@ -92,6 +93,21 @@ class ThreadBookmark private constructor(
     }
   }
 
+  fun toggleWatching() {
+    if (state.get(BOOKMARK_STATE_WATCHING)) {
+      state.clear(BOOKMARK_STATE_WATCHING)
+      return
+    }
+
+    if (state.get(BOOKMARK_STATE_THREAD_DELETED)
+      || state.get(BOOKMARK_STATE_THREAD_ARCHIVED)
+      || isStickyClosed()) {
+      return
+    }
+
+    state.set(BOOKMARK_STATE_WATCHING)
+  }
+
   fun readRepliesUpTo(lastSeenPostNo: Long) {
     // Mark all quotes to me as notified/seen/read which postNo is less or equals to lastSeenPostNo.
     threadBookmarkReplies.values
@@ -127,9 +143,7 @@ class ThreadBookmark private constructor(
     closed: Boolean? = null,
     stickyNoCap: Boolean? = null
   ) {
-    val oldStateHasTerminalFlags = state.get(BOOKMARK_STATE_THREAD_DELETED)
-      || (state.get(BOOKMARK_STATE_STICKY) && state.get(BOOKMARK_STATE_THREAD_CLOSED))
-
+    val oldStateHasTerminalFlags = state.get(BOOKMARK_STATE_THREAD_DELETED) || isStickyClosed()
     if (oldStateHasTerminalFlags) {
       if (state.get(BOOKMARK_STATE_WATCHING)) {
         state.clear(BOOKMARK_STATE_WATCHING)
@@ -180,9 +194,9 @@ class ThreadBookmark private constructor(
 
     stickyNoCap?.let {
       if (it) {
-        state.set(BOOKMARK_STATE_STICKY)
+        state.set(BOOKMARK_STATE_STICKY_NO_CAP)
       } else {
-        state.clear(BOOKMARK_STATE_STICKY)
+        state.clear(BOOKMARK_STATE_STICKY_NO_CAP)
       }
     }
   }
@@ -272,11 +286,11 @@ class ThreadBookmark private constructor(
     const val BOOKMARK_STATE_FIRST_FETCH = 1 shl 7
 
     /**
-     * The thread is sticky. We need this flag to handle cases when a thread is sticky and closed
-     * because such threads are "alive" threads but not really so if the user bookmarks such thread
-     * it will be fetching thread info infinitely.
+     * The thread is sticky (and it is not "sticky rolling" thread). We need this flag to handle
+     * cases when a thread is sticky and closed because such threads are "alive" threads but not
+     * really so if the user bookmarks such thread it will be fetching thread info infinitely.
      * */
-    const val BOOKMARK_STATE_STICKY = 1 shl 8
+    const val BOOKMARK_STATE_STICKY_NO_CAP = 1 shl 8
 
     fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadBookmark {
       val bookmarkInitialState = BitSet()

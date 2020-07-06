@@ -676,7 +676,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     if (callback != null && !ChanSettings.neverShowPages.get()) {
       val boardPage = callback!!.getPage(post)
       if (boardPage != null && PostsFilter.Order.isNotBumpOrder(ChanSettings.boardOrder.get())) {
-        text += ", page " + boardPage.page
+        text += ", page " + boardPage.currentPage
       }
     }
 

@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.interactors.PostMapInfoHolder
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 
+// TODO(KurobaEx): highlight posts from archives (but only when not all posts are from archives)
 class PostInfoMapItemDecoration(
   private val context: Context
 ) {

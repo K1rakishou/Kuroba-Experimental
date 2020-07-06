@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.features.bookmarks
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.manager.PageRequestManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.adamantcheese.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -24,7 +25,6 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
-import kotlin.math.max
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -34,6 +34,8 @@ class BookmarksPresenter(
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var pageRequestManager: PageRequestManager
 
   private val isSearchMode = AtomicBoolean(false)
 
@@ -148,6 +150,13 @@ class BookmarksPresenter(
     reloadBookmarks()
   }
 
+  fun onBookmarkStatsClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    bookmarksManager.updateBookmark(
+      threadDescriptor,
+      BookmarksManager.NotifyListenersOption.NotifyEager
+    ) { threadBookmark -> threadBookmark.toggleWatching() }
+  }
+
   private suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
@@ -159,6 +168,10 @@ class BookmarksPresenter(
         ?: "No title"
 
       if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
+        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+        val currentPage = boardPage?.currentPage ?: 0
+        val totalPages = boardPage?.totalPages ?: 0
+
         return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
           title = title,
@@ -167,13 +180,15 @@ class BookmarksPresenter(
           threadBookmarkStats = ThreadBookmarkStats(
             showBookmarkStats = isWatcherEnabled,
             watching = threadBookmarkView.isWatching(),
-            newPosts = max(0, threadBookmarkView.totalPostsCount - threadBookmarkView.seenPostsCount),
-            newQuotes = threadBookmarkView.threadBookmarkReplyViews.values.count { reply -> !reply.alreadyRead },
+            newPosts = threadBookmarkView.newPostsCount(),
+            newQuotes = threadBookmarkView.newQuotesCount(),
             totalPosts = threadBookmarkView.totalPostsCount,
+            currentPage = currentPage,
+            totalPages = totalPages,
             isBumpLimit = threadBookmarkView.isBumpLimit(),
             isImageLimit = threadBookmarkView.isImageLimit(),
-            isOnLastPage = false,
-            isFirstFetch = threadBookmarkView.isFirstFetch()
+            isFirstFetch = threadBookmarkView.isFirstFetch(),
+            isError = threadBookmarkView.isError()
           )
         )
       }

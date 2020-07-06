@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout
+import com.github.adamantcheese.common.resetClickListener
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -47,6 +48,9 @@ open class BaseThreadBookmarkViewHolder(
   private lateinit var bookmarkTitle: AppCompatTextView
   private lateinit var bookmarkStats: AppCompatTextView
 
+  private var bookmarkAdditionalStats: AppCompatTextView? = null
+  private var bookmarkStatsHolder: LinearLayout? = null
+
   init {
     Chan.inject(this)
   }
@@ -56,10 +60,14 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkImage = itemView.findViewById(R.id.thread_bookmark_image)
     bookmarkTitle = itemView.findViewById(R.id.thread_bookmark_title)
     bookmarkStats = itemView.findViewById(R.id.thread_bookmark_stats)
+    bookmarkAdditionalStats = itemView.findViewById(R.id.thread_bookmark_additional_stats)
+    bookmarkStatsHolder = itemView.findViewById(R.id.thread_bookmark_stats_holder)
   }
 
   fun unbind() {
-    this.clickListener(null)
+    this.viewHolder.resetClickListener()
+    this.bookmarkStatsHolder?.resetClickListener()
+    this.bookmarkStats.resetClickListener()
 
     this.imageLoaderRequestData = null
     this.threadDescriptor = null
@@ -92,7 +100,7 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkTitle.text = titleText
   }
 
-  fun setThreadBookmarkStats(threadBookmarkStats: ThreadBookmarkStats?) {
+  fun setThreadBookmarkStats(isGridMode: Boolean, threadBookmarkStats: ThreadBookmarkStats?) {
     if (threadBookmarkStats == null) {
       bookmarkStats.visibility = View.GONE
       return
@@ -100,11 +108,73 @@ open class BaseThreadBookmarkViewHolder(
 
     if (!threadBookmarkStats.showBookmarkStats) {
       bookmarkStats.visibility = View.GONE
+      bookmarkAdditionalStats?.visibility = View.GONE
       return
     }
 
     bookmarkStats.visibility = View.VISIBLE
+    setRegularBookmarksStats(isGridMode, threadBookmarkStats)
 
+    if (isGridMode && !threadBookmarkStats.isFirstFetch) {
+      bookmarkAdditionalStats!!.visibility = View.VISIBLE
+
+      if (threadBookmarkStats.watching) {
+        bookmarkAdditionalStats!!.setTextColor(themeHelper.theme.pinPostsNormalColor)
+      } else {
+        bookmarkAdditionalStats!!.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+      }
+
+      if (!setAdditionalBookmarkStats(threadBookmarkStats)) {
+        bookmarkAdditionalStats!!.visibility = View.GONE
+      }
+    } else {
+      bookmarkAdditionalStats?.visibility = View.GONE
+    }
+  }
+
+  private fun setAdditionalBookmarkStats(threadBookmarkStats: ThreadBookmarkStats): Boolean {
+    val additionalStats = buildString {
+      if (threadBookmarkStats.totalPages > 0) {
+        append("Pg: ")
+        append(threadBookmarkStats.currentPage)
+        append("/")
+        append(threadBookmarkStats.totalPages)
+      }
+
+      if (threadBookmarkStats.isBumpLimit) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append("BL")
+      }
+
+      if (threadBookmarkStats.isImageLimit) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append("IL")
+      }
+
+      if (threadBookmarkStats.isError) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append("Err")
+      }
+    }
+
+    if (additionalStats.isBlank()) {
+      return false
+    }
+
+    bookmarkAdditionalStats!!.text = additionalStats
+    return true
+  }
+
+  private fun setRegularBookmarksStats(isGridMode: Boolean, threadBookmarkStats: ThreadBookmarkStats) {
     bookmarkStats.text = buildString {
       if (threadBookmarkStats.isFirstFetch) {
         append("Loading...")
@@ -133,24 +203,42 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
     bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
 
-    if (threadBookmarkStats.isBumpLimit && threadBookmarkStats.isImageLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD_ITALIC)
-    } else if (threadBookmarkStats.isBumpLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.ITALIC)
-    } else if (threadBookmarkStats.isImageLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD)
-    }
+    if (!isGridMode) {
+      if (threadBookmarkStats.isBumpLimit && threadBookmarkStats.isImageLimit) {
+        bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD_ITALIC)
+      } else if (threadBookmarkStats.isBumpLimit) {
+        bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.ITALIC)
+      } else if (threadBookmarkStats.isImageLimit) {
+        bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD)
+      }
 
-    if (threadBookmarkStats.isOnLastPage) {
-      bookmarkStats.paintFlags = bookmarkStats.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+      if (threadBookmarkStats.isLastPage()) {
+        bookmarkStats.paintFlags = bookmarkStats.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+      }
     }
   }
 
-  fun clickListener(func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
+  fun bookmarkClickListener(func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
     if (func == null) {
-      viewHolder.setOnClickListener(null)
+      viewHolder.resetClickListener()
     } else {
       viewHolder.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
+    }
+  }
+
+  fun bookmarkStatsClickListener(isGridMode: Boolean, func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
+    if (func == null) {
+      if (isGridMode) {
+        bookmarkStatsHolder!!.resetClickListener()
+      } else {
+        bookmarkStats.resetClickListener()
+      }
+    } else {
+      if (isGridMode) {
+        bookmarkStatsHolder!!.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
+      } else {
+        bookmarkStats.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.math.max
 
 class ThreadBookmarkView private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -29,8 +30,11 @@ class ThreadBookmarkView private constructor(
   fun isImageLimit(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_THREAD_IMAGE_LIMIT)
   fun isRollingSticky(): Boolean = stickyThread is StickyThread.StickyWithCap
   fun isFirstFetch(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_FIRST_FETCH)
+  fun isError(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_ERROR)
 
   fun postsCount(): Int = totalPostsCount
+  fun newPostsCount(): Int = max(0, totalPostsCount - seenPostsCount)
+  fun newQuotesCount(): Int = threadBookmarkReplyViews.values.count { reply -> !reply.alreadyRead }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

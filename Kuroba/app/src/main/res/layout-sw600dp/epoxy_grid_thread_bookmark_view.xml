@@ -24,19 +24,43 @@
             android:scaleType="centerCrop"
             tools:src="@drawable/ic_baseline_settings" />
 
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/thread_bookmark_stats"
+        <LinearLayout
+            android:id="@+id/thread_bookmark_stats_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
-            android:gravity="center_horizontal"
+            android:orientation="vertical"
             android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:textSize="18sp"
-            tools:text="1231 (15) / 6666" />
+            android:paddingBottom="2dp">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/thread_bookmark_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:gravity="center_horizontal"
+                android:textSize="18sp"
+                tools:text="1231 (15) / 6666" />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/thread_bookmark_additional_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:gravity="center_horizontal"
+                android:textSize="18sp"
+                android:visibility="gone"
+                tools:text="Pg: 5/10, BL, IL, ERR"
+                tools:visibility="visible" />
+
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/thread_bookmark_title"
@@ -46,7 +70,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:gravity="center_horizontal"
-            android:maxLines="4"
+            android:maxLines="6"
             android:textSize="18sp"
             tools:text="@string/lorem_ipsum" />
 

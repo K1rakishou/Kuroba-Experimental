@@ -12,7 +12,12 @@ class BitSetTypeConverter {
 
   @TypeConverter
   fun fromBitSet(bitSet: BitSet): Long {
-    return bitSet.toLongArray().first()
+    val array = bitSet.toLongArray()
+    if (array.isEmpty()) {
+      return 0L
+    }
+
+    return array.first()
   }
 
 }

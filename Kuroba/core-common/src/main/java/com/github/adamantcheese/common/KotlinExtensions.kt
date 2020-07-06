@@ -130,6 +130,17 @@ fun <K, V> HashMap<K, V>.putIfNotContains(key: K, value: V) {
   }
 }
 
+/**
+ * Not thread-safe!
+ * */
+fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
+  if (isEmpty()) {
+    return null
+  }
+
+  return firstKey()
+}
+
 fun Throwable.errorMessageOrClassName(): String {
   if (!message.isNullOrBlank()) {
     return message!!
@@ -246,14 +257,6 @@ fun View.updateHeight(newHeight: Int) {
   layoutParams = updatedLayoutParams
 }
 
-fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
-  if (isEmpty()) {
-    return null
-  }
-
-  return firstKey()
-}
-
 fun String.ellipsizeEnd(maxLength: Int): String {
   val minStringLength = 5
   val threeDotsLength = 3
@@ -283,4 +286,12 @@ suspend fun CompletableDeferred<*>.awaitSilently() {
   } catch (ignored: CancellationException) {
     // no-op
   }
+}
+
+fun View.resetClickListener() {
+  setOnClickListener(null)
+
+  // setOnClickListener sets isClickable to true even when the callback is null
+  // (which is absolutely not obvious)
+  isClickable = false
 }

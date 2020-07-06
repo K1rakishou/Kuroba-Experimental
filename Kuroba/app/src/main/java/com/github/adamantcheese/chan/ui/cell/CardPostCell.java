@@ -289,7 +289,7 @@ public class CardPostCell
         if (!ChanSettings.neverShowPages.get()) {
             Chan4PagesRequest.BoardPage boardPage = callback.getPage(post);
             if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
-                status += " Pg " + boardPage.getPage();
+                status += " Pg " + boardPage.getCurrentPage();
             }
         }
 

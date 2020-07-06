@@ -15,7 +15,9 @@ abstract class EpoxyGridThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
-  var clickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
+  var bookmarkClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
+  @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
+  var bookmarkStatsClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var context: Context? = null
 
@@ -31,8 +33,9 @@ abstract class EpoxyGridThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
 
     holder.setImageLoaderRequestData(imageLoaderRequestData)
     holder.setDescriptor(threadDescriptor)
-    holder.setThreadBookmarkStats(threadBookmarkStats)
-    holder.clickListener(clickListener)
+    holder.setThreadBookmarkStats(true, threadBookmarkStats)
+    holder.bookmarkClickListener(bookmarkClickListener)
+    holder.bookmarkStatsClickListener(true, bookmarkStatsClickListener)
     holder.setTitle(titleString)
     holder.highlightBookmark(highlightBookmark)
 

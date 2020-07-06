@@ -105,7 +105,7 @@ class PageRequestManager(
     val boardPage = findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
       ?: return false
 
-    if (!boardPage.isOnLastPage) {
+    if (!boardPage.isLastPage()) {
       return false
     }
 

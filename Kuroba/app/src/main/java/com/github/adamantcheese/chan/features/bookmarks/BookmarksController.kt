@@ -240,7 +240,10 @@ class BookmarksController(
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
                 highlightBookmark(bookmark.hightlight)
-                clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                bookmarkStatsClickListener {
+                  bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
+                }
               }
             } else {
               epoxyListThreadBookmarkViewHolder {
@@ -251,7 +254,10 @@ class BookmarksController(
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
                 highlightBookmark(bookmark.hightlight)
-                clickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                bookmarkStatsClickListener {
+                  bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
+                }
               }
             }
           }
