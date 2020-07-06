@@ -299,9 +299,7 @@ class ReplyNotificationsHelper(
       preOreoNotificationBuilder.build()
     )
 
-    Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() " +
-      "unseenThreadBookmarkReplies is NOT empty, notification updated")
-
+    Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() notificationManagerCompat.notify() called")
     return unreadNotificationsGrouped
   }
 
@@ -374,7 +372,7 @@ class ReplyNotificationsHelper(
       summaryNotificationBuilder.build()
     )
 
-    Logger.d(TAG, "showSummaryNotification() called")
+    Logger.d(TAG, "showSummaryNotification() notificationManagerCompat.notify() called")
     return true
   }
 
@@ -432,8 +430,8 @@ class ReplyNotificationsHelper(
         notificationBuilder.build()
       )
 
-      Logger.d(TAG, "showNotificationsForAndroidOreoAndAbove() created notification " +
-        "with tag ${notificationTag}, counter=${notificationCounter}")
+      Logger.d(TAG, "showNotificationsForAndroidOreoAndAbove() notificationManagerCompat.notify() " +
+        "called, tag=${notificationTag}, counter=${notificationCounter}")
 
       ++notificationCounter
 
@@ -441,6 +439,8 @@ class ReplyNotificationsHelper(
       shownNotifications[threadDescriptor]!!.addAll(threadBookmarkReplies)
 
       if (notificationCounter > MAX_VISIBLE_NOTIFICATIONS) {
+        Logger.d(TAG, "showNotificationsForAndroidOreoAndAbove() " +
+          "notificationCounter ($notificationCounter) exceeded MAX_VISIBLE_NOTIFICATIONS")
         break
       }
     }
@@ -647,7 +647,6 @@ class ReplyNotificationsHelper(
     }
 
     setStyle(notificationStyle)
-
     return this
   }
 

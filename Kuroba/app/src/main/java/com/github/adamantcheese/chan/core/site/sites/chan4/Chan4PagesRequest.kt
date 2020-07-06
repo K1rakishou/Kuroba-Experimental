@@ -94,18 +94,18 @@ class Chan4PagesRequest(
     return ThreadNoTimeModPair(ChanDescriptor.ThreadDescriptor(boardDescriptor, no), modified)
   }
   
-  class BoardPages(
+  data class BoardPages(
     val boardDescriptor: BoardDescriptor,
     val boardPages: List<BoardPage>
   )
 
-  inner class BoardPage(
+  data class BoardPage(
     val page: Int,
     val isOnLastPage: Boolean,
     val threads: List<ThreadNoTimeModPair>
   )
 
-  inner class ThreadNoTimeModPair(
+  data class ThreadNoTimeModPair(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val modified: Long
   )

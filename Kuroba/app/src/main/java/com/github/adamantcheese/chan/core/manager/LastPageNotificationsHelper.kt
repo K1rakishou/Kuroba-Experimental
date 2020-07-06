@@ -19,7 +19,6 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_NAME
-import com.github.adamantcheese.common.flatMapNotNull
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import java.util.*
@@ -46,8 +45,14 @@ class LastPageNotificationsHelper(
     }
 
     val threadsOnLastPage = mutableSetOf<ChanDescriptor.ThreadDescriptor>()
+    val currentlyOpenedThread = bookmarksManager.currentlyOpenedThread()
 
     watchingBookmarkDescriptors.forEach { threadDescriptor ->
+      if (threadDescriptor == currentlyOpenedThread) {
+        Logger.d(TAG, "Skipping notification for currently opened thread ($currentlyOpenedThread)")
+        return@forEach
+      }
+
       if (pageRequestManager.canAlertAboutThreadBeingOnLastPage(threadDescriptor)) {
         threadsOnLastPage += threadDescriptor
       }
@@ -76,13 +81,15 @@ class LastPageNotificationsHelper(
       }
     }
 
-    setupChannel()
+    setupChannels()
 
     notificationManagerCompat.notify(
       NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_TAG,
       NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_ID,
       getNotification(threadsWithTitles)
     )
+
+    Logger.d(TAG, "notificationManagerCompat.notify() called")
   }
 
   private fun getNotification(
@@ -135,8 +142,11 @@ class LastPageNotificationsHelper(
     notificationTitle: String,
     threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
   ): NotificationCompat.Builder {
-    val threadsThatHitLastPageRecently = threadsWithTitles
-      .flatMapNotNull { (threadDescriptor, _) -> pageRequestManager.getPage(threadDescriptor)?.threads }
+    val threadsThatHitLastPageRecently = pageRequestManager.getThreadNoTimeModPairList(
+      threadsWithTitles.map { it.first }.toSet()
+    )
+
+    val sortedAndFiltered = threadsThatHitLastPageRecently
       .sortedBy { threadNoTimeModPair -> threadNoTimeModPair.modified }
       .takeLast(NotificationConstants.MAX_LINES_IN_NOTIFICATION)
       .map { threadNoTimeModPair -> threadNoTimeModPair.threadDescriptor }
@@ -144,7 +154,7 @@ class LastPageNotificationsHelper(
     val styleBuilder = NotificationCompat.InboxStyle(this)
       .setSummaryText(notificationTitle)
 
-    threadsThatHitLastPageRecently.forEach { threadDescriptor ->
+    sortedAndFiltered.forEach { threadDescriptor ->
       val threadTitle = threadsWithTitles
         .firstOrNull { threadWithTitle -> threadWithTitle.first == threadDescriptor }
         ?.second
@@ -157,7 +167,7 @@ class LastPageNotificationsHelper(
     return this
   }
 
-  private fun setupChannel() {
+  private fun setupChannels() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
       return
     }

@@ -78,12 +78,12 @@ class BookmarkWatcherDelegate(
 
     val watchingBookmarkDescriptors = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
       if (isUpdatingCurrentlyOpenedThread) {
-        if (threadBookmarkView.threadDescriptor != bookmarksManager.currentOpenedThread()) {
+        if (threadBookmarkView.threadDescriptor != bookmarksManager.currentlyOpenedThread()) {
           // Skip all threads that are not the currently opened thread
           return@mapNotNullBookmarksOrdered null
         }
       } else {
-        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == bookmarksManager.currentOpenedThread()
+        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == bookmarksManager.currentlyOpenedThread()
           // Always update bookmark at least once! If we don't do this then the bookmark will never
           // receive any information from the server if the user bookmarks already archived/deleted/etc.
           // thread.
@@ -102,11 +102,10 @@ class BookmarkWatcherDelegate(
       return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
     }
 
-    // TODO(KurobaEx): this condition is incorrect. We should only skip notifications for the thread
-    //  we are currently viewing.
-    if (!isUpdatingCurrentlyOpenedThread) {
-      // Only show last page notifications for threads that we are not currently viewing
+    try {
       lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "lastPageNotificationsHelper.showOrUpdateNotifications() crashed!", error)
     }
 
     if (watchingBookmarkDescriptors.isEmpty()
@@ -141,7 +140,11 @@ class BookmarkWatcherDelegate(
       return
     }
 
-    replyNotificationsHelper.showOrUpdateNotifications()
+    try {
+      replyNotificationsHelper.showOrUpdateNotifications()
+    } catch (error: Throwable) {
+      Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
+    }
   }
 
   private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {

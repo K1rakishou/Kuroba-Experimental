@@ -111,7 +111,6 @@ class BookmarksPresenter(
   fun listenForStateChanges(): Flowable<BookmarksControllerState> {
     return bookmarksControllerStateSubject
       .observeOn(AndroidSchedulers.mainThread())
-      .distinctUntilChanged()
       .debounce(250, TimeUnit.MILLISECONDS)
       .hide()
   }

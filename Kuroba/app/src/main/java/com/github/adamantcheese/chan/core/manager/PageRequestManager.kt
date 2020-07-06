@@ -34,6 +34,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
+import kotlin.collections.HashSet
 import kotlin.coroutines.CoroutineContext
 
 class PageRequestManager(
@@ -58,7 +59,7 @@ class PageRequestManager(
       .hide()
       .onBackpressureLatest()
   }
-  
+
   fun getPage(op: Post?): BoardPage? {
     if (op == null) {
       return null
@@ -68,15 +69,35 @@ class PageRequestManager(
   }
 
   fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {
-    return if (threadDescriptor == null) {
-      null
-    } else {
-      if (threadDescriptor.threadNo < 0) {
-        return null
-      }
-      
-      findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
+    if (threadDescriptor == null || threadDescriptor.threadNo < 0) {
+      return null
     }
+
+    return findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
+  }
+
+  fun getThreadNoTimeModPairList(
+    threadDescriptorsToFind: Set<ChanDescriptor.ThreadDescriptor>
+  ): Set<Chan4PagesRequest.ThreadNoTimeModPair> {
+    val threadNoTimeModPairSet = mutableSetOf<Chan4PagesRequest.ThreadNoTimeModPair>()
+    val threadDescriptorsToFindCopy = HashSet(threadDescriptorsToFind)
+
+    for (threadDescriptor in threadDescriptorsToFind) {
+      val catalog = boardPagesMap[threadDescriptor.boardCode()]
+        ?: continue
+
+      loop@ for (boardPage in catalog.boardPages) {
+        for (threadNoTimeModPair in boardPage.threads) {
+          if (threadNoTimeModPair.threadDescriptor in threadDescriptorsToFindCopy) {
+            threadNoTimeModPairSet += threadNoTimeModPair
+            threadDescriptorsToFindCopy.remove(threadNoTimeModPair.threadDescriptor)
+            break@loop
+          }
+        }
+      }
+    }
+
+    return threadNoTimeModPairSet
   }
 
   @Synchronized
@@ -106,14 +127,14 @@ class PageRequestManager(
 
   fun forceUpdateForBoard(boardDescriptor: BoardDescriptor) {
     Logger.d(TAG, "Requesting existing board pages for /${boardDescriptor.boardCode}/, forced")
-    
+
     launch { requestBoard(boardDescriptor) }
   }
 
   private fun findPage(boardDescriptor: BoardDescriptor, opNo: Long): BoardPage? {
     val pages = getPages(boardDescriptor)
       ?: return null
-    
+
     for (page in pages.boardPages) {
       for (threadNoTimeModPair in page.threads) {
         if (opNo == threadNoTimeModPair.threadDescriptor.threadNo) {
@@ -121,7 +142,7 @@ class PageRequestManager(
         }
       }
     }
-    
+
     return null
   }
 
@@ -140,7 +161,7 @@ class PageRequestManager(
     if (alreadyRequested) {
       return null
     }
-  
+
     launch {
       // Otherwise, get the site for the board and request the pages for it
       Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
@@ -226,7 +247,7 @@ class PageRequestManager(
     pages: Chan4PagesRequest.BoardPages
   ) {
     Logger.d(TAG, "Got pages for ${boardDescriptor.siteName()}/${boardDescriptor.boardCode}/")
-    
+
     savedBoards.add(boardDescriptor.boardCode)
     requestedBoards.remove(boardDescriptor.boardCode)
     boardTimeMap[boardDescriptor.boardCode] = System.currentTimeMillis()

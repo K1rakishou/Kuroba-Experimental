@@ -73,7 +73,7 @@ class BookmarkForegroundWatcher(
       return
     }
 
-    if (bookmarksManager.currentOpenedThread() != threadDescriptor) {
+    if (bookmarksManager.currentlyOpenedThread() != threadDescriptor) {
       return
     }
 

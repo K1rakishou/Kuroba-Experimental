@@ -47,7 +47,6 @@ import com.github.adamantcheese.chan.core.net.DnsSelector;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
-import com.github.adamantcheese.chan.ui.service.LastPageNotification;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
@@ -167,7 +166,6 @@ public class Chan
         logAppConstants(appConstants);
 
         SavingNotification.setupChannel();
-        LastPageNotification.setupChannel();
 
         Dns okHttpDns = getOkHttpDns();
         OkHttpProtocols okHttpProtocols = getOkHttpProtocols();

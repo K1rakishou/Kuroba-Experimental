@@ -144,10 +144,10 @@ class BookmarksManager(
     currentOpenThread.set(threadDescriptor)
   }
 
-  fun currentOpenedThread(): ChanDescriptor.ThreadDescriptor? = currentOpenThread.get()
+  fun currentlyOpenedThread(): ChanDescriptor.ThreadDescriptor? = currentOpenThread.get()
 
   fun onThreadIsFetchingData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (threadDescriptor == currentOpenedThread()) {
+    if (threadDescriptor == currentlyOpenedThread()) {
       threadIsFetchingEventsSubject.onNext(threadDescriptor)
     }
   }
