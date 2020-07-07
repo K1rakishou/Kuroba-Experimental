@@ -58,11 +58,12 @@ interface PostCellInterface {
   interface PostCellCallback {
     fun getLoadable(): Loadable?
 
-    // Only used in PostCell and CardPostCell, no need to use in stubs
+    // Only used in PostCell and CardPostCell
     fun onPostBind(post: Post)
 
-    // Only used in PostCell and CardPostCell, no need to use in stubs
+    // Only used in PostCell and CardPostCell
     fun onPostUnbind(post: Post, isActuallyRecycling: Boolean)
+
     fun onPostClicked(post: Post)
     fun onPostDoubleClicked(post: Post)
     fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView)

@@ -514,9 +514,9 @@ public class BrowseController
         SiteSetupController siteSetupController = new SiteSetupController(site, context);
 
         if (doubleNavigationController != null) {
-            doubleNavigationController.pushController(siteSetupController);
+            doubleNavigationController.openControllerWrappedIntoBottomNavAwareController(siteSetupController);
         } else {
-            navigationController.pushController(siteSetupController);
+            requireStartActivity().openControllerWrappedIntoBottomNavAwareController(siteSetupController);
         }
     }
 

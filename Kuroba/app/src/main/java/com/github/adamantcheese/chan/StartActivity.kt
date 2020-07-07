@@ -69,7 +69,8 @@ import kotlin.time.ExperimentalTime
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
   FSAFActivityCallbacks,
-  CoroutineScope {
+  CoroutineScope,
+  StartActivityCallbacks {
 
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -327,6 +328,10 @@ class StartActivity : AppCompatActivity(),
     drawerController.loadThread(threadDescriptor, true)
   }
 
+  override fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
+    drawerController.openControllerWrappedIntoBottomNavAwareController(controller)
+  }
+
   private fun restoreFromUrl(): Boolean {
     var handled = false
     val data = intent.data
@@ -498,7 +503,7 @@ class StartActivity : AppCompatActivity(),
     if (threadDescriptors.size == 1) {
       drawerController.loadThread(threadDescriptors.first(), true)
     } else {
-      drawerController.showBookmarksController(threadDescriptors)
+      drawerController.openBookmarksController(threadDescriptors)
     }
   }
 
@@ -535,7 +540,7 @@ class StartActivity : AppCompatActivity(),
     if (threadDescriptors.size == 1) {
       drawerController.loadThread(threadDescriptors.first(), true)
     } else {
-      drawerController.showBookmarksController(threadDescriptors)
+      drawerController.openBookmarksController(threadDescriptors)
     }
 
     bookmarksManager.updateBookmarks(

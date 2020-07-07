@@ -282,6 +282,8 @@ class BookmarkWatcherDelegate(
         threadBookmark.updateState(
           archived = originalPost.archived,
           closed = originalPost.closed,
+          error = false,
+          deleted = false,
           stickyNoCap = originalPost.stickyThread is StickyThread.StickyUnlimited
         )
 

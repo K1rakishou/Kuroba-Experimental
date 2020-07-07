@@ -807,7 +807,10 @@ public class ThreadListLayout
             ChanThread thread = getThread();
             if (thread != null) {
                 if (thread.getLoadable().isThreadMode() && postInfoMapItemDecoration == null) {
-                    postInfoMapItemDecoration = new PostInfoMapItemDecoration(getContext());
+                    postInfoMapItemDecoration = new PostInfoMapItemDecoration(
+                            getContext(),
+                            ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
+                    );
                 }
 
                 if (postInfoMapItemDecoration != null) {

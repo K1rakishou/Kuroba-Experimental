@@ -275,10 +275,20 @@ class DrawerController(
     }
   }
 
-  fun showBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+  fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
+    openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
+  }
 
-    openController(BookmarksController(context, threadDescriptors))
+  fun openSettingsController() {
+    closeAllNonMainControllers()
+    openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context))
+  }
+
+  fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
+    val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
+    pushChildController(bottomNavBarAwareNavigationController)
+    bottomNavBarAwareNavigationController.pushController(controller)
   }
 
   fun loadThread(
@@ -296,20 +306,10 @@ class DrawerController(
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
       R.id.action_bookmarks -> {
-        // TODO(KurobaEx): SPLIT mode!
-        closeAllNonMainControllers()
-
-        val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
-        pushChildController(bottomNavBarAwareNavigationController)
-        bottomNavBarAwareNavigationController.pushController(BookmarksController(context, emptyList()))
+        openBookmarksController(emptyList())
       }
       R.id.action_settings -> {
-        // TODO(KurobaEx): SPLIT mode!
-        closeAllNonMainControllers()
-
-        val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
-        pushChildController(bottomNavBarAwareNavigationController)
-        bottomNavBarAwareNavigationController.pushController(MainSettingsControllerV2(context))
+        openSettingsController()
       }
     }
   }

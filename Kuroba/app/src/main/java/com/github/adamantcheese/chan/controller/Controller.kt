@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.StartActivity
+import com.github.adamantcheese.chan.StartActivityCallbacks
 import com.github.adamantcheese.chan.controller.transition.FadeInTransition
 import com.github.adamantcheese.chan.controller.transition.FadeOutTransition
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager
@@ -99,6 +100,11 @@ abstract class Controller(@JvmField var context: Context) {
 
   fun requireNavController(): NavigationController = requireNotNull(navigationController) {
     "navigationController was not set"
+  }
+
+  fun requireStartActivity(): StartActivityCallbacks {
+    return context as? StartActivityCallbacks
+      ?: throw IllegalStateException("Wrong context! Must be StartActivity")
   }
 
   @CallSuper

@@ -40,8 +40,7 @@ import javax.inject.Inject
 class SiteSetupController(
   private val site: Site,
   context: Context
-) :
-  SettingsController(context),
+) : SettingsController(context),
   SiteSetupPresenter.Callback {
 
   @Inject
@@ -154,8 +153,9 @@ class SiteSetupController(
       getString(R.string.setup_site_login),
       "",
       View.OnClickListener {
-        val loginController = LoginController(context, site!!)
-        navigationController!!.pushController(loginController)
+        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(
+          LoginController(context, site)
+        )
       })
 
     login.add(loginLink)

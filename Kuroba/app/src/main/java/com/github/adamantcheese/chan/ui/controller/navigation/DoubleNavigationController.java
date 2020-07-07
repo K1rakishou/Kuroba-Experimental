@@ -35,6 +35,8 @@ public interface DoubleNavigationController extends HasNavigation {
 
     void switchToController(boolean leftController);
 
+    void openControllerWrappedIntoBottomNavAwareController(Controller controller);
+
     boolean pushController(Controller to);
 
     boolean pushController(Controller to, boolean animated);

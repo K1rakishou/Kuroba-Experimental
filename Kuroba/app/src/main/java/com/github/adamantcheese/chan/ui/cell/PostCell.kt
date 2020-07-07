@@ -405,7 +405,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
   private fun startAttentionLabelFadeOutAnimation() {
     serializedCoroutineExecutor.post {
-      if (callback == null) {
+      if (callback == null || post == null) {
         return@post
       }
 
@@ -417,13 +417,11 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
         return@post
       }
 
-      callback?.let { callback ->
-        if (!callback.hasAlreadySeenPost(post!!)) {
-          unseenPostIndicatorFadeOutAnimation.start(
-            { alpha -> postAttentionLabel.alpha = alpha },
-            { postAttentionLabel.visibility = View.INVISIBLE }
-          )
-        }
+      if (!callback!!.hasAlreadySeenPost(post!!)) {
+        unseenPostIndicatorFadeOutAnimation.start(
+          { alpha -> postAttentionLabel.alpha = alpha },
+          { postAttentionLabel.visibility = View.INVISIBLE }
+        )
       }
     }
   }

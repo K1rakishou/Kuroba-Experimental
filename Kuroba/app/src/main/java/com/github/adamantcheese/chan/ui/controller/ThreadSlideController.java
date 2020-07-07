@@ -222,6 +222,11 @@ public class ThreadSlideController
     }
 
     @Override
+    public void openControllerWrappedIntoBottomNavAwareController(Controller controller) {
+        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(controller);
+    }
+
+    @Override
     public boolean pushController(Controller to) {
         return navigationController.pushController(to);
     }

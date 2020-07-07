@@ -4,13 +4,15 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.core.graphics.withTranslation
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.interactors.PostMapInfoHolder
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 
 // TODO(KurobaEx): highlight posts from archives (but only when not all posts are from archives)
 class PostInfoMapItemDecoration(
-  private val context: Context
+  private val context: Context,
+  private val isSplitMode: Boolean
 ) {
   private var postInfoHolder = PostMapInfoHolder()
   private val showHideAnimator = ValueAnimator.ofFloat(0f, 1f)
@@ -46,7 +48,8 @@ class PostInfoMapItemDecoration(
 
   fun onDrawOver(
     canvas: Canvas,
-    topOffset: Float,
+    recyclerTopPadding: Float,
+    recyclerBottomPadding: Float,
     recyclerViewHeight: Int,
     recyclerViewWidth: Int
   ) {
@@ -55,7 +58,8 @@ class PostInfoMapItemDecoration(
     drawRanges(
       canvas,
       postInfoHolder.myPostsPositionRanges,
-      topOffset,
+      recyclerTopPadding,
+      recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
@@ -66,7 +70,8 @@ class PostInfoMapItemDecoration(
     drawRanges(
       canvas,
       postInfoHolder.replyPositionRanges,
-      topOffset,
+      recyclerTopPadding,
+      recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
@@ -77,20 +82,21 @@ class PostInfoMapItemDecoration(
     drawRanges(
       canvas,
       postInfoHolder.crossThreadQuotePositionRanges,
-      topOffset,
+      recyclerTopPadding,
+      recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
       crossThreadRepliesPaint
     )
     labelWidth += LABEL_WIDTH_INC
-
   }
 
   private fun drawRanges(
     canvas: Canvas,
     ranges: List<IntRange>,
-    topOffset: Float,
+    recyclerTopPadding: Float,
+    recyclerBottomPadding: Float,
     recyclerViewHeight: Int,
     recyclerViewWidth: Int,
     labelWidth: Float,
@@ -100,29 +106,36 @@ class PostInfoMapItemDecoration(
       return
     }
 
-    paint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
-    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceAtLeast(MIN_LABEL_HEIGHT)
-    val halfUnit = (unit / 2f)
-
-    canvas.translate(0f, (topOffset + halfUnit))
-
-    ranges.forEach { positionRange ->
-      val startPosition = positionRange.first
-      val endPosition = positionRange.last
-
-      val top = startPosition * unit - halfUnit
-      val bottom = (endPosition * unit) + halfUnit
-
-      canvas.drawRect(
-        recyclerViewWidth - labelWidth,
-        top,
-        recyclerViewWidth.toFloat(),
-        bottom,
-        paint
-      )
+    val topOffset = if (isSplitMode) {
+      recyclerTopPadding + recyclerBottomPadding
+    } else {
+      (recyclerTopPadding + recyclerBottomPadding) / 2f
     }
 
-    canvas.translate(0f, -(topOffset + halfUnit))
+    paint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
+
+    var recyclerHeight = recyclerViewHeight.toFloat() - (recyclerTopPadding + recyclerBottomPadding)
+    val unit = (recyclerHeight / postsTotal.toFloat()).coerceAtLeast(MIN_LABEL_HEIGHT)
+    val halfUnit = unit / 2f
+    recyclerHeight -= unit
+
+    canvas.withTranslation(y = (topOffset + halfUnit)) {
+      ranges.forEach { positionRange ->
+        val startPosition = positionRange.first
+        val endPosition = positionRange.last
+
+        val top = startPosition * unit - halfUnit
+        val bottom = (endPosition * unit) + halfUnit
+
+        canvas.drawRect(
+          recyclerViewWidth - labelWidth,
+          top,
+          recyclerViewWidth.toFloat(),
+          bottom,
+          paint
+        )
+      }
+    }
   }
 
   fun show() {

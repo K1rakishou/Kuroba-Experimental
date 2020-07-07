@@ -153,6 +153,11 @@ public class SplitNavigationController
     }
 
     @Override
+    public void openControllerWrappedIntoBottomNavAwareController(Controller controller) {
+        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(controller);
+    }
+
+    @Override
     public boolean pushController(final Controller to) {
         return pushController(to, true);
     }

@@ -358,14 +358,16 @@ public class FastScroller
         }
 
         if (postInfoMapItemDecoration != null) {
-            float topOffset = (bottomNavBarHeight + toolbarHeight) / 2f;
+            int recyclerHeight = mRecyclerView.getHeight();
+            int recyclerWidth = getRecyclerViewWidth();
 
             // Draw under scrollbar
             postInfoMapItemDecoration.onDrawOver(
                     canvas,
-                    topOffset,
-                    getRecyclerViewHeight(),
-                    getRecyclerViewWidth()
+                    mRecyclerView.getPaddingTop(),
+                    mRecyclerView.getPaddingBottom() + bottomNavBarHeight,
+                    recyclerHeight,
+                    recyclerWidth
             );
         }
 

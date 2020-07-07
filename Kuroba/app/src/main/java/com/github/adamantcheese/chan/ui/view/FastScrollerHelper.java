@@ -7,6 +7,7 @@ import android.graphics.drawable.StateListDrawable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +33,18 @@ public class FastScrollerHelper {
         final int defaultThickness = dp(8);
         final int targetWidth = dp(8);
         final int minimumRange = dp(50);
-        final int margin = dp(0);
+        final int margin = 0;
         final int thumbMinLength = dp(32);
 
-        // TODO(KurobaEx): Test with SPLIT mode, probably I don't need to consider the bottomNavBar
-        //  when using it.
+        int bottomNavBarHeight = 0;
+        int toolbarHeight = 0;
+
+        // The toolbar and bottom nav bar are not hideable when using SPLIT mode
+        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+            bottomNavBarHeight = (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height);
+            toolbarHeight = (int) context.getResources().getDimension(R.dimen.toolbar_height);
+        }
+
         return new FastScroller(
                 recyclerView,
                 postInfoMapItemDecoration,
@@ -49,8 +57,8 @@ public class FastScrollerHelper {
                 margin,
                 thumbMinLength,
                 targetWidth,
-                (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height),
-                (int) context.getResources().getDimension(R.dimen.toolbar_height)
+                bottomNavBarHeight,
+                toolbarHeight
         );
     }
 

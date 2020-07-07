@@ -147,6 +147,7 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "showNotificationForReplies(${unreadNotificationsGrouped.size})")
 
     if (unreadNotificationsGrouped.isEmpty()) {
+      // TODO(KurobaEx): close all notifications with "reply" group
       return emptyMap()
     }
 
