@@ -151,6 +151,21 @@ public class ThreadListLayout
         return loadable.getThreadDescriptorOrNull();
     }
 
+    @Nullable
+    private ChanDescriptor currentChanDescriptorOrNull() {
+        ChanThread thread = showingThread;
+        if (thread == null) {
+            return null;
+        }
+
+        Loadable loadable = thread.getLoadable();
+        if (loadable == null) {
+            return null;
+        }
+
+        return loadable.getChanDescriptor();
+    }
+
     public ThreadListLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
     }

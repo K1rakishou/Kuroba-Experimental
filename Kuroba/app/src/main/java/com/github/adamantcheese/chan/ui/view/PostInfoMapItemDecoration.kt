@@ -46,154 +46,83 @@ class PostInfoMapItemDecoration(
 
   fun onDrawOver(
     canvas: Canvas,
-    scrollbarHalfHeight: Float,
     topOffset: Float,
     recyclerViewHeight: Int,
     recyclerViewWidth: Int
   ) {
     var labelWidth = DEFAULT_LABEL_WIDTH
 
-    drawMyPosts(
+    drawRanges(
       canvas,
-      scrollbarHalfHeight,
+      postInfoHolder.myPostsPositionRanges,
       topOffset,
       recyclerViewHeight,
       recyclerViewWidth,
-      labelWidth
+      labelWidth,
+      myPostsPaint
     )
     labelWidth += LABEL_WIDTH_INC
 
-    drawYous(
+    drawRanges(
       canvas,
-      scrollbarHalfHeight,
+      postInfoHolder.replyPositionRanges,
       topOffset,
       recyclerViewHeight,
       recyclerViewWidth,
-      labelWidth
+      labelWidth,
+      yousPaint
     )
     labelWidth += LABEL_WIDTH_INC
 
-    drawCrossThreadReplies(
+    drawRanges(
       canvas,
-      scrollbarHalfHeight,
+      postInfoHolder.crossThreadQuotePositionRanges,
       topOffset,
       recyclerViewHeight,
       recyclerViewWidth,
-      labelWidth
+      labelWidth,
+      crossThreadRepliesPaint
     )
     labelWidth += LABEL_WIDTH_INC
 
   }
 
-  private fun drawMyPosts(
+  private fun drawRanges(
     canvas: Canvas,
-    scrollbarHalfHeight: Float,
+    ranges: List<IntRange>,
     topOffset: Float,
     recyclerViewHeight: Int,
     recyclerViewWidth: Int,
-    labelWidth: Float
+    labelWidth: Float,
+    paint: Paint
   ) {
-    val myPostsPositionRanges = postInfoHolder.myPostsPositionRanges
-    if (myPostsPositionRanges.isEmpty()) {
+    if (ranges.isEmpty()) {
       return
     }
 
-    myPostsPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
-    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceIn(MIN_LABEL_HEIGHT, MAX_LABEL_HEIGHT)
+    paint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
+    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceAtLeast(MIN_LABEL_HEIGHT)
+    val halfUnit = (unit / 2f)
 
-    canvas.translate(0f, topOffset)
+    canvas.translate(0f, (topOffset + halfUnit))
 
-    myPostsPositionRanges.forEach { positionRange ->
+    ranges.forEach { positionRange ->
       val startPosition = positionRange.first
       val endPosition = positionRange.last
 
-      val top = startPosition * unit
-      val bottom = (endPosition * unit) + unit
+      val top = startPosition * unit - halfUnit
+      val bottom = (endPosition * unit) + halfUnit
 
       canvas.drawRect(
         recyclerViewWidth - labelWidth,
-        top + scrollbarHalfHeight,
+        top,
         recyclerViewWidth.toFloat(),
-        bottom + scrollbarHalfHeight,
-        myPostsPaint
+        bottom,
+        paint
       )
     }
 
-    canvas.translate(0f, -topOffset)
-  }
-
-  private fun drawYous(
-    canvas: Canvas,
-    scrollbarHalfHeight: Float,
-    topOffset: Float,
-    recyclerViewHeight: Int,
-    recyclerViewWidth: Int,
-    labelWidth: Float
-  ) {
-    val replyPositionRanges = postInfoHolder.replyPositionRanges
-    if (replyPositionRanges.isEmpty()) {
-      return
-    }
-
-    yousPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
-    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceIn(MIN_LABEL_HEIGHT, MAX_LABEL_HEIGHT)
-
-    canvas.translate(0f, topOffset)
-
-    replyPositionRanges.forEach { positionRange ->
-      val startPosition = positionRange.first
-      val endPosition = positionRange.last
-
-      val top = startPosition * unit
-      val bottom = (endPosition * unit) + unit
-
-      canvas.drawRect(
-        recyclerViewWidth - labelWidth,
-        top + scrollbarHalfHeight,
-        recyclerViewWidth.toFloat(),
-        bottom + scrollbarHalfHeight,
-        yousPaint
-      )
-    }
-
-    canvas.translate(0f, -topOffset)
-  }
-
-  private fun drawCrossThreadReplies(
-    canvas: Canvas,
-    scrollbarHalfHeight: Float,
-    topOffset: Float,
-    recyclerViewHeight: Int,
-    recyclerViewWidth: Int,
-    labelWidth: Float
-  ) {
-    val crossThreadQuotePositionRanges = postInfoHolder.crossThreadQuotePositionRanges
-    if (crossThreadQuotePositionRanges.isEmpty()) {
-      return
-    }
-
-    crossThreadRepliesPaint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
-    val unit = (recyclerViewHeight / postsTotal.toFloat()).coerceIn(MIN_LABEL_HEIGHT, MAX_LABEL_HEIGHT)
-
-    canvas.translate(0f, topOffset)
-
-    crossThreadQuotePositionRanges.forEach { positionRange ->
-      val startPosition = positionRange.first
-      val endPosition = positionRange.last
-
-      val top = startPosition * unit
-      val bottom = (endPosition * unit) + unit
-
-      canvas.drawRect(
-        recyclerViewWidth - labelWidth,
-        top + scrollbarHalfHeight,
-        recyclerViewWidth.toFloat(),
-        bottom + scrollbarHalfHeight,
-        crossThreadRepliesPaint
-      )
-    }
-
-    canvas.translate(0f, -topOffset)
+    canvas.translate(0f, -(topOffset + halfUnit))
   }
 
   fun show() {
@@ -209,17 +138,12 @@ class PostInfoMapItemDecoration(
     showHideAnimator.start()
   }
 
-  fun cancelHide() {
-    showHideAnimator.cancel()
-  }
-
-  fun cancelShow() {
+  fun cancelAnimation() {
     showHideAnimator.cancel()
   }
 
   private companion object {
     private val MIN_LABEL_HEIGHT = dp(1f).toFloat()
-    private val MAX_LABEL_HEIGHT = dp(10f).toFloat()
     private val DEFAULT_LABEL_WIDTH = dp(10f).toFloat()
     private val LABEL_WIDTH_INC = dp(3f).toFloat()
 
