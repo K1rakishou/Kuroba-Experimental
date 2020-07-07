@@ -384,10 +384,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       View.GONE
     }
 
-    if (ChanSettings.shiftPostFormat.get() && post.postImagesCount == 1 && !ChanSettings.textOnly.get()) {
-      applyPostShiftFormat()
-    }
-
     startAttentionLabelFadeOutAnimation()
 
     if (callback != null) {
@@ -618,18 +614,10 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
     comment.setTextColor(theme.textPrimary)
 
-    if (ChanSettings.shiftPostFormat.get()) {
-      comment.visibility = if (TextUtils.isEmpty(commentText)) {
-        View.GONE
-      } else {
-        View.VISIBLE
-      }
+    comment.visibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
+      View.GONE
     } else {
-      comment.visibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
-        View.GONE
-      } else {
-        View.VISIBLE
-      }
+      View.VISIBLE
     }
   }
 
@@ -760,84 +748,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
     if (ChanSettings.tapNoReply.get()) {
       title.setMovementMethod(titleMovementMethod)
-    }
-  }
-
-  private fun applyPostShiftFormat() {
-    // display width, we don't care about height here
-    val displaySize = AndroidUtils.getDisplaySize()
-    val thumbnailSize = AndroidUtils.getDimen(R.dimen.cell_post_thumbnail_size)
-    val isSplitMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-
-    // get the width of the cell for calculations, height we don't need but measure it anyways
-    // 0.35 is from SplitNavigationControllerLayout; measure for the smaller of the two sides
-    measure(
-      MeasureSpec.makeMeasureSpec(if (isSplitMode) (displaySize.x * 0.35).toInt() else displaySize.x, MeasureSpec.AT_MOST),
-      MeasureSpec.makeMeasureSpec(displaySize.y, MeasureSpec.AT_MOST)
-    )
-
-    // we want the heights here, but the widths must be the exact size between the thumbnail
-    // and view edge so that we calculate offsets right
-    title.measure(
-      MeasureSpec.makeMeasureSpec(this.measuredWidth - thumbnailSize, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
-
-    icons.measure(
-      MeasureSpec.makeMeasureSpec(this.measuredWidth - thumbnailSize, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
-
-    comment.measure(
-      MeasureSpec.makeMeasureSpec(this.measuredWidth - thumbnailSize, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
-
-    val wrapHeight = title.measuredHeight + icons.measuredHeight
-    val extraWrapHeight = wrapHeight + comment.measuredHeight
-
-    // wrap if the title+icons height is larger than 0.8x the thumbnail size, or if everything is
-    // over 1.6x the thumbnail size
-    if (wrapHeight >= 0.8f * thumbnailSize || extraWrapHeight >= 1.6f * thumbnailSize) {
-      val commentParams = comment.layoutParams as RelativeLayout.LayoutParams
-      commentParams.removeRule(RelativeLayout.RIGHT_OF)
-
-      val iconsHeight = if (icons.visibility == View.VISIBLE) {
-        icons.measuredHeight
-      } else {
-        0
-      }
-
-      if (title.measuredHeight + (iconsHeight) < thumbnailSize) {
-        commentParams.addRule(
-          RelativeLayout.BELOW,
-          R.id.thumbnail_view
-        )
-      } else {
-        commentParams.addRule(
-          RelativeLayout.BELOW,
-          if (icons.visibility == View.VISIBLE) R.id.icons else R.id.title
-        )
-      }
-
-      comment.layoutParams = commentParams
-
-      val replyParams = replies.layoutParams as RelativeLayout.LayoutParams
-      replyParams.removeRule(RelativeLayout.RIGHT_OF)
-      replies.layoutParams = replyParams
-
-      return
-    }
-
-    if (comment.visibility == View.GONE) {
-      val replyParams = replies.layoutParams as RelativeLayout.LayoutParams
-      replyParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-
-      replies.layoutParams = replyParams
-
-      val replyExtraParams = repliesAdditionalArea.layoutParams as RelativeLayout.LayoutParams
-      replyExtraParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-      repliesAdditionalArea.layoutParams = replyExtraParams
     }
   }
 

@@ -297,7 +297,6 @@ sealed class AppearanceScreen(
 
     object FontSize : PostGroup("font_size")
     object FontAlternate : PostGroup("font_alternate")
-    object ShiftPostFormat : PostGroup("shift_post_format")
     object PostFullDate : PostGroup("post_full_date")
     object PostFileInfo : PostGroup("post_file_info")
     object PostFileName : PostGroup("post_file_name")

@@ -147,15 +147,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.ShiftPostFormat,
-          topDescriptionIdFunc = { R.string.setting_shift_post },
-          bottomDescriptionIdFunc = { R.string.setting_shift_post_description },
-          setting = ChanSettings.shiftPostFormat,
-          requiresRestart = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.PostGroup.PostFullDate,
           topDescriptionIdFunc = { R.string.setting_post_full_date },
           setting = ChanSettings.postFullDate,
