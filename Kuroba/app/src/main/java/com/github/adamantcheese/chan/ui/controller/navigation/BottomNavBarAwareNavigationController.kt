@@ -8,7 +8,10 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import javax.inject.Inject
 
-class BottomNavBarAwareNavigationController(context: Context) : ToolbarNavigationController(context) {
+class BottomNavBarAwareNavigationController(
+  context: Context,
+  private val listener: CloseBottomNavBarAwareNavigationControllerListener
+) : ToolbarNavigationController(context) {
 
   @Inject
   lateinit var themeHelper: ThemeHelper
@@ -18,6 +21,7 @@ class BottomNavBarAwareNavigationController(context: Context) : ToolbarNavigatio
 
     view = AndroidUtils.inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
+
     val nav = container as NavigationControllerContainerLayout
     nav.setNavigationController(this)
     nav.setSwipeEnabled(false)
@@ -30,6 +34,10 @@ class BottomNavBarAwareNavigationController(context: Context) : ToolbarNavigatio
   override fun onMenuOrBackClicked(isArrow: Boolean) {
     super.onMenuOrBackClicked(isArrow)
 
-    // TODO(KurobaEx): doesn't work
+    listener.onCloseController()
+  }
+
+  interface CloseBottomNavBarAwareNavigationControllerListener {
+    fun onCloseController()
   }
 }

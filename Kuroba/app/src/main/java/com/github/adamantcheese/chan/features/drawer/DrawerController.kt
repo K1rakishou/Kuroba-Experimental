@@ -286,7 +286,15 @@ class DrawerController(
   }
 
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
-    val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(context)
+    val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(
+      context,
+      object : BottomNavBarAwareNavigationController.CloseBottomNavBarAwareNavigationControllerListener {
+        override fun onCloseController() {
+          closeBottomNavBarAwareNavigationControllerListener()
+        }
+      }
+    )
+
     pushChildController(bottomNavBarAwareNavigationController)
     bottomNavBarAwareNavigationController.pushController(controller)
   }
@@ -312,6 +320,17 @@ class DrawerController(
         openSettingsController()
       }
     }
+  }
+
+  private fun closeBottomNavBarAwareNavigationControllerListener() {
+    val currentNavController = top
+      ?: return
+
+    if (currentNavController !is BottomNavBarAwareNavigationController) {
+      return
+    }
+
+    popChildController(false)
   }
 
   private fun closeAllNonMainControllers() {
