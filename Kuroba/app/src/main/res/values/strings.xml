@@ -524,8 +524,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
-    <string name="setting_enable_emoji">Enable emoji</string>
-    <string name="setting_enable_emoji_description">Enable emoji posting and parsing</string>
 
     <!-- Appearance gallery group -->
     <string name="setting_hide_images">Hide images</string>

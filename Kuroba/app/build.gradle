@@ -285,9 +285,6 @@ dependencies {
     implementation "com.google.code.gson:gson:${versions.gson}"
     implementation 'me.xdrop:fuzzywuzzy:1.2.0'
     implementation 'com.vladsch.flexmark:flexmark:0.60.2'
-    implementation ('com.vdurmont:emoji-java:5.1.1') {
-        exclude group: 'org.json', module: 'json'
-    }
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin_compiler}"

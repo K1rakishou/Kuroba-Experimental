@@ -206,7 +206,6 @@ public class ChanSettings {
     public static final BooleanSetting addDubs;
     public static final BooleanSetting parseYoutubeTitlesAndDuration;
     public static final BooleanSetting showYoutubeLinkAlongWithTitleAndDuration;
-    public static final BooleanSetting enableEmoji;
     public static final BooleanSetting markYourPostsOnScrollbar;
     public static final BooleanSetting markRepliesToYourPostOnScrollbar;
     public static final BooleanSetting markCrossThreadQuotesOnScrollbar;
@@ -355,7 +354,6 @@ public class ChanSettings {
             addDubs = new BooleanSetting(p, "add_dubs", false);
             parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
             showYoutubeLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_youtube_link_along_with_title_and_duration", true);
-            enableEmoji = new BooleanSetting(p, "enable_emoji", false);
             markYourPostsOnScrollbar = new BooleanSetting(p, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(p, "mark_replies_to_your_posts_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);

@@ -23,11 +23,9 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
-import com.vdurmont.emoji.EmojiParser;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -566,11 +564,7 @@ public class Post implements Comparable<Post> {
         }
 
         public Builder name(String name) {
-            if (ChanSettings.enableEmoji.get()) {
-                this.name = EmojiParser.parseToUnicode(name);
-            } else {
-                this.name = name;
-            }
+            this.name = name;
             return this;
         }
 

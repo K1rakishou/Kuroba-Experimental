@@ -308,7 +308,6 @@ sealed class AppearanceScreen(
     object AddDubs : PostGroup("add_dubs")
     object ParseYoutubeTitlesAndDuration : PostGroup("parse_youtube_titles_and_duration")
     object ShowYoutubeLinkAlongWithTitleAndDuration : PostGroup("show_youtube_links_along_with_title_and_duration")
-    object EnableEmoji : PostGroup("enable_emoji")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

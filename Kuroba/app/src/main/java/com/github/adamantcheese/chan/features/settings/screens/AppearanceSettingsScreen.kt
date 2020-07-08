@@ -241,15 +241,6 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.PostGroup.EnableEmoji,
-          topDescriptionIdFunc = { R.string.setting_enable_emoji },
-          bottomDescriptionIdFunc = { R.string.setting_enable_emoji_description },
-          setting = ChanSettings.enableEmoji,
-          requiresUiRefresh = true
-        )
-
         return group
       }
     )
