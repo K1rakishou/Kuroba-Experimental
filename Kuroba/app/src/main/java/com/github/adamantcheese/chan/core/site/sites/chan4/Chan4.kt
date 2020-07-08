@@ -485,7 +485,7 @@ class Chan4 : SiteBase() {
 
       override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
         if (loadable.isCatalogMode()) {
-          if (postNo != null) {
+          if (postNo != null && postNo > 0) {
             return "https://boards.4chan.org/" + loadable.boardCode + "/thread/" + postNo
           } else {
             return "https://boards.4chan.org/" + loadable.boardCode + "/"
@@ -494,7 +494,7 @@ class Chan4 : SiteBase() {
 
         if (loadable.isThreadMode()) {
           var url = "https://boards.4chan.org/" + loadable.boardCode + "/thread/" + loadable.no
-          if (postNo != null && loadable.no.toLong() != postNo) {
+          if (postNo != null && postNo > 0 && loadable.no.toLong() != postNo) {
             url += "#p$postNo"
           }
 
