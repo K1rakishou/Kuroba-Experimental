@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 
 class BookmarkWatcherController(
   private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
@@ -35,7 +36,7 @@ class BookmarkWatcherController(
         .filter { bookmarkChange -> isExpectedBookmarkChange(bookmarkChange) }
         .catch { error -> Logger.e(TAG, "Error while listenForBookmarksChanges()", error) }
         .collect {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
           }
 
@@ -54,7 +55,7 @@ class BookmarkWatcherController(
       Flowable.merge(watchEnabledFlowable, watchBackgroundFlowable, watchBackgroundIntervalFlowable)
         .asFlow()
         .collect { watchSettingChange ->
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             when (watchSettingChange) {
               WatchSettingChange.WatcherSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchEnabled setting changed")

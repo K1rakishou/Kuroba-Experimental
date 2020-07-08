@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookmarkForegroundWatcher(
   private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
   private val bookmarkWatcherDelegate: BookmarkWatcherDelegate
@@ -28,7 +29,7 @@ class BookmarkForegroundWatcher(
     appScope.launch {
       channel.consumeEach {
         if (working.compareAndSet(false, true)) {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "working == true, calling doWorkAndWaitUntilNext()")
           }
 
@@ -141,7 +142,7 @@ class BookmarkForegroundWatcher(
     // needed to not kill the battery with constant network request spam.
     val additionalInterval = (activeBookmarksCount / 10) * ADDITIONAL_INTERVAL_INCREMENT_MS
 
-    if (isDevFlavor) {
+    if (verboseLogsEnabled) {
       Logger.d(TAG, "bookmarkWatcherDelegate.doWork() completed, waiting for " +
         "${FOREGROUND_INITIAL_INTERVAL_MS}ms + ${additionalInterval}ms " +
         "(activeBookmarksCount: $activeBookmarksCount, " +
@@ -156,7 +157,7 @@ class BookmarkForegroundWatcher(
       return
     }
 
-    if (isDevFlavor) {
+    if (verboseLogsEnabled) {
       Logger.e(TAG, "Error while doing foreground bookmark watching", error)
     } else {
       Logger.e(TAG, "Error while doing foreground bookmark watching: ${error.errorMessageOrClassName()}")

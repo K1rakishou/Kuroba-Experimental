@@ -30,6 +30,7 @@ import kotlin.time.measureTime
 
 class BookmarkWatcherDelegate(
   private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
   private val siteRepository: SiteRepository,
@@ -370,7 +371,7 @@ class BookmarkWatcherDelegate(
     threadBookmarkFetchResults.forEach { fetchResult ->
       when (fetchResult) {
         is ThreadBookmarkFetchResult.Error -> {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}", fetchResult.error)
           } else {
             Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}, " +
@@ -380,21 +381,21 @@ class BookmarkWatcherDelegate(
           ++errorsCount
         }
         is ThreadBookmarkFetchResult.AlreadyDeleted -> {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "FetchResult.AlreadyDeleted: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++alreadyDeletedCount
         }
         is ThreadBookmarkFetchResult.NotFoundOnServer -> {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "FetchResult.NotFoundOnServer: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++notFoundOnServerCount
         }
         is ThreadBookmarkFetchResult.BadStatusCode -> {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "FetchResult.BadStatusCode: descriptor=${fetchResult.threadDescriptor}, " +
               "status=${fetchResult.statusCode}")
           }
@@ -402,7 +403,7 @@ class BookmarkWatcherDelegate(
           ++badStatusCount
         }
         is ThreadBookmarkFetchResult.Success -> {
-          if (isDevFlavor) {
+          if (verboseLogsEnabled) {
             val originalPost = fetchResult.threadBookmarkInfoObject.simplePostObjects.firstOrNull { post ->
               post is ThreadBookmarkInfoPostObject.OriginalPost
             } as? ThreadBookmarkInfoPostObject.OriginalPost

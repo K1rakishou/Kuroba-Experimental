@@ -76,6 +76,7 @@ class LastPageNotificationsHelper(
     }
 
     if (isDevFlavor) {
+      // TODO(KurobaEx): remove?
       threadsWithTitles.forEach { (threadDescriptor, title) ->
         Logger.d(TAG, "Thread $threadDescriptor (${title.take(50)}) hit last page")
       }

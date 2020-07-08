@@ -30,7 +30,8 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class BookmarksManager(
-  private val isDevAppFlavor: Boolean,
+  private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val bookmarksRepository: BookmarksRepository
@@ -71,7 +72,7 @@ class BookmarksManager(
       delayedBookmarksChangedSubject
         .debounce(1, TimeUnit.SECONDS)
         .doOnNext { bookmarkChange ->
-          if (isDevAppFlavor) {
+          if (verboseLogsEnabled) {
             Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
           }
         }
@@ -112,7 +113,7 @@ class BookmarksManager(
     return bookmarksChangedSubject
       .observeOn(AndroidSchedulers.mainThread())
       .doOnNext { bookmarkChange ->
-        if (isDevAppFlavor) {
+        if (verboseLogsEnabled) {
           Logger.d(TAG, "bookmarksChanged(${bookmarkChange::class.java.simpleName})")
         }
       }
@@ -170,7 +171,7 @@ class BookmarksManager(
         this.thumbnailUrl = thumbnailUrl
       }
 
-      if (isDevAppFlavor) {
+      if (isDevFlavor) {
         check(!orders.contains(threadDescriptor)) { "orders already contains $threadDescriptor" }
       }
 
@@ -405,8 +406,6 @@ class BookmarksManager(
 
     lock.write {
       orders.add(to, orders.removeAt(from))
-
-      // TODO(KurobaEx): ??? What bookmark exactly should be used here?
       bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
 
       Logger.d(TAG, "Bookmark moved (from=$from, to=$to)")
@@ -439,13 +438,6 @@ class BookmarksManager(
       threadBookmark.updateSeenPostCount(realPostIndex)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
-
-      if (isDevAppFlavor) {
-        // TODO(KurobaEx): this may not work when we have removed posts in a thread (removed by
-        //  filters)
-        Logger.d(TAG, "onPostViewed postNo=$postNo, currentPostIndex=$currentPostIndex, " +
-          "realPostIndex=$realPostIndex")
-      }
     }
   }
 
@@ -500,7 +492,7 @@ class BookmarksManager(
   }
 
   private fun ensureBookmarksAndOrdersConsistency() {
-    if (isDevAppFlavor) {
+    if (isDevFlavor) {
       check(bookmarks.size == orders.size) {
         "Inconsistency detected! bookmarks.size (${bookmarks.size}) != orders.size (${orders.size})"
       }
@@ -508,7 +500,7 @@ class BookmarksManager(
   }
 
   private fun ensureNotContainsOrder(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (isDevAppFlavor) {
+    if (isDevFlavor) {
       check(!orders.contains(threadDescriptor)) {
         "Orders contains ($threadDescriptor) when bookmarks doesn't!"
       }
@@ -516,7 +508,7 @@ class BookmarksManager(
   }
 
   private fun ensureContainsOrder(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (isDevAppFlavor) {
+    if (isDevFlavor) {
       check(orders.contains(threadDescriptor)) {
         "Orders does not contain ($threadDescriptor) when bookmarks does!"
       }
@@ -524,7 +516,7 @@ class BookmarksManager(
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
-    if (isDevAppFlavor) {
+    if (isDevFlavor) {
       ensureBookmarksAndOrdersConsistency()
     }
 
@@ -533,7 +525,7 @@ class BookmarksManager(
   }
 
   private fun delayedBookmarksChanged(bookmarkChange: BookmarkChange) {
-    if (isDevAppFlavor) {
+    if (isDevFlavor) {
       ensureBookmarksAndOrdersConsistency()
     }
 

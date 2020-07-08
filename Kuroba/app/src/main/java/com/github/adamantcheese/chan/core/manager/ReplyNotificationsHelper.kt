@@ -60,6 +60,7 @@ import kotlin.coroutines.resume
 
 class ReplyNotificationsHelper(
   private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val notificationManagerCompat: NotificationManagerCompat,
@@ -186,7 +187,7 @@ class ReplyNotificationsHelper(
       sortedUnreadNotificationsGrouped
     )
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isDevFlavor) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && verboseLogsEnabled) {
       notificationManager.activeNotifications.forEach { notification ->
         Logger.d(TAG, "active notification, id: ${notification.id}, " +
           "group=${notification.isGroup}, " +

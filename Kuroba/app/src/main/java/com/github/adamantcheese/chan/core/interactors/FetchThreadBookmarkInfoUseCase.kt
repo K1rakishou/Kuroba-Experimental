@@ -24,6 +24,7 @@ import kotlin.math.max
 @Suppress("FoldInitializerAndIfToElvis")
 class FetchThreadBookmarkInfoUseCase(
   private val isDevFlavor: Boolean,
+  private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val okHttpClient: NetModule.ProxiedOkHttpClient,
   private val siteRepository: SiteRepository,
@@ -69,7 +70,7 @@ class FetchThreadBookmarkInfoUseCase(
     threadJsonEndpoint: HttpUrl,
     chanReader: ChanReader
   ): ThreadBookmarkFetchResult {
-    if (isDevFlavor) {
+    if (verboseLogsEnabled) {
       Logger.d(TAG, "fetchThreadBookmarkInfo() threadJsonEndpoint = $threadJsonEndpoint")
     }
 

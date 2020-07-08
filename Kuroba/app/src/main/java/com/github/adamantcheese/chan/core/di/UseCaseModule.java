@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -58,6 +59,7 @@ public class UseCaseModule {
 
         return new FetchThreadBookmarkInfoUseCase(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appScope,
                 okHttpClient,
                 siteRepository,

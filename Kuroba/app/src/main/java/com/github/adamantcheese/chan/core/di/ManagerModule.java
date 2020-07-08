@@ -308,6 +308,7 @@ public class ManagerModule {
 
         return new BookmarksManager(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appScope,
                 applicationVisibilityManager,
                 bookmarksRepository
@@ -345,6 +346,7 @@ public class ManagerModule {
 
         return new BookmarkWatcherDelegate(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
                 siteRepository,
@@ -368,6 +370,7 @@ public class ManagerModule {
 
         return new BookmarkForegroundWatcher(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
                 bookmarkWatcherDelegate
@@ -387,6 +390,7 @@ public class ManagerModule {
 
         return new BookmarkWatcherController(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
                 bookmarksManager,
@@ -416,6 +420,7 @@ public class ManagerModule {
 
         return new ReplyNotificationsHelper(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
                 getNotificationManagerCompat(),
