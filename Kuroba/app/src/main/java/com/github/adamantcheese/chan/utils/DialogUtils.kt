@@ -79,6 +79,7 @@ object DialogUtils {
   fun createSimpleDialogWithInput(
     context: Context,
     dialogTitleTextId: Int,
+    messageTextId: Int? = null,
     onValueEntered: (String) -> Unit,
     inputType: Int = InputType.TYPE_CLASS_NUMBER,
     onCanceled: (() -> Unit)? = null,
@@ -108,13 +109,23 @@ object DialogUtils {
       }
       .setNegativeButton(negativeButtonTextId) { _, _ -> onCanceled?.invoke() }
       .setTitle(dialogTitleTextId)
+      .setMessageEx(messageTextId)
       .setView(container)
       .create()
 
     dialog.window!!
       .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
 
+    editText.requestFocus()
     return dialog
+  }
+
+  private fun AlertDialog.Builder.setMessageEx(messageTextId: Int?): AlertDialog.Builder {
+    if (messageTextId != null) {
+      setMessage(messageTextId)
+    }
+
+    return this
   }
 
 }

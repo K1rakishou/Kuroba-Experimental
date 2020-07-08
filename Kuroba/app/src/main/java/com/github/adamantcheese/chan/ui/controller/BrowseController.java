@@ -401,6 +401,7 @@ public class BrowseController
         DialogUtils.createSimpleDialogWithInput(
                 context,
                 R.string.browse_controller_enter_thread_id,
+                R.string.browse_controller_enter_thread_id_msg,
                 (input) -> {
                     try {
                         long threadNo = Long.parseLong(input);

@@ -415,6 +415,7 @@ public class ViewThreadController
         DialogUtils.createSimpleDialogWithInput(
                 context,
                 R.string.view_thread_controller_enter_post_id,
+                null,
                 (input) -> {
                     try {
                         int postNo = Integer.parseInt(input);

@@ -74,13 +74,13 @@ class GetPostsFromArchiveUseCase(
       val threadId = chanPostRepository.createEmptyThreadIfNotExists(descriptor)
         .unwrap()
 
-      val archiveThread = handleResult(archiveThreadResult, archiveDescriptor, descriptor)
-      if (archiveThread.posts.isEmpty()) {
+      if (threadId == null) {
+        Logger.e(TAG, "Couldn't create empty thread to for archive posts")
         return@Try emptyList<Post.Builder>()
       }
 
-      if (threadId == null) {
-        Logger.e(TAG, "Couldn't create empty thread to for archive posts")
+      val archiveThread = handleResult(archiveThreadResult, archiveDescriptor, descriptor)
+      if (archiveThread.posts.isEmpty()) {
         return@Try emptyList<Post.Builder>()
       }
 
