@@ -18,17 +18,22 @@ class PostInfoMapItemDecoration(
   private val showHideAnimator = ValueAnimator.ofFloat(0f, 1f)
 
   private val myPostsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = context.resources.getColor(R.color.my_posts_map_color)
+    color = context.resources.getColor(R.color.my_post_color)
     alpha = DEFAULT_ALPHA
   }
 
   private val yousPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = context.resources.getColor(R.color.reply_map_quote_color)
+    color = context.resources.getColor(R.color.reply_post_color)
     alpha = DEFAULT_ALPHA
   }
 
   private val crossThreadRepliesPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = context.resources.getColor(R.color.cross_thread_reply_map_quote_color)
+    color = context.resources.getColor(R.color.cross_thread_reply_post_color)
+    alpha = DEFAULT_ALPHA
+  }
+
+  private val archivedPostPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = context.resources.getColor(R.color.archived_post_color)
     alpha = DEFAULT_ALPHA
   }
 
@@ -88,6 +93,18 @@ class PostInfoMapItemDecoration(
       recyclerViewWidth,
       labelWidth,
       crossThreadRepliesPaint
+    )
+    labelWidth += LABEL_WIDTH_INC
+
+    drawRanges(
+      canvas,
+      postInfoHolder.archivedPostsPositionRanges,
+      recyclerTopPadding,
+      recyclerBottomPadding,
+      recyclerViewHeight,
+      recyclerViewWidth,
+      labelWidth,
+      archivedPostPaint
     )
     labelWidth += LABEL_WIDTH_INC
   }

@@ -158,6 +158,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts on scrollbar</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s on scrollbar</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies on scrollbar</string>
+    <string name="action_mark_archived_posts_on_scrollbar">Highlight deleted posts that were restored from archives on scrollbar</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>

@@ -105,6 +105,7 @@ public class ViewThreadController
     private static final int ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100;
     private static final int ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101;
     private static final int ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102;
+    private static final int ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR = 9103;
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -326,6 +327,14 @@ public class ViewThreadController
                         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR,
                         this::onScrollbarLabelingOptionClicked
                 )
+                .addNestedItem(
+                        ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR,
+                        R.string.action_mark_archived_posts_on_scrollbar,
+                        true,
+                        ChanSettings.markArchivedPostsOnScrollbar.get(),
+                        ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR,
+                        this::onScrollbarLabelingOptionClicked
+                )
                 .build()
                 .withSubItem(
                         ACTION_SCROLL_TO_TOP,
@@ -441,6 +450,11 @@ public class ViewThreadController
             ChanSettings.markYourPostsOnScrollbar.set(markYourPostsOnScrollbar);
 
             item.isCurrentlySelected = markYourPostsOnScrollbar;
+        } else if (clickedItemId == ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR) {
+            boolean markArchivedPostsOnScrollbar = !ChanSettings.markArchivedPostsOnScrollbar.get();
+            ChanSettings.markArchivedPostsOnScrollbar.set(markArchivedPostsOnScrollbar);
+
+            item.isCurrentlySelected = markArchivedPostsOnScrollbar;
         }
 
         threadLayout.presenter.quickReload();

@@ -210,6 +210,7 @@ public class ChanSettings {
     public static final BooleanSetting markYourPostsOnScrollbar;
     public static final BooleanSetting markRepliesToYourPostOnScrollbar;
     public static final BooleanSetting markCrossThreadQuotesOnScrollbar;
+    public static final BooleanSetting markArchivedPostsOnScrollbar;
 
     // Images
     public static final BooleanSetting hideImages;
@@ -358,6 +359,7 @@ public class ChanSettings {
             markYourPostsOnScrollbar = new BooleanSetting(p, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(p, "mark_replies_to_your_posts_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);
+            markArchivedPostsOnScrollbar = new BooleanSetting(p, "mark_archived_posts_on_scrollbar", false);
 
             // Images
             hideImages = new BooleanSetting(p, "preference_hide_images", false);
