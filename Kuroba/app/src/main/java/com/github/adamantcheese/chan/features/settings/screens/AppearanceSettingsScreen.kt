@@ -215,15 +215,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.AddDubs,
-          topDescriptionIdFunc = { R.string.add_dubs_title },
-          bottomDescriptionIdFunc = { R.string.add_dubs_description },
-          setting = ChanSettings.addDubs,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.PostGroup.ParseYoutubeTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_youtube_title_and_durations },
           bottomDescriptionIdFunc = { R.string.setting_youtube_title_and_durations_description },

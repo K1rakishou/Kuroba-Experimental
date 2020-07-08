@@ -518,8 +518,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_show_anonymous_name">Always show \"Anonymous\" name</string>
     <string name="setting_show_anonymous_name_description">Displays \"Anonymous\" rather than an empty field</string>
     <string name="setting_anonymize_ids">Hide IDs</string>
-    <string name="add_dubs_title">Add dubs to post cells</string>
-    <string name="add_dubs_description">Appends your GET to your post number, for FUN!</string>
     <string name="setting_youtube_title_and_durations">Enable Youtube titles and durations</string>
     <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>

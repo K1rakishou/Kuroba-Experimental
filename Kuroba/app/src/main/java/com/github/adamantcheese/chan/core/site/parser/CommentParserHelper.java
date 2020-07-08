@@ -54,16 +54,6 @@ public class CommentParserHelper {
 
     private static String[] noThumbLinkSuffixes = {"webm", "pdf", "mp4", "mp3", "swf", "m4a", "ogg", "flac"};
 
-    private static final Pattern dubsPattern = Pattern.compile("(\\d)\\1$");
-    private static final Pattern tripsPattern = Pattern.compile("(\\d)\\1{2}$");
-    private static final Pattern quadsPattern = Pattern.compile("(\\d)\\1{3}$");
-    private static final Pattern quintsPattern = Pattern.compile("(\\d)\\1{4}$");
-    private static final Pattern hexesPattern = Pattern.compile("(\\d)\\1{5}$");
-    private static final Pattern septsPattern = Pattern.compile("(\\d)\\1{6}$");
-    private static final Pattern octsPattern = Pattern.compile("(\\d)\\1{7}$");
-    private static final Pattern nonsPattern = Pattern.compile("(\\d)\\1{8}$");
-    private static final Pattern decsPattern = Pattern.compile("(\\d)\\1{9}$");
-
     /**
      * Detect links in the given spannable, and create PostLinkables with Type.LINK for the
      * links found onto the spannable.
@@ -168,18 +158,4 @@ public class CommentParserHelper {
         }
     }
 
-    public static String getRepeatDigits(long no) {
-        String number = String.valueOf(no);
-        //inverted order to match largest to smallest, otherwise will always match smallest
-        if (decsPattern.matcher(number).find()) return "Decs";
-        if (nonsPattern.matcher(number).find()) return "Nons";
-        if (octsPattern.matcher(number).find()) return "Octs";
-        if (septsPattern.matcher(number).find()) return "Septs";
-        if (hexesPattern.matcher(number).find()) return "Sexes";
-        if (quintsPattern.matcher(number).find()) return "Quints";
-        if (quadsPattern.matcher(number).find()) return "Quads";
-        if (tripsPattern.matcher(number).find()) return "Trips";
-        if (dubsPattern.matcher(number).find()) return "Dubs";
-        return null;
-    }
 }

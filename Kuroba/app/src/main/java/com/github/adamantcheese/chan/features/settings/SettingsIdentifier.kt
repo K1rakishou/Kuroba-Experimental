@@ -305,7 +305,6 @@ sealed class AppearanceScreen(
     object Anonymize : PostGroup("anonymize")
     object ShowAnonymousName : PostGroup("show_anonymous_name")
     object AnonymizeIds : PostGroup("anonymize_ids")
-    object AddDubs : PostGroup("add_dubs")
     object ParseYoutubeTitlesAndDuration : PostGroup("parse_youtube_titles_and_duration")
     object ShowYoutubeLinkAlongWithTitleAndDuration : PostGroup("show_youtube_links_along_with_title_and_duration")
 

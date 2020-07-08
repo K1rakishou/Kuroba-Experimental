@@ -50,7 +50,6 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
-import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface.PostCellCallback
@@ -481,14 +480,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       titleParts.add(post.tripcode)
     }
 
-    var noText = String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.no)
-    if (ChanSettings.addDubs.get()) {
-      val repeat = CommentParserHelper.getRepeatDigits(post.no)
-      if (repeat != null) {
-        noText += " ($repeat)"
-      }
-    }
-
+    val noText = String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.no)
     val time = postPreloadedInfoHolder!!.getPostTime(post)
     val date = SpannableString("$noText $time")
 

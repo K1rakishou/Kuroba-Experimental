@@ -203,7 +203,6 @@ public class ChanSettings {
     public static final BooleanSetting anonymize;
     public static final BooleanSetting showAnonymousName;
     public static final BooleanSetting anonymizeIds;
-    public static final BooleanSetting addDubs;
     public static final BooleanSetting parseYoutubeTitlesAndDuration;
     public static final BooleanSetting showYoutubeLinkAlongWithTitleAndDuration;
     public static final BooleanSetting markYourPostsOnScrollbar;
@@ -351,7 +350,6 @@ public class ChanSettings {
             anonymize = new BooleanSetting(p, "preference_anonymize", false);
             showAnonymousName = new BooleanSetting(p, "preference_show_anonymous_name", false);
             anonymizeIds = new BooleanSetting(p, "preference_anonymize_ids", false);
-            addDubs = new BooleanSetting(p, "add_dubs", false);
             parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
             showYoutubeLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_youtube_link_along_with_title_and_duration", true);
             markYourPostsOnScrollbar = new BooleanSetting(p, "mark_your_posts_on_scrollbar", true);
