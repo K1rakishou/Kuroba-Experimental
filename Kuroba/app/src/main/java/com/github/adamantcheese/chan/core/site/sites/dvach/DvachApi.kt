@@ -207,7 +207,7 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     var comment: String = ""
     var sticky: Boolean = false
     var rollingSticky: Boolean = false
-    val bumpLimit = dvachExtraThreadInfo.postsCount >= dvachExtraThreadInfo.bumpLimit
+    var bumpLimit = dvachExtraThreadInfo.postsCount >= dvachExtraThreadInfo.bumpLimit
 
     reader.beginObject()
 
@@ -247,6 +247,10 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
         StickyThread.StickyUnlimited
       } else {
         StickyThread.NotSticky
+      }
+
+      if (stickyPost !is StickyThread.NotSticky) {
+        bumpLimit = false
       }
 
       return ThreadBookmarkInfoPostObject.OriginalPost(

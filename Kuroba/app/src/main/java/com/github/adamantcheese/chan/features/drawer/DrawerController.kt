@@ -152,6 +152,10 @@ class DrawerController(
     bottomNavView.setBackgroundColor(themeHelper.theme.backColorSecondary)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
+      if (bottomNavView.selectedItemId == menuItem.itemId) {
+        return@setOnNavigationItemSelectedListener true
+      }
+
       onNavigationItemSelectedListener(menuItem)
       return@setOnNavigationItemSelectedListener true
     }
