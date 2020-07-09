@@ -327,7 +327,7 @@ class FutabaChanReader(
 
     if (isOp) {
       if (postNo == null) {
-        Logger.e(TAG, "Error reading OriginalPost (postNo=$postNo, closed=$closed, archived=$archived)")
+        Logger.e(TAG, "Error reading OriginalPost (postNo=$postNo)")
         return null
       }
 
@@ -344,7 +344,7 @@ class FutabaChanReader(
       )
     } else {
       if (postNo == null) {
-        Logger.e(TAG, "Error reading RegularPost (isOp=$isOp, postNo=$postNo)")
+        Logger.e(TAG, "Error reading RegularPost (isOp=$isOp)")
         return null
       }
 
