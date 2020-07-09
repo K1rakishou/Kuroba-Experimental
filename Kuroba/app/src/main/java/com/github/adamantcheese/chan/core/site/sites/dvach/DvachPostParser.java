@@ -38,6 +38,7 @@ public class DvachPostParser extends DefaultPostParser {
 
     private void parseNameForColor(Post.Builder builder) {
         CharSequence nameRaw = builder.name;
+
         try {
             String name = nameRaw.toString();
 

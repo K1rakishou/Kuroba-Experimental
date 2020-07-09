@@ -4,14 +4,18 @@ import android.content.Context
 import android.view.View
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
+import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.OnMeasuredCallback
+import com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout
+import com.github.adamantcheese.common.updateMargins
 import javax.inject.Inject
 
 class BottomNavBarAwareNavigationController(
   context: Context,
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
-) : ToolbarNavigationController(context) {
+) : ToolbarNavigationController(context), OnMeasuredCallback {
 
   @Inject
   lateinit var themeHelper: ThemeHelper
@@ -29,6 +33,39 @@ class BottomNavBarAwareNavigationController(
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setBackgroundColor(themeHelper.theme.primaryColor.color)
     requireToolbar().setCallback(this)
+  }
+
+  override fun onShow() {
+    super.onShow()
+
+    waitForLayout(container, this)
+  }
+
+  override fun onMeasured(view: View?): Boolean {
+    if (!AndroidUtils.isTablet()) {
+      return true
+    }
+
+    val hasBookmarksController = childControllers.any { controller -> controller is BookmarksController }
+    if (hasBookmarksController) {
+      return true
+    }
+
+    val v = view
+      ?: return true
+
+    val margin = (v.width * 0.1).toInt()
+
+    view.updateMargins(
+      margin,
+      margin,
+      margin,
+      margin,
+      null,
+      null
+    )
+
+    return false
   }
 
   override fun onMenuOrBackClicked(isArrow: Boolean) {
