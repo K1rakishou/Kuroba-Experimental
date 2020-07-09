@@ -1,14 +1,14 @@
 package com.github.adamantcheese.chan.ui.controller.navigation
 
 import android.content.Context
+import android.content.res.Configuration
 import android.view.View
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.AndroidUtils.OnMeasuredCallback
-import com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout
+import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.common.updateMargins
 import javax.inject.Inject
 
@@ -42,7 +42,11 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onMeasured(view: View?): Boolean {
-    if (!AndroidUtils.isTablet()) {
+    if (!isTablet()) {
+      return true
+    }
+
+    if (getScreenOrientation() != Configuration.ORIENTATION_LANDSCAPE) {
       return true
     }
 
