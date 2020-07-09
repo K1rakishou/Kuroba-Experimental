@@ -529,28 +529,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (ChanSettings.postPinThread.get()) {
-      if (callback.thread?.loadable?.isThreadMode == true) {
-        // reply
-        val thread = callback.thread
-        if (thread != null) {
-          val op = thread.op
-          val title = PostHelper.getTitle(op, localLoadable)
-          val thumbnail = op.firstImage()?.thumbnailUrl
-
-          bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!, title, thumbnail)
-        } else {
-          bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!)
-        }
-      } else {
-        // new thread, use the new loadable
-        draft.loadable = localLoadable
-        val title = PostHelper.getTitle(draft)
-
-        bookmarksManager.createBookmark(
-          ChanDescriptor.ThreadDescriptor(localLoadable.boardDescriptor, loadableNo),
-          title
-        )
-      }
+      bookmarkThread(localLoadable, loadableNo)
     }
 
     val savedReply = SavedReply.fromBoardNoPassword(
@@ -579,6 +558,31 @@ class ReplyPresenter @Inject constructor(
     // loadable
     if (bound && loadable!!.isCatalogMode) {
       callback.showThread(localLoadable)
+    }
+  }
+
+  private fun bookmarkThread(localLoadable: Loadable, loadableNo: Long) {
+    if (callback.thread?.loadable?.isThreadMode == true) {
+      // reply
+      val thread = callback.thread
+      if (thread != null) {
+        val op = thread.op
+        val title = PostHelper.getTitle(op, localLoadable)
+        val thumbnail = op.firstImage()?.thumbnailUrl
+
+        bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!, title, thumbnail)
+      } else {
+        bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!)
+      }
+    } else {
+      // new thread, use the new loadable
+      draft.loadable = localLoadable
+      val title = PostHelper.getTitle(draft)
+
+      bookmarksManager.createBookmark(
+        ChanDescriptor.ThreadDescriptor(localLoadable.boardDescriptor, loadableNo),
+        title
+      )
     }
   }
 

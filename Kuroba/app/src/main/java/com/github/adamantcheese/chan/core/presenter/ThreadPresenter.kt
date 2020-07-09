@@ -487,6 +487,9 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val localLoadable = loadable
+      ?: return
+
     if (isWatching) {
       chanLoader!!.setTimer()
     }
@@ -498,65 +501,69 @@ class ThreadPresenter @Inject constructor(
       showPosts()
     }
 
-    if (loadable!!.isThreadMode) {
-      val lastLoaded = loadable!!.lastLoaded
-      var more = 0
-
-      if (lastLoaded > 0) {
-        for (post in result.posts) {
-          if (post.no == lastLoaded.toLong()) {
-            more = result.postsCount - result.posts.indexOf(post) - 1
-            break
-          }
-        }
-      }
-
-      loadable!!.setLastLoaded(result.posts[result.postsCount - 1].no)
-
-      if (loadable!!.lastViewed == -1) {
-        loadable!!.setLastViewed(loadable!!.lastLoaded.toLong())
-      }
-
-      if (more > 0 && loadable!!.no == result.loadable.no) {
-        threadPresenterCallback?.showNewPostsNotification(true, more)
-        // deal with any "requests" for a page update
-        if (forcePageUpdate) {
-          pageRequestManager.forceUpdateForBoard(loadable!!.board.boardDescriptor())
-          forcePageUpdate = false
-        }
-      }
+    if (localLoadable.isThreadMode) {
+      handleNewPosts(localLoadable, result)
     }
 
-    if (loadable!!.markedNo >= 0) {
-      val markedPost = findPostById(loadable!!.markedNo.toLong(), chanLoader!!.thread)
-      if (markedPost != null) {
-        highlightPost(markedPost)
-
-        if (BackgroundUtils.isInForeground()) {
-          scrollToPost(markedPost, false)
-        }
-
-        if (StartActivity.loadedFromURL) {
-          BackgroundUtils.runOnMainThread({ scrollToPost(markedPost, false) }, 1000)
-          StartActivity.loadedFromURL = false
-        }
-      }
-
-      loadable!!.markedNo = -1
+    if (localLoadable.markedNo >= 0) {
+      handleMarkedPost(localLoadable)
     }
 
-    if (loadable != null) {
-      createNewNavHistoryElement(result)
-      updateBookmarkInfoIfNecessary(result)
-    }
+    createNewNavHistoryElement(localLoadable, result)
+    updateBookmarkInfoIfNecessary(localLoadable, result)
 
     // Update loadable in the database
-    databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(loadable))
+    databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(localLoadable))
   }
 
-  private fun updateBookmarkInfoIfNecessary(chanThread: ChanThread) {
-    val localLoadable = loadable!!
+  private fun handleNewPosts(localLoadable: Loadable, result: ChanThread) {
+    val lastLoaded = localLoadable.lastLoaded
+    var more = 0
 
+    if (lastLoaded > 0) {
+      for (post in result.posts) {
+        if (post.no == lastLoaded.toLong()) {
+          more = result.postsCount - result.posts.indexOf(post) - 1
+          break
+        }
+      }
+    }
+
+    localLoadable.setLastLoaded(result.posts[result.postsCount - 1].no)
+
+    if (localLoadable.lastViewed == -1) {
+      localLoadable.setLastViewed(localLoadable.lastLoaded.toLong())
+    }
+
+    if (more > 0 && localLoadable.no == result.loadable.no) {
+      threadPresenterCallback?.showNewPostsNotification(true, more)
+      // deal with any "requests" for a page update
+      if (forcePageUpdate) {
+        pageRequestManager.forceUpdateForBoard(localLoadable.board.boardDescriptor())
+        forcePageUpdate = false
+      }
+    }
+  }
+
+  private fun handleMarkedPost(localLoadable: Loadable) {
+    val markedPost = findPostById(localLoadable.markedNo.toLong(), chanLoader!!.thread)
+    if (markedPost != null) {
+      highlightPost(markedPost)
+
+      if (BackgroundUtils.isInForeground()) {
+        scrollToPost(markedPost, false)
+      }
+
+      if (StartActivity.loadedFromURL) {
+        BackgroundUtils.runOnMainThread({ scrollToPost(markedPost, false) }, 1000)
+        StartActivity.loadedFromURL = false
+      }
+    }
+
+    localLoadable.markedNo = -1
+  }
+
+  private fun updateBookmarkInfoIfNecessary(localLoadable: Loadable, chanThread: ChanThread) {
     val threadDescriptor = when (val descriptor = localLoadable.chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> descriptor
       is ChanDescriptor.CatalogDescriptor -> {
@@ -586,9 +593,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun createNewNavHistoryElement(chanThread: ChanThread) {
-    val localLoadable = loadable!!
-
+  private fun createNewNavHistoryElement(localLoadable: Loadable, chanThread: ChanThread) {
     when (val descriptor = localLoadable.chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         val site = siteRepository.bySiteDescriptor(descriptor.siteDescriptor())
