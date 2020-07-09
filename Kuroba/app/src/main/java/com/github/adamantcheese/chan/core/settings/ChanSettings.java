@@ -231,7 +231,6 @@ public class ChanSettings {
     public static final BooleanSetting openLinkConfirmation;
     public static final BooleanSetting openLinkBrowser;
     public static final BooleanSetting imageViewerGestures;
-    public static final BooleanSetting alwaysOpenDrawer;
     public static final StringSetting jsCaptchaCookies;
 
     // Reply
@@ -379,7 +378,6 @@ public class ChanSettings {
             openLinkConfirmation = new BooleanSetting(p, "preference_open_link_confirmation", false);
             openLinkBrowser = new BooleanSetting(p, "preference_open_link_browser", false);
             imageViewerGestures = new BooleanSetting(p, "image_viewer_gestures", true);
-            alwaysOpenDrawer = new BooleanSetting(p, "drawer_auto_open_always", false);
             jsCaptchaCookies = new StringSetting(p, "js_captcha_cookies", EMPTY_JSON);
 
             // Reply

@@ -547,10 +547,43 @@ class ThreadPresenter @Inject constructor(
 
     if (loadable != null) {
       createNewNavHistoryElement(result)
+      updateBookmarkInfoIfNecessary(result)
     }
 
     // Update loadable in the database
     databaseManager.runTaskAsync(databaseManager.databaseLoadableManager.updateLoadable(loadable))
+  }
+
+  private fun updateBookmarkInfoIfNecessary(chanThread: ChanThread) {
+    val localLoadable = loadable!!
+
+    val threadDescriptor = when (val descriptor = localLoadable.chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> descriptor
+      is ChanDescriptor.CatalogDescriptor -> {
+        ChanDescriptor.ThreadDescriptor(descriptor.boardDescriptor, chanThread.op.no)
+      }
+    }
+
+    val opThumbnailUrl = chanLoader?.thread?.op?.firstImage()?.thumbnailUrl
+
+    val title = if (TextUtils.isEmpty(localLoadable.title)) {
+      PostHelper.getTitle(chanThread.op, localLoadable)
+    } else {
+      localLoadable.title
+    }
+
+    bookmarksManager.updateBookmark(
+      threadDescriptor,
+      BookmarksManager.NotifyListenersOption.NotifyEager
+    ) { threadBookmark ->
+      if (threadBookmark.title.isNullOrEmpty()) {
+        threadBookmark.title = title
+      }
+
+      if (threadBookmark.thumbnailUrl == null && opThumbnailUrl != null) {
+        threadBookmark.thumbnailUrl = opThumbnailUrl
+      }
+    }
   }
 
   private fun createNewNavHistoryElement(chanThread: ChanThread) {
@@ -569,8 +602,8 @@ class ThreadPresenter @Inject constructor(
 
       is ChanDescriptor.ThreadDescriptor -> {
         val image = chanLoader?.thread?.op?.firstImage()
-        val title = if (TextUtils.isEmpty(loadable!!.title)) {
-          PostHelper.getTitle(chanThread.op, loadable)
+        val title = if (TextUtils.isEmpty(localLoadable.title)) {
+          PostHelper.getTitle(chanThread.op, localLoadable)
         } else {
           localLoadable.title
         }

@@ -362,7 +362,6 @@ sealed class BehaviorScreen(
     object OpenLinkConfirmation : GeneralGroup("open_link_confirmation")
     object OpenLinkBrowser : GeneralGroup("open_link_browser")
     object ImageViewerGestures : GeneralGroup("image_viewer_gestures")
-    object AlwaysOpenDrawer : GeneralGroup("always_open_drawer")
     object CaptchaSetup : GeneralGroup("catpcha_setup")
     object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")
     object ClearThreadHides : GeneralGroup("clear_thread_hides")

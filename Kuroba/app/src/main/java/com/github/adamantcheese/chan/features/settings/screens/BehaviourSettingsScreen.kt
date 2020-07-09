@@ -274,13 +274,6 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.imageViewerGestures
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.GeneralGroup.AlwaysOpenDrawer,
-          topDescriptionIdFunc = { R.string.settings_always_open_drawer },
-          setting = ChanSettings.alwaysOpenDrawer
-        )
-
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.CaptchaSetup,

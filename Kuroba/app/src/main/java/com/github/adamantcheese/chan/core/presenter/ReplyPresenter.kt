@@ -22,6 +22,7 @@ import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.ReplyManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
@@ -42,8 +43,10 @@ import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate.ImagePickCallback
+import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import java.io.File
@@ -58,7 +61,8 @@ class ReplyPresenter @Inject constructor(
   private val databaseManager: DatabaseManager,
   private val lastReplyRepository: LastReplyRepository,
   private val siteRepository: SiteRepository,
-  private val boardRepository: BoardRepository
+  private val boardRepository: BoardRepository,
+  private val bookmarksManager: BookmarksManager
 ) : AuthenticationLayoutCallback, ImagePickCallback, CoroutineScope {
 
   enum class Page {
@@ -514,7 +518,7 @@ class ReplyPresenter @Inject constructor(
       localBoard,
       // for the time being, will be updated later when the watchmanager updates
       loadableNo,
-      "/" + localBoard.code + "/"
+      PostHelper.getTitle(draft)
     )
 
     val localLoadable = databaseManager.databaseLoadableManager.get(newLoadable)
@@ -525,19 +529,28 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (ChanSettings.postPinThread.get()) {
-      // TODO(KurobaEx): bookmark on post
-//      if (localLoadable.isThreadMode) {
-//        // reply
-//        val thread = callback.thread
-//        if (thread != null) {
-//          watchManager.createPin(localLoadable, thread.op)
-//        } else {
-//          watchManager.createPin(localLoadable)
-//        }
-//      } else {
-//        // new thread
-//        watchManager.createPin(localLoadable, draft)
-//      }
+      if (callback.thread?.loadable?.isThreadMode == true) {
+        // reply
+        val thread = callback.thread
+        if (thread != null) {
+          val op = thread.op
+          val title = PostHelper.getTitle(op, localLoadable)
+          val thumbnail = op.firstImage()?.thumbnailUrl
+
+          bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!, title, thumbnail)
+        } else {
+          bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!)
+        }
+      } else {
+        // new thread, use the new loadable
+        draft.loadable = localLoadable
+        val title = PostHelper.getTitle(draft)
+
+        bookmarksManager.createBookmark(
+          ChanDescriptor.ThreadDescriptor(localLoadable.boardDescriptor, loadableNo),
+          title
+        )
+      }
     }
 
     val savedReply = SavedReply.fromBoardNoPassword(

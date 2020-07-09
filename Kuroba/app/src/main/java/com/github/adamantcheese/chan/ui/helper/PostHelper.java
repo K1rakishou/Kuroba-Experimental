@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.site.http.Reply;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -67,6 +68,21 @@ public class PostHelper {
             }
         } else {
             return "";
+        }
+    }
+
+    @Nullable
+    public static String getTitle(Reply reply) {
+        if (!TextUtils.isEmpty(reply.subject)) {
+            return reply.subject;
+        } else if (!TextUtils.isEmpty(reply.comment)) {
+            int length = Math.min(reply.comment.length(), 200);
+            String boardCode = reply.loadable.boardCode;
+
+            return "/" + boardCode + "/ - " + reply.comment.subSequence(0, length);
+        } else {
+            String boardCode = reply.loadable.boardCode;
+            return "/" + boardCode + "/" + reply.loadable.no;
         }
     }
 
