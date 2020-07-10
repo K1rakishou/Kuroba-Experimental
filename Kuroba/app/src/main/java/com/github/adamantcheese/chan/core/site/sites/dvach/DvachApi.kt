@@ -9,6 +9,7 @@ import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.StringUtils
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
@@ -45,11 +46,11 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     while (reader.hasNext()) {
       val key = reader.nextName()
       when (key) {
-        "name" -> builder.name(reader.nextString())
-        "subject" -> builder.subject(reader.nextString())
-        "comment" -> builder.comment(reader.nextString())
+        "name" -> builder.name(reader.nextStringWithoutBOM())
+        "subject" -> builder.subject(reader.nextStringWithoutBOM())
+        "comment" -> builder.comment(reader.nextStringWithoutBOM())
         "timestamp" -> builder.setUnixTimestampSeconds(reader.nextLong())
-        "trip" -> builder.tripcode(reader.nextString())
+        "trip" -> builder.tripcode(reader.nextStringWithoutBOM())
         "parent" -> {
           parentPostId = reader.nextInt()
           builder.op(parentPostId == 0)
@@ -64,7 +65,7 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
         "files_count" -> builder.threadImagesCount(reader.nextInt())
         "lasthit" -> builder.lastModified(reader.nextLong())
         "num" -> {
-          val num = reader.nextString()
+          val num = reader.nextStringWithoutBOM()
           builder.id(num.toInt().toLong())
         }
         "files" -> {
@@ -122,16 +123,16 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
 
     while (reader.hasNext()) {
       when (reader.nextName()) {
-        "path" -> path = reader.nextString()
-        "name" -> fileName = reader.nextString()
+        "path" -> path = reader.nextStringWithoutBOM()
+        "name" -> fileName = reader.nextStringWithoutBOM()
         "size" -> {
           // 2ch is in kB
           fileSize = reader.nextLong() * 1024
         }
         "width" -> fileWidth = reader.nextInt()
         "height" -> fileHeight = reader.nextInt()
-        "thumbnail" -> thumbnail = reader.nextString()
-        "md5" -> fileHash = reader.nextString()
+        "thumbnail" -> thumbnail = reader.nextStringWithoutBOM()
+        "md5" -> fileHash = reader.nextStringWithoutBOM()
         else -> reader.skipValue()
       }
     }
@@ -214,12 +215,12 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     while (reader.hasNext()) {
       when (reader.nextName()) {
         "num" -> {
-          val num = reader.nextString()
+          val num = reader.nextStringWithoutBOM()
           postNo = num.toInt().toLong()
         }
         "closed" -> closed = reader.nextInt() == 1
         "archived" -> archived = reader.nextInt() == 1
-        "comment" -> comment = reader.nextString()
+        "comment" -> comment = reader.nextStringWithoutBOM()
         "parent" -> {
           val parentPostId = reader.nextInt()
           isOp = parentPostId == 0
@@ -330,6 +331,14 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     }
 
     reader.endObject()
+  }
+
+  // 2ch.hk sometimes sends strings with BOM character which crashes the app after extracting
+  // the posts subject from the database (for some reason Room/SQLite filters out this character)
+  // because we are trying to restore the spans but we end up with a string that has spans which
+  // bounds exceed string length.
+  private fun JsonReader.nextStringWithoutBOM(): String {
+    return StringUtils.removeUTF8BOM(nextString())
   }
 
   data class DvachExtraThreadInfo(

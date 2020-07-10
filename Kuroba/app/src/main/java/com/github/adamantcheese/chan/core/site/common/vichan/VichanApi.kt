@@ -7,67 +7,28 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
+import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
+import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class VichanApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
   override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    reader.beginObject()
-    // Page object
-
-    while (reader.hasNext()) {
-      val key = reader.nextName()
-      if (key == "posts") {
-        reader.beginArray()
-        // Thread array
-
-        while (reader.hasNext()) {
-          // Thread object
-          readPostObject(reader, chanReaderProcessor)
-        }
-
-        reader.endArray()
-      } else {
-        reader.skipValue()
-      }
-    }
-
-    reader.endObject()
+    vichanReaderExtensions.iteratePostsInThread(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
   }
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    reader.beginArray() // Array of pages
-
-    while (reader.hasNext()) {
-      reader.beginObject() // Page object
-
-      while (reader.hasNext()) {
-        if (reader.nextName() == "threads") {
-          reader.beginArray() // Threads array
-
-          while (reader.hasNext()) {
-            readPostObject(reader, chanReaderProcessor)
-          }
-
-          reader.endArray()
-        } else {
-          reader.skipValue()
-        }
-      }
-
-      reader.endObject()
-    }
-
-    reader.endArray()
+    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
   }
 
   @Throws(Exception::class)
@@ -258,7 +219,33 @@ class VichanApi(commonSite: CommonSite) : CommonApi(commonSite) {
     expectedCapacity: Int,
     reader: JsonReader
   ): ModularResult<ThreadBookmarkInfoObject> {
-    // TODO(KurobaEx):
-    TODO("Not yet implemented")
+    return ModularResult.Try {
+      val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
+        max(expectedCapacity, ChanReader.DEFAULT_POST_LIST_CAPACITY)
+      )
+
+      vichanReaderExtensions.iteratePostsInThread(reader) { reader ->
+        val postObject = vichanReaderExtensions.readThreadBookmarkInfoPostObject(reader)
+        if (postObject != null) {
+          postObjects += postObject
+        }
+      }
+
+      val originalPost = postObjects.firstOrNull { postObject ->
+        postObject is ThreadBookmarkInfoPostObject.OriginalPost
+      } as? ThreadBookmarkInfoPostObject.OriginalPost
+
+      if (originalPost == null) {
+        throw IllegalStateException("Thread $threadDescriptor has no OP")
+      }
+
+      check(threadDescriptor.threadNo == originalPost.postNo) {
+        "Original post has incorrect postNo, " +
+          "expected: ${threadDescriptor.threadNo}, actual: ${originalPost.postNo}"
+      }
+
+      return@Try ThreadBookmarkInfoObject(threadDescriptor, postObjects)
+    }
   }
+
 }

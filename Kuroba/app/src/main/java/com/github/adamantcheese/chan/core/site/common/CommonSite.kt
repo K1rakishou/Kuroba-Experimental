@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.site.*
+import com.github.adamantcheese.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.adamantcheese.chan.core.site.http.*
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
@@ -533,9 +534,12 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonApi(protected var site: CommonSite) : ChanReader {
+    val vichanReaderExtensions = VichanReaderExtensions()
+
     override suspend fun getParser(): PostParser? {
       return site.postParser
     }
+
   }
   
   abstract inner class CommonRequestModifier : SiteRequestModifier {

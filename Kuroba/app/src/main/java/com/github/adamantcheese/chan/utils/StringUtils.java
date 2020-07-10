@@ -17,6 +17,7 @@ public class StringUtils {
     private static final String RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s";
     private static final String RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]";
     private static final String RESERVED_CHARACTERS_FILE = "[" + RESERVED_CHARACTERS + "]";
+    private static final String UTF8_BOM = "\uFEFF";
 
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
@@ -138,5 +139,12 @@ public class StringUtils {
             }
         }
         return false;
+    }
+
+    public static String removeUTF8BOM(String input) {
+        if (input.startsWith(UTF8_BOM)) {
+            input = input.substring(1);
+        }
+        return input;
     }
 }

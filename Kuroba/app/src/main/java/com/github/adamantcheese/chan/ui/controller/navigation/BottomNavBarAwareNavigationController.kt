@@ -7,7 +7,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.common.updateMargins
 import javax.inject.Inject
@@ -23,7 +22,7 @@ class BottomNavBarAwareNavigationController(
   override fun onCreate() {
     super.onCreate()
 
-    view = AndroidUtils.inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
+    view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
 
     val nav = container as NavigationControllerContainerLayout

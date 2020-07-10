@@ -102,6 +102,7 @@ class ThreadWatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchBackground
         )
 
+        // TODO(KurobaEx): change this to: notify about quotes to your posts? (yes/no)
         group += ListSettingV2.createBuilder<String>(
           context = context,
           identifier = ThreadWatcherScreen.MainGroup.WatchNotifyMode,
@@ -119,6 +120,7 @@ class ThreadWatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchBackground
         )
 
+        // TODO(KurobaEx): change this to: use sound for alert notifications? (yes/no)
         group += ListSettingV2.createBuilder<String>(
           context = context,
           identifier = ThreadWatcherScreen.MainGroup.WatchSound,
@@ -136,6 +138,7 @@ class ThreadWatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchBackground
         )
 
+        // TODO(KurobaEx): change this to: use headups for alert notifications? (yes/no)
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = ThreadWatcherScreen.MainGroup.WatchHeadsup,

@@ -455,10 +455,12 @@ public class BrowseController
 
         SitesSetupController setupController = new SitesSetupController(context);
         if (doubleNavigationController != null) {
-            doubleNavigationController.pushController(setupController);
+            doubleNavigationController.openControllerWrappedIntoBottomNavAwareController(setupController);
         } else {
-            navigationController.pushController(setupController);
+            requireStartActivity().openControllerWrappedIntoBottomNavAwareController(setupController);
         }
+
+        requireStartActivity().setSettingsMenuItemSelected();
     }
 
     private void handleShareAndOpenInBrowser(boolean share) {
@@ -519,6 +521,8 @@ public class BrowseController
         } else {
             requireStartActivity().openControllerWrappedIntoBottomNavAwareController(siteSetupController);
         }
+
+        requireStartActivity().setSettingsMenuItemSelected();
     }
 
     @Override

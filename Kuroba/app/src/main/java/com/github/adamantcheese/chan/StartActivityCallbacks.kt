@@ -4,4 +4,6 @@ import com.github.adamantcheese.chan.controller.Controller
 
 interface StartActivityCallbacks {
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller)
+  fun setSettingsMenuItemSelected()
+  fun setBookmarksMenuItemSelected()
 }

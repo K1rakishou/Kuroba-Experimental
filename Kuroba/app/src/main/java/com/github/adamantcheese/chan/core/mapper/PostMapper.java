@@ -56,22 +56,6 @@ public class PostMapper {
         );
     }
 
-    public static List<SerializablePost> toSerializablePostList(
-            PostFilterManager postFilterManager,
-            Gson gson,
-            List<Post> postList
-    ) {
-        List<SerializablePost> serializablePostList = new ArrayList<>(postList.size());
-
-        for (Post post : postList) {
-            SerializablePost serializablePost = toSerializablePost(postFilterManager, gson, post);
-
-            serializablePostList.add(serializablePost);
-        }
-
-        return serializablePostList;
-    }
-
     public static Post fromSerializedPost(
             Gson gson,
             Loadable loadable,

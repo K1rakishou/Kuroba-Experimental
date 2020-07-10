@@ -156,6 +156,7 @@ class SiteSetupController(
         requireStartActivity().openControllerWrappedIntoBottomNavAwareController(
           LoginController(context, site)
         )
+        requireStartActivity().setSettingsMenuItemSelected()
       })
 
     login.add(loginLink)

@@ -40,7 +40,11 @@ public class GsonModule {
                         .registerSubtype(IntegerJsonSetting.class, "integer")
                         .registerSubtype(LongJsonSetting.class, "long")
                         .registerSubtype(BooleanJsonSetting.class, "boolean");
+
         Logger.d(AppModule.DI_TAG, "Gson module");
-        return new GsonBuilder().registerTypeAdapterFactory(userSettingAdapter).create();
+
+        return new GsonBuilder()
+                .registerTypeAdapterFactory(userSettingAdapter)
+                .create();
     }
 }

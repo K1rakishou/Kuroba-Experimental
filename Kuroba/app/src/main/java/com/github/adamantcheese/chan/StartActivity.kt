@@ -332,6 +332,14 @@ class StartActivity : AppCompatActivity(),
     drawerController.openControllerWrappedIntoBottomNavAwareController(controller)
   }
 
+  override fun setSettingsMenuItemSelected() {
+    drawerController.setSettingsMenuItemSelected()
+  }
+
+  override fun setBookmarksMenuItemSelected() {
+    drawerController.setBookmarksMenuItemSelected()
+  }
+
   private fun restoreFromUrl(): Boolean {
     var handled = false
     val data = intent.data

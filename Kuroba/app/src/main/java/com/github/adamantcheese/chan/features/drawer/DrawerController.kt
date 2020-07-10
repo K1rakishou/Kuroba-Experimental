@@ -284,7 +284,7 @@ class DrawerController(
     openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
   }
 
-  fun openSettingsController() {
+  private fun openSettingsController() {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context))
   }
@@ -301,6 +301,14 @@ class DrawerController(
 
     pushChildController(bottomNavBarAwareNavigationController)
     bottomNavBarAwareNavigationController.pushController(controller)
+  }
+
+  fun setSettingsMenuItemSelected() {
+    bottomNavView.menu.findItem(R.id.action_settings)?.isChecked = true
+  }
+
+  fun setBookmarksMenuItemSelected() {
+    bottomNavView.menu.findItem(R.id.action_bookmarks)?.isChecked = true
   }
 
   fun loadThread(
@@ -383,23 +391,6 @@ class DrawerController(
         closeAllFloatingControllers(childController.childControllers)
       }
     }
-  }
-
-  private fun openController(controller: Controller) {
-    val topController = top
-      ?: return
-
-    if (topController is NavigationController) {
-      closeAllNonMainControllers()
-
-      topController.pushController(controller, false)
-    } else if (topController is DoubleNavigationController) {
-      closeAllNonMainControllers()
-
-      topController.pushController(controller, false)
-    }
-
-    drawerLayout.closeDrawer(GravityCompat.START)
   }
 
   override fun onClick(v: View) {

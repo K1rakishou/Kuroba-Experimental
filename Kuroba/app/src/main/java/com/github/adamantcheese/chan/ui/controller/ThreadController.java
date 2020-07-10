@@ -273,10 +273,12 @@ public abstract class ThreadController
     public void openFilterForType(FilterType type, String filterText) {
         FiltersController filtersController = new FiltersController(context);
         if (doubleNavigationController != null) {
-            doubleNavigationController.pushController(filtersController);
+            doubleNavigationController.openControllerWrappedIntoBottomNavAwareController(filtersController);
         } else {
-            navigationController.pushController(filtersController);
+            requireStartActivity().openControllerWrappedIntoBottomNavAwareController(filtersController);
         }
+
+        requireStartActivity().setSettingsMenuItemSelected();
 
         Filter filter = new Filter();
         filter.type = type.flag;
