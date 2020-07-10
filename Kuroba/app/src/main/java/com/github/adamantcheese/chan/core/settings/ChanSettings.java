@@ -174,10 +174,8 @@ public class ChanSettings {
     public static final BooleanSetting watchEnabled;
     public static final BooleanSetting watchBackground;
     public static final IntegerSetting watchBackgroundInterval;
+    public static final BooleanSetting replyNotifications;
     public static final BooleanSetting watchLastPageNotify;
-    public static final StringSetting watchNotifyMode;
-    public static final StringSetting watchSound;
-    public static final BooleanSetting watchPeek;
     //endregion
 
     //region APPEARANCE
@@ -320,10 +318,8 @@ public class ChanSettings {
             watchBackground.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(watchBackground)));
             watchBackgroundInterval = new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
             watchBackgroundInterval.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(watchBackgroundInterval)));
+            replyNotifications = new BooleanSetting(p, "reply_notifications", true);
             watchLastPageNotify = new BooleanSetting(p, "preference_watch_last_page_notify", false);
-            watchNotifyMode = new StringSetting(p, "preference_watch_notify_mode", NOTIFY_ALL_POSTS);
-            watchSound = new StringSetting(p, "preference_watch_sound", "quotes");
-            watchPeek = new BooleanSetting(p, "preference_watch_peek", true);
             //endregion
 
             //region APPEARANCE

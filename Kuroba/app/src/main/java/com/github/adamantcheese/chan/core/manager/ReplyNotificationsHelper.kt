@@ -19,6 +19,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
@@ -107,6 +108,11 @@ class ReplyNotificationsHelper(
   }
 
   private suspend fun showOrUpdateNotificationsInternal() {
+    if (!ChanSettings.replyNotifications.get()) {
+      Logger.d(TAG, "showOrUpdateNotificationsInternal() ChanSettings.replyNotifications == false")
+      return
+    }
+
     val unreadNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
 
     bookmarksManager.mapBookmarksOrdered { threadBookmarkView ->
@@ -151,7 +157,6 @@ class ReplyNotificationsHelper(
 
     if (!AndroidUtils.isAndroidO()) {
       return showNotificationsForAndroidNougatAndBelow(
-        notificationsGroup,
         unreadNotificationsGrouped
       )
     }
@@ -167,7 +172,6 @@ class ReplyNotificationsHelper(
       ?: DateTime.now()
 
     val hasUnseenReplies = showSummaryNotification(
-      notificationsGroup,
       notificationTime,
       sortedUnreadNotificationsGrouped
     )
@@ -179,7 +183,6 @@ class ReplyNotificationsHelper(
     }
 
     val shownNotifications = showNotificationsForAndroidOreoAndAbove(
-      notificationsGroup,
       notificationTime,
       sortedUnreadNotificationsGrouped
     )
@@ -214,7 +217,6 @@ class ReplyNotificationsHelper(
   }
 
   private fun showNotificationsForAndroidNougatAndBelow(
-    notificationsGroup: String,
     unreadNotificationsGrouped: MutableMap<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>
   ): Map<ChanDescriptor.ThreadDescriptor, Set<ThreadBookmarkReplyView>> {
     val threadsWithUnseenRepliesCount = unreadNotificationsGrouped.size
@@ -304,7 +306,6 @@ class ReplyNotificationsHelper(
 
   @RequiresApi(Build.VERSION_CODES.O)
   private fun showSummaryNotification(
-    notificationsGroup: String,
     notificationTime: DateTime,
     unreadNotificationsGrouped: Map<ChanDescriptor.ThreadDescriptor, List<ThreadBookmarkReplyView>>
   ): Boolean {
@@ -377,7 +378,6 @@ class ReplyNotificationsHelper(
 
   @RequiresApi(Build.VERSION_CODES.O)
   suspend fun showNotificationsForAndroidOreoAndAbove(
-    notificationsGroup: String,
     notificationTime: DateTime,
     unreadNotificationsGrouped: Map<ChanDescriptor.ThreadDescriptor, List<ThreadBookmarkReplyView>>
   ): Map<ChanDescriptor.ThreadDescriptor, Set<ThreadBookmarkReplyView>> {

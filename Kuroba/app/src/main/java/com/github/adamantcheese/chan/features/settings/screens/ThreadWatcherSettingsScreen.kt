@@ -95,56 +95,19 @@ class ThreadWatcherSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = ThreadWatcherScreen.MainGroup.ReplyNotifications,
+          topDescriptionIdFunc = { R.string.setting_reply_notifications },
+          bottomDescriptionIdFunc = { R.string.setting_reply_notifications_description },
+          setting = ChanSettings.replyNotifications,
+          dependsOnSetting = ChanSettings.watchBackground
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
           topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
           bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
           setting = ChanSettings.watchLastPageNotify,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        // TODO(KurobaEx): change this to: notify about quotes to your posts? (yes/no)
-        group += ListSettingV2.createBuilder<String>(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.WatchNotifyMode,
-          topDescriptionIdFunc = { R.string.setting_watch_notify_mode },
-          bottomDescriptionStringFunc = { itemName -> itemName },
-          items = listOf(NOTIFY_ALL_POSTS, NOTIFY_ONLY_QUOTES),
-          itemNameMapper = { item ->
-            when (item) {
-              NOTIFY_ALL_POSTS -> context.resources.getString(R.string.setting_watch_notify_mode_all_posts)
-              NOTIFY_ONLY_QUOTES -> context.resources.getString(R.string.setting_watch_notify_mode_only_quotes)
-              else -> throw IllegalArgumentException("Unknown item: ${item}")
-            }
-          },
-          setting = ChanSettings.watchNotifyMode,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        // TODO(KurobaEx): change this to: use sound for alert notifications? (yes/no)
-        group += ListSettingV2.createBuilder<String>(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.WatchSound,
-          topDescriptionIdFunc = { R.string.setting_watch_sound },
-          bottomDescriptionStringFunc = { itemName -> itemName },
-          items = listOf(NOTIFY_ALL_POSTS, NOTIFY_ONLY_QUOTES),
-          itemNameMapper = { item ->
-            when (item) {
-              NOTIFY_ALL_POSTS -> context.resources.getString(R.string.setting_watch_notify_sound_all_posts)
-              NOTIFY_ONLY_QUOTES -> context.resources.getString(R.string.setting_watch_notify_sound_only_quotes)
-              else -> throw IllegalArgumentException("Unknown item: ${item}")
-            }
-          },
-          setting = ChanSettings.watchSound,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        // TODO(KurobaEx): change this to: use headups for alert notifications? (yes/no)
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.WatchHeadsup,
-          topDescriptionIdFunc = { R.string.setting_watch_peek },
-          bottomDescriptionIdFunc = { R.string.setting_watch_peek_description },
-          setting = ChanSettings.watchPeek,
           dependsOnSetting = ChanSettings.watchBackground
         )
 
@@ -192,9 +155,6 @@ class ThreadWatcherSettingsScreen(
   }
 
   companion object {
-    const val NOTIFY_ALL_POSTS = "all"
-    const val NOTIFY_ONLY_QUOTES = "quotes"
-
     private val INTERVALS = listOf(
       TimeUnit.MINUTES.toMillis(15).toInt(),
       TimeUnit.MINUTES.toMillis(30).toInt(),

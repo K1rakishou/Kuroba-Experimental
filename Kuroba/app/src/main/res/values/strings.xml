@@ -444,17 +444,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_background_watcher_first_option">%1$s (More frequent updates, worse for battery)</string>
     <string name="setting_background_watcher_last_option">%1$s (Less frequent updates, better for battery)</string>
 
+    <string name="setting_reply_notifications">Reply notifications</string>
+    <string name="setting_reply_notifications_description">Notify when your posts are being replied to</string>
     <string name="setting_thread_page_limit_notify">Last page notifications</string>
     <string name="setting_thread_page_limit_notify_description">Notify when threads hit the last page</string>
-    <string name="setting_watch_notify_mode">Notify about</string>
-    <string name="setting_watch_sound">Notification sound</string>
-    <string name="setting_watch_notify_mode_all_posts">All posts</string>
-    <string name="setting_watch_notify_mode_only_quotes">Only posts quoting you</string>
-    <string name="setting_watch_notify_sound_all_posts">All posts</string>
-    <string name="setting_watch_notify_sound_only_quotes">Only posts quoting you</string>
-    <string name="setting_watch_peek">Heads-up notification on quotes</string>
-    <string name="setting_watch_peek_description">Show a heads-up notification when quoted</string>
-    <string name="setting_watch_led">Notification light</string>
     <string name="setting_watch_background_limitations_dialog_title">Regarding background limitation of certain phone models…</string>
     <string name="setting_watch_background_limitations_dialog_description">It appears that your phone model is one of the models with known problems related to app background execution limitations. If you ever notice that you have no notifications (even though they are supposed to be) when the app is in background, then check this link out for possible solutions:\n\n%1$s"</string>
 
