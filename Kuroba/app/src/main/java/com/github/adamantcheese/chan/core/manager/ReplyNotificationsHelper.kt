@@ -72,9 +72,6 @@ class ReplyNotificationsHelper(
   private val debouncer = SuspendDebouncer(appScope)
   private val working = AtomicBoolean(false)
 
-  // For Adnroid O and above
-  private val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
-
   init {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
@@ -148,7 +145,7 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "showNotificationForReplies(${unreadNotificationsGrouped.size})")
 
     if (unreadNotificationsGrouped.isEmpty()) {
-      // TODO(KurobaEx): close all notifications with "reply" group
+      closeAllNotifications()
       return emptyMap()
     }
 
@@ -190,9 +187,9 @@ class ReplyNotificationsHelper(
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && verboseLogsEnabled) {
       notificationManager.activeNotifications.forEach { notification ->
         Logger.d(TAG, "active notification, id: ${notification.id}, " +
-          "group=${notification.isGroup}, " +
-          "groupKey=${notification.notification.group}, " +
-          "behavior=${notification.notification.groupAlertBehavior}")
+          "isGroup=${notification.isGroup}, " +
+          "group=${notification.notification.group}, " +
+          "groupAlertBehavior=${notification.notification.groupAlertBehavior}")
       }
     }
 
@@ -736,7 +733,11 @@ class ReplyNotificationsHelper(
     }
 
     val visibleNotifications = notificationManager.activeNotifications
-      .filter { notification -> notification.groupKey == notificationsGroup }
+      .filter { statusBarNotification -> statusBarNotification.notification.group == notificationsGroup }
+
+    if (visibleNotifications.isEmpty()) {
+      return
+    }
 
     val maxNotificationId = visibleNotifications.maxBy { notification -> notification.id }?.id ?: 0
     if (maxNotificationId > NotificationConstants.ReplyNotifications.notificationIdCounter.get()) {
@@ -756,12 +757,33 @@ class ReplyNotificationsHelper(
     }
   }
 
+  private fun closeAllNotifications() {
+    if (!AndroidUtils.isAndroidO()) {
+      notificationManagerCompat.cancel(REPLIES_PRE_OREO_NOTIFICATION_TAG, REPLIES_PRE_OREO_NOTIFICATION_ID)
+      return
+    }
+
+    val visibleNotifications = notificationManager.activeNotifications
+      .filter { statusBarNotification -> statusBarNotification.notification.group == notificationsGroup }
+
+    if (visibleNotifications.isEmpty()) {
+      return
+    }
+
+    visibleNotifications.forEach { notification ->
+      notificationManagerCompat.cancel(notification.tag, notification.id)
+    }
+  }
+
   companion object {
     private const val TAG = "ReplyNotificationsHelper"
 
     private const val NOTIFICATIONS_UPDATE_DEBOUNCE_TIME = 1000L
     private const val MAX_THREAD_TITLE_LENGTH = 50
     private const val MAX_THUMBNAIL_REQUESTS_PER_BATCH = 8
+
+    // For Android O and above
+    private val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
 
     private val REPLIES_COMPARATOR = Comparator<ThreadBookmarkReplyView> { o1, o2 ->
       o1.postDescriptor.postNo.compareTo(o2.postDescriptor.postNo)
