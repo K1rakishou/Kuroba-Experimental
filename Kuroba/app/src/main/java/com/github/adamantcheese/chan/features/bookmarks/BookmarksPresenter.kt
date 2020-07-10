@@ -125,8 +125,20 @@ class BookmarksPresenter(
     bookmarksManager.onBookmarkMoved(fromPosition, toPosition)
   }
 
+  fun hasBookmarks(): Boolean {
+    return bookmarksManager.bookmarksCount() > 0
+  }
+
+  fun hasNonActiveBookmarks(): Boolean {
+    return bookmarksManager.hasNonActiveBookmarks()
+  }
+
   fun pruneNonActive() {
     bookmarksManager.pruneNonActive()
+  }
+
+  fun clearAllBookmarks() {
+    bookmarksManager.deleteAllBookmarks()
   }
 
   fun markAllAsSeen() {

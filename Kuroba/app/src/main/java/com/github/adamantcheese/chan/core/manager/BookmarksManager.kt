@@ -274,6 +274,19 @@ class BookmarksManager(
     }
   }
 
+  fun deleteAllBookmarks() {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    lock.write {
+      val allBookmarksDescriptors = bookmarks.keys.toList()
+
+      bookmarks.clear()
+      orders.clear()
+
+      bookmarksChanged(BookmarkChange.BookmarksDeleted(allBookmarksDescriptors))
+    }
+  }
+
   fun readPostsAndNotificationsForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -467,6 +480,16 @@ class BookmarksManager(
     return lock.read {
       return@read bookmarks.any { (_, bookmark) ->
         return@any bookmark.isActive()
+      }
+    }
+  }
+
+  fun hasNonActiveBookmarks(): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    return lock.read {
+      return@read bookmarks.any { (_, bookmark) ->
+        return@any !bookmark.isActive()
       }
     }
   }

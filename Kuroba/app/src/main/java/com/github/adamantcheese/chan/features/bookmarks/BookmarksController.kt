@@ -91,6 +91,15 @@ class BookmarksController(
             onPruneNonActiveBookmarksClicked(subItem)
           }
         })
+      .withSubItem(
+        ACTION_CLEAR_ALL_BOOKMARKS,
+        R.string.controller_bookmarks_clear_all_bookmarks,
+        object : ToolbarMenuSubItem.ClickCallback {
+          override fun clicked(subItem: ToolbarMenuSubItem) {
+            onClearAllBookmarksClicked(subItem)
+          }
+        }
+      )
       .build()
       .build()
 
@@ -120,7 +129,27 @@ class BookmarksController(
     bookmarksPresenter.onCreate(this)
   }
 
+  private fun onClearAllBookmarksClicked(subItem: ToolbarMenuSubItem) {
+    if (!bookmarksPresenter.hasBookmarks()) {
+      return
+    }
+
+    DialogUtils.createSimpleConfirmationDialog(
+      context,
+      applicationVisibilityManager.isAppInForeground(),
+      R.string.controller_bookmarks_clear_all_bookmarks_confirmation_message,
+      positiveButtonTextId = R.string.controller_bookmarks_clear,
+      onPositiveButtonClickListener = {
+        bookmarksPresenter.clearAllBookmarks()
+      }
+    )
+  }
+
   private fun onPruneNonActiveBookmarksClicked(subItem: ToolbarMenuSubItem) {
+    if (!bookmarksPresenter.hasNonActiveBookmarks()) {
+      return
+    }
+
     DialogUtils.createSimpleConfirmationDialog(
       context,
       applicationVisibilityManager.isAppInForeground(),
@@ -406,5 +435,6 @@ class BookmarksController(
 
     private const val ACTION_PRUNE_NON_ACTIVE_BOOKMARKS = 2000
     private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001
+    private const val ACTION_CLEAR_ALL_BOOKMARKS = 2002
   }
 }
