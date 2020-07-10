@@ -53,12 +53,30 @@ class ThreadWatcherSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = ThreadWatcherScreen.MainGroup.ReplyNotifications,
+          topDescriptionIdFunc = { R.string.setting_reply_notifications },
+          bottomDescriptionIdFunc = { R.string.setting_reply_notifications_description },
+          setting = ChanSettings.replyNotifications,
+          dependsOnSetting = ChanSettings.watchEnabled
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = ThreadWatcherScreen.MainGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_background_description },
           checkChangedCallback = { checked -> showShittyPhonesBackgroundLimitationsExplanationDialog(checked) },
           setting = ChanSettings.watchBackground,
           dependsOnSetting = ChanSettings.watchEnabled
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
+          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
+          bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
+          setting = ChanSettings.watchLastPageNotify,
+          dependsOnSetting = ChanSettings.watchBackground
         )
 
         group += ListSettingV2.createBuilder<Int>(
@@ -90,24 +108,6 @@ class ThreadWatcherSettingsScreen(
             return@createBuilder timeoutString
           },
           setting = ChanSettings.watchBackgroundInterval,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.ReplyNotifications,
-          topDescriptionIdFunc = { R.string.setting_reply_notifications },
-          bottomDescriptionIdFunc = { R.string.setting_reply_notifications_description },
-          setting = ChanSettings.replyNotifications,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
-          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
-          bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
-          setting = ChanSettings.watchLastPageNotify,
           dependsOnSetting = ChanSettings.watchBackground
         )
 
