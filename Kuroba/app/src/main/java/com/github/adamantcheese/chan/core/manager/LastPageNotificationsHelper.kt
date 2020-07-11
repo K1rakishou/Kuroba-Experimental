@@ -77,13 +77,6 @@ class LastPageNotificationsHelper(
       return
     }
 
-    if (isDevFlavor) {
-      // TODO(KurobaEx): remove?
-      threadsWithTitles.forEach { (threadDescriptor, title) ->
-        Logger.d(TAG, "Thread $threadDescriptor (${title.take(50)}) hit last page")
-      }
-    }
-
     setupChannels()
 
     notificationManagerCompat.notify(
@@ -126,8 +119,10 @@ class LastPageNotificationsHelper(
     )
 
     val threadsOnLastPageCount = threadsWithTitles.count()
-    // TODO(KurobaEx): strings
-    val title = "$threadsOnLastPageCount thread(s) hit last page"
+    val title = appContext.resources.getString(
+      R.string.last_page_notification_threads_hit_last_page_format,
+      threadsOnLastPageCount
+    )
     val useSoundForLastPageNotifications = ChanSettings.useSoundForLastPageNotifications.get()
 
     val builder = if (useSoundForLastPageNotifications) {

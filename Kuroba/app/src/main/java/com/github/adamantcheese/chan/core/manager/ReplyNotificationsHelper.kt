@@ -220,8 +220,12 @@ class ReplyNotificationsHelper(
   ): Map<ChanDescriptor.ThreadDescriptor, Set<ThreadBookmarkReplyView>> {
     val threadsWithUnseenRepliesCount = unreadNotificationsGrouped.size
     val totalUnseenRepliesCount = unreadNotificationsGrouped.values.sumBy { replies -> replies.size }
-    // TODO(KurobaEx): strings
-    val titleText = "You have $totalUnseenRepliesCount replies in $threadsWithUnseenRepliesCount thread(s)"
+
+    val titleText = appContext.resources.getString(
+      R.string.reply_notifications_new_replies_total_stats,
+      totalUnseenRepliesCount,
+      threadsWithUnseenRepliesCount
+    )
 
     val unseenRepliesCount = unreadNotificationsGrouped.values
       .flatten()
@@ -349,8 +353,12 @@ class ReplyNotificationsHelper(
 
     val threadsWithUnseenRepliesCount = unreadNotificationsGrouped.size
     val totalUnseenRepliesCount = unreadNotificationsGrouped.values.sumBy { replies -> replies.size }
-    // TODO(KurobaEx): strings
-    val titleText = "You have $totalUnseenRepliesCount replies in $threadsWithUnseenRepliesCount thread(s)"
+
+    val titleText = appContext.resources.getString(
+      R.string.reply_notifications_new_replies_total_stats,
+      totalUnseenRepliesCount,
+      threadsWithUnseenRepliesCount
+    )
 
     check(threadsWithUnseenRepliesCount > 0) { "Bad threadsWithUnseenRepliesCount" }
     check(totalUnseenRepliesCount > 0) { "Bad totalUnseenRepliesCount" }
@@ -407,8 +415,12 @@ class ReplyNotificationsHelper(
 
       val threadTitle = getThreadTitle(originalPosts, threadDescriptor)
 
-      // TODO(KurobaEx): strings
-      val titleText = "You have ${threadBookmarkReplies.size} new replies in thread ${threadDescriptor.threadNo}"
+      val titleText = appContext.resources.getString(
+        R.string.reply_notifications_new_replies_in_thread,
+        threadBookmarkReplies.size,
+        threadDescriptor.threadNo
+      )
+
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
       val notificationId = getOrCalculateNotificationId(threadDescriptor)
 
@@ -652,8 +664,13 @@ class ReplyNotificationsHelper(
       .takeLast(MAX_LINES_IN_NOTIFICATION)
 
     repliesSorted.forEach { reply ->
-      // TODO(KurobaEx): strings
-      notificationStyle.addLine("Reply from ${reply.postDescriptor.postNo} to post ${reply.repliesTo.postNo}")
+      val formattedReply = appContext.resources.getString(
+        R.string.reply_notifications_reply_format,
+        reply.postDescriptor.postNo,
+        reply.repliesTo.postNo
+      )
+
+      notificationStyle.addLine(formattedReply)
     }
 
     setStyle(notificationStyle)
