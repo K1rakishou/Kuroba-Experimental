@@ -72,8 +72,15 @@ class EpoxyArchiveSettingRow @JvmOverloads constructor(
     }.exhaustive
   }
 
-  @ModelProp
-  fun setArchiveState(state: ArchiveState) {
+  @ModelProp(ModelProp.Option.NullOnRecycle)
+  fun setArchiveState(state: ArchiveState?) {
+    if (state == null) {
+      archiveState.isEnabled = true
+      archiveState.isClickable = false
+      archiveState.isFocusable = false
+      return
+    }
+
     archiveState.isChecked = when (state) {
       ArchiveState.Enabled -> true
       ArchiveState.Disabled,
