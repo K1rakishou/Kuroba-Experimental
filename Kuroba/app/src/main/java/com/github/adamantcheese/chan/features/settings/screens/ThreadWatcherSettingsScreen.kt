@@ -62,6 +62,14 @@ class ThreadWatcherSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = ThreadWatcherScreen.MainGroup.UseSoundForReplyNotifications,
+          topDescriptionIdFunc = { R.string.setting_reply_notifications_use_sound },
+          setting = ChanSettings.useSoundForReplyNotifications,
+          dependsOnSetting = ChanSettings.replyNotifications
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = ThreadWatcherScreen.MainGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_background_description },
@@ -77,6 +85,14 @@ class ThreadWatcherSettingsScreen(
           bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
           setting = ChanSettings.watchLastPageNotify,
           dependsOnSetting = ChanSettings.watchBackground
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.UseSoundForLastPageNotifications,
+          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_use_sound },
+          setting = ChanSettings.useSoundForLastPageNotifications,
+          dependsOnSetting = ChanSettings.watchLastPageNotify
         )
 
         group += ListSettingV2.createBuilder<Int>(

@@ -229,7 +229,9 @@ sealed class ThreadWatcherScreen(
     object EnableBackgroundThreadWatcher : MainGroup("enable_background_thread_watcher")
     object ThreadWatcherTimeout : MainGroup("thread_watcher_timeout")
     object ReplyNotifications : MainGroup("reply_notifications")
+    object UseSoundForReplyNotifications : MainGroup("use_sound_for_reply_notifications")
     object WatchLastPageNotify : MainGroup("watch_last_page_notify")
+    object UseSoundForLastPageNotifications : MainGroup("use_sound_for_last_page_notifications")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

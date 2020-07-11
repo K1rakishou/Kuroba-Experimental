@@ -19,6 +19,8 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_NAME
+import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID
+import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_NAME
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import java.util.*
@@ -124,19 +126,47 @@ class LastPageNotificationsHelper(
     )
 
     val threadsOnLastPageCount = threadsWithTitles.count()
+    // TODO(KurobaEx): strings
     val title = "$threadsOnLastPageCount thread(s) hit last page"
+    val useSoundForLastPageNotifications = ChanSettings.useSoundForLastPageNotifications.get()
 
-    return NotificationCompat.Builder(appContext, LAST_PAGE_NOTIFICATION_CHANNEL_ID)
-      .setSmallIcon(R.drawable.ic_stat_notify_alert)
+    val builder = if (useSoundForLastPageNotifications) {
+      NotificationCompat.Builder(appContext, LAST_PAGE_NOTIFICATION_CHANNEL_ID)
+    } else {
+      NotificationCompat.Builder(appContext, LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID)
+    }
+
+    val priority = if (useSoundForLastPageNotifications) {
+      NotificationCompat.PRIORITY_MAX
+    } else {
+      NotificationCompat.PRIORITY_LOW
+    }
+
+    return builder.setSmallIcon(R.drawable.ic_stat_notify_alert)
       .setContentTitle(title)
       .setupNotificationStyle(title, threadsWithTitles)
       .setContentIntent(pendingIntent)
-      .setPriority(NotificationCompat.PRIORITY_MAX)
-      .setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
-      .setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+      .setPriority(priority)
+      .setupSoundAndVibration(useSoundForLastPageNotifications)
       .setAutoCancel(true)
       .setWhen(System.currentTimeMillis())
       .build()
+  }
+
+  private fun NotificationCompat.Builder.setupSoundAndVibration(
+    useSoundForLastPageNotifications: Boolean
+  ): NotificationCompat.Builder {
+      Logger.d(TAG, "Using sound and vibration: useSoundForLastPageNotifications=${useSoundForLastPageNotifications}")
+
+      if (useSoundForLastPageNotifications) {
+        setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
+      } else {
+        setDefaults(Notification.DEFAULT_VIBRATE)
+      }
+
+      setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+
+    return this
   }
 
   private fun NotificationCompat.Builder.setupNotificationStyle(
@@ -196,8 +226,22 @@ class LastPageNotificationsHelper(
 
       lastPageAlertChannel.enableLights(true)
       lastPageAlertChannel.lightColor = appContext.resources.getColor(R.color.accent)
+      lastPageAlertChannel.enableVibration(true)
 
       notificationManagerCompat.createNotificationChannel(lastPageAlertChannel)
+    }
+
+    if (notificationManagerCompat.getNotificationChannel(LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() creating ${LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID} channel")
+
+      // notification channel for replies summary
+      val summaryChannel = NotificationChannel(
+        LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID,
+        LAST_PAGE_SILENT_NOTIFICATION_NAME,
+        NotificationManager.IMPORTANCE_LOW
+      )
+
+      notificationManagerCompat.createNotificationChannel(summaryChannel)
     }
   }
 

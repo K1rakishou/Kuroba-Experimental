@@ -175,7 +175,9 @@ public class ChanSettings {
     public static final BooleanSetting watchBackground;
     public static final IntegerSetting watchBackgroundInterval;
     public static final BooleanSetting replyNotifications;
+    public static final BooleanSetting useSoundForReplyNotifications;
     public static final BooleanSetting watchLastPageNotify;
+    public static final BooleanSetting useSoundForLastPageNotifications;
     //endregion
 
     //region APPEARANCE
@@ -319,7 +321,9 @@ public class ChanSettings {
             watchBackgroundInterval = new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
             watchBackgroundInterval.addCallback((setting, value) -> postToEventBus(new SettingChanged<>(watchBackgroundInterval)));
             replyNotifications = new BooleanSetting(p, "reply_notifications", true);
+            useSoundForReplyNotifications = new BooleanSetting(p, "use_sound_for_reply_notifications", false);
             watchLastPageNotify = new BooleanSetting(p, "preference_watch_last_page_notify", false);
+            useSoundForLastPageNotifications = new BooleanSetting(p, "use_sound_for_last_page_notifications", false);
             //endregion
 
             //region APPEARANCE
