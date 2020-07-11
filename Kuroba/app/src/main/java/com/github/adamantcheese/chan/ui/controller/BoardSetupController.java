@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.ui.layout.BoardAddLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.CrossfadeView;
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration;
+import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -56,7 +57,6 @@ import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.fixSnackbarText;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -194,28 +194,27 @@ public class BoardSetupController
 
     @Override
     public void showRemovedSnackbar(final Board board) {
-        Snackbar snackbar = Snackbar.make(view,
+        SnackbarWrapper snackbarWrapper = SnackbarWrapper.create(
+                view,
                 getString(R.string.setup_board_removed, BoardHelper.getName(board)),
                 Snackbar.LENGTH_LONG
         );
-        snackbar.setGestureInsetBottomIgnored(true);
-        fixSnackbarText(context, snackbar);
 
-        snackbar.setAction(R.string.undo, v -> presenter.undoRemoveBoard(board));
-        snackbar.show();
+        snackbarWrapper.setAction(R.string.undo, v -> presenter.undoRemoveBoard(board));
+        snackbarWrapper.show();
     }
 
     @Override
     public void boardsWereAdded(int count) {
         savedBoardsRecycler.smoothScrollToPosition(savedAdapter.getItemCount());
 
-        Snackbar snackbar = Snackbar.make(view,
+        SnackbarWrapper snackbarWrapper = SnackbarWrapper.create(
+                view,
                 getString(R.string.setup_board_added, getQuantityString(R.plurals.board, count, count)),
                 Snackbar.LENGTH_LONG
         );
-        snackbar.setGestureInsetBottomIgnored(true);
-        fixSnackbarText(context, snackbar);
-        snackbar.show();
+
+        snackbarWrapper.show();
     }
 
     private class SavedBoardsAdapter

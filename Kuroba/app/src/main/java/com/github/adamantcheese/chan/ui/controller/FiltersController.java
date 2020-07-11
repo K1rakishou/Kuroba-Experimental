@@ -45,6 +45,7 @@ import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.FilterLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -58,7 +59,6 @@ import javax.inject.Inject;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.fixSnackbarText;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -246,14 +246,17 @@ public class FiltersController
         postToEventBus(new RefreshUIMessage("filters"));
         adapter.reload();
 
-        Snackbar s = Snackbar.make(view, getString(R.string.filter_removed_undo, clone.pattern), Snackbar.LENGTH_LONG);
-        s.setAction(R.string.undo, v -> {
+        SnackbarWrapper snackbarWrapper = SnackbarWrapper.create(
+                view,
+                getString(R.string.filter_removed_undo, clone.pattern),
+                Snackbar.LENGTH_LONG
+        );
+
+        snackbarWrapper.setAction(R.string.undo, v -> {
             filterEngine.createOrUpdateFilter(clone);
             adapter.reload();
         });
-        s.setGestureInsetBottomIgnored(true);
-        fixSnackbarText(context, s);
-        s.show();
+        snackbarWrapper.show();
     }
 
     @SuppressLint("RestrictedApi")

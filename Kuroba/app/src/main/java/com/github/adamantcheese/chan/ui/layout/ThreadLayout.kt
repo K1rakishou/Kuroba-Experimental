@@ -64,6 +64,7 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.view.HidingFloatingActionButton
 import com.github.adamantcheese.chan.ui.view.LoadView
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
+import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -113,7 +114,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var removedPostsHelper: RemovedPostsHelper
 
   private var drawerCallbacks: DrawerCallbacks? = null
-  private var newPostsNotification: Snackbar? = null
+  private var newPostsNotification: SnackbarWrapper? = null
   private var replyButtonEnabled = false
   private var showingReplyButton = false
   private var refreshedFromSwipe = false
@@ -500,18 +501,21 @@ class ThreadLayout @JvmOverloads constructor(
     databaseManager.runTask(databaseManager.databaseHideManager.addThreadHide(postHide))
     presenter.refreshUI()
 
-    val snackbarStringId = if (hide) R.string.thread_hidden else R.string.thread_removed
-    val snackbar = Snackbar.make(this, snackbarStringId, Snackbar.LENGTH_LONG)
+    val snackbarStringId = if (hide) {
+      R.string.thread_hidden
+    } else {
+      R.string.thread_removed
+    }
 
-    snackbar.isGestureInsetBottomIgnored = true
-    snackbar.setAction(R.string.undo, {
-      postFilterManager.remove(post.postDescriptor)
+    SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
+      setAction(R.string.undo, {
+        postFilterManager.remove(post.postDescriptor)
 
-      databaseManager.runTask(databaseManager.databaseHideManager.removePostHide(postHide))
-      presenter.refreshUI()
-    }).show()
-
-    AndroidUtils.fixSnackbarText(context, snackbar)
+        databaseManager.runTask(databaseManager.databaseHideManager.removePostHide(postHide))
+        presenter.refreshUI()
+      })
+      show()
+    }
   }
 
   override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long) {
@@ -533,16 +537,16 @@ class ThreadLayout @JvmOverloads constructor(
       AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
     }
 
-    val snackbar = Snackbar.make(this, formattedString, Snackbar.LENGTH_LONG)
-    snackbar.isGestureInsetBottomIgnored = true
-    snackbar.setAction(R.string.undo) {
-      postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
+    SnackbarWrapper.create(this, formattedString, Snackbar.LENGTH_LONG).apply {
+      setAction(R.string.undo) {
+        postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
 
-      databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(hideList))
-      presenter.refreshUI()
-    }.show()
+        databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(hideList))
+        presenter.refreshUI()
+      }
 
-    AndroidUtils.fixSnackbarText(context, snackbar)
+      show()
+    }
   }
 
   override fun unhideOrUnremovePost(post: Post) {
@@ -569,11 +573,11 @@ class ThreadLayout @JvmOverloads constructor(
     databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(postsToRestore))
     presenter.refreshUI()
 
-    val snackbar = Snackbar.make(this, AndroidUtils.getString(R.string.restored_n_posts, postsToRestore.size), Snackbar.LENGTH_LONG)
-    snackbar.isGestureInsetBottomIgnored = true
-    snackbar.show()
-
-    AndroidUtils.fixSnackbarText(context, snackbar)
+    SnackbarWrapper.create(
+      this,
+      AndroidUtils.getString(R.string.restored_n_posts, postsToRestore.size),
+      Snackbar.LENGTH_LONG
+    ).apply { show() }
   }
 
   override fun onPostUpdated(post: Post) {
@@ -584,7 +588,6 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(floatingListMenuController, animate)
   }
 
-  // TODO(KurobaEx): handle bottom nav bar!!!
   override fun showNewPostsNotification(show: Boolean, more: Int) {
     if (!show) {
       dismissSnackbar()
@@ -595,14 +598,14 @@ class ThreadLayout @JvmOverloads constructor(
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 
-      newPostsNotification = Snackbar.make(this, text, Snackbar.LENGTH_LONG)
-      newPostsNotification!!.isGestureInsetBottomIgnored = true
-      newPostsNotification!!.setAction(R.string.thread_new_posts_goto) {
-        presenter.onNewPostsViewClicked()
-        dismissSnackbar()
-      }.show()
+      newPostsNotification = SnackbarWrapper.create(this, text, Snackbar.LENGTH_LONG).apply {
+        setAction(R.string.thread_new_posts_goto) {
+          presenter.onNewPostsViewClicked()
+          dismissSnackbar()
+        }
+        show()
+      }
 
-      AndroidUtils.fixSnackbarText(context, newPostsNotification)
       return
     }
 
@@ -610,10 +613,8 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun dismissSnackbar() {
-    if (newPostsNotification != null) {
-      newPostsNotification!!.dismiss()
-      newPostsNotification = null
-    }
+    newPostsNotification?.dismiss()
+    newPostsNotification = null
   }
 
   override fun getLoadable(): Loadable? {
