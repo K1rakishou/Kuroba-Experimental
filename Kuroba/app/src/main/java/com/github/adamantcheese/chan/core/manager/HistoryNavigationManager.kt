@@ -23,8 +23,6 @@ import okhttp3.HttpUrl
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-// TODO(KurobaEx): For some reason we don't update the current nav element when switching from a thread
-//  back to board when using PHONE layout
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
   private val historyNavigationRepository: HistoryNavigationRepository,

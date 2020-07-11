@@ -144,6 +144,13 @@ public class BrowseController
                 drawerCallbacks.showBottomNavBar(false, false);
             }
         }
+
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE) {
+            Loadable loadable = getLoadable();
+            if (loadable != null) {
+                historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
+            }
+        }
     }
 
     @Override
