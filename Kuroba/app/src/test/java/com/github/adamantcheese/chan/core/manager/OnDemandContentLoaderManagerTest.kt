@@ -6,7 +6,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.exhaustive
+import com.github.adamantcheese.common.exhaustive
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Single
 import io.reactivex.schedulers.TestScheduler
