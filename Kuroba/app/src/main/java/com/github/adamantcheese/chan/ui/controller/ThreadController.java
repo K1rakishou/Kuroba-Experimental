@@ -39,7 +39,6 @@ import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
-import com.github.adamantcheese.chan.ui.text.FastTextView;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -105,7 +104,6 @@ public abstract class ThreadController
 
         drawerCallbacks = null;
         threadLayout.destroy();
-        FastTextView.cleanup();
 
         EventBus.getDefault().unregister(this);
     }

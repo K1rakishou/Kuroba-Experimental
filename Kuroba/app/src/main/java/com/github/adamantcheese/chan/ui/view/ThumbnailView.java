@@ -74,7 +74,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private RectF outputRect = new RectF();
 
     private Matrix matrix = new Matrix();
-    BitmapShader bitmapShader;
+    private BitmapShader bitmapShader;
     private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
 
     private boolean foregroundCalculate = false;

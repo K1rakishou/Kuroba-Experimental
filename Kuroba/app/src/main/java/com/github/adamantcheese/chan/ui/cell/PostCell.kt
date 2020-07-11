@@ -54,8 +54,6 @@ import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
-import com.github.adamantcheese.chan.ui.text.FastTextView
-import com.github.adamantcheese.chan.ui.text.FastTextViewMovementMethod
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.ClearableSpan
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
@@ -90,10 +88,10 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
 
   private lateinit var relativeLayoutContainer: RelativeLayout
-  private lateinit var title: FastTextView
+  private lateinit var title: TextView
   private lateinit var icons: PostIcons
   private lateinit var comment: TextView
-  private lateinit var replies: FastTextView
+  private lateinit var replies: TextView
   private lateinit var repliesAdditionalArea: View
   private lateinit var options: ImageView
   private lateinit var divider: View
@@ -320,8 +318,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     }
 
     unseenPostIndicatorFadeOutAnimation.end()
-    title.clear()
-    replies.clear()
 
     if (callback != null && post != null) {
       callback?.onPostUnbind(post, isActuallyRecycling)
@@ -737,7 +733,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     comment.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
 
     if (ChanSettings.tapNoReply.get()) {
-      title.setMovementMethod(titleMovementMethod)
+      title.movementMethod = titleMovementMethod
     }
   }
 
@@ -1019,8 +1015,9 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
    * This version is for the [FastTextView].<br></br>
    * See [PostLinkable] for more information.
    */
-  private class PostViewFastMovementMethod : FastTextViewMovementMethod {
-    override fun onTouchEvent(widget: FastTextView, buffer: Spanned, event: MotionEvent): Boolean {
+  private class PostViewFastMovementMethod : LinkMovementMethod() {
+
+    override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
       val action = event.actionMasked
 
       if (action != MotionEvent.ACTION_UP) {
@@ -1047,6 +1044,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
       return false
     }
+
   }
 
   private class PostNumberClickableSpan(

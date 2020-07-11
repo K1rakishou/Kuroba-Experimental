@@ -40,6 +40,7 @@ import java.util.Objects;
 import javax.inject.Singleton;
 
 import coil.ImageLoader;
+import coil.request.CachePolicy;
 import kotlinx.coroutines.CoroutineScope;
 import okhttp3.Dns;
 
@@ -130,6 +131,9 @@ public class AppModule {
         Logger.d(DI_TAG, "Coil Image loader");
         return ImageLoader
                 .builder(applicationContext)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .networkCachePolicy(CachePolicy.ENABLED)
                 .build();
     }
 
