@@ -28,21 +28,6 @@ import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.adamantcheese.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NORMAL_NOTIFICATION_CLICK_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG
 import com.github.adamantcheese.common.ellipsizeEnd
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.common.putIfNotContains
@@ -270,8 +255,8 @@ class ReplyNotificationsHelper(
 
     if (unseenThreadBookmarkReplies.isEmpty()) {
       notificationManagerCompat.cancel(
-        REPLIES_PRE_OREO_NOTIFICATION_TAG,
-        REPLIES_PRE_OREO_NOTIFICATION_ID
+        NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
+        NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID
       )
 
       Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() " +
@@ -290,7 +275,10 @@ class ReplyNotificationsHelper(
       .setContentTitle(getApplicationLabel())
       .setContentText(titleText)
       .setSmallIcon(iconId)
-      .setupClickOnNotificationIntent(NORMAL_NOTIFICATION_CLICK_REQUEST_CODE, unreadNotificationsGrouped.keys)
+      .setupClickOnNotificationIntent(
+        NotificationConstants.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+        unreadNotificationsGrouped.keys
+      )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAutoCancel(true)
       .setAllowSystemGeneratedContextualActions(false)
@@ -301,8 +289,8 @@ class ReplyNotificationsHelper(
       .setGroupSummary(true)
 
     notificationManagerCompat.notify(
-      REPLIES_PRE_OREO_NOTIFICATION_TAG,
-      REPLIES_PRE_OREO_NOTIFICATION_ID,
+      NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
+      NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID,
       preOreoNotificationBuilder.build()
     )
 
@@ -346,10 +334,16 @@ class ReplyNotificationsHelper(
 
     val summaryNotificationBuilder = if (hasNewReplies && useSoundForReplyNotifications) {
       Logger.d(TAG, "showSummaryNotification() Using REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID")
-      NotificationCompat.Builder(appContext, REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID)
+      NotificationCompat.Builder(
+        appContext,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID
+      )
     } else {
       Logger.d(TAG, "showSummaryNotification() Using REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID")
-      NotificationCompat.Builder(appContext, REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID)
+      NotificationCompat.Builder(
+        appContext,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID
+      )
     }
 
     val threadsWithUnseenRepliesCount = unreadNotificationsGrouped.size
@@ -372,7 +366,10 @@ class ReplyNotificationsHelper(
       .setSmallIcon(iconId)
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
       .setupSummaryNotificationsStyle(titleText)
-      .setupClickOnNotificationIntent(SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE, unreadNotificationsGrouped.keys)
+      .setupClickOnNotificationIntent(
+        NotificationConstants.REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE,
+        unreadNotificationsGrouped.keys
+      )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAllowSystemGeneratedContextualActions(false)
       .setAutoCancel(true)
@@ -380,8 +377,8 @@ class ReplyNotificationsHelper(
       .setGroupSummary(true)
 
     notificationManagerCompat.notify(
-      SUMMARY_NOTIFICATION_TAG,
-      SUMMARY_NOTIFICATION_ID,
+      NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG,
+      NotificationConstants.REPLIES_SUMMARY_NOTIFICATION_ID,
       summaryNotificationBuilder.build()
     )
 
@@ -425,7 +422,10 @@ class ReplyNotificationsHelper(
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
       val notificationId = getOrCalculateNotificationId(threadDescriptor)
 
-      val notificationBuilder = NotificationCompat.Builder(appContext, REPLY_NOTIFICATION_CHANNEL_ID)
+      val notificationBuilder = NotificationCompat.Builder(
+        appContext,
+        NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID
+      )
         .setContentTitle(titleText)
         .setWhen(notificationTime.millis)
         .setShowWhen(true)
@@ -433,7 +433,10 @@ class ReplyNotificationsHelper(
         .setSmallIcon(R.drawable.ic_stat_notify_alert)
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
-        .setupClickOnNotificationIntent(NORMAL_NOTIFICATION_CLICK_REQUEST_CODE, listOf(threadDescriptor))
+        .setupClickOnNotificationIntent(
+          NotificationConstants.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+          listOf(threadDescriptor)
+        )
         .setupDeleteNotificationIntent(listOf(threadDescriptor))
         .setAllowSystemGeneratedContextualActions(false)
         .setCategory(Notification.CATEGORY_MESSAGE)
@@ -555,7 +558,7 @@ class ReplyNotificationsHelper(
     }
 
     intent
-      .setAction(Intent.ACTION_MAIN)
+      .setAction(NotificationConstants.REPLY_NOTIFICATION_ACTION)
       .addCategory(Intent.CATEGORY_LAUNCHER)
       .setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -564,7 +567,7 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
+        NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
@@ -589,7 +592,7 @@ class ReplyNotificationsHelper(
     }
 
     intent
-      .setAction(Intent.ACTION_MAIN)
+      .setAction(NotificationConstants.REPLY_NOTIFICATION_ACTION)
       .addCategory(Intent.CATEGORY_LAUNCHER)
       .setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -598,13 +601,13 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
+        NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      R_NOTIFICATION_SWIPE_REQUEST_CODE,
+      NotificationConstants.REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -685,13 +688,14 @@ class ReplyNotificationsHelper(
 
     Logger.d(TAG, "setupChannels() called")
 
-    if (notificationManagerCompat.getNotificationChannel(REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID} channel")
+    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() " +
+        "creating ${NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID} channel")
 
       // notification channel for replies summary
       val summaryChannel = NotificationChannel(
-        REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID,
-        REPLY_SUMMARY_NOTIFICATION_NAME,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_NAME,
         NotificationManager.IMPORTANCE_HIGH
       )
 
@@ -711,26 +715,28 @@ class ReplyNotificationsHelper(
       notificationManagerCompat.createNotificationChannel(summaryChannel)
     }
 
-    if (notificationManagerCompat.getNotificationChannel(REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID} channel")
+    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() creating " +
+        "${NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID} channel")
 
       // notification channel for replies summary
       val summaryChannel = NotificationChannel(
-        REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID,
-        REPLY_SUMMARY_SILENT_NOTIFICATION_NAME,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID,
+        NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_NAME,
         NotificationManager.IMPORTANCE_LOW
       )
 
       notificationManagerCompat.createNotificationChannel(summaryChannel)
     }
 
-    if (notificationManagerCompat.getNotificationChannel(REPLY_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${REPLY_NOTIFICATION_CHANNEL_ID} channel")
+    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() creating " +
+        "${NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID} channel")
 
       // notification channel for replies
       val replyChannel = NotificationChannel(
-        REPLY_NOTIFICATION_CHANNEL_ID,
-        REPLY_NOTIFICATION_CHANNEL_NAME,
+        NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID,
+        NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_NAME,
         NotificationManager.IMPORTANCE_LOW
       )
 
@@ -789,7 +795,10 @@ class ReplyNotificationsHelper(
 
   private fun closeAllNotifications() {
     if (!AndroidUtils.isAndroidO()) {
-      notificationManagerCompat.cancel(REPLIES_PRE_OREO_NOTIFICATION_TAG, REPLIES_PRE_OREO_NOTIFICATION_ID)
+      notificationManagerCompat.cancel(
+        NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
+        NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID
+      )
       return
     }
 
@@ -803,6 +812,8 @@ class ReplyNotificationsHelper(
     visibleNotifications.forEach { notification ->
       notificationManagerCompat.cancel(notification.tag, notification.id)
     }
+
+    Logger.d(TAG, "closeAllNotifications() closed ${visibleNotifications.size} notifications")
   }
 
   companion object {

@@ -130,6 +130,10 @@ class BookmarksManager(
 
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
+    if (isReady()) {
+      return
+    }
+
     Logger.d(TAG, "BookmarksManager is not ready yet, waiting...")
     val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
     Logger.d(TAG, "BookmarksManager initialization completed, took $duration")

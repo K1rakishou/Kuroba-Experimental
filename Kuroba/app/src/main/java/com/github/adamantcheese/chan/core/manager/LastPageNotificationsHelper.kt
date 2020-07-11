@@ -17,12 +17,6 @@ import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.NotificationConstants
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_NAME
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import java.util.*
@@ -83,7 +77,7 @@ class LastPageNotificationsHelper(
 
     notificationManagerCompat.notify(
       NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_TAG,
-      NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_ID,
+      NotificationConstants.LAST_PAGE_NOTIFICATION_ID,
       getNotification(threadsWithTitles)
     )
 
@@ -101,9 +95,15 @@ class LastPageNotificationsHelper(
     val useSoundForLastPageNotifications = ChanSettings.useSoundForLastPageNotifications.get()
 
     val builder = if (useSoundForLastPageNotifications) {
-      NotificationCompat.Builder(appContext, LAST_PAGE_NOTIFICATION_CHANNEL_ID)
+      NotificationCompat.Builder(
+        appContext,
+        NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID
+      )
     } else {
-      NotificationCompat.Builder(appContext, LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID)
+      NotificationCompat.Builder(
+        appContext,
+        NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID
+      )
     }
 
     val priority = if (useSoundForLastPageNotifications) {
@@ -128,7 +128,8 @@ class LastPageNotificationsHelper(
   private fun NotificationCompat.Builder.setupSoundAndVibration(
     useSoundForLastPageNotifications: Boolean
   ): NotificationCompat.Builder {
-    Logger.d(TAG, "Using sound and vibration: useSoundForLastPageNotifications=${useSoundForLastPageNotifications}")
+    Logger.d(TAG, "Using sound and vibration: " +
+      "useSoundForLastPageNotifications=${useSoundForLastPageNotifications}")
 
     if (useSoundForLastPageNotifications) {
       setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
@@ -151,7 +152,7 @@ class LastPageNotificationsHelper(
     }
 
     intent
-      .setAction(Intent.ACTION_MAIN)
+      .setAction(NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION)
       .addCategory(Intent.CATEGORY_LAUNCHER)
       .setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -160,15 +161,15 @@ class LastPageNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
+        NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      LP_NOTIFICATION_CLICK_REQUEST_CODE,
+      NotificationConstants.LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE,
       intent,
-      PendingIntent.FLAG_ONE_SHOT
+      PendingIntent.FLAG_UPDATE_CURRENT
     )
 
     setContentIntent(pendingIntent)
@@ -211,12 +212,13 @@ class LastPageNotificationsHelper(
 
     Logger.d(TAG, "setupChannels() called")
 
-    if (notificationManagerCompat.getNotificationChannel(LAST_PAGE_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${LAST_PAGE_NOTIFICATION_CHANNEL_ID} channel")
+    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() creating " +
+        "${NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID} channel")
 
       val lastPageAlertChannel = NotificationChannel(
-        LAST_PAGE_NOTIFICATION_CHANNEL_ID,
-        LAST_PAGE_NOTIFICATION_NAME,
+        NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_CHANNEL_ID,
+        NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_NAME,
         NotificationManager.IMPORTANCE_HIGH
       )
 
@@ -237,17 +239,18 @@ class LastPageNotificationsHelper(
       notificationManagerCompat.createNotificationChannel(lastPageAlertChannel)
     }
 
-    if (notificationManagerCompat.getNotificationChannel(LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID} channel")
+    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID) == null) {
+      Logger.d(TAG, "setupChannels() creating " +
+        "${NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID} channel")
 
       // notification channel for replies summary
-      val summaryChannel = NotificationChannel(
-        LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID,
-        LAST_PAGE_SILENT_NOTIFICATION_NAME,
+      val lastPageSilentChannel = NotificationChannel(
+        NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID,
+        NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_NAME,
         NotificationManager.IMPORTANCE_LOW
       )
 
-      notificationManagerCompat.createNotificationChannel(summaryChannel)
+      notificationManagerCompat.createNotificationChannel(lastPageSilentChannel)
     }
   }
 

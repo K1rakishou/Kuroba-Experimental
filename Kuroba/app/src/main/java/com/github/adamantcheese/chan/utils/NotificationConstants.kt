@@ -11,8 +11,20 @@ object NotificationConstants {
 
   val NOTIFICATION_THUMBNAIL_SIZE = AndroidUtils.dp(96f)
 
+  const val REPLIES_SUMMARY_NOTIFICATION_ID = 0
+  const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
+  const val LAST_PAGE_NOTIFICATION_ID = 2
+
+  const val REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE = 1
+  const val REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE = 2
+  const val REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE = 3
+  const val LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE = 4
+
+  const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
+  const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
+
   object ReplyNotifications {
-    val notificationIdCounter = AtomicInteger(1000)
+    val notificationIdCounter = AtomicInteger(100000)
     val notificationIdMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Int>()
 
     const val NOTIFICATION_TAG_PREFIX = "reply_"
@@ -27,15 +39,8 @@ object NotificationConstants {
     val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
     val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
 
-    const val SUMMARY_NOTIFICATION_ID = 0
-    const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
-
     const val R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
-    const val NORMAL_NOTIFICATION_CLICK_REQUEST_CODE = 1
-    const val SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE = 2
-
     const val R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "reply_notification_swipe_thread_descriptors"
-    const val R_NOTIFICATION_SWIPE_REQUEST_CODE = 3
   }
 
   object LastPageNotifications {
@@ -46,10 +51,7 @@ object NotificationConstants {
 
     val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
 
-    const val LAST_PAGE_NOTIFICATION_ID = 2
-
     const val LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
-    const val LP_NOTIFICATION_CLICK_REQUEST_CODE = 4
   }
 
 }

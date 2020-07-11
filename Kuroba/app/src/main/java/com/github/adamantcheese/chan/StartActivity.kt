@@ -52,13 +52,7 @@ import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavig
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.setupFullscreen
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
@@ -70,7 +64,6 @@ import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
-import kotlin.time.ExperimentalTime
 
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
@@ -124,13 +117,9 @@ class StartActivity : AppCompatActivity(),
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    if (intentMismatchWorkaround()) {
-      return
-    }
-
     launch {
       val start = System.currentTimeMillis()
-      onCreateInternal(savedInstanceState)
+      onCreateInternal(this, savedInstanceState)
       val diff = System.currentTimeMillis() - start
       Logger.d(TAG, "StartActivity initialization took " + diff + "ms")
     }
@@ -138,10 +127,6 @@ class StartActivity : AppCompatActivity(),
 
   override fun onDestroy() {
     super.onDestroy()
-
-    if (intentMismatchWorkaround()) {
-      return
-    }
 
     job.cancel()
     updateManager.onDestroy()
@@ -155,7 +140,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private suspend fun onCreateInternal(savedInstanceState: Bundle?) {
+  private suspend fun onCreateInternal(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
     Chan.inject(this)
 
     if (AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev) {
@@ -203,16 +188,16 @@ class StartActivity : AppCompatActivity(),
     setupFromStateOrFreshLaunch(savedInstanceState)
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      coroutineScope {
-        launch {
-          listenForReplyViewStatesChanges()
-        }
+      coroutineScope.launch {
+        listenForReplyViewStatesChanges()
+      }
 
-        launch {
-          listenForControllerNavigationChanges()
-        }
+      coroutineScope.launch {
+        listenForControllerNavigationChanges()
       }
     }
+
+    onNewIntentInternal(intent)
   }
 
   private suspend fun listenForReplyViewStatesChanges() {
@@ -478,33 +463,50 @@ class StartActivity : AppCompatActivity(),
     browseController!!.setDrawerCallbacks(drawerController)
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
 
+    onNewIntentInternal(intent)
+  }
+
+  private fun onNewIntentInternal(intent: Intent) {
     val extras = intent.extras
       ?: return
+    val action = intent.action
+      ?: return
+
+    if (!isKnownAction(action)) {
+      return
+    }
 
     launch {
       bookmarksManager.awaitUntilInitialized()
 
       when {
-        intent.hasExtra(R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
           replyNotificationClicked(extras)
         }
-        intent.hasExtra(R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
+        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
           replyNotificationSwipedAway(extras)
         }
-        intent.hasExtra(LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+        intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
           lastPageNotificationClicked(extras)
         }
       }
     }
   }
 
+  private fun isKnownAction(action: String): Boolean {
+    return when (action) {
+      NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
+      NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      else -> false
+    }
+  }
+
   private fun lastPageNotificationClicked(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
-      LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+      NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
@@ -522,7 +524,7 @@ class StartActivity : AppCompatActivity(),
 
   private fun replyNotificationSwipedAway(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
-      R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
+      NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
@@ -540,7 +542,7 @@ class StartActivity : AppCompatActivity(),
 
   private fun replyNotificationClicked(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
-      R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+      NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
