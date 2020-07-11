@@ -521,7 +521,7 @@ class ReplyPresenter @Inject constructor(
       PostHelper.getTitle(draft)
     )
 
-    val localLoadable = databaseManager.databaseLoadableManager.get(newLoadable)
+    val localLoadable = databaseManager.databaseLoadableManager.getOrCreateLoadable(newLoadable)
     lastReplyRepository.putLastReply(localLoadable.board)
 
     if (loadable!!.isCatalogMode) {

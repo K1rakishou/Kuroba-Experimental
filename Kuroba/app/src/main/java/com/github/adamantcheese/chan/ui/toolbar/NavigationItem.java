@@ -25,6 +25,9 @@ import com.github.adamantcheese.chan.ui.controller.navigation.NavigationControll
 import java.util.ArrayList;
 import java.util.List;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 /**
@@ -159,6 +162,14 @@ public class NavigationItem {
         public MenuOverflowBuilder withSubItem(
                 int id,
                 int text,
+                Function1<ToolbarMenuSubItem, Unit> clickCallback
+        ) {
+            return withSubItem(id, getString(text), true, clickCallback::invoke);
+        }
+
+        public MenuOverflowBuilder withSubItem(
+                int id,
+                int text,
                 boolean visible,
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
@@ -262,6 +273,24 @@ public class NavigationItem {
             );
 
             return this;
+        }
+
+        public MenuNestedOverflowBuilder addNestedItem(
+                int itemId,
+                int text,
+                boolean visible,
+                boolean isCurrentlySelected,
+                Object value,
+                Function1<ToolbarMenuSubItem, Unit> clickCallback
+        ) {
+            return addNestedItem(
+                    itemId,
+                    text,
+                    visible,
+                    isCurrentlySelected,
+                    value,
+                    (ToolbarMenuSubItem.ClickCallback) clickCallback::invoke
+            );
         }
 
         public MenuOverflowBuilder build() {

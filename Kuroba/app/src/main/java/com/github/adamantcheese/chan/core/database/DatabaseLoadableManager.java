@@ -117,7 +117,7 @@ public class DatabaseLoadableManager {
      * @param loadable Loadable to search from that was not yet gotten from the db.
      * @return a loadable ready to use.
      */
-    public Loadable get(final Loadable loadable) {
+    public Loadable getOrCreateLoadable(final Loadable loadable) {
         if (loadable.id != 0) {
             return loadable;
         }

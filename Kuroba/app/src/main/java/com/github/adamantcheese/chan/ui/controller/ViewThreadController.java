@@ -522,7 +522,7 @@ public class ViewThreadController
             return;
         }
 
-        Loadable catalog = databaseLoadableManager.get(Loadable.forCatalog(board));
+        Loadable catalog = databaseLoadableManager.getOrCreateLoadable(Loadable.forCatalog(board));
         showBoard(catalog);
     }
 

@@ -186,15 +186,15 @@ public class PostsFilter {
         MODIFIED("modified"),
         ACTIVITY("activity");
 
-        public String name;
+        public String orderName;
 
         Order(String storeName) {
-            this.name = storeName;
+            this.orderName = storeName;
         }
 
         public static Order find(String name) {
             for (Order mode : Order.values()) {
-                if (mode.name.equals(name)) {
+                if (mode.orderName.equals(name)) {
                     return mode;
                 }
             }

@@ -120,7 +120,7 @@ public class BrowsePresenter
     }
 
     private Loadable getLoadableForBoard(Board board) {
-        return databaseManager.getDatabaseLoadableManager().get(Loadable.forCatalog(board));
+        return databaseManager.getDatabaseLoadableManager().getOrCreateLoadable(Loadable.forCatalog(board));
     }
 
     private void loadBoard(Board board) {

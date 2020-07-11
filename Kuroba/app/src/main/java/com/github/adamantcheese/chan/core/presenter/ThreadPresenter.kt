@@ -355,7 +355,7 @@ class ThreadPresenter @Inject constructor(
       bookmarksManager.deleteBookmark(threadDescriptor)
     } else {
       // We still need this so that we can open the thread by this bookmark later
-      databaseManager.databaseLoadableManager.get(loadable)
+      databaseManager.databaseLoadableManager.getOrCreateLoadable(loadable)
 
       bookmarksManager.createBookmark(
         threadDescriptor,
@@ -779,7 +779,7 @@ class ThreadPresenter @Inject constructor(
     )
 
     highlightPost(post)
-    val threadLoadable = databaseManager.databaseLoadableManager.get(newLoadable)
+    val threadLoadable = databaseManager.databaseLoadableManager.getOrCreateLoadable(newLoadable)
 
     threadPresenterCallback?.showThread(threadLoadable)
   }
@@ -982,7 +982,7 @@ class ThreadPresenter @Inject constructor(
         }
 
         // We still need this so that we can open the thread by this bookmark later
-        databaseManager.databaseLoadableManager.get(loadable)
+        databaseManager.databaseLoadableManager.getOrCreateLoadable(loadable)
 
         bookmarksManager.createBookmark(
           threadDescriptor,
@@ -1077,7 +1077,7 @@ class ThreadPresenter @Inject constructor(
           ""
         )
 
-        val threadLoadable = databaseManager.databaseLoadableManager.get(loadable)
+        val threadLoadable = databaseManager.databaseLoadableManager.getOrCreateLoadable(loadable)
         threadLoadable.markedNo = threadLink.postId.toInt()
 
         threadPresenterCallback?.showThread(threadLoadable)
@@ -1102,7 +1102,7 @@ class ThreadPresenter @Inject constructor(
         return
       }
 
-      val catalog = databaseManager.databaseLoadableManager.get(Loadable.forCatalog(board))
+      val catalog = databaseManager.databaseLoadableManager.getOrCreateLoadable(Loadable.forCatalog(board))
       threadPresenterCallback?.showBoard(catalog)
 
       return
@@ -1124,7 +1124,7 @@ class ThreadPresenter @Inject constructor(
         return
       }
 
-      val catalog = databaseManager.databaseLoadableManager.get(Loadable.forCatalog(board))
+      val catalog = databaseManager.databaseLoadableManager.getOrCreateLoadable(Loadable.forCatalog(board))
       threadPresenterCallback?.showBoardAndSearch(catalog, searchLink.search)
     }
   }

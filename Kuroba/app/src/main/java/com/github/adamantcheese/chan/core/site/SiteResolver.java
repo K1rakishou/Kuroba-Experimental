@@ -122,7 +122,7 @@ public class SiteResolver {
             if (site.resolvable().respondsTo(httpUrl)) {
                 Loadable resolvedLoadable = site.resolvable().resolveLoadable(site, httpUrl);
                 if (resolvedLoadable != null) {
-                    Loadable resolved = databaseManager.getDatabaseLoadableManager().get(resolvedLoadable);
+                    Loadable resolved = databaseManager.getDatabaseLoadableManager().getOrCreateLoadable(resolvedLoadable);
 
                     if (resolved != null) {
                         resolved.markedNo = resolvedLoadable.markedNo;

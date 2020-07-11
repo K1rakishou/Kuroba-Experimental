@@ -377,7 +377,7 @@ class StartActivity : AppCompatActivity(),
       browseController?.setBoard(boardThreadPair.first!!.board)
 
       if (boardThreadPair.second != null) {
-        browseController?.showThread(boardThreadPair.second, false)
+        browseController?.showThread(boardThreadPair.second!!, false)
       }
     }
 
@@ -420,7 +420,7 @@ class StartActivity : AppCompatActivity(),
       // query these from the loadablemanager.
       val loadableManager = databaseManager.databaseLoadableManager
       if (stateLoadable.id == 0) {
-        stateLoadable = loadableManager[stateLoadable]
+        stateLoadable = loadableManager.getOrCreateLoadable(stateLoadable)
       }
     }
 
