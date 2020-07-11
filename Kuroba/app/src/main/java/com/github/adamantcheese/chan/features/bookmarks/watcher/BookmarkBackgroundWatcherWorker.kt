@@ -35,6 +35,8 @@ class BookmarkBackgroundWatcherWorker(
       return Result.success()
     }
 
+    bookmarksManager.awaitUntilInitialized()
+
     if (!bookmarksManager.hasActiveBookmarks()) {
       Logger.d(TAG, "Cannot start BookmarkWatcherWorker, no active bookmarks requiring service")
       return Result.success()

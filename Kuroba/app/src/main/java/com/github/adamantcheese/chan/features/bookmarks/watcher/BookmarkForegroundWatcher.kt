@@ -74,6 +74,8 @@ class BookmarkForegroundWatcher(
       return
     }
 
+    bookmarksManager.awaitUntilInitialized()
+
     if (bookmarksManager.currentlyOpenedThread() != threadDescriptor) {
       return
     }
@@ -103,12 +105,14 @@ class BookmarkForegroundWatcher(
 
   private suspend fun CoroutineScope.updateBookmarksWorkerLoop() {
     while (true) {
-      if (!bookmarksManager.hasActiveBookmarks()) {
-        return
-      }
+      bookmarksManager.awaitUntilInitialized()
 
       if (!ChanSettings.watchEnabled.get()) {
         Logger.d(TAG, "updateBookmarks() ChanSettings.watchEnabled() is false")
+        return
+      }
+
+      if (!bookmarksManager.hasActiveBookmarks()) {
         return
       }
 

@@ -6,14 +6,13 @@ import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
@@ -29,11 +28,11 @@ class FetchThreadBookmarkInfoUseCase(
   private val okHttpClient: NetModule.ProxiedOkHttpClient,
   private val siteRepository: SiteRepository,
   private val bookmarksManager: BookmarksManager
-) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, List<ThreadBookmarkFetchResult>> {
+) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, ModularResult<List<ThreadBookmarkFetchResult>>> {
 
-  override suspend fun execute(parameter: List<ChanDescriptor.ThreadDescriptor>): List<ThreadBookmarkFetchResult> {
+  override suspend fun execute(parameter: List<ChanDescriptor.ThreadDescriptor>): ModularResult<List<ThreadBookmarkFetchResult>> {
     Logger.d(TAG, "FetchThreadBookmarkInfoUseCase.execute(${parameter.size})")
-    return fetchThreadBookmarkInfoBatched(parameter)
+    return Try { fetchThreadBookmarkInfoBatched(parameter) }
   }
 
   private suspend fun fetchThreadBookmarkInfoBatched(
@@ -42,22 +41,24 @@ class FetchThreadBookmarkInfoUseCase(
     return watchingBookmarkDescriptors
       .chunked(BATCH_SIZE)
       .flatMap { chunk ->
-        return@flatMap chunk.map { threadDescriptor ->
-          return@map appScope.async(Dispatchers.IO) {
-            val site = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())
-            if (site == null) {
-              Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
-                "not found in siteRepository!")
-              return@async null
+        return@flatMap supervisorScope {
+          return@supervisorScope chunk.map { threadDescriptor ->
+            return@map appScope.async(Dispatchers.IO) {
+              val site = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())
+              if (site == null) {
+                Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
+                  "not found in siteRepository!")
+                return@async null
+              }
+
+              val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
+
+              return@async fetchThreadBookmarkInfo(
+                threadDescriptor,
+                threadJsonEndpoint,
+                site.chanReader()
+              )
             }
-
-            val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
-
-            return@async fetchThreadBookmarkInfo(
-              threadDescriptor,
-              threadJsonEndpoint,
-              site.chanReader()
-            )
           }
         }
           .awaitAll()

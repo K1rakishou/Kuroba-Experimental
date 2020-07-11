@@ -282,11 +282,13 @@ class DrawerController(
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
+    setBookmarksMenuItemSelected()
   }
 
-  private fun openSettingsController() {
+  fun openSettingsController() {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context))
+    setSettingsMenuItemSelected()
   }
 
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {

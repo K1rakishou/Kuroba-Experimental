@@ -21,6 +21,8 @@ import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotific
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_NAME
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LAST_PAGE_SILENT_NOTIFICATION_NAME
+import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_REQUEST_CODE
+import com.github.adamantcheese.chan.utils.NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
 import java.util.*
@@ -91,33 +93,6 @@ class LastPageNotificationsHelper(
   private fun getNotification(
     threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
   ): Notification {
-    val intent = Intent(appContext, StartActivity::class.java)
-
-    val threadDescriptorsParcelable = threadsWithTitles.map { (threadDescriptor, _) ->
-      ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
-    }
-
-    intent
-      .setAction(Intent.ACTION_MAIN)
-      .addCategory(Intent.CATEGORY_LAUNCHER)
-      .setFlags(
-        Intent.FLAG_ACTIVITY_CLEAR_TOP
-          or Intent.FLAG_ACTIVITY_SINGLE_TOP
-          or Intent.FLAG_ACTIVITY_NEW_TASK
-          or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-      )
-      .putParcelableArrayListExtra(
-        NotificationConstants.LastPageNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
-        ArrayList(threadDescriptorsParcelable)
-      )
-
-    val pendingIntent = PendingIntent.getActivity(
-      appContext,
-      NotificationConstants.LastPageNotifications.NOTIFICATION_CLICK_REQUEST_CODE,
-      intent,
-      PendingIntent.FLAG_ONE_SHOT
-    )
-
     val threadsOnLastPageCount = threadsWithTitles.count()
     val title = appContext.resources.getString(
       R.string.last_page_notification_threads_hit_last_page_format,
@@ -137,30 +112,66 @@ class LastPageNotificationsHelper(
       NotificationCompat.PRIORITY_LOW
     }
 
-    return builder.setSmallIcon(R.drawable.ic_stat_notify_alert)
+    return builder
+      .setSmallIcon(R.drawable.ic_stat_notify_alert)
       .setContentTitle(title)
       .setupNotificationStyle(title, threadsWithTitles)
-      .setContentIntent(pendingIntent)
+      .setupLastPageNotificationClicked(threadsWithTitles)
       .setPriority(priority)
       .setupSoundAndVibration(useSoundForLastPageNotifications)
       .setAutoCancel(true)
       .setWhen(System.currentTimeMillis())
+      .setAllowSystemGeneratedContextualActions(false)
       .build()
   }
 
   private fun NotificationCompat.Builder.setupSoundAndVibration(
     useSoundForLastPageNotifications: Boolean
   ): NotificationCompat.Builder {
-      Logger.d(TAG, "Using sound and vibration: useSoundForLastPageNotifications=${useSoundForLastPageNotifications}")
+    Logger.d(TAG, "Using sound and vibration: useSoundForLastPageNotifications=${useSoundForLastPageNotifications}")
 
-      if (useSoundForLastPageNotifications) {
-        setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
-      } else {
-        setDefaults(Notification.DEFAULT_VIBRATE)
-      }
+    if (useSoundForLastPageNotifications) {
+      setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
+    } else {
+      setDefaults(Notification.DEFAULT_VIBRATE)
+    }
 
-      setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+    setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+    return this
+  }
 
+  private fun NotificationCompat.Builder.setupLastPageNotificationClicked(
+    threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
+  ): NotificationCompat.Builder {
+    Logger.d(TAG, "setupLastPageNotificationClicked() threads count = ${threadsWithTitles.size}")
+
+    val intent = Intent(appContext, StartActivity::class.java)
+    val threadDescriptorsParcelable = threadsWithTitles.map { (threadDescriptor, _) ->
+      ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
+    }
+
+    intent
+      .setAction(Intent.ACTION_MAIN)
+      .addCategory(Intent.CATEGORY_LAUNCHER)
+      .setFlags(
+        Intent.FLAG_ACTIVITY_CLEAR_TOP
+          or Intent.FLAG_ACTIVITY_SINGLE_TOP
+          or Intent.FLAG_ACTIVITY_NEW_TASK
+          or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+      )
+      .putParcelableArrayListExtra(
+        LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
+        ArrayList(threadDescriptorsParcelable)
+      )
+
+    val pendingIntent = PendingIntent.getActivity(
+      appContext,
+      LP_NOTIFICATION_CLICK_REQUEST_CODE,
+      intent,
+      PendingIntent.FLAG_ONE_SHOT
+    )
+
+    setContentIntent(pendingIntent)
     return this
   }
 

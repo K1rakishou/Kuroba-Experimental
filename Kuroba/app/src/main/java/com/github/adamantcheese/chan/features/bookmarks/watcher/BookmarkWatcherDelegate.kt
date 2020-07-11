@@ -118,6 +118,11 @@ class BookmarkWatcherDelegate(
     }
 
     val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
+        return
+      }
+
     printDebugLogs(fetchResults)
 
     if (fetchResults.isEmpty()) {

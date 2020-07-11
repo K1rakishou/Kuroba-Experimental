@@ -28,10 +28,7 @@ import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.adamantcheese.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_REQUEST_CODE
-import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.NORMAL_NOTIFICATION_CLICK_REQUEST_CODE
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_NOTIFICATION_CHANNEL_ID
@@ -40,6 +37,10 @@ import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotificati
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_NOTIFICATION_NAME
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.REPLY_SUMMARY_SILENT_NOTIFICATION_NAME
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_REQUEST_CODE
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
+import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_ID
 import com.github.adamantcheese.chan.utils.NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG
 import com.github.adamantcheese.common.ellipsizeEnd
@@ -289,7 +290,7 @@ class ReplyNotificationsHelper(
       .setContentTitle(getApplicationLabel())
       .setContentText(titleText)
       .setSmallIcon(iconId)
-      .setupClickOnNotificationIntent(unreadNotificationsGrouped.keys)
+      .setupClickOnNotificationIntent(NORMAL_NOTIFICATION_CLICK_REQUEST_CODE, unreadNotificationsGrouped.keys)
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAutoCancel(true)
       .setAllowSystemGeneratedContextualActions(false)
@@ -371,7 +372,7 @@ class ReplyNotificationsHelper(
       .setSmallIcon(iconId)
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
       .setupSummaryNotificationsStyle(titleText)
-      .setupClickOnNotificationIntent(unreadNotificationsGrouped.keys)
+      .setupClickOnNotificationIntent(SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE, unreadNotificationsGrouped.keys)
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAllowSystemGeneratedContextualActions(false)
       .setAutoCancel(true)
@@ -432,7 +433,7 @@ class ReplyNotificationsHelper(
         .setSmallIcon(R.drawable.ic_stat_notify_alert)
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
-        .setupClickOnNotificationIntent(listOf(threadDescriptor))
+        .setupClickOnNotificationIntent(NORMAL_NOTIFICATION_CLICK_REQUEST_CODE, listOf(threadDescriptor))
         .setupDeleteNotificationIntent(listOf(threadDescriptor))
         .setAllowSystemGeneratedContextualActions(false)
         .setCategory(Notification.CATEGORY_MESSAGE)
@@ -545,10 +546,10 @@ class ReplyNotificationsHelper(
   }
 
   private fun NotificationCompat.Builder.setupClickOnNotificationIntent(
+    requestCode: Int,
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): NotificationCompat.Builder {
     val intent = Intent(appContext, StartActivity::class.java)
-
     val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
       ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
     }
@@ -563,13 +564,13 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
+        R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      NOTIFICATION_CLICK_REQUEST_CODE,
+      requestCode,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -597,13 +598,13 @@ class ReplyNotificationsHelper(
           or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
       )
       .putParcelableArrayListExtra(
-        NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
+        R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      NOTIFICATION_SWIPE_REQUEST_CODE,
+      R_NOTIFICATION_SWIPE_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
