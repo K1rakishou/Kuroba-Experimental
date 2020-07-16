@@ -153,7 +153,10 @@ class BookmarksManager(
 
   fun onThreadIsFetchingData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (threadDescriptor == currentlyOpenedThread()) {
-      threadIsFetchingEventsSubject.onNext(threadDescriptor)
+      val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
+      if (isActive) {
+        threadIsFetchingEventsSubject.onNext(threadDescriptor)
+      }
     }
   }
 

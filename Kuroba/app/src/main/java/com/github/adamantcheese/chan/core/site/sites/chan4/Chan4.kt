@@ -43,9 +43,9 @@ class Chan4 : SiteBase() {
   private val random = Random()
 
   // Legacy settings that were global before
-  private var passUser: StringSetting? = null
-  private var passPass: StringSetting? = null
-  private var passToken: StringSetting? = null
+  private var passUser: StringSetting
+  private var passPass: StringSetting
+  private var passToken: StringSetting
   private var captchaType: OptionsSetting<CaptchaType>? = null
   var flagType: StringSetting? = null
 
@@ -186,8 +186,7 @@ class Chan4 : SiteBase() {
 
     override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
       if (actions().isLoggedIn()) {
-        val passTokenSetting = checkNotNull(passToken) { "passToken must not be null here!" }
-
+        val passTokenSetting = passToken
         requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
       }
     }
@@ -202,8 +201,7 @@ class Chan4 : SiteBase() {
       cookieManager.removeAllCookies(null)
 
       if (actions().isLoggedIn()) {
-        val passTokenSetting = checkNotNull(passToken) { "passToken must not be null here!" }
-
+        val passTokenSetting = passToken
         val passCookies = arrayOf("pass_enabled=1;", "pass_id=" + passTokenSetting.get() + ";")
         val domain = sys.scheme + "://" + sys.host + "/"
 
@@ -289,8 +287,8 @@ class Chan4 : SiteBase() {
     }
 
     override suspend fun login(loginRequest: LoginRequest): SiteActions.LoginResult {
-      passUser!!.set(loginRequest.user)
-      passPass!!.set(loginRequest.pass)
+      passUser.set(loginRequest.user)
+      passPass.set(loginRequest.pass)
 
       val loginResult = httpCallManager.makeHttpCall(
         Chan4PassHttpCall(this@Chan4, loginRequest)
@@ -300,7 +298,7 @@ class Chan4 : SiteBase() {
         is HttpCall.HttpCallResult.Success -> {
           val loginResponse = loginResult.httpCall.loginResponse
           if (loginResponse.success) {
-            passToken!!.set(loginResponse.token)
+            passToken.set(loginResponse.token)
           }
 
           return SiteActions.LoginResult.LoginComplete(
@@ -336,15 +334,15 @@ class Chan4 : SiteBase() {
     }
 
     override fun logout() {
-      passToken!!.set("")
+      passToken.set("")
     }
 
     override fun isLoggedIn(): Boolean {
-      return passToken!!.get().isNotEmpty()
+      return passToken.get().isNotEmpty()
     }
 
     override fun loginDetails(): LoginRequest {
-      return LoginRequest(passUser!!.get(), passPass!!.get())
+      return LoginRequest(passUser.get(), passPass.get())
     }
   }
 

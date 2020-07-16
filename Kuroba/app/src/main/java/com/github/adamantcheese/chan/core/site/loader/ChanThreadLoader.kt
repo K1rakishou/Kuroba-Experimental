@@ -315,16 +315,16 @@ class ChanThreadLoader(val loadable: Loadable) {
 
     val url = getChanUrl(loadable.getSite(), loadable.chanDescriptor).toString()
 
+    // Notify the listeners that loader is starting fetching data from the server
+    loadable.threadDescriptorOrNull?.let { threadDescriptor ->
+      bookmarksManager.onThreadIsFetchingData(threadDescriptor)
+    }
+
     return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
       when (chanLoaderResponseResult) {
         is ModularResult.Value -> {
           val chanLoaderResponse = when (val threadLoadResult = chanLoaderResponseResult.value) {
             is ThreadLoadResult.LoadedNormally -> {
-              // Notify the listeners that loader is starting fetching data from the server
-              loadable.threadDescriptorOrNull?.let { threadDescriptor ->
-                bookmarksManager.onThreadIsFetchingData(threadDescriptor)
-              }
-
               threadLoadResult.chanLoaderResponse
             }
             is ThreadLoadResult.LoadedFromDatabaseCopy -> threadLoadResult.chanLoaderResponse

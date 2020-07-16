@@ -81,6 +81,10 @@ class BookmarkWatcherDelegate(
       if (isUpdatingCurrentlyOpenedThread) {
         if (threadBookmarkView.threadDescriptor != bookmarksManager.currentlyOpenedThread()) {
           // Skip all threads that are not the currently opened thread
+          if (verboseLogsEnabled) {
+            Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread) " +
+              "Skipping ${threadBookmarkView.threadDescriptor} because it is not a currently opened thread")
+          }
           return@mapNotNullBookmarksOrdered null
         }
       } else {
@@ -92,11 +96,20 @@ class BookmarkWatcherDelegate(
 
         if (shouldSkipThisBookmark) {
           // Skip the currently opened thread because we will update it differently
+          if (verboseLogsEnabled) {
+            Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread, " +
+              "isFirstFetch=${threadBookmarkView.isFirstFetch()}) " +
+              "Skipping ${threadBookmarkView.threadDescriptor} because it is a currently opened thread")
+          }
           return@mapNotNullBookmarksOrdered null
         }
       }
 
       if (!threadBookmarkView.isActive()) {
+        if (verboseLogsEnabled) {
+          Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread), " +
+            "Skipping ${threadBookmarkView.threadDescriptor} because it is not an active bookmark")
+        }
         return@mapNotNullBookmarksOrdered null
       }
 

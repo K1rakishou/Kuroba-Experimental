@@ -226,7 +226,7 @@ class ReplyPresenter @Inject constructor(
       if (isExpanded) {
         callback.openFileName(false)
         if (board.spoilers) {
-          callback.openSpoiler(false, true)
+          callback.openSpoiler(show = false, setUnchecked = true)
         }
       }
 
@@ -243,7 +243,7 @@ class ReplyPresenter @Inject constructor(
         return
       }
 
-      switchPage(Page.AUTHENTICATION, true, false)
+      switchPage(Page.AUTHENTICATION, useV2NoJsCaptcha = true, autoReply = false)
     }
   }
 
@@ -450,7 +450,7 @@ class ReplyPresenter @Inject constructor(
     callback.openCommentSJISButton(false)
     callback.openNameOptions(false)
     callback.openFileName(false)
-    callback.openSpoiler(false, true)
+    callback.openSpoiler(show = false, setUnchecked = true)
     callback.openPreview(false, null)
     callback.openPreviewMessage(false, null)
     callback.destroyCurrentAuthentication()
@@ -668,7 +668,7 @@ class ReplyPresenter @Inject constructor(
     if (isExpanded) {
       callback.openFileName(true)
       if (board.spoilers) {
-        callback.openSpoiler(true, false)
+        callback.openSpoiler(show = true, setUnchecked = false)
       }
     }
 
