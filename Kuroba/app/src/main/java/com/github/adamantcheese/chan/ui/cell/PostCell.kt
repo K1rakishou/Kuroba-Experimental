@@ -1012,7 +1012,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
   /**
    * A MovementMethod that searches for PostLinkables.<br></br>
-   * This version is for the [FastTextView].<br></br>
    * See [PostLinkable] for more information.
    */
   private class PostViewFastMovementMethod : LinkMovementMethod() {
