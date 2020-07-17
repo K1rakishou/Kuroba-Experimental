@@ -438,7 +438,9 @@ public class AndroidUtils {
      * Always registers an onpredrawlistener. The given ViewTreeObserver will be used.
      */
     public static void waitForLayout(
-            final ViewTreeObserver viewTreeObserver, final View view, final OnMeasuredCallback callback
+            final ViewTreeObserver viewTreeObserver,
+            final View view,
+            final OnMeasuredCallback callback
     ) {
         waitForLayoutInternal(false, viewTreeObserver, view, callback);
     }

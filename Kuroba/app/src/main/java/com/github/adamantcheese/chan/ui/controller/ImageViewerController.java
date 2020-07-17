@@ -413,8 +413,10 @@ public class ImageViewerController
                 ? imageViewerCallback.getPostForPostImage(postImage).no
                 : presenter.getLoadable().no;
 
-        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName) + File.separator
-                + StringUtils.dirNameRemoveBadCharacters(presenter.getLoadable().boardCode) + File.separator
+        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
+                + File.separator
+                + StringUtils.dirNameRemoveBadCharacters(presenter.getLoadable().boardCode)
+                + File.separator
                 + postNoString + "_";
 
         String tempTitle = (presenter.getLoadable().no == 0
@@ -456,7 +458,7 @@ public class ImageViewerController
         previewImage.setVisibility(visible ? VISIBLE : INVISIBLE);
     }
 
-    public void setPagerVisiblity(boolean visible) {
+    public void setPagerVisibility(boolean visible) {
         pager.setVisibility(visible ? VISIBLE : INVISIBLE);
         pager.setSwipingEnabled(visible);
     }
@@ -508,12 +510,7 @@ public class ImageViewerController
             return null;
         }
 
-        ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
-        if (adapter == null) {
-            return null;
-        }
-
-        return adapter;
+        return (ImageViewerAdapter) pager.getAdapter();
     }
 
     public void setTitle(PostImage postImage, int index, int count, boolean spoiler) {

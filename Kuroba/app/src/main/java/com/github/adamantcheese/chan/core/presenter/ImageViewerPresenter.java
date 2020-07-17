@@ -152,7 +152,7 @@ public class ImageViewerPresenter
         // Depends on what onModeLoaded did
         if (changeViewsOnInTransitionEnd) {
             callback.setPreviewVisibility(false);
-            callback.setPagerVisiblity(true);
+            callback.setPagerVisibility(true);
         }
     }
 
@@ -166,7 +166,7 @@ public class ImageViewerPresenter
         }
 
         callback.showDownloadMenuItem(false);
-        callback.setPagerVisiblity(false);
+        callback.setPagerVisibility(false);
         callback.setPreviewVisibility(true);
         callback.startPreviewOutTransition(loadable, postImage);
         callback.showProgress(false);
@@ -236,7 +236,7 @@ public class ImageViewerPresenter
                 if (!entering) {
                     // Entering transition was already ended, switch now
                     callback.setPreviewVisibility(false);
-                    callback.setPagerVisiblity(true);
+                    callback.setPagerVisibility(true);
                 } else {
                     // Wait for enter animation to finish before changing views
                     changeViewsOnInTransitionEnd = true;
@@ -761,7 +761,7 @@ public class ImageViewerPresenter
         void startPreviewInTransition(Loadable loadable, PostImage postImage);
         void startPreviewOutTransition(Loadable loadable, PostImage postImage);
         void setPreviewVisibility(boolean visible);
-        void setPagerVisiblity(boolean visible);
+        void setPagerVisibility(boolean visible);
         void setPagerItems(Loadable loadable, List<PostImage> images, int initialIndex);
         void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center);
         void setVolume(PostImage postImage, boolean muted);
