@@ -64,9 +64,9 @@ class ReportManager(
   private fun initSenderQueue() {
     crashLogSenderQueue
       .subscribeOn(senderScheduler)
+      .onBackpressureBuffer(UNBOUNDED_QUEUE_MIN_SIZE, false, true)
       .observeOn(senderScheduler)
       .buffer(1, TimeUnit.SECONDS)
-      .onBackpressureBuffer(UNBOUNDED_QUEUE_MIN_SIZE, false, true)
       .filter { requests -> requests.isNotEmpty() }
       .flatMap { requests ->
         Logger.d(TAG, "Collected ${requests.size} crash logs")

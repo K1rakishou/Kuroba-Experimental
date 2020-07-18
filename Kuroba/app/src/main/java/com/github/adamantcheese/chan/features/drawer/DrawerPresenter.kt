@@ -71,17 +71,17 @@ class DrawerPresenter(
 
   fun listenForStateChanges(): Flowable<HistoryControllerState> {
     return historyControllerStateSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
-      .onBackpressureLatest()
       .hide()
   }
 
   fun listenForBookmarksBadgeStateChanges(): Flowable<BookmarksBadgeState> {
     return bookmarksBadgeStateSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
-      .onBackpressureLatest()
       .hide()
   }
 

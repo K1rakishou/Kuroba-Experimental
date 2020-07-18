@@ -150,9 +150,9 @@ public class ViewThreadController
         loadThread(loadable);
 
         Disposable disposable = bookmarksManager.listenForBookmarksChanges()
+                .onBackpressureLatest()
                 .filter(bookmarkChange -> !(bookmarkChange instanceof BookmarksManager.BookmarkChange.BookmarksInitialized))
                 .debounce(250, TimeUnit.MILLISECONDS)
-                .onBackpressureLatest()
                 .subscribe(
                         this::updatePinIconStateIfNeeded,
                         error -> Logger.e(TAG, "Error while listening for bookmarks changes", error)

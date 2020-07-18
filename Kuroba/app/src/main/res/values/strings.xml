@@ -165,12 +165,15 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>
     <string name="action_sort">Sort</string>
+    <string name="action_browse_dev_menu">Dev menu</string>
     <string name="action_rename_pin">Rename bookmark</string>
     <string name="action_rename">Rename</string>
     <string name="action_reply">Reply</string>
     <string name="action_copy_image_url">Copy image url</string>
 
     <string name="open_link_not_matched">%1$s cannot open this link; it will open in your browser instead.</string>
+
+    <string name="dev_bookmark_every_thread">Bookmark every thread</string>
 
     <string name="order_bump">Bump order</string>
     <string name="order_reply">Reply count</string>

@@ -10,9 +10,9 @@ class ApplicationVisibilityManager {
 
   fun listenForAppVisibilityUpdates(): Flowable<ApplicationVisibility> {
     return appVisibilityStateSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .distinctUntilChanged()
-      .onBackpressureLatest()
       .hide()
   }
 

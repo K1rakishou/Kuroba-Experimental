@@ -63,20 +63,20 @@ class BookmarksManager(
 
     appScope.launch {
       persistTaskSubject
-        .debounce(1, TimeUnit.SECONDS)
         .onBackpressureLatest()
+        .debounce(1, TimeUnit.SECONDS)
         .collect { persistBookmarks() }
     }
 
     appScope.launch {
       delayedBookmarksChangedSubject
+        .onBackpressureLatest()
         .debounce(1, TimeUnit.SECONDS)
         .doOnNext { bookmarkChange ->
           if (verboseLogsEnabled) {
             Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
           }
         }
-        .onBackpressureLatest()
         .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
     }
 
@@ -111,20 +111,20 @@ class BookmarksManager(
 
   fun listenForBookmarksChanges(): Flowable<BookmarkChange> {
     return bookmarksChangedSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnNext { bookmarkChange ->
         if (verboseLogsEnabled) {
           Logger.d(TAG, "bookmarksChanged(${bookmarkChange::class.java.simpleName})")
         }
       }
-      .onBackpressureLatest()
       .hide()
   }
 
   fun listenForFetchEventsFromActiveThreads(): Flowable<ChanDescriptor.ThreadDescriptor> {
     return threadIsFetchingEventsSubject
-      .observeOn(AndroidSchedulers.mainThread())
       .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
       .hide()
   }
 

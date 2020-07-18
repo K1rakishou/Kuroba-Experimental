@@ -55,9 +55,9 @@ class PageRequestManager(
 
   fun listenForPagesUpdates(): Flowable<Unit> {
     return boardPagesUpdateSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .hide()
-      .onBackpressureLatest()
   }
 
   fun getPage(op: Post?): BoardPage? {

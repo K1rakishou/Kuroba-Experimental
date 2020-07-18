@@ -199,6 +199,7 @@ class BrowseController(context: Context) : ThreadController(context),
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
       .addSortMenu()
+      .addDevMenu()
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
@@ -206,6 +207,26 @@ class BrowseController(context: Context) : ThreadController(context),
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
       .build()
       .build()
+  }
+
+  @Suppress("MoveLambdaOutsideParentheses")
+  private fun NavigationItem.MenuOverflowBuilder.addDevMenu(): NavigationItem.MenuOverflowBuilder {
+    withNestedOverflow(
+      ACTION_DEV_MENU,
+      R.string.action_browse_dev_menu,
+      AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
+    )
+      .addNestedItem(
+        DEV_BOOKMARK_EVERY_THREAD,
+        R.string.dev_bookmark_every_thread,
+        true,
+        false,
+        DEV_BOOKMARK_EVERY_THREAD,
+        { subItem -> onBookmarkEveryThreadClicked(subItem) }
+      )
+      .build()
+
+    return this
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -275,6 +296,17 @@ class BrowseController(context: Context) : ThreadController(context),
       .build()
 
     return this
+  }
+
+  private fun onBookmarkEveryThreadClicked(subItem: ToolbarMenuSubItem) {
+    val id = subItem.value as? Int
+      ?: return
+
+    when (id) {
+      DEV_BOOKMARK_EVERY_THREAD -> {
+        presenter.bookmarkEveryThread(threadLayout.presenter.chanThread)
+      }
+    }
   }
 
   private fun onSortItemClicked(subItem: ToolbarMenuSubItem) {
@@ -681,12 +713,14 @@ class BrowseController(context: Context) : ThreadController(context),
   companion object {
     private const val ACTION_CHANGE_VIEW_MODE = 901
     private const val ACTION_SORT = 902
-    private const val ACTION_REPLY = 903
-    private const val ACTION_OPEN_BROWSER = 904
-    private const val ACTION_SHARE = 905
-    private const val ACTION_SCROLL_TO_TOP = 906
-    private const val ACTION_SCROLL_TO_BOTTOM = 907
-    private const val ACTION_OPEN_THREAD_BY_ID = 908
+    private const val ACTION_DEV_MENU = 903
+    private const val ACTION_REPLY = 904
+    private const val ACTION_OPEN_BROWSER = 905
+    private const val ACTION_SHARE = 906
+    private const val ACTION_SCROLL_TO_TOP = 907
+    private const val ACTION_SCROLL_TO_BOTTOM = 908
+    private const val ACTION_OPEN_THREAD_BY_ID = 909
+
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001
     private const val SORT_MODE_IMAGE = 1002
@@ -694,5 +728,7 @@ class BrowseController(context: Context) : ThreadController(context),
     private const val SORT_MODE_OLDEST = 1004
     private const val SORT_MODE_MODIFIED = 1005
     private const val SORT_MODE_ACTIVITY = 1006
+
+    private const val DEV_BOOKMARK_EVERY_THREAD = 2000
   }
 }
