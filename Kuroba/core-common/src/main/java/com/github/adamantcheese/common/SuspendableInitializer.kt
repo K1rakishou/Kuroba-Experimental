@@ -36,6 +36,10 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
     value.complete(newValue)
     invokeAllCallbacks(null)
+
+    if (logStates) {
+      Log.d(tag, "initWithValue() done")
+    }
   }
 
   fun initWithError(exception: Throwable) {
@@ -50,6 +54,10 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     error.set(exception)
     value.completeExceptionally(exception)
     invokeAllCallbacks(exception)
+
+    if (logStates) {
+      Log.e(tag, "initWithError() done")
+    }
   }
 
   fun initWithModularResult(modularResult: ModularResult<T>) {
@@ -144,12 +152,20 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
   fun invokeAfterInitialized(func: (Throwable?) -> Unit) {
     if (value.isCompleted) {
+      if (logStates) {
+        Log.d(tag, "invokeAfterInitialized() called when already initialized")
+      }
+
       func(error.get())
       return
     }
 
     synchronized(this) {
       toRunAfterInitialized.add(func)
+    }
+
+    if (logStates) {
+      Log.d(tag, "invokeAfterInitialized() called, new callback added")
     }
   }
 
@@ -175,6 +191,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return@synchronized copy
     }
 
+    if (logStates) {
+      Log.d(tag, "invokeAllCallbacks() called, before copyOfCallbacks.forEach")
+    }
+
     copyOfCallbacks.forEach { func -> func.invoke(error) }
+
+    if (logStates) {
+      Log.d(tag, "invokeAllCallbacks() called, after copyOfCallbacks.forEach")
+    }
   }
 }
