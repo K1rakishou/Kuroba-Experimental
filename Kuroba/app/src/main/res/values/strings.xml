@@ -145,6 +145,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_open_thread_by_id">Open a thread by it\'s ID</string>
     <string name="action_share">Share</string>
+    <string name="action_share_url">Share file url</string>
+    <string name="action_share_content">Share file content</string>
     <string name="action_go_to_post">Go to post</string>
     <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
     <string name="action_download_album">Download album</string>
@@ -555,13 +557,10 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>
-    <string name="setting_buttons_bottom">Reply buttons on the bottom</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
     <string name="setting_tap_no_rely">Tap the post number to reply</string>
     <string name="settings_image_long_url">Enable long-press image URL copy</string>
     <string name="settings_image_long_url_description">Makes long-pressing on post images copy the image URL to the clipboard</string>
-    <string name="setting_share_url">Share URL to image</string>
-    <string name="setting_share_url_description">Share the URL to the image instead of the image itself</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
     <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
 

@@ -238,11 +238,9 @@ public class ChanSettings {
     public static final StringSetting postDefaultName;
 
     // Post
-    public static final BooleanSetting repliesButtonsBottom;
     public static final BooleanSetting volumeKeysScrolling;
     public static final BooleanSetting tapNoReply;
     public static final BooleanSetting enableLongPressURLCopy;
-    public static final BooleanSetting shareUrl;
     public static final BooleanSetting markUnseenPosts;
 
     // Other options
@@ -385,11 +383,9 @@ public class ChanSettings {
             postDefaultName = new StringSetting(p, "preference_default_name", "");
 
             // Post
-            repliesButtonsBottom = new BooleanSetting(p, "preference_buttons_bottom", false);
             volumeKeysScrolling = new BooleanSetting(p, "preference_volume_key_scrolling", false);
             tapNoReply = new BooleanSetting(p, "preference_tap_no_reply", false);
             enableLongPressURLCopy = new BooleanSetting(p, "long_press_image_url_copy", true);
-            shareUrl = new BooleanSetting(p, "preference_image_share_url", false);
             markUnseenPosts = new BooleanSetting(p, "preference_mark_unseen_posts", true);
 
             // Other options

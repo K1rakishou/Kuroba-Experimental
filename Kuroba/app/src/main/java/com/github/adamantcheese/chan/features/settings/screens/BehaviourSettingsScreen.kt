@@ -145,13 +145,6 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.PostGroup.RepliesButtonsBottom,
-          topDescriptionIdFunc = { R.string.setting_buttons_bottom },
-          setting = ChanSettings.repliesButtonsBottom
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = BehaviorScreen.PostGroup.VolumeKeysScrolling,
           topDescriptionIdFunc = { R.string.setting_volume_key_scrolling },
           setting = ChanSettings.volumeKeysScrolling
@@ -170,14 +163,6 @@ class BehaviourSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_image_long_url },
           bottomDescriptionIdFunc = { R.string.settings_image_long_url_description },
           setting = ChanSettings.enableLongPressURLCopy
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.PostGroup.ShareUrl,
-          topDescriptionIdFunc = { R.string.setting_share_url },
-          bottomDescriptionIdFunc = { R.string.setting_share_url_description },
-          setting = ChanSettings.shareUrl
         )
 
         group += BooleanSettingV2.createBuilder(

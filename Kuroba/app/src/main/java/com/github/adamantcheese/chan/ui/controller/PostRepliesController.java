@@ -143,13 +143,7 @@ public class PostRepliesController
         storeScrollPosition();
         displayingData = data;
 
-        View dataView;
-        if (ChanSettings.repliesButtonsBottom.get()) {
-            dataView = inflate(context, R.layout.layout_post_replies_bottombuttons);
-        } else {
-            dataView = inflate(context, R.layout.layout_post_replies);
-        }
-
+        View dataView = inflate(context, R.layout.layout_post_replies_bottombuttons);
         repliesView = dataView.findViewById(R.id.post_list);
         View repliesBack = dataView.findViewById(R.id.replies_back);
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());

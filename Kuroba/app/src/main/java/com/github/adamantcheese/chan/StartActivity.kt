@@ -200,6 +200,39 @@ class StartActivity : AppCompatActivity(),
     onNewIntentInternal(intent)
   }
 
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+
+    onNewIntentInternal(intent)
+  }
+
+  private fun onNewIntentInternal(intent: Intent) {
+    val extras = intent.extras
+      ?: return
+    val action = intent.action
+      ?: return
+
+    if (!isKnownAction(action)) {
+      return
+    }
+
+    launch {
+      bookmarksManager.awaitUntilInitialized()
+
+      when {
+        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+          replyNotificationClicked(extras)
+        }
+        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
+          replyNotificationSwipedAway(extras)
+        }
+        intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+          lastPageNotificationClicked(extras)
+        }
+      }
+    }
+  }
+
   private suspend fun listenForReplyViewStatesChanges() {
     replyViewStateManager.listenForReplyViewsStateUpdates()
       .asFlow()
@@ -461,39 +494,6 @@ class StartActivity : AppCompatActivity(),
     }
 
     browseController!!.setDrawerCallbacks(drawerController)
-  }
-
-  override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-
-    onNewIntentInternal(intent)
-  }
-
-  private fun onNewIntentInternal(intent: Intent) {
-    val extras = intent.extras
-      ?: return
-    val action = intent.action
-      ?: return
-
-    if (!isKnownAction(action)) {
-      return
-    }
-
-    launch {
-      bookmarksManager.awaitUntilInitialized()
-
-      when {
-        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-          replyNotificationClicked(extras)
-        }
-        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
-          replyNotificationSwipedAway(extras)
-        }
-        intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-          lastPageNotificationClicked(extras)
-        }
-      }
-    }
   }
 
   private fun isKnownAction(action: String): Boolean {

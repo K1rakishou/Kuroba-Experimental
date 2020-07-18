@@ -112,12 +112,13 @@ public class ImageViewerController
     private static final int VOLUME_ID = 1;
     private static final int SAVE_ID = 2;
     private static final int ACTION_OPEN_BROWSER = 3;
-    private static final int ACTION_SHARE = 4;
-    private static final int ACTION_SEARCH_IMAGE = 5;
-    private static final int ACTION_DOWNLOAD_ALBUM = 6;
-    private static final int ACTION_TRANSPARENCY_TOGGLE = 7;
-    private static final int ACTION_IMAGE_ROTATE = 8;
-    private static final int ACTION_RELOAD = 9;
+    private static final int ACTION_SHARE_URL = 4;
+    private static final int ACTION_SHARE_CONTENT = 5;
+    private static final int ACTION_SEARCH_IMAGE = 6;
+    private static final int ACTION_DOWNLOAD_ALBUM = 7;
+    private static final int ACTION_TRANSPARENCY_TOGGLE = 8;
+    private static final int ACTION_IMAGE_ROTATE = 9;
+    private static final int ACTION_RELOAD = 10;
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -228,9 +229,14 @@ public class ImageViewerController
                 this::openBrowserClicked
         );
         overflowBuilder.withSubItem(
-                ACTION_SHARE,
-                R.string.action_share,
-                this::shareClicked
+                ACTION_SHARE_URL,
+                R.string.action_share_url,
+                this::shareUrlClicked
+        );
+        overflowBuilder.withSubItem(
+                ACTION_SHARE_CONTENT,
+                R.string.action_share_content,
+                this::shareContentClicked
         );
         overflowBuilder.withSubItem(
                 ACTION_SEARCH_IMAGE,
@@ -306,7 +312,17 @@ public class ImageViewerController
         }
     }
 
-    private void shareClicked(ToolbarMenuSubItem item) {
+    private void shareUrlClicked(ToolbarMenuSubItem item) {
+        PostImage postImage = presenter.getCurrentPostImage();
+        if (postImage.imageUrl == null) {
+            Logger.e(TAG, "saveShare() postImage.imageUrl == null");
+            return;
+        }
+
+        shareLink(postImage.imageUrl.toString());
+    }
+
+    private void shareContentClicked(ToolbarMenuSubItem item) {
         PostImage postImage = presenter.getCurrentPostImage();
         saveShare(true, postImage);
     }
@@ -362,40 +378,33 @@ public class ImageViewerController
     }
 
     private void saveShare(boolean share, PostImage postImage) {
-        if (share && ChanSettings.shareUrl.get()) {
-            if (postImage.imageUrl == null) {
-                Logger.e(TAG, "saveShare() postImage.imageUrl == null");
-                return;
-            }
+        ImageSaveTask task = new ImageSaveTask(loadable, postImage, false);
+        task.setShare(share);
+        if (ChanSettings.saveBoardFolder.get()) {
+            String subFolderName;
 
-            shareLink(postImage.imageUrl.toString());
-        } else {
-            ImageSaveTask task = new ImageSaveTask(loadable, postImage, false);
-            task.setShare(share);
-            if (ChanSettings.saveBoardFolder.get()) {
-                String subFolderName;
-
-                if (ChanSettings.saveThreadFolder.get()) {
-                    subFolderName = appendAdditionalSubDirectories(postImage);
-                } else {
-                    String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(presenter.getLoadable().site.name());
-
-                    subFolderName = siteNameSafe + File.separator + presenter.getLoadable().boardCode;
-                }
-
-                task.setSubFolder(subFolderName);
-            }
-
-            imageSaver.startDownloadTask(context, task, message -> {
-                String errorMessage = String.format(Locale.ENGLISH,
-                        "%s, error message = %s",
-                        "Couldn't start download task",
-                        message
+            if (ChanSettings.saveThreadFolder.get()) {
+                subFolderName = appendAdditionalSubDirectories(postImage);
+            } else {
+                String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(
+                        presenter.getLoadable().site.name()
                 );
 
-                showToast(context, errorMessage, Toast.LENGTH_LONG);
-            });
+                subFolderName = siteNameSafe + File.separator + presenter.getLoadable().boardCode;
+            }
+
+            task.setSubFolder(subFolderName);
         }
+
+        imageSaver.startDownloadTask(context, task, message -> {
+            String errorMessage = String.format(Locale.ENGLISH,
+                    "%s, error message = %s",
+                    "Couldn't start download task",
+                    message
+            );
+
+            showToast(context, errorMessage, Toast.LENGTH_LONG);
+        });
     }
 
     @NonNull

@@ -537,14 +537,20 @@ public class ImageSaver {
     }
 
     @NonNull
-    private AbstractFile deduplicateFile(PostImage postImage, ImageSaveTask task, @NonNull AbstractFile saveLocation) {
-        String name = ChanSettings.saveServerFilename.get() ? postImage.serverFilename : postImage.filename;
+    private AbstractFile deduplicateFile(
+            PostImage postImage,
+            ImageSaveTask task,
+            @NonNull AbstractFile saveLocation) {
+        String name = ChanSettings.saveServerFilename.get()
+                ? postImage.serverFilename
+                : postImage.filename;
 
-        //dedupe shared files to have their own file name; ok to overwrite, prevents lots of downloads for multiple shares
+        // dedupe shared files to have their own file name; ok to overwrite, prevents lots
+        // of downloads for multiple shares
         String fileName = filterName(name + (task.getShare() ? "_shared" : "") + "." + postImage.extension, true);
         AbstractFile saveFile = saveLocation.clone(new FileSegment(fileName));
 
-        //shared files don't need deduplicating
+        // shared files don't need deduplicating
         while (fileManager.exists(saveFile) && !task.getShare()) {
             String currentTimeHash = Long.toString(SystemClock.elapsedRealtimeNanos(), Character.MAX_RADIX);
             String resultFileName = name + "_" + currentTimeHash + "." + postImage.extension;
