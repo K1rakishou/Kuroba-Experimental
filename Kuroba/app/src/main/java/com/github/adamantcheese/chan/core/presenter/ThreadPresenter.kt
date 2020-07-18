@@ -96,8 +96,6 @@ class ThreadPresenter @Inject constructor(
   private var searchQuery: String? = null
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
-  private var historyAdded = false
-  private var addToLocalBackHistory = false
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
 
@@ -144,7 +142,6 @@ class ThreadPresenter @Inject constructor(
       }
 
       this.currentLoadable = loadable
-      this.addToLocalBackHistory = addToLocalBackHistory
 
       loadable.threadDescriptorOrNull?.let { threadDescriptor ->
         bookmarksManager.setCurrentOpenThreadDescriptor(threadDescriptor)
@@ -180,8 +177,6 @@ class ThreadPresenter @Inject constructor(
       chanLoaderManager.release(chanLoader!!, this)
       chanLoader = null
       currentLoadable = null
-      historyAdded = false
-      addToLocalBackHistory = true
       threadPresenterCallback?.showLoading()
     }
 
