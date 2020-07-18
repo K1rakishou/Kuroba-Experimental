@@ -395,7 +395,6 @@ sealed class BehaviorScreen(
 
     object VolumeKeysScrolling : PostGroup("volume_keys_scrolling")
     object TapNoReply : PostGroup("tap_no_reply")
-    object EnableLongPressURLCopy : PostGroup("enable_long_press_url_copy")
     object MarkUnseenPosts : PostGroup("mark_unseen_posts")
 
     companion object : IGroupIdentifier() {

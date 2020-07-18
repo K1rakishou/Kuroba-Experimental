@@ -739,6 +739,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
   private fun bindThumbnails(post: Post) {
     for (thumbnailView in thumbnailViews) {
+      thumbnailView.unbindPostImage()
       relativeLayoutContainer.removeView(thumbnailView)
     }
 
@@ -789,6 +790,10 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       // twice and more importantly inside RecyclerView bind call
       thumbnailView.setOnClickListener {
         callback?.onThumbnailClicked(image, thumbnailView)
+      }
+      thumbnailView.setOnLongClickListener {
+        callback?.onThumbnailLongClicked(image, thumbnailView)
+        return@setOnLongClickListener true
       }
 
       thumbnailView.setRounding(AndroidUtils.dp(2f))

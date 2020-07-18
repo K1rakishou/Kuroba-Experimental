@@ -21,7 +21,6 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -41,12 +40,8 @@ import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.setClipboardContent;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
-public class PostImageThumbnailView
-        extends ThumbnailView
-        implements View.OnLongClickListener {
+public class PostImageThumbnailView extends ThumbnailView {
     private static final String TAG = "PostImageThumbnailView";
 
     @Inject
@@ -79,7 +74,6 @@ public class PostImageThumbnailView
         super(context, attrs, defStyle);
         inject(this);
 
-        this.setOnLongClickListener(this);
         this.showPrefetchLoadingIndicator = ChanSettings.autoLoadThreadImages.get()
                 && ChanSettings.showPrefetchLoadingIndicator.get();
 
@@ -223,8 +217,8 @@ public class PostImageThumbnailView
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         } else {
             int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-            if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY && (heightMode == MeasureSpec.UNSPECIFIED
-                    || heightMode == MeasureSpec.AT_MOST)) {
+            if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+                    && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)) {
                 int width = MeasureSpec.getSize(widthMeasureSpec);
 
                 super.onMeasure(widthMeasureSpec,
@@ -236,15 +230,4 @@ public class PostImageThumbnailView
         }
     }
 
-    @Override
-    public boolean onLongClick(View v) {
-        if (postImage == null || postImage.imageUrl == null || !ChanSettings.enableLongPressURLCopy.get()) {
-            return false;
-        }
-
-        setClipboardContent("Image URL", postImage.imageUrl.toString());
-        showToast(getContext(), R.string.image_url_copied_to_clipboard);
-
-        return true;
-    }
 }

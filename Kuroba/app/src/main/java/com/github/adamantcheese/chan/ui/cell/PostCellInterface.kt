@@ -67,6 +67,7 @@ interface PostCellInterface {
     fun onPostClicked(post: Post)
     fun onPostDoubleClicked(post: Post)
     fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView)
+    fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView)
     fun onShowPostReplies(post: Post)
     fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>)
     fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean)

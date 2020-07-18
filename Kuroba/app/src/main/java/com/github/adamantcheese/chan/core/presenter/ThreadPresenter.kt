@@ -842,6 +842,36 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
+  override fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView) {
+    if (!isBound) {
+      return
+    }
+
+    val items = mutableListOf<FloatingListMenuItem>()
+    items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
+
+    val floatingListMenuController = FloatingListMenuController(
+      context,
+      items,
+      { (key) -> onThumbnailOptionClicked(key as Int, postImage, thumbnail) }
+    )
+
+    presentController(floatingListMenuController, true)
+  }
+
+  private fun onThumbnailOptionClicked(id: Int, postImage: PostImage, thumbnail: ThumbnailView) {
+    when (id) {
+      THUMBNAIL_COPY_URL -> {
+        if (postImage.imageUrl == null) {
+          return
+        }
+
+        AndroidUtils.setClipboardContent("Image URL", postImage.imageUrl.toString())
+        showToast(context, R.string.image_url_copied_to_clipboard)
+      }
+    }
+  }
+
   override fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>) {
     if (!isBound) {
       return
@@ -1477,10 +1507,10 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_OPEN_BROWSER = 13
     private const val POST_OPTION_REMOVE = 14
     private const val POST_OPTION_MOCK_REPLY = 15
-
     private const val POST_OPTION_FILTER_TRIPCODE = 100
     private const val POST_OPTION_FILTER_IMAGE_HASH = 101
 
+    private const val THUMBNAIL_COPY_URL = 1000
   }
 
 }

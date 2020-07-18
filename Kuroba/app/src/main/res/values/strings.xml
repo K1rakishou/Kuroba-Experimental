@@ -168,6 +168,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_rename_pin">Rename bookmark</string>
     <string name="action_rename">Rename</string>
     <string name="action_reply">Reply</string>
+    <string name="action_copy_image_url">Copy image url</string>
+
     <string name="open_link_not_matched">%1$s cannot open this link; it will open in your browser instead.</string>
 
     <string name="order_bump">Bump order</string>
@@ -559,8 +561,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_group_post">Post</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
     <string name="setting_tap_no_rely">Tap the post number to reply</string>
-    <string name="settings_image_long_url">Enable long-press image URL copy</string>
-    <string name="settings_image_long_url_description">Makes long-pressing on post images copy the image URL to the clipboard</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
     <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
 

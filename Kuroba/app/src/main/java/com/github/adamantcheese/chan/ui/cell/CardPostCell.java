@@ -56,7 +56,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class CardPostCell
         extends CardView
-        implements PostCellInterface, View.OnClickListener {
+        implements PostCellInterface, View.OnClickListener, View.OnLongClickListener {
     private static final int COMMENT_MAX_LENGTH = 200;
 
     @Inject
@@ -106,6 +106,7 @@ public class CardPostCell
         thumbView = findViewById(R.id.thumbnail);
         thumbView.setRatio(16f / 13f);
         thumbView.setOnClickListener(this);
+        thumbView.setOnLongClickListener(this);
         title = findViewById(R.id.title);
         comment = findViewById(R.id.comment);
         replies = findViewById(R.id.replies);
@@ -157,6 +158,16 @@ public class CardPostCell
         } else if (v == this) {
             callback.onPostClicked(post);
         }
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        if (v == thumbView) {
+            callback.onThumbnailLongClicked(post.firstImage(), thumbView);
+            return true;
+        }
+
+        return false;
     }
 
     public void setPost(

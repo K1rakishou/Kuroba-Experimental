@@ -240,7 +240,6 @@ public class ChanSettings {
     // Post
     public static final BooleanSetting volumeKeysScrolling;
     public static final BooleanSetting tapNoReply;
-    public static final BooleanSetting enableLongPressURLCopy;
     public static final BooleanSetting markUnseenPosts;
 
     // Other options
@@ -385,7 +384,6 @@ public class ChanSettings {
             // Post
             volumeKeysScrolling = new BooleanSetting(p, "preference_volume_key_scrolling", false);
             tapNoReply = new BooleanSetting(p, "preference_tap_no_reply", false);
-            enableLongPressURLCopy = new BooleanSetting(p, "long_press_image_url_copy", true);
             markUnseenPosts = new BooleanSetting(p, "preference_mark_unseen_posts", true);
 
             // Other options

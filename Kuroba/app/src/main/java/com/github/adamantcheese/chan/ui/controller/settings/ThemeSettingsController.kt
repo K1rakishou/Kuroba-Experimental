@@ -103,6 +103,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     override fun onPostClicked(post: Post) {}
     override fun onPostDoubleClicked(post: Post) {}
     override fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView) {}
+    override fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView) {}
     override fun onShowPostReplies(post: Post) {}
     override fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>) {}
     override fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean) {}

@@ -159,14 +159,6 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.PostGroup.EnableLongPressURLCopy,
-          topDescriptionIdFunc = { R.string.settings_image_long_url },
-          bottomDescriptionIdFunc = { R.string.settings_image_long_url_description },
-          setting = ChanSettings.enableLongPressURLCopy
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = BehaviorScreen.PostGroup.MarkUnseenPosts,
           topDescriptionIdFunc = { R.string.setting_mark_unseen_posts_title },
           bottomDescriptionIdFunc = { R.string.setting_mark_unseen_posts_duration },
