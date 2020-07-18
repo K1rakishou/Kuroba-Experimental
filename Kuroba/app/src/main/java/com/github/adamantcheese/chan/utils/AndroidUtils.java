@@ -456,44 +456,43 @@ public class AndroidUtils {
 
         if (returnIfNotZero && width > 0 && height > 0) {
             callback.onMeasured(view);
-        } else {
-            viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    ViewTreeObserver usingViewTreeObserver = viewTreeObserver;
-                    if (viewTreeObserver != view.getViewTreeObserver()) {
-                        Logger.e(
-                                TAG,
-                                "view.getViewTreeObserver() is another viewtreeobserver! replacing with the new one"
-                        );
-                        usingViewTreeObserver = view.getViewTreeObserver();
-                    }
-
-                    if (usingViewTreeObserver.isAlive()) {
-                        usingViewTreeObserver.removeOnPreDrawListener(this);
-                    } else {
-                        Logger.e(
-                                TAG,
-                                "ViewTreeObserver not alive, could not remove onPreDrawListener! This will probably not end well"
-                        );
-                    }
-
-                    boolean ret;
-                    try {
-                        ret = callback.onMeasured(view);
-                    } catch (Exception e) {
-                        Logger.i(TAG, "Exception in onMeasured", e);
-                        throw e;
-                    }
-
-                    if (!ret) {
-                        Logger.d(TAG, "waitForLayout requested a re-layout by returning false");
-                    }
-
-                    return ret;
-                }
-            });
+            return;
         }
+
+        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            private ViewTreeObserver usingViewTreeObserver = viewTreeObserver;
+
+            @Override
+            public boolean onPreDraw() {
+                if (viewTreeObserver != view.getViewTreeObserver()) {
+                    Logger.e(TAG, "view.getViewTreeObserver() is another viewtreeobserver! " +
+                            "replacing with the new one");
+
+                    usingViewTreeObserver = view.getViewTreeObserver();
+                }
+
+                if (usingViewTreeObserver.isAlive()) {
+                    usingViewTreeObserver.removeOnPreDrawListener(this);
+                } else {
+                    Logger.e(TAG, "ViewTreeObserver not alive, could not remove onPreDrawListener! " +
+                            "This will probably not end well");
+                }
+
+                boolean ret;
+                try {
+                    ret = callback.onMeasured(view);
+                } catch (Exception e) {
+                    Logger.e(TAG, "Exception in onMeasured", e);
+                    throw e;
+                }
+
+                if (!ret) {
+                    Logger.d(TAG, "waitForLayout requested a re-layout by returning false");
+                }
+
+                return ret;
+            }
+        });
     }
 
     public static void setBoundlessRoundRippleBackground(View view) {

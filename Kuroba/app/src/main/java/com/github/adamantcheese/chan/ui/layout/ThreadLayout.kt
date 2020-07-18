@@ -467,7 +467,8 @@ class ThreadLayout @JvmOverloads constructor(
     checkBox.buttonTintList = ColorStateList.valueOf(themeHelper.theme.textPrimary)
     checkBox.setTextColor(ColorStateList.valueOf(themeHelper.theme.textPrimary))
 
-    AlertDialog.Builder(context).setTitle(R.string.delete_confirm)
+    AlertDialog.Builder(context)
+      .setTitle(R.string.delete_confirm)
       .setView(view)
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.delete, { _, _ -> presenter.deletePostConfirmed(post, checkBox.isChecked) })

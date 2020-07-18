@@ -4,6 +4,7 @@ import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.isExceptionImportant
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -157,7 +158,7 @@ class BookmarkForegroundWatcher(
   }
 
   private fun logErrorIfNeeded(error: Throwable) {
-    if (error is CancellationException) {
+    if (!error.isExceptionImportant()) {
       return
     }
 

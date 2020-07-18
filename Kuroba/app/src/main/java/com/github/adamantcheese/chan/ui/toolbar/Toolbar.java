@@ -334,6 +334,11 @@ public class Toolbar
 
     @Override
     public void searchInput(String input) {
+        if (input.isEmpty()) {
+            closeSearch();
+            return;
+        }
+
         presenter.searchInput(input);
     }
 

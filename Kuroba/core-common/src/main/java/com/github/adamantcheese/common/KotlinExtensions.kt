@@ -149,6 +149,13 @@ fun Throwable.errorMessageOrClassName(): String {
   return this::class.java.name
 }
 
+fun Throwable.isExceptionImportant(): Boolean {
+  return when (this) {
+    is CancellationException -> false
+    else -> true
+  }
+}
+
 fun View.updateMargins(
   left: Int? = null,
   right: Int? = null,

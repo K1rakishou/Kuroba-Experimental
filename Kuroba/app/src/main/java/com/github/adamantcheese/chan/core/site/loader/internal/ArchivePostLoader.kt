@@ -8,8 +8,9 @@ import com.github.adamantcheese.chan.core.site.loader.internal.usecase.StorePost
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.isExceptionImportant
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.CancellationException
 
 internal class ArchivePostLoader(
   private val parsePostsUseCase: ParsePostsUseCase,
@@ -34,12 +35,12 @@ internal class ArchivePostLoader(
         descriptor,
         Utils.getArchiveDescriptor(archivesManager, descriptor, requestParams, true)
       ).safeUnwrap { error ->
-        if (error is CancellationException) {
-          Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
-            "posts from archive (CANCELED)")
-        } else {
+        if (error.isExceptionImportant()) {
           Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
             "posts from archive", error)
+        } else {
+          Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
+            "posts from archive: ${error.errorMessageOrClassName()}")
         }
 
         return@Try

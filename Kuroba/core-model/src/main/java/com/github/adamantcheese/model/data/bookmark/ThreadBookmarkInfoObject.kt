@@ -79,6 +79,14 @@ sealed class StickyThread {
   // Rolling sticky thread
   data class StickyWithCap(val cap: Int) : StickyThread()
 
+  override fun toString(): String {
+    return when (this) {
+      NotSticky -> "NotSticky"
+      StickyUnlimited -> "StickyUnlimited"
+      is StickyWithCap -> "StickyWithCap(cap=${cap})"
+    }
+  }
+
   companion object {
     fun create(isSticky: Boolean, stickyCap: Int): StickyThread {
       if (!isSticky) {

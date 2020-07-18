@@ -576,9 +576,9 @@ public class ViewThreadController
 
         // phone layout
         BrowseController browseController = null;
-        for (Controller c : navigationController.childControllers) {
-            if (c instanceof BrowseController) {
-                browseController = (BrowseController) c;
+        for (Controller controller : requireNavController().childControllers) {
+            if (controller instanceof BrowseController) {
+                browseController = (BrowseController) controller;
                 break;
             }
         }
@@ -587,7 +587,7 @@ public class ViewThreadController
             browseController.setBoard(catalogLoadable.board);
         }
 
-        navigationController.popController(false);
+        requireNavController().popController(false);
 
         // search after we're at the browse controller
         if (searchQuery != null && browseController != null) {

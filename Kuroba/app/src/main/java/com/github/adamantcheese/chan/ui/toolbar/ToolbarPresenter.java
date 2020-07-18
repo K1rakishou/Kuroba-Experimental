@@ -120,7 +120,6 @@ public class ToolbarPresenter {
         set(item, null, AnimationStyle.FADE);
 
         callback.onSearchVisibilityChanged(item, false);
-
         return true;
     }
 

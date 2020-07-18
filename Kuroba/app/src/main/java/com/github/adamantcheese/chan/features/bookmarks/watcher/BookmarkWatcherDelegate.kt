@@ -14,6 +14,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.isExceptionImportant
 import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
@@ -66,7 +67,13 @@ class BookmarkWatcherDelegate(
         Logger.d(TAG, "BookmarkWatcherDelegate.doWork() success, " +
           "activeBookmarksCount=$activeBookmarksCount")
 
-      }.peekError { error -> Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", error) }
+      }.peekError { error ->
+        if (error.isExceptionImportant()) {
+          Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", error)
+        } else {
+          Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure, error: ${error.errorMessageOrClassName()}")
+        }
+      }
     }
 
     Logger.d(TAG, "BookmarkWatcherDelegate.doWork() took $duration")
@@ -132,7 +139,12 @@ class BookmarkWatcherDelegate(
 
     val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
       .safeUnwrap { error ->
-        Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
+        if (error.isExceptionImportant()) {
+          Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
+        } else {
+          Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error: ${error.errorMessageOrClassName()}")
+        }
+
         return
       }
 
@@ -429,8 +441,7 @@ class BookmarkWatcherDelegate(
             requireNotNull(originalPost) { "No OP!" }
 
             Logger.d(TAG, "FetchResult.Success: descriptor=${fetchResult.threadDescriptor}, " +
-              "threadNo = ${originalPost.postNo}, closed = ${originalPost.closed}, " +
-              "archive = ${originalPost.archived}")
+              "originalPost=${originalPost}")
           }
 
           ++successCount
