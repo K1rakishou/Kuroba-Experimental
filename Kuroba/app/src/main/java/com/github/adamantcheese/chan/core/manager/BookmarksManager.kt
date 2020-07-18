@@ -219,11 +219,11 @@ class BookmarksManager(
     notifyListenersOption: NotifyListenersOption,
     mutator: (ThreadBookmark) -> Unit
   ) {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
     if (threadDescriptors.isEmpty()) {
       return
     }
-
-    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.write {
       var updated = false
@@ -432,35 +432,6 @@ class BookmarksManager(
     }
   }
 
-  fun onPostViewed(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    postNo: Long,
-    currentPostIndex: Int,
-    realPostIndex: Int
-  ) {
-    if (!isReady()) {
-      return
-    }
-
-    val lastViewedPostNo = lock.read {
-      if (!bookmarks.containsKey(threadDescriptor)) {
-        return
-      }
-
-      return@read bookmarks[threadDescriptor]?.lastViewedPostNo ?: 0L
-    }
-
-    if (postNo <= lastViewedPostNo) {
-      return
-    }
-
-    updateBookmark(threadDescriptor, NotifyListenersOption.NotifyDelayed) { threadBookmark ->
-      threadBookmark.updateSeenPostCount(realPostIndex)
-      threadBookmark.updateLastViewedPostNo(postNo)
-      threadBookmark.readRepliesUpTo(postNo)
-    }
-  }
-
   fun bookmarksCount(): Int {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -518,6 +489,35 @@ class BookmarksManager(
       ensureBookmarksAndOrdersConsistency()
 
       return@read bookmarks.values.any { threadBookmark -> threadBookmark.hasUnreadReplies() }
+    }
+  }
+
+  fun onPostViewed(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postNo: Long,
+    currentPostIndex: Int,
+    realPostIndex: Int
+  ) {
+    if (!isReady()) {
+      return
+    }
+
+    val lastViewedPostNo = lock.read {
+      if (!bookmarks.containsKey(threadDescriptor)) {
+        return
+      }
+
+      return@read bookmarks[threadDescriptor]?.lastViewedPostNo ?: 0L
+    }
+
+    if (postNo <= lastViewedPostNo) {
+      return
+    }
+
+    updateBookmark(threadDescriptor, NotifyListenersOption.NotifyDelayed) { threadBookmark ->
+      threadBookmark.updateSeenPostCount(realPostIndex)
+      threadBookmark.updateLastViewedPostNo(postNo)
+      threadBookmark.readRepliesUpTo(postNo)
     }
   }
 

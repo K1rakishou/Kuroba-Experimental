@@ -134,45 +134,51 @@ public class AlbumDownloadController
     @Override
     public void onClick(View v) {
         if (v == download) {
-            int checkCount = getCheckCount();
-            if (checkCount == 0) {
-                showToast(context, R.string.album_download_none_checked);
-            } else {
-                String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(loadable.site.name());
-                String subFolder = ChanSettings.saveBoardFolder.get() ? (ChanSettings.saveThreadFolder.get()
-                        ? appendAdditionalSubDirectories()
-                        : siteNameSafe + File.separator + loadable.boardCode) : null;
-                String message = getString(
-                        R.string.album_download_confirm,
-                        getQuantityString(R.plurals.image, checkCount, checkCount),
-                        (subFolder != null ? subFolder : "your base saved files location") + "."
-                );
+            onDownloadClicked();
+        }
+    }
 
-                //generate tasks before prompting
-                List<ImageSaveTask> tasks = new ArrayList<>(items.size());
-                for (AlbumDownloadItem item : items) {
-                    if (item.postImage.isInlined || item.postImage.hidden) {
-                        // Do not download inlined files via the Album downloads (because they often
-                        // fail with SSL exceptions) and we can't really trust those files.
-                        // Also don't download filter hidden items
-                        continue;
-                    }
+    private void onDownloadClicked() {
+        int checkCount = getCheckCount();
+        if (checkCount == 0) {
+            showToast(context, R.string.album_download_none_checked);
+            return;
+        }
 
-                    if (item.checked) {
-                        ImageSaveTask imageTask = new ImageSaveTask(loadable, item.postImage, true);
-                        if (subFolder != null) {
-                            imageTask.setSubFolder(subFolder);
-                        }
-                        tasks.add(imageTask);
-                    }
+        String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(loadable.site.name());
+        String subFolder = ChanSettings.saveBoardFolder.get() ? (ChanSettings.saveThreadFolder.get()
+                ? appendAdditionalSubDirectories()
+                : siteNameSafe + File.separator + loadable.boardCode) : null;
+        String message = getString(
+                R.string.album_download_confirm,
+                getQuantityString(R.plurals.image, checkCount, checkCount),
+                (subFolder != null ? subFolder : "your base saved files location") + "."
+        );
+
+        //generate tasks before prompting
+        List<ImageSaveTask> tasks = new ArrayList<>(items.size());
+        for (AlbumDownloadItem item : items) {
+            if (item.postImage.isInlined || item.postImage.hidden) {
+                // Do not download inlined files via the Album downloads (because they often
+                // fail with SSL exceptions) and we can't really trust those files.
+                // Also don't download filter hidden items
+                continue;
+            }
+
+            if (item.checked) {
+                ImageSaveTask imageTask = new ImageSaveTask(loadable, item.postImage, true);
+                if (subFolder != null) {
+                    imageTask.setSubFolder(subFolder);
                 }
-
-                new AlertDialog.Builder(context).setMessage(message)
-                        .setNegativeButton(R.string.cancel, null)
-                        .setPositiveButton(R.string.ok, (dialog, which) -> startAlbumDownloadTask(tasks))
-                        .show();
+                tasks.add(imageTask);
             }
         }
+
+        new AlertDialog.Builder(context)
+                .setMessage(message)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok, (dialog, which) -> startAlbumDownloadTask(tasks))
+                .show();
     }
 
     private void startAlbumDownloadTask(List<ImageSaveTask> tasks) {
