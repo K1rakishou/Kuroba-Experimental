@@ -457,15 +457,13 @@ class BookmarkWatcherDelegate(
 
   private suspend fun SiteRepository.awaitUntilInitialized() {
     return suspendCancellableCoroutine { continuation ->
-      this.runWhenSitesAreInitialized(object : SiteRepository.SitesInitializationListener {
-        override fun onSitesInitialized() {
+      this.invokeAfterInitialized { error ->
+        if (error != null) {
+          continuation.resumeWithException(error)
+        } else {
           continuation.resume(Unit)
         }
-
-        override fun onFailedToInitialize(error: Throwable) {
-          continuation.resumeWithException(error)
-        }
-      })
+      }
     }
   }
 

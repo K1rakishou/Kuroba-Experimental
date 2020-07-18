@@ -14,6 +14,7 @@ import com.github.adamantcheese.chan.core.model.orm.SiteModel;
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.SuspendableInitializer;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import java.util.ArrayList;
@@ -21,10 +22,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 import static com.github.adamantcheese.chan.core.site.SiteRegistry.SITE_CLASSES;
 
@@ -33,8 +35,7 @@ public class SiteRepository {
 
     private DatabaseManager databaseManager;
     private Sites sitesObservable = new Sites();
-    private AtomicBoolean sitesInitialized = new AtomicBoolean(false);
-    private CopyOnWriteArrayList<SitesInitializationListener> listeners = new CopyOnWriteArrayList<>();
+    private SuspendableInitializer<Unit> suspendableInitializer = new SuspendableInitializer<Unit>("SiteRepository");
 
     public Site forId(int id) {
         return sitesObservable.forId(id);
@@ -94,21 +95,14 @@ public class SiteRepository {
     }
 
     public boolean isReady() {
-        return sitesInitialized.get();
+        return suspendableInitializer.isInitialized();
     }
 
-    public void runWhenSitesAreInitialized(SitesInitializationListener listener) {
-        if (sitesInitialized.get()) {
-            listener.onSitesInitialized();
-            return;
-        }
-
-        listeners.add(listener);
+    public void invokeAfterInitialized(Function1<Throwable, Unit> func) {
+        suspendableInitializer.invokeAfterInitialized(func);
     }
 
     public void initialize() {
-        Throwable exception = null;
-
         try {
             List<Site> sites = new ArrayList<>();
 
@@ -140,30 +134,10 @@ public class SiteRepository {
             }
 
             sitesObservable.notifyObservers();
+            suspendableInitializer.initWithValue(Unit.INSTANCE);
         } catch (Throwable error) {
-            exception = error;
-        }
-
-        if (sitesInitialized.compareAndSet(false, true)) {
-            fireCallbacksAndThrowExceptionIfNeeded(exception);
-        }
-    }
-
-    private void fireCallbacksAndThrowExceptionIfNeeded(Throwable exception) {
-        if (exception == null) {
-            for (SitesInitializationListener listener : listeners) {
-                listener.onSitesInitialized();
-            }
-        } else {
-            for (SitesInitializationListener listener : listeners) {
-                listener.onFailedToInitialize(exception);
-            }
-        }
-
-        listeners.clear();
-
-        if (exception != null) {
-            throw new RuntimeException(exception);
+            Logger.e(TAG, "Error while initializing SiteRepository", error);
+            suspendableInitializer.initWithError(error);
         }
     }
 
