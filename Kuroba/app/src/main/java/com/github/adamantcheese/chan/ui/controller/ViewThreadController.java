@@ -92,20 +92,23 @@ public class ViewThreadController
     private static final int ACTION_REPLY = 9000;
     private static final int ACTION_SEARCH = 9001;
     private static final int ACTION_RELOAD = 9002;
-    private static final int ACTION_VIEW_REMOVED_POSTS = 9003;
-    private static final int ACTION_RETRIEVE_DELETED_POSTS = 9004;
-    private static final int ACTION_OPEN_BROWSER = 9005;
-    private static final int ACTION_SHARE = 9006;
-    private static final int ACTION_GO_TO_POST = 9007;
-    private static final int ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS = 9008;
-    private static final int ACTION_SCROLL_TO_TOP = 9009;
-    private static final int ACTION_SCROLL_TO_BOTTOM = 9010;
-    private static final int ACTION_FORCE_RELOAD = 9011;
+    private static final int ACTION_FORCE_RELOAD = 9003;
+    private static final int ACTION_VIEW_REMOVED_POSTS = 9004;
+    private static final int ACTION_RETRIEVE_DELETED_POSTS = 9005;
+    private static final int ACTION_OPEN_BROWSER = 9006;
+    private static final int ACTION_SHARE = 9007;
+    private static final int ACTION_GO_TO_POST = 9008;
+    private static final int ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS = 9009;
+    private static final int ACTION_THREAD_VIEW_OPTIONS = 9010;
+    private static final int ACTION_SCROLL_TO_TOP = 9011;
+    private static final int ACTION_SCROLL_TO_BOTTOM = 9012;
 
     private static final int ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100;
     private static final int ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101;
     private static final int ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102;
     private static final int ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR = 9103;
+
+    private static final int ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9200;
 
     private DatabaseLoadableManager databaseLoadableManager;
 
@@ -145,6 +148,7 @@ public class ViewThreadController
         view.setBackgroundColor(getAttrColor(context, R.attr.backcolor));
 
         navigation.hasDrawer = true;
+        navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get();
 
         buildMenu();
         loadThread(loadable);
@@ -336,6 +340,20 @@ public class ViewThreadController
                         this::onScrollbarLabelingOptionClicked
                 )
                 .build()
+                .withNestedOverflow(
+                        ACTION_THREAD_VIEW_OPTIONS,
+                        R.string.action_thread_view_options,
+                        true
+                )
+                .addNestedItem(
+                        ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE,
+                        R.string.action_use_scrolling_text_for_thread_title,
+                        true,
+                        ChanSettings.scrollingTextForThreadTitles.get(),
+                        ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE,
+                        this::onThreadViewOptionClicked
+                )
+                .build()
                 .withSubItem(
                         ACTION_SCROLL_TO_TOP,
                         R.string.action_scroll_to_top,
@@ -430,6 +448,23 @@ public class ViewThreadController
         ).show();
     }
 
+    private void onThreadViewOptionClicked(ToolbarMenuSubItem item) {
+        Integer clickedItemId = (Integer) item.value;
+        if (clickedItemId == null) {
+            return;
+        }
+
+        if (clickedItemId == ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE) {
+            boolean useScrollingTextForThreadView = !ChanSettings.scrollingTextForThreadTitles.get();
+            ChanSettings.scrollingTextForThreadTitles.set(useScrollingTextForThreadView);
+
+            item.isCurrentlySelected = useScrollingTextForThreadView;
+            showToast(context, R.string.restart_the_app);
+        } else {
+            throw new IllegalStateException("Unknown clickedItemId " + clickedItemId);
+        }
+    }
+
     private void onScrollbarLabelingOptionClicked(ToolbarMenuSubItem item) {
         Integer clickedItemId = (Integer) item.value;
         if (clickedItemId == null) {
@@ -456,6 +491,8 @@ public class ViewThreadController
             ChanSettings.markArchivedPostsOnScrollbar.set(markArchivedPostsOnScrollbar);
 
             item.isCurrentlySelected = markArchivedPostsOnScrollbar;
+        } else {
+            throw new IllegalStateException("Unknown clickedItemId " + clickedItemId);
         }
 
         threadLayout.presenter.quickReload();

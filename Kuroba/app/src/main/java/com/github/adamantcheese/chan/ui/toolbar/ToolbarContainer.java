@@ -25,6 +25,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
@@ -459,6 +460,13 @@ public class ToolbarContainer extends FrameLayout {
             titleView.setTypeface(theme != null ? theme.mainFont : themeHelper.getTheme().mainFont);
             titleView.setText(item.title);
             titleView.setTextColor(Color.WHITE);
+
+            if (item.scrollableTitle) {
+                titleView.setSingleLine(true);
+                titleView.setMarqueeRepeatLimit(-1);
+                titleView.setEllipsize(TextUtils.TruncateAt.MARQUEE);
+                titleView.setSelected(true);
+            }
 
             // Middle title with arrow and callback
             if (item.middleMenu != null) {

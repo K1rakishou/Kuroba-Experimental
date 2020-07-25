@@ -119,6 +119,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_browse">Browse</string>
     <string name="menu_settings">Settings</string>
 
+    <string name="restart_the_app">Restart the app</string>
+
     <string name="update_later">Later</string>
     <string name="update_none">Already on the latest %1$s version.</string>
     <string name="update_check_failed">Failed to check for updates.</string>
@@ -149,6 +151,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_share_content">Share file content</string>
     <string name="action_go_to_post">Go to post</string>
     <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
+    <string name="action_thread_view_options">Thread view options</string>
     <string name="action_download_album">Download album</string>
     <string name="action_transparency_toggle">Toggle opacity</string>
     <string name="action_image_rotate">Rotate image</string>
@@ -161,6 +164,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s on scrollbar</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies on scrollbar</string>
     <string name="action_mark_archived_posts_on_scrollbar">Highlight deleted posts that were restored from archives on scrollbar</string>
+
+    <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>

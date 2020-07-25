@@ -306,6 +306,8 @@ public class ChanSettings {
     //endregion
     //endregion
 
+    public static final BooleanSetting scrollingTextForThreadTitles;
+
     static {
         try {
             SettingProvider p = new SharedPreferencesSettingProvider(getPreferences());
@@ -472,6 +474,7 @@ public class ChanSettings {
             reencodeHintShown = new BooleanSetting(p, "preference_reencode_hint_already_shown", false);
             //endregion
 
+            scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the
             // stacktrace. Otherwise we won't because of Feather.

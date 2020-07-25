@@ -44,6 +44,7 @@ public class NavigationItem {
     public boolean hasDrawer;
     public boolean handlesToolbarInset;
     public boolean swipeable = true;
+    public boolean scrollableTitle = false;
 
     public String searchText;
     public boolean search;
@@ -294,6 +295,10 @@ public class NavigationItem {
         }
 
         public MenuOverflowBuilder build() {
+            if (nestedMenuItems.isEmpty()) {
+                throw new IllegalStateException("nestedMenuItems is empty");
+            }
+
             return menuOverflowBuilder
                     .withSubItem(menuSubItem.id, menuSubItem.text, menuSubItem.visible, null)
                     .addNestedItemsTo(menuSubItem.id, nestedMenuItems);
