@@ -26,6 +26,7 @@ import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
@@ -33,7 +34,6 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.model.orm.Pin
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -91,6 +91,12 @@ class BrowseController(context: Context) : ThreadController(context),
     super.onCreate()
     Chan.inject(this)
     databaseLoadableManager = databaseManager.databaseLoadableManager
+
+    val navControllerContainerLayout = AndroidUtils.inflate(context, R.layout.controller_browse)
+    val container = navControllerContainerLayout.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
+    container.initBrowseControllerTracker(this, navigationController)
+    container.addView(view)
+    view = container
 
     // Initialization
     order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
@@ -527,10 +533,6 @@ class BrowseController(context: Context) : ThreadController(context),
     }
 
     requireStartActivity().setSettingsMenuItemSelected()
-  }
-
-  override fun openPin(pin: Pin) {
-    showThread(pin.loadable)
   }
 
   override fun showThread(threadLoadable: Loadable) {

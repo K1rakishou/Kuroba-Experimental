@@ -36,7 +36,6 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -511,11 +510,6 @@ public class ViewThreadController
             // ends up staying unseen for some unknown reason).
             bookmarksManager.readPostsAndNotificationsForThread(threadDescriptor);
         }
-    }
-
-    @Override
-    public void openPin(Pin pin) {
-        loadThread(pin.loadable);
     }
 
     @Override

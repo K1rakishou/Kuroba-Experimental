@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.features.drawer
 import android.content.Context
 import android.content.res.ColorStateList
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -32,7 +33,6 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
-import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
@@ -67,8 +67,6 @@ class DrawerController(
   DrawerCallbacks,
   View.OnClickListener {
 
-  @Inject
-  lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
@@ -431,6 +429,10 @@ class DrawerController(
 
   override fun resetBottomNavViewState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
     bottomNavView.resetState(unlockTranslation, unlockCollapse)
+  }
+
+  override fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {
+    return drawerLayout.onTouchEvent(event)
   }
 
   override fun resetBottomNavViewCheckState() {

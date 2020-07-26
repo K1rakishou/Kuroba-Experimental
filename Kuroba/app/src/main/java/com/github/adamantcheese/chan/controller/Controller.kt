@@ -92,7 +92,9 @@ abstract class Controller(@JvmField var context: Context) {
   protected var compositeDisposable = CompositeDisposable()
   protected var mainScope = MainScope() + CoroutineName("Controller")
 
-  private var shown = false
+  var shown = false
+    @JvmName("shown") get
+    private set
 
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
     "Toolbar was not set"

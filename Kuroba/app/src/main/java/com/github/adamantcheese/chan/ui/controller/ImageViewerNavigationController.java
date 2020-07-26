@@ -41,9 +41,6 @@ public class ImageViewerNavigationController
 
         view = inflate(context, R.layout.controller_navigation_image_viewer);
         container = (NavigationControllerContainerLayout) view.findViewById(R.id.container);
-        NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
-        nav.setNavigationController(this);
-        nav.setSwipeEnabled(false);
 
         setToolbar(view.findViewById(R.id.toolbar));
         requireToolbar().setCallback(this);

@@ -22,6 +22,7 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 
 import androidx.annotation.Nullable;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -34,7 +35,6 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.model.orm.Loadable;
-import com.github.adamantcheese.chan.core.model.orm.Pin;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
@@ -113,11 +113,17 @@ public abstract class ThreadController
         this.drawerCallbacks = drawerCallbacks;
     }
 
+    public boolean passMotionEventIntoDrawer(MotionEvent event) {
+        if (drawerCallbacks == null) {
+            return false;
+        }
+
+        return drawerCallbacks.passMotionEventIntoDrawer(event);
+    }
+
     public void showSitesNotSetup() {
         threadLayout.presenter.showNoContent();
     }
-
-    public abstract void openPin(Pin pin);
 
     /*
      * Used to save instance state

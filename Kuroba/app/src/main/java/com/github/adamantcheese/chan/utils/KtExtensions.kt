@@ -6,6 +6,7 @@ import android.view.View
 import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.*
 import com.github.adamantcheese.chan.StartActivity
+import com.github.adamantcheese.chan.controller.Controller
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -52,4 +53,19 @@ suspend fun View.awaitUntilLaidOut(continueRendering: Boolean = true) {
       return@waitForLayout continueRendering
     }
   }
+}
+
+fun Controller.findControllerOrNull(predicate: (Controller) -> Boolean): Controller? {
+  if (predicate(this)) {
+    return this
+  }
+
+  for (childController in childControllers) {
+    val result = childController.findControllerOrNull(predicate)
+    if (result != null) {
+      return result
+    }
+  }
+
+  return null
 }

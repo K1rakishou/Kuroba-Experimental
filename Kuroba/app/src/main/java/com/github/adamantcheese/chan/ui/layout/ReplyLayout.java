@@ -94,6 +94,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.requestViewAndKeyboardFocus;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
+// TODO(KurobaEx): When catalog reply is opened and we open any thread via "tabs" the opened thread
+//  will be glitched, it won't have the bottomNavBar because we have a replyLayout opened.
 public class ReplyLayout
         extends LoadView
         implements View.OnClickListener,

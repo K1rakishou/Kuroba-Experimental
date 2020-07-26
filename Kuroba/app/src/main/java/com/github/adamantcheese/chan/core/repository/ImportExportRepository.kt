@@ -164,7 +164,6 @@ constructor(
     }
 
     for (exportedBoard in appSettings.exportedBoards) {
-      assert(exportedBoard.description != null)
       databaseHelper.boardsDao.createIfNotExists(Board(
         exportedBoard.siteId,
         exportedBoard.isSaved,

@@ -25,10 +25,6 @@ class BottomNavBarAwareNavigationController(
     view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
 
-    val nav = container as NavigationControllerContainerLayout
-    nav.setNavigationController(this)
-    nav.setSwipeEnabled(false)
-
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setBackgroundColor(themeHelper.theme.primaryColor.color)
     requireToolbar().setCallback(this)
