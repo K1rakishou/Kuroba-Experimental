@@ -62,7 +62,6 @@ public class DatabaseManager {
     @Inject
     PostFilterManager postFilterManager;
 
-    private final DatabasePinManager databasePinManager;
     private final DatabaseLoadableManager databaseLoadableManager;
     private final DatabaseHistoryManager databaseHistoryManager;
     private final DatabaseSavedReplyManager databaseSavedReplyManager;
@@ -78,7 +77,6 @@ public class DatabaseManager {
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
         databaseLoadableManager = new DatabaseLoadableManager(helper, this);
-        databasePinManager = new DatabasePinManager(helper, databaseLoadableManager);
         databaseHistoryManager = new DatabaseHistoryManager(helper, this, databaseLoadableManager);
         databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
@@ -95,10 +93,6 @@ public class DatabaseManager {
         // Only trims.
         runTaskAsync(databaseHistoryManager.load());
         runTaskAsync(databaseHideManager.load());
-    }
-
-    public DatabasePinManager getDatabasePinManager() {
-        return databasePinManager;
     }
 
     public DatabaseLoadableManager getDatabaseLoadableManager() {
@@ -155,7 +149,6 @@ public class DatabaseManager {
 
         try {
             o += "Loadable rows: " + helper.getLoadableDao().countOf() + "\n";
-            o += "Pin rows: " + helper.getPinDao().countOf() + "\n";
             o += "SavedReply rows: " + helper.getSavedDao().countOf() + "\n";
             o += "Board rows: " + helper.getBoardsDao().countOf() + "\n";
             o += "PostHide rows: " + helper.getPostHideDao().countOf() + "\n";

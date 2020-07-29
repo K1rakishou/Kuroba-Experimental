@@ -200,38 +200,6 @@ constructor(
         exportedSite.userSettings,
         exportedSite.order
       ))
-
-      for (exportedPin in exportedSite.exportedPins) {
-        val exportedLoadable = exportedPin.exportedLoadable ?: continue
-
-        val loadable = Loadable.importLoadable(
-          inserted.id,
-          exportedLoadable.mode,
-          exportedLoadable.boardCode,
-          exportedLoadable.no,
-          exportedLoadable.title,
-          exportedLoadable.listViewIndex,
-          exportedLoadable.listViewTop,
-          exportedLoadable.lastViewed,
-          exportedLoadable.lastLoaded
-        )
-
-        val insertedLoadable = databaseHelper.loadableDao.createIfNotExists(loadable)
-
-        val pin = Pin(
-          insertedLoadable,
-          exportedPin.isWatching,
-          exportedPin.watchLastCount,
-          exportedPin.watchNewCount,
-          exportedPin.quoteLastCount,
-          exportedPin.quoteNewCount,
-          exportedPin.isError,
-          exportedPin.thumbnailUrl,
-          exportedPin.order,
-          exportedPin.isArchived
-        )
-        databaseHelper.pinDao.createIfNotExists(pin)
-      }
     }
 
     for (exportedFilter in appSettings.exportedFilters) {
@@ -311,51 +279,10 @@ constructor(
     @SuppressLint("UseSparseArrays")
     val loadableMap = fillLoadablesMap()
 
-    val pins = HashSet(databaseHelper.pinDao.queryForAll())
     val toExportMap = HashMap<SiteModel, MutableList<ExportedPin>>()
 
     for (siteModel in sitesMap.values) {
       toExportMap[siteModel] = ArrayList()
-    }
-
-    for (pin in pins) {
-      val loadable = loadableMap[pin.loadable.id]
-        ?: throw NullPointerException("Could not find Loadable by pin.loadable.id "
-          + pin.loadable.id)
-
-      val siteModel = sitesMap[loadable.siteId]
-        ?: throw NullPointerException("Could not find siteModel by loadable.siteId "
-          + loadable.siteId)
-
-      val exportedLoadable = ExportedLoadable(
-        loadable.boardCode,
-        loadable.id.toLong(),
-        loadable.lastLoaded,
-        loadable.lastViewed,
-        loadable.listViewIndex,
-        loadable.listViewTop,
-        loadable.mode,
-        loadable.no,
-        loadable.siteId,
-        loadable.title
-      )
-
-      val exportedPin = ExportedPin(
-        pin.archived,
-        pin.id,
-        pin.isError,
-        loadable.id,
-        pin.order,
-        pin.quoteLastCount,
-        pin.quoteNewCount,
-        pin.thumbnailUrl,
-        pin.watchLastCount,
-        pin.watchNewCount,
-        pin.watching,
-        exportedLoadable
-      )
-
-      toExportMap[siteModel]!!.add(exportedPin)
     }
 
     val exportedSites = ArrayList<ExportedSite>()

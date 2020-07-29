@@ -40,7 +40,6 @@ class DatabaseHelper @Inject constructor(
   private val context: Context
 ) : OrmLiteSqliteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-  val pinDao by lazy { getDao(Pin::class.java)!! as Dao<Pin, Int> }
   val loadableDao by lazy { getDao(Loadable::class.java)!! as Dao<Loadable, Int> }
   val savedDao by lazy { getDao(SavedReply::class.java)!! as Dao<SavedReply, Int> }
   val boardsDao by lazy { getDao(Board::class.java)!! as Dao<Board, Int> }
@@ -60,7 +59,6 @@ class DatabaseHelper @Inject constructor(
 
   @Throws(SQLException::class)
   fun createTables(connectionSource: ConnectionSource?) {
-    TableUtils.createTable(connectionSource, Pin::class.java)
     TableUtils.createTable(connectionSource, Loadable::class.java)
     TableUtils.createTable(connectionSource, SavedReply::class.java)
     TableUtils.createTable(connectionSource, Board::class.java)
@@ -72,7 +70,6 @@ class DatabaseHelper @Inject constructor(
 
   @Throws(SQLException::class)
   fun dropTables(connectionSource: ConnectionSource?) {
-    TableUtils.dropTable<Pin, Any>(connectionSource, Pin::class.java, true)
     TableUtils.dropTable<Loadable, Any>(connectionSource, Loadable::class.java, true)
     TableUtils.dropTable<SavedReply, Any>(connectionSource, SavedReply::class.java, true)
     TableUtils.dropTable<Board, Any>(connectionSource, Board::class.java, true)
@@ -468,11 +465,6 @@ class DatabaseHelper @Inject constructor(
         loadableIdSet.add(loadable.id)
       }
 
-      // pins
-      val pinDelete = pinDao.deleteBuilder()
-      pinDelete.where().`in`("loadable_id", loadableIdSet)
-      pinDelete.delete()
-
       // history
       val historyDelete = historyDao.deleteBuilder()
       historyDelete.where().`in`("loadable_id", loadableIdSet)
@@ -546,11 +538,6 @@ class DatabaseHelper @Inject constructor(
           loadableIdSet.add(loadable.id)
         }
       }
-
-      //pins
-      val pinDelete = pinDao.deleteBuilder()
-      pinDelete.where().`in`("loadable_id", loadableIdSet)
-      pinDelete.delete()
 
       //history
       val historyDelete = historyDao.deleteBuilder()
