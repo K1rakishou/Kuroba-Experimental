@@ -63,7 +63,6 @@ public class DatabaseManager {
     PostFilterManager postFilterManager;
 
     private final DatabaseLoadableManager databaseLoadableManager;
-    private final DatabaseHistoryManager databaseHistoryManager;
     private final DatabaseSavedReplyManager databaseSavedReplyManager;
     private final DatabaseFilterManager databaseFilterManager;
     private final DatabaseBoardManager databaseBoardManager;
@@ -77,7 +76,6 @@ public class DatabaseManager {
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
         databaseLoadableManager = new DatabaseLoadableManager(helper, this);
-        databaseHistoryManager = new DatabaseHistoryManager(helper, this, databaseLoadableManager);
         databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
         databaseBoardManager = new DatabaseBoardManager(helper);
@@ -91,16 +89,11 @@ public class DatabaseManager {
         runTask(databaseSavedReplyManager.load());
 
         // Only trims.
-        runTaskAsync(databaseHistoryManager.load());
         runTaskAsync(databaseHideManager.load());
     }
 
     public DatabaseLoadableManager getDatabaseLoadableManager() {
         return databaseLoadableManager;
-    }
-
-    public DatabaseHistoryManager getDatabaseHistoryManager() {
-        return databaseHistoryManager;
     }
 
     public DatabaseSavedReplyManager getDatabaseSavedReplyManager() {
@@ -152,7 +145,6 @@ public class DatabaseManager {
             o += "SavedReply rows: " + helper.getSavedDao().countOf() + "\n";
             o += "Board rows: " + helper.getBoardsDao().countOf() + "\n";
             o += "PostHide rows: " + helper.getPostHideDao().countOf() + "\n";
-            o += "History rows: " + helper.getHistoryDao().countOf() + "\n";
             o += "Filter rows: " + helper.getFilterDao().countOf() + "\n";
             o += "Site rows: " + helper.getSiteDao().countOf() + "\n";
         } catch (SQLException e) {

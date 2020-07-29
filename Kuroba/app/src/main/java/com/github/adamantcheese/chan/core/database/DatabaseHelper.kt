@@ -44,7 +44,6 @@ class DatabaseHelper @Inject constructor(
   val savedDao by lazy { getDao(SavedReply::class.java)!! as Dao<SavedReply, Int> }
   val boardsDao by lazy { getDao(Board::class.java)!! as Dao<Board, Int> }
   val postHideDao by lazy { getDao(PostHide::class.java)!! as Dao<PostHide, Int> }
-  val historyDao by lazy { getDao(History::class.java)!! as Dao<History, Int> }
   val filterDao by lazy { getDao(Filter::class.java)!! as Dao<Filter, Int> }
   val siteDao by lazy { getDao(SiteModel::class.java)!! as Dao<SiteModel, Int> }
 
@@ -63,7 +62,6 @@ class DatabaseHelper @Inject constructor(
     TableUtils.createTable(connectionSource, SavedReply::class.java)
     TableUtils.createTable(connectionSource, Board::class.java)
     TableUtils.createTable(connectionSource, PostHide::class.java)
-    TableUtils.createTable(connectionSource, History::class.java)
     TableUtils.createTable(connectionSource, Filter::class.java)
     TableUtils.createTable(connectionSource, SiteModel::class.java)
   }
@@ -74,7 +72,6 @@ class DatabaseHelper @Inject constructor(
     TableUtils.dropTable<SavedReply, Any>(connectionSource, SavedReply::class.java, true)
     TableUtils.dropTable<Board, Any>(connectionSource, Board::class.java, true)
     TableUtils.dropTable<PostHide, Any>(connectionSource, PostHide::class.java, true)
-    TableUtils.dropTable<History, Any>(connectionSource, History::class.java, true)
     TableUtils.dropTable<Filter, Any>(connectionSource, Filter::class.java, true)
     TableUtils.dropTable<SiteModel, Any>(connectionSource, SiteModel::class.java, true)
   }
@@ -465,11 +462,6 @@ class DatabaseHelper @Inject constructor(
         loadableIdSet.add(loadable.id)
       }
 
-      // history
-      val historyDelete = historyDao.deleteBuilder()
-      historyDelete.where().`in`("loadable_id", loadableIdSet)
-      historyDelete.delete()
-
       // loadables
       val loadableDelete = loadableDao.deleteBuilder()
       loadableDelete.where().`in`("id", loadableIdSet)
@@ -538,11 +530,6 @@ class DatabaseHelper @Inject constructor(
           loadableIdSet.add(loadable.id)
         }
       }
-
-      //history
-      val historyDelete = historyDao.deleteBuilder()
-      historyDelete.where().`in`("loadable_id", loadableIdSet)
-      historyDelete.delete()
 
       //loadables
       val loadableDelete = loadableDao.deleteBuilder()

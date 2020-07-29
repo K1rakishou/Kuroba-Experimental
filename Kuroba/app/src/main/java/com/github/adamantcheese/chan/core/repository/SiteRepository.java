@@ -203,7 +203,6 @@ public class SiteRepository {
 
             List<Loadable> siteLoadables = databaseManager.getDatabaseLoadableManager().getLoadables(site).call();
             if (!siteLoadables.isEmpty()) {
-                databaseManager.getDatabaseHistoryManager().deleteHistory(siteLoadables).call();
                 databaseManager.getDatabaseLoadableManager().deleteLoadables(siteLoadables).call();
             }
 
