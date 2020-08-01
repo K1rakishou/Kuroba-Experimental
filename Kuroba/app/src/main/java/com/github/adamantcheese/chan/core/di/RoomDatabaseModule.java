@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.di;
 import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
@@ -59,5 +60,11 @@ public class RoomDatabaseModule {
     @Singleton
     public BookmarksRepository provideBookmarksRepository() {
         return modelMainComponent.getBookmarksRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ChanThreadViewableInfoRepository provideChanThreadViewableInfoRepository() {
+        return modelMainComponent.getChanThreadViewableInfoRepository();
     }
 }

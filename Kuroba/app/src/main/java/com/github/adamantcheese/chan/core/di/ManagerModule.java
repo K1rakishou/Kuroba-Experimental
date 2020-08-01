@@ -63,6 +63,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
@@ -452,9 +453,15 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ChanThreadViewableInfoManager provideChanThreadViewableInfoManager() {
+    public ChanThreadViewableInfoManager provideChanThreadViewableInfoManager(
+            ChanThreadViewableInfoRepository chanThreadViewableInfoRepository,
+            CoroutineScope appScope
+    ) {
         Logger.d(AppModule.DI_TAG, "ChanThreadViewableInfoManager");
 
-        return new ChanThreadViewableInfoManager();
+        return new ChanThreadViewableInfoManager(
+                chanThreadViewableInfoRepository,
+                appScope
+        );
     }
 }

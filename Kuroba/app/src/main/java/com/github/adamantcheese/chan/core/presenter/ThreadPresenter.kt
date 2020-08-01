@@ -52,15 +52,12 @@ import com.github.adamantcheese.chan.ui.layout.ThreadListLayout.ThreadListLayout
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
-import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
-import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
-import com.github.adamantcheese.chan.utils.TimeUtils
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -138,36 +135,33 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showEmpty()
   }
 
-  @Synchronized
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     job.cancelChildren()
 
-    if (chanDescriptor != this.currentChanDescriptor) {
-      if (isBound) {
-        unbindChanDescriptor()
-      }
-
-      this.currentChanDescriptor = chanDescriptor
-
-      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
-      }
-
-      chanLoader = chanLoaderManager.obtain(chanDescriptor, this)
-      threadPresenterCallback?.showLoading()
-      seenPostsManager.preloadForThread(chanDescriptor)
-
-      val disposable = onDemandContentLoaderManager.listenPostContentUpdates()
-        .subscribe(
-          { batchResult -> onPostUpdatedWithNewContent(batchResult) },
-          { error -> Logger.e(TAG, "Post content updates error", error) }
-        )
-
-      compositeDisposable.add(disposable)
+    if (chanDescriptor == this.currentChanDescriptor) {
+      return
     }
+
+    if (isBound) {
+      unbindChanDescriptor()
+    }
+
+    this.currentChanDescriptor = chanDescriptor
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
+    }
+
+    threadPresenterCallback?.showLoading()
+    chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
+
+    compositeDisposable += onDemandContentLoaderManager.listenPostContentUpdates()
+      .subscribe(
+        { batchResult -> onPostUpdatedWithNewContent(batchResult) },
+        { error -> Logger.e(TAG, "Post content updates error", error) }
+      )
   }
 
-  @Synchronized
   fun unbindChanDescriptor() {
     if (isBound) {
       if (currentChanDescriptor != null) {
@@ -472,7 +466,7 @@ class ThreadPresenter @Inject constructor(
     return false
   }
 
-  override fun onChanLoaderData(result: ChanThread) {
+  override suspend fun onChanLoaderData(result: ChanThread) {
     BackgroundUtils.ensureMainThread()
 
     if (!isBound) {
@@ -482,6 +476,9 @@ class ThreadPresenter @Inject constructor(
 
     val localChanDescriptor = currentChanDescriptor
       ?: return
+
+    seenPostsManager.preloadForThread(localChanDescriptor)
+    chanThreadViewableInfoManager.preloadForThread(localChanDescriptor)
 
     if (isWatching) {
       chanLoader!!.setTimer()

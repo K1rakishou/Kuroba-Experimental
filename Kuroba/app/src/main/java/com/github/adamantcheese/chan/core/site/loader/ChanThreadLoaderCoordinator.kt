@@ -152,7 +152,7 @@ class ChanThreadLoaderCoordinator(
   fun loadThread(
     url: String,
     requestParams: ChanLoaderRequestParams,
-    resultCallback: (ModularResult<ThreadLoadResult>) -> Unit
+    resultCallback: suspend (ModularResult<ThreadLoadResult>) -> Unit
   ): Job {
     return launch {
       BackgroundUtils.ensureBackgroundThread()

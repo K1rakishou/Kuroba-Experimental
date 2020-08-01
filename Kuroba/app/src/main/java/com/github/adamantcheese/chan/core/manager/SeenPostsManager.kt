@@ -64,6 +64,7 @@ class SeenPostsManager(
             }
           }
 
+          action.completable.complete(Unit)
           Unit
         }
         is ActorAction.MarkPostAsSeen -> {
@@ -114,7 +115,7 @@ class SeenPostsManager(
     return cd.awaitSilently(false)
   }
 
-  fun preloadForThread(chanDescriptor: ChanDescriptor) {
+  suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
@@ -124,7 +125,11 @@ class SeenPostsManager(
     }
 
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-    actor.offer(ActorAction.Preload(threadDescriptor))
+    val completable = CompletableDeferred<Unit>()
+
+    actor.offer(ActorAction.Preload(threadDescriptor, completable))
+
+    completable.awaitSilently()
   }
 
   fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
@@ -147,7 +152,10 @@ class SeenPostsManager(
   private fun isEnabled() = ChanSettings.markUnseenPosts.get()
 
   private sealed class ActorAction {
-    class Preload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : ActorAction()
+    class Preload(
+      val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      val completable: CompletableDeferred<Unit>
+    ) : ActorAction()
     class MarkPostAsSeen(val postDescriptor: PostDescriptor) : ActorAction()
 
     class CheckSeenPost(

@@ -356,7 +356,8 @@ class Chan4 : SiteBase() {
     captchaType = OptionsSetting(
       settingsProvider,
       "preference_captcha_type_chan4",
-      CaptchaType::class.java, CaptchaType.V2JS
+      CaptchaType::class.java,
+      CaptchaType.V2NOJS
     )
 
     flagType = StringSetting(
@@ -492,12 +493,18 @@ class Chan4 : SiteBase() {
       }
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
-        val boardCode = chanDescriptor.boardCode()
+        if (chanDescriptor.isCatalogDescriptor()) {
+          if (postNo != null && postNo > 0) {
+            return "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/thread/" + postNo
+          } else {
+            return "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/"
+          }
+        }
 
         if (chanDescriptor.isThreadDescriptor()) {
-          val threadNo = chanDescriptor.threadNoOrNull()!!
-          var url = "https://boards.4chan.org/$boardCode/thread/$threadNo"
+          val threadNo = (chanDescriptor as ChanDescriptor.ThreadDescriptor).threadNo
 
+          var url = "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/thread/" + threadNo
           if (postNo != null && postNo > 0 && threadNo != postNo) {
             url += "#p$postNo"
           }
@@ -505,7 +512,7 @@ class Chan4 : SiteBase() {
           return url
         }
 
-        return "https://boards.4chan.org/$boardCode/"
+        return "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/"
       }
 
       override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {

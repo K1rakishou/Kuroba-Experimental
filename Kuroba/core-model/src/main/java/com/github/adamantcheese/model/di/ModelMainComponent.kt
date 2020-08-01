@@ -27,6 +27,7 @@ interface ModelMainComponent {
   fun getThirdPartyArchiveInfoRepository(): ThirdPartyArchiveInfoRepository
   fun getHistoryNavigationRepository(): HistoryNavigationRepository
   fun getBookmarksRepository(): BookmarksRepository
+  fun getChanThreadViewableInfoRepository(): ChanThreadViewableInfoRepository
 
   @Component.Builder
   interface Builder {

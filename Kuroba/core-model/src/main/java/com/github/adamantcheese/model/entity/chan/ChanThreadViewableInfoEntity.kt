@@ -20,7 +20,7 @@ import androidx.room.*
 data class ChanThreadViewableInfoEntity(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = CHAN_THREAD_VIEWABLE_INFO_ID_COLUMN_NAME)
-  var chanThreadViewableInfoId: Long,
+  var chanThreadViewableInfoId: Long = 0L,
   @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
   val ownerThreadId: Long,
   @ColumnInfo(name = LIST_VIEW_INDEX_COLUMN_NAME)

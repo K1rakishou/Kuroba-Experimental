@@ -1,35 +1,43 @@
 package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.thread.ChanThreadViewableInfo
 import com.github.adamantcheese.model.data.thread.ChanThreadViewableInfoView
+import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
-class ChanThreadViewableInfoManager {
+class ChanThreadViewableInfoManager(
+  private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
+  private val appScope: CoroutineScope
+) {
   private val lock = ReentrantReadWriteLock()
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   @GuardedBy("lock")
   private val chanThreadViewableMap =
     mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
-  private val suspendableInitializer = SuspendableInitializer<Unit>("ChanThreadViewableInfoManager")
+  suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return
+    }
 
+    val chanThreadViewableInfo = chanThreadViewableInfoRepository.preloadForThread(chanDescriptor)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "preloadForThread($chanDescriptor) failed", error)
+        return
+      } ?: ChanThreadViewableInfo(chanDescriptor)
 
-  fun init() {
-    // TODO(KurobaEx):
-    suspendableInitializer.initWithValue(Unit)
+    chanThreadViewableMap[chanDescriptor] = chanThreadViewableInfo
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
-    check(isReady()) { "ChanThreadViewableInfoManager is not ready yet! Use awaitUntilInitialized()" }
-
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
     }
@@ -38,13 +46,10 @@ class ChanThreadViewableInfoManager {
       ?: return
 
     func(markedPostNo)
-
-    // TODO(KurobaEx): persist
+    persist(chanDescriptor)
   }
 
   fun update(chanDescriptor: ChanDescriptor, mutator: (ChanThreadViewableInfo) -> Unit) {
-    check(isReady()) { "ChanThreadViewableInfoManager is not ready yet! Use awaitUntilInitialized()" }
-
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
     }
@@ -60,13 +65,10 @@ class ChanThreadViewableInfoManager {
     }
 
     chanThreadViewableMap[chanDescriptor] = mutatedChanThreadViewableInfo
-
-    // TODO(KurobaEx): persist
+    persist(chanDescriptor)
   }
 
   fun <T> view(chanDescriptor: ChanDescriptor, func: (ChanThreadViewableInfoView) -> T): T? {
-    check(isReady()) { "ChanThreadViewableInfoManager is not ready yet! Use awaitUntilInitialized()" }
-
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return null
     }
@@ -77,21 +79,15 @@ class ChanThreadViewableInfoManager {
     return func(ChanThreadViewableInfoView.fromChanThreadViewableInfo(oldChanThreadViewableInfo))
   }
 
-  @OptIn(ExperimentalTime::class)
-  suspend fun awaitUntilInitialized() {
-    if (isReady()) {
-      return
+  private fun persist(chanDescriptor: ChanDescriptor) {
+    serializedCoroutineExecutor.post {
+      chanThreadViewableMap[chanDescriptor]?.let { chanThreadViewableInfo ->
+        chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
+      }
     }
-
-    Logger.d(TAG, "ChanThreadViewableInfoManager is not ready yet, waiting...")
-    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
-    Logger.d(TAG, "ChanThreadViewableInfoManager initialization completed, took $duration")
   }
-
-  fun isReady() = suspendableInitializer.isInitialized()
 
   companion object {
     private const val TAG = "ChanThreadViewableInfoManager"
   }
-
 }

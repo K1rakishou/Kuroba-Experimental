@@ -49,18 +49,20 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
-class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
+class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var gson: Gson
+
   @Inject
   lateinit var okHttpClient: ProxiedOkHttpClient
   @Inject
@@ -90,6 +92,11 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
   var thread: ChanThread? = null
     private set
 
+  private val job = SupervisorJob()
+
+  override val coroutineContext: CoroutineContext
+    get() = Dispatchers.Main + job + CoroutineName("ChanThreadLoader")
+
   private val chanThreadLoaderCoordinator by lazy {
     return@lazy ChanThreadLoaderCoordinator(
       gson,
@@ -109,6 +116,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
   }
 
   private val compositeDisposable = CompositeDisposable()
+
   @Volatile
   private var requestJob: Job? = null
   private var pendingFuture: ScheduledFuture<*>? = null
@@ -168,6 +176,9 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
 
       requestJob?.cancel()
       requestJob = null
+
+      job.cancelChildren()
+
       true
     } else {
       false
@@ -257,8 +268,12 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
       checkNotNull(thread) { "Cannot quick load without already loaded thread" }
     }
 
-    listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
-    requestMoreData(false)
+    launch {
+      BackgroundUtils.ensureMainThread()
+
+      listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
+      requestMoreData(false)
+    }
   }
 
   /**
@@ -334,8 +349,8 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
             }
             is ThreadLoadResult.LoadedFromDatabaseCopy -> threadLoadResult.chanLoaderResponse
             is ThreadLoadResult.LoadedFromArchive -> {
-                threadLoadResult.chanLoaderResponse.op.archived = true
-                threadLoadResult.chanLoaderResponse
+              threadLoadResult.chanLoaderResponse.op.archived = true
+              threadLoadResult.chanLoaderResponse
             }
           }
 
@@ -348,7 +363,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
     }
   }
 
-  private fun onResponse(response: ChanLoaderResponse) {
+  private suspend fun onResponse(response: ChanLoaderResponse) {
     requestJob = null
 
     try {
@@ -358,7 +373,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
     }
   }
 
-  private fun onResponseInternal(response: ChanLoaderResponse): Boolean {
+  private suspend fun onResponseInternal(response: ChanLoaderResponse): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
     // Normal thread, not archived/deleted/closed
@@ -381,7 +396,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
   }
 
   @Synchronized
-  private fun onResponseInternalNext(fakeOp: Post.Builder) {
+  private suspend fun onResponseInternalNext(fakeOp: Post.Builder) {
     BackgroundUtils.ensureBackgroundThread()
 
     val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
@@ -403,7 +418,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
       currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
     }
 
-    runOnMainThread {
+    withContext(Dispatchers.Main) {
       listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
     }
   }
@@ -476,7 +491,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
   }
 
   interface ChanLoaderCallback {
-    fun onChanLoaderData(result: ChanThread)
+    suspend fun onChanLoaderData(result: ChanThread)
     fun onChanLoaderError(error: ChanLoaderException)
   }
 

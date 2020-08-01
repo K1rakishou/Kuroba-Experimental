@@ -529,9 +529,7 @@ class BrowseController(context: Context) : ThreadController(context),
     navigation.subtitle = board.name
 
     val presenter = threadLayout.presenter
-    presenter.bindChanDescriptor(
-      CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode)
-    )
+    presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
     presenter.requestData()
 
     requireNavController().requireToolbar().updateTitle(navigation)
@@ -593,6 +591,7 @@ class BrowseController(context: Context) : ThreadController(context),
           if (navigationController.top is ViewThreadController) {
             val viewThreadController = navigationController.top as ViewThreadController?
             viewThreadController!!.setDrawerCallbacks(drawerCallbacks)
+
             viewThreadController.loadThread(threadDescriptor)
           }
         } else {

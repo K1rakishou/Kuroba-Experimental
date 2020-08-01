@@ -81,7 +81,7 @@ class ToolbarMenuSubItem {
     clickCallback?.clicked(this)
   }
 
-  interface ClickCallback {
+  fun interface ClickCallback {
     fun clicked(subItem: ToolbarMenuSubItem)
   }
 }

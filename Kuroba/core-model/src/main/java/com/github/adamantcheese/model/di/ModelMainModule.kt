@@ -171,6 +171,24 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideChanThreadViewableInfoLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger,
+    chanDescriptorCache: ChanDescriptorCache
+  ): ChanThreadViewableInfoLocalSource {
+    return ChanThreadViewableInfoLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger,
+      chanDescriptorCache
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -347,6 +365,24 @@ class ModelMainModule {
       logger,
       scope,
       threadBookmarkLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanThreadViewableInfoRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    chanThreadViewableInfoLocalSource: ChanThreadViewableInfoLocalSource
+  ): ChanThreadViewableInfoRepository {
+    return ChanThreadViewableInfoRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      chanThreadViewableInfoLocalSource
     )
   }
 }
