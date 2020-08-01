@@ -124,6 +124,12 @@ class ThreadLayout @JvmOverloads constructor(
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
 
+  override val toolbar: Toolbar
+    get() = callback.toolbar
+
+  override val chanDescriptor: ChanDescriptor?
+    get() = presenter.chanDescriptor
+
   override val displayingPosts: List<Post>
     get() = if (postPopupHelper.isOpen) {
       postPopupHelper.displayingPosts
@@ -207,7 +213,7 @@ class ThreadLayout @JvmOverloads constructor(
     return threadListLayout.onBack()
   }
 
-  fun sendKeyEvent(event: KeyEvent?): Boolean {
+  fun sendKeyEvent(event: KeyEvent): Boolean {
     return threadListLayout.sendKeyEvent(event)
   }
 
@@ -222,7 +228,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun setPostViewMode(postViewMode: PostViewMode?) {
+  fun setPostViewMode(postViewMode: PostViewMode) {
     threadListLayout.setPostViewMode(postViewMode)
   }
 
@@ -236,10 +242,6 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun replyLayoutOpen(open: Boolean) {
     showReplyButton(!open)
-  }
-
-  override fun getToolbar(): Toolbar {
-    return callback.toolbar
   }
 
   override fun showImageReencodingWindow(supportsReencode: Boolean) {
@@ -257,6 +259,10 @@ class ThreadLayout @JvmOverloads constructor(
   ) {
     if (replyButton.visibility != View.VISIBLE) {
       replyButton.show()
+    }
+
+    if (thread == null) {
+      return
     }
 
     threadListLayout.showPosts(thread, filter, visible != Visible.THREAD, refreshAfterHideOrRemovePosts)
@@ -631,10 +637,6 @@ class ThreadLayout @JvmOverloads constructor(
   private fun dismissSnackbar() {
     newPostsNotification?.dismiss()
     newPostsNotification = null
-  }
-
-  override fun getChanDescriptor(): ChanDescriptor? {
-    return presenter.chanDescriptor
   }
 
   override fun onDetachedFromWindow() {
