@@ -39,7 +39,8 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     NavHistoryElementInfoEntity::class,
     LastUsedArchiveForThreadRelationEntity::class,
     ThreadBookmarkEntity::class,
-    ThreadBookmarkReplyEntity::class
+    ThreadBookmarkReplyEntity::class,
+    ChanThreadViewableInfoEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class
@@ -77,6 +78,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun lastUsedArchiveForThreadDao(): LastUsedArchiveForThreadDao
   abstract fun threadBookmarkDao(): ThreadBookmarkDao
   abstract fun threadBookmarkReplyDao(): ThreadBookmarkReplyDao
+  abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao
 
   companion object {
     const val DATABASE_NAME = "Kuroba.db"

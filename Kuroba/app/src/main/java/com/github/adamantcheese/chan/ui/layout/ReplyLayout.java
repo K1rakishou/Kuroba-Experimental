@@ -51,13 +51,14 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.model.ChanThread;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
+import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.core.site.http.Reply;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.adamantcheese.chan.ui.captcha.CaptchaHolder;
@@ -76,9 +77,11 @@ import com.github.adamantcheese.chan.ui.view.SelectionListeningEditText;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.ImageDecoder;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -112,6 +115,10 @@ public class ReplyLayout
     CaptchaHolder captchaHolder;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    SiteRepository siteRepository;
+    @Inject
+    BoardRepository boardRepository;
 
     private ReplyLayoutCallback callback;
     private AuthenticationLayoutInterface authenticationLayout;
@@ -318,19 +325,25 @@ public class ReplyLayout
         presenter.onOpen(open);
     }
 
-    public void bindLoadable(Loadable loadable) {
-        if (loadable.site.actions().postRequiresAuthentication()) {
+    public void bindLoadable(ChanDescriptor chanDescriptor) {
+        Site site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor());
+        if (site == null) {
+            throw new IllegalStateException("Couldn't find site by siteDescriptor " + chanDescriptor.siteDescriptor());
+        }
+
+        if (site.actions().postRequiresAuthentication()) {
             comment.setMinHeight(dp(144));
         } else {
             captcha.setVisibility(GONE);
         }
-        presenter.bindLoadable(loadable);
+
+        presenter.bindChanDescriptor(chanDescriptor);
         captchaHolder.setListener(this);
     }
 
     public void cleanup() {
         captchaHolder.removeListener();
-        presenter.unbindLoadable();
+        presenter.unbindChanDescriptor();
         removeCallbacks(closeMessageRunnable);
     }
 
@@ -830,8 +843,14 @@ public class ReplyLayout
                     return true;
                 }
 
-                Loadable threadLoadable = thread.getLoadable();
-                boolean is4chan = threadLoadable.board.site instanceof Chan4;
+                ChanDescriptor chanDescriptor = thread.getChanDescriptor();
+                Board board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor());
+                if (board == null) {
+                    return true;
+                }
+
+                boolean is4chan = chanDescriptor.siteDescriptor().is4chan();
+                String boardCode = chanDescriptor.boardCode();
 
                 // menu item cleanup, these aren't needed for this
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -845,7 +864,7 @@ public class ReplyLayout
                 quoteMenuItem = menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote);
 
                 // [spoiler] tags
-                if (threadLoadable.board.spoilers) {
+                if (board.spoilers) {
                     spoilerMenuItem = menu.add(Menu.NONE,
                             R.id.reply_selection_action_spoiler,
                             2,
@@ -856,7 +875,7 @@ public class ReplyLayout
                 // setup specific items in a submenu
                 SubMenu otherMods = menu.addSubMenu("Modify");
                 // g [code]
-                if (is4chan && threadLoadable.boardCode.equals("g")) {
+                if (is4chan && boardCode.equals("g")) {
                     codeMenuItem = otherMods.add(Menu.NONE,
                             R.id.reply_selection_action_code,
                             1,
@@ -865,7 +884,7 @@ public class ReplyLayout
                 }
 
                 // sci [eqn] and [math]
-                if (is4chan && threadLoadable.boardCode.equals("sci")) {
+                if (is4chan && boardCode.equals("sci")) {
                     eqnMenuItem = otherMods.add(Menu.NONE,
                             R.id.reply_selection_action_eqn,
                             2,
@@ -881,8 +900,7 @@ public class ReplyLayout
                 }
 
                 // jp and vip [sjis]
-                if (is4chan && (threadLoadable.boardCode.equals("jp")
-                        || threadLoadable.boardCode.equals("vip"))) {
+                if (is4chan && (boardCode.equals("jp") || boardCode.equals("vip"))) {
                     sjisMenuItem = otherMods.add(
                             Menu.NONE,
                             R.id.reply_selection_action_sjis,
@@ -946,8 +964,8 @@ public class ReplyLayout
     }
 
     @Override
-    public void showThread(Loadable loadable) {
-        callback.showThread(loadable);
+    public void showThread(@NotNull ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        callback.showThread(threadDescriptor);
     }
 
     @Override
@@ -1021,7 +1039,7 @@ public class ReplyLayout
 
         void openReply(boolean open);
 
-        void showThread(Loadable loadable);
+        void showThread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
         void requestNewPostLoad();
 

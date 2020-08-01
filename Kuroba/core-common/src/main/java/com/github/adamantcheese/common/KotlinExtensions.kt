@@ -9,6 +9,7 @@ import java.io.IOException
 import java.util.*
 import java.util.regex.Matcher
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -301,4 +302,36 @@ fun View.resetClickListener() {
   // setOnClickListener sets isClickable to true even when the callback is null
   // (which is absolutely not obvious)
   isClickable = false
+}
+
+fun safeCapacity(initialCapacity: Int): Int {
+  return if (initialCapacity < 16) {
+    16
+  } else {
+    initialCapacity
+  }
+}
+
+public inline fun <T> mutableListWithCap(initialCapacity: Int): MutableList<T> {
+  return ArrayList(safeCapacity(initialCapacity))
+}
+
+public inline fun <T> mutableListWithCap(collection: Collection<*>): MutableList<T> {
+  return ArrayList(safeCapacity(collection.size))
+}
+
+public inline fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, V> {
+  return HashMap(safeCapacity(initialCapacity))
+}
+
+public inline fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
+  return HashMap(safeCapacity(collection.size))
+}
+
+public inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
+  return HashSet(safeCapacity(initialCapacity))
+}
+
+public inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
+  return HashSet(safeCapacity(collection.size))
 }

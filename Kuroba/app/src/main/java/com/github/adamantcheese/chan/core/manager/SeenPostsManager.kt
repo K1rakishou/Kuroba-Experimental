@@ -2,9 +2,7 @@ package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -26,7 +24,7 @@ class SeenPostsManager(
   private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
   @GuardedBy("mutex")
-  private val seenPostsMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>()
+  private val seenPostsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(32)
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob()
@@ -99,8 +97,8 @@ class SeenPostsManager(
     }
   }
 
-  suspend fun hasAlreadySeenPost(loadable: Loadable, post: Post): Boolean {
-    if (!loadable.isThreadMode) {
+  suspend fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: Post): Boolean {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return true
     }
 
@@ -108,7 +106,7 @@ class SeenPostsManager(
       return true
     }
 
-    val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
     val postNo = post.no
     val cd = CompletableDeferred<Boolean>()
 
@@ -116,8 +114,8 @@ class SeenPostsManager(
     return cd.awaitSilently(false)
   }
 
-  fun preloadForThread(loadable: Loadable) {
-    if (!loadable.isThreadMode) {
+  fun preloadForThread(chanDescriptor: ChanDescriptor) {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
 
@@ -125,12 +123,12 @@ class SeenPostsManager(
       return
     }
 
-    val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
     actor.offer(ActorAction.Preload(threadDescriptor))
   }
 
-  fun onPostBind(loadable: Loadable, post: Post) {
-    if (!loadable.isThreadMode) {
+  fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
 
@@ -138,13 +136,11 @@ class SeenPostsManager(
       return
     }
 
-    val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
-      ?: return
-
+    val postDescriptor = PostDescriptor.create(chanDescriptor as ChanDescriptor.ThreadDescriptor, post.no)
     actor.offer(ActorAction.MarkPostAsSeen(postDescriptor))
   }
 
-  fun onPostUnbind(loadable: Loadable, post: Post) {
+  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: Post) {
     // No-op (maybe something will be added here in the future)
   }
 

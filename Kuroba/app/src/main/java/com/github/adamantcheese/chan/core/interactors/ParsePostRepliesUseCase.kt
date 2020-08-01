@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
@@ -32,7 +33,8 @@ class ParsePostRepliesUseCase(
   private suspend fun parsePostReplies(
     successThreadBookmarkFetchResults: List<ThreadBookmarkFetchResult.Success>
   ): Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>> {
-    val quotesToMePerThreadMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>()
+    val quotesToMePerThreadMap =
+      mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>(successThreadBookmarkFetchResults.size)
 
     successThreadBookmarkFetchResults
       .chunked(BATCH_SIZE)
@@ -59,8 +61,8 @@ class ParsePostRepliesUseCase(
     successFetchResult: ThreadBookmarkFetchResult.Success
   ): Map<Long, List<PostDescriptor>> {
     val threadDescriptor = successFetchResult.threadDescriptor
-    val allQuotesInThread = hashSetOf<Long>(32)
-    val quoteOwnerPostsMap = mutableMapOf<Long, MutableSet<Long>>()
+    val allQuotesInThread = HashSet<Long>(32)
+    val quoteOwnerPostsMap = mutableMapWithCap<Long, MutableSet<Long>>(32)
 
     successFetchResult.threadBookmarkInfoObject.simplePostObjects.forEach { simplePostObject ->
       val extractedQuotes = replyParser.extractCommentReplies(

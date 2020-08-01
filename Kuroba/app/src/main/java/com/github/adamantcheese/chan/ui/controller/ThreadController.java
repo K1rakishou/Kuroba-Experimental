@@ -24,6 +24,7 @@ import android.nfc.NfcEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -34,7 +35,8 @@ import com.github.adamantcheese.chan.core.manager.FilterType;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
@@ -42,11 +44,15 @@ import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
 import java.util.List;
+
+import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
@@ -61,6 +67,9 @@ public abstract class ThreadController
         NfcAdapter.CreateNdefMessageCallback,
         ThreadSlideController.SlideChangeListener {
     private static final String TAG = "ThreadController";
+
+    @Inject
+    SiteRepository siteRepository;
 
     protected ThreadLayout threadLayout;
     @Nullable
@@ -129,11 +138,11 @@ public abstract class ThreadController
      * Used to save instance state
      */
     @Nullable
-    public Loadable getLoadable() {
-        return threadLayout.presenter.getLoadable();
+    public ChanDescriptor getChanDescriptor() {
+        return threadLayout.presenter.getChanDescriptor();
     }
 
-    public void selectPost(int post) {
+    public void selectPost(long post) {
         threadLayout.presenter.selectPost(post);
     }
 
@@ -169,12 +178,15 @@ public abstract class ThreadController
             return null;
         }
 
-        Loadable loadable = getLoadable();
         String url = null;
         NdefMessage message = null;
 
-        if (loadable != null) {
-            url = loadable.desktopUrl();
+        ChanDescriptor chanDescriptor = getChanDescriptor();
+        SiteDescriptor siteDescriptor = chanDescriptor.siteDescriptor();
+        Site site = siteRepository.bySiteDescriptor(siteDescriptor);
+
+        if (site != null) {
+            url = site.resolvable().desktopUrl(chanDescriptor, null);
         }
 
         if (url != null) {
@@ -192,7 +204,11 @@ public abstract class ThreadController
 
     @Override
     public void openReportController(final Post post) {
-        navigationController.pushController(new ReportController(context, post));
+        Site site = siteRepository.bySiteDescriptor(post.boardDescriptor.getSiteDescriptor());
+
+        if (site != null) {
+            navigationController.pushController(new ReportController(context, post, site));
+        }
     }
 
     public void selectPostImage(PostImage postImage) {
@@ -201,9 +217,9 @@ public abstract class ThreadController
 
     @Override
     public void showImages(
-            List<PostImage> images,
+            @NonNull List<PostImage> images,
             int index,
-            Loadable loadable,
+            @NonNull ChanDescriptor chanDescriptor,
             final ThumbnailView thumbnail
     ) {
         boolean isAlreadyPresenting =
@@ -213,7 +229,7 @@ public abstract class ThreadController
         if (thumbnail.getBitmap() != null && !isAlreadyPresenting) {
             ImageViewerNavigationController imagerViewer = new ImageViewerNavigationController(context);
             presentController(imagerViewer, false);
-            imagerViewer.showImages(images, index, loadable, this);
+            imagerViewer.showImages(images, index, chanDescriptor, this);
         }
     }
 
@@ -231,7 +247,7 @@ public abstract class ThreadController
     public void showAlbum(List<PostImage> images, int index) {
         if (threadLayout.presenter.getChanThread() != null) {
             AlbumViewController albumViewController = new AlbumViewController(context);
-            albumViewController.setImages(getLoadable(), images, index, navigation.title);
+            albumViewController.setImages(getChanDescriptor(), images, index, navigation.title);
 
             if (doubleNavigationController != null) {
                 doubleNavigationController.pushController(albumViewController);

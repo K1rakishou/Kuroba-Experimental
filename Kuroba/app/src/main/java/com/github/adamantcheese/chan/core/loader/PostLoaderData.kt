@@ -1,11 +1,11 @@
 package com.github.adamantcheese.chan.core.loader
 
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicBoolean
 
 class PostLoaderData(
-  val loadable: Loadable,
+  val chanDescriptor: ChanDescriptor,
   val post: Post,
   private val disposeFuncList: MutableList<() -> Unit> = mutableListOf()
 ) {

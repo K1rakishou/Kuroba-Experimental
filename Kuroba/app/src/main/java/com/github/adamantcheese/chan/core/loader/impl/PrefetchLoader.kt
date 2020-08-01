@@ -10,8 +10,9 @@ import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Scheduler
@@ -44,9 +45,9 @@ class PrefetchLoader(
     BackgroundUtils.ensureBackgroundThread()
 
     val post = postLoaderData.post
-    val loadable = postLoaderData.loadable
+    val chanDescriptor = postLoaderData.chanDescriptor
 
-    val prefetchList = tryGetPrefetchBatch(loadable, post)
+    val prefetchList = tryGetPrefetchBatch(chanDescriptor, post)
     if (prefetchList.isEmpty()) {
       postLoaderData.post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, true) }
       return rejected()
@@ -108,21 +109,21 @@ class PrefetchLoader(
   }
 
   private fun tryGetPrefetchBatch(
-    loadable: Loadable,
+    chanDescriptor: ChanDescriptor,
     post: Post
   ): List<Prefetch> {
     if (post.isContentLoadedForLoader(loaderType)) {
       return emptyList()
     }
 
-    if (!loadable.isSuitableForPrefetch) {
+    if (!isSuitableForPrefetch()) {
       return emptyList()
     }
 
-    return getPrefetchBatch(post, loadable)
+    return getPrefetchBatch(post, chanDescriptor)
   }
 
-  private fun getPrefetchBatch(post: Post, loadable: Loadable): List<Prefetch> {
+  private fun getPrefetchBatch(post: Post, chanDescriptor: ChanDescriptor): List<Prefetch> {
     BackgroundUtils.ensureBackgroundThread()
 
     return post.postImages.mapNotNull { postImage ->
@@ -130,7 +131,7 @@ class PrefetchLoader(
         return@mapNotNull null
       }
 
-      return@mapNotNull Prefetch(postImage, loadable)
+      return@mapNotNull Prefetch(postImage, chanDescriptor)
     }
   }
 
@@ -150,9 +151,13 @@ class PrefetchLoader(
     prefetchImageDownloadIndicatorManager.onPrefetchCompleted(postImage)
   }
 
+  private fun isSuitableForPrefetch(): Boolean {
+    return ChanSettings.autoLoadThreadImages.get()
+  }
+
   private data class Prefetch(
     val postImage: PostImage,
-    val loadable: Loadable
+    val chanDescriptor: ChanDescriptor
   )
 
   companion object {

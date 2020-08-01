@@ -29,7 +29,6 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.ui.cell.AlbumViewCell;
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
@@ -38,6 +37,7 @@ import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.view.GridRecyclerView;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.List;
 
@@ -54,8 +54,7 @@ public class AlbumViewController
 
     private List<PostImage> postImages;
     private int targetIndex = -1;
-
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
 
     public AlbumViewController(Context context) {
         super(context);
@@ -74,13 +73,13 @@ public class AlbumViewController
         recyclerView.setHasFixedSize(true);
         recyclerView.setSpanWidth(dp(120));
         recyclerView.setItemAnimator(null);
-        AlbumAdapter albumAdapter = new AlbumAdapter(loadable);
+        AlbumAdapter albumAdapter = new AlbumAdapter(chanDescriptor);
         recyclerView.setAdapter(albumAdapter);
         recyclerView.scrollToPosition(targetIndex);
     }
 
-    public void setImages(Loadable loadable, List<PostImage> postImages, int index, String title) {
-        this.loadable = loadable;
+    public void setImages(ChanDescriptor chanDescriptor, List<PostImage> postImages, int index, String title) {
+        this.chanDescriptor = chanDescriptor;
         this.postImages = postImages;
 
         // Navigation
@@ -95,7 +94,7 @@ public class AlbumViewController
 
     private void downloadAlbumClicked(ToolbarMenuItem item) {
         AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
-        albumDownloadController.setPostImages(loadable, postImages);
+        albumDownloadController.setPostImages(chanDescriptor, postImages);
         navigationController.pushController(albumDownloadController);
     }
 
@@ -165,18 +164,18 @@ public class AlbumViewController
             final ImageViewerNavigationController imageViewer = new ImageViewerNavigationController(context);
             int index = postImages.indexOf(postImage);
             presentController(imageViewer, false);
-            imageViewer.showImages(postImages, index, loadable, this, this);
+            imageViewer.showImages(postImages, index, chanDescriptor, this, this);
         }
     }
 
     private class AlbumAdapter
             extends RecyclerView.Adapter<AlbumItemCellHolder> {
-        private Loadable loadable;
+        private ChanDescriptor chanDescriptor;
 
-        public AlbumAdapter(Loadable loadable) {
+        public AlbumAdapter(ChanDescriptor chanDescriptor) {
             setHasStableIds(true);
 
-            this.loadable = loadable;
+            this.chanDescriptor = chanDescriptor;
         }
 
         @Override
@@ -191,7 +190,7 @@ public class AlbumViewController
             PostImage postImage = postImages.get(position);
 
             if (postImage != null) {
-                holder.cell.setPostImage(loadable, postImage);
+                holder.cell.setPostImage(postImage);
             }
         }
 

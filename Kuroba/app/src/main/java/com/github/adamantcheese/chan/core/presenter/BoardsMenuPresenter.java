@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,13 +50,13 @@ public class BoardsMenuPresenter
         allBoards = boardManager.getAllBoardsObservable();
     }
 
-    public void create(Callback callback, Board selectedBoard) {
+    public void create(Callback callback, BoardDescriptor selectedBoardDescriptor) {
         this.allBoards.addObserver(this);
         items = new Items();
 
         updateWithFilter();
 
-        callback.scrollToPosition(items.findBoardPosition(selectedBoard));
+        callback.scrollToPosition(items.findBoardPosition(selectedBoardDescriptor));
     }
 
     public void destroy() {
@@ -123,10 +124,10 @@ public class BoardsMenuPresenter
             return items.size();
         }
 
-        public int findBoardPosition(Board board) {
+        public int findBoardPosition(BoardDescriptor boardDescriptor) {
             int position = 0;
             for (Item item : items) {
-                if (item.board != null && item.board.siteCodeEquals(board)) {
+                if (item.board != null && item.board.boardDescriptor().equals(boardDescriptor)) {
                     return position;
                 }
 

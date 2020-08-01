@@ -25,8 +25,8 @@ public class PostHide {
     @DatabaseField(generatedId = true)
     public int id;
 
-    @DatabaseField(columnName = "site")
-    public int site;
+    @DatabaseField(columnName = "site_name")
+    public String siteName;
 
     @DatabaseField(columnName = "board")
     public String board;
@@ -62,20 +62,23 @@ public class PostHide {
     private PostHide() {
     }
 
-    public PostHide(int siteId, String boardCode, int no) {
-        site = siteId;
-        board = boardCode;
+    public PostHide(String siteName, String boardCode, int no) {
+        this.siteName = siteName;
+        this.board = boardCode;
         this.no = no;
     }
 
     public static PostHide hidePost(
-            Post post, Boolean wholeThread, Boolean hide, Boolean hideRepliesToThisPost
+            Post post,
+            Boolean wholeThread,
+            Boolean hide,
+            Boolean hideRepliesToThisPost
     ) {
         PostHide postHide = new PostHide();
-        postHide.board = post.board.code;
+        postHide.board = post.boardDescriptor.getBoardCode();
+        postHide.siteName = post.boardDescriptor.siteName();
         postHide.no = (int) post.no;
         postHide.threadNo = (int) post.opNo;
-        postHide.site = post.board.siteId;
         postHide.wholeThread = wholeThread;
         postHide.hide = hide;
         postHide.hideRepliesToThisPost = hideRepliesToThisPost;
@@ -85,17 +88,17 @@ public class PostHide {
     public static PostHide unhidePost(Post post) {
         PostHide postHide = new PostHide();
 
-        postHide.board = post.board.code;
+        postHide.board = post.boardDescriptor.getBoardCode();
+        postHide.siteName = post.boardDescriptor.siteName();
         postHide.no = (int) post.no;
-        postHide.site = post.board.siteId;
 
         return postHide;
     }
 
-    public static PostHide unhidePost(int siteId, String boardCode, long postNo) {
+    public static PostHide unhidePost(String siteName, String boardCode, long postNo) {
         PostHide postHide = new PostHide();
 
-        postHide.site = siteId;
+        postHide.siteName = siteName;
         postHide.board = boardCode;
         postHide.no = (int) postNo;
 
@@ -109,14 +112,14 @@ public class PostHide {
 
         PostHide that = (PostHide) o;
 
-        return no == that.no && board.equals(that.board) && site == that.site;
+        return no == that.no && board.equals(that.board) && siteName.equals(that.siteName);
     }
 
     @Override
     public int hashCode() {
         int result = board.hashCode();
         result = 31 * result + no;
-        result = 31 * result + site;
+        result = 31 * result + siteName.hashCode();
         return result;
     }
 }

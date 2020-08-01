@@ -9,7 +9,6 @@ import androidx.core.util.Pair;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.model.orm.SiteModel;
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -200,12 +199,6 @@ public class SiteRepository {
         databaseManager.runTask(() -> {
             removeFilters(site);
             databaseManager.getDatabaseBoardManager().deleteBoards(site).call();
-
-            List<Loadable> siteLoadables = databaseManager.getDatabaseLoadableManager().getLoadables(site).call();
-            if (!siteLoadables.isEmpty()) {
-                databaseManager.getDatabaseLoadableManager().deleteLoadables(siteLoadables).call();
-            }
-
             databaseManager.getDatabaseSavedReplyManager().deleteSavedReplies(site).call();
             databaseManager.getDatabaseHideManager().deleteThreadHides(site).call();
             databaseManager.getDatabaseSiteManager().deleteSite(site).call();

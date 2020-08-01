@@ -17,36 +17,24 @@
 package com.github.adamantcheese.chan.core.site.loader;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.parser.ChanReader;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.List;
 
-/**
- * A request from ChanThreadLoader to load something.
- */
 public class ChanLoaderRequestParams {
-    /**
-     * Related loadable for the request.
-     */
-    public final Loadable loadable;
-
+    public final ChanDescriptor chanDescriptor;
     public final ChanReader chanReader;
-
-    /**
-     * Cached Post objects from previous loads, or an empty list.
-     */
     public final List<Post> cached;
-
     public final boolean retrieveDeletedPostsFromArchives;
 
     public ChanLoaderRequestParams(
-            Loadable loadable,
+            ChanDescriptor chanDescriptor,
             ChanReader chanReader,
             List<Post> cached,
             boolean retrieveDeletedPostsFromArchives
     ) {
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
         this.chanReader = chanReader;
         this.cached = cached;
         this.retrieveDeletedPostsFromArchives = retrieveDeletedPostsFromArchives;

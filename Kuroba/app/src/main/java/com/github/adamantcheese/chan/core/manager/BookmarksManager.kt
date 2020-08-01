@@ -5,6 +5,8 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.SuspendableInitializer
+import com.github.adamantcheese.common.mutableListWithCap
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkView
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -47,9 +49,9 @@ class BookmarksManager(
   private val currentOpenThread = AtomicReference<ChanDescriptor.ThreadDescriptor>(null)
 
   @GuardedBy("lock")
-  private val bookmarks = mutableMapOf<ChanDescriptor.ThreadDescriptor, ThreadBookmark>()
+  private val bookmarks = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(256)
   @GuardedBy("lock")
-  private val orders = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+  private val orders = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(256)
 
   init {
     appScope.launch {
@@ -261,7 +263,7 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.write {
-      val toDelete = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+      val toDelete = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(bookmarks.size / 2)
 
       bookmarks.entries.forEach { (threadDescriptor, threadBookmark) ->
         if (!threadBookmark.isActive()) {

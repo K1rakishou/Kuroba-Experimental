@@ -28,22 +28,19 @@ import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
+import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.HintPopup;
+import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
@@ -51,9 +48,10 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
-import com.github.adamantcheese.chan.utils.DescriptorUtils;
 import com.github.adamantcheese.chan.utils.DialogUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.chan.utils.SharingUtils;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -109,39 +107,31 @@ public class ViewThreadController
 
     private static final int ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9200;
 
-    private DatabaseLoadableManager databaseLoadableManager;
-
     @Inject
     ThemeHelper themeHelper;
-    @Inject
-    DatabaseManager databaseManager;
-    @Inject
-    BoardRepository boardRepository;
     @Inject
     HistoryNavigationManager historyNavigationManager;
     @Inject
     BookmarksManager bookmarksManager;
 
     private boolean pinItemPinned = false;
-    private Loadable loadable;
+    private ChanDescriptor.ThreadDescriptor threadDescriptor;
 
-    //pairs of the current thread loadable and the thread we're going to's hashcode
-    private Deque<Pair<Loadable, Integer>> threadFollowerpool = new ArrayDeque<>();
+    // pairs of the current thread loadable and the thread we're going to's hashcode
+    private Deque<Pair<ChanDescriptor.ThreadDescriptor, Integer>> threadFollowerpool = new ArrayDeque<>();
 
     @Nullable
     private HintPopup hintPopup = null;
 
-    public ViewThreadController(Context context, Loadable loadable) {
+    public ViewThreadController(Context context, ChanDescriptor.ThreadDescriptor threadDescriptor) {
         super(context);
-        this.loadable = loadable;
+        this.threadDescriptor = threadDescriptor;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         inject(this);
-
-        databaseLoadableManager = databaseManager.getDatabaseLoadableManager();
 
         threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST);
         view.setBackgroundColor(getAttrColor(context, R.attr.backcolor));
@@ -150,7 +140,7 @@ public class ViewThreadController
         navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get();
 
         buildMenu();
-        loadThread(loadable);
+        loadThread(threadDescriptor);
 
         Disposable disposable = bookmarksManager.listenForBookmarksChanges()
                 .onBackpressureLatest()
@@ -253,7 +243,7 @@ public class ViewThreadController
             );
         }
 
-        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
+        ChanDescriptor descriptor = threadDescriptor;
         boolean isThread = descriptor instanceof ChanDescriptor.ThreadDescriptor;
         boolean is4chan = descriptor.siteDescriptor().is4chan();
 
@@ -414,8 +404,13 @@ public class ViewThreadController
             return;
         }
 
-        Loadable loadable = threadLayout.presenter.getLoadable();
-        openLinkInBrowser(context, loadable.desktopUrl(), themeHelper.getTheme());
+        String url = SharingUtils.getUrlForSharing(siteRepository, threadDescriptor);
+        if (url == null) {
+            showToast(context, R.string.cannot_open_in_browser_already_deleted);
+            return;
+        }
+
+        openLinkInBrowser(context, url, themeHelper.getTheme());
     }
 
     private void shareClicked(ToolbarMenuSubItem item) {
@@ -424,8 +419,13 @@ public class ViewThreadController
             return;
         }
 
-        Loadable loadable = threadLayout.presenter.getLoadable();
-        shareLink(loadable.desktopUrl());
+        String url = SharingUtils.getUrlForSharing(siteRepository, threadDescriptor);
+        if (url == null) {
+            showToast(context, R.string.cannot_shared_thread_already_deleted);
+            return;
+        }
+
+        shareLink(url);
     }
 
     private void onGoToPostClicked(ToolbarMenuSubItem item) {
@@ -513,64 +513,35 @@ public class ViewThreadController
     }
 
     @Override
-    public void showThread(final Loadable threadLoadable) {
-        new AlertDialog.Builder(context).setNegativeButton(R.string.cancel, null)
+    public void openThread(@NotNull ChanDescriptor.ThreadDescriptor descriptor) {
+        new AlertDialog.Builder(context)
+                .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    threadFollowerpool.addFirst(new Pair<>(loadable, threadLoadable.hashCode()));
-                    loadThread(threadLoadable);
+                    threadFollowerpool.addFirst(new Pair<>(threadDescriptor, threadDescriptor.hashCode()));
+                    loadThread(threadDescriptor);
                 })
                 .setTitle(R.string.open_thread_confirmation)
-                .setMessage("/" + threadLoadable.boardCode + "/" + threadLoadable.no)
+                .setMessage("/" + threadDescriptor.boardCode() + "/" + threadDescriptor.getThreadNo())
                 .show();
     }
 
     @Override
     public void showThread(@NotNull ChanDescriptor.ThreadDescriptor descriptor) {
-        Loadable threadLoadable = databaseLoadableManager.getByThreadDescriptor(descriptor);
-        if (threadLoadable == null) {
-            showToast(context, R.string.browse_controller_cannot_open_thread);
-            return;
-        }
-
-        if (!threadLoadable.isThreadMode()) {
-            String errorMessage = context.getString(
-                    R.string.browse_controller_cannot_open_thread_not_a_thread,
-                    threadLoadable.mode
-            );
-
-            showToast(context, errorMessage);
-            return;
-        }
-
-        loadThread(threadLoadable);
+        loadThread(descriptor);
     }
 
     @Override
-    public void showBoard(@NotNull ChanDescriptor.CatalogDescriptor descriptor) {
-        Board board = boardRepository.getFromBoardDescriptor(descriptor.getBoardDescriptor());
-        if (board == null) {
-            showToast(context, R.string.browse_controller_cannot_open_board);
-            return;
-        }
-
-        Loadable catalog = databaseLoadableManager.getOrCreateLoadable(Loadable.forCatalog(board));
-        showBoard(catalog);
+    public void showBoard(@NotNull BoardDescriptor descriptor) {
+        showBoardInternal(descriptor, null);
     }
 
     @Override
-    public void showBoard(@NonNull final Loadable catalogLoadable) {
-        showBoardInternal(catalogLoadable, null);
+    public void showBoardAndSearch(@NonNull final BoardDescriptor boardDescriptor, String search) {
+        showBoardInternal(boardDescriptor, search);
     }
 
-    @Override
-    public void showBoardAndSearch(@NonNull final Loadable catalogLoadable, String search) {
-        showBoardInternal(catalogLoadable, search);
-    }
-
-    private void showBoardInternal(Loadable catalogLoadable, String searchQuery) {
-        historyNavigationManager.moveNavElementToTop(
-                new ChanDescriptor.CatalogDescriptor(catalogLoadable.getBoardDescriptor())
-        );
+    private void showBoardInternal(BoardDescriptor boardDescriptor, String searchQuery) {
+        historyNavigationManager.moveNavElementToTop(new ChanDescriptor.CatalogDescriptor(boardDescriptor));
 
         if (doubleNavigationController != null
                 && doubleNavigationController.getLeftController() instanceof BrowseController) {
@@ -579,7 +550,7 @@ public class ViewThreadController
             BrowseController browseController =
                     ((BrowseController) doubleNavigationController.getLeftController());
 
-            browseController.setBoard(catalogLoadable.board);
+            browseController.setBoard(boardDescriptor);
             if (searchQuery != null) {
                 browseController.searchQuery = searchQuery;
             }
@@ -593,7 +564,7 @@ public class ViewThreadController
             BrowseController browseController =
                     ((BrowseController) doubleNavigationController.getLeftController().childControllers.get(0));
 
-            browseController.setBoard(catalogLoadable.board);
+            browseController.setBoard(boardDescriptor);
             if (searchQuery != null) {
                 Toolbar toolbar = browseController.getToolbar();
                 if (toolbar != null) {
@@ -615,7 +586,7 @@ public class ViewThreadController
         }
 
         if (browseController != null) {
-            browseController.setBoard(catalogLoadable.board);
+            browseController.setBoard(boardDescriptor);
         }
 
         requireNavController().popController(false);
@@ -630,35 +601,38 @@ public class ViewThreadController
         }
     }
 
-    public void loadThread(Loadable loadable) {
-        loadThread(loadable, true);
-    }
-
-    public void loadThread(Loadable loadable, boolean addToLocalBackHistory) {
-        historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
+    public void loadThread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        historyNavigationManager.moveNavElementToTop(threadDescriptor);
 
         ThreadPresenter presenter = threadLayout.presenter;
-        if (!loadable.equals(presenter.getLoadable())) {
-            loadThreadInternal(loadable, addToLocalBackHistory);
+        if (!threadDescriptor.equals(presenter.getChanDescriptor())) {
+            loadThreadInternal(threadDescriptor);
         }
     }
 
-    private void loadThreadInternal(Loadable loadable, boolean addToLocalBackHistory) {
+    private void loadThreadInternal(ChanDescriptor.ThreadDescriptor threadDescriptor) {
         ThreadPresenter presenter = threadLayout.presenter;
 
-        presenter.bindLoadable(loadable, addToLocalBackHistory);
-        this.loadable = loadable;
+        presenter.bindChanDescriptor(threadDescriptor);
+        this.threadDescriptor = threadDescriptor;
 
         updateMenuItems();
-        navigation.title = loadable.title;
+        updateNavigationTitle(threadDescriptor);
+
         requireNavController().requireToolbar().updateTitle(navigation);
 
         setPinIconState(false);
-
-        updateLeftPaneHighlighting(loadable);
+        updateLeftPaneHighlighting(threadDescriptor);
         presenter.requestInitialData();
 
         showHints();
+    }
+
+    private void updateNavigationTitle(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        ChanThread chanThread = threadLayout.presenter.getChanThread();
+        if (chanThread != null) {
+            navigation.title = PostHelper.getTitle(chanThread.getOp(), threadDescriptor);
+        }
     }
 
     private void updateMenuItems() {
@@ -671,8 +645,7 @@ public class ViewThreadController
             return;
         }
 
-        ChanDescriptor descriptor = DescriptorUtils.getDescriptor(loadable);
-        retrieveDeletedPostsItem.visible = descriptor.siteDescriptor().is4chan();
+        retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan();
     }
 
     private void showHints() {
@@ -706,7 +679,7 @@ public class ViewThreadController
     @Override
     public void onShowPosts() {
         super.onShowPosts();
-        navigation.title = this.loadable.title;
+        updateNavigationTitle(threadDescriptor);
 
         setPinIconState(false);
 
@@ -714,24 +687,34 @@ public class ViewThreadController
         requireNavController().requireToolbar().updateViewForItem(navigation);
     }
 
-    private void updateLeftPaneHighlighting(Loadable loadable) {
-        if (doubleNavigationController != null) {
-            ThreadController threadController = null;
-            Controller leftController = doubleNavigationController.getLeftController();
-            if (leftController instanceof ThreadController) {
-                threadController = (ThreadController) leftController;
-            } else if (leftController instanceof NavigationController) {
-                NavigationController leftNavigationController = (NavigationController) leftController;
-                for (Controller controller : leftNavigationController.childControllers) {
-                    if (controller instanceof ThreadController) {
-                        threadController = (ThreadController) controller;
-                        break;
-                    }
+    private void updateLeftPaneHighlighting(ChanDescriptor chanDescriptor) {
+        if (doubleNavigationController == null) {
+            return;
+        }
+
+        ThreadController threadController = null;
+        Controller leftController = doubleNavigationController.getLeftController();
+        if (leftController instanceof ThreadController) {
+            threadController = (ThreadController) leftController;
+        } else if (leftController instanceof NavigationController) {
+            NavigationController leftNavigationController = (NavigationController) leftController;
+            for (Controller controller : leftNavigationController.childControllers) {
+                if (controller instanceof ThreadController) {
+                    threadController = (ThreadController) controller;
+                    break;
                 }
             }
-            if (threadController != null) {
-                threadController.selectPost(loadable != null ? loadable.no : -1);
-            }
+        }
+
+        if (threadController == null) {
+            return;
+        }
+
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            long threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+            threadController.selectPost(threadNo);
+        } else {
+            threadController.selectPost(-1L);
         }
     }
 
@@ -764,15 +747,16 @@ public class ViewThreadController
     public boolean threadBackPressed() {
         // clear the pool if the current thread isn't a part of this crosspost chain
         // ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
-        // noinspection ConstantConditions
-        if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != loadable.hashCode()) {
+        if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != threadDescriptor.hashCode()) {
             threadFollowerpool.clear();
         }
+
         // if the thread is new, it'll be empty here, so we'll get back-to-catalog functionality
         if (threadFollowerpool.isEmpty()) {
             return false;
         }
-        loadThread(threadFollowerpool.removeFirst().first, false);
+
+        loadThread(threadFollowerpool.removeFirst().first);
         return true;
     }
 
@@ -793,8 +777,8 @@ public class ViewThreadController
     public void onSlideChanged(boolean leftOpen) {
         super.onSlideChanged(leftOpen);
 
-        if (loadable != null) {
-            historyNavigationManager.moveNavElementToTop(loadable.getChanDescriptor());
+        if (threadDescriptor != null) {
+            historyNavigationManager.moveNavElementToTop(threadDescriptor);
         }
     }
 }

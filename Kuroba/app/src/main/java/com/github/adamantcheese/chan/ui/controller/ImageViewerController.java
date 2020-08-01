@@ -50,14 +50,12 @@ import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.ImageViewerPresenter;
 import com.github.adamantcheese.chan.core.saver.ImageSaveTask;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.adapter.ImageViewerAdapter;
-import com.github.adamantcheese.chan.ui.helper.PostHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
@@ -72,6 +70,7 @@ import com.github.adamantcheese.chan.ui.view.TransitionImageView;
 import com.github.adamantcheese.chan.utils.FullScreenUtilsKt;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -138,7 +137,7 @@ public class ImageViewerController
     private ImageViewerPresenter presenter;
 
     private final Toolbar toolbar;
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     private TransitionImageView previewImage;
     private OptionalSwipeViewPager pager;
     private LoadingBar loadingBar;
@@ -147,12 +146,12 @@ public class ImageViewerController
     private Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable uiHideCall = this::hideSystemUI;
 
-    public ImageViewerController(Loadable loadable, Context context, Toolbar toolbar) {
+    public ImageViewerController(ChanDescriptor chanDescriptor, Context context, Toolbar toolbar) {
         super(context);
         inject(this);
 
         this.toolbar = toolbar;
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
 
         presenter = new ImageViewerPresenter(context, this);
     }
@@ -334,7 +333,7 @@ public class ImageViewerController
     private void downloadAlbumClicked(ToolbarMenuSubItem item) {
         List<PostImage> all = presenter.getAllPostImages();
         AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
-        albumDownloadController.setPostImages(presenter.getLoadable(), all);
+        albumDownloadController.setPostImages(presenter.getChanDescriptor(), all);
         navigationController.pushController(albumDownloadController);
     }
 
@@ -378,7 +377,7 @@ public class ImageViewerController
     }
 
     private void saveShare(boolean share, PostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(loadable, postImage, false);
+        ImageSaveTask task = new ImageSaveTask(chanDescriptor, postImage, false);
         task.setShare(share);
         if (ChanSettings.saveBoardFolder.get()) {
             String subFolderName;
@@ -387,10 +386,12 @@ public class ImageViewerController
                 subFolderName = appendAdditionalSubDirectories(postImage);
             } else {
                 String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(
-                        presenter.getLoadable().site.name()
+                        presenter.getChanDescriptor().siteName()
                 );
 
-                subFolderName = siteNameSafe + File.separator + presenter.getLoadable().boardCode;
+                subFolderName = siteNameSafe
+                        + File.separator
+                        + presenter.getChanDescriptor().boardCode();
             }
 
             task.setSubFolder(subFolderName);
@@ -409,33 +410,42 @@ public class ImageViewerController
 
     @NonNull
     private String appendAdditionalSubDirectories(PostImage postImage) {
+        long threadNo = 0L;
+
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+        }
+
+        String siteName = chanDescriptor.siteName();
+        String boardCode = chanDescriptor.boardCode();
+
         // save to op no appended with the first 50 characters of the subject
         // should be unique and perfectly understandable title wise
-        //
-        // if we're saving from the catalog, find the post for the image and use its attributes
-        // to keep everything consistent as the loadable is for the catalog and doesn't have
-        // the right info
-
-        String siteName = presenter.getLoadable().site.name();
-
-        long postNoString = presenter.getLoadable().no == 0
-                ? imageViewerCallback.getPostForPostImage(postImage).no
-                : presenter.getLoadable().no;
-
         String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
                 + File.separator
-                + StringUtils.dirNameRemoveBadCharacters(presenter.getLoadable().boardCode)
+                + StringUtils.dirNameRemoveBadCharacters(boardCode)
                 + File.separator
-                + postNoString + "_";
+                + threadNo
+                + "_";
 
-        String tempTitle = (presenter.getLoadable().no == 0
-                ? PostHelper.getTitle(imageViewerCallback.getPostForPostImage(postImage), null)
-                : presenter.getLoadable().title);
-
-        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(tempTitle);
-        String truncatedFileName = sanitizedFileName.substring(0, Math.min(sanitizedFileName.length(), 50));
+        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(
+                getTempTitle(threadNo, siteName, boardCode)
+        );
+        String truncatedFileName = sanitizedFileName.substring(
+                0,
+                Math.min(sanitizedFileName.length(), 50)
+        );
 
         return sanitizedSubFolderName + truncatedFileName;
+    }
+
+    @NonNull
+    private String getTempTitle(long threadNo, String siteName, String boardCode) {
+        if (threadNo <= 0) {
+            return "catalog";
+        }
+
+        return String.format(Locale.ENGLISH, "%s_%s_%d", siteName, boardCode, threadNo);
     }
 
     @Override
@@ -472,8 +482,9 @@ public class ImageViewerController
         pager.setSwipingEnabled(visible);
     }
 
-    public void setPagerItems(Loadable loadable, List<PostImage> images, int initialIndex) {
-        ImageViewerAdapter adapter = new ImageViewerAdapter(images, loadable, presenter);
+    @Override
+    public void setPagerItems(ChanDescriptor chanDescriptor, List<PostImage> images, int initialIndex) {
+        ImageViewerAdapter adapter = new ImageViewerAdapter(images, presenter);
         pager.setAdapter(adapter);
         pager.setCurrentItem(initialIndex);
     }
@@ -623,7 +634,8 @@ public class ImageViewerController
         return isInImmersiveMode;
     }
 
-    public void startPreviewInTransition(Loadable loadable, PostImage postImage) {
+    @Override
+    public void startPreviewInTransition(ChanDescriptor chanDescriptor, PostImage postImage) {
         ThumbnailView startImageView = getTransitionImageView(postImage);
 
         if (!setTransitionViewData(startImageView)) {
@@ -679,7 +691,8 @@ public class ImageViewerController
         );
     }
 
-    public void startPreviewOutTransition(Loadable loadable, final PostImage postImage) {
+    @Override
+    public void startPreviewOutTransition(ChanDescriptor chanDescriptor, final PostImage postImage) {
         if (startAnimation != null || endAnimation != null) {
             return;
         }

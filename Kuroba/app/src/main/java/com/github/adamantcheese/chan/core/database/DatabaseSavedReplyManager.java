@@ -24,6 +24,7 @@ import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.common.SuspendableInitializer;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
 
@@ -86,6 +87,10 @@ public class DatabaseSavedReplyManager {
     @AnyThread
     public boolean isSaved(Board board, long postNo) {
         return getSavedReply(board, postNo) != null;
+    }
+
+    public boolean isSaved(BoardDescriptor boardDescriptor, int siteId, long postNo) {
+        return getSavedReply(boardDescriptor, siteId, postNo) != null;
     }
 
     public Callable<Void> load() {
@@ -164,16 +169,40 @@ public class DatabaseSavedReplyManager {
         };
     }
 
+    public SavedReply getSavedReply(BoardDescriptor boardDescriptor, int siteId, long postNo) {
+        synchronized (savedRepliesByNo) {
+            if (savedRepliesByNo.containsKey(postNo)) {
+                List<SavedReply> items = savedRepliesByNo.get(postNo);
+                if (items == null) {
+                    return null;
+                }
+
+                for (SavedReply item : items) {
+                    if (item.board.equals(boardDescriptor.getBoardCode()) && item.siteId == siteId) {
+                        return item;
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
+
     public SavedReply getSavedReply(Board board, long postNo) {
         synchronized (savedRepliesByNo) {
             if (savedRepliesByNo.containsKey(postNo)) {
                 List<SavedReply> items = savedRepliesByNo.get(postNo);
+                if (items == null) {
+                    return null;
+                }
+
                 for (SavedReply item : items) {
                     if (item.board.equals(board.code) && item.siteId == board.siteId) {
                         return item;
                     }
                 }
             }
+
             return null;
         }
     }
@@ -227,7 +256,7 @@ public class DatabaseSavedReplyManager {
     }
 
     @NonNull
-    public List<Long> retainSavedPostNos(List<Post> postList) {
+    public List<Long> retainSavedPostNos(List<Post> postList, int siteId) {
         if (postList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -246,9 +275,9 @@ public class DatabaseSavedReplyManager {
                 }
 
                 for (SavedReply item : items) {
-                    Board postBoard = post.board;
+                    String boardCode = post.boardDescriptor.getBoardCode();
 
-                    if (item.board.equals(postBoard.code) && item.siteId == postBoard.siteId) {
+                    if (item.board.equals(boardCode) && item.siteId == siteId) {
                         resultList.add(post.no);
                     }
                 }

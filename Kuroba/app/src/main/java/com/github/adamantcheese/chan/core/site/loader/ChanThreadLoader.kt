@@ -16,16 +16,18 @@
  */
 package com.github.adamantcheese.chan.core.site.loader
 
-import android.text.TextUtils
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BookmarksManager
+import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -38,6 +40,7 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.error
 import com.github.adamantcheese.common.ModularResult.Companion.value
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
@@ -55,17 +58,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.min
 
-/**
- * A ChanThreadLoader is the loader for Loadables.
- *
- * Obtain ChanLoaders with [ChanLoaderManager].
- *
- * ChanLoaders can load boards and threads, and return [ChanThread] objects on success, through
- * [ChanLoaderCallback].
- *
- * For threads timers can be started with [setTimer] to do a request later.
- */
-class ChanThreadLoader(val loadable: Loadable) {
+class ChanThreadLoader(val chanDescriptor: ChanDescriptor) {
   @Inject
   lateinit var gson: Gson
   @Inject
@@ -88,6 +81,10 @@ class ChanThreadLoader(val loadable: Loadable) {
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var siteRepository: SiteRepository
+  @Inject
+  lateinit var boardRepository: BoardRepository
 
   @Volatile
   var thread: ChanThread? = null
@@ -105,7 +102,9 @@ class ChanThreadLoader(val loadable: Loadable) {
       thirdPartyArchiveInfoRepository,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
-      themeHelper
+      themeHelper,
+      boardRepository,
+      siteRepository
     )
   }
 
@@ -190,12 +189,6 @@ class ChanThreadLoader(val loadable: Loadable) {
     requestJob?.cancel()
     requestJob = null
 
-    if (loadable.isCatalogMode) {
-      loadable.no = 0
-      loadable.listViewIndex = 0
-      loadable.listViewTop = 0
-    }
-
     currentTimeout = -1
 
     synchronized(this) { thread = null }
@@ -212,7 +205,7 @@ class ChanThreadLoader(val loadable: Loadable) {
     BackgroundUtils.ensureMainThread()
     clearPendingRunnable()
 
-    return if (loadable.isThreadMode && requestJob == null) {
+    return if (chanDescriptor.isThreadDescriptor() && requestJob == null) {
       compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
       true
     } else {
@@ -304,20 +297,32 @@ class ChanThreadLoader(val loadable: Loadable) {
 
   private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
     BackgroundUtils.ensureBackgroundThread()
-    Logger.d(TAG, "Requested /" + loadable.boardCode + "/, " + StringUtils.maskPostNo(loadable.no))
+
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        Logger.d(TAG, "Requested thread /" + chanDescriptor.boardCode() + "/, " + StringUtils.maskPostNo(chanDescriptor.threadNo))
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        Logger.d(TAG, "Requested catalog /" + chanDescriptor.boardCode() + "/")
+      }
+    }
+
+    val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    requireNotNull(site) { "site == null, siteDescriptor = ${chanDescriptor.siteDescriptor()}" }
+    val chanReader = site.chanReader()
 
     val requestParams = ChanLoaderRequestParams(
-      loadable,
-      loadable.getSite().chanReader(),
+      chanDescriptor,
+      chanReader,
       synchronized(this) { thread?.posts ?: ArrayList() },
       retrieveDeletedPostsFromArchives
     )
 
-    val url = getChanUrl(loadable.getSite(), loadable.chanDescriptor).toString()
+    val url = getChanUrl(site, chanDescriptor).toString()
 
     // Notify the listeners that loader is starting fetching data from the server
-    loadable.threadDescriptorOrNull?.let { threadDescriptor ->
-      bookmarksManager.onThreadIsFetchingData(threadDescriptor)
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
     return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
@@ -364,7 +369,7 @@ class ChanThreadLoader(val loadable: Loadable) {
 
     synchronized(this) {
       if (thread == null) {
-        thread = ChanThread(loadable, ArrayList())
+        thread = ChanThread(chanDescriptor, ArrayList())
       }
 
       thread!!.setNewPosts(response.posts)
@@ -382,12 +387,10 @@ class ChanThreadLoader(val loadable: Loadable) {
     val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
     processResponse(fakeOp)
 
-    if (TextUtils.isEmpty(loadable.title)) {
-      loadable.setTitle(PostHelper.getTitle(localThread.op, loadable))
-    }
+    val title = PostHelper.getTitle(localThread.op, chanDescriptor)
 
     for (post in localThread.posts) {
-      post.title = loadable.title
+      post.title = title
     }
 
     lastLoadTime = System.currentTimeMillis()
@@ -416,7 +419,7 @@ class ChanThreadLoader(val loadable: Loadable) {
       checkNotNull(thread) { "thread is null during processResponse" }
     }
 
-    if (loadable.isThreadMode && localThread.postsCount > 0) {
+    if (chanDescriptor.isThreadDescriptor() && localThread.postsCount > 0) {
       // Replace some op parameters to the real op (index 0).
       // This is done on the main thread to avoid race conditions.
       val realOp = localThread.op

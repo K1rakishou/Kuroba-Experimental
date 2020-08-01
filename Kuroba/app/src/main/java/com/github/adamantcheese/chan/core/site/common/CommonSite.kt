@@ -22,7 +22,6 @@ import androidx.annotation.CallSuper
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
@@ -34,6 +33,7 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -228,16 +228,16 @@ abstract class CommonSite : SiteBase() {
       return this.url!!.host == url.host
     }
     
-    override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
-      return when {
-        loadable.isCatalogMode -> {
-          url!!.newBuilder().addPathSegment(loadable.boardCode).toString()
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+      return when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          url!!.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
         }
-        loadable.isThreadMode -> {
+        is ChanDescriptor.ThreadDescriptor -> {
           url!!.newBuilder()
-            .addPathSegment(loadable.boardCode)
+            .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
-            .addPathSegment(loadable.no.toString())
+            .addPathSegment(chanDescriptor.threadNo.toString())
             .toString()
         }
         else -> url.toString()
@@ -245,7 +245,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-    override fun resolveLoadable(site: Site, url: HttpUrl): Loadable? {
+    override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
       val boardPattern = boardPattern().matcher(url.encodedPath)
       val threadPattern = threadPattern().matcher(url.encodedPath)
       
@@ -253,28 +253,37 @@ abstract class CommonSite : SiteBase() {
         if (threadPattern.find()) {
           val board = site.board(threadPattern.group(1))
             ?: return null
-          
-          val loadable = Loadable.forThread(
-            site,
-            board,
-            threadPattern.group(3).toInt().toLong(),
-            ""
+
+          val threadNo = threadPattern.group(3).toInt().toLong()
+
+
+          val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+            site.name(),
+            board.code,
+            threadNo
           )
           
           val markedNo = if (TextUtils.isEmpty(url.fragment)) {
-            url.fragment?.toInt() ?: -1
+            url.fragment?.toLong()
           } else {
-            -1
+            null
           }
 
-          loadable.markedNo = markedNo
-          return loadable
+          return ResolvedChanDescriptor(
+            threadDescriptor,
+            markedNo
+          )
         }
         
         val board = site.board(boardPattern.group(1))
           ?: return null
-        
-        return Loadable.forCatalog(board)
+
+        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+          site.name(),
+          board.code
+        )
+
+        return ResolvedChanDescriptor(catalogDescriptor)
       } catch (error: NumberFormatException) {
         Logger.e(TAG, "Error while trying to resolve loadable", error)
       }
@@ -311,7 +320,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, arg: Map<String, String>): HttpUrl {
+    override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
@@ -327,7 +336,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun reply(loadableDescriptor: Loadable): HttpUrl {
+    override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
@@ -377,12 +386,12 @@ abstract class CommonSite : SiteBase() {
     
     override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
-      val loadable = reply.loadable!!
+      val chanDescriptor = reply.chanDescriptor!!
       
       reply.password = java.lang.Long.toHexString(site!!.secureRandom.nextLong())
       replyResponse.password = reply.password
-      replyResponse.siteId = loadable.siteId
-      replyResponse.boardCode = loadable.boardCode
+      replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
+      replyResponse.boardCode = chanDescriptor.boardCode()
       
       val call: MultipartHttpCall = object : MultipartHttpCall(site) {
         override fun process(response: Response, result: String) {
@@ -390,7 +399,7 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site!!.endpoints().reply(loadable))
+      call.url(site!!.endpoints().reply(chanDescriptor))
       
       return flow {
         if (requirePrepare()) {
@@ -405,11 +414,11 @@ abstract class CommonSite : SiteBase() {
       }
     }
     
-    open fun setupPost(reply: Reply, call: MultipartHttpCall) {
-    
+    open fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+      return ModularResult.error(NotImplementedError("Not implemented"))
     }
     
-    open fun handlePost(response: ReplyResponse, httpResponse: Response, responseBody: String) {
+    open fun handlePost(replyResponse: ReplyResponse, response: Response, result: String) {
     
     }
     
@@ -437,7 +446,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     open suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse) {
-    
+
     }
     
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {

@@ -4,6 +4,9 @@ import android.util.JsonReader
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
@@ -19,7 +22,11 @@ import java.util.*
 import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
+class TaimabaApi(
+  private val siteRepository: SiteRepository,
+  private val boardRepository: BoardRepository,
+  commonSite: CommonSite
+) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
   override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
@@ -34,8 +41,14 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
   @Throws(Exception::class)
   override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
-    builder.board(chanReaderProcessor.loadable.board)
-    val endpoints = chanReaderProcessor.loadable.getSite().endpoints()
+    builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+
+    val site = siteRepository.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+      ?: return
+    val board = boardRepository.getFromBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+      ?: return
+
+    val endpoints = site.endpoints()
 
     // File
     var fileExt: String? = null
@@ -96,7 +109,7 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
         "extra_files" -> {
           reader.beginArray()
           while (reader.hasNext()) {
-            val postImage = readPostImage(reader, builder, endpoints)
+            val postImage = readPostImage(reader, builder, board, endpoints)
             if (postImage != null) {
               files.add(postImage)
             }
@@ -114,8 +127,8 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
     // The file from between the other values.
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
-      val image = PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, args))
+      val image = PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -176,7 +189,10 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
   @Throws(IOException::class)
   private fun readPostImage(
-    reader: JsonReader, builder: Post.Builder, endpoints: SiteEndpoints
+    reader: JsonReader,
+    builder: Post.Builder,
+    board: Board,
+    endpoints: SiteEndpoints
   ): PostImage? {
     var fileSize: Long = 0
     var fileExt: String? = null
@@ -203,8 +219,8 @@ class TaimabaApi(commonSite: CommonSite) : CommonApi(commonSite) {
 
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
-      return PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, args))
+      return PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)

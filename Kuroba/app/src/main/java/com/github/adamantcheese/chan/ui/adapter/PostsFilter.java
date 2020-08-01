@@ -22,7 +22,9 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.PostIndexed;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,6 +65,8 @@ public class PostsFilter {
 
     @Inject
     DatabaseManager databaseManager;
+    @Inject
+    SiteRepository siteRepository;
 
     private Order order;
     private String query;
@@ -73,9 +77,14 @@ public class PostsFilter {
         inject(this);
     }
 
-    public List<PostIndexed> apply(List<Post> original, Loadable loadable) {
-        int siteId = loadable.siteId;
-        String board = loadable.boardCode;
+    public List<PostIndexed> apply(List<Post> original, ChanDescriptor chanDescriptor) {
+        Site site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor());
+        if (site == null) {
+            return Collections.emptyList();
+        }
+
+        String siteName = site.name();
+        String board = chanDescriptor.boardCode();
 
         List<Post> posts = new ArrayList<>(original);
         Map<Long, Integer> originalPostIndexes = calculateOriginalPostIndexes(original);
@@ -91,7 +100,7 @@ public class PostsFilter {
         // Process hidden by filter and post/thread hiding
         List<Post> retainedPosts = databaseManager.getDatabaseHideManager().filterHiddenPosts(
                 posts,
-                siteId,
+                siteName,
                 board
         );
 

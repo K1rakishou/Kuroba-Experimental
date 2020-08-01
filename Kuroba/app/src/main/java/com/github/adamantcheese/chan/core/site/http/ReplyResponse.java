@@ -16,7 +16,10 @@
  */
 package com.github.adamantcheese.chan.core.site.http;
 
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.core.site.SiteActions;
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import kotlin.coroutines.Continuation;
 
@@ -35,13 +38,14 @@ public class ReplyResponse {
      * Error message used to show to the user if {@link #posted} is {@code false}.
      * <p>Optional
      */
+    @Nullable
     public String errorMessage;
 
-    // TODO(multi-site)
-    public int siteId = 0;
+    @Nullable
+    public SiteDescriptor siteDescriptor = null;
     public String boardCode = "";
-    public int threadNo = 0;
-    public int postNo = 0;
+    public long threadNo = 0L;
+    public long postNo = 0L;
     public String password = "";
     public boolean probablyBanned = false;
     public boolean requireAuthentication = false;

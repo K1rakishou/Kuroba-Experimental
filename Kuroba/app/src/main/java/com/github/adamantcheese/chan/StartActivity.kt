@@ -26,7 +26,7 @@ import android.nfc.NfcEvent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.Pair
 import androidx.lifecycle.Lifecycle
@@ -35,8 +35,8 @@ import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.*
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
+import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
@@ -53,8 +53,9 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
+import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -83,6 +84,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var siteRepository: SiteRepository
+  @Inject
+  lateinit var boardRepository: BoardRepository
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
@@ -328,7 +331,7 @@ class StartActivity : AppCompatActivity(),
 
       when (topNavElement) {
         is NavHistoryElement.Catalog -> {
-          browseController?.showBoard(topNavElement.descriptor)
+          browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
         }
         is NavHistoryElement.Thread -> {
           val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
@@ -337,7 +340,7 @@ class StartActivity : AppCompatActivity(),
               "catalogNavElement is not catalog!"
             }
 
-            browseController?.setBoard(catalogNavElement.descriptor)
+            browseController?.setBoard(catalogNavElement.descriptor.boardDescriptor)
           } else {
             browseController?.loadWithDefaultBoard()
           }
@@ -365,33 +368,30 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun restoreFromUrl(): Boolean {
-    var handled = false
     val data = intent.data
+      ?: return false
 
-    // Start from an url launch.
-    if (data != null) {
-      val loadableResult = siteResolver.resolveLoadableForUrl(data.toString())
-      if (loadableResult != null) {
-        handled = true
-        loadedFromURL = true
+    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(data.toString())
+    if (chanDescriptorResult != null) {
+      loadedFromURL = true
 
-        val loadable = loadableResult.loadable
-        browseController?.setBoard(loadable.board)
+      val chanDescriptor = chanDescriptorResult.chanDescriptor
+      browseController?.setBoard(chanDescriptor.boardDescriptor())
 
-        if (loadable.isThreadMode) {
-          browseController?.showThread(loadable, false)
-        }
-      } else {
-        AlertDialog.Builder(this)
-          .setMessage(getString(R.string.open_link_not_matched,
-            AndroidUtils.getApplicationLabel()
-          ))
-          .setPositiveButton(R.string.ok) { _, _ -> AndroidUtils.openLink(data.toString()) }
-          .show()
+      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        browseController?.showThread(chanDescriptor, false)
       }
+
+      return true
     }
 
-    return handled
+    Toast.makeText(
+      this,
+      getString(R.string.open_link_not_matched, AndroidUtils.getApplicationLabel()),
+      Toast.LENGTH_LONG
+    ).show()
+
+    return false
   }
 
   private fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
@@ -407,7 +407,7 @@ class StartActivity : AppCompatActivity(),
     val boardThreadPair = resolveChanState(chanState)
     if (boardThreadPair.first != null) {
       handled = true
-      browseController?.setBoard(boardThreadPair.first!!.board)
+      browseController?.setBoard(boardThreadPair.first!!)
 
       if (boardThreadPair.second != null) {
         browseController?.showThread(boardThreadPair.second!!, false)
@@ -417,47 +417,29 @@ class StartActivity : AppCompatActivity(),
     return handled
   }
 
-  private fun resolveChanState(state: ChanState): Pair<Loadable?, Loadable?> {
-    val boardLoadable = resolveLoadable(state.board, false)
-    val threadLoadable = resolveLoadable(state.thread, true)
-    return Pair(boardLoadable, threadLoadable)
+  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+    val boardDescriptor =
+      (resolveChanDescriptor(state.board) as ChanDescriptor.CatalogDescriptor).boardDescriptor
+    val threadDescriptor =
+      resolveChanDescriptor(state.thread) as ChanDescriptor.ThreadDescriptor
+
+    return Pair(boardDescriptor, threadDescriptor)
   }
 
-  private fun resolveLoadable(_stateLoadable: Loadable, forThread: Boolean): Loadable? {
-    // invalid (no state saved).
-    var stateLoadable = _stateLoadable
-
-    val mode = if (forThread) {
-      Loadable.Mode.THREAD
+  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
+    val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
+      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
     } else {
-      Loadable.Mode.CATALOG
+      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
     }
 
-    if (stateLoadable.mode != mode) {
-      return null
-    }
-
-    val site = siteRepository.forId(stateLoadable.siteId)
+    siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return null
 
-    val board = site.board(stateLoadable.boardCode)
+    boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return null
 
-    stateLoadable.site = site
-    stateLoadable.board = board
-
-    if (forThread) {
-      // When restarting the parcelable isn't actually deserialized, but the same
-      // object instance is reused. This means that the loadables we gave to the
-      // state are the same instance, and also have the id set etc. We don't need to
-      // query these from the loadablemanager.
-      val loadableManager = databaseManager.databaseLoadableManager
-      if (stateLoadable.id == 0) {
-        stateLoadable = loadableManager.getOrCreateLoadable(stateLoadable)
-      }
-    }
-
-    return stateLoadable
+    return chanDescriptor
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -505,9 +487,9 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun lastPageNotificationClicked(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
       return
@@ -523,9 +505,9 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun replyNotificationSwipedAway(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
       return
@@ -541,9 +523,9 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun replyNotificationClicked(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<ThreadDescriptorParcelable>(
+    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromThreadDescriptorParcelable(it) }
+    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
     if (threadDescriptors.isNullOrEmpty()) {
       return
@@ -576,13 +558,13 @@ class StartActivity : AppCompatActivity(),
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
 
-    val board = browseController?.loadable
-    if (board == null) {
+    val boardDescriptor = browseController?.chanDescriptor
+    if (boardDescriptor == null) {
       Logger.w(TAG, "Can not save instance state, the board loadable is null")
       return
     }
 
-    var thread: Loadable? = null
+    var threadDescriptor: ChanDescriptor? = null
 
     if (drawerController.childControllers[0] is SplitNavigationController) {
       val dblNav = drawerController.childControllers[0] as SplitNavigationController
@@ -592,7 +574,7 @@ class StartActivity : AppCompatActivity(),
 
         for (controller in rightNavigationController.childControllers) {
           if (controller is ViewThreadController) {
-            thread = controller.loadable
+            threadDescriptor = controller.chanDescriptor
             break
           }
         }
@@ -602,23 +584,27 @@ class StartActivity : AppCompatActivity(),
 
       for (controller in controllers) {
         if (controller is ViewThreadController) {
-          thread = controller.loadable
+          threadDescriptor = controller.chanDescriptor
           break
         } else if (controller is ThreadSlideController) {
           if (controller.getRightController() is ViewThreadController) {
-            thread = (controller.getRightController() as ViewThreadController).loadable
+            threadDescriptor = (controller.getRightController() as ViewThreadController).chanDescriptor
             break
           }
         }
       }
     }
 
-    if (thread == null) {
-      // Make the parcel happy
-      thread = Loadable.emptyLoadable()
+    if (threadDescriptor == null) {
+      return
     }
 
-    outState.putParcelable(STATE_KEY, ChanState(board.clone(), thread!!.clone()))
+    val chanState = ChanState(
+      DescriptorParcelable.fromDescriptor(boardDescriptor),
+      DescriptorParcelable.fromDescriptor(threadDescriptor)
+    )
+
+    outState.putParcelable(STATE_KEY, chanState)
   }
 
   override fun createNdefMessage(event: NfcEvent): NdefMessage? {

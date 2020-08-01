@@ -30,7 +30,8 @@ import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload;
 import com.github.adamantcheese.chan.core.cache.downloader.DownloadRequestExtraInfo;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ImageSearch;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
@@ -39,7 +40,10 @@ import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,6 +89,8 @@ public class ImageViewerPresenter
     CacheHandler cacheHandler;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    BoardRepository boardRepository;
 
     private boolean entering = true;
     private boolean exiting = false;
@@ -92,7 +98,7 @@ public class ImageViewerPresenter
     private Map<Integer, List<Float>> progress;
     private int selectedPosition = 0;
     private SwipeDirection swipeDirection = SwipeDirection.Default;
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     private Set<CancelableDownload> preloadingImages = new HashSet<>();
     private final Set<String> nonCancelableImages = new HashSet<>();
     private Debouncer motionEventDebouncer = new Debouncer(false);
@@ -111,9 +117,9 @@ public class ImageViewerPresenter
     }
 
     @SuppressLint("UseSparseArrays")
-    public void showImages(List<PostImage> images, int position, Loadable loadable) {
+    public void showImages(List<PostImage> images, int position, ChanDescriptor chanDescriptor) {
         this.images = images;
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
         this.selectedPosition = Math.max(0, Math.min(images.size() - 1, position));
         this.progress = new HashMap<>(images.size());
 
@@ -132,13 +138,13 @@ public class ImageViewerPresenter
         }
 
         // Do this before the view is measured, to avoid it to always loading the first two pages
-        callback.setPagerItems(loadable, images, selectedPosition);
+        callback.setPagerItems(chanDescriptor, images, selectedPosition);
         callback.setImageMode(images.get(selectedPosition), LOWRES, true);
     }
 
     public void onViewMeasured() {
         // Pager is measured, but still invisible
-        callback.startPreviewInTransition(loadable, images.get(selectedPosition));
+        callback.startPreviewInTransition(chanDescriptor, images.get(selectedPosition));
         PostImage postImage = images.get(selectedPosition);
         callback.setTitle(postImage, selectedPosition, images.size(), postImage.spoiler());
     }
@@ -168,7 +174,7 @@ public class ImageViewerPresenter
         callback.showDownloadMenuItem(false);
         callback.setPagerVisibility(false);
         callback.setPreviewVisibility(true);
-        callback.startPreviewOutTransition(loadable, postImage);
+        callback.startPreviewOutTransition(chanDescriptor, postImage);
         callback.showProgress(false);
 
         for (CancelableDownload preloadingImage : preloadingImages) {
@@ -193,9 +199,20 @@ public class ImageViewerPresenter
         return images.get(selectedPosition);
     }
 
+    @NotNull
     @Override
-    public Loadable getLoadable() {
-        return loadable;
+    public ChanDescriptor getChanDescriptor() {
+        return chanDescriptor;
+    }
+
+    @Override
+    public boolean isWorkSafe() {
+        Board board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor());
+        if (board == null) {
+            return false;
+        }
+
+        return board.workSafe;
     }
 
     @Override
@@ -758,11 +775,11 @@ public class ImageViewerPresenter
     }
 
     public interface Callback {
-        void startPreviewInTransition(Loadable loadable, PostImage postImage);
-        void startPreviewOutTransition(Loadable loadable, PostImage postImage);
+        void startPreviewInTransition(ChanDescriptor chanDescriptor, PostImage postImage);
+        void startPreviewOutTransition(ChanDescriptor chanDescriptor, PostImage postImage);
         void setPreviewVisibility(boolean visible);
         void setPagerVisibility(boolean visible);
-        void setPagerItems(Loadable loadable, List<PostImage> images, int initialIndex);
+        void setPagerItems(ChanDescriptor chanDescriptor, List<PostImage> images, int initialIndex);
         void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center);
         void setVolume(PostImage postImage, boolean muted);
         void setTitle(PostImage postImage, int index, int count, boolean spoiler);

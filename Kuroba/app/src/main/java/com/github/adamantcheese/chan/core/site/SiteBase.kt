@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.SettingProvider
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
@@ -46,6 +47,7 @@ abstract class SiteBase : Site, CoroutineScope {
   protected val okHttpClient: NetModule.ProxiedOkHttpClient by lazy { instance(NetModule.ProxiedOkHttpClient::class.java) }
   protected val siteService: SiteService by lazy { instance(SiteService::class.java) }
   protected val siteRepository: SiteRepository by lazy { instance(SiteRepository::class.java) }
+  protected val boardRepository: BoardRepository by lazy { instance(BoardRepository::class.java) }
   protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
   protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }
   protected val boardManager: BoardManager by lazy { instance(BoardManager::class.java) }

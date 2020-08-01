@@ -7,9 +7,7 @@ import com.github.adamantcheese.chan.core.loader.LoaderResult
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader
 import com.github.adamantcheese.chan.core.loader.PostLoaderData
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
@@ -67,7 +65,7 @@ class OnDemandContentLoaderManager(
    * Also, updates [Post.onDemandContentLoadedMap] for the current post.
    * */
   private fun addDelayIfSomethingIsNotCachedYet(postLoaderData: PostLoaderData): Flowable<PostLoaderData> {
-    val loadable = postLoaderData.loadable
+    val chanDescriptor = postLoaderData.chanDescriptor
     val post = postLoaderData.post
 
     if (post.allLoadersCompletedLoading()) {
@@ -76,7 +74,7 @@ class OnDemandContentLoaderManager(
 
     val loadersCachedResultFlowable = Flowable.fromIterable(loaders)
       .flatMapSingle { loader ->
-        return@flatMapSingle loader.isCached(PostLoaderData(loadable, post))
+        return@flatMapSingle loader.isCached(PostLoaderData(chanDescriptor, post))
           .onErrorReturnItem(false)
       }
       .toList()
@@ -120,7 +118,7 @@ class OnDemandContentLoaderManager(
           .onErrorReturnItem(LoaderResult.Failed(loader.loaderType))
       }
       .toList()
-      .map { results -> LoaderBatchResult(postLoaderData.loadable, postLoaderData.post, results) }
+      .map { results -> LoaderBatchResult(postLoaderData.chanDescriptor, postLoaderData.post, results) }
       .doOnSuccess(postUpdateRxQueue::onNext)
       .map { Unit }
       .toFlowable()
@@ -135,26 +133,23 @@ class OnDemandContentLoaderManager(
       .hide()
   }
 
-  fun onPostBind(loadable: Loadable, post: Post) {
+  fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
-    val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
-      ?: return
-
-    val descriptor = DescriptorUtils.getDescriptor(loadable)
-    val postLoaderData = PostLoaderData(loadable, post)
+    val postDescriptor = PostDescriptor.create(chanDescriptor, post.no)
+    val postLoaderData = PostLoaderData(chanDescriptor, post)
 
     val alreadyAdded = rwLock.write {
-      if (!activeLoaders.containsKey(descriptor)) {
-        activeLoaders[descriptor] = hashMapOf()
+      if (!activeLoaders.containsKey(chanDescriptor)) {
+        activeLoaders[chanDescriptor] = hashMapOf()
       }
 
-      if (activeLoaders[descriptor]!!.containsKey(postDescriptor)) {
+      if (activeLoaders[chanDescriptor]!!.containsKey(postDescriptor)) {
         return@write true
       }
 
-      activeLoaders[descriptor]!![postDescriptor] = postLoaderData
+      activeLoaders[chanDescriptor]!![postDescriptor] = postLoaderData
       return@write false
     }
 
@@ -165,7 +160,7 @@ class OnDemandContentLoaderManager(
     postLoaderRxQueue.onNext(postLoaderData)
   }
 
-  fun onPostUnbind(loadable: Loadable, post: Post, isActuallyRecycling: Boolean) {
+  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: Post, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
@@ -175,26 +170,23 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    val postDescriptor = DescriptorUtils.getPostDescriptor(loadable, post)
-      ?: return
-
-    val descriptor = DescriptorUtils.getDescriptor(loadable)
+    val postDescriptor = PostDescriptor.create(chanDescriptor, post.no)
 
     rwLock.write {
-      val postLoaderData = activeLoaders[descriptor]?.remove(postDescriptor)
+      val postLoaderData = activeLoaders[chanDescriptor]?.remove(postDescriptor)
         ?: return@write null
 
       loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
     }
   }
 
-  fun cancelAllForLoadable(loadable: Loadable) {
-    if (!loadable.isThreadMode) {
+  fun cancelAllForDescriptor(chanDescriptor: ChanDescriptor) {
+    if (chanDescriptor.isCatalogDescriptor()) {
       return
     }
 
     BackgroundUtils.ensureMainThread()
-    val threadDescriptor = DescriptorUtils.getThreadDescriptorOrThrow(loadable)
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
 
     Logger.d(TAG, "cancelAllForLoadable called for $threadDescriptor")
 
@@ -214,15 +206,12 @@ class OnDemandContentLoaderManager(
 
   private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
     return rwLock.read {
-      val descriptor = DescriptorUtils.getDescriptor(
-        postLoaderData.loadable
-      )
-      val postDescriptor = DescriptorUtils.getPostDescriptor(
-        postLoaderData.loadable,
-        postLoaderData.post
+      val postDescriptor = PostDescriptor.create(
+        postLoaderData.chanDescriptor,
+        postLoaderData.post.no
       )
 
-      return@read activeLoaders[descriptor]?.containsKey(postDescriptor)
+      return@read activeLoaders[postLoaderData.chanDescriptor]?.containsKey(postDescriptor)
         ?: false
     }
   }

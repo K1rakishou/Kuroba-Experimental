@@ -6,7 +6,6 @@ import com.github.adamantcheese.chan.core.cache.FileCacheListener
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.cache.MediaSourceCallback
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils.runOnMainThread
@@ -25,7 +24,7 @@ class WebmStreamingSource(
   private val cacheHandler: CacheHandler
 ) {
 
-  fun createMediaSource(loadable: Loadable, postImage: PostImage, callback: MediaSourceCallback) {
+  fun createMediaSource(postImage: PostImage, callback: MediaSourceCallback) {
     BackgroundUtils.ensureBackgroundThread()
 
     val imageUrl = postImage.imageUrl
@@ -67,7 +66,7 @@ class WebmStreamingSource(
 
           // The webm file is already completely downloaded, just use it from the disk
           callback.onMediaSourceReady(
-            ProgressiveMediaSource.Factory(DataSource.Factory { fileCacheSource })
+            ProgressiveMediaSource.Factory { fileCacheSource }
               .createMediaSource(uri)
           )
         }

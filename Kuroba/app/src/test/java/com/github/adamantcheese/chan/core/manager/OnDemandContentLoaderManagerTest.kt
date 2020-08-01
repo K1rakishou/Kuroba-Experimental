@@ -2,11 +2,9 @@ package com.github.adamantcheese.chan.core.manager
 
 import com.github.adamantcheese.chan.core.loader.*
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.exhaustive
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.nhaarman.mockitokotlin2.*
 import io.reactivex.Single
 import io.reactivex.schedulers.TestScheduler
@@ -236,8 +234,8 @@ class OnDemandContentLoaderManagerTest {
       loaderManager.onPostBind(loadable, post)
     }
 
-    val (_, loadable) = createTestLoadable()
-    loaderManager.cancelAllForLoadable(loadable)
+    val (threadDescriptor, _) = createTestData()
+    loaderManager.cancelAllForDescriptor(threadDescriptor)
 
     workerScheduler.advanceTimeBy(
       advanceByALot(),
@@ -273,13 +271,13 @@ class OnDemandContentLoaderManagerTest {
       loaderManager.onPostBind(loadable, post)
     }
 
-    val (_, loadable) = createTestLoadable()
+    val (threadDescriptor, _) = createTestData()
 
     workerScheduler.advanceTimeBy(
       advanceByALot(),
       TimeUnit.MILLISECONDS
     )
-    loaderManager.cancelAllForLoadable(loadable)
+    loaderManager.cancelAllForDescriptor(threadDescriptor)
 
     loaders.forEach { loader ->
       verify(loader, times(10)).startLoading(any())
@@ -294,29 +292,20 @@ class OnDemandContentLoaderManagerTest {
   private fun advanceByALot() = OnDemandContentLoaderManager.LOADING_DELAY_TIME_MS + 300
 
   private fun createTestData(postNo: Long = 1): TestData {
-    val (board, loadable) = createTestLoadable()
+    val threadDescriptor = ChanDescriptor.ThreadDescriptor.create("4chan", "test", 1234)
 
     val post = Post.Builder()
-      .board(board)
+      .boardDescriptor(threadDescriptor.boardDescriptor)
       .id(postNo)
       .opId(postNo)
       .setUnixTimestampSeconds(System.currentTimeMillis())
       .comment("Test comment")
       .build()
 
-    return TestData(loadable, post)
+    return TestData(threadDescriptor, post)
   }
 
-  private fun createTestLoadable(): Pair<Board, Loadable> {
-    val site = Chan4()
-
-    val board = Board.fromSiteNameCode(site, "4chan", "test")
-    val loadable = Loadable.forThread(site, board, 1, "Test")
-
-    return Pair(board, loadable)
-  }
-
-  data class TestData(val loadable: Loadable, val post: Post)
+  data class TestData(val threadDescriptor: ChanDescriptor.ThreadDescriptor, val post: Post)
 
   open class DummyLoader(
     loaderType: LoaderType,

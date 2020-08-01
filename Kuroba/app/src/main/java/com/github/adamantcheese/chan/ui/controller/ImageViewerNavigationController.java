@@ -21,8 +21,8 @@ import android.content.Context;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.List;
 
@@ -49,21 +49,21 @@ public class ImageViewerNavigationController
     public void showImages(
             final List<PostImage> images,
             final int index,
-            final Loadable loadable,
+            final ChanDescriptor chanDescriptor,
             ImageViewerController.ImageViewerCallback imageViewerCallback
     ) {
-        showImages(images, index, loadable, imageViewerCallback, null);
+        showImages(images, index, chanDescriptor, imageViewerCallback, null);
     }
 
     public void showImages(
             final List<PostImage> images,
             final int index,
-            final Loadable loadable,
+            final ChanDescriptor chanDescriptor,
             ImageViewerController.ImageViewerCallback imageViewerCallback,
             ImageViewerController.GoPostCallback goPostCallback
     ) {
         ImageViewerController imageViewerController = new ImageViewerController(
-                loadable,
+                chanDescriptor,
                 context,
                 requireToolbar()
         );
@@ -71,6 +71,6 @@ public class ImageViewerNavigationController
         imageViewerController.setGoPostCallback(goPostCallback);
         pushController(imageViewerController, false);
         imageViewerController.setImageViewerCallback(imageViewerCallback);
-        imageViewerController.getPresenter().showImages(images, index, loadable);
+        imageViewerController.getPresenter().showImages(images, index, chanDescriptor);
     }
 }

@@ -33,7 +33,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.saver.ImageSaveTask;
 import com.github.adamantcheese.chan.core.saver.ImageSaver;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
@@ -44,11 +43,13 @@ import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.RecyclerUtils;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.inject.Inject;
 
@@ -70,7 +71,7 @@ public class AlbumDownloadController
     private FloatingActionButton download;
 
     private List<AlbumDownloadItem> items = new ArrayList<>();
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
 
     @Nullable
     private LoadingViewController loadingViewController;
@@ -145,10 +146,8 @@ public class AlbumDownloadController
             return;
         }
 
-        String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(loadable.site.name());
-        String subFolder = ChanSettings.saveBoardFolder.get() ? (ChanSettings.saveThreadFolder.get()
-                ? appendAdditionalSubDirectories()
-                : siteNameSafe + File.separator + loadable.boardCode) : null;
+        String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(chanDescriptor.siteName());
+        String subFolder = getSubFolder(siteNameSafe);
         String message = getString(
                 R.string.album_download_confirm,
                 getQuantityString(R.plurals.image, checkCount, checkCount),
@@ -166,7 +165,7 @@ public class AlbumDownloadController
             }
 
             if (item.checked) {
-                ImageSaveTask imageTask = new ImageSaveTask(loadable, item.postImage, true);
+                ImageSaveTask imageTask = new ImageSaveTask(chanDescriptor, item.postImage, true);
                 if (subFolder != null) {
                     imageTask.setSubFolder(subFolder);
                 }
@@ -179,6 +178,19 @@ public class AlbumDownloadController
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.ok, (dialog, which) -> startAlbumDownloadTask(tasks))
                 .show();
+    }
+
+    @Nullable
+    private String getSubFolder(String siteNameSafe) {
+        if (ChanSettings.saveBoardFolder.get()) {
+            if (ChanSettings.saveThreadFolder.get()) {
+                return appendAdditionalSubDirectories();
+            } else {
+                return siteNameSafe + File.separator + chanDescriptor.boardCode();
+            }
+        }
+
+        return null;
     }
 
     private void startAlbumDownloadTask(List<ImageSaveTask> tasks) {
@@ -273,8 +285,9 @@ public class AlbumDownloadController
         updateTitle();
     }
 
-    public void setPostImages(Loadable loadable, List<PostImage> postImages) {
-        this.loadable = loadable;
+    public void setPostImages(ChanDescriptor chanDescriptor, List<PostImage> postImages) {
+        this.chanDescriptor = chanDescriptor;
+
         for (int i = 0, postImagesSize = postImages.size(); i < postImagesSize; i++) {
             PostImage postImage = postImages.get(i);
             if (postImage == null || postImage.isInlined || postImage.hidden) {
@@ -307,20 +320,45 @@ public class AlbumDownloadController
         return checkCount;
     }
 
-    //This method and the one in ImageViewerController should be roughly equivalent in function
+    // This method and the one in ImageViewerController should be roughly equivalent in function
     @NonNull
     private String appendAdditionalSubDirectories() {
+        long threadNo = 0L;
+
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+        }
+
+        String siteName = chanDescriptor.siteName();
+        String boardCode = chanDescriptor.boardCode();
+
         // save to op no appended with the first 50 characters of the subject
         // should be unique and perfectly understandable title wise
-        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(loadable.site.name()) + File.separator
-                + StringUtils.dirNameRemoveBadCharacters(loadable.boardCode) + File.separator + loadable.no + "_";
+        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
+                + File.separator
+                + StringUtils.dirNameRemoveBadCharacters(boardCode)
+                + File.separator
+                + threadNo
+                + "_";
 
-        String tempTitle = (loadable.no == 0 ? "catalog" : loadable.title);
-
-        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(tempTitle);
-        String truncatedFileName = sanitizedFileName.substring(0, Math.min(sanitizedFileName.length(), 50));
+        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(
+                getTempTitle(threadNo, siteName, boardCode)
+        );
+        String truncatedFileName = sanitizedFileName.substring(
+                0,
+                Math.min(sanitizedFileName.length(), 50)
+        );
 
         return sanitizedSubFolderName + truncatedFileName;
+    }
+
+    @NonNull
+    private String getTempTitle(long threadNo, String siteName, String boardCode) {
+        if (threadNo <= 0) {
+            return "catalog";
+        }
+
+        return String.format(Locale.ENGLISH, "%s_%s_%d", siteName, boardCode, threadNo);
     }
 
     private static class AlbumDownloadItem {

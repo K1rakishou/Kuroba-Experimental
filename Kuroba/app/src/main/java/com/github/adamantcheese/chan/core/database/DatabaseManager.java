@@ -21,14 +21,10 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
 
 import java.sql.SQLException;
 import java.util.concurrent.Callable;
@@ -62,7 +58,6 @@ public class DatabaseManager {
     @Inject
     PostFilterManager postFilterManager;
 
-    private final DatabaseLoadableManager databaseLoadableManager;
     private final DatabaseSavedReplyManager databaseSavedReplyManager;
     private final DatabaseFilterManager databaseFilterManager;
     private final DatabaseBoardManager databaseBoardManager;
@@ -75,13 +70,11 @@ public class DatabaseManager {
 
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
-        databaseLoadableManager = new DatabaseLoadableManager(helper, this);
         databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
         databaseBoardManager = new DatabaseBoardManager(helper);
         databaseSiteManager = new DatabaseSiteManager(helper);
         databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
-        EventBus.getDefault().register(this);
     }
 
     public void initializeAndTrim() {
@@ -90,10 +83,6 @@ public class DatabaseManager {
 
         // Only trims.
         runTaskAsync(databaseHideManager.load());
-    }
-
-    public DatabaseLoadableManager getDatabaseLoadableManager() {
-        return databaseLoadableManager;
     }
 
     public DatabaseSavedReplyManager getDatabaseSavedReplyManager() {
@@ -116,14 +105,6 @@ public class DatabaseManager {
         return databaseHideManager;
     }
 
-    // Called when the app changes foreground state
-    @Subscribe
-    public void onEvent(Chan.ForegroundChangedMessage message) {
-        if (!message.inForeground) {
-            runTaskAsync(databaseLoadableManager.flush());
-        }
-    }
-
     /**
      * Reset all tables in the database. Used for the developer screen.
      */
@@ -141,7 +122,6 @@ public class DatabaseManager {
         String o = "";
 
         try {
-            o += "Loadable rows: " + helper.getLoadableDao().countOf() + "\n";
             o += "SavedReply rows: " + helper.getSavedDao().countOf() + "\n";
             o += "Board rows: " + helper.getBoardsDao().countOf() + "\n";
             o += "PostHide rows: " + helper.getPostHideDao().countOf() + "\n";

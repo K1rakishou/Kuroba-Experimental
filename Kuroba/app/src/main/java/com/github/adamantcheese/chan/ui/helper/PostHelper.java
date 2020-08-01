@@ -24,8 +24,8 @@ import android.text.style.ImageSpan;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -50,21 +50,24 @@ public class PostHelper {
         }
     }
 
-    public static String getTitle(@Nullable Post post, @Nullable Loadable loadable) {
+    public static String getTitle(@Nullable Post post, @Nullable ChanDescriptor chanDescriptor) {
         if (post != null) {
             if (!TextUtils.isEmpty(post.subject)) {
                 return post.subject.toString();
             } else if (!TextUtils.isEmpty(post.getComment())) {
                 int length = Math.min(post.getComment().length(), 200);
-                return "/" + post.boardId + "/ - " + post.getComment().subSequence(0, length);
+                return "/" + post.boardDescriptor.getBoardCode() + "/ - " + post.getComment().subSequence(0, length);
             } else {
-                return "/" + post.boardId + "/" + post.no;
+                return "/" + post.boardDescriptor.getBoardCode() + "/" + post.no;
             }
-        } else if (loadable != null) {
-            if (loadable.mode == Loadable.Mode.CATALOG) {
-                return "/" + loadable.boardCode + "/";
+        } else if (chanDescriptor != null) {
+            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
+                return "/" + chanDescriptor.boardCode() + "/";
             } else {
-                return "/" + loadable.boardCode + "/" + loadable.no;
+                ChanDescriptor.ThreadDescriptor threadDescriptor =
+                        (ChanDescriptor.ThreadDescriptor) chanDescriptor;
+
+                return "/" + chanDescriptor.boardCode() + "/" + threadDescriptor.getThreadNo();
             }
         } else {
             return "";
@@ -77,12 +80,18 @@ public class PostHelper {
             return reply.subject;
         } else if (!TextUtils.isEmpty(reply.comment)) {
             int length = Math.min(reply.comment.length(), 200);
-            String boardCode = reply.loadable.boardCode;
+            String boardCode = reply.chanDescriptor.boardCode();
 
             return "/" + boardCode + "/ - " + reply.comment.subSequence(0, length);
         } else {
-            String boardCode = reply.loadable.boardCode;
-            return "/" + boardCode + "/" + reply.loadable.no;
+            String boardCode = reply.chanDescriptor.boardCode();
+            long threadNo = -1L;
+
+            if (reply.chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                threadNo = ((ChanDescriptor.ThreadDescriptor) reply.chanDescriptor).getThreadNo();
+            }
+
+            return "/" + boardCode + "/" + threadNo;
         }
     }
 

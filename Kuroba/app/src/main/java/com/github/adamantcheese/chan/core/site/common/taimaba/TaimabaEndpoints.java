@@ -19,7 +19,6 @@ package com.github.adamantcheese.chan.core.site.common.taimaba;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
@@ -64,7 +63,7 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, Map<String, String> arg) {
+    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilers, Map<String, String> arg) {
         switch (arg.get("ext")) {
             case "swf":
                 return HttpUrl.parse(BuildConfig.RESOURCES_ENDPOINT + "swf_thumb.png");
@@ -74,13 +73,21 @@ public class TaimabaEndpoints
             case "flac":
                 return HttpUrl.parse(BuildConfig.RESOURCES_ENDPOINT + "audio_thumb.png");
             default:
-                return sys.builder().s(post.board.code).s("thumb").s(arg.get("tim") + "s.jpg").url();
+                return sys.builder()
+                        .s(post.boardDescriptor.getBoardCode())
+                        .s("thumb")
+                        .s(arg.get("tim") + "s.jpg")
+                        .url();
         }
     }
 
     @Override
     public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
-        return sys.builder().s(post.board.code).s("src").s(arg.get("tim") + "." + arg.get("ext")).url();
+        return sys.builder()
+                .s(post.boardDescriptor.getBoardCode())
+                .s("src")
+                .s(arg.get("tim") + "." + arg.get("ext"))
+                .url();
     }
 
     @Override
@@ -100,8 +107,8 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl reply(Loadable loadable) {
-        return sys.builder().s(loadable.boardCode).s("taimaba.pl").url();
+    public HttpUrl reply(ChanDescriptor chanDescriptor) {
+        return sys.builder().s(chanDescriptor.boardCode()).s("taimaba.pl").url();
     }
 
     @Override
@@ -113,7 +120,7 @@ public class TaimabaEndpoints
                 .addQueryParameter("reason", "RULE_VIOLATION")
                 .addQueryParameter("note", "")
                 .addQueryParameter("location",
-                        "http://boards.420chan.org/" + post.board.code + "/" + String.valueOf(post.no)
+                        "http://boards.420chan.org/" + post.boardDescriptor.getBoardCode() + "/" + post.no
                 )
                 .build();
     }

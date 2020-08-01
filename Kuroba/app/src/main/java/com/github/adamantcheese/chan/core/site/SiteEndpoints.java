@@ -20,7 +20,6 @@ import androidx.collection.ArrayMap;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -39,7 +38,7 @@ public interface SiteEndpoints {
 
     HttpUrl imageUrl(Post.Builder post, Map<String, String> arg);
 
-    HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, Map<String, String> arg);
+    HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilers, Map<String, String> arg);
 
     HttpUrl icon(String icon, Map<String, String> arg);
 
@@ -49,7 +48,7 @@ public interface SiteEndpoints {
 
     HttpUrl archive(Board board);
 
-    HttpUrl reply(Loadable thread);
+    HttpUrl reply(ChanDescriptor chanDescriptor);
 
     HttpUrl delete(Post post);
 

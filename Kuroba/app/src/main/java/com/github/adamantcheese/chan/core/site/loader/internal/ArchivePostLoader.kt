@@ -20,20 +20,18 @@ internal class ArchivePostLoader(
 ) : AbstractPostLoader() {
 
   suspend fun updateThreadPostsFromArchiveIfNeeded(
-    descriptor: ChanDescriptor,
     requestParams: ChanLoaderRequestParams
   ): ModularResult<Unit> {
     return Try {
-      if (descriptor !is ChanDescriptor.ThreadDescriptor) {
+      if (requestParams.chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
         // We don't support catalog loading from archives
         return@Try
       }
 
       val postsFromArchive = getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
         emptyList(),
-        requestParams.loadable,
-        descriptor,
-        Utils.getArchiveDescriptor(archivesManager, descriptor, requestParams, true)
+        requestParams.chanDescriptor,
+        Utils.getArchiveDescriptor(archivesManager, requestParams, true)
       ).safeUnwrap { error ->
         if (error.isExceptionImportant()) {
           Logger.e(TAG, "tryLoadFromArchivesOrLocalCopyIfPossible() Error while trying to get " +
@@ -48,8 +46,7 @@ internal class ArchivePostLoader(
 
       if (postsFromArchive.isNotEmpty()) {
         val parsedPosts = parsePostsUseCase.parseNewPostsPosts(
-          descriptor,
-          requestParams.loadable,
+          requestParams.chanDescriptor,
           requestParams.chanReader,
           postsFromArchive,
           Int.MAX_VALUE

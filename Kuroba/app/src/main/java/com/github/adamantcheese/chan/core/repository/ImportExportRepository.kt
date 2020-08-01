@@ -16,17 +16,12 @@
  */
 package com.github.adamantcheese.chan.core.repository
 
-import android.annotation.SuppressLint
-import android.text.TextUtils
 import com.github.adamantcheese.chan.core.database.DatabaseHelper
 import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.model.export.*
-import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
-import com.github.adamantcheese.chan.core.model.orm.*
+import com.github.adamantcheese.chan.core.model.export.ExportedAppSettings
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Export
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Import
 import com.github.adamantcheese.chan.core.settings.ChanSettings
-import com.github.adamantcheese.chan.core.settings.ChanSettings.EMPTY_JSON
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
@@ -157,300 +152,25 @@ constructor(
       )
     }
 
-    // recreate tables from scratch, because we need to reset database IDs as well
-    databaseHelper.connectionSource.use { cs ->
-      databaseHelper.dropTables(cs)
-      databaseHelper.createTables(cs)
-    }
-
-    for (exportedBoard in appSettings.exportedBoards) {
-      databaseHelper.boardsDao.createIfNotExists(Board(
-        exportedBoard.siteId,
-        exportedBoard.isSaved,
-        exportedBoard.order,
-        exportedBoard.name,
-        exportedBoard.code,
-        exportedBoard.isWorkSafe,
-        exportedBoard.perPage,
-        exportedBoard.pages,
-        exportedBoard.maxFileSize,
-        exportedBoard.maxWebmSize,
-        exportedBoard.maxCommentChars,
-        exportedBoard.bumpLimit,
-        exportedBoard.imageLimit,
-        exportedBoard.cooldownThreads,
-        exportedBoard.cooldownReplies,
-        exportedBoard.cooldownImages,
-        exportedBoard.isSpoilers,
-        exportedBoard.customSpoilers,
-        exportedBoard.isUserIds,
-        exportedBoard.isCodeTags,
-        exportedBoard.isPreuploadCaptcha,
-        exportedBoard.isCountryFlags,
-        exportedBoard.isMathTags,
-        exportedBoard.description ?: "",
-        exportedBoard.isArchive
-      ))
-    }
-
-    for (exportedSite in appSettings.exportedSites) {
-      val inserted = databaseHelper.siteDao.createIfNotExists(SiteModel(
-        exportedSite.siteId,
-        exportedSite.configuration,
-        exportedSite.userSettings,
-        exportedSite.order
-      ))
-    }
-
-    for (exportedFilter in appSettings.exportedFilters) {
-      databaseHelper.filterDao.createIfNotExists(Filter(
-        exportedFilter.isEnabled,
-        exportedFilter.type,
-        exportedFilter.pattern,
-        exportedFilter.isAllBoards,
-        exportedFilter.boards,
-        exportedFilter.action,
-        exportedFilter.color,
-        exportedFilter.applyToReplies,
-        exportedFilter.order,
-        exportedFilter.onlyOnOP,
-        exportedFilter.applyToSaved
-      ))
-    }
-
-    for (exportedPostHide in appSettings.exportedPostHides) {
-      databaseHelper.postHideDao.createIfNotExists(PostHide(
-        exportedPostHide.site,
-        exportedPostHide.board,
-        exportedPostHide.no))
-    }
-
     ChanSettings.deserializeFromString(appSettingsParam.settings)
   }
 
   private fun onUpgrade(version: Int, appSettings: ExportedAppSettings): ExportedAppSettings {
-    if (version < 2) {
-      //clear the post hides for version 1, threadNo field was added
-      appSettings.exportedPostHides = ArrayList()
-    }
-
-    if (version < 3) {
-      //clear the site model usersettings to be an empty JSON map for version 2,
-      // as they won't parse correctly otherwise
-      for (site in appSettings.exportedSites) {
-        site.userSettings = EMPTY_JSON
-      }
-    }
-
-    if (version < 4) {
-      //55chan and 8chan were removed for this version
-      var chan8: ExportedSite? = null
-      var chan55: ExportedSite? = null
-
-      for (site in appSettings.exportedSites) {
-        val config = gson.fromJson(site.configuration, SiteConfig::class.java)
-
-        if (config.classId == 1 && chan8 == null) {
-          chan8 = site
-        }
-
-        if (config.classId == 7 && chan55 == null) {
-          chan55 = site
-        }
-      }
-
-      if (chan55 != null) {
-        deleteExportedSite(chan55, appSettings)
-      }
-
-      if (chan8 != null) {
-        deleteExportedSite(chan8, appSettings)
-      }
-    }
-
     return appSettings
   }
 
   @Throws(java.sql.SQLException::class, IOException::class)
   private fun readSettingsFromDatabase(): ExportedAppSettings {
-    @SuppressLint("UseSparseArrays")
-    val sitesMap = fillSitesMap()
-
-    @SuppressLint("UseSparseArrays")
-    val loadableMap = fillLoadablesMap()
-
-    val toExportMap = HashMap<SiteModel, MutableList<ExportedPin>>()
-
-    for (siteModel in sitesMap.values) {
-      toExportMap[siteModel] = ArrayList()
-    }
-
-    val exportedSites = ArrayList<ExportedSite>()
-
-    for ((key, value) in toExportMap) {
-      val exportedSite = ExportedSite(
-        key.id,
-        key.configuration,
-        key.order,
-        key.userSettings,
-        value
-      )
-
-      exportedSites.add(exportedSite)
-    }
-
-    val exportedBoards = ArrayList<ExportedBoard>()
-
-    for (board in databaseHelper.boardsDao.queryForAll()) {
-      exportedBoards.add(ExportedBoard(
-        board.siteId,
-        board.saved,
-        board.order,
-        board.name,
-        board.code,
-        board.workSafe,
-        board.perPage,
-        board.pages,
-        board.maxFileSize,
-        board.maxWebmSize,
-        board.maxCommentChars,
-        board.bumpLimit,
-        board.imageLimit,
-        board.cooldownThreads,
-        board.cooldownReplies,
-        board.cooldownImages,
-        board.spoilers,
-        board.customSpoilers,
-        board.userIds,
-        board.codeTags,
-        board.preuploadCaptcha,
-        board.countryFlags,
-        board.mathTags,
-        board.description,
-        board.archive
-      ))
-    }
-
-    val exportedFilters = ArrayList<ExportedFilter>()
-
-    for (filter in databaseHelper.filterDao.queryForAll()) {
-      exportedFilters.add(ExportedFilter(
-        filter.enabled,
-        filter.type,
-        filter.pattern,
-        filter.allBoards,
-        filter.boards,
-        filter.action,
-        filter.color,
-        filter.applyToReplies,
-        filter.order,
-        filter.onlyOnOP,
-        filter.applyToSaved
-      ))
-    }
-
-    val exportedPostHides = ArrayList<ExportedPostHide>()
-
-    for (threadHide in databaseHelper.postHideDao.queryForAll()) {
-      exportedPostHides.add(ExportedPostHide(
-        threadHide.site,
-        threadHide.board,
-        threadHide.no,
-        threadHide.wholeThread,
-        threadHide.hide,
-        threadHide.hideRepliesToThisPost,
-        threadHide.threadNo
-      ))
-    }
 
     val settings = ChanSettings.serializeToString()
 
     return ExportedAppSettings(
-      exportedSites,
-      exportedBoards,
-      exportedFilters,
-      exportedPostHides,
+      Collections.emptyList(),
+      Collections.emptyList(),
+      Collections.emptyList(),
+      Collections.emptyList(),
       settings
     )
-  }
-
-  private fun fillLoadablesMap(): Map<Int, Loadable> {
-    val map = hashMapOf<Int, Loadable>()
-    val loadables = databaseHelper.loadableDao.queryForAll()
-
-    for (loadable in loadables) {
-      map[loadable.id] = loadable
-    }
-
-    return map
-  }
-
-  private fun fillSitesMap(): Map<Int, SiteModel> {
-    val map = hashMapOf<Int, SiteModel>()
-    val sites = databaseHelper.siteDao.queryForAll()
-
-    for (site in sites) {
-      map[site.id] = site
-    }
-
-    return map
-  }
-
-  private fun deleteExportedSite(site: ExportedSite, appSettings: ExportedAppSettings) {
-    //filters
-    val filtersToDelete = ArrayList<ExportedFilter>()
-    for (filter in appSettings.exportedFilters) {
-      if (filter.isAllBoards || TextUtils.isEmpty(filter.boards)) {
-        continue
-      }
-
-      val boards = checkNotNull(filter.boards)
-      val splitBoards = boards.split(",".toRegex()).dropLastWhile { it.isEmpty() }
-
-      for (uniqueId in splitBoards) {
-        val split = uniqueId.split(":".toRegex()).dropLastWhile { it.isEmpty() }
-
-        if (split.size == 2 && Integer.parseInt(split[0]) == site.siteId) {
-          filtersToDelete.add(filter)
-          break
-        }
-      }
-    }
-
-    appSettings.exportedFilters.removeAll(filtersToDelete)
-
-    //boards
-    val boardsToDelete = ArrayList<ExportedBoard>()
-    for (board in appSettings.exportedBoards) {
-      if (board.siteId == site.siteId) {
-        boardsToDelete.add(board)
-      }
-    }
-    appSettings.exportedBoards.removeAll(boardsToDelete)
-
-    //loadables for saved threads
-    val loadables = ArrayList<ExportedLoadable>()
-    for (pin in site.exportedPins) {
-      val loadable = pin.exportedLoadable
-        ?: continue
-
-      if (loadable.siteId == site.siteId) {
-        loadables.add(loadable)
-      }
-    }
-
-    //post hides
-    val hidesToDelete = ArrayList<ExportedPostHide>()
-    for (hide in appSettings.exportedPostHides) {
-      if (hide.site == site.siteId) {
-        hidesToDelete.add(hide)
-      }
-    }
-
-    appSettings.exportedPostHides.removeAll(hidesToDelete)
-
-    //site (also removes pins and loadables)
-    appSettings.exportedSites.remove(site)
   }
 
   enum class ImportExport {
@@ -471,6 +191,6 @@ constructor(
 
     // Don't forget to change this when changing any of the Export models.
     // Also, don't forget to handle the change in the onUpgrade or onDowngrade methods
-    const val CURRENT_EXPORT_SETTINGS_VERSION = 5
+    const val CURRENT_EXPORT_SETTINGS_VERSION = 1
   }
 }

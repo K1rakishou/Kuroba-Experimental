@@ -65,7 +65,7 @@ class PageRequestManager(
       return null
     }
 
-    return findPage(op.board.boardDescriptor(), op.no)
+    return findPage(op.boardDescriptor, op.no)
   }
 
   fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {

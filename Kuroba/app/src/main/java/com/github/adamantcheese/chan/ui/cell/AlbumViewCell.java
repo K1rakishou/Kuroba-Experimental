@@ -25,7 +25,6 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
@@ -59,9 +58,8 @@ public class AlbumViewCell
         text = findViewById(R.id.text);
     }
 
-    public void setPostImage(Loadable loadable, @NonNull PostImage postImage) {
+    public void setPostImage(@NonNull PostImage postImage) {
         this.postImage = postImage;
-
         int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
 
         // We don't want to show the prefetch loading indicator in album thumbnails (at least for
@@ -74,9 +72,13 @@ public class AlbumViewCell
                 ChanSettings.autoLoadThreadImages.get() ? 500 : thumbnailSize
         );
 
-        String details = postImage.extension.toUpperCase() +
-                " " + postImage.imageWidth + "x" + postImage.imageHeight +
-                " " + getReadableFileSize(postImage.getSize());
+        String details = postImage.extension.toUpperCase()
+                + " "
+                + postImage.imageWidth
+                + "x"
+                + postImage.imageHeight
+                + " "
+                + getReadableFileSize(postImage.getSize());
 
         // if -1, linked image, no info
         text.setText(postImage.isInlined ? postImage.extension.toUpperCase() : details);

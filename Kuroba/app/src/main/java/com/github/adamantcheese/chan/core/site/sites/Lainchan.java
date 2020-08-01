@@ -17,9 +17,9 @@
 package com.github.adamantcheese.chan.core.site.sites;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
@@ -29,6 +29,7 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -61,14 +62,14 @@ public class Lainchan extends CommonSite {
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, Long postNo) {
-            if (loadable.isCatalogMode()) {
-                return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
-            } else if (loadable.isThreadMode()) {
+        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo) {
+            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
+                return getUrl().newBuilder().addPathSegment(chanDescriptor.boardCode()).toString();
+            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
                 return getUrl().newBuilder()
-                        .addPathSegment(loadable.boardCode)
+                        .addPathSegment(chanDescriptor.boardCode())
                         .addPathSegment("res")
-                        .addPathSegment(loadable.no + ".html")
+                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
                         .toString();
             } else {
                 return getUrl().toString();
@@ -116,8 +117,8 @@ public class Lainchan extends CommonSite {
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this, getOkHttpClient()));
-        setApi(new VichanApi(this));
+        setActions(new VichanActions(this, getOkHttpClient(), getSiteRepository()));
+        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
 

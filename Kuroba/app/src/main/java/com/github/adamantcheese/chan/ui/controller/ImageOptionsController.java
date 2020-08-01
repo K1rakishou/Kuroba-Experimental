@@ -33,13 +33,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import javax.inject.Inject;
 
@@ -87,7 +87,7 @@ public class ImageOptionsController
             Context context,
             ImageOptionsHelper imageReencodingHelper,
             ImageOptionsControllerCallbacks callbacks,
-            Loadable loadable,
+            ChanDescriptor chanDescriptor,
             ImageReencodingPresenter.ImageOptions lastOptions,
             boolean supportsReencode
     ) {
@@ -99,7 +99,7 @@ public class ImageOptionsController
         lastSettings = lastOptions;
         reencodeEnabled = supportsReencode;
 
-        presenter = new ImageReencodingPresenter(context, this, loadable, lastOptions);
+        presenter = new ImageReencodingPresenter(context, this, chanDescriptor, lastOptions);
     }
 
     @Override

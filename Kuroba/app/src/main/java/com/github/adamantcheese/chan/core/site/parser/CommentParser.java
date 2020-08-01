@@ -29,13 +29,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -224,19 +223,16 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         PostLinkable.Link handlerLink = matchAnchor(post, text, anchor, callback);
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
-        Board board = post.board;
-        if (board != null) {
-            Site site = post.board.site;
-            if (site != null) {
-                long mockReplyPostNo = mockReplyManager.getLastMockReply(
-                        post.board.site.name(),
-                        post.board.code,
-                        post.opId
-                );
+        BoardDescriptor boardDescriptor = post.boardDescriptor;
+        if (boardDescriptor != null) {
+            long mockReplyPostNo = mockReplyManager.getLastMockReply(
+                    post.boardDescriptor.siteName(),
+                    post.boardDescriptor.getBoardCode(),
+                    post.opId
+            );
 
-                if (mockReplyPostNo >= 0) {
-                    addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
-                }
+            if (mockReplyPostNo >= 0) {
+                addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
             }
         }
 
@@ -469,7 +465,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             long threadId = Long.parseLong(externalMatcher.group(2));
             long postId = Long.parseLong(externalMatcher.group(3));
 
-            if (board.equals(post.board.code) && callback.isInternal(postId)) {
+            if (board.equals(post.boardDescriptor.getBoardCode()) && callback.isInternal(postId)) {
                 // link to post in same thread with post number (>>post)
                 type = PostLinkable.Type.QUOTE;
                 value = new PostLinkable.Value.LongValue(postId);

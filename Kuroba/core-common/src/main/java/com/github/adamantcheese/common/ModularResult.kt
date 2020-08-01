@@ -45,6 +45,10 @@ sealed class ModularResult<V : Any?> {
     return null
   }
 
+  /**
+   * If this ModularResult hold an error then it will return it right away, if it hold a value then
+   * the lambda will be executed with the value as it's input
+   * */
   @CheckReturnValue
   inline fun <T : Any?> mapValue(func: (value: V) -> T): ModularResult<T> {
     return when (this) {
@@ -119,6 +123,7 @@ sealed class ModularResult<V : Any?> {
       return Error(error)
     }
 
+    @JvmStatic
     @CheckReturnValue
     @Suppress("FunctionName")
     inline fun <T> Try(func: () -> T): ModularResult<T> {

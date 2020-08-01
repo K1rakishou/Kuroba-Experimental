@@ -19,8 +19,8 @@ package com.github.adamantcheese.chan.core.site;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.List;
 
@@ -111,7 +111,7 @@ public class SiteResolver {
         return new SiteResolverResult(SiteResolverResult.Match.EXTERNAL, null, httpUrl);
     }
 
-    public LoadableResult resolveLoadableForUrl(String url) {
+    public ChanDescriptorResult resolveChanDescriptorForUrl(String url) {
         final HttpUrl httpUrl = sanitizeUrl(url);
 
         if (httpUrl == null) {
@@ -120,14 +120,18 @@ public class SiteResolver {
 
         for (Site site : siteRepository.all().getAll()) {
             if (site.resolvable().respondsTo(httpUrl)) {
-                Loadable resolvedLoadable = site.resolvable().resolveLoadable(site, httpUrl);
-                if (resolvedLoadable != null) {
-                    Loadable resolved = databaseManager.getDatabaseLoadableManager().getOrCreateLoadable(resolvedLoadable);
+                ResolvedChanDescriptor resolveChanDescriptor =
+                        site.resolvable().resolveChanDescriptor(site, httpUrl);
 
-                    if (resolved != null) {
-                        resolved.markedNo = resolvedLoadable.markedNo;
-                        return new LoadableResult(resolved);
+                if (resolveChanDescriptor != null) {
+                    ChanDescriptor chanDescriptor = resolveChanDescriptor.getChanDescriptor();
+                    Long markedPostNo = resolveChanDescriptor.getMarkedPostNo();
+
+                    if (markedPostNo != null) {
+                        return new ChanDescriptorResult(chanDescriptor, markedPostNo);
                     }
+
+                    return new ChanDescriptorResult(chanDescriptor);
                 }
             }
         }
@@ -169,11 +173,17 @@ public class SiteResolver {
         }
     }
 
-    public static class LoadableResult {
-        public final Loadable loadable;
+    public static class ChanDescriptorResult {
+        public final ChanDescriptor chanDescriptor;
+        public long markedPostNo = -1L;
 
-        public LoadableResult(Loadable loadable) {
-            this.loadable = loadable;
+        public ChanDescriptorResult(ChanDescriptor chanDescriptor) {
+            this.chanDescriptor = chanDescriptor;
+        }
+
+        public ChanDescriptorResult(ChanDescriptor chanDescriptor, long markedPostNo) {
+            this.chanDescriptor = chanDescriptor;
+            this.markedPostNo = markedPostNo;
         }
     }
 }

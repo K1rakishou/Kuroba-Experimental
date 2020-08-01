@@ -5,6 +5,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.SuspendableInitializer
+import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.adamantcheese.model.data.navigation.NavHistoryElementInfo
@@ -33,7 +34,7 @@ class HistoryNavigationManager(
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val persistRunning = AtomicBoolean(false)
 
-  private val navigationStack = mutableListOf<NavHistoryElement>()
+  private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
 
   init {

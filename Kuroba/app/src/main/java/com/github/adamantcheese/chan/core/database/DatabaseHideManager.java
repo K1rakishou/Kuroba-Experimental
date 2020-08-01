@@ -63,7 +63,7 @@ public class DatabaseHideManager {
      * Searches for hidden posts in the PostHide table then checks whether there are posts with a reply
      * to already hidden posts and if there are hides them as well.
      */
-    public List<Post> filterHiddenPosts(List<Post> posts, int siteId, String board) {
+    public List<Post> filterHiddenPosts(List<Post> posts, String siteName, String board) {
         return databaseManager.runTask(() -> {
             List<Long> postNoList = new ArrayList<>(posts.size());
             for (Post post : posts) {
@@ -78,7 +78,7 @@ public class DatabaseHideManager {
 
             applyFiltersToReplies(posts, postsFastLookupMap);
 
-            Map<Long, PostHide> hiddenPostsLookupMap = getHiddenPosts(siteId, board, postNoList);
+            Map<Long, PostHide> hiddenPostsLookupMap = getHiddenPosts(siteName, board, postNoList);
 
             // find replies to hidden posts and add them to the PostHide table in the database
             // and to the hiddenPostsLookupMap
@@ -93,7 +93,7 @@ public class DatabaseHideManager {
                     continue;
                 }
 
-                PostHide hiddenPost = findHiddenPost(hiddenPostsLookupMap, post, siteId, board);
+                PostHide hiddenPost = findHiddenPost(hiddenPostsLookupMap, post, siteName, board);
                 if (hiddenPost != null) {
                     if (hiddenPost.hide) {
                         // hide post
@@ -206,14 +206,14 @@ public class DatabaseHideManager {
         }
     }
 
-    private Map<Long, PostHide> getHiddenPosts(int siteId, String board, List<Long> postNoList)
+    private Map<Long, PostHide> getHiddenPosts(String siteName, String board, List<Long> postNoList)
             throws SQLException {
 
         Set<PostHide> hiddenInDatabase = new HashSet<>(helper.getPostHideDao().queryBuilder()
                 .where()
                 .in("no", postNoList)
                 .and()
-                .eq("site", siteId)
+                .eq("site_name", siteName)
                 .and()
                 .eq("board", board)
                 .query());
@@ -313,13 +313,13 @@ public class DatabaseHideManager {
     }
 
     @Nullable
-    private PostHide findHiddenPost(Map<Long, PostHide> hiddenPostsLookupMap, Post post, int siteId, String board) {
+    private PostHide findHiddenPost(Map<Long, PostHide> hiddenPostsLookupMap, Post post, String siteName, String board) {
         if (hiddenPostsLookupMap.isEmpty()) {
             return null;
         }
 
         PostHide maybeHiddenPost = hiddenPostsLookupMap.get(post.no);
-        if (maybeHiddenPost != null && maybeHiddenPost.site == siteId && maybeHiddenPost.board.equals(board)) {
+        if (maybeHiddenPost != null && maybeHiddenPost.siteName.equals(siteName) && maybeHiddenPost.board.equals(board)) {
             return maybeHiddenPost;
         }
 
@@ -364,7 +364,7 @@ public class DatabaseHideManager {
                 deleteBuilder.where()
                         .eq("no", postHide.no)
                         .and()
-                        .eq("site", postHide.site)
+                        .eq("site_name", postHide.siteName)
                         .and()
                         .eq("board", postHide.board);
 
@@ -381,7 +381,7 @@ public class DatabaseHideManager {
                 .where()
                 .eq("no", hide.no)
                 .and()
-                .eq("site", hide.site)
+                .eq("site_name", hide.siteName)
                 .and()
                 .eq("board", hide.board)
                 .queryForFirst();

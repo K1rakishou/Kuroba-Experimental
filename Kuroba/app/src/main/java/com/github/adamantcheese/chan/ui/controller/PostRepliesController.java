@@ -31,7 +31,6 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
@@ -39,6 +38,7 @@ import com.github.adamantcheese.chan.ui.helper.PostPopupHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.LoadView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -127,8 +127,8 @@ public class PostRepliesController
         return thumbnail;
     }
 
-    public void setPostRepliesData(Loadable loadable, PostPopupHelper.RepliesData data) {
-        displayData(loadable, data);
+    public void setPostRepliesData(ChanDescriptor chanDescriptor, PostPopupHelper.RepliesData data) {
+        displayData(chanDescriptor, data);
     }
 
     public List<Post> getPostRepliesData() {
@@ -139,7 +139,7 @@ public class PostRepliesController
         repliesView.smoothScrollToPosition(displayPosition);
     }
 
-    private void displayData(Loadable loadable, final PostPopupHelper.RepliesData data) {
+    private void displayData(ChanDescriptor chanDescriptor, final PostPopupHelper.RepliesData data) {
         storeScrollPosition();
         displayingData = data;
 
@@ -166,7 +166,7 @@ public class PostRepliesController
                 themeHelper,
                 presenter,
                 postPreloadedInfoHolder,
-                loadable
+                chanDescriptor
         );
 
         repliesAdapter.setHasStableIds(true);
@@ -231,19 +231,19 @@ public class PostRepliesController
         private ThemeHelper themeHelper;
         private ThreadPresenter presenter;
         private PostPreloadedInfoHolder postPreloadedInfoHolder;
-        private Loadable loadable;
+        private ChanDescriptor chanDescriptor;
         private PostPopupHelper.RepliesData data;
 
         public RepliesAdapter(
                 ThemeHelper themeHelper,
                 ThreadPresenter presenter,
                 PostPreloadedInfoHolder postPreloadedInfoHolder,
-                Loadable loadable
+                ChanDescriptor chanDescriptor
         ) {
             this.themeHelper = themeHelper;
             this.presenter = presenter;
             this.postPreloadedInfoHolder = postPreloadedInfoHolder;
-            this.loadable = loadable;
+            this.chanDescriptor = chanDescriptor;
         }
 
         @NonNull
@@ -259,7 +259,7 @@ public class PostRepliesController
             holder.onBind(
                     presenter,
                     postPreloadedInfoHolder,
-                    loadable,
+                    chanDescriptor,
                     data.posts.get(position),
                     data.forPost.no,
                     position,
@@ -316,7 +316,7 @@ public class PostRepliesController
         public void onBind(
                 ThreadPresenter presenter,
                 PostPreloadedInfoHolder postPreloadedInfoHolder,
-                Loadable loadable,
+                ChanDescriptor chanDescriptor,
                 Post post,
                 long markedNo,
                 int position,
@@ -325,7 +325,7 @@ public class PostRepliesController
             boolean showDivider = position < itemCount - 1;
 
             postCellInterface.setPost(
-                    loadable,
+                    chanDescriptor,
                     post,
                     -1,
                     -1,

@@ -24,6 +24,10 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.common.CommonReplyHttpCall;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
+
+import java.io.File;
+import java.util.Objects;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -39,17 +43,24 @@ public class Chan4ReplyCall extends CommonReplyHttpCall {
             MultipartBody.Builder formBuilder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
+        ChanDescriptor chanDescriptor = Objects.requireNonNull(
+                reply.chanDescriptor,
+                "reply.chanDescriptor == null"
+        );
+
         formBuilder.addFormDataPart("mode", "regist");
         formBuilder.addFormDataPart("pwd", replyResponse.password);
 
-        if (reply.loadable.isThreadMode()) {
-            formBuilder.addFormDataPart("resto", String.valueOf(reply.loadable.no));
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            long threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+
+            formBuilder.addFormDataPart("resto", String.valueOf(threadNo));
         }
 
         formBuilder.addFormDataPart("name", reply.name);
         formBuilder.addFormDataPart("email", reply.options);
 
-        if (!reply.loadable.isThreadMode() && !TextUtils.isEmpty(reply.subject)) {
+        if ((chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) && !TextUtils.isEmpty(reply.subject)) {
             formBuilder.addFormDataPart("sub", reply.subject);
         }
 
@@ -66,7 +77,7 @@ public class Chan4ReplyCall extends CommonReplyHttpCall {
 
         Site site = getSite();
 
-        if (site instanceof Chan4 && reply.loadable.boardCode.equals("pol")) {
+        if (site instanceof Chan4 && reply.chanDescriptor.boardCode().equals("pol")) {
             if (!reply.flag.isEmpty()) {
                 formBuilder.addFormDataPart("flag", reply.flag);
             } else {
@@ -84,17 +95,22 @@ public class Chan4ReplyCall extends CommonReplyHttpCall {
     }
 
     private void attachFile(
-            MultipartBody.Builder formBuilder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            MultipartBody.Builder formBuilder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
-        RequestBody requestBody;
+        File file = Objects.requireNonNull(reply.file, "reply.file is null");
 
+        RequestBody requestBody;
         if (progressListener == null) {
-            requestBody = RequestBody.create(reply.file, MediaType.parse("application/octet-stream"));
+            requestBody = RequestBody.create(file, MediaType.parse("application/octet-stream"));
         } else {
-            requestBody =
-                    new ProgressRequestBody(RequestBody.create(reply.file, MediaType.parse("application/octet-stream")),
-                            progressListener
-                    );
+            requestBody = new ProgressRequestBody(
+                    RequestBody.create(
+                            file,
+                            MediaType.parse("application/octet-stream")
+                    ),
+                    progressListener
+            );
         }
 
         formBuilder.addFormDataPart("upfile", reply.fileName, requestBody);

@@ -19,14 +19,14 @@ package com.github.adamantcheese.chan.core.model;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ChanThread {
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     // Unmodifiable list of posts. We need it to make this class "thread-safe" (it's actually
     // still not fully thread-safe because Loadable and the Post classes are not thread-safe but
     // there is no easy way to fix them right now) and to avoid copying the whole list of posts
@@ -37,8 +37,8 @@ public class ChanThread {
     private boolean closed = false;
     private boolean archived = false;
 
-    public ChanThread(Loadable loadable, List<Post> posts) {
-        this.loadable = loadable;
+    public ChanThread(ChanDescriptor chanDescriptor, List<Post> posts) {
+        this.chanDescriptor = chanDescriptor;
         this.posts = Collections.unmodifiableList(new ArrayList<>(posts));
     }
 
@@ -101,19 +101,15 @@ public class ChanThread {
         return posts.get(0);
     }
 
-    /**
-     * For now it is like this because there are a lot of places that will have to be changed to make
-     * this safe
-     */
-    public Loadable getLoadable() {
-        return loadable;
+    public ChanDescriptor getChanDescriptor() {
+        return chanDescriptor;
     }
 
     @NonNull
     @Override
     public String toString() {
         return "ChanThread{" +
-                "loadable=" + loadable +
+                "chanDescriptor=" + chanDescriptor +
                 ", closed=" + closed +
                 ", archived=" + archived +
                 '}';

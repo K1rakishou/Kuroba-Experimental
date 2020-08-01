@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
@@ -20,6 +19,8 @@ import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
@@ -77,7 +78,7 @@ class Dvach : CommonSite() {
         return root.builder().s(arg["path"]).url()
       }
 
-      override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, arg: Map<String, String>): HttpUrl {
+      override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
         return root.builder().s(arg["thumbnail"]).url()
       }
 
@@ -85,7 +86,7 @@ class Dvach : CommonSite() {
         return HttpUrl.Builder().scheme("https").host("2ch.hk").addPathSegment("boards.json").build()
       }
 
-      override fun reply(loadable: Loadable): HttpUrl {
+      override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
         return HttpUrl.Builder().scheme("https")
           .host("2ch.hk")
           .addPathSegment("makaba")
@@ -95,18 +96,20 @@ class Dvach : CommonSite() {
       }
     })
 
+    setActions(object : VichanActions(this, okHttpClient, siteRepository) {
+      override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+        return super.setupPost(reply, call)
+          .mapValue {
+            if (reply.chanDescriptor!!.isThreadDescriptor()) {
+              // "thread" is already added in VichanActions.
+              call.parameter("post", "New Reply")
+            } else {
+              call.parameter("post", "New Thread")
+              call.parameter("page", "1")
+            }
 
-
-    setActions(object : VichanActions(this, okHttpClient) {
-      override fun setupPost(reply: Reply, call: MultipartHttpCall) {
-        super.setupPost(reply, call)
-        if (reply.loadable.isThreadMode) {
-          // "thread" is already added in VichanActions.
-          call.parameter("post", "New Reply")
-        } else {
-          call.parameter("post", "New Thread")
-          call.parameter("page", "1")
-        }
+            return@mapValue
+          }
       }
 
       override fun requirePrepare(): Boolean {
@@ -186,7 +189,7 @@ class Dvach : CommonSite() {
       }
     })
 
-    setApi(DvachApi(this))
+    setApi(DvachApi(siteRepository, boardRepository, this))
     setParser(DvachCommentParser(mockReplyManager))
   }
 
@@ -218,17 +221,21 @@ class Dvach : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("dvach", "2ch")
 
-      override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
-        return if (loadable.isCatalogMode) {
-          url.newBuilder().addPathSegment(loadable.boardCode).toString()
-        } else if (loadable.isThreadMode) {
-          url.newBuilder()
-            .addPathSegment(loadable.boardCode)
-            .addPathSegment("res")
-            .addPathSegment(loadable.no.toString() + ".html")
-            .toString()
-        } else {
-          url.toString()
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+        return when (chanDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+          }
+          is ChanDescriptor.ThreadDescriptor -> {
+            url.newBuilder()
+              .addPathSegment(chanDescriptor.boardCode())
+              .addPathSegment("res")
+              .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+              .toString()
+          }
+          else -> {
+            url.toString()
+          }
         }
       }
     }

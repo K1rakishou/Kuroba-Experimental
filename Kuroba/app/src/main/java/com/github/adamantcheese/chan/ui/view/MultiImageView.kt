@@ -59,7 +59,6 @@ import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.ImageViewerController
 import com.github.adamantcheese.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
@@ -72,6 +71,7 @@ import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.common.findChild
 import com.github.adamantcheese.common.findChildren
 import com.github.adamantcheese.common.updateHeight
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.Player
@@ -111,13 +111,10 @@ class MultiImageView @JvmOverloads constructor(
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
-
   @Inject
   lateinit var webmStreamingSource: WebmStreamingSource
-
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
-
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -152,6 +149,7 @@ class MultiImageView @JvmOverloads constructor(
     R.id.exo_next
   )
 
+  @SuppressLint("ClickableViewAccessibility")
   private val exoControlsTouchListener = OnTouchListener { v, event ->
     if (event.actionMasked == MotionEvent.ACTION_DOWN
       || event.actionMasked == MotionEvent.ACTION_UP) {
@@ -260,7 +258,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  fun setMode(loadable: Loadable, newMode: Mode, center: Boolean) {
+  fun setMode(newMode: Mode, center: Boolean) {
     mode = newMode
     hasContent = false
 
@@ -275,10 +273,10 @@ class MultiImageView @JvmOverloads constructor(
           setThumbnail(postImage, center)
           transparentBackground = ChanSettings.transparencyOn.get()
         }
-        Mode.BIGIMAGE -> setBigImage(loadable, postImage)
-        Mode.GIFIMAGE -> setGif(loadable, postImage)
-        Mode.VIDEO -> setVideo(loadable, postImage)
-        Mode.OTHER -> setOther(loadable, postImage)
+        Mode.BIGIMAGE -> setBigImage(postImage)
+        Mode.GIFIMAGE -> setGif(postImage)
+        Mode.VIDEO -> setVideo(postImage)
+        Mode.OTHER -> setOther(postImage)
         Mode.UNLOADED -> {
           // no-op
         }
@@ -411,7 +409,7 @@ class MultiImageView @JvmOverloads constructor(
       })
   }
 
-  private fun setBigImage(loadable: Loadable, postImage: PostImage?) {
+  private fun setBigImage(postImage: PostImage?) {
     BackgroundUtils.ensureMainThread()
 
     if (bigImageRequest.get() != null) {
@@ -480,7 +478,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setGif(loadable: Loadable, postImage: PostImage?) {
+  private fun setGif(postImage: PostImage?) {
     BackgroundUtils.ensureMainThread()
 
     if (gifRequest.get() != null) {
@@ -602,17 +600,17 @@ class MultiImageView @JvmOverloads constructor(
     gifImageView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
   }
 
-  private fun setVideo(loadable: Loadable, postImage: PostImage?) {
+  private fun setVideo(postImage: PostImage?) {
     BackgroundUtils.ensureMainThread()
 
     if (ChanSettings.videoStream.get()) {
-      openVideoInternalStream(loadable, postImage)
+      openVideoInternalStream(postImage)
     } else {
-      openVideoExternal(loadable, postImage)
+      openVideoExternal(postImage)
     }
   }
 
-  private fun openVideoExternal(loadable: Loadable, postImage: PostImage?) {
+  private fun openVideoExternal(postImage: PostImage?) {
     BackgroundUtils.ensureMainThread()
 
     if (videoRequest.get() != null) {
@@ -728,7 +726,7 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  private fun openVideoInternalStream(loadable: Loadable, postImage: PostImage?) {
+  private fun openVideoInternalStream(postImage: PostImage?) {
     if (postImage == null) {
       return
     }
@@ -738,7 +736,7 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     webmStreamSourceInitJob = mainScope.launch(MEDIA_LOADING_DISPATCHER) {
-      webmStreamingSource.createMediaSource(loadable, postImage, object : MediaSourceCallback {
+      webmStreamingSource.createMediaSource(postImage, object : MediaSourceCallback {
         override fun onMediaSourceReady(source: MediaSource?) {
           BackgroundUtils.ensureMainThread()
           webmStreamSourceInitJob = null
@@ -851,7 +849,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setOther(loadable: Loadable, image: PostImage?) {
+  private fun setOther(image: PostImage?) {
     if (image == null) {
       return
     }
@@ -868,8 +866,9 @@ class MultiImageView @JvmOverloads constructor(
 
   fun toggleTransparency() {
     transparentBackground = !transparentBackground
+    val workSafe = callback?.isWorkSafe ?: false
 
-    val boardColor = if (callback?.loadable?.board?.workSafe == true) {
+    val boardColor = if (workSafe) {
       if (op) {
         BACKGROUND_COLOR_SFW_OP
       } else {
@@ -1217,7 +1216,8 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   interface Callback {
-    val loadable: Loadable
+    val chanDescriptor: ChanDescriptor
+    val isWorkSafe: Boolean
 
     fun onTap()
     fun checkImmersive()

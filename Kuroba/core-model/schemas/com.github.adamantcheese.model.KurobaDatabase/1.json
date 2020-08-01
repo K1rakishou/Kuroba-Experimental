@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "22a9039dbaaabc3bd2f5ce0d0eb1c468",
+    "identityHash": "8b9c303383311b36da8b02793e22dee1",
     "entities": [
       {
         "tableName": "chan_board",
@@ -1338,6 +1338,83 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "chan_thread_viewable_info",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`chan_thread_viewable_info_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_thread_id` INTEGER NOT NULL, `list_view_index` INTEGER NOT NULL, `list_view_top` INTEGER NOT NULL, `last_viewed_post_no` INTEGER NOT NULL, `last_loaded_post_no` INTEGER NOT NULL, `marked_post_no` INTEGER NOT NULL, FOREIGN KEY(`owner_thread_id`) REFERENCES `chan_thread`(`thread_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "chanThreadViewableInfoId",
+            "columnName": "chan_thread_viewable_info_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ownerThreadId",
+            "columnName": "owner_thread_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "listViewIndex",
+            "columnName": "list_view_index",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "listViewTop",
+            "columnName": "list_view_top",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastViewedPostNo",
+            "columnName": "last_viewed_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLoadedPostNo",
+            "columnName": "last_loaded_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "markedPostNo",
+            "columnName": "marked_post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "chan_thread_viewable_info_id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_chan_thread_viewable_info_owner_thread_id",
+            "unique": false,
+            "columnNames": [
+              "owner_thread_id"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chan_thread_viewable_info_owner_thread_id` ON `${TABLE_NAME}` (`owner_thread_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "chan_thread",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_thread_id"
+            ],
+            "referencedColumns": [
+              "thread_id"
+            ]
+          }
+        ]
       }
     ],
     "views": [
@@ -1348,7 +1425,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '22a9039dbaaabc3bd2f5ce0d0eb1c468')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8b9c303383311b36da8b02793e22dee1')"
     ]
   }
 }

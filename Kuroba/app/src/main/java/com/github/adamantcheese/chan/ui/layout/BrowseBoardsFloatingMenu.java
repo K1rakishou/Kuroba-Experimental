@@ -57,6 +57,7 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -82,7 +83,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.removeFromParentV
 /**
  * A ViewGroup that attaches above the entire window, containing a list of boards the user can
  * select. The list is aligned to a view, given to
- * {@link #show(ViewGroup, View, ClickCallback, Board)}.
+ * {@link #show(ViewGroup, View, ClickCallback, BoardDescriptor)}.
  * This view completely covers the window to catch any input that goes outside the inner list view.
  * It also features a search field at the top. The data shown is controlled by
  * {@link BoardsMenuPresenter}.
@@ -126,7 +127,12 @@ public class BrowseBoardsFloatingMenu
         setFocusable(true);
     }
 
-    public void show(ViewGroup baseView, View anchor, ClickCallback clickCallback, Board selectedBoard) {
+    public void show(
+            ViewGroup baseView,
+            View anchor,
+            ClickCallback clickCallback,
+            BoardDescriptor selectedBoardDescriptor
+    ) {
         this.anchor = anchor;
         this.clickCallback = clickCallback;
 
@@ -143,12 +149,10 @@ public class BrowseBoardsFloatingMenu
         rootView.addView(this, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
         requestFocus();
-
         watchAnchor();
-
         animateIn();
 
-        presenter.create(this, selectedBoard);
+        presenter.create(this, selectedBoardDescriptor);
         items = presenter.items();
         items.addObserver(this);
 
@@ -226,11 +230,11 @@ public class BrowseBoardsFloatingMenu
         recyclerView.scrollToPosition(position);
     }
 
-    private void itemClicked(Site site, Board board) {
+    private void itemClicked(Site site, BoardDescriptor boardDescriptor) {
         if (!isInteractive()) return;
 
-        if (board != null) {
-            clickCallback.setBoard(board);
+        if (boardDescriptor != null) {
+            clickCallback.setBoard(boardDescriptor);
         } else {
             if (site.name().equals("App Setup")) {
                 clickCallback.openSetup();
@@ -533,13 +537,12 @@ public class BrowseBoardsFloatingMenu
     private class BoardViewHolder
             extends ViewHolder {
         TextView text;
-
         Board board;
 
         public BoardViewHolder(View itemView) {
             super(itemView);
 
-            itemView.setOnClickListener(v -> itemClicked(null, board));
+            itemView.setOnClickListener(v -> itemClicked(null, board.boardDescriptor()));
 
             // View binding
             text = (TextView) itemView;
@@ -555,7 +558,7 @@ public class BrowseBoardsFloatingMenu
     }
 
     public interface ClickCallback {
-        void setBoard(Board item);
+        void setBoard(BoardDescriptor boardDescriptor);
 
         void onSiteClicked(Site site);
 

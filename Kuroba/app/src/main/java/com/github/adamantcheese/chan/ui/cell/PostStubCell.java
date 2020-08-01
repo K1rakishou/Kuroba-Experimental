@@ -30,13 +30,13 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,7 +152,7 @@ public class PostStubCell
     }
 
     public void setPost(
-            Loadable loadable,
+            ChanDescriptor chanDescriptor,
             final Post post,
             final int currentPostIndex,
             final int realPostIndex,

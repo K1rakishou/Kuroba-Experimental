@@ -4,7 +4,6 @@ import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.DescriptorUtils
 import com.github.adamantcheese.chan.utils.Logger
 
 internal class DatabasePostLoader(
@@ -14,11 +13,7 @@ internal class DatabasePostLoader(
   suspend fun loadPosts(requestParams: ChanLoaderRequestParams): ChanLoaderResponse? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(
-      DescriptorUtils.getDescriptor(requestParams.loadable),
-      requestParams.loadable
-    )
-
+    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(requestParams.chanDescriptor)
     if (reloadedPosts.isEmpty()) {
       Logger.d(TAG, "tryLoadFromDiskCache() returned empty list")
       return null

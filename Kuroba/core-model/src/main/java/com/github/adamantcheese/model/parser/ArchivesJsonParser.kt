@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.parser
 
 import android.util.JsonReader
 import android.util.JsonToken
+import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchivePostMedia
@@ -18,7 +19,7 @@ class ArchivesJsonParser(
   private val TAG = "$loggerTag ArchivesJsonParser"
 
   fun parsePosts(jsonReader: JsonReader, threadNo: Long): List<ArchivePost> {
-    val archivedPosts = mutableListOf<ArchivePost>()
+    val archivedPosts = mutableListWithCap<ArchivePost>(64)
 
     jsonReader.jsonObject {
       if (!hasNext()) {
@@ -78,7 +79,7 @@ class ArchivesJsonParser(
     }
 
     return jsonObject {
-      val archivedPosts = mutableListOf<ArchivePost>()
+      val archivedPosts = mutableListWithCap<ArchivePost>(64)
 
       while (hasNext()) {
         // skip the json key

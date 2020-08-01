@@ -145,10 +145,7 @@ object PostUtils {
   }
 
   fun postsDiffer(postBuilder: Post.Builder, chanPost: ChanPost): Boolean {
-    if (postBuilder.board!!.site.name() != chanPost.postDescriptor.descriptor.siteName()) {
-      return true
-    }
-    if (postBuilder.board!!.code != chanPost.postDescriptor.descriptor.boardCode()) {
+    if (postBuilder.boardDescriptor!! != chanPost.postDescriptor.descriptor.boardDescriptor()) {
       return true
     }
     if (postBuilder.op != chanPost.isOp) {

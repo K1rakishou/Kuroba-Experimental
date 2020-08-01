@@ -37,12 +37,14 @@ public class UseCaseModule {
     @Singleton
     @Provides
     public ExtractPostMapInfoHolderUseCase provideExtractReplyPostsPositionsFromPostsListUseCase(
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            SiteRepository siteRepository
     ) {
         Logger.d(AppModule.DI_TAG, "ExtractPostMapInfoHolderUseCase");
 
         return new ExtractPostMapInfoHolderUseCase(
-                databaseManager.getDatabaseSavedReplyManager()
+                databaseManager.getDatabaseSavedReplyManager(),
+                siteRepository
         );
     }
 

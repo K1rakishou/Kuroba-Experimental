@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.cache
 
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -13,9 +14,9 @@ class ChanDescriptorCache(
   private val mutex = Mutex()
 
   @GuardedBy("mutex")
-  private val boardIdCache = mutableMapOf<BoardDescriptor, Long>()
+  private val boardIdCache = mutableMapWithCap<BoardDescriptor, Long>(512)
   @GuardedBy("mutex")
-  private val threadIdCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+  private val threadIdCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(512)
 
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
@@ -58,7 +59,7 @@ class ChanDescriptorCache(
   ): Map<ChanDescriptor.ThreadDescriptor, Long> {
     database.ensureInTransaction()
 
-    val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadDescriptors.size)
 
     mutex.withLock {
       threadDescriptors.forEach { threadDescriptor ->
@@ -76,7 +77,7 @@ class ChanDescriptorCache(
       !resultMap.containsKey(threadDescriptor)
     }
 
-    val boardIdsMap = mutableMapOf<BoardDescriptor, Long>()
+    val boardIdsMap = mutableMapWithCap<BoardDescriptor, Long>(notCached.size)
 
     notCached.forEach { threadDescriptor ->
       if (boardIdsMap.containsKey(threadDescriptor.boardDescriptor)) {

@@ -26,9 +26,9 @@ import com.github.adamantcheese.chan.core.cache.FileCacheListener;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.ExternalFile;
@@ -59,7 +59,7 @@ public class ImageSaveTask
     FileManager fileManager;
 
     private PostImage postImage;
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     private boolean isBatchDownload;
     private AbstractFile destination;
     private boolean share;
@@ -67,10 +67,10 @@ public class ImageSaveTask
     private boolean success = false;
     private SingleSubject<ImageSaver.BundledDownloadResult> imageSaveTaskAsyncResult;
 
-    public ImageSaveTask(Loadable loadable, PostImage postImage, boolean isBatchDownload) {
+    public ImageSaveTask(ChanDescriptor chanDescriptor, PostImage postImage, boolean isBatchDownload) {
         inject(this);
 
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
         this.postImage = postImage;
         this.isBatchDownload = isBatchDownload;
         this.imageSaveTaskAsyncResult = SingleSubject.create();
@@ -90,7 +90,7 @@ public class ImageSaveTask
 
     public String getPostImageUrl() {
         if (postImage.imageUrl == null) {
-            throw new NullPointerException("imageUrl is null! loadable = " + loadable.toShortString());
+            throw new NullPointerException("imageUrl is null! loadable = " + chanDescriptor.toString());
         }
 
         return postImage.imageUrl.toString();

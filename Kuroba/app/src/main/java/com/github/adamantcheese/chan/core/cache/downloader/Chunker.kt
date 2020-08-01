@@ -1,5 +1,7 @@
 package com.github.adamantcheese.chan.core.cache.downloader
 
+import com.github.adamantcheese.common.mutableListWithCap
+
 
 fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
   require(chunksCount > 0) { "ChunksCount ($chunksCount) must be greater than zero!" }
@@ -9,7 +11,7 @@ fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
     return listOf(Chunk(0, value))
   }
 
-  val chunks = mutableListOf<Chunk>()
+  val chunks = mutableListWithCap<Chunk>(chunksCount)
   val chunkSize = value / chunksCount
   var current = 0L
 

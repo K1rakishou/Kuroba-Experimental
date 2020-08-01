@@ -1,10 +1,7 @@
 package com.github.adamantcheese.model.repository
 
-import com.github.adamantcheese.common.AppConstants
-import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.common.SuspendableInitializer
-import com.github.adamantcheese.common.myAsync
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -196,7 +193,10 @@ class ChanPostRepository(
             }
           }
 
-          val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+          val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
+            originalPostsFromCache.size + originalPostsFromDatabase.size
+          )
+
           resultMap.putAll(originalPostsFromCache)
           resultMap.putAll(originalPostsFromDatabase)
 

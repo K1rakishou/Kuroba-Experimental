@@ -1,5 +1,6 @@
 package com.github.adamantcheese.model.mapper
 
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReply
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkFull
@@ -27,7 +28,7 @@ object ThreadBookmarkReplyMapper {
     threadBookmarkFull: ThreadBookmarkFull,
     threadBookmarkReplyEntities: List<ThreadBookmarkReplyEntity>
   ): Map<PostDescriptor, ThreadBookmarkReply> {
-    val resultMap = mutableMapOf<PostDescriptor, ThreadBookmarkReply>()
+    val resultMap = mutableMapWithCap<PostDescriptor, ThreadBookmarkReply>(threadBookmarkReplyEntities)
 
     threadBookmarkReplyEntities.forEach { threadBookmarkReplyEntity ->
       val postDescriptor = PostDescriptor.create(

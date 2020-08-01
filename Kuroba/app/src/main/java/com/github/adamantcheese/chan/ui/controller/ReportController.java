@@ -38,10 +38,12 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class ReportController extends Controller implements RequiresNoBottomNavBar {
     private Post post;
+    private Site site;
 
-    public ReportController(Context context, Post post) {
+    public ReportController(Context context, Post post, Site site) {
         super(context);
         this.post = post;
+        this.site = site;
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -50,7 +52,6 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
         super.onCreate();
         navigation.title = getString(R.string.report_screen, PostHelper.getTitle(post, null));
 
-        Site site = post.board.site;
         HttpUrl url = site.endpoints().report(post);
 
         try {

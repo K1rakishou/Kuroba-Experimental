@@ -50,11 +50,11 @@ public class PostPopupHelper {
             present();
         }
 
-        if (presenter.getLoadable() == null) {
+        if (presenter.getChanDescriptor() == null) {
             throw new IllegalStateException("Thread loadable cannot be null");
         }
 
-        presentingController.setPostRepliesData(presenter.getLoadable(), data);
+        presentingController.setPostRepliesData(presenter.getChanDescriptor(), data);
     }
 
     public void pop() {
@@ -63,11 +63,11 @@ public class PostPopupHelper {
         }
 
         if (dataQueue.size() > 0) {
-            if (presenter.getLoadable() == null) {
+            if (presenter.getChanDescriptor() == null) {
                 throw new IllegalStateException("Thread loadable cannot be null");
             }
 
-            presentingController.setPostRepliesData(presenter.getLoadable(), dataQueue.get(dataQueue.size() - 1));
+            presentingController.setPostRepliesData(presenter.getChanDescriptor(), dataQueue.get(dataQueue.size() - 1));
         } else {
             dismiss();
         }

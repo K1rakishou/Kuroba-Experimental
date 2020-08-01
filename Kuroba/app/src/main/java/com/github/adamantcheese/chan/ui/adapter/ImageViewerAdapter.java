@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.ViewPagerAdapter;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -33,7 +32,6 @@ public class ImageViewerAdapter
     private static final String TAG = "ImageViewerAdapter";
 
     private final List<PostImage> images;
-    private final Loadable loadable;
     private final MultiImageView.Callback multiImageViewCallback;
 
     private List<MultiImageView> loadedViews = new ArrayList<>(3);
@@ -41,11 +39,9 @@ public class ImageViewerAdapter
 
     public ImageViewerAdapter(
             List<PostImage> images,
-            Loadable loadable,
             MultiImageView.Callback multiImageViewCallback
     ) {
         this.images = images;
-        this.loadable = loadable;
         this.multiImageViewCallback = multiImageViewCallback;
     }
 
@@ -94,7 +90,7 @@ public class ImageViewerAdapter
             if (view == null || view.getWindowToken() == null) {
                 Logger.w(TAG, "finishUpdate setMode view still not found");
             } else {
-                view.setMode(loadable, change.mode, change.center);
+                view.setMode(change.mode, change.center);
             }
         }
         pendingModeChanges.clear();
@@ -105,7 +101,7 @@ public class ImageViewerAdapter
         if (view == null || view.getWindowToken() == null) {
             pendingModeChanges.add(new ModeChange(mode, postImage, center));
         } else {
-            view.setMode(loadable, mode, center);
+            view.setMode(mode, center);
         }
     }
 

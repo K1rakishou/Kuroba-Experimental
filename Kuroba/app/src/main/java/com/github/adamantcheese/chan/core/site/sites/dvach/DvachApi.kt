@@ -3,6 +3,9 @@ package com.github.adamantcheese.chan.core.site.sites.dvach
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
@@ -21,7 +24,11 @@ import java.util.*
 import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
-class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSite) {
+class DvachApi internal constructor(
+  private val siteRepository: SiteRepository,
+  private val boardRepository: BoardRepository,
+  commonSite: CommonSite
+) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
   override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
@@ -36,8 +43,15 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
   @Throws(Exception::class)
   override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
-    builder.board(chanReaderProcessor.loadable.board)
-    val endpoints = chanReaderProcessor.loadable.getSite().endpoints()
+    builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+
+    val site = siteRepository.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+      ?: return
+    val board = boardRepository.getFromBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+      ?: return
+
+    val endpoints = site.endpoints()
+
     val files: MutableList<PostImage> = ArrayList()
     var parentPostId = 0
 
@@ -71,7 +85,7 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
         "files" -> {
           reader.beginArray()
           while (reader.hasNext()) {
-            val postImage = readPostImage(reader, builder, endpoints)
+            val postImage = readPostImage(reader, builder, board, endpoints)
             if (postImage != null) {
               files.add(postImage)
             }
@@ -109,7 +123,7 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
   }
 
   @Throws(IOException::class)
-  private fun readPostImage(reader: JsonReader, builder: Post.Builder, endpoints: SiteEndpoints): PostImage? {
+  private fun readPostImage(reader: JsonReader, builder: Post.Builder, board: Board, endpoints: SiteEndpoints): PostImage? {
     var path: String? = null
     var fileSize: Long = 0
     var fileExt: String? = null
@@ -147,8 +161,8 @@ class DvachApi internal constructor(commonSite: CommonSite) : CommonApi(commonSi
     if (path != null && fileName != null) {
       val args = SiteEndpoints.makeArgument("path", path, "thumbnail", thumbnail)
       return PostImage.Builder().serverFilename(fileName)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)

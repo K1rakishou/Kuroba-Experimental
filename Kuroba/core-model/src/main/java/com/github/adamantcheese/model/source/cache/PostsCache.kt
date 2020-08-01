@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.cache
 
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
@@ -13,13 +14,13 @@ class PostsCache(private val maxValueCount: Int) {
   private val currentValuesCount = AtomicInteger(0)
 
   @GuardedBy("mutex")
-  private val postsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, NavigableMap<PostDescriptor, ChanPost>>()
+  private val postsCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, NavigableMap<PostDescriptor, ChanPost>>(64)
 
   @GuardedBy("mutex")
-  private val originalPostsCache = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+  private val originalPostsCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(64)
 
   @GuardedBy("mutex")
-  private val accessTimes = mutableMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+  private val accessTimes = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(64)
 
   suspend fun putIntoCache(postDescriptor: PostDescriptor, post: ChanPost) {
 //        mutex.withLock {

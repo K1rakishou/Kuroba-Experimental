@@ -523,7 +523,7 @@ class DrawerController(
             threadController.showThread(descriptor)
           }
           is ChanDescriptor.CatalogDescriptor -> {
-            threadController.showBoard(descriptor)
+            threadController.showBoard(descriptor.boardDescriptor)
           }
         }
       }

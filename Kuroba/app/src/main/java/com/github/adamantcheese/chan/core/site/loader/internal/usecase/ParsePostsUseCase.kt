@@ -6,7 +6,8 @@ import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -28,12 +29,13 @@ class ParsePostsUseCase(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val databaseSavedReplyManager: DatabaseSavedReplyManager,
-  private val themeHelper: ThemeHelper
+  private val themeHelper: ThemeHelper,
+  private val boardRepository: BoardRepository,
+  private val siteRepository: SiteRepository
 ) {
 
   suspend fun parseNewPostsPosts(
     chanDescriptor: ChanDescriptor,
-    loadable: Loadable,
     chanReader: ChanReader,
     postBuildersToParse: List<Post.Builder>,
     maxCount: Int
@@ -42,7 +44,6 @@ class ParsePostsUseCase(
 
     if (verboseLogsEnabled) {
       Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
-        "loadable=${loadable.toShortString()}, " +
         "postsToParseSize=${postBuildersToParse.size}, " +
         "maxCount=$maxCount)")
     }
@@ -71,6 +72,9 @@ class ParsePostsUseCase(
       }
     }
 
+    val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?: return emptyList()
+
     return supervisorScope {
       return@supervisorScope postBuildersToParse
         .chunked(POSTS_PER_BATCH)
@@ -81,8 +85,9 @@ class ParsePostsUseCase(
                 filterEngine,
                 postFilterManager,
                 databaseSavedReplyManager,
+                siteRepository,
                 themeHelper.theme,
-                loadFilters(loadable),
+                loadFilters(chanDescriptor),
                 postToParse,
                 chanReader,
                 internalIds
@@ -95,11 +100,14 @@ class ParsePostsUseCase(
     }
   }
 
-  private fun loadFilters(loadable: Loadable): List<Filter> {
+  private fun loadFilters(chanDescriptor: ChanDescriptor): List<Filter> {
     BackgroundUtils.ensureBackgroundThread()
 
+    val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?: return emptyList()
+
     return filterEngine.enabledFilters
-      .filter { filter -> filterEngine.matchesBoard(filter, loadable.board) }
+      .filter { filter -> filterEngine.matchesBoard(filter, board) }
       // copy the filter because it will get used on other threads
       .map { filter -> filter.clone() }
   }

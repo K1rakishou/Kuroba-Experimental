@@ -47,7 +47,6 @@ import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
@@ -66,6 +65,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BitmapUtils
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor.Companion.isActualArchive
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import java.io.IOException
@@ -97,7 +97,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
   private lateinit var gestureDetector: GestureDetector
-  private lateinit var loadable: Loadable
+  private lateinit var chanDescriptor: ChanDescriptor
 
   private var post: Post? = null
   private var callback: PostCellCallback? = null
@@ -233,7 +233,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
 
   @SuppressLint("ClickableViewAccessibility")
   override fun setPost(
-    loadable: Loadable,
+    chanDescriptor: ChanDescriptor,
     post: Post,
     currentPostIndex: Int,
     realPostIndex: Int,
@@ -260,7 +260,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       return
     }
 
-    this.loadable = loadable
+    this.chanDescriptor = chanDescriptor
     this.post = post
     this.currentPostIndex = currentPostIndex
     this.realPostIndex = realPostIndex
@@ -323,7 +323,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       callback?.onPostUnbind(post, isActuallyRecycling)
     }
 
-    if (loadable.isThreadMode && post != null) {
+    if (chanDescriptor.isThreadDescriptor() && post != null) {
       threadBookmarkViewPost(post)
     }
 
@@ -337,7 +337,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     }
 
     // Assume that we're in thread mode if the loadable is null
-    threadMode = callback!!.getLoadable() == null || callback!!.getLoadable()!!.isThreadMode
+    threadMode = callback?.getChanDescriptor()?.isThreadDescriptor() ?: false
 
     setPostLinkableListener(post, true)
 
@@ -385,13 +385,13 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       callback?.onPostBind(post)
     }
 
-    if (loadable.isThreadMode) {
+    if (chanDescriptor.isThreadDescriptor()) {
       threadBookmarkViewPost(post)
     }
   }
 
   private fun threadBookmarkViewPost(post: Post) {
-    val threadDescriptor = loadable.threadDescriptorOrNull
+    val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
     if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
       bookmarksManager.onPostViewed(threadDescriptor, post.no, currentPostIndex, realPostIndex)
       lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, post.no)
@@ -463,7 +463,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
     var postIndexText = ""
 
-    if (loadable.isThreadMode && currentPostIndex >= 0) {
+    if (chanDescriptor.isThreadDescriptor() && currentPostIndex >= 0) {
       postIndexText = String.format(Locale.ENGLISH, "#%d, ", currentPostIndex + 1)
     }
 

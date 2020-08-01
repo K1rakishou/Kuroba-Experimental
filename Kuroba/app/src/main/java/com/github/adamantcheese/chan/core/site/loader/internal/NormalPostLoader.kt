@@ -14,8 +14,8 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
-import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import java.util.*
 import kotlin.collections.ArrayList
@@ -38,14 +38,12 @@ internal class NormalPostLoader(
     url: String,
     chanReaderProcessor: ChanReaderProcessor,
     requestParams: ChanLoaderRequestParams,
-    descriptor: ChanDescriptor,
     archiveDescriptor: ArchiveDescriptor?
   ): ThreadLoadResult {
     val (archivePosts, archiveFetchDuration) = measureTimedValue {
       return@measureTimedValue getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
         chanReaderProcessor.getToParse(),
-        requestParams.loadable,
-        descriptor,
+        requestParams.chanDescriptor,
         archiveDescriptor
       ).safeUnwrap { error ->
         Logger.e(TAG, "Error while trying to get posts from archive", error)
@@ -56,8 +54,7 @@ internal class NormalPostLoader(
     val (parsedPosts, parsingDuration) = measureTimedValue {
       val posts = mergePosts(chanReaderProcessor.getToParse(), archivePosts)
       return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
-        descriptor,
-        requestParams.loadable,
+        requestParams.chanDescriptor,
         requestParams.chanReader,
         posts,
         chanReaderProcessor.getThreadCap()
@@ -67,15 +64,14 @@ internal class NormalPostLoader(
     val (storedPostNoList, storeDuration) = measureTimedValue {
       storePostsInRepositoryUseCase.storePosts(
         parsedPosts,
-        requestParams.loadable.isCatalogMode
+        requestParams.chanDescriptor.isCatalogDescriptor()
       )
     }
 
     val (reloadedPosts, reloadingDuration) = measureTimedValue {
       return@measureTimedValue reloadPostsFromDatabaseUseCase.reloadPosts(
         chanReaderProcessor,
-        descriptor,
-        requestParams.loadable
+        requestParams.chanDescriptor
       )
     }
 
@@ -113,7 +109,7 @@ internal class NormalPostLoader(
   ): List<Post.Builder> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val resultList = mutableListOf<Post.Builder>()
+    val resultList = mutableListWithCap<Post.Builder>(postsFromServer.size / 2)
     val archivePostsMap = postsFromArchive
       .associateBy { archivePost -> archivePost.id }
       .toMutableMap()
@@ -146,7 +142,7 @@ internal class NormalPostLoader(
 
     val cachedPosts = ArrayList<Post>()
     val newPosts = ArrayList<Post>()
-    val loadable = requestParams.loadable
+    val chanDescriptor = requestParams.chanDescriptor
     val cachedPostsMap = requestParams.cached.associateBy { post -> post.no }.toMutableMap()
 
     if (cachedPostsMap.isNotEmpty()) {
@@ -165,7 +161,7 @@ internal class NormalPostLoader(
 
       // If there's a cached post but it's not in the list received from the server,
       // mark it as deleted
-      if (loadable.isThreadMode) {
+      if (chanDescriptor.isThreadDescriptor()) {
         for (cachedPost in cachedPosts) {
           if (cachedPost.deleted.get()) {
             // We already updated this post as deleted (most likely we got this info from
@@ -191,7 +187,7 @@ internal class NormalPostLoader(
     totalPosts.addAll(cachedPosts)
     totalPosts.addAll(newPosts)
 
-    if (loadable.isThreadMode) {
+    if (chanDescriptor.isThreadDescriptor()) {
       fillInReplies(totalPosts)
     }
 

@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.dao
 
 import androidx.room.*
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.entity.chan.*
 
@@ -250,11 +251,11 @@ abstract class ChanPostDao {
     }
 
     // Map<PostNo, Set<PostId>>
-    val groupedPostIdMap = mutableMapOf<Long, MutableSet<Long>>()
+    val groupedPostIdMap = mutableMapWithCap<Long, MutableSet<Long>>(32)
     // Map<PostId, Count>
-    val postIdCountMap = mutableMapOf<Long, Int>()
+    val postIdCountMap = mutableMapWithCap<Long, Int>(32)
     // Map<PostId, ArchiveId>
-    val archiveIdByPostId = mutableMapOf<Long, Long>()
+    val archiveIdByPostId = mutableMapWithCap<Long, Long>(32)
 
     groupedPostIdPostNoDto.forEach { (postImageId, postId, postNo, archiveId) ->
       archiveIdByPostId[postId] = archiveId

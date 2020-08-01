@@ -9,12 +9,12 @@ import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ImageReencodingPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.ui.controller.ImageOptionsController;
 import com.github.adamantcheese.chan.ui.controller.ImageReencodeOptionsController;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
 import javax.inject.Inject;
@@ -42,7 +42,7 @@ public class ImageOptionsHelper
         inject(this);
     }
 
-    public void showController(Loadable loadable, boolean supportsReencode) {
+    public void showController(ChanDescriptor chanDescriptor, boolean supportsReencode) {
         if (imageOptionsController == null) {
             try {
                 // load up the last image options every time this controller is created
@@ -59,7 +59,7 @@ public class ImageOptionsHelper
                     context,
                     this,
                     this,
-                    loadable,
+                    chanDescriptor,
                     lastImageOptions,
                     supportsReencode
             );

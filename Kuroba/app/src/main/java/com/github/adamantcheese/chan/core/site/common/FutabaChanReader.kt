@@ -6,6 +6,9 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.parser.*
 import com.github.adamantcheese.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
@@ -25,7 +28,9 @@ import kotlin.math.max
 class FutabaChanReader(
   private val archivesManager: ArchivesManager,
   private val postFilterManager: PostFilterManager,
-  private val mockReplyManager: MockReplyManager
+  private val mockReplyManager: MockReplyManager,
+  private val siteRepository: SiteRepository,
+  private val boardRepository: BoardRepository
 ) : ChanReader {
   private val mutex = Mutex()
   private var parser: PostParser? = null
@@ -65,8 +70,14 @@ class FutabaChanReader(
   @Throws(Exception::class)
   override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
-    builder.board(chanReaderProcessor.loadable.board)
-    val endpoints = chanReaderProcessor.loadable.getSite().endpoints()
+    builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+
+    val site = siteRepository.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+      ?: return
+    val board = boardRepository.getFromBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+      ?: return
+
+    val endpoints = site.endpoints()
 
     // File
     var fileId: String? = null
@@ -132,7 +143,7 @@ class FutabaChanReader(
         "extra_files" -> {
           reader.beginArray()
           while (reader.hasNext()) {
-            val postImage = readPostImage(reader, builder, endpoints)
+            val postImage = readPostImage(reader, builder, board, endpoints)
             if (postImage != null) {
               files.add(postImage)
             }
@@ -155,8 +166,8 @@ class FutabaChanReader(
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
       val image = PostImage.Builder()
         .serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -207,7 +218,12 @@ class FutabaChanReader(
   }
 
   @Throws(IOException::class)
-  private fun readPostImage(reader: JsonReader, builder: Post.Builder, endpoints: SiteEndpoints): PostImage? {
+  private fun readPostImage(
+    reader: JsonReader,
+    builder: Post.Builder,
+    board: Board,
+    endpoints: SiteEndpoints
+  ): PostImage? {
     reader.beginObject()
 
     var fileId: String? = null
@@ -238,8 +254,8 @@ class FutabaChanReader(
     if (fileId != null && fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
       return PostImage.Builder().serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)

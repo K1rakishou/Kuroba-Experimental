@@ -22,6 +22,8 @@ import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.repository.BoardRepository
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
@@ -34,7 +36,6 @@ import com.github.adamantcheese.chan.core.site.loader.internal.usecase.StorePost
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.DescriptorUtils.getDescriptor
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
@@ -76,7 +77,9 @@ class ChanThreadLoaderCoordinator(
   private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
-  private val themeHelper: ThemeHelper
+  private val themeHelper: ThemeHelper,
+  private val boardRepository: BoardRepository,
+  private val siteRepository: SiteRepository
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -88,7 +91,8 @@ class ChanThreadLoaderCoordinator(
       gson,
       archivesManager,
       chanPostRepository,
-      themeHelper
+      themeHelper,
+      boardRepository
     )
   }
 
@@ -101,7 +105,9 @@ class ChanThreadLoaderCoordinator(
       filterEngine,
       postFilterManager,
       databaseSavedReplyManager,
-      themeHelper
+      themeHelper,
+      boardRepository,
+      siteRepository
     )
   }
 
@@ -163,10 +169,8 @@ class ChanThreadLoaderCoordinator(
           return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }
 
-        val descriptor = getDescriptor(requestParams.loadable)
         val archiveDescriptor = Utils.getArchiveDescriptor(
           archivesManager,
-          descriptor,
           requestParams,
           false
         )
@@ -174,7 +178,6 @@ class ChanThreadLoaderCoordinator(
         if (!response.isSuccessful) {
           if (response.code == NOT_FOUND) {
             return@Try fallbackPostLoadWhenThreadIsDead(
-              descriptor,
               requestParams,
               response.code
             )
@@ -190,7 +193,6 @@ class ChanThreadLoaderCoordinator(
           url,
           chanReaderProcessor,
           requestParams,
-          descriptor,
           archiveDescriptor
         )
       }.mapError { error -> ChanLoaderException(error) }
@@ -200,11 +202,10 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun fallbackPostLoadWhenThreadIsDead(
-    descriptor: ChanDescriptor,
     requestParams: ChanLoaderRequestParams,
     responseCode: Int
   ): ThreadLoadResult {
-    archivePostLoader.updateThreadPostsFromArchiveIfNeeded(descriptor, requestParams)
+    archivePostLoader.updateThreadPostsFromArchiveIfNeeded(requestParams)
       .mapErrorToValue { error ->
         Logger.e(TAG, "Error updating thread posts from archive", error)
       }
@@ -242,15 +243,14 @@ class ChanThreadLoaderCoordinator(
           .use { jsonReader ->
             val chanReaderProcessor = ChanReaderProcessor(
               chanPostRepository,
-              requestParams.loadable
+              requestParams.chanDescriptor
             )
 
-            val loadable = requestParams.loadable
             val reader = requestParams.chanReader
 
-            when {
-              loadable.isThreadMode -> reader.loadThread(jsonReader, chanReaderProcessor)
-              loadable.isCatalogMode -> reader.loadCatalog(jsonReader, chanReaderProcessor)
+            when (requestParams.chanDescriptor) {
+              is ChanDescriptor.ThreadDescriptor -> reader.loadThread(jsonReader, chanReaderProcessor)
+              is ChanDescriptor.CatalogDescriptor -> reader.loadCatalog(jsonReader, chanReaderProcessor)
               else -> throw IllegalArgumentException("Unknown mode")
             }
 

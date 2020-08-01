@@ -16,7 +16,9 @@
  */
 package com.github.adamantcheese.chan.core.site.http;
 
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import androidx.annotation.Nullable;
+
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.io.File;
 
@@ -27,15 +29,19 @@ public class Reply {
     /**
      * Optional. {@code null} when ReCaptcha v2 was used or a 4pass
      */
+    @Nullable
     public String captchaChallenge;
 
     /**
      * Optional. {@code null} when a 4pass was used.
      */
+    @Nullable
     public String captchaResponse;
 
-    public Loadable loadable;
+    @Nullable
+    public ChanDescriptor chanDescriptor;
 
+    @Nullable
     public File file;
     public String fileName = "";
     public String name = "";
@@ -45,4 +51,12 @@ public class Reply {
     public String comment = "";
     public boolean spoilerImage = false;
     public String password = "";
+
+    public long threadNo() {
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+        }
+
+        return 0;
+    }
 }

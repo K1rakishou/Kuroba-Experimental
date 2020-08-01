@@ -17,17 +17,18 @@
 package com.github.adamantcheese.chan.core.site.parser
 
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.PostUtils
+import com.github.adamantcheese.common.mutableListWithCap
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 
 class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
-  val loadable: Loadable
+  val chanDescriptor: ChanDescriptor
 ) {
   private val toParse = ArrayList<Post.Builder>()
-  private val postNoOrderedList = mutableListOf<Long>()
+  private val postNoOrderedList = mutableListWithCap<Long>(64)
 
   var op: Post.Builder? = null
 
@@ -51,14 +52,14 @@ class ChanReaderProcessor(
   private suspend fun differsFromCached(builder: Post.Builder): Boolean {
     val postDescriptor = if (builder.op) {
       PostDescriptor.create(
-        builder.board!!.site.name(),
-        builder.board!!.code,
+        builder.boardDescriptor!!.siteName(),
+        builder.boardDescriptor!!.boardCode,
         builder.id
       )
     } else {
       PostDescriptor.create(
-        builder.board!!.site.name(),
-        builder.board!!.code,
+        builder.boardDescriptor!!.siteName(),
+        builder.boardDescriptor!!.boardCode,
         builder.opId,
         builder.id
       )

@@ -2,20 +2,20 @@ package com.github.adamantcheese.chan.core.mapper
 
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchivePostMedia
 import com.github.adamantcheese.model.data.archive.ArchiveThread
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 object ArchiveThreadMapper {
   private const val TAG = "ArchiveThreadMapper"
 
   fun fromThread(
-    board: Board,
+    boardDescriptor: BoardDescriptor,
     archiveThread: ArchiveThread,
     archiveDescriptor: ArchiveDescriptor
   ): List<Post.Builder> {
@@ -24,7 +24,7 @@ object ArchiveThreadMapper {
 
     return archiveThread.posts.mapNotNull { post ->
       return@mapNotNull Try {
-        return@Try fromPost(board, repliesCount, imagesCount, post, archiveDescriptor)
+        return@Try fromPost(boardDescriptor, repliesCount, imagesCount, post, archiveDescriptor)
       }.safeUnwrap { error ->
         Logger.e(TAG, "Error mapping archive post ${post.postNo}", error)
         return@mapNotNull null
@@ -33,7 +33,7 @@ object ArchiveThreadMapper {
   }
 
   private fun fromPost(
-    board: Board,
+    boardDescriptor: BoardDescriptor,
     repliesCount: Int,
     imagesCount: Int,
     archivePost: ArchivePost,
@@ -49,7 +49,7 @@ object ArchiveThreadMapper {
     }
 
     val postBuilder = Post.Builder()
-      .board(board)
+      .boardDescriptor(boardDescriptor)
       .id(archivePost.postNo)
       .opId(archivePost.threadNo)
       .op(archivePost.isOP)

@@ -18,8 +18,8 @@ package com.github.adamantcheese.chan.core.manager;
 
 import android.content.Context;
 
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.io.File;
 import java.util.HashMap;
@@ -33,34 +33,34 @@ import javax.inject.Inject;
 public class ReplyManager {
     private final Context context;
 
-    private Map<Loadable, Reply> drafts = new HashMap<>();
+    private Map<ChanDescriptor, Reply> drafts = new HashMap<>();
 
     @Inject
     public ReplyManager(Context context) {
         this.context = context;
     }
 
-    public Reply getReply(Loadable loadable) {
-        Reply reply = drafts.get(loadable);
+    public Reply getReply(ChanDescriptor chanDescriptor) {
+        Reply reply = drafts.get(chanDescriptor);
         if (reply == null) {
             reply = new Reply();
-            drafts.put(loadable, reply);
+            drafts.put(chanDescriptor, reply);
         }
         return reply;
     }
 
-    public void putReply(Loadable loadable, Reply reply) {
+    public void putReply(ChanDescriptor chanDescriptor, Reply reply) {
         // Remove files from all other replies because there can only be one picked_file at the same time.
         // Not doing this would be confusing and cause invalid fileNames.
-        for (Map.Entry<Loadable, Reply> entry : drafts.entrySet()) {
-            if (!entry.getKey().equals(loadable)) {
+        for (Map.Entry<ChanDescriptor, Reply> entry : drafts.entrySet()) {
+            if (!entry.getKey().equals(chanDescriptor)) {
                 Reply value = entry.getValue();
                 value.file = null;
                 value.fileName = "";
             }
         }
 
-        drafts.put(loadable, reply);
+        drafts.put(chanDescriptor, reply);
     }
 
     public File getPickFile() {

@@ -10,12 +10,14 @@ open class PostDescriptor protected constructor(
   open val postSubNo: Long = 0L
 ) {
 
-  fun getThreadDescriptor(): ChanDescriptor.ThreadDescriptor {
+  fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
     return when (descriptor) {
       is ChanDescriptor.ThreadDescriptor -> descriptor
       is ChanDescriptor.CatalogDescriptor -> descriptor.toThreadDescriptor(postNo)
     }
   }
+
+  fun boardDescriptor(): BoardDescriptor = descriptor.boardDescriptor()
 
   fun getThreadNo(): Long {
     return when (descriptor) {
@@ -62,13 +64,20 @@ open class PostDescriptor protected constructor(
   companion object {
 
     @JvmStatic
-    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, postNo: Long): PostDescriptor {
-      return create(
-        threadDescriptor.siteName(),
-        threadDescriptor.boardCode(),
-        threadDescriptor.threadNo,
-        postNo
-      )
+    fun create(chanDescriptor: ChanDescriptor, postNo: Long): PostDescriptor {
+      return when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor -> create(
+          chanDescriptor.siteName(),
+          chanDescriptor.boardCode(),
+          chanDescriptor.threadNo,
+          postNo
+        )
+        is ChanDescriptor.CatalogDescriptor -> create(
+          chanDescriptor.siteName(),
+          chanDescriptor.boardCode(),
+          postNo
+        )
+      }
     }
 
     @JvmStatic
@@ -79,6 +88,16 @@ open class PostDescriptor protected constructor(
         ChanDescriptor.CatalogDescriptor.create(siteName, boardCode),
         threadNo
       )
+    }
+
+    @JvmStatic
+    fun create(boardDescriptor: BoardDescriptor, threadNo: Long, postNo: Long): PostDescriptor {
+      return create(boardDescriptor.siteName(), boardDescriptor.boardCode, threadNo, postNo)
+    }
+
+    @JvmStatic
+    fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long): PostDescriptor {
+      return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo)
     }
 
     @JvmStatic

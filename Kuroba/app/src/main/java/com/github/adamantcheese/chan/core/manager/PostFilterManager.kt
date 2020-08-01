@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.manager
 
 import com.github.adamantcheese.chan.core.model.PostFilter
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -8,7 +9,7 @@ import kotlin.concurrent.write
 
 class PostFilterManager {
   private val lock = ReentrantReadWriteLock()
-  private val filterStorage = mutableMapOf<PostDescriptor, PostFilter>()
+  private val filterStorage = mutableMapWithCap<PostDescriptor, PostFilter>(32)
 
   fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
     lock.write { filterStorage[postDescriptor] = postFilter }

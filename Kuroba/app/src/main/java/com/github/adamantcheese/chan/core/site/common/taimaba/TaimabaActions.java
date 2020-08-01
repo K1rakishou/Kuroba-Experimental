@@ -21,12 +21,15 @@ import com.github.adamantcheese.chan.core.site.common.CommonSite;
 import com.github.adamantcheese.chan.core.site.common.MultipartHttpCall;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
+import com.github.adamantcheese.common.ModularResult;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import kotlin.Unit;
 import okhttp3.Response;
 
 import static android.text.TextUtils.isEmpty;
@@ -39,40 +42,49 @@ public class TaimabaActions
         super(commonSite);
     }
 
-    int threadNo = 0;
+    volatile long threadNo = 0L;
     String password = null;
 
     @Override
-    public void setupPost(Reply reply, MultipartHttpCall call) {
-        //pass threadNo & password with correct variables
-        threadNo = reply.loadable.no;
-        password = reply.password;
+    public ModularResult<Unit> setupPost(Reply reply, MultipartHttpCall call) {
+        return ModularResult.Try(() -> {
+            ChanDescriptor chanDescriptor = reply.chanDescriptor;
+            if (chanDescriptor == null) {
+                throw new NullPointerException("Reply has no chanDescriptor");
+            }
 
-        call.parameter("fart", Integer.toString((int) (Math.random() * 15000) + 5000));
+            // pass threadNo & password with correct variables
+            threadNo = reply.threadNo();
+            password = reply.password;
 
-        call.parameter("board", reply.loadable.boardCode);
-        call.parameter("task", "post");
+            call.parameter("fart", Integer.toString((int) (Math.random() * 15000) + 5000));
 
-        if (reply.loadable.isThreadMode()) {
-            call.parameter("parent", String.valueOf(reply.loadable.no));
-        }
+            call.parameter("board", reply.chanDescriptor.boardCode());
+            call.parameter("task", "post");
 
-        call.parameter("password", reply.password);
-        call.parameter("field1", reply.name);
+            if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                call.parameter("parent", String.valueOf(reply.threadNo()));
+            }
 
-        if (!isEmpty(reply.subject)) {
-            call.parameter("field3", reply.subject);
-        }
+            call.parameter("password", reply.password);
+            call.parameter("field1", reply.name);
 
-        call.parameter("field4", reply.comment);
+            if (!isEmpty(reply.subject)) {
+                call.parameter("field3", reply.subject);
+            }
 
-        if (reply.file != null) {
-            call.fileParameter("file", reply.fileName, reply.file);
-        }
+            call.parameter("field4", reply.comment);
 
-        if (reply.options.equals("sage")) {
-            call.parameter("sage", "on");
-        }
+            if (reply.file != null) {
+                call.fileParameter("file", reply.fileName, reply.file);
+            }
+
+            if (reply.options.equals("sage")) {
+                call.parameter("sage", "on");
+            }
+
+            return Unit.INSTANCE;
+        });
     }
 
     @Override

@@ -24,9 +24,11 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.common.CommonReplyHttpCall;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,15 +57,26 @@ public class DvachReplyCall
             MultipartBody.Builder formBuilder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) {
+        ChanDescriptor chanDescriptor = Objects.requireNonNull(
+                reply.chanDescriptor,
+                "reply.chanDescriptor == null"
+        );
+
+        long threadNo = -1L;
+
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+        }
+
         formBuilder.addFormDataPart("task", "post");
-        formBuilder.addFormDataPart("board", reply.loadable.boardCode);
+        formBuilder.addFormDataPart("board", chanDescriptor.boardCode());
         formBuilder.addFormDataPart("comment", reply.comment);
-        formBuilder.addFormDataPart("thread", String.valueOf(reply.loadable.no));
+        formBuilder.addFormDataPart("thread", String.valueOf(threadNo));
 
         formBuilder.addFormDataPart("name", reply.name);
         formBuilder.addFormDataPart("email", reply.options);
 
-        if (!reply.loadable.isThreadMode() && !TextUtils.isEmpty(reply.subject)) {
+        if ((chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) && !TextUtils.isEmpty(reply.subject)) {
             formBuilder.addFormDataPart("subject", reply.subject);
         }
 

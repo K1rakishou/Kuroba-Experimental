@@ -1,10 +1,7 @@
 package com.github.adamantcheese.model.repository
 
-import com.github.adamantcheese.common.AppConstants
-import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.common.ModularResult.Companion.Try
-import com.github.adamantcheese.common.SuspendableInitializer
-import com.github.adamantcheese.common.myAsync
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchiveThread
@@ -148,7 +145,9 @@ class ThirdPartyArchiveInfoRepository(
     return applicationScope.myAsync {
       return@myAsync suspendableInitializer.invokeWhenInitialized {
         return@invokeWhenInitialized Try {
-          val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+          val resultMap = mutableMapWithCap<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>(
+            archiveDescriptorList.size
+          )
           val newerThan = DateTime.now().minus(ONE_HOUR)
 
           archiveDescriptorList.forEach { archiveDescriptor ->
@@ -199,7 +198,7 @@ class ThirdPartyArchiveInfoRepository(
       return@myAsync suspendableInitializer.invokeWhenInitialized {
         return@invokeWhenInitialized Try {
           val newerThan = DateTime.now().minus(ONE_HOUR)
-          val resultMap = mutableMapOf<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>()
+          val resultMap = mutableMapWithCap<ArchiveDescriptor, List<ThirdPartyArchiveFetchResult>>(archiveDescriptorList)
 
           archiveDescriptorList.forEach { archiveDescriptor ->
             val fetchHistory = thirdPartyArchiveInfoCache.selectLatestFetchHistory(

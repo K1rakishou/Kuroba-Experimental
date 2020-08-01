@@ -21,6 +21,7 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.ConversionUtils.charArrayToInt
 import com.github.adamantcheese.chan.utils.ConversionUtils.intToCharArray
+import com.github.adamantcheese.common.mutableListWithCap
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
@@ -817,7 +818,7 @@ class CacheHandler(
         StringUtils.removeExtensionFromFileName(fileName)
       }
 
-    val groupedCacheFileList = mutableListOf<GroupedCacheFile>()
+    val groupedCacheFileList = mutableListWithCap<GroupedCacheFile>(grouped.size / 2)
 
     for ((fileName, groupOfFiles) in grouped) {
       // We have already filtered all non-cache related files so it's safe to delete them here.

@@ -27,13 +27,10 @@ import android.view.animation.RotateAnimation
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
-import com.github.adamantcheese.chan.core.database.DatabaseLoadableManager
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -46,7 +43,6 @@ import com.github.adamantcheese.chan.ui.controller.ThreadSlideController.SlideCh
 import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
-import com.github.adamantcheese.chan.ui.helper.BoardHelper
 import com.github.adamantcheese.chan.ui.helper.HintPopup
 import com.github.adamantcheese.chan.ui.layout.BrowseBoardsFloatingMenu
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
@@ -56,6 +52,8 @@ import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.DialogUtils.createSimpleDialogWithInput
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import java.util.*
@@ -67,8 +65,6 @@ class BrowseController(context: Context) : ThreadController(context),
   BrowseBoardsFloatingMenu.ClickCallback,
   SlideChangeListener,
   ReplyAutoCloseListener {
-
-  private lateinit var databaseLoadableManager: DatabaseLoadableManager
 
   @Inject
   lateinit var presenter: BrowsePresenter
@@ -90,7 +86,6 @@ class BrowseController(context: Context) : ThreadController(context),
   override fun onCreate() {
     super.onCreate()
     Chan.inject(this)
-    databaseLoadableManager = databaseManager.databaseLoadableManager
 
     val navControllerContainerLayout = AndroidUtils.inflate(context, R.layout.controller_browse)
     val container = navControllerContainerLayout.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
@@ -118,9 +113,8 @@ class BrowseController(context: Context) : ThreadController(context),
     }
 
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE) {
-      val loadable = loadable
-      if (loadable != null) {
-        historyNavigationManager.moveNavElementToTop(loadable.chanDescriptor)
+      if (chanDescriptor != null) {
+        historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
       }
     }
   }
@@ -155,8 +149,8 @@ class BrowseController(context: Context) : ThreadController(context),
     super.setDrawerCallbacks(drawerCallbacks)
   }
 
-  override fun setBoard(board: Board) {
-    presenter.setBoard(board)
+  override fun setBoard(descriptor: BoardDescriptor) {
+    presenter.setBoard(descriptor)
   }
 
   fun loadWithDefaultBoard() {
@@ -168,7 +162,7 @@ class BrowseController(context: Context) : ThreadController(context),
     navigation.hasDrawer = true
     navigation.setMiddleMenu { anchor: View? ->
       val boardsFloatingMenu = BrowseBoardsFloatingMenu(context)
-      boardsFloatingMenu.show(view, anchor, this@BrowseController, presenter.currentBoard())
+      boardsFloatingMenu.show(view, anchor, this@BrowseController, presenter.currentBoardDescriptor())
     }
 
     // Toolbar menu
@@ -410,8 +404,9 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   private fun openThreadById(item: ToolbarMenuSubItem) {
-    val loadable = loadable
-      ?: return
+    if (chanDescriptor == null) {
+      return
+    }
 
     createSimpleDialogWithInput(
       context,
@@ -419,15 +414,13 @@ class BrowseController(context: Context) : ThreadController(context),
       R.string.browse_controller_enter_thread_id_msg,
       { input: String ->
         try {
-          val threadNo = input.toLong()
-          val threadLoadable = Loadable.forThread(
-            loadable.site,
-            loadable.board,
-            threadNo,
-            ""
+          val threadDescriptor = ThreadDescriptor.create(
+            chanDescriptor!!.siteName(),
+            chanDescriptor!!.boardCode(),
+            input.toLong()
           )
 
-          showThread(databaseLoadableManager.getOrCreateLoadable(threadLoadable))
+          openThread(threadDescriptor)
         } catch (e: NumberFormatException) {
           AndroidUtils.showToast(
             context,
@@ -479,11 +472,27 @@ class BrowseController(context: Context) : ThreadController(context),
     }
 
     if (presenter.chanThread == null) {
+      Logger.e(TAG, "handleShareAndOpenInBrowser() chanThread == null")
       AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
-    val link = presenter.loadable!!.desktopUrl()
+    val chanDescriptor = presenter.chanDescriptor
+    if (chanDescriptor == null) {
+      Logger.e(TAG, "handleShareAndOpenInBrowser() chanDescriptor == null")
+      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      return
+    }
+
+    val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    if (site == null) {
+      Logger.e(TAG, "handleShareAndOpenInBrowser() site == null " +
+        "(siteDescriptor = ${chanDescriptor.siteDescriptor()})")
+      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      return
+    }
+
+    val link = site.resolvable().desktopUrl(chanDescriptor, null)
     if (share) {
       AndroidUtils.shareLink(link)
     } else {
@@ -512,13 +521,17 @@ class BrowseController(context: Context) : ThreadController(context),
     threadLayout.setPostViewMode(postViewMode)
   }
 
-  override fun loadBoard(loadable: Loadable) {
-    loadable.title = BoardHelper.getName(loadable.board)
-    navigation.title = "/" + loadable.boardCode + "/"
-    navigation.subtitle = loadable.board.name
+  override fun loadBoard(boardDescriptor: BoardDescriptor) {
+    val board = boardRepository.getFromBoardDescriptor(boardDescriptor)
+    requireNotNull(board) { "Couldn't find board by boardDescriptor: ${boardDescriptor}" }
+
+    navigation.title = "/" + boardDescriptor.boardCode + "/"
+    navigation.subtitle = board.name
 
     val presenter = threadLayout.presenter
-    presenter.bindLoadable(loadable)
+    presenter.bindChanDescriptor(
+      CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode)
+    )
     presenter.requestData()
 
     requireNavController().requireToolbar().updateTitle(navigation)
@@ -535,65 +548,28 @@ class BrowseController(context: Context) : ThreadController(context),
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun showThread(threadLoadable: Loadable) {
-    showThread(threadLoadable, true)
+  override fun openThread(descriptor: ThreadDescriptor) {
+    showThread(descriptor)
   }
 
   override fun showThread(descriptor: ThreadDescriptor) {
-    val threadLoadable = databaseLoadableManager.getByThreadDescriptor(descriptor)
-    if (threadLoadable == null) {
-      AndroidUtils.showToast(context, R.string.browse_controller_cannot_open_thread)
-      return
-    }
-
-    if (!threadLoadable.isThreadMode) {
-      val errorMessage = context.getString(
-        R.string.browse_controller_cannot_open_thread_not_a_thread,
-        threadLoadable.mode
-      )
-      AndroidUtils.showToast(context, errorMessage)
-      return
-    }
-
-    showThread(threadLoadable, true)
+    showThread(descriptor, true)
   }
 
-  override fun showBoard(descriptor: CatalogDescriptor) {
-    val board = boardRepository.getFromBoardDescriptor(descriptor.boardDescriptor)
-    if (board == null) {
-      AndroidUtils.showToast(context, R.string.browse_controller_cannot_open_board)
-      return
-    }
-
-    showBoard(board)
+  override fun showBoard(descriptor: BoardDescriptor) {
+    showBoardInternal(descriptor)
   }
 
-  fun setBoard(descriptor: CatalogDescriptor) {
-    val board = boardRepository.getFromBoardDescriptor(descriptor.boardDescriptor)
-    if (board == null) {
-      AndroidUtils.showToast(context, R.string.browse_controller_cannot_open_board)
-      return
-    }
-
-    setBoard(board)
-  }
-
-  override fun showBoard(catalogLoadable: Loadable) {
+  override fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
     // we don't actually need to do anything here because you can't tap board links in the browse
     // controller set the board just in case?
-    setBoard(catalogLoadable.board)
-  }
-
-  override fun showBoardAndSearch(catalogLoadable: Loadable, searchQuery: String?) {
-    // we don't actually need to do anything here because you can't tap board links in the browse
-    // controller set the board just in case?
-    setBoard(catalogLoadable.board)
+    setBoard(descriptor)
   }
 
   // Creates or updates the target ThreadViewController
   // This controller can be in various places depending on the layout
   // We dynamically search for it
-  fun showThread(threadLoadable: Loadable, animated: Boolean) {
+  fun showThread(threadDescriptor: ThreadDescriptor, animated: Boolean) {
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null
@@ -617,12 +593,12 @@ class BrowseController(context: Context) : ThreadController(context),
           if (navigationController.top is ViewThreadController) {
             val viewThreadController = navigationController.top as ViewThreadController?
             viewThreadController!!.setDrawerCallbacks(drawerCallbacks)
-            viewThreadController.loadThread(threadLoadable)
+            viewThreadController.loadThread(threadDescriptor)
           }
         } else {
           val navigationController = StyledToolbarNavigationController(context)
           splitNav.setRightController(navigationController)
-          val viewThreadController = ViewThreadController(context, threadLoadable)
+          val viewThreadController = ViewThreadController(context, threadDescriptor)
           navigationController.pushController(viewThreadController, false)
           viewThreadController.setDrawerCallbacks(drawerCallbacks)
         }
@@ -631,12 +607,13 @@ class BrowseController(context: Context) : ThreadController(context),
       slideNav != null -> {
         // Create a threadview in the right part of the slide nav *without* a toolbar
         if (slideNav.getRightController() is ViewThreadController) {
-          (slideNav.getRightController() as ViewThreadController).loadThread(threadLoadable)
+          (slideNav.getRightController() as ViewThreadController).loadThread(threadDescriptor)
         } else {
           val viewThreadController = ViewThreadController(
             context,
-            threadLoadable
+            threadDescriptor
           )
+
           slideNav.setRightController(viewThreadController)
           viewThreadController.setDrawerCallbacks(drawerCallbacks)
         }
@@ -647,7 +624,7 @@ class BrowseController(context: Context) : ThreadController(context),
         // (BrowseController -> ToolbarNavigationController)
         val viewThreadController = ViewThreadController(
           context,
-          threadLoadable
+          threadDescriptor
         )
 
         Objects.requireNonNull(navigationController, "navigationController is null")
@@ -657,10 +634,10 @@ class BrowseController(context: Context) : ThreadController(context),
       }
     }
 
-    historyNavigationManager.moveNavElementToTop(threadLoadable.chanDescriptor)
+    historyNavigationManager.moveNavElementToTop(threadDescriptor)
   }
 
-  private fun showBoard(board: Board) {
+  private fun showBoardInternal(boardDescriptor: BoardDescriptor) {
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null
@@ -690,7 +667,7 @@ class BrowseController(context: Context) : ThreadController(context),
       }
     }
 
-    setBoard(board)
+    setBoard(boardDescriptor)
   }
 
   override fun onSlideChanged(leftOpen: Boolean) {
@@ -702,9 +679,8 @@ class BrowseController(context: Context) : ThreadController(context),
       searchQuery = null
     }
 
-    val loadable = loadable
-    if (loadable != null) {
-      historyNavigationManager.moveNavElementToTop(loadable.chanDescriptor)
+    if (chanDescriptor != null) {
+      historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
     }
   }
 
@@ -713,6 +689,8 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   companion object {
+    private const val TAG = "BrowseController"
+
     private const val ACTION_CHANGE_VIEW_MODE = 901
     private const val ACTION_SORT = 902
     private const val ACTION_DEV_MENU = 903
@@ -722,6 +700,7 @@ class BrowseController(context: Context) : ThreadController(context),
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
+    // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

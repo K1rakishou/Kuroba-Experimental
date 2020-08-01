@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.common.flatMapIndexed
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -236,7 +237,7 @@ class ChanPostLocalSource(
   ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
     ensureInTransaction()
 
-    val catalogDescriptors = mutableMapOf<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>()
+    val catalogDescriptors = mutableMapWithCap<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>(threadDescriptors)
 
     threadDescriptors.forEach { threadDescriptor ->
       val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
@@ -251,7 +252,7 @@ class ChanPostLocalSource(
       catalogDescriptors[catalogDescriptor]!!.add(threadDescriptor.threadNo)
     }
 
-    val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, ChanPost>()
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(catalogDescriptors.size / 2)
 
     catalogDescriptors.forEach { (catalogDescriptor, postNoSet) ->
       // Load catalog descriptor's board

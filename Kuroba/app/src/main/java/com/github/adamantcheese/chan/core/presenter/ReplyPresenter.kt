@@ -27,7 +27,6 @@ import com.github.adamantcheese.chan.core.manager.ReplyManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository
@@ -70,7 +69,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private var bound = false
-  private var loadable: Loadable? = null
+  private var chanDescriptor: ChanDescriptor? = null
   private var page = Page.INPUT
   private var previewOpen = false
   private var pickingFile = false
@@ -80,6 +79,7 @@ class ReplyPresenter @Inject constructor(
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var draft: Reply
   private lateinit var board: Board
+  private lateinit var site: Site
 
   var isExpanded = false
     private set
@@ -98,27 +98,34 @@ class ReplyPresenter @Inject constructor(
     this.callback = callback
   }
 
-  fun bindLoadable(loadable: Loadable) {
-    if (this.loadable != null) {
-      unbindLoadable()
+  fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+    if (this.chanDescriptor != null) {
+      unbindChanDescriptor()
     }
 
     this.job = SupervisorJob()
     this.bound = true
-    this.loadable = loadable
+    this.chanDescriptor = chanDescriptor
 
-    board = loadable.board
-    draft = replyManager.getReply(loadable)
+    draft = replyManager.getReply(chanDescriptor)
 
     if (TextUtils.isEmpty(draft.name)) {
       draft.name = ChanSettings.postDefaultName.get()
     }
 
-    val stringId = if (loadable.isThreadMode) {
+    val stringId = if (chanDescriptor.isThreadDescriptor()) {
       R.string.reply_comment_thread
     } else {
       R.string.reply_comment_board
     }
+
+    val thisBoard = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
+    requireNotNull(thisBoard) { "Couldn't get board by board descriptor: ${chanDescriptor.boardDescriptor()}" }
+    this.board = thisBoard
+
+    val thisSite = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    requireNotNull(thisSite) { "Couldn't get site by site descriptor: ${chanDescriptor.siteDescriptor()}" }
+    this.site = thisSite
 
     callback.loadDraftIntoViews(draft)
     callback.updateCommentCount(0, board.maxCommentChars, false)
@@ -131,7 +138,7 @@ class ReplyPresenter @Inject constructor(
     switchPage(Page.INPUT)
   }
 
-  fun unbindLoadable() {
+  fun unbindChanDescriptor() {
     bound = false
 
     if (::job.isInitialized) {
@@ -142,7 +149,7 @@ class ReplyPresenter @Inject constructor(
     draft.fileName = ""
 
     callback.loadViewsIntoDraft(draft)
-    replyManager.putReply(loadable, draft)
+    replyManager.putReply(chanDescriptor, draft)
 
     closeAll()
   }
@@ -176,7 +183,7 @@ class ReplyPresenter @Inject constructor(
     callback.setExpanded(isExpanded)
     callback.openNameOptions(isExpanded)
 
-    if (!loadable!!.isThreadMode) {
+    if (chanDescriptor!!.isCatalogDescriptor()) {
       callback.openSubject(isExpanded)
     }
 
@@ -238,7 +245,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onAuthenticateCalled() {
-    if (loadable!!.site.actions().postRequiresAuthentication()) {
+    if (site.actions().postRequiresAuthentication()) {
       if (!onPrepareToSubmit(true)) {
         return
       }
@@ -252,10 +259,16 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    //only 4chan seems to have the post delay, this is a hack for that
-    if (draft.loadable.site is Chan4 && !longClicked) {
-      if (loadable!!.isThreadMode) {
-        val timeLeft = lastReplyRepository.getTimeUntilReply(draft.loadable.board, draft.file != null)
+    val chanDescriptor = draft.chanDescriptor
+      ?: return
+
+    // only 4chan seems to have the post delay, this is a hack for that
+    if (chanDescriptor.siteDescriptor().is4chan() && !longClicked) {
+      if (chanDescriptor.isThreadDescriptor()) {
+        val timeLeft = lastReplyRepository.getTimeUntilReply(
+          chanDescriptor.boardDescriptor(),
+          draft.file != null
+        )
 
         if (timeLeft < 0L) {
           submitOrAuthenticate()
@@ -266,7 +279,7 @@ class ReplyPresenter @Inject constructor(
         }
 
       } else {
-        val timeLeft = lastReplyRepository.getTimeUntilThread(draft.loadable.board)
+        val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
         if (timeLeft < 0L) {
           submitOrAuthenticate()
         } else {
@@ -283,7 +296,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate() {
-    if (loadable!!.site.actions().postRequiresAuthentication()) {
+    if (site.actions().postRequiresAuthentication()) {
       switchPage(Page.AUTHENTICATION)
     } else {
       makeSubmitCall()
@@ -298,7 +311,7 @@ class ReplyPresenter @Inject constructor(
       return false
     }
 
-    draft.loadable = loadable
+    draft.chanDescriptor = chanDescriptor
     draft.spoilerImage = draft.spoilerImage && board.spoilers
     draft.captchaResponse = null
     return true
@@ -458,7 +471,7 @@ class ReplyPresenter @Inject constructor(
 
   private fun makeSubmitCall() {
     launch {
-      loadable!!.getSite().actions().post(draft)
+      site.actions().post(draft)
         .collect { postResult ->
           withContext(Dispatchers.Main) {
             when (postResult) {
@@ -503,38 +516,34 @@ class ReplyPresenter @Inject constructor(
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
-    val localSite = siteRepository.forId(replyResponse.siteId)
+    val localSite = siteRepository.bySiteDescriptor(replyResponse.siteDescriptor)
     val localBoard = requireNotNull(boardRepository.getFromCode(localSite, replyResponse.boardCode))
 
-    val loadableNo = if (replyResponse.threadNo == 0) {
-      replyResponse.postNo.toLong()
+    val threadNo = if (replyResponse.threadNo <= 0L) {
+      replyResponse.postNo
     } else {
-      replyResponse.threadNo.toLong()
+      replyResponse.threadNo
     }
 
-    val newLoadable = Loadable.forThread(
-      localSite,
-      // this loadable is for the reply response's site and board
-      localBoard,
-      // for the time being, will be updated later when the watchmanager updates
-      loadableNo,
-      PostHelper.getTitle(draft)
+    val newThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+      localSite!!.name(),
+      localBoard.code,
+      threadNo
     )
 
-    val localLoadable = databaseManager.databaseLoadableManager.getOrCreateLoadable(newLoadable)
-    lastReplyRepository.putLastReply(localLoadable.board)
+    lastReplyRepository.putLastReply(newThreadDescriptor.boardDescriptor)
 
-    if (loadable!!.isCatalogMode) {
-      lastReplyRepository.putLastThread(loadable!!.board)
+    if (chanDescriptor!!.isCatalogDescriptor()) {
+      lastReplyRepository.putLastThread(chanDescriptor!!.boardDescriptor())
     }
 
     if (ChanSettings.postPinThread.get()) {
-      bookmarkThread(localLoadable, loadableNo)
+      bookmarkThread(newThreadDescriptor, threadNo)
     }
 
     val savedReply = SavedReply.fromBoardNoPassword(
-      localLoadable.board,
-      replyResponse.postNo.toLong(),
+      localBoard,
+      replyResponse.postNo,
       replyResponse.password
     )
 
@@ -549,38 +558,38 @@ class ReplyPresenter @Inject constructor(
     draft = Reply()
     draft.name = draft.name
 
-    replyManager.putReply(localLoadable, draft)
+    replyManager.putReply(newThreadDescriptor, draft)
 
     callback.loadDraftIntoViews(draft)
     callback.onPosted()
 
     // special case for new threads, check if we were on the catalog with the nonlocal
     // loadable
-    if (bound && loadable!!.isCatalogMode) {
-      callback.showThread(localLoadable)
+    if (bound && chanDescriptor!!.isCatalogDescriptor()) {
+      callback.showThread(newThreadDescriptor)
     }
   }
 
-  private fun bookmarkThread(localLoadable: Loadable, loadableNo: Long) {
-    if (callback.thread?.loadable?.isThreadMode == true) {
+  private fun bookmarkThread(chanDescriptor: ChanDescriptor, threadNo: Long) {
+    if (callback.thread?.chanDescriptor?.isThreadDescriptor() == true) {
       // reply
       val thread = callback.thread
       if (thread != null) {
         val op = thread.op
-        val title = PostHelper.getTitle(op, localLoadable)
+        val title = PostHelper.getTitle(op, chanDescriptor)
         val thumbnail = op.firstImage()?.thumbnailUrl
 
-        bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!, title, thumbnail)
+        bookmarksManager.createBookmark(chanDescriptor.toThreadDescriptor(threadNo), title, thumbnail)
       } else {
-        bookmarksManager.createBookmark(localLoadable.threadDescriptorOrNull!!)
+        bookmarksManager.createBookmark(chanDescriptor.toThreadDescriptor(threadNo))
       }
     } else {
       // new thread, use the new loadable
-      draft.loadable = localLoadable
+      draft.chanDescriptor = chanDescriptor
       val title = PostHelper.getTitle(draft)
 
       bookmarksManager.createBookmark(
-        ChanDescriptor.ThreadDescriptor(localLoadable.boardDescriptor, loadableNo),
+        ChanDescriptor.ThreadDescriptor(chanDescriptor.boardDescriptor(), threadNo),
         title
       )
     }
@@ -619,7 +628,7 @@ class ReplyPresenter @Inject constructor(
       Page.INPUT -> callback.setPage(page)
       Page.AUTHENTICATION -> {
         callback.setPage(Page.AUTHENTICATION)
-        val authentication = loadable!!.site.actions().postAuthenticate()
+        val authentication = site.actions().postAuthenticate()
 
         // cleanup resources tied to the new captcha layout/presenter
         callback.destroyCurrentAuthentication()
@@ -627,7 +636,7 @@ class ReplyPresenter @Inject constructor(
         try {
           // If the user doesn't have WebView installed it will throw an error
           callback.initializeAuthentication(
-            loadable!!.site,
+            site,
             authentication,
             this,
             useV2NoJsCaptcha,
@@ -750,7 +759,7 @@ class ReplyPresenter @Inject constructor(
     fun openPreviewMessage(show: Boolean, message: String?)
     fun openSpoiler(show: Boolean, setUnchecked: Boolean)
     fun highlightPostNo(no: Int)
-    fun showThread(loadable: Loadable?)
+    fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
     fun onUploadingProgress(percent: Int)
     fun onFallbackToV1CaptchaView(autoReply: Boolean)

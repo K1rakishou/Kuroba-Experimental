@@ -30,8 +30,7 @@ class StorePostsInRepositoryUseCase(
 
     for (post in posts) {
       val postDescriptor = PostDescriptor.create(
-        post.board.site.name(),
-        post.board.code,
+        post.boardDescriptor,
         post.opNo,
         post.no
       )

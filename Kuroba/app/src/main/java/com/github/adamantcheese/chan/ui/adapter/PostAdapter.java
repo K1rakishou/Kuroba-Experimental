@@ -24,11 +24,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostIndexed;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.PostUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
 public class PostAdapter
@@ -58,6 +62,9 @@ public class PostAdapter
     private static final int TYPE_STATUS = 1;
     private static final int TYPE_POST_STUB = 2;
     private static final int TYPE_LAST_SEEN = 3;
+
+    @Inject
+    ChanThreadViewableInfoManager chanThreadViewableInfoManager;
 
     private final PostAdapterCallback postAdapterCallback;
     private final PostCellInterface.PostCellCallback postCellCallback;
@@ -73,13 +80,13 @@ public class PostAdapter
     private final Set<Long> updatingPosts = new HashSet<>(64);
     private PostPreloadedInfoHolder postPreloadedInfoHolder;
 
-    private Loadable loadable = null;
+    private ChanDescriptor chanDescriptor = null;
     private String error = null;
     private Post highlightedPost;
     private String highlightedPostId;
     private int highlightedPostNo = -1;
     private CharSequence highlightedPostTripcode;
-    private int selectedPost = -1;
+    private long selectedPost = -1L;
     private int lastSeenIndicatorPosition = -1;
 
     private ChanSettings.PostViewMode postViewMode;
@@ -94,6 +101,8 @@ public class PostAdapter
             ThreadStatusCell.Callback statusCellCallback,
             Theme theme
     ) {
+        inject(this);
+
         this.postFilterManager = postFilterManager;
         this.recyclerView = recyclerView;
         this.postAdapterCallback = postAdapterCallback;
@@ -164,8 +173,8 @@ public class PostAdapter
         switch (itemViewType) {
             case TYPE_POST:
             case TYPE_POST_STUB:
-                if (loadable == null) {
-                    throw new IllegalStateException("Loadable cannot be null");
+                if (chanDescriptor == null) {
+                    throw new IllegalStateException("catalogDescriptor cannot be null");
                 }
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
@@ -177,7 +186,7 @@ public class PostAdapter
                 PostCellInterface postCell = ((PostCellInterface) postViewHolder.itemView);
 
                 postCell.setPost(
-                        loadable,
+                        chanDescriptor,
                         post,
                         postIndexed.getCurrentPostIndex(),
                         postIndexed.getRealPostIndex(),
@@ -306,7 +315,7 @@ public class PostAdapter
     }
 
     public void setThread(
-            Loadable threadLoadable,
+            ChanDescriptor chanDescriptor,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
             List<PostIndexed> indexedPosts,
             boolean refreshAfterHideOrRemovePosts
@@ -314,10 +323,10 @@ public class PostAdapter
         BackgroundUtils.ensureMainThread();
 
         // changed threads, update
-        boolean changed = (this.loadable != null && !this.loadable.equals(threadLoadable));
+        boolean changed = (this.chanDescriptor != null && !this.chanDescriptor.equals(chanDescriptor));
         int lastLastSeenIndicator = lastSeenIndicatorPosition;
 
-        this.loadable = threadLoadable;
+        this.chanDescriptor = chanDescriptor;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 
         showError(null);
@@ -332,7 +341,7 @@ public class PostAdapter
         indexedDisplayList.clear();
         indexedDisplayList.addAll(indexedPosts);
 
-        lastSeenIndicatorPosition = getLastSeenIndicatorPosition(threadLoadable);
+        lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor);
 
         boolean shouldUpdate = changed
                 // Update for indicator (adds/removes extra recycler item that causes inconsistency
@@ -380,18 +389,26 @@ public class PostAdapter
         return localChanged;
     }
 
-    private int getLastSeenIndicatorPosition(Loadable threadLoadable) {
-        if (threadLoadable.lastViewed >= 0) {
-            // Do not process the last post, the indicator does not have to appear at the bottom
-            for (int i = 0, displayListSize = displayList.size() - 1; i < displayListSize; i++) {
-                Post post = displayList.get(i);
-                if (post.no == threadLoadable.lastViewed) {
-                    return lastSeenIndicatorPosition = i + 1;
+    private int getLastSeenIndicatorPosition(ChanDescriptor chanDescriptor) {
+        Integer index = chanThreadViewableInfoManager.view(chanDescriptor, chanThreadViewableInfoView -> {
+            if (chanThreadViewableInfoView.getLastViewedPostNo() >= 0) {
+                // Do not process the last post, the indicator does not have to appear at the bottom
+                for (int i = 0, displayListSize = displayList.size() - 1; i < displayListSize; i++) {
+                    Post post = displayList.get(i);
+                    if (post.no == chanThreadViewableInfoView.getLastViewedPostNo()) {
+                        return lastSeenIndicatorPosition = i + 1;
+                    }
                 }
             }
+
+            return -1;
+        });
+
+        if (index == null) {
+            return -1;
         }
 
-        return -1;
+        return index;
     }
 
     public List<Post> getDisplayList() {
@@ -404,7 +421,7 @@ public class PostAdapter
         highlightedPostNo = -1;
         highlightedPostTripcode = null;
 
-        selectedPost = -1;
+        selectedPost = -1L;
         lastSeenIndicatorPosition = -1;
         error = null;
 
@@ -462,7 +479,7 @@ public class PostAdapter
         notifyDataSetChanged();
     }
 
-    public void selectPost(int no) {
+    public void selectPost(long no) {
         selectedPost = no;
         notifyDataSetChanged();
     }
@@ -495,10 +512,10 @@ public class PostAdapter
     }
 
     private boolean showStatusView() {
-        Loadable loadable = postAdapterCallback.getLoadable();
-        // the loadable can be null while this adapter is used between cleanup and the removal
+        ChanDescriptor chanDescriptor = postAdapterCallback.getChanDescriptor();
+        // the chanDescriptor can be null while this adapter is used between cleanup and the removal
         // of the recyclerview from the view hierarchy, although it's rare.
-        return loadable != null;
+        return chanDescriptor != null;
     }
 
     public void updatePost(Post post) {
@@ -565,7 +582,7 @@ public class PostAdapter
     }
 
     public interface PostAdapterCallback {
-        @Nullable Loadable getLoadable();
+        @Nullable ChanDescriptor getChanDescriptor();
         void onUnhidePostClick(Post post);
     }
 }

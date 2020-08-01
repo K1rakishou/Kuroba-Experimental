@@ -6,15 +6,27 @@ sealed class ChanDescriptor {
 
   abstract fun siteName(): String
   abstract fun boardCode(): String
+  abstract fun threadDescriptorOrNull(): ThreadDescriptor?
+  abstract fun threadNoOrNull(): Long?
 
+  abstract fun boardDescriptor(): BoardDescriptor
   abstract fun siteDescriptor(): SiteDescriptor
   abstract fun serializeToString(): String
 
   @JvmOverloads
   fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
-    return when (this) {
-      is ThreadDescriptor -> this
-      is CatalogDescriptor -> ThreadDescriptor(boardDescriptor, threadNo!!)
+    when (this) {
+      is ThreadDescriptor -> {
+        check(this.threadNo == threadNo) {
+          "Attempt to convert thread descriptor (${this.threadNo}) " +
+            "into another thread descriptor (${threadNo})"
+        }
+
+        return this
+      }
+      is CatalogDescriptor -> {
+        return ThreadDescriptor(boardDescriptor, threadNo!!)
+      }
     }
   }
 
@@ -28,10 +40,10 @@ sealed class ChanDescriptor {
 
     override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
     override fun boardCode(): String = boardDescriptor.boardCode
-
-    override fun siteDescriptor(): SiteDescriptor {
-      return boardDescriptor.siteDescriptor
-    }
+    override fun threadDescriptorOrNull(): ThreadDescriptor? = this
+    override fun threadNoOrNull(): Long? = threadNo
+    override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
+    override fun boardDescriptor(): BoardDescriptor = boardDescriptor
 
     override fun serializeToString(): String {
       return "TD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}_${threadNo}"
@@ -65,11 +77,13 @@ sealed class ChanDescriptor {
         return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadNo)
       }
 
-      fun fromThreadDescriptorParcelable(threadDescriptorParcelable: ThreadDescriptorParcelable): ThreadDescriptor {
+      fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
+        require(descriptorParcelable.isThreadDescriptor()) { "Not a thread descriptor type" }
+
         return create(
-          threadDescriptorParcelable.siteName,
-          threadDescriptorParcelable.boardCode,
-          threadDescriptorParcelable.threadNo
+          descriptorParcelable.siteName,
+          descriptorParcelable.boardCode,
+          descriptorParcelable.threadNo!!
         )
       }
     }
@@ -83,10 +97,10 @@ sealed class ChanDescriptor {
 
     override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
     override fun boardCode(): String = boardDescriptor.boardCode
-
-    override fun siteDescriptor(): SiteDescriptor {
-      return boardDescriptor.siteDescriptor
-    }
+    override fun threadDescriptorOrNull(): ThreadDescriptor? = null
+    override fun threadNoOrNull(): Long? = null
+    override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
+    override fun boardDescriptor(): BoardDescriptor = boardDescriptor
 
     override fun serializeToString(): String {
       return "CD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
@@ -110,6 +124,16 @@ sealed class ChanDescriptor {
     }
 
     companion object {
+
+      fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
+        require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
+
+        return CatalogDescriptor.create(
+          descriptorParcelable.siteName,
+          descriptorParcelable.boardCode
+        )
+      }
+
       @JvmStatic
       fun create(siteName: String, boardCode: String): CatalogDescriptor {
         return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))

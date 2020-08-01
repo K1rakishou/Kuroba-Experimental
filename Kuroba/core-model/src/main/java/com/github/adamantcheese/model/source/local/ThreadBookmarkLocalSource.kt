@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.source.local
 
 import com.github.adamantcheese.common.flatMapIndexed
 import com.github.adamantcheese.common.mapReverseIndexedNotNull
+import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
@@ -125,7 +126,7 @@ class ThreadBookmarkLocalSource(
     bookmarksDescriptors: Set<ChanDescriptor.ThreadDescriptor>,
     cachedBookmarks: Map<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>
   ): List<ChanDescriptor.ThreadDescriptor> {
-    val list = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+    val list = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(cachedBookmarks.size / 2)
 
     cachedBookmarks.forEach { (threadDescriptor, _) ->
       if (!bookmarksDescriptors.contains(threadDescriptor)) {

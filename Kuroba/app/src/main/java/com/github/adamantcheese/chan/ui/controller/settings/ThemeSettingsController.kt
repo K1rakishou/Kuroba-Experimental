@@ -45,14 +45,11 @@ import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.PostIndexed
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.common.DefaultPostParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.core.site.parser.PostParser
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -72,6 +69,8 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.ViewPagerAdapter
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
@@ -87,15 +86,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   @Inject
   lateinit var mockReplyManager: MockReplyManager
 
-  private val dummyBoard = Board().apply {
-    site = Chan4()
-    name = "name"
-    code = "code"
-  }
-
-  private val dummyLoadable = Loadable.emptyLoadable().apply {
-    Loadable.Mode.THREAD
-  }
+  private val dummyBoardDescriptor =
+    BoardDescriptor.create("test_site", "test_board")
+  private val dummyThreadDescriptor =
+    ChanDescriptor.ThreadDescriptor.create("test_site", "test_board", 1234567890L)
 
   private val dummyPostCallback: PostCellCallback = object : PostCellCallback {
     override fun onPostBind(post: Post) {}
@@ -112,8 +106,8 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     override fun onPostNoClicked(post: Post) {}
     override fun onPostSelectionQuoted(post: Post, quoted: CharSequence) {}
 
-    override fun getLoadable(): Loadable? {
-      return dummyLoadable
+    override fun getChanDescriptor(): ChanDescriptor? {
+      return dummyThreadDescriptor
     }
 
     override fun getPage(op: Post): BoardPage? {
@@ -262,7 +256,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       val postParser = DefaultPostParser(parser, postFilterManager)
       val builder1 = Post.Builder()
-        .board(dummyBoard)
+        .boardDescriptor(dummyBoardDescriptor)
         .id(123456789)
         .opId(123456789)
         .op(true)
@@ -278,7 +272,8 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       val post1 = postParser.parse(theme, builder1, parserCallback)
       post1.repliesFrom.add(234567890L)
 
-      val builder2 = Post.Builder().board(dummyBoard)
+      val builder2 = Post.Builder()
+        .boardDescriptor(dummyBoardDescriptor)
         .id(234567890)
         .opId(123456789)
         .setUnixTimestampSeconds(
@@ -315,8 +310,8 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
         postFilterManager,
         postsView,
         object : PostAdapterCallback {
-          override fun getLoadable(): Loadable? {
-            return dummyLoadable
+          override fun getChanDescriptor(): ChanDescriptor? {
+            return dummyThreadDescriptor
           }
 
           override fun onUnhidePostClick(post: Post) {}
@@ -346,7 +341,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       val postPreloadedInfoHolder = PostPreloadedInfoHolder()
       postPreloadedInfoHolder.preloadPostsInfo(posts)
-      adapter.setThread(dummyLoadable, postPreloadedInfoHolder, indexPosts(posts), false)
+      adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts), false)
       adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
       postsView.adapter = adapter
 

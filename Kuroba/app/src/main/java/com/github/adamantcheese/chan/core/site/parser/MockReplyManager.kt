@@ -22,8 +22,7 @@ import java.util.*
  * */
 open class MockReplyManager {
   @GuardedBy("this")
-  private val mockReplyMultiMap =
-    mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
+  private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
 
   fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
     synchronized(this) {

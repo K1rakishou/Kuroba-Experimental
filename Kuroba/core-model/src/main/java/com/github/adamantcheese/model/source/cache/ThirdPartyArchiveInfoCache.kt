@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.cache
 
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveFetchResult
 import com.github.adamantcheese.model.data.archive.ThirdPartyArchiveInfo
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -138,7 +139,7 @@ class ThirdPartyArchiveInfoCache {
 }
 
 internal class FetchResultsPerThread {
-  private val fetchResultsMap: MutableMap<ChanDescriptor.ThreadDescriptor, MutableList<ThirdPartyArchiveFetchResult>> = mutableMapOf()
+  private val fetchResultsMap: MutableMap<ChanDescriptor.ThreadDescriptor, MutableList<ThirdPartyArchiveFetchResult>> = mutableMapWithCap(32)
 
   internal fun addFetchResult(fetchResult: ThirdPartyArchiveFetchResult) {
     if (!fetchResultsMap.containsKey(fetchResult.threadDescriptor)) {

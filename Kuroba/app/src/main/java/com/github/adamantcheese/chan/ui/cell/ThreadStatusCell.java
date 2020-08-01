@@ -35,11 +35,13 @@ import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import javax.inject.Inject;
 
@@ -52,6 +54,8 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
 
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    BoardRepository boardRepository;
 
     private Callback callback;
     private boolean running = false;
@@ -114,7 +118,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             return false;
         }
 
-        if (chanThread.getLoadable().isCatalogMode()) {
+        if (chanThread.getChanDescriptor().isCatalogDescriptor()) {
             if (isClickable()) {
                 setClickable(false);
             }
@@ -150,10 +154,13 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         builder.append('\n');
 
         Post op = chanThread.getOp();
-        Board board = op.board;
+        BoardDescriptor boardDescriptor = op.boardDescriptor;
 
-        if (board != null) {
-            appendThreadStatisticsPart(chanThread, builder, op, board);
+        if (boardDescriptor != null) {
+            Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
+            if (board != null) {
+                appendThreadStatisticsPart(chanThread, builder, op, board);
+            }
         }
 
         appendArchiveStatisticsPart(chanThread, builder);

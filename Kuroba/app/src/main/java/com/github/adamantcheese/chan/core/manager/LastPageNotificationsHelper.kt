@@ -18,7 +18,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.NotificationConstants
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
+import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import java.util.*
 
 class LastPageNotificationsHelper(
@@ -148,7 +148,7 @@ class LastPageNotificationsHelper(
 
     val intent = Intent(appContext, StartActivity::class.java)
     val threadDescriptorsParcelable = threadsWithTitles.map { (threadDescriptor, _) ->
-      ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
+      DescriptorParcelable.fromDescriptor(threadDescriptor)
     }
 
     intent

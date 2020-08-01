@@ -22,9 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * All {@code final} fields are thread-safe.
  */
 public class Post implements Comparable<Post> {
-    public final String boardId;
-    public final Board board;
+    public final BoardDescriptor boardDescriptor;
     public final long no;
     public final boolean isOP;
     public final String name;
@@ -116,10 +115,8 @@ public class Post implements Comparable<Post> {
             onDemandContentLoadedMap.put(loaderType, false);
         }
 
-        board = builder.board;
-        boardId = builder.board.code;
+        boardDescriptor = builder.boardDescriptor;
         no = builder.id;
-
         isOP = builder.op;
         totalRepliesCount = builder.totalRepliesCount;
         threadImagesCount = builder.threadImagesCount;
@@ -250,6 +247,10 @@ public class Post implements Comparable<Post> {
         return true;
     }
 
+    public BoardDescriptor getBoardDescriptor() {
+        return boardDescriptor;
+    }
+
     @AnyThread
     public boolean isSticky() {
         return sticky;
@@ -345,8 +346,7 @@ public class Post implements Comparable<Post> {
     public int hashCode() {
         // Post.comment can now be mutated so it's not safe to use it to calculate hash code
         return 31 * Objects.hashCode(no) +
-                31 * board.code.hashCode() +
-                31 * board.siteId +
+                31 * Objects.hashCode(boardDescriptor) +
                 31 * (deleted.get() ? 1 : 0);
     }
 
@@ -368,16 +368,14 @@ public class Post implements Comparable<Post> {
 
         // Post.comment can now be mutated so it's not safe to use it in equals()
         return this.no == otherPost.no
-                && this.board.code.equals(otherPost.board.code)
-                && this.board.siteId == otherPost.board.siteId
+                && this.boardDescriptor.equals(((Post) other).getBoardDescriptor())
                 && this.deleted.get() == otherPost.deleted.get();
     }
 
     @Override
     public String toString() {
         return "Post{" +
-                "siteName=" + board.site.name() +
-                ", boardCode=" + board.code +
+                "boardDescriptor=" + boardDescriptor.toString() +
                 ", no=" + no +
                 ", isOP=" + isOP +
                 ", comment=" + comment +
@@ -387,7 +385,7 @@ public class Post implements Comparable<Post> {
 
     public Post.Builder toPostBuilder(@Nullable ArchiveDescriptor archiveDescriptor) {
         Post.Builder postBuilder = new Post.Builder()
-                .board(board)
+                .boardDescriptor(boardDescriptor)
                 .id(no)
                 .opId(opNo)
                 .op(isOP)
@@ -419,7 +417,7 @@ public class Post implements Comparable<Post> {
 
     public static final class Builder {
         @Nullable
-        public Board board;
+        public BoardDescriptor boardDescriptor;
         public long id = -1;
         public long opId = -1;
         public boolean op;
@@ -476,11 +474,11 @@ public class Post implements Comparable<Post> {
                 return postDescriptor;
             }
 
-            Objects.requireNonNull(board);
+            Objects.requireNonNull(boardDescriptor);
 
             postDescriptor = PostDescriptor.create(
-                    board.site.name(),
-                    board.code,
+                    boardDescriptor.siteName(),
+                    boardDescriptor.getBoardCode(),
                     getOpId(),
                     id
             );
@@ -488,8 +486,8 @@ public class Post implements Comparable<Post> {
             return postDescriptor;
         }
 
-        public Builder board(Board board) {
-            this.board = board;
+        public Builder boardDescriptor(BoardDescriptor boardDescriptor) {
+            this.boardDescriptor = boardDescriptor;
             return this;
         }
 
@@ -679,7 +677,7 @@ public class Post implements Comparable<Post> {
         }
 
         public Post build() {
-            if (board == null || id < 0 || opId < 0 || unixTimestampSeconds < 0 || !postCommentBuilder.hasComment()) {
+            if (boardDescriptor == null || id < 0 || opId < 0 || unixTimestampSeconds < 0 || !postCommentBuilder.hasComment()) {
                 throw new IllegalArgumentException("Post data not complete");
             }
 

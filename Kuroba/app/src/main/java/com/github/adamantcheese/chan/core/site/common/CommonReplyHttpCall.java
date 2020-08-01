@@ -23,9 +23,11 @@ import com.github.adamantcheese.chan.core.site.http.HttpCall;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
 
+import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,9 +50,14 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public CommonReplyHttpCall(Site site, Reply reply) {
         super(site);
 
+        ChanDescriptor chanDescriptor = Objects.requireNonNull(
+                reply.chanDescriptor,
+                "reply.chanDescriptor == null"
+        );
+
         this.reply = reply;
-        replyResponse.siteId = reply.loadable.siteId;
-        replyResponse.boardCode = reply.loadable.boardCode;
+        this.replyResponse.siteDescriptor = chanDescriptor.siteDescriptor();
+        this.replyResponse.boardCode = chanDescriptor.boardCode();
     }
 
     @Override
@@ -65,7 +72,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
 
         addParameters(formBuilder, progressListener);
 
-        HttpUrl replyUrl = getSite().endpoints().reply(this.reply.loadable);
+        HttpUrl replyUrl = getSite().endpoints().reply(this.reply.chanDescriptor);
         requestBuilder.url(replyUrl);
         requestBuilder.addHeader("Referer", replyUrl.toString());
         requestBuilder.post(formBuilder.build());
@@ -77,19 +84,20 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         if (errorMessageMatcher.find()) {
             replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text();
             replyResponse.probablyBanned = replyResponse.errorMessage.contains(PROBABLY_BANNED_TEXT);
-        } else {
-            Matcher threadNoMatcher = THREAD_NO_PATTERN.matcher(result);
-            if (threadNoMatcher.find()) {
-                try {
-                    replyResponse.threadNo = Integer.parseInt(threadNoMatcher.group(1));
-                    replyResponse.postNo = Integer.parseInt(threadNoMatcher.group(2));
-                } catch (NumberFormatException ignored) {
-                }
+            return;
+        }
 
-                if (replyResponse.threadNo >= 0
-                        && replyResponse.postNo > 0) { //threadNo can be 0 iff this is a new thread
-                    replyResponse.posted = true;
-                }
+        Matcher threadNoMatcher = THREAD_NO_PATTERN.matcher(result);
+        if (threadNoMatcher.find()) {
+            try {
+                replyResponse.threadNo = Integer.parseInt(threadNoMatcher.group(1));
+                replyResponse.postNo = Integer.parseInt(threadNoMatcher.group(2));
+            } catch (NumberFormatException ignored) {
+            }
+
+            //threadNo can be 0 iff this is a new thread
+            if (replyResponse.threadNo >= 0 && replyResponse.postNo > 0) {
+                replyResponse.posted = true;
             }
         }
     }

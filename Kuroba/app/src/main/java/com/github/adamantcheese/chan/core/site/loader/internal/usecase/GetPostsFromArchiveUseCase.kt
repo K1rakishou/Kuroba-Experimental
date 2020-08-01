@@ -3,7 +3,6 @@ package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils
@@ -30,7 +29,6 @@ class GetPostsFromArchiveUseCase(
 
   suspend fun getPostsFromArchiveIfNecessary(
     freshPostsFromServer: List<Post.Builder>,
-    loadable: Loadable,
     descriptor: ChanDescriptor,
     archiveDescriptor: ArchiveDescriptor?
   ): ModularResult<List<Post.Builder>> {
@@ -107,7 +105,7 @@ class GetPostsFromArchiveUseCase(
         "${archivePostsThatWereDeleted.size} deleted (or updated) posts")
 
       return@Try ArchiveThreadMapper.fromThread(
-        loadable.board,
+        descriptor.boardDescriptor,
         ArchiveThread(archivePostsThatWereDeleted),
         archiveDescriptor
       )

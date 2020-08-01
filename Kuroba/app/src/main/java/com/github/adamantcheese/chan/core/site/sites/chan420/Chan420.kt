@@ -17,7 +17,6 @@
 package com.github.adamantcheese.chan.core.site.sites.chan420
 
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties
@@ -29,6 +28,7 @@ import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaApi
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaEndpoints
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -80,7 +80,7 @@ class Chan420 : CommonSite() {
         )
       }
     })
-    setApi(TaimabaApi(this))
+    setApi(TaimabaApi(siteRepository, boardRepository, this))
     setParser(TaimabaCommentParser(mockReplyManager))
   }
 
@@ -110,22 +110,24 @@ class Chan420 : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("420chan", "420")
       
-      override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
-        return if (loadable.isCatalogMode) {
-          if (postNo != null) {
-            "https://boards.420chan.org/" + loadable.boardCode + "/thread/" + postNo
-          } else {
-            "https://boards.420chan.org/" + loadable.boardCode + "/"
-          }
-        } else if (loadable.isThreadMode) {
-          var url = "https://boards.420chan.org/" + loadable.boardCode + "/thread/" + loadable.no
-          if (postNo != null && loadable.no.toLong() != postNo) {
-            url += "#${postNo}"
-          }
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+        val boardCode = chanDescriptor.boardCode()
 
-          url
-        } else {
-          "https://boards.420chan.org/" + loadable.boardCode + "/"
+        when (chanDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            return "https://boards.420chan.org/$boardCode/"
+          }
+          is ChanDescriptor.ThreadDescriptor -> {
+            var url = "https://boards.420chan.org/$boardCode/thread/" + chanDescriptor.threadNo
+            if (postNo != null && chanDescriptor.threadNo != postNo) {
+              url += "#${postNo}"
+            }
+
+            return url
+          }
+          else -> {
+            return "https://boards.420chan.org/$boardCode/"
+          }
         }
       }
     }

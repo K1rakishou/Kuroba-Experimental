@@ -17,10 +17,11 @@
 package com.github.adamantcheese.chan.core.site.sites;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
+import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
@@ -33,13 +34,17 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.common.ModularResult;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import kotlin.Unit;
 import okhttp3.HttpUrl;
 import okhttp3.Response;
 
@@ -73,14 +78,16 @@ public class Wired7
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, Long postNo) {
-            if (loadable.isCatalogMode()) {
-                return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
-            } else if (loadable.isThreadMode()) {
+        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo) {
+            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
                 return getUrl().newBuilder()
-                        .addPathSegment(loadable.boardCode)
+                        .addPathSegment(chanDescriptor.boardCode())
+                        .toString();
+            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                return getUrl().newBuilder()
+                        .addPathSegment(chanDescriptor.boardCode())
                         .addPathSegment("res")
-                        .addPathSegment(String.valueOf(loadable.no))
+                        .addPathSegment(String.valueOf(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo()))
                         .toString();
             } else {
                 return getUrl().toString();
@@ -128,45 +135,60 @@ public class Wired7
         });
 
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
-        setActions(new Wired7Actions(this, getOkHttpClient()));
-        setApi(new VichanApi(this));
+        setActions(new Wired7Actions(this, getOkHttpClient(), getSiteRepository()));
+        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
 
     private static class Wired7Actions extends VichanActions {
 
-        Wired7Actions(CommonSite commonSite, NetModule.ProxiedOkHttpClient okHttpClient) {
-            super(commonSite, okHttpClient);
+        Wired7Actions(
+                CommonSite commonSite,
+                NetModule.ProxiedOkHttpClient okHttpClient,
+                SiteRepository siteRepository
+        ) {
+            super(commonSite, okHttpClient, siteRepository);
         }
 
         @Override
-        public void setupPost(Reply reply, MultipartHttpCall call) {
-            call.parameter("board", reply.loadable.boardCode);
+        public ModularResult<Unit> setupPost(Reply reply, MultipartHttpCall call) {
+            return ModularResult.Try(() -> {
+                ChanDescriptor chanDescriptor = Objects.requireNonNull(
+                        reply.chanDescriptor,
+                        "reply.chanDescriptor is null"
+                );
 
-            if (reply.loadable.isThreadMode()) {
-                call.parameter("thread", String.valueOf(reply.loadable.no));
-            }
+                call.parameter("board", chanDescriptor.boardCode());
 
-            // Added with VichanAntispam.
-            call.parameter("post", "Post");
+                if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                    long threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
 
-            call.parameter("password", reply.password);
-            call.parameter("name", reply.name);
-            call.parameter("email", reply.options);
+                    call.parameter("thread", String.valueOf(threadNo));
+                }
 
-            if (!isEmpty(reply.subject)) {
-                call.parameter("subject", reply.subject);
-            }
+                // Added with VichanAntispam.
+                call.parameter("post", "Post");
 
-            call.parameter("body", reply.comment);
+                call.parameter("password", reply.password);
+                call.parameter("name", reply.name);
+                call.parameter("email", reply.options);
 
-            if (reply.file != null) {
-                call.fileParameter("file", reply.fileName, reply.file);
-            }
+                if (!isEmpty(reply.subject)) {
+                    call.parameter("subject", reply.subject);
+                }
 
-            if (reply.spoilerImage) {
-                call.parameter("spoiler", "on");
-            }
+                call.parameter("body", reply.comment);
+
+                if (reply.file != null) {
+                    call.fileParameter("file", reply.fileName, reply.file);
+                }
+
+                if (reply.spoilerImage) {
+                    call.parameter("spoiler", "on");
+                }
+
+                return Unit.INSTANCE;
+            });
         }
 
         @Override

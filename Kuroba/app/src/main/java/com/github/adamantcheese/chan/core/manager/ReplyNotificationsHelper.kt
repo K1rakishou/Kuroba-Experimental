@@ -30,11 +30,12 @@ import com.github.adamantcheese.chan.utils.NotificationConstants.MAX_VISIBLE_NOT
 import com.github.adamantcheese.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
 import com.github.adamantcheese.common.ellipsizeEnd
 import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReplyView
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.ThreadDescriptorParcelable
+import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import kotlinx.coroutines.*
@@ -470,7 +471,7 @@ class ReplyNotificationsHelper(
   private suspend fun getThreadThumbnails(
     originalPosts: Map<ChanDescriptor.ThreadDescriptor, ChanPost>
   ): Map<ChanDescriptor.ThreadDescriptor, BitmapDrawable> {
-    val resultMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, BitmapDrawable>()
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, BitmapDrawable>(originalPosts.size / 2)
 
     supervisorScope {
       originalPosts.entries
@@ -554,7 +555,7 @@ class ReplyNotificationsHelper(
   ): NotificationCompat.Builder {
     val intent = Intent(appContext, StartActivity::class.java)
     val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
-      ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
+      DescriptorParcelable.fromDescriptor(threadDescriptor)
     }
 
     intent
@@ -588,7 +589,7 @@ class ReplyNotificationsHelper(
     val intent = Intent(appContext, StartActivity::class.java)
 
     val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
-      ThreadDescriptorParcelable.fromThreadDescriptor(threadDescriptor)
+      DescriptorParcelable.fromDescriptor(threadDescriptor)
     }
 
     intent

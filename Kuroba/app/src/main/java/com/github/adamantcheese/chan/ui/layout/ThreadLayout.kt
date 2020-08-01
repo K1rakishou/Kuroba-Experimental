@@ -41,10 +41,10 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.http.Reply
@@ -67,6 +67,7 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
@@ -100,6 +101,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var siteRepository: SiteRepository
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -180,7 +183,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun destroy() {
     drawerCallbacks = null
-    presenter.unbindLoadable()
+    presenter.unbindChanDescriptor()
     threadListLayout.onDestroy()
   }
 
@@ -335,16 +338,16 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openReportController(post)
   }
 
-  override fun showThread(threadLoadable: Loadable) {
-    callback.showThread(threadLoadable)
+  override fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    callback.openThread(threadDescriptor)
   }
 
-  override fun showBoard(catalogLoadable: Loadable) {
-    callback.showBoard(catalogLoadable)
+  override fun showBoard(boardDescriptor: BoardDescriptor) {
+    callback.showBoard(boardDescriptor)
   }
 
-  override fun showBoardAndSearch(catalogLoadable: Loadable, searchQuery: String?) {
-    callback.showBoardAndSearch(catalogLoadable, searchQuery)
+  override fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?) {
+    callback.showBoardAndSearch(boardDescriptor, searchQuery)
   }
 
   override fun showPostsPopup(forPost: Post, posts: List<Post>) {
@@ -361,14 +364,19 @@ class ThreadLayout @JvmOverloads constructor(
     postPopupHelper.popAll()
   }
 
-  override fun showImages(images: List<PostImage>, index: Int, loadable: Loadable, thumbnail: ThumbnailView) {
+  override fun showImages(
+    images: List<PostImage>,
+    index: Int,
+    chanDescriptor: ChanDescriptor,
+    thumbnail: ThumbnailView
+  ) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    callback.showImages(images, index, loadable, thumbnail)
+    callback.showImages(images, index, chanDescriptor, thumbnail)
   }
 
   override fun showAlbum(images: List<PostImage>, index: Int) {
@@ -436,7 +444,7 @@ class ThreadLayout @JvmOverloads constructor(
     dialog.show()
   }
 
-  override fun selectPost(post: Int) {
+  override fun selectPost(post: Long) {
     threadListLayout.selectPost(post)
   }
 
@@ -563,12 +571,19 @@ class ThreadLayout @JvmOverloads constructor(
     removedPostsHelper.showPosts(threadPosts, threadNo)
   }
 
-  override fun onRestoreRemovedPostsClicked(threadLoadable: Loadable, selectedPosts: List<Long>) {
+  override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<Long>) {
     val postsToRestore: MutableList<PostHide> = ArrayList()
     for (postNo in selectedPosts) {
-      postsToRestore.add(
-        PostHide.unhidePost(threadLoadable.site.id(), threadLoadable.boardCode, postNo)
+      val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        ?: continue
+
+      val postHide = PostHide.unhidePost(
+        site.name(),
+        chanDescriptor.boardCode(),
+        postNo
       )
+
+      postsToRestore.add(postHide)
     }
 
     databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(postsToRestore))
@@ -618,8 +633,8 @@ class ThreadLayout @JvmOverloads constructor(
     newPostsNotification = null
   }
 
-  override fun getLoadable(): Loadable? {
-    return presenter.loadable
+  override fun getChanDescriptor(): ChanDescriptor? {
+    return presenter.chanDescriptor
   }
 
   override fun onDetachedFromWindow() {
@@ -627,14 +642,14 @@ class ThreadLayout @JvmOverloads constructor(
     super.onDetachedFromWindow()
   }
 
-  override fun showImageReencodingWindow(loadable: Loadable, supportsReencode: Boolean) {
+  override fun showImageReencodingWindow(chanDescriptor: ChanDescriptor, supportsReencode: Boolean) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    imageReencodingHelper.showController(loadable, supportsReencode)
+    imageReencodingHelper.showController(chanDescriptor, supportsReencode)
   }
 
   fun getThumbnail(postImage: PostImage?): ThumbnailView? {
@@ -683,7 +698,7 @@ class ThreadLayout @JvmOverloads constructor(
           threadListLayout.cleanup()
           postPopupHelper.popAll()
 
-          if (loadable == null || loadable?.isThreadMode == true) {
+          if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
             showSearch(false)
           }
 
@@ -790,11 +805,10 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar
 
     fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    fun showBoard(descriptor: ChanDescriptor.CatalogDescriptor)
-    fun showThread(threadLoadable: Loadable)
-    fun showBoard(catalogLoadable: Loadable)
-    fun showBoardAndSearch(catalogLoadable: Loadable, searchQuery: String?)
-    fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, loadable: Loadable, thumbnail: ThumbnailView)
+    fun openThread(descriptor: ChanDescriptor.ThreadDescriptor)
+    fun showBoard(descriptor: BoardDescriptor)
+    fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
+    fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
     fun onShowPosts()
     fun presentController(controller: Controller, animated: Boolean = true)

@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.site.common.vichan;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
@@ -56,13 +55,13 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, Map<String, String> arg) {
-        return root.builder().s(post.board.code).s("thumb").s(arg.get("tim") + ".png").url();
+    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilter, Map<String, String> arg) {
+        return root.builder().s(post.boardDescriptor.getBoardCode()).s("thumb").s(arg.get("tim") + ".png").url();
     }
 
     @Override
     public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
-        return root.builder().s(post.board.code).s("src").s(arg.get("tim") + "." + arg.get("ext")).url();
+        return root.builder().s(post.boardDescriptor.getBoardCode()).s("src").s(arg.get("tim") + "." + arg.get("ext")).url();
     }
 
     @Override
@@ -82,7 +81,7 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl reply(Loadable loadable) {
+    public HttpUrl reply(ChanDescriptor chanDescriptor) {
         return sys.builder().s("post.php").url();
     }
 

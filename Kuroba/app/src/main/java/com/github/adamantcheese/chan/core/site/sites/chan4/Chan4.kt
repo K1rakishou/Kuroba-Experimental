@@ -5,7 +5,6 @@ import android.webkit.WebView
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.OptionSettingItem
@@ -89,19 +88,24 @@ class Chan4 : SiteBase() {
       val imageFile = arg["tim"].toString() + "." + arg["ext"]
 
       return i.newBuilder()
-        .addPathSegment(post.board!!.code)
+        .addPathSegment(post.boardDescriptor!!.boardCode)
         .addPathSegment(imageFile)
         .build()
     }
 
-    override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, arg: Map<String, String>): HttpUrl {
-      val board = post.board!!
+    override fun thumbnailUrl(
+      post: Post.Builder,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>
+    ): HttpUrl {
+      val boardCode = post.boardDescriptor!!.boardCode
 
       return if (spoiler) {
         val image = s.newBuilder().addPathSegment("image")
-        if (board.customSpoilers >= 0) {
-          val i = random.nextInt(board.customSpoilers) + 1
-          image.addPathSegment("spoiler-" + board.code + i + ".png")
+        if (customSpoilers >= 0) {
+          val i = random.nextInt(customSpoilers) + 1
+          image.addPathSegment("spoiler-${boardCode}$i.png")
         } else {
           image.addPathSegment("spoiler.png")
         }
@@ -111,7 +115,7 @@ class Chan4 : SiteBase() {
         when (arg["ext"]) {
           "swf" -> (BuildConfig.RESOURCES_ENDPOINT + "swf_thumb.png").toHttpUrl()
           else -> t.newBuilder()
-            .addPathSegment(board.code)
+            .addPathSegment(boardCode)
             .addPathSegment(arg["tim"].toString() + "s.jpg")
             .build()
         }
@@ -153,24 +157,24 @@ class Chan4 : SiteBase() {
       return b.newBuilder().addPathSegment(board.code).addPathSegment("archive").build()
     }
 
-    override fun reply(loadable: Loadable): HttpUrl {
-      return sys.newBuilder().addPathSegment(loadable.boardCode).addPathSegment("post").build()
+    override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
+      return sys.newBuilder().addPathSegment(chanDescriptor.boardCode()).addPathSegment("post").build()
     }
 
     override fun delete(post: Post): HttpUrl {
-      val board = post.board
+      val boardCode = post.boardDescriptor.boardCode
 
       return sys.newBuilder()
-        .addPathSegment(board.code)
+        .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
         .build()
     }
 
     override fun report(post: Post): HttpUrl {
-      val board = post.board
+      val boardCode = post.boardDescriptor.boardCode
 
       return sys.newBuilder()
-        .addPathSegment(board.code)
+        .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
         .addQueryParameter("mode", "report")
         .addQueryParameter("no", post.no.toString())
@@ -407,7 +411,13 @@ class Chan4 : SiteBase() {
   }
 
   override fun chanReader(): ChanReader {
-    return FutabaChanReader(archivesManager, postFilterManager, mockReplyManager)
+    return FutabaChanReader(
+      archivesManager,
+      postFilterManager,
+      mockReplyManager,
+      siteRepository,
+      boardRepository
+    )
   }
 
   override fun actions(): SiteActions {
@@ -481,66 +491,68 @@ class Chan4 : SiteBase() {
           || host == "boards.4channel.org"
       }
 
-      override fun desktopUrl(loadable: Loadable, postNo: Long?): String {
-        if (loadable.isCatalogMode()) {
-          if (postNo != null && postNo > 0) {
-            return "https://boards.4chan.org/" + loadable.boardCode + "/thread/" + postNo
-          } else {
-            return "https://boards.4chan.org/" + loadable.boardCode + "/"
-          }
-        }
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+        val boardCode = chanDescriptor.boardCode()
 
-        if (loadable.isThreadMode()) {
-          var url = "https://boards.4chan.org/" + loadable.boardCode + "/thread/" + loadable.no
-          if (postNo != null && postNo > 0 && loadable.no.toLong() != postNo) {
+        if (chanDescriptor.isThreadDescriptor()) {
+          val threadNo = chanDescriptor.threadNoOrNull()!!
+          var url = "https://boards.4chan.org/$boardCode/thread/$threadNo"
+
+          if (postNo != null && postNo > 0 && threadNo != postNo) {
             url += "#p$postNo"
           }
 
           return url
         }
 
-        return "https://boards.4chan.org/" + loadable.boardCode + "/"
+        return "https://boards.4chan.org/$boardCode/"
       }
 
-      override fun resolveLoadable(site: Site, url: HttpUrl): Loadable? {
+      override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
         val parts = url.pathSegments
-        if (parts.isNotEmpty()) {
-          val boardCode = parts[0]
-          val board = site.board(boardCode)
-            ?: return null
+        if (parts.isEmpty()) {
+          return null
+        }
 
-          if (parts.size < 3) {
-            // Board mode
-            return Loadable.forCatalog(board)
-          }
+        val boardCode = parts[0]
+        if (site.board(boardCode) == null) {
+          return null
+        }
 
-          // Thread mode
-          val no = (parts[2].toIntOrNull() ?: -1).toLong()
-          var postId = -1L
-          val fragment = url.fragment
+        if (parts.size < 3) {
+          // Board mode
+          return ResolvedChanDescriptor(ChanDescriptor.CatalogDescriptor.create(site.name(), boardCode))
+        }
 
-          if (fragment != null) {
-            val index = fragment.indexOf("p")
-            if (index >= 0) {
-              postId = (fragment.substring(index + 1).toIntOrNull() ?: -1).toLong()
-            }
-          }
+        // Thread mode
+        val threadNo = (parts[2].toIntOrNull() ?: -1).toLong()
+        var postId = -1L
+        val fragment = url.fragment
 
-          if (no >= 0L) {
-            val markedPostNo = if (postId >= 0L) {
-              postId.toInt()
-            } else {
-              -1
-            }
-
-            val loadable = Loadable.forThread(site, board, no, "")
-            loadable.markedNo = markedPostNo
-
-            return loadable
+        if (fragment != null) {
+          val index = fragment.indexOf("p")
+          if (index >= 0) {
+            postId = (fragment.substring(index + 1).toIntOrNull() ?: -1).toLong()
           }
         }
 
-        return null
+        if (threadNo < 0L) {
+          return null
+        }
+
+        val markedPostNo = if (postId >= 0L) {
+          postId
+        } else {
+          null
+        }
+
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          site.name(),
+          boardCode,
+          threadNo
+        )
+
+        return ResolvedChanDescriptor(threadDescriptor, markedPostNo)
       }
     }
 

@@ -25,7 +25,6 @@ import androidx.core.util.Pair;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
@@ -33,6 +32,7 @@ import com.github.adamantcheese.chan.utils.BitmapUtils;
 import com.github.adamantcheese.chan.utils.ImageDecoder;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
 import java.util.concurrent.Executor;
@@ -59,20 +59,20 @@ public class ImageReencodingPresenter {
 
     private Executor executor = Executors.newSingleThreadExecutor();
     private ImageReencodingPresenterCallback callback;
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     private ImageOptions imageOptions;
     private BackgroundUtils.Cancelable cancelable;
 
     public ImageReencodingPresenter(
             Context context,
             ImageReencodingPresenterCallback callback,
-            Loadable loadable,
+            ChanDescriptor chanDescriptor,
             ImageOptions lastOptions
     ) {
         inject(this);
 
         this.context = context;
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
         this.callback = callback;
 
         if (lastOptions != null) {
@@ -92,7 +92,7 @@ public class ImageReencodingPresenter {
     }
 
     public void loadImagePreview() {
-        Reply reply = replyManager.getReply(loadable);
+        Reply reply = replyManager.getReply(chanDescriptor);
         Point displaySize = getDisplaySize();
 
         ImageDecoder.decodeFileOnBackgroundThread(
@@ -112,17 +112,17 @@ public class ImageReencodingPresenter {
     }
 
     public boolean hasAttachedFile() {
-        return replyManager.getReply(loadable).file != null;
+        return replyManager.getReply(chanDescriptor).file != null;
     }
 
     @Nullable
     public Bitmap.CompressFormat getImageFormat() {
-        Reply reply = replyManager.getReply(loadable);
+        Reply reply = replyManager.getReply(chanDescriptor);
         return BitmapUtils.getImageFormat(reply.file);
     }
 
     public Pair<Integer, Integer> getImageDims() {
-        Reply reply = replyManager.getReply(loadable);
+        Reply reply = replyManager.getReply(chanDescriptor);
         return BitmapUtils.getImageDims(reply.file);
     }
 
@@ -158,7 +158,7 @@ public class ImageReencodingPresenter {
                 return;
             }
 
-            reply = replyManager.getReply(loadable);
+            reply = replyManager.getReply(chanDescriptor);
         }
 
         ChanSettings.lastImageOptions.set(gson.toJson(imageOptions));

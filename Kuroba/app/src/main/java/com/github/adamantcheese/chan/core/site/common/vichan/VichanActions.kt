@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.site.common.vichan
 
 import android.text.TextUtils
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
+import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteAuthentication
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonActions
@@ -26,6 +27,8 @@ import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.DeleteResponse
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -33,34 +36,37 @@ import java.util.regex.Pattern
 
 open class VichanActions(
   commonSite: CommonSite,
-  private val okHttpClient: ProxiedOkHttpClient
+  private val okHttpClient: ProxiedOkHttpClient,
+  private val siteRepository: SiteRepository
 ) : CommonActions(commonSite) {
 
-  override fun setupPost(reply: Reply, call: MultipartHttpCall) {
-    call.parameter("board", reply.loadable.boardCode)
+  override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+    return ModularResult.Try {
+      call.parameter("board", reply.chanDescriptor!!.boardCode())
 
-    if (reply.loadable.isThreadMode) {
-      call.parameter("thread", reply.loadable.no.toString())
-    }
+      if (reply.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        call.parameter("thread", (reply.chanDescriptor as ChanDescriptor.ThreadDescriptor).threadNo.toString())
+      }
 
-    // Added with VichanAntispam.
-    // call.parameter("post", "Post");
-    call.parameter("password", reply.password)
-    call.parameter("name", reply.name)
-    call.parameter("email", reply.options)
+      // Added with VichanAntispam.
+      // call.parameter("post", "Post");
+      call.parameter("password", reply.password)
+      call.parameter("name", reply.name)
+      call.parameter("email", reply.options)
 
-    if (!TextUtils.isEmpty(reply.subject)) {
-      call.parameter("subject", reply.subject)
-    }
+      if (!TextUtils.isEmpty(reply.subject)) {
+        call.parameter("subject", reply.subject)
+      }
 
-    call.parameter("body", reply.comment)
+      call.parameter("body", reply.comment)
 
-    if (reply.file != null) {
-      call.fileParameter("file", reply.fileName, reply.file)
-    }
+      if (reply.file != null) {
+        call.fileParameter("file", reply.fileName, reply.file)
+      }
 
-    if (reply.spoilerImage) {
-      call.parameter("spoiler", "on")
+      if (reply.spoilerImage) {
+        call.parameter("spoiler", "on")
+      }
     }
   }
 
@@ -69,9 +75,15 @@ open class VichanActions(
   }
 
   override suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse) {
+    val siteDescriptor = reply.chanDescriptor!!.siteDescriptor()
+
+    val site = checkNotNull(siteRepository.bySiteDescriptor(siteDescriptor)) {
+      "Couldn't find site ${siteDescriptor}"
+    }
+
     val antispam = VichanAntispam(
       okHttpClient,
-      reply.loadable.desktopUrl().toHttpUrl()
+      site.resolvable().desktopUrl(reply.chanDescriptor!!, null).toHttpUrl()
     )
 
     antispam.addDefaultIgnoreFields()
@@ -96,12 +108,13 @@ open class VichanActions(
       else -> {
         val url = response.request.url
         val m = Pattern.compile("/\\w+/\\w+/(\\d+).html").matcher(url.encodedPath)
+
         try {
           if (m.find()) {
-            replyResponse.threadNo = m.group(1).toInt()
+            replyResponse.threadNo = m.group(1).toLong()
             val fragment = url.encodedFragment
             if (fragment != null) {
-              replyResponse.postNo = fragment.toInt()
+              replyResponse.postNo = fragment.toLong()
             } else {
               replyResponse.postNo = replyResponse.threadNo
             }
@@ -115,7 +128,7 @@ open class VichanActions(
   }
 
   override fun setupDelete(deleteRequest: DeleteRequest, call: MultipartHttpCall) {
-    call.parameter("board", deleteRequest.post.board.code)
+    call.parameter("board", deleteRequest.post.boardDescriptor.boardCode)
     call.parameter("delete", "Delete")
     call.parameter("delete_" + deleteRequest.post.no, "on")
     call.parameter("password", deleteRequest.savedReply.password)

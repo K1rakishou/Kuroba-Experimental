@@ -30,7 +30,7 @@ import okhttp3.HttpUrl;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 
 public class PostImage {
-    private static final long MAX_PREFETCH_FILE_SIZE =  10 * (1024 * 1024); // 10 MB
+    private static final long MAX_PREFETCH_FILE_SIZE = 10 * (1024 * 1024); // 10 MB
 
     public boolean hidden = ChanSettings.hideImages.get();
 

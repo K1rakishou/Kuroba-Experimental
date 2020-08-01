@@ -31,6 +31,7 @@ import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
+import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
@@ -447,5 +448,13 @@ public class ManagerModule {
                 pageRequestManager,
                 bookmarksManager
         );
+    }
+
+    @Provides
+    @Singleton
+    public ChanThreadViewableInfoManager provideChanThreadViewableInfoManager() {
+        Logger.d(AppModule.DI_TAG, "ChanThreadViewableInfoManager");
+
+        return new ChanThreadViewableInfoManager();
     }
 }

@@ -65,9 +65,12 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public LastReplyRepository provideLastReplyRepository() {
+    public LastReplyRepository provideLastReplyRepository(
+            SiteRepository siteRepository,
+            BoardRepository boardRepository
+    ) {
         Logger.d(AppModule.DI_TAG, "Last reply repository");
-        return new LastReplyRepository();
+        return new LastReplyRepository(siteRepository, boardRepository);
     }
 
 }

@@ -41,17 +41,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase;
+import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.http.Reply;
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4;
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter;
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.cell.PostCell;
@@ -74,6 +73,8 @@ import java.util.Calendar;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode.CARD;
@@ -107,6 +108,10 @@ public class ThreadListLayout
     ExtractPostMapInfoHolderUseCase extractPostMapInfoHolderUseCase;
     @Inject
     LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder;
+    @Inject
+    ChanThreadViewableInfoManager chanThreadViewableInfoManager;
+
+    private Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private ReplyLayout reply;
     private TextView searchStatus;
@@ -123,11 +128,40 @@ public class ThreadListLayout
     private int background;
     private boolean searchOpen;
     private int lastPostCount;
+    private Bitmap hat;
 
     @Nullable
     private ChanThread showingThread;
 
-    private Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final RecyclerView.ItemDecoration PARTY = new RecyclerView.ItemDecoration() {
+        @Override
+        public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
+            if (hat == null) {
+                hat = BitmapFactory.decodeResource(getResources(), R.drawable.partyhat);
+            }
+
+            for (int i = 0, j = parent.getChildCount(); i < j; i++) {
+                View child = parent.getChildAt(i);
+                if (child instanceof PostCellInterface) {
+                    PostCellInterface postView = (PostCellInterface) child;
+                    Post post = postView.getPost();
+
+                    if (post == null || !post.isOP || post.getPostImages().isEmpty()) {
+                        continue;
+                    }
+
+                    RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
+                    int top = child.getTop() + params.topMargin;
+                    int left = child.getLeft() + params.leftMargin;
+                    c.drawBitmap(hat,
+                            left - parent.getPaddingLeft() - dp(25),
+                            top - dp(80) - parent.getPaddingTop() + toolbarHeight(),
+                            null
+                    );
+                }
+            }
+        }
+    };
 
     private RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -143,12 +177,7 @@ public class ThreadListLayout
             return null;
         }
 
-        Loadable loadable = thread.getLoadable();
-        if (loadable == null) {
-            return null;
-        }
-
-        return loadable.getThreadDescriptorOrNull();
+        return thread.getChanDescriptor().threadDescriptorOrNull();
     }
 
     @Nullable
@@ -158,12 +187,7 @@ public class ThreadListLayout
             return null;
         }
 
-        Loadable loadable = thread.getLoadable();
-        if (loadable == null) {
-            return null;
-        }
-
-        return loadable.getChanDescriptor();
+        return thread.getChanDescriptor();
     }
 
     public ThreadListLayout(Context context, AttributeSet attrs) {
@@ -238,22 +262,33 @@ public class ThreadListLayout
 
     private void onRecyclerViewScrolled() {
         // onScrolled can be called after cleanup()
-        if (showingThread != null) {
-            int[] indexTop = getIndexAndTop();
+        if (showingThread == null) {
+            return;
+        }
 
-            showingThread.getLoadable().setListViewIndex(indexTop[0]);
-            showingThread.getLoadable().setListViewTop(indexTop[1]);
+        ChanDescriptor chanDescriptor = currentChanDescriptorOrNull();
+        if (chanDescriptor == null) {
+            return;
+        }
 
-            int last = getCompleteBottomAdapterPosition();
-            updateLastViewedPostNo(last);
+        int[] indexTop = getIndexAndTop();
 
-            if (last == postAdapter.getItemCount() - 1 && last > lastPostCount) {
-                lastPostCount = last;
+        chanThreadViewableInfoManager.update(chanDescriptor, chanThreadViewableInfo -> {
+            chanThreadViewableInfo.setListViewIndex(indexTop[0]);
+            chanThreadViewableInfo.setListViewTop(indexTop[1]);
 
-                // As requested by the RecyclerView, make sure that the adapter isn't changed
-                // while in a layout pass. Postpone to the next frame.
-                mainHandler.post(() -> ThreadListLayout.this.callback.onListScrolledToBottom());
-            }
+            return Unit.INSTANCE;
+        });
+
+        int last = getCompleteBottomAdapterPosition();
+        updateLastViewedPostNo(last);
+
+        if (last == postAdapter.getItemCount() - 1 && last > lastPostCount) {
+            lastPostCount = last;
+
+            // As requested by the RecyclerView, make sure that the adapter isn't changed
+            // while in a layout pass. Postpone to the next frame.
+            mainHandler.post(() -> ThreadListLayout.this.callback.onListScrolledToBottom());
         }
     }
 
@@ -362,22 +397,29 @@ public class ThreadListLayout
         showingThread = thread;
 
         if (initial) {
-            reply.bindLoadable(showingThread.getLoadable());
+            reply.bindLoadable(showingThread.getChanDescriptor());
 
             recyclerView.setLayoutManager(null);
             recyclerView.setLayoutManager(layoutManager);
             recyclerView.getRecycledViewPool().clear();
 
-            int index = thread.getLoadable().listViewIndex;
-            int top = thread.getLoadable().listViewTop;
+            ChanDescriptor chanDescriptor = currentChanDescriptorOrNull();
+            if (chanDescriptor != null) {
+                chanThreadViewableInfoManager.view(chanDescriptor, chanThreadViewableInfoView -> {
+                    int index = chanThreadViewableInfoView.getListViewIndex();
+                    int top = chanThreadViewableInfoView.getListViewTop();
 
-            switch (postViewMode) {
-                case LIST:
-                    ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(index, top);
-                    break;
-                case CARD:
-                    ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(index, top);
-                    break;
+                    switch (postViewMode) {
+                        case LIST:
+                            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(index, top);
+                            break;
+                        case CARD:
+                            ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(index, top);
+                            break;
+                    }
+
+                    return Unit.INSTANCE;
+                });
             }
 
             party();
@@ -386,9 +428,9 @@ public class ThreadListLayout
         setFastScroll(true);
 
         postAdapter.setThread(
-                thread.getLoadable(),
+                thread.getChanDescriptor(),
                 thread.getPostPreloadedInfoHolder(),
-                filter.apply(thread.getPosts(), thread.getLoadable()),
+                filter.apply(thread.getPosts(), thread.getChanDescriptor()),
                 refreshAfterHideOrRemovePosts
         );
     }
@@ -434,13 +476,9 @@ public class ThreadListLayout
             return;
         }
 
-        Loadable loadable = thread.getLoadable();
-        if (loadable != null) {
-            if (loadable.mode == Loadable.Mode.INVALID) {
-                throw new RuntimeException("Bad loadable mode");
-            }
-
-            replyViewStateManager.replyViewStateChanged(loadable.isCatalogMode(), open);
+        ChanDescriptor chanDescriptor = thread.getChanDescriptor();
+        if (chanDescriptor != null) {
+            replyViewStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open);
         }
 
         this.replyOpen = open;
@@ -624,7 +662,7 @@ public class ThreadListLayout
         reply.cleanup();
         openReply(false);
 
-        if (showingThread != null && showingThread.getLoadable().isThreadMode()) {
+        if (showingThread != null && showingThread.getChanDescriptor().isThreadDescriptor()) {
             openSearch(false);
         }
 
@@ -715,7 +753,7 @@ public class ThreadListLayout
         postAdapter.highlightPostTripcode(tripcode);
     }
 
-    public void selectPost(int post) {
+    public void selectPost(long post) {
         postAdapter.selectPost(post);
     }
 
@@ -725,8 +763,8 @@ public class ThreadListLayout
     }
 
     @Override
-    public void showThread(Loadable loadable) {
-        callback.showThread(loadable);
+    public void showThread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        callback.showThread(threadDescriptor);
     }
 
     @Override
@@ -806,7 +844,7 @@ public class ThreadListLayout
         } else {
             ChanThread thread = getThread();
             if (thread != null) {
-                if (thread.getLoadable().isThreadMode() && postInfoMapItemDecoration == null) {
+                if (thread.getChanDescriptor().isThreadDescriptor() && postInfoMapItemDecoration == null) {
                     postInfoMapItemDecoration = new PostInfoMapItemDecoration(
                             getContext(),
                             ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
@@ -899,40 +937,12 @@ public class ThreadListLayout
         return -1;
     }
 
-    private Bitmap hat;
-
-    private final RecyclerView.ItemDecoration PARTY = new RecyclerView.ItemDecoration() {
-        @Override
-        public void onDrawOver(Canvas c, RecyclerView parent, RecyclerView.State state) {
-            if (hat == null) {
-                hat = BitmapFactory.decodeResource(getResources(), R.drawable.partyhat);
-            }
-
-            for (int i = 0, j = parent.getChildCount(); i < j; i++) {
-                View child = parent.getChildAt(i);
-                if (child instanceof PostCellInterface) {
-                    PostCellInterface postView = (PostCellInterface) child;
-                    Post post = postView.getPost();
-
-                    if (post == null || !post.isOP || post.getPostImages().isEmpty()) {
-                        continue;
-                    }
-
-                    RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
-                    int top = child.getTop() + params.topMargin;
-                    int left = child.getLeft() + params.leftMargin;
-                    c.drawBitmap(hat,
-                            left - parent.getPaddingLeft() - dp(25),
-                            top - dp(80) - parent.getPaddingTop() + toolbarHeight(),
-                            null
-                    );
-                }
-            }
-        }
-    };
-
     private void party() {
-        if (showingThread.getLoadable().site instanceof Chan4) {
+        if (showingThread == null) {
+            return;
+        }
+
+        if (showingThread.getChanDescriptor().siteDescriptor().is4chan()) {
             Calendar calendar = Calendar.getInstance();
             if (calendar.get(Calendar.MONTH) == Calendar.OCTOBER && calendar.get(Calendar.DAY_OF_MONTH) == 1) {
                 recyclerView.addItemDecoration(PARTY);
@@ -960,7 +970,7 @@ public class ThreadListLayout
         }
     }
     public interface ThreadListLayoutPresenterCallback {
-        void showThread(Loadable loadable);
+        void showThread(ChanDescriptor.ThreadDescriptor threadDescriptor);
         void requestNewPostLoad();
         void onListScrolledToBottom();
     }
@@ -972,6 +982,6 @@ public class ThreadListLayout
         Toolbar getToolbar();
         void showImageReencodingWindow(boolean supportsReencode);
         boolean threadBackPressed();
-        @Nullable Loadable getLoadable();
+        @Nullable ChanDescriptor getChanDescriptor();
     }
 }

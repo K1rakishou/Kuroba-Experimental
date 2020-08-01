@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.site.sites;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
@@ -16,11 +16,15 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.common.ModularResult;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.Objects;
 
+import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 public class Kun8
@@ -51,14 +55,16 @@ public class Kun8
         }
 
         @Override
-        public String desktopUrl(Loadable loadable, Long postNo) {
-            if (loadable.isCatalogMode()) {
-                return getUrl().newBuilder().addPathSegment(loadable.boardCode).toString();
-            } else if (loadable.isThreadMode()) {
+        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo) {
+            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
                 return getUrl().newBuilder()
-                        .addPathSegment(loadable.boardCode)
+                        .addPathSegment(chanDescriptor.boardCode())
+                        .toString();
+            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                return getUrl().newBuilder()
+                        .addPathSegment(chanDescriptor.boardCode())
                         .addPathSegment("res")
-                        .addPathSegment(loadable.no + ".html")
+                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
                         .toString();
             } else {
                 return getUrl().toString();
@@ -90,12 +96,15 @@ public class Kun8
             @NonNull
             @Override
             public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
-                return HttpUrl.parse("https://media.8kun.top/" + "file_store/" + (arg.get("tim") + "." + arg.get("ext")));
+                HttpUrl url =
+                        HttpUrl.parse("https://media.8kun.top/file_store/" + (arg.get("tim") + "." + arg.get("ext")));
+
+                return Objects.requireNonNull(url, "image url is null");
             }
 
             @NonNull
             @Override
-            public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, Map<String, String> arg) {
+            public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilters, Map<String, String> arg) {
                 String ext;
                 switch (arg.get("ext")) {
                     case "jpeg":
@@ -109,22 +118,28 @@ public class Kun8
                         break;
                 }
 
-                return HttpUrl.parse("https://media.8kun.top/" + "file_store/" + "thumb/" + (arg.get("tim") + "." + ext));
+                HttpUrl url =
+                        HttpUrl.parse("https://media.8kun.top/file_store/thumb/" + (arg.get("tim") + "." + ext));
+
+                return Objects.requireNonNull(url, "thumbnail url is null");
             }
         });
 
-        setActions(new VichanActions(this, getOkHttpClient()) {
+        setActions(new VichanActions(this, getOkHttpClient(), getSiteRepository()) {
             @Override
-            public void setupPost(Reply reply, MultipartHttpCall call) {
-                super.setupPost(reply, call);
+            public ModularResult<Unit> setupPost(Reply reply, MultipartHttpCall call) {
+                return super.setupPost(reply, call)
+                        .mapValue(unit -> {
+                            if (reply.chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                                // "thread" is already added in VichanActions.
+                                call.parameter("post", "New Reply");
+                            } else {
+                                call.parameter("post", "New Thread");
+                                call.parameter("page", "1");
+                            }
 
-                if (reply.loadable.isThreadMode()) {
-                    // "thread" is already added in VichanActions.
-                    call.parameter("post", "New Reply");
-                } else {
-                    call.parameter("post", "New Thread");
-                    call.parameter("page", "1");
-                }
+                            return Unit.INSTANCE;
+                        });
             }
 
             @Override
@@ -143,7 +158,7 @@ public class Kun8
             }
         });
 
-        setApi(new VichanApi(this));
+        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
 
         setParser(new VichanCommentParser(getMockReplyManager()));
     }

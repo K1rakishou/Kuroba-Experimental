@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Loadable
+import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -16,13 +16,13 @@ class ReloadPostsFromDatabaseUseCase(
   private val gson: Gson,
   private val archivesManager: ArchivesManager,
   private val chanPostRepository: ChanPostRepository,
-  private val themeHelper: ThemeHelper
+  private val themeHelper: ThemeHelper,
+  private val boardRepository: BoardRepository
 ) {
 
   suspend fun reloadPosts(
     chanReaderProcessor: ChanReaderProcessor,
-    chanDescriptor: ChanDescriptor,
-    loadable: Loadable
+    chanDescriptor: ChanDescriptor
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -55,7 +55,6 @@ class ReloadPostsFromDatabaseUseCase(
     }.map { post ->
       return@map ChanPostMapper.toPost(
         gson,
-        loadable.board,
         post,
         themeHelper.theme,
         archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)
@@ -68,10 +67,7 @@ class ReloadPostsFromDatabaseUseCase(
     }
   }
 
-  suspend fun reloadPosts(
-    chanDescriptor: ChanDescriptor,
-    loadable: Loadable
-  ): List<Post> {
+  suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
     val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
@@ -84,7 +80,10 @@ class ReloadPostsFromDatabaseUseCase(
           .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        val postsToLoadCount = loadable.board.pages * loadable.board.perPage
+        val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor)
+          ?: return emptyList()
+
+        val postsToLoadCount = board.pages * board.perPage
 
         chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToLoadCount)
           .unwrap()
@@ -94,7 +93,6 @@ class ReloadPostsFromDatabaseUseCase(
     }.map { post ->
       return@map ChanPostMapper.toPost(
         gson,
-        loadable.board,
         post,
         themeHelper.theme,
         archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)

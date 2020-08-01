@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.mapper
 
 import androidx.core.text.toSpanned
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -74,7 +73,6 @@ object ChanPostMapper {
     @JvmStatic
     fun toPost(
             gson: Gson,
-            board: Board,
             chanPost: ChanPost,
             currentTheme: Theme,
             archiveDescriptor: ArchiveDescriptor?
@@ -111,7 +109,7 @@ object ChanPostMapper {
         }
 
         val postBuilder = Post.Builder()
-                .board(board)
+                .boardDescriptor(chanPost.postDescriptor.boardDescriptor())
                 .id(chanPost.postDescriptor.postNo)
                 .opId(opId)
                 .op(chanPost.isOp)

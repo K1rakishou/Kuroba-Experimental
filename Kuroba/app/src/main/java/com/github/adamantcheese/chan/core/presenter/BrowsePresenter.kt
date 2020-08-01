@@ -16,31 +16,28 @@
  */
 package com.github.adamantcheese.chan.core.presenter
 
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.model.ChanThread
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.model.orm.Loadable
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
-import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor.Companion.create
 import io.reactivex.disposables.CompositeDisposable
 import java.util.*
 import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
-  private val databaseManager: DatabaseManager,
   boardManager: BoardManager,
   private val historyNavigationManager: HistoryNavigationManager,
   private val bookmarksManager: BookmarksManager
 ) : Observer {
   private var callback: Callback? = null
   private var hadBoards: Boolean
-  private var currentBoard: Board? = null
+  private var currentBoardDescriptor: BoardDescriptor? = null
   private val savedBoardsObservable = boardManager.savedBoardsObservable
   private val compositeDisposable = CompositeDisposable()
 
@@ -59,18 +56,18 @@ class BrowsePresenter @Inject constructor(
     savedBoardsObservable.deleteObserver(this)
   }
 
-  fun currentBoard(): Board? {
-    return currentBoard
+  fun currentBoardDescriptor(): BoardDescriptor? {
+    return currentBoardDescriptor
   }
 
-  fun setBoard(board: Board) {
-    loadBoard(board)
+  fun setBoard(boardDescriptor: BoardDescriptor) {
+    loadBoard(boardDescriptor)
   }
 
   fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
-    val first = firstBoard()
-    if (first != null) {
-      loadBoard(first, !boardSetViaBoardSetup)
+    val boardDescriptor = firstBoardDescriptor()
+    if (boardDescriptor != null) {
+      loadBoard(boardDescriptor, !boardSetViaBoardSetup)
     }
   }
 
@@ -88,24 +85,20 @@ class BrowsePresenter @Inject constructor(
   }
 
   private fun hasBoards(): Boolean {
-    return firstBoard() != null
+    return firstBoardDescriptor() != null
   }
 
-  private fun firstBoard(): Board? {
+  private fun firstBoardDescriptor(): BoardDescriptor? {
     for (item in savedBoardsObservable.get()) {
       if (item.boards.isNotEmpty()) {
-        return item.boards[0]
+        return item.boards[0]?.boardDescriptor()
       }
     }
 
     return null
   }
 
-  private fun getLoadableForBoard(board: Board): Loadable {
-    return databaseManager.databaseLoadableManager.getOrCreateLoadable(Loadable.forCatalog(board))
-  }
-
-  private fun loadBoard(board: Board, isDefaultBoard: Boolean = false) {
+  private fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
     if (callback == null) {
       return
     }
@@ -115,16 +108,16 @@ class BrowsePresenter @Inject constructor(
       // board that we load on every app start. Because we want to have the last visited
       // thread/board on top not the default board.
       historyNavigationManager.moveNavElementToTop(
-        CatalogDescriptor(board.boardDescriptor())
+        CatalogDescriptor(boardDescriptor)
       )
     }
 
-    if (board == currentBoard) {
+    if (boardDescriptor == currentBoardDescriptor) {
       return
     }
 
-    currentBoard = board
-    callback!!.loadBoard(getLoadableForBoard(board))
+    currentBoardDescriptor = boardDescriptor
+    callback!!.loadBoard(boardDescriptor)
   }
 
   fun bookmarkEveryThread(chanThread: ChanThread?) {
@@ -133,14 +126,14 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
-    val catalogLoadable = chanThread.loadable
-    if (catalogLoadable == null) {
-      Logger.e(TAG, "bookmarkEveryThread() catalogLoadable == null")
+    val chanDescriptor = chanThread.chanDescriptor
+    if (chanDescriptor == null) {
+      Logger.e(TAG, "bookmarkEveryThread() chanDescriptor == null")
       return
     }
 
-    if (!catalogLoadable.isCatalogMode) {
-      Logger.e(TAG, "bookmarkEveryThread() not catalog loaded")
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      Logger.e(TAG, "bookmarkEveryThread() chanDescriptor is not catalog descriptor")
       return
     }
 
@@ -150,13 +143,8 @@ class BrowsePresenter @Inject constructor(
         continue
       }
 
-      val threadDescriptor = create(
-        catalogLoadable.site.name(),
-        catalogLoadable.boardCode,
-        post.no
-      )
-
-      val title = PostHelper.getTitle(post, catalogLoadable)
+      val threadDescriptor = chanDescriptor.toThreadDescriptor(post.no)
+      val title = PostHelper.getTitle(post, threadDescriptor)
 
       if (bookmarksManager.exists(threadDescriptor)) {
         Logger.d(TAG, "bookmarkEveryThread() bookmark for post ${title.take(50)} already exist")
@@ -164,10 +152,6 @@ class BrowsePresenter @Inject constructor(
       }
 
       val thumbnailUrl = post.firstImage()?.thumbnailUrl
-      val loadable = Loadable.forThread(catalogLoadable.site, post.board, post.no, title)
-
-      // We still need this so that we can open the thread by this bookmark later
-      databaseManager.databaseLoadableManager.getOrCreateLoadable(loadable)
       bookmarksManager.createBookmark(threadDescriptor, title, thumbnailUrl)
 
       Logger.d(TAG, "bookmarkEveryThread() created bookmark for post ${title.take(50)}")
@@ -177,7 +161,7 @@ class BrowsePresenter @Inject constructor(
   }
 
   interface Callback {
-    fun loadBoard(loadable: Loadable)
+    fun loadBoard(boardDescriptor: BoardDescriptor)
     fun loadSiteSetup(site: Site)
   }
 

@@ -30,7 +30,6 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Loadable;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
@@ -41,6 +40,7 @@ import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +65,7 @@ public class CardPostCell
     PostFilterManager postFilterManager;
 
     private Post post;
-    private Loadable loadable;
+    private ChanDescriptor chanDescriptor;
     private PostCellInterface.PostCellCallback callback;
     private PostPreloadedInfoHolder postPreloadedInfoHolder;
     private boolean compact = false;
@@ -171,7 +171,7 @@ public class CardPostCell
     }
 
     public void setPost(
-            Loadable loadable,
+            ChanDescriptor chanDescriptor,
             final Post post,
             final int currentPostIndex,
             final int realPostIndex,
@@ -191,7 +191,7 @@ public class CardPostCell
         }
 
         this.inPopup = inPopup;
-        this.loadable = loadable;
+        this.chanDescriptor = chanDescriptor;
         this.post = post;
         this.callback = callback;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;

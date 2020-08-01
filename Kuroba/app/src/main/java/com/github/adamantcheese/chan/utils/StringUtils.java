@@ -97,7 +97,11 @@ public class StringUtils {
         return bytesToHex(bytes);
     }
 
-    public static String maskPostNo(int postNo) {
+    public static String maskPostNo(@Nullable Long postNo) {
+        if (postNo == null) {
+            return "<null>";
+        }
+
         String postNoString = String.valueOf(postNo);
         if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
             return postNoString;

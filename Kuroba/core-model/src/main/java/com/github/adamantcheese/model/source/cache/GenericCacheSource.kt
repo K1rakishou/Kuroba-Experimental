@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.source.cache
 
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.awaitSilently
+import com.github.adamantcheese.common.mutableMapWithCap
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,7 @@ open class GenericCacheSource<Key, Value>(
           action.deferred.complete(cache[action.key])
         }
         is CacheAction.GetMany -> {
-          val result = mutableMapOf<Key, Value>()
+          val result = mutableMapWithCap<Key, Value>(action.keys)
 
           for (key in action.keys) {
             val value = cache[key] ?: continue
