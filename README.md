@@ -42,9 +42,9 @@ etc).
 - [x] New bookmarks (they were fully rewritten from scratch, now use way less memory, don't use wakelocks, show separate notifications
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
-- [ ] New database.
+- [ ] New database (more than half of the old database have been ported).
 - [ ] Edge-to-edge theme support.
-- [ ] Fully customizable themes (you will be able to choose colors in app).
+- [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
 
 ### Why does it not say that this is a fork of Kuroba on github page?
 Because Github does not allow creating two separate forks of the same repo. So I decided to create a new, standalone
