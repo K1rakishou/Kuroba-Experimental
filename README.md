@@ -30,10 +30,21 @@ Yes, most likely.
 Yes, if they are related to this particular version (for now the code base is very similar to original Kuroba so the 
 bugs will most likely be similar too).
 
-### What are the new features that are currently being worked on?
-- On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
-etc). (This one is already implemented and tested).
-- Third-party archives support. (Load deleted posts/images etc).
+### What are the new features that are currently being worked on or already implemented?
+- [x] New technological stack (Kotlin, RxJava/Coroutines, Dagger, Room etc).
+- [x] On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
+etc).
+- [x] Third-party archives support. (Load deleted posts/images etc).
+- [x] Ability to restore deleted posts/images from third-party archives (4chan only), redirect to archives when a thread is deleted,
+  ability to open any thread by it's id (and get automatically redirected to archive if the thread is deleted)
+- [x] New thread navigation (tabs).
+- [x] New in-app navigation (bottom nav bar).
+- [x] New bookmarks (they were fully rewritten from scratch, now use way less memory, don't use wakelocks, show separate notifications
+per thread (and notifications can be swiped away).
+- [x] Lots of other tiny improvements.
+- [ ] New database.
+- [ ] Edge-to-edge theme support.
+- [ ] Fully customizable themes (you will be able to choose colors in app).
 
 ### Why does it not say that this is a fork of Kuroba on github page?
 Because Github does not allow creating two separate forks of the same repo. So I decided to create a new, standalone
