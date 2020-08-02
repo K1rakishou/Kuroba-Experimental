@@ -34,9 +34,9 @@ bugs will most likely be similar too).
 - [x] New technological stack (Kotlin, RxJava/Coroutines, Room etc).
 - [x] On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
 etc).
-- [x] Third-party archives support. (Load deleted posts/images etc).
-- [x] Ability to restore deleted posts/images from third-party archives (4chan only), redirect to archives when a thread is deleted,
-  ability to open any thread by it's id (and get automatically redirected to archive if the thread is deleted)
+- [x] Third-party archives support. Ability to restore deleted posts/images from third-party archives (4chan only), 
+redirect to archives when a thread is deleted, ability to open any thread by it's id (and get automatically redirected to archive if 
+the thread is deleted)
 - [x] New thread navigation (tabs).
 - [x] New in-app navigation (bottom nav bar).
 - [x] New bookmarks (they were fully rewritten from scratch, now use way less memory, don't use wakelocks, show separate notifications
