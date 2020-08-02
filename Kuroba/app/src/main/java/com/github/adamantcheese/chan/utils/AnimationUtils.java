@@ -1,55 +1,11 @@
 package com.github.adamantcheese.chan.utils;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.graphics.Color;
 import android.view.View;
-import android.view.Window;
 import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.LinearInterpolator;
 import android.view.animation.ScaleAnimation;
 
 public class AnimationUtils {
-
-    public static void animateStatusBar(
-            Window window,
-            boolean in,
-            final int originalColor,
-            final int duration
-    ) {
-        final int targetColor = calculateTargetColor(in, originalColor);
-
-        ValueAnimator statusBar = ValueAnimator.ofArgb(
-                originalColor,
-                targetColor
-        );
-
-        statusBar.addUpdateListener(animation -> {
-            int color = (int) animation.getAnimatedValue();
-            window.setStatusBarColor(color);
-        });
-        statusBar.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                super.onAnimationCancel(animation);
-
-                window.setStatusBarColor(originalColor);
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-
-                window.setStatusBarColor(targetColor);
-            }
-        });
-        statusBar
-                .setDuration(duration)
-                .setInterpolator(new LinearInterpolator());
-
-        statusBar.start();
-    }
 
     private static int calculateTargetColor(boolean in, int originalColor) {
         float progress = in ? 0.5f : 0f;

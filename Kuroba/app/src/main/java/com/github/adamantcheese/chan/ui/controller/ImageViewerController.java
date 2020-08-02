@@ -81,7 +81,7 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
-import dev.chrisbanes.insetter.Insetter;
+import io.reactivex.disposables.Disposable;
 
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
@@ -177,24 +177,26 @@ public class ImageViewerController
 
         showVolumeMenuItem(false, true);
 
-        Insetter.setOnApplyInsetsListener(view, (view, insets, initialState) -> {
-            if (navigationController == null) {
-                return;
-            }
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> {
+                    if (navigationController == null) {
+                        return;
+                    }
 
-            Toolbar toolbar = navigationController.getToolbar();
-            if (toolbar == null) {
-                return;
-            }
+                    Toolbar toolbar = navigationController.getToolbar();
+                    if (toolbar == null) {
+                        return;
+                    }
 
-            if (isInImmersiveMode) {
-                hideToolbar();
-            } else {
-                toolbar.setTranslationY(globalWindowInsetsManager.top());
-                toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
-                toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
-            }
-        });
+                    if (isInImmersiveMode) {
+                        hideToolbar();
+                    } else {
+                        toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
+                        toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
+                    }
+                });
+
+        compositeDisposable().add(disposable);
 
         // Sanity check
         if (parentController.view.getWindowToken() == null) {

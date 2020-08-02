@@ -9,9 +9,11 @@ import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 
 class GlobalWindowInsetsManager {
-  private var initialized = false
   var isKeyboardOpened = false
     private set
+  var keyboardHeight = 0
+    private set
+
   private val currentInsets = Rect()
 
   private val insetsSubject = PublishProcessor.create<Unit>()
@@ -22,6 +24,10 @@ class GlobalWindowInsetsManager {
     keyboardStateSubject.onNext(opened)
   }
 
+  fun updateKeyboardHeight(height: Int) {
+    keyboardHeight = height.coerceAtLeast(0)
+  }
+
   fun updateInsets(insets: WindowInsetsCompat) {
     currentInsets.set(
       insets.systemWindowInsetLeft,
@@ -30,7 +36,6 @@ class GlobalWindowInsetsManager {
       insets.systemWindowInsetBottom
     )
 
-    initialized = true
     insetsSubject.onNext(Unit)
   }
 
@@ -51,7 +56,6 @@ class GlobalWindowInsetsManager {
       .hide()
   }
 
-  fun isInitialized() = initialized
   fun left() = currentInsets.left
   fun right() = currentInsets.right
   fun top() = currentInsets.top

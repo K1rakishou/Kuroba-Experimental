@@ -7,6 +7,7 @@ import android.graphics.drawable.StateListDrawable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 
@@ -21,6 +22,7 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 public class FastScrollerHelper {
 
     public static FastScroller create(
+            GlobalWindowInsetsManager globalWindowInsetsManager,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -46,6 +48,7 @@ public class FastScrollerHelper {
         }
 
         return new FastScroller(
+                globalWindowInsetsManager,
                 recyclerView,
                 postInfoMapItemDecoration,
                 thumb,

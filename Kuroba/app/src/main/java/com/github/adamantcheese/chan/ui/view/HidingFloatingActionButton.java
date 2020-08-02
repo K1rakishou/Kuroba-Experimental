@@ -34,6 +34,9 @@ import com.google.android.material.snackbar.Snackbar;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 
@@ -48,6 +51,7 @@ public class HidingFloatingActionButton
     private CoordinatorLayout coordinatorLayout;
     private float currentCollapseScale;
     private int bottomNavViewHeight;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
@@ -84,17 +88,7 @@ public class HidingFloatingActionButton
     public void setToolbar(Toolbar toolbar) {
         this.toolbar = toolbar;
 
-        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-
-        KotlinExtensionsKt.updateMargins(
-                this,
-                null,
-                null,
-                null,
-                null,
-                null,
-                layoutParams.bottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom()
-        );
+        updatePaddings();
 
         if (attachedToWindow && !attachedToToolbar) {
             toolbar.addCollapseCallback(this);
@@ -118,6 +112,11 @@ public class HidingFloatingActionButton
             toolbar.addCollapseCallback(this);
             attachedToToolbar = true;
         }
+
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> updatePaddings());
+
+        compositeDisposable.add(disposable);
     }
 
     @Override
@@ -130,7 +129,22 @@ public class HidingFloatingActionButton
             attachedToToolbar = false;
         }
 
+        compositeDisposable.clear();
         coordinatorLayout = null;
+    }
+
+    private void updatePaddings() {
+        int fabBottomMargin = getDimen(R.dimen.hiding_fab_margin);
+
+        KotlinExtensionsKt.updateMargins(
+                this,
+                null,
+                null,
+                null,
+                null,
+                null,
+                fabBottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom()
+        );
     }
 
     @Override

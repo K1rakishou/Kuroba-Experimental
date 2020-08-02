@@ -90,6 +90,10 @@ abstract class Controller(@JvmField var context: Context) {
   var alive = false
 
   protected var compositeDisposable = CompositeDisposable()
+    @JvmName("compositeDisposable")
+    get
+    private set
+
   protected var mainScope = MainScope() + CoroutineName("Controller")
 
   var shown = false

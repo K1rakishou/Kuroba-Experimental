@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.core.site.SiteService
 import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
+import com.github.adamantcheese.chan.ui.controller.ImageViewerController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
@@ -146,6 +147,10 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
+  // TODO(KurobaEx): Edge to edge bugs:
+  //  - Keyboard closes right away in SPLIT mode when orientation is landscape. In portrait orientation
+  //  reply layout has a huge bottom padding.
+  //  - Keyboard doesn't show up at all in PHONE and SLIDE modes in landscape orientation.
   private suspend fun onCreateInternal(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
     Chan.inject(this)
 
@@ -164,7 +169,12 @@ class StartActivity : AppCompatActivity(),
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = view.isKeyboardAppeared(insets.systemWindowInsetBottom)
 
+      globalWindowInsetsManager.updateKeyboardHeight(
+        view.calculateDesiredRealBottomInset(insets.systemWindowInsetBottom)
+      )
+
       globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
+
       globalWindowInsetsManager.updateInsets(
         insets.replaceSystemWindowInsets(
           insets.systemWindowInsetLeft,
@@ -226,6 +236,7 @@ class StartActivity : AppCompatActivity(),
       }
     }
 
+    updateNavBarVisibility(resources.configuration)
     onNewIntentInternal(intent)
   }
 
@@ -278,31 +289,49 @@ class StartActivity : AppCompatActivity(),
     controllerNavigationManager.listenForControllerNavigationChanges()
       .asFlow()
       .collect { change ->
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-          return@collect
-        }
-
-        when (change) {
-          is ControllerNavigationManager.ControllerNavigationChange.Presented,
-          is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
-          is ControllerNavigationManager.ControllerNavigationChange.Pushed,
-          is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
-            updateBottomNavBar()
-          }
-          else -> {
-            // no-op
-          }
-        }
+        updateBottomNavBarIfNeeded(change)
+        updateNavBarVisibility(resources.configuration, true)
       }
   }
 
-  private fun updateBottomNavBar() {
-    val hasRequiresNoBottomNavBarControllers = stack.any { navController ->
-      return@any isControllerPresent(navController) { controller ->
-        return@isControllerPresent controller is RequiresNoBottomNavBar
-      }
+  private fun updateNavBarVisibility(
+    newConfig: Configuration,
+    isFromControllerNavigationListener: Boolean = false
+  ) {
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      return
     }
 
+    if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+      val isViewingImages = isControllerAdded { controller -> controller is ImageViewerController }
+      if (!isViewingImages) {
+        window.hideNavBar()
+      }
+    } else if (!isFromControllerNavigationListener) {
+      window.showNavBar()
+    }
+  }
+
+  private fun updateBottomNavBarIfNeeded(change: ControllerNavigationManager.ControllerNavigationChange?) {
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      return
+    }
+
+    when (change) {
+      is ControllerNavigationManager.ControllerNavigationChange.Presented,
+      is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
+      is ControllerNavigationManager.ControllerNavigationChange.Pushed,
+      is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
+        updateBottomNavBar()
+      }
+      else -> {
+        // no-op
+      }
+    }
+  }
+
+  private fun updateBottomNavBar() {
+    val hasRequiresNoBottomNavBarControllers = isControllerAdded { controller -> controller is RequiresNoBottomNavBar }
     if (hasRequiresNoBottomNavBarControllers) {
       drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
     } else if (!replyViewStateManager.anyReplyViewVisible()) {
@@ -668,7 +697,7 @@ class StartActivity : AppCompatActivity(),
 
   fun isControllerAdded(predicate: Function1<Controller, Boolean>): Boolean {
     for (controller in stack) {
-      if (predicate.invoke(controller)) {
+      if (isControllerPresent(controller, predicate)) {
         return true
       }
     }
@@ -688,6 +717,8 @@ class StartActivity : AppCompatActivity(),
     for (controller in stack) {
       controller.onConfigurationChanged(newConfig)
     }
+
+    updateNavBarVisibility(newConfig)
   }
 
   override fun onBackPressed() {

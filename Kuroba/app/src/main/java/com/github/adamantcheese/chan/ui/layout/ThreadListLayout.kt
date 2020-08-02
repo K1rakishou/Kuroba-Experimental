@@ -859,6 +859,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
         if (fastScroller == null) {
           fastScroller = FastScrollerHelper.create(
+            globalWindowInsetsManager,
             recyclerView,
             postInfoMapItemDecoration,
             themeHelper.theme

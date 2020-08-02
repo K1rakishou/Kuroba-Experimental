@@ -369,9 +369,9 @@ public class ReplyLayout
         params.width = MATCH_PARENT;
         params.height = matchParent ? MATCH_PARENT : WRAP_CONTENT;
 
-        int bottomPadding = 0;
-        if (!globalWindowInsetsManager.isKeyboardOpened()) {
-            bottomPadding = globalWindowInsetsManager.bottom();
+        int bottomPadding = globalWindowInsetsManager.bottom();
+        if (globalWindowInsetsManager.isKeyboardOpened()) {
+            bottomPadding = globalWindowInsetsManager.getKeyboardHeight();
         }
 
         if (matchParent) {

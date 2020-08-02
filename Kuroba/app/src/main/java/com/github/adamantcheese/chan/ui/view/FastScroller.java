@@ -35,6 +35,8 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -86,6 +88,7 @@ public class FastScroller
 
     @Nullable
     private final PostInfoMapItemDecoration postInfoMapItemDecoration;
+    private final GlobalWindowInsetsManager globalWindowInsetsManager;
     private final int mScrollbarMinimumRange;
     private final int mMargin;
     private final int mThumbMinLength;
@@ -156,6 +159,7 @@ public class FastScroller
     };
 
     public FastScroller(
+            GlobalWindowInsetsManager globalWindowInsetsManager,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -185,6 +189,7 @@ public class FastScroller
         mThumbMinLength = thumbMinLength;
         mTargetWidth = targetWidth;
 
+        this.globalWindowInsetsManager = globalWindowInsetsManager;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
         this.bottomNavBarHeight = bottomNavBarHeight;
         this.toolbarHeight = toolbarHeight;
@@ -365,7 +370,7 @@ public class FastScroller
             postInfoMapItemDecoration.onDrawOver(
                     canvas,
                     mRecyclerView.getPaddingTop(),
-                    mRecyclerView.getPaddingBottom() + bottomNavBarHeight,
+                    mRecyclerView.getPaddingBottom() + bottomNavBarHeight + globalWindowInsetsManager.bottom(),
                     recyclerHeight,
                     recyclerWidth
             );
@@ -410,7 +415,7 @@ public class FastScroller
     private int getRecyclerViewBottomPadding() {
         return mNeedHorizontalScrollbar
                 ? 0
-                : mRecyclerView.getPaddingBottom() + bottomNavBarHeight;
+                : mRecyclerView.getPaddingBottom() + bottomNavBarHeight + globalWindowInsetsManager.bottom();
     }
 
     private void drawVerticalScrollbar(Canvas canvas) {
