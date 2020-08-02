@@ -817,9 +817,9 @@ class MultiImageView @JvmOverloads constructor(
   private fun updatePlayerControlsInsets(exoVideoView: PlayerView) {
     val insetsView = exoVideoView.findChild { childView ->
       childView.id == R.id.exo_controls_insets_view
-    } as FrameLayout
+    } as? FrameLayout
 
-    insetsView.updateHeight(globalWindowInsetsManager.bottom())
+    insetsView?.updateHeight(globalWindowInsetsManager.bottom())
   }
 
   private fun createExoPlayer(source: MediaSource): SimpleExoPlayer {

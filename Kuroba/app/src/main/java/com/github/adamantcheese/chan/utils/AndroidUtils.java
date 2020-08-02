@@ -63,7 +63,6 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -464,7 +463,7 @@ public class AndroidUtils {
 
             @Override
             public boolean onPreDraw() {
-                if (viewTreeObserver != view.getViewTreeObserver()) {
+                if (usingViewTreeObserver != view.getViewTreeObserver()) {
                     Logger.e(TAG, "view.getViewTreeObserver() is another viewtreeobserver! " +
                             "replacing with the new one");
 
@@ -536,22 +535,6 @@ public class AndroidUtils {
         ((TextView) snackbar.getView().findViewById(R.id.snackbar_text)).setTextColor(Color.WHITE);
         snackbar.setActionTextColor(getAttrColor(context, R.attr.colorAccent));
         snackbar.getView().setBackgroundColor(getAttrColor(context, R.attr.backcolor_secondary));
-    }
-
-    /**
-     * We only need to use this method in DrawerController. Snackbar "should" work normally in all
-     * other places.
-     */
-    public static void fixSnackbarInsets(
-            @NonNull Snackbar snackbar,
-            @NonNull GlobalWindowInsetsManager globalWindowInsetsManager
-    ) {
-        snackbar.getView().setPadding(
-                globalWindowInsetsManager.left(),
-                0,
-                0,
-                globalWindowInsetsManager.bottom()
-        );
     }
 
     public static boolean isConnected(int type) {

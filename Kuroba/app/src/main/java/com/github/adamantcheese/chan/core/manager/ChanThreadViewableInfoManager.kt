@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
+import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -22,6 +23,7 @@ class ChanThreadViewableInfoManager(
   @GuardedBy("lock")
   private val chanThreadViewableMap =
     mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
+  private val debouncer = SuspendDebouncer(appScope)
 
   suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
@@ -80,14 +82,17 @@ class ChanThreadViewableInfoManager(
   }
 
   private fun persist(chanDescriptor: ChanDescriptor) {
-    serializedCoroutineExecutor.post {
-      chanThreadViewableMap[chanDescriptor]?.let { chanThreadViewableInfo ->
-        chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
+    debouncer.post(DEBOUNCE_TIMEOUT_MS) {
+      serializedCoroutineExecutor.post {
+        chanThreadViewableMap[chanDescriptor]?.let { chanThreadViewableInfo ->
+          chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
+        }
       }
     }
   }
 
   companion object {
     private const val TAG = "ChanThreadViewableInfoManager"
+    private const val DEBOUNCE_TIMEOUT_MS = 1000L
   }
 }

@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <dimen name="toolbar_height">56dp</dimen>
     <dimen name="bottom_nav_view_height">56dp</dimen>
+    <dimen name="hiding_fab_margin">16dp</dimen>
 
     <dimen name="grid_card_width">120dp</dimen>
     <dimen name="grid_card_margin">2dp</dimen>

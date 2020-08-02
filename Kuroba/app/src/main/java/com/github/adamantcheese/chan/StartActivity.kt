@@ -29,6 +29,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.Pair
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import com.airbnb.epoxy.EpoxyController
@@ -94,6 +95,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var replyViewStateManager: ReplyViewStateManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -157,7 +160,30 @@ class StartActivity : AppCompatActivity(),
     updateManager = UpdateManager(this)
 
     contentView = findViewById(android.R.id.content)
-    setupFullscreen()
+
+    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+      val isKeyboardOpen = view.isKeyboardAppeared(insets.systemWindowInsetBottom)
+
+      globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
+      globalWindowInsetsManager.updateInsets(
+        insets.replaceSystemWindowInsets(
+          insets.systemWindowInsetLeft,
+          insets.systemWindowInsetTop,
+          insets.systemWindowInsetRight,
+          view.calculateDesiredBottomInset(insets.systemWindowInsetBottom)
+        )
+      )
+
+      return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
+        view,
+        insets.replaceSystemWindowInsets(
+          0,
+          0,
+          0,
+          view.calculateDesiredRealBottomInset(insets.systemWindowInsetBottom)
+        )
+      )
+    }
 
     // Setup base controllers, and decide if to use the split layout for tablets
     drawerController = DrawerController(this).apply {

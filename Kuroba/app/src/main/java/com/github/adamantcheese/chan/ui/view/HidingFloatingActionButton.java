@@ -25,11 +25,17 @@ import android.view.animation.Interpolator;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+
+import javax.inject.Inject;
+
+import static com.github.adamantcheese.chan.Chan.inject;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 
 public class HidingFloatingActionButton
         extends FloatingActionButton
@@ -42,6 +48,9 @@ public class HidingFloatingActionButton
     private CoordinatorLayout coordinatorLayout;
     private float currentCollapseScale;
     private int bottomNavViewHeight;
+
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public HidingFloatingActionButton(Context context) {
         super(context);
@@ -59,15 +68,17 @@ public class HidingFloatingActionButton
     }
 
     private void init() {
+        inject(this);
+
         // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
         // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
         // when in SPLIT mode.
         if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-            bottomNavViewHeight =
-                    (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
+            bottomNavViewHeight = getDimen(R.dimen.bottom_nav_view_height);
         } else {
             bottomNavViewHeight = 0;
         }
+
     }
 
     public void setToolbar(Toolbar toolbar) {
@@ -82,7 +93,7 @@ public class HidingFloatingActionButton
                 null,
                 null,
                 null,
-                layoutParams.bottomMargin + bottomNavViewHeight
+                layoutParams.bottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom()
         );
 
         if (attachedToWindow && !attachedToToolbar) {

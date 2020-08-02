@@ -181,9 +181,13 @@ class ThreadLayout @JvmOverloads constructor(
     if (!replyButtonEnabled) {
       AndroidUtils.removeFromParentView(replyButton)
     } else {
-      replyButton.setOnClickListener(this)
-      replyButton.setToolbar(callback.toolbar)
-      themeHelper.theme.applyFabColor(replyButton)
+      // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
+      // use the insets
+      post {
+        replyButton.setOnClickListener(this)
+        replyButton.setToolbar(callback.toolbar)
+        themeHelper.theme.applyFabColor(replyButton)
+      }
     }
   }
 

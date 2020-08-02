@@ -34,16 +34,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -55,11 +60,18 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 public class Toolbar
         extends LinearLayout
         implements View.OnClickListener, ToolbarPresenter.Callback, ToolbarContainer.Callback {
+    private final static String TAG = "Toolbar";
+
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
 
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
+
+    private boolean isInImmersiveMode = false;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private final RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -87,6 +99,7 @@ public class Toolbar
     private int lastScrollDeltaOffset;
     private int scrollOffset;
     private List<ToolbarCollapseCallback> collapseCallbacks = new ArrayList<>();
+    private List<ToolbarHeightUpdatesCallback> heightUpdatesCallbacks = new ArrayList<>();
 
     public Toolbar(Context context) {
         this(context, null);
@@ -119,8 +132,8 @@ public class Toolbar
         arrowMenuView.setImageDrawable(arrowMenuDrawable);
 
         AndroidUtils.setBoundlessRoundRippleBackground(arrowMenuView);
-
         int toolbarSize = getDimen(R.dimen.toolbar_height);
+
         FrameLayout.LayoutParams leftButtonContainerLp =
                 new FrameLayout.LayoutParams(toolbarSize, MATCH_PARENT, Gravity.CENTER_VERTICAL);
         leftButtonContainer.addView(arrowMenuView, leftButtonContainerLp);
@@ -134,6 +147,63 @@ public class Toolbar
         if (getElevation() == 0f) {
             setElevation(dp(4f));
         }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        int toolbarSize = getDimen(R.dimen.toolbar_height);
+        updateToolbarTopPaddingAndHeight(toolbarSize);
+
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe(unit -> {
+                    if (isInImmersiveMode) {
+                        return;
+                    }
+
+                    if (!updateToolbarTopPaddingAndHeight(toolbarSize)) {
+                        return;
+                    }
+
+                    for (ToolbarHeightUpdatesCallback heightUpdatesCallback : heightUpdatesCallbacks) {
+                        heightUpdatesCallback.onToolbarHeightKnown();
+                    }
+                });
+
+        compositeDisposable.add(disposable);
+    }
+
+    private boolean updateToolbarTopPaddingAndHeight(int toolbarSize) {
+        int newHeight = toolbarSize + globalWindowInsetsManager.top();
+        int oldHeight = getLayoutParams().height;
+
+        if (oldHeight == newHeight) {
+            return false;
+        }
+
+        getLayoutParams().height = newHeight;
+
+        KotlinExtensionsKt.updatePaddings(
+                this,
+                null,
+                null,
+                globalWindowInsetsManager.top(),
+                null
+        );
+
+        return true;
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        compositeDisposable.clear();
+    }
+
+    public void setInImmersiveMode(boolean inImmersiveMode) {
+        isInImmersiveMode = inImmersiveMode;
     }
 
     public void updateToolbarMenuStartPadding(int newPadding) {
@@ -168,7 +238,15 @@ public class Toolbar
     }
 
     public int getToolbarHeight() {
-        return getHeight() == 0 ? getLayoutParams().height : getHeight();
+        return getLayoutParams().height;
+    }
+
+    public void addToolbarHeightUpdatesCallback(ToolbarHeightUpdatesCallback callback) {
+        heightUpdatesCallbacks.add(callback);
+    }
+
+    public void removeToolbarHeightUpdatesCallback(ToolbarHeightUpdatesCallback callback) {
+        heightUpdatesCallbacks.remove(callback);
     }
 
     public void addCollapseCallback(ToolbarCollapseCallback callback) {
@@ -392,5 +470,9 @@ public class Toolbar
         void onCollapseTranslation(float offset);
 
         void onCollapseAnimation(boolean collapse);
+    }
+
+    public interface ToolbarHeightUpdatesCallback {
+        void onToolbarHeightKnown();
     }
 }

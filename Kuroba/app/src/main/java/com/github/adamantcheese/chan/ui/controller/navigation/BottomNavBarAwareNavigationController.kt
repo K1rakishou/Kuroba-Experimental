@@ -5,10 +5,13 @@ import android.content.res.Configuration
 import android.view.View
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.updateMargins
+import com.github.adamantcheese.common.updatePaddings
 import javax.inject.Inject
 
 class BottomNavBarAwareNavigationController(
@@ -18,6 +21,8 @@ class BottomNavBarAwareNavigationController(
 
   @Inject
   lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   override fun onCreate() {
     super.onCreate()
@@ -25,9 +30,25 @@ class BottomNavBarAwareNavigationController(
     view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
 
+    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
+
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setBackgroundColor(themeHelper.theme.primaryColor.color)
     requireToolbar().setCallback(this)
+
+    // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
+    // use the insets
+    view.post {
+      container.updatePaddings(
+        bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+      )
+
+      compositeDisposable += globalWindowInsetsManager.listenForInsetsChanges().subscribe {
+        container.updatePaddings(
+          bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+        )
+      }
+    }
   }
 
   override fun onShow() {

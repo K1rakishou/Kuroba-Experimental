@@ -135,6 +135,9 @@ class CancelableDownload(
 
     try {
       requestCancellationThread.submit {
+        val startTime = System.currentTimeMillis()
+        val funcsCount = disposeFuncList.size
+
         synchronized(this) {
           // Cancel downloads
           disposeFuncList.forEach { func ->
@@ -149,6 +152,8 @@ class CancelableDownload(
           disposeFuncList.clear()
         }
 
+        val totalTime = System.currentTimeMillis() - startTime
+
         val action = when (state.get()) {
           DownloadState.Running -> {
             throw RuntimeException("Expected Stopped or Canceled but got Running!")
@@ -157,7 +162,8 @@ class CancelableDownload(
           DownloadState.Canceled -> "Cancelling"
         }
 
-        Logger.d(TAG, "$action file download request, url = ${maskImageUrl(url)}")
+        Logger.d(TAG, "$action file download request (cleanup took: ${totalTime}ms, " +
+          "funcsCount=$funcsCount), url = ${maskImageUrl(url)}")
       }
         // We use timeout here just in case to not get deadlocked
         .get(MAX_CANCELLATION_WAIT_TIME_SECONDS, TimeUnit.SECONDS)

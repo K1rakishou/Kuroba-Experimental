@@ -31,6 +31,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
@@ -45,7 +46,11 @@ import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 import static com.github.adamantcheese.chan.Chan.inject;
+import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class ThreadStatusCell extends LinearLayout implements View.OnClickListener {
@@ -56,7 +61,10 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     ThemeHelper themeHelper;
     @Inject
     BoardRepository boardRepository;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private Callback callback;
     private boolean running = false;
     private TextView text;
@@ -88,13 +96,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         text = findViewById(R.id.text);
         text.setTypeface(themeHelper.getTheme().mainFont);
 
-        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-            int bottomNavViewHeight =
-                    (int) getContext().getResources().getDimension(R.dimen.bottom_nav_view_height);
-
-            KotlinExtensionsKt.updateMargins(this, null, null, null, null, null, bottomNavViewHeight);
-        }
-
+        updatePaddings();
         setOnClickListener(this);
     }
 
@@ -275,12 +277,40 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         schedule();
+        listenForInsetsUpdates();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         unschedule();
+
+        compositeDisposable.clear();
+    }
+
+    private void listenForInsetsUpdates() {
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe(unit -> updatePaddings());
+
+        compositeDisposable.add(disposable);
+    }
+
+    private void updatePaddings() {
+        int bottomPadding = getDimen(R.dimen.bottom_nav_view_height) + globalWindowInsetsManager.bottom();
+
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            bottomPadding = globalWindowInsetsManager.bottom();
+        }
+
+        KotlinExtensionsKt.updateMargins(
+                this,
+                null,
+                null,
+                null,
+                null,
+                null,
+                bottomPadding
+        );
     }
 
     @Override

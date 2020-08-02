@@ -187,9 +187,13 @@ public class ImageViewerController
                 return;
             }
 
-            toolbar.setTranslationY(globalWindowInsetsManager.top());
-            toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
-            toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
+            if (isInImmersiveMode) {
+                hideToolbar();
+            } else {
+                toolbar.setTranslationY(globalWindowInsetsManager.top());
+                toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
+                toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
+            }
         });
 
         // Sanity check
@@ -830,10 +834,7 @@ public class ImageViewerController
             }
         });
 
-        // setting this to 0 because GONE doesn't seem to work?
-        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
-        params.height = 0;
-        navigationController.getToolbar().setLayoutParams(params);
+        hideToolbar();
 
         onSystemUiVisibilityChange(false);
     }
@@ -850,11 +851,24 @@ public class ImageViewerController
         FullScreenUtilsKt.showSystemUI(window);
 
         // setting this to the toolbar height because VISIBLE doesn't seem to work?
-        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
-        params.height = getDimen(R.dimen.toolbar_height);
-        navigationController.getToolbar().setLayoutParams(params);
+        showToolbar();
 
         onSystemUiVisibilityChange(true);
+    }
+
+    private void hideToolbar() {
+        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
+        // setting this to 0 because GONE doesn't seem to work?
+        params.height = 0;
+        navigationController.getToolbar().setInImmersiveMode(true);
+        navigationController.getToolbar().setLayoutParams(params);
+    }
+
+    private void showToolbar() {
+        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
+        params.height = getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top();
+        navigationController.getToolbar().setInImmersiveMode(false);
+        navigationController.getToolbar().setLayoutParams(params);
     }
 
     public interface ImageViewerCallback {

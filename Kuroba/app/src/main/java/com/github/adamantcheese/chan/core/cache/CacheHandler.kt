@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * We need creation time to not delete cache file for active downloads or for downloads that has
  * just been completed (otherwise the user may see a black screen instead of an image/webm). The
- * minimum cache file life time is 5 minutes. That means we won't delete any cache file (and their
+ * minimum cache file life time is 5 minutes. That means we won't delete any cache files (and their
  * meta files) for at least 5 minutes.
  *
  * The cache size has been increased from 100MB up to 512MB. The reasoning for that is that there

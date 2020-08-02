@@ -144,14 +144,16 @@ open class ViewThreadController(
     val menuBuilder = navigation.buildMenu()
 
     if (!ChanSettings.textOnly.get()) {
-      menuBuilder.withItem(ACTION_ALBUM, R.drawable.ic_image_white_24dp) { item -> albumClicked(item) }
+      menuBuilder
+        .withItem(ACTION_ALBUM, R.drawable.ic_image_white_24dp) { item -> albumClicked(item) }
     }
 
     menuBuilder.withItem(ACTION_PIN, R.drawable.ic_bookmark_border_white_24dp) { item -> pinClicked(item) }
     val menuOverflowBuilder = menuBuilder.withOverflow(navigationController, this)
 
     if (!ChanSettings.enableReplyFab.get()) {
-      menuOverflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
+      menuOverflowBuilder
+        .withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
     }
 
     val descriptor = threadDescriptor

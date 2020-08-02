@@ -152,10 +152,12 @@ constructor(
       )
     }
 
+    // TODO(KurobaEx):
     ChanSettings.deserializeFromString(appSettingsParam.settings)
   }
 
   private fun onUpgrade(version: Int, appSettings: ExportedAppSettings): ExportedAppSettings {
+    // TODO(KurobaEx):
     return appSettings
   }
 

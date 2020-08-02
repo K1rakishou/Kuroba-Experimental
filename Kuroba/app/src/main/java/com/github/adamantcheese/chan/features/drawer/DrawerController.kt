@@ -24,7 +24,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyRecyclerView
@@ -54,8 +53,9 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.AndroidUtils.getDimen
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
-import com.github.adamantcheese.common.updateMargins
+import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.*
 import javax.inject.Inject
@@ -68,9 +68,9 @@ class DrawerController(
   View.OnClickListener {
 
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
   lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var rootLayout: FrameLayout
   private lateinit var container: FrameLayout
@@ -136,6 +136,7 @@ class DrawerController(
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
 
+    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomNavView.selectedItemId = R.id.action_browse
 
@@ -158,23 +159,6 @@ class DrawerController(
       return@setOnNavigationItemSelectedListener true
     }
 
-    ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { view, insets ->
-      globalWindowInsetsManager.updateInsets(insets)
-
-      view.updateMargins(
-        globalWindowInsetsManager.left(),
-        globalWindowInsetsManager.right(),
-        globalWindowInsetsManager.left(),
-        globalWindowInsetsManager.right(),
-        globalWindowInsetsManager.top(),
-        globalWindowInsetsManager.bottom()
-      )
-
-      return@setOnApplyWindowInsetsListener insets.replaceSystemWindowInsets(0, 0, 0, 0)
-    }
-
-    ViewCompat.requestApplyInsets(rootLayout)
-
     EpoxyTouchHelper
       .initSwiping(epoxyRecyclerView)
       .right()
@@ -191,6 +175,12 @@ class DrawerController(
           drawerPresenter.onNavElementSwipedAway(model.descriptor())
         }
       })
+
+    compositeDisposable += globalWindowInsetsManager.listenForInsetsChanges()
+      .subscribe {
+        bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+        bottomNavView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+      }
 
     compositeDisposable += drawerPresenter.listenForStateChanges()
       .subscribe(

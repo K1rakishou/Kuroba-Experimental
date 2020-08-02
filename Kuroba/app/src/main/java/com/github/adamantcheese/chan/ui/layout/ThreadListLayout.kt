@@ -40,10 +40,7 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase
-import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager
-import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
-import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -72,13 +69,15 @@ import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.thread.ChanThreadViewableInfo
+import io.reactivex.disposables.CompositeDisposable
 import java.util.*
 import javax.inject.Inject
 
 /**
  * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
  */
-class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs), ReplyLayoutCallback {
+class ThreadListLayout(context: Context, attrs: AttributeSet?)
+  : FrameLayout(context, attrs), ReplyLayoutCallback, Toolbar.ToolbarHeightUpdatesCallback {
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
@@ -91,11 +90,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
   @Inject
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var reply: ReplyLayout
   private lateinit var searchStatus: TextView
   private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
+
+  private val compositeDisposable = CompositeDisposable()
 
   private var layoutManager: RecyclerView.LayoutManager? = null
   private var fastScroller: FastScroller? = null
@@ -209,11 +212,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     return thread.chanDescriptor
   }
 
-  fun onDestroy() {
-    forceRecycleAllPostViews()
-    recyclerView.adapter = null
-  }
-
   private fun forceRecycleAllPostViews() {
     val adapter = recyclerView.adapter
     if (adapter is PostAdapter) {
@@ -238,6 +236,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     // View setup
     reply.setCallback(this)
     searchStatus.typeface = themeHelper.theme.mainFont
+
+    // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
+    // use the insets
+    post {
+      searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
+      reply.updatePaddings(0, 0, 0, 0)
+    }
   }
 
   fun setCallbacks(
@@ -269,8 +274,19 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     setFastScroll(false)
     attachToolbarScroll(true)
 
-    reply.setPadding(0, 0, 0, 0)
-    searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
+    threadListLayoutCallback?.toolbar?.addToolbarHeightUpdatesCallback(this)
+  }
+
+  fun onDestroy() {
+    compositeDisposable.clear()
+    threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
+
+    forceRecycleAllPostViews()
+    recyclerView.adapter = null
+  }
+
+  override fun onToolbarHeightKnown() {
+    setRecyclerViewPadding()
   }
 
   private fun onRecyclerViewScrolled() {

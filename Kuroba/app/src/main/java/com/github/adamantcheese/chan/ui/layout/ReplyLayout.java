@@ -50,6 +50,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
@@ -87,6 +88,9 @@ import java.io.File;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -119,6 +123,8 @@ public class ReplyLayout
     SiteRepository siteRepository;
     @Inject
     BoardRepository boardRepository;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private ReplyLayoutCallback callback;
     private AuthenticationLayoutInterface authenticationLayout;
@@ -162,6 +168,7 @@ public class ReplyLayout
     // Captcha views:
     private FrameLayout captchaContainer;
     private ImageView captchaHardReset;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private Runnable closeMessageRunnable = new Runnable() {
         @Override
@@ -186,6 +193,11 @@ public class ReplyLayout
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         EventBus.getDefault().register(this);
+
+        Disposable disposable = globalWindowInsetsManager.listenForKeyboardChanges()
+                .subscribe((isOpened) -> setWrappingMode(presenter.isExpanded()));
+
+        compositeDisposable.add(disposable);
     }
 
     @Override
@@ -198,6 +210,7 @@ public class ReplyLayout
         }
 
         EventBus.getDefault().unregister(this);
+        compositeDisposable.clear();
     }
 
     @Override
@@ -356,11 +369,16 @@ public class ReplyLayout
         params.width = MATCH_PARENT;
         params.height = matchParent ? MATCH_PARENT : WRAP_CONTENT;
 
+        int bottomPadding = 0;
+        if (!globalWindowInsetsManager.isKeyboardOpened()) {
+            bottomPadding = globalWindowInsetsManager.bottom();
+        }
+
         if (matchParent) {
-            setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, 0);
+            setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, bottomPadding);
             params.gravity = Gravity.TOP;
         } else {
-            setPadding(0, 0, 0, 0);
+            setPadding(0, 0, 0, bottomPadding);
             params.gravity = Gravity.BOTTOM;
         }
 
@@ -654,10 +672,7 @@ public class ReplyLayout
 
     @Subscribe
     public void onEvent(RefreshUIMessage message) {
-        setPadding(0, 0, 0, 0);
-        LayoutParams params = (LayoutParams) getLayoutParams();
-        params.gravity = Gravity.BOTTOM;
-        setLayoutParams(params);
+        setWrappingMode(presenter.isExpanded());
     }
 
     @Override
