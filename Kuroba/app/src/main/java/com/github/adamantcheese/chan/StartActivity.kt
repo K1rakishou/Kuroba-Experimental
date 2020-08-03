@@ -44,7 +44,6 @@ import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.core.site.SiteService
 import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
-import com.github.adamantcheese.chan.ui.controller.ImageViewerController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
@@ -55,6 +54,7 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
@@ -147,10 +147,6 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  // TODO(KurobaEx): Edge to edge bugs:
-  //  - Keyboard closes right away in SPLIT mode when orientation is landscape. In portrait orientation
-  //  reply layout has a huge bottom padding.
-  //  - Keyboard doesn't show up at all in PHONE and SLIDE modes in landscape orientation.
   private suspend fun onCreateInternal(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
     Chan.inject(this)
 
@@ -165,6 +161,12 @@ class StartActivity : AppCompatActivity(),
     updateManager = UpdateManager(this)
 
     contentView = findViewById(android.R.id.content)
+
+    // Setup base controllers, and decide if to use the split layout for tablets
+    drawerController = DrawerController(this).apply {
+      onCreate()
+      onShow()
+    }
 
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = view.isKeyboardAppeared(insets.systemWindowInsetBottom)
@@ -184,6 +186,11 @@ class StartActivity : AppCompatActivity(),
         )
       )
 
+      drawerController.view.updatePaddings(
+        left = globalWindowInsetsManager.left(),
+        right = globalWindowInsetsManager.right()
+      )
+
       return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
         view,
         insets.replaceSystemWindowInsets(
@@ -193,12 +200,6 @@ class StartActivity : AppCompatActivity(),
           view.calculateDesiredRealBottomInset(insets.systemWindowInsetBottom)
         )
       )
-    }
-
-    // Setup base controllers, and decide if to use the split layout for tablets
-    drawerController = DrawerController(this).apply {
-      onCreate()
-      onShow()
     }
 
     mainNavigationController = StyledToolbarNavigationController(this)
@@ -236,7 +237,6 @@ class StartActivity : AppCompatActivity(),
       }
     }
 
-    updateNavBarVisibility(resources.configuration)
     onNewIntentInternal(intent)
   }
 
@@ -290,26 +290,7 @@ class StartActivity : AppCompatActivity(),
       .asFlow()
       .collect { change ->
         updateBottomNavBarIfNeeded(change)
-        updateNavBarVisibility(resources.configuration, true)
       }
-  }
-
-  private fun updateNavBarVisibility(
-    newConfig: Configuration,
-    isFromControllerNavigationListener: Boolean = false
-  ) {
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      return
-    }
-
-    if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-      val isViewingImages = isControllerAdded { controller -> controller is ImageViewerController }
-      if (!isViewingImages) {
-        window.hideNavBar()
-      }
-    } else if (!isFromControllerNavigationListener) {
-      window.showNavBar()
-    }
   }
 
   private fun updateBottomNavBarIfNeeded(change: ControllerNavigationManager.ControllerNavigationChange?) {
@@ -717,8 +698,6 @@ class StartActivity : AppCompatActivity(),
     for (controller in stack) {
       controller.onConfigurationChanged(newConfig)
     }
-
-    updateNavBarVisibility(newConfig)
   }
 
   override fun onBackPressed() {

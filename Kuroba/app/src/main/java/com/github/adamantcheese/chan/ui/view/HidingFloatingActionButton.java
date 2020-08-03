@@ -51,6 +51,8 @@ public class HidingFloatingActionButton
     private CoordinatorLayout coordinatorLayout;
     private float currentCollapseScale;
     private int bottomNavViewHeight;
+
+    private boolean listeningForInsetsChanges = false;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Inject
@@ -83,6 +85,7 @@ public class HidingFloatingActionButton
             bottomNavViewHeight = 0;
         }
 
+        startListeningForInsetsChangesIfNeeded();
     }
 
     public void setToolbar(Toolbar toolbar) {
@@ -113,10 +116,7 @@ public class HidingFloatingActionButton
             attachedToToolbar = true;
         }
 
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> updatePaddings());
-
-        compositeDisposable.add(disposable);
+        startListeningForInsetsChangesIfNeeded();
     }
 
     @Override
@@ -129,8 +129,25 @@ public class HidingFloatingActionButton
             attachedToToolbar = false;
         }
 
-        compositeDisposable.clear();
+        stopListeningForInsetsChanges();
         coordinatorLayout = null;
+    }
+
+    private void stopListeningForInsetsChanges() {
+        compositeDisposable.clear();
+        listeningForInsetsChanges = false;
+    }
+
+    private void startListeningForInsetsChangesIfNeeded() {
+        if (listeningForInsetsChanges) {
+            return;
+        }
+
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> updatePaddings());
+
+        compositeDisposable.add(disposable);
+        listeningForInsetsChanges = true;
     }
 
     private void updatePaddings() {

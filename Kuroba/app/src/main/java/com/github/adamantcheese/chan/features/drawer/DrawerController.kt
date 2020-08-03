@@ -178,6 +178,11 @@ class DrawerController(
 
     compositeDisposable += globalWindowInsetsManager.listenForInsetsChanges()
       .subscribe {
+        epoxyRecyclerView.updatePaddings(
+          top = globalWindowInsetsManager.top(),
+          bottom = globalWindowInsetsManager.bottom()
+        )
+
         bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
         bottomNavView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
       }
