@@ -44,6 +44,7 @@ per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
 - [ ] New database (more than half of the old database have been ported).
+- [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
 - [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
 
 ### Why does it not say that this is a fork of Kuroba on github page?
