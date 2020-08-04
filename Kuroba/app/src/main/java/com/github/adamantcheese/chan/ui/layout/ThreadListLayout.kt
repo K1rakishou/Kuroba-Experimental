@@ -68,7 +68,6 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import com.github.adamantcheese.model.data.thread.ChanThreadViewableInfo
 import io.reactivex.disposables.CompositeDisposable
 import java.util.*
 import javax.inject.Inject
@@ -236,13 +235,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     // View setup
     reply.setCallback(this)
     searchStatus.typeface = themeHelper.theme.mainFont
-
-    // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
-    // use the insets
-    post {
-      searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
-      reply.updatePaddings(0, 0, 0, 0)
-    }
   }
 
   fun setCallbacks(
@@ -275,6 +267,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     attachToolbarScroll(true)
 
     threadListLayoutCallback?.toolbar?.addToolbarHeightUpdatesCallback(this)
+
+    searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
+    reply.updatePaddings(0, 0, 0, 0)
   }
 
   fun onDestroy() {
@@ -299,7 +294,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ?: return
     val indexTop = indexAndTop
 
-    chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo: ChanThreadViewableInfo ->
+    chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
       chanThreadViewableInfo.listViewIndex = indexTop[0]
       chanThreadViewableInfo.listViewTop = indexTop[1]
     }

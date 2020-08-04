@@ -264,7 +264,7 @@ public class ToolbarContainer extends FrameLayout {
         }
     }
 
-    private void setAnimation(ItemView view, ItemView previousView, ToolbarPresenter.AnimationStyle animationStyle) {
+    private void setAnimation(ItemView newView, ItemView previousView, ToolbarPresenter.AnimationStyle animationStyle) {
         if (animationStyle == ToolbarPresenter.AnimationStyle.PUSH
                 || animationStyle == ToolbarPresenter.AnimationStyle.POP) {
             final boolean pushing = animationStyle == ToolbarPresenter.AnimationStyle.PUSH;
@@ -289,11 +289,11 @@ public class ToolbarContainer extends FrameLayout {
             post(previousAnimation::start);
 
             // Current animation + arrow
-            view.view.setAlpha(0f);
+            newView.view.setAlpha(0f);
             ValueAnimator animation = getShortAnimator();
             animation.addUpdateListener(a -> {
                 float value = (float) a.getAnimatedValue();
-                setAnimationProgress(view.view, pushing, value);
+                setAnimationProgress(newView.view, pushing, value);
 
                 if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
                     setArrowProgress(value, !currentView.item.hasArrow());
@@ -302,11 +302,11 @@ public class ToolbarContainer extends FrameLayout {
             animation.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(view.view);
+                    animatorSet.remove(newView.view);
                 }
             });
             if (!pushing) animation.setStartDelay(100);
-            animatorSet.put(view.view, animation);
+            animatorSet.put(newView.view, animation);
 
             post(animation::start);
         } else if (animationStyle == ToolbarPresenter.AnimationStyle.FADE) {
@@ -327,14 +327,14 @@ public class ToolbarContainer extends FrameLayout {
             post(previousAnimation::start);
 
             // Current animation + arrow
-            view.view.setAlpha(0f);
-            ValueAnimator animation = ObjectAnimator.ofFloat(view.view, View.ALPHA, 0f, 1f);
+            newView.view.setAlpha(0f);
+            ValueAnimator animation = ObjectAnimator.ofFloat(newView.view, View.ALPHA, 0f, 1f);
             animation.setDuration(300);
             animation.setInterpolator(new LinearInterpolator());
             animation.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(view.view);
+                    animatorSet.remove(newView.view);
                 }
             });
             // A different animator for the arrow because that one needs the deceleration
@@ -354,11 +354,11 @@ public class ToolbarContainer extends FrameLayout {
             animationAndArrow.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(view.view);
+                    animatorSet.remove(newView.view);
                 }
             });
 
-            animatorSet.put(view.view, animationAndArrow);
+            animatorSet.put(newView.view, animationAndArrow);
 
             post(animationAndArrow::start);
         }

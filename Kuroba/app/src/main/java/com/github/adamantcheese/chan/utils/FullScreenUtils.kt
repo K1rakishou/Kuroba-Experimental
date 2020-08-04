@@ -18,8 +18,6 @@ object FullScreenUtils {
   }
 
   fun setupFullscreen(activity: Activity) {
-    activity.window.decorView.systemUiVisibility = getUIShownFlags()
-
     if (Build.VERSION.SDK_INT >= 21) {
       activity.window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
       activity.window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
@@ -48,12 +46,6 @@ object FullScreenUtils {
       or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
       or View.SYSTEM_UI_FLAG_FULLSCREEN
       )
-  }
-
-  private fun getUIShownFlags(): Int {
-    return (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-      or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
   }
 
   fun calculateDesiredBottomInset(

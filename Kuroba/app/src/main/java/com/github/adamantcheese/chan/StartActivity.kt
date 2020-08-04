@@ -165,6 +165,12 @@ class StartActivity : AppCompatActivity(),
     FullScreenUtils.setupDefaultFlags(window)
     FullScreenUtils.setupFullscreen(this)
 
+    // Setup base controllers, and decide if to use the split layout for tablets
+    drawerController = DrawerController(this).apply {
+      onCreate()
+      onShow()
+    }
+
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = FullScreenUtils.isKeyboardAppeared(view, insets.systemWindowInsetBottom)
 
