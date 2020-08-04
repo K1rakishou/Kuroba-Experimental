@@ -64,6 +64,7 @@ public class Toolbar
 
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
+    private static final int MIN_SCROLL_SLOP = dp(128);
 
     @Inject
     ThemeHelper themeHelper;
@@ -71,6 +72,9 @@ public class Toolbar
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private boolean isInImmersiveMode = false;
+    private int prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
+    private int pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
+
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private final RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
@@ -78,15 +82,38 @@ public class Toolbar
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             if (isAtTheTopOfThread(recyclerView)) {
                 setCollapse(TOOLBAR_COLLAPSE_SHOW, false);
-            } else {
-                processScrollCollapse(dy, false);
+                return;
             }
+
+            int currentState = recyclerView.getScrollState();
+
+            // Consume the scroll events without showing the toolbar if we have some unconsumed
+            // pixels left.
+            if (dy < 0 &&
+                    prevScrollState == RecyclerView.SCROLL_STATE_IDLE
+                    && currentState != RecyclerView.SCROLL_STATE_IDLE) {
+                if (pixelsToConsumeBeforeShowingToolbar > 0) {
+                    pixelsToConsumeBeforeShowingToolbar -= Math.abs(dy);
+                } else {
+                    prevScrollState = currentState;
+                }
+
+                return;
+            }
+
+            // Show the UI
+            processScrollCollapse(dy, false);
         }
 
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             if (recyclerView.getLayoutManager() != null && newState == RecyclerView.SCROLL_STATE_IDLE) {
                 processRecyclerViewScroll(recyclerView);
+            }
+
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
+                pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
             }
         }
     };
