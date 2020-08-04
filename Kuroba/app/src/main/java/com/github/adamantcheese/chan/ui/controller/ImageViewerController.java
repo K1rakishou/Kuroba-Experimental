@@ -67,7 +67,7 @@ import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.OptionalSwipeViewPager;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.TransitionImageView;
-import com.github.adamantcheese.chan.utils.FullScreenUtilsKt;
+import com.github.adamantcheese.chan.utils.FullScreenUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
@@ -827,11 +827,11 @@ public class ImageViewerController
         isInImmersiveMode = true;
 
         Window window = getWindow(context);
-        FullScreenUtilsKt.hideSystemUI(window);
+        FullScreenUtils.INSTANCE.hideSystemUI(window);
 
         window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
             if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
-                FullScreenUtilsKt.showSystemUI(window);
+                FullScreenUtils.INSTANCE.showSystemUI(window);
                 mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
             }
         });
@@ -850,7 +850,7 @@ public class ImageViewerController
 
         Window window = getWindow(context);
         window.getDecorView().setOnSystemUiVisibilityChangeListener(null);
-        FullScreenUtilsKt.showSystemUI(window);
+        FullScreenUtils.INSTANCE.showSystemUI(window);
 
         // setting this to the toolbar height because VISIBLE doesn't seem to work?
         showToolbar();

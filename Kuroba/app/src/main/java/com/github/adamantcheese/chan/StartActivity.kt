@@ -162,17 +162,14 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    // Setup base controllers, and decide if to use the split layout for tablets
-    drawerController = DrawerController(this).apply {
-      onCreate()
-      onShow()
-    }
+    FullScreenUtils.setupDefaultFlags(window)
+    FullScreenUtils.setupFullscreen(this)
 
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-      val isKeyboardOpen = view.isKeyboardAppeared(insets.systemWindowInsetBottom)
+      val isKeyboardOpen = FullScreenUtils.isKeyboardAppeared(view, insets.systemWindowInsetBottom)
 
       globalWindowInsetsManager.updateKeyboardHeight(
-        view.calculateDesiredRealBottomInset(insets.systemWindowInsetBottom)
+        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
       )
 
       globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
@@ -182,7 +179,7 @@ class StartActivity : AppCompatActivity(),
           insets.systemWindowInsetLeft,
           insets.systemWindowInsetTop,
           insets.systemWindowInsetRight,
-          view.calculateDesiredBottomInset(insets.systemWindowInsetBottom)
+          FullScreenUtils.calculateDesiredBottomInset(view, insets.systemWindowInsetBottom)
         )
       )
 
@@ -197,7 +194,7 @@ class StartActivity : AppCompatActivity(),
           0,
           0,
           0,
-          view.calculateDesiredRealBottomInset(insets.systemWindowInsetBottom)
+          FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
         )
       )
     }
