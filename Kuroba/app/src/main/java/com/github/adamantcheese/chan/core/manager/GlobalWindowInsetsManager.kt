@@ -9,6 +9,8 @@ import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 
 class GlobalWindowInsetsManager {
+  private var initialized = false
+
   var isKeyboardOpened = false
     private set
   var keyboardHeight = 0
@@ -36,6 +38,7 @@ class GlobalWindowInsetsManager {
       insets.systemWindowInsetBottom
     )
 
+    initialized = true
     insetsSubject.onNext(Unit)
   }
 
@@ -50,6 +53,7 @@ class GlobalWindowInsetsManager {
 
   fun listenForInsetsChanges(): Flowable<Unit> {
     return insetsSubject
+      .filter { initialized }
       .onBackpressureBuffer()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "insetsSubject unknown error", error) }

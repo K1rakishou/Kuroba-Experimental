@@ -81,6 +81,11 @@ public class PostRepliesController
     }
 
     @Override
+    protected int getLayoutId() {
+        return R.layout.layout_post_replies_container;
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -94,11 +99,6 @@ public class PostRepliesController
             repliesView.getRecycledViewPool().clear();
             ((RepliesAdapter) adapter).clear();
         }
-    }
-
-    @Override
-    protected int getLayoutId() {
-        return R.layout.layout_post_replies_container;
     }
 
     public ThumbnailView getThumbnail(PostImage postImage) {

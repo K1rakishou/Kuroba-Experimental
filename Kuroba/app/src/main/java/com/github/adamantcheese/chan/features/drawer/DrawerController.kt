@@ -85,6 +85,7 @@ class DrawerController(
   private val topThreadController: ThreadController?
     get() {
       val nav = mainToolbarNavigationController
+        ?: return null
 
       if (nav.top is ThreadController) {
         return nav.top as ThreadController?
@@ -101,10 +102,11 @@ class DrawerController(
       return null
     }
 
-  private val mainToolbarNavigationController: ToolbarNavigationController
+  private val mainToolbarNavigationController: ToolbarNavigationController?
     get() {
       var navigationController: ToolbarNavigationController? = null
-      val topController = top!!
+      val topController = top
+        ?: return null
 
       if (topController is StyledToolbarNavigationController) {
         navigationController = topController
@@ -393,7 +395,7 @@ class DrawerController(
   }
 
   fun onMenuClicked() {
-    val topController = mainToolbarNavigationController.top
+    val topController = mainToolbarNavigationController?.top
       ?: return
 
     if (topController.navigation.hasDrawer) {

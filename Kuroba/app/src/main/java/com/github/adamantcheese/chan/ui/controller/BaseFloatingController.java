@@ -35,19 +35,22 @@ public abstract class BaseFloatingController extends Controller {
         super.onCreate();
 
         view = inflate(context, getLayoutId());
+        updatePaddings();
 
         Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> {
-                    AndroidUtils.updatePaddings(
-                            view,
-                            HPADDING + globalWindowInsetsManager.left(),
-                            HPADDING + globalWindowInsetsManager.right(),
-                            VPADDING + globalWindowInsetsManager.top(),
-                            VPADDING + globalWindowInsetsManager.bottom()
-                    );
-                });
+                .subscribe((unit) -> updatePaddings());
 
         compositeDisposable.add(disposable);
+    }
+
+    private void updatePaddings() {
+        AndroidUtils.updatePaddings(
+                view,
+                HPADDING + globalWindowInsetsManager.left(),
+                HPADDING + globalWindowInsetsManager.right(),
+                VPADDING + globalWindowInsetsManager.top(),
+                VPADDING + globalWindowInsetsManager.bottom()
+        );
     }
 
     @Override
