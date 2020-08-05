@@ -43,6 +43,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.core.site.SiteService
 import com.github.adamantcheese.chan.features.drawer.DrawerController
+import com.github.adamantcheese.chan.ui.controller.AlbumViewController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
@@ -307,6 +308,11 @@ class StartActivity : AppCompatActivity(),
       is ControllerNavigationManager.ControllerNavigationChange.Pushed,
       is ControllerNavigationManager.ControllerNavigationChange.Popped -> {
         updateBottomNavBar()
+      }
+      is ControllerNavigationManager.ControllerNavigationChange.SwipedFrom -> {
+        if (change.controller is AlbumViewController) {
+          updateBottomNavBar()
+        }
       }
       else -> {
         // no-op
