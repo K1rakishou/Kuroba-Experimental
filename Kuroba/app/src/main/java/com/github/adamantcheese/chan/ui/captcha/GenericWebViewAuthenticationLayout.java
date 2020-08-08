@@ -24,6 +24,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
@@ -31,6 +32,9 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 
@@ -41,6 +45,8 @@ public class GenericWebViewAuthenticationLayout
     private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     private final Handler handler = new Handler();
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+
     private boolean attachedToWindow = false;
 
     private AuthenticationLayoutCallback callback;
@@ -50,15 +56,15 @@ public class GenericWebViewAuthenticationLayout
 
     @Inject
     CaptchaHolder captchaHolder;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public GenericWebViewAuthenticationLayout(Context context) {
         this(context, null);
-        init();
     }
 
     public GenericWebViewAuthenticationLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
-        init();
     }
 
     public GenericWebViewAuthenticationLayout(Context context, AttributeSet attrs, int defStyle) {
@@ -72,6 +78,11 @@ public class GenericWebViewAuthenticationLayout
         inject(this);
     }
 
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
+    }
+
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
     public void initialize(Site site, AuthenticationLayoutCallback callback, boolean ignored) {
@@ -82,6 +93,15 @@ public class GenericWebViewAuthenticationLayout
         WebSettings settings = getSettings();
         settings.setJavaScriptEnabled(true);
         addJavascriptInterface(new WebInterface(this), "WebInterface");
+
+        updatePaddings();
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> updatePaddings());
+        compositeDisposable.add(disposable);
+    }
+
+    private void updatePaddings() {
+        // no-op for now
     }
 
     @Override

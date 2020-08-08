@@ -33,6 +33,7 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
@@ -46,6 +47,9 @@ import com.google.gson.Gson;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 import static android.view.View.MeasureSpec.AT_MOST;
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -64,6 +68,7 @@ public class CaptchaLayout
 
     private static final String COOKIE_DOMAIN = "google.com";
 
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private AuthenticationLayoutCallback callback;
     private boolean loaded = false;
     private String baseUrl;
@@ -77,6 +82,8 @@ public class CaptchaLayout
     Gson gson;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public CaptchaLayout(Context context) {
         super(context);
@@ -138,6 +145,20 @@ public class CaptchaLayout
         setBackgroundColor(0x00000000);
 
         addJavascriptInterface(new CaptchaInterface(this), "CaptchaCallback");
+
+        updatePaddings();
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> updatePaddings());
+        compositeDisposable.add(disposable);
+    }
+
+    private void updatePaddings() {
+        // no-op for now
+    }
+
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
     }
 
     private void setUpJsCaptchaCookies(JsCaptchaCookiesJar jsCaptchaCookiesJar) {

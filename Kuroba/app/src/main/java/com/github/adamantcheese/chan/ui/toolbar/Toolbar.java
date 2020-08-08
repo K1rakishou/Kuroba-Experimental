@@ -35,7 +35,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -180,6 +179,8 @@ public class Toolbar
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
+        presenter.onAttached();
+
         int toolbarSize = getDimen(R.dimen.toolbar_height);
         updateToolbarTopPaddingAndHeight(toolbarSize);
 
@@ -226,6 +227,7 @@ public class Toolbar
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
+        presenter.onDetached();
         compositeDisposable.clear();
     }
 
@@ -357,11 +359,7 @@ public class Toolbar
     }
 
     public void closeSearchPhoneMode() {
-        if (ChanSettings.layoutMode.get() == ChanSettings.LayoutMode.PHONE) {
-            presenter.closeSearchIfNeeded();
-        } else {
-            presenter.closeSearch();
-        }
+        presenter.closeSearchPhoneMode();
     }
 
     public boolean isTransitioning() {

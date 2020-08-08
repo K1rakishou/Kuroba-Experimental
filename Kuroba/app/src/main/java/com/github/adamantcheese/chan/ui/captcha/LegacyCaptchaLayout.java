@@ -31,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -41,6 +42,9 @@ import com.github.adamantcheese.chan.utils.IOUtils;
 
 import javax.inject.Inject;
 
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 
@@ -50,7 +54,10 @@ public class LegacyCaptchaLayout
 
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private FixedRatioThumbnailView image;
     private EditText input;
     private ImageView submit;
@@ -116,6 +123,13 @@ public class LegacyCaptchaLayout
         settings.setJavaScriptEnabled(true);
 
         internalWebView.addJavascriptInterface(new CaptchaInterface(this), "CaptchaCallback");
+
+
+    }
+
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
     }
 
     @Override
@@ -135,6 +149,16 @@ public class LegacyCaptchaLayout
 
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;
+
+        updatePaddings();
+
+        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
+                .subscribe((unit) -> updatePaddings());
+        compositeDisposable.add(disposable);
+    }
+
+    private void updatePaddings() {
+        // no-op for now
     }
 
     @Override

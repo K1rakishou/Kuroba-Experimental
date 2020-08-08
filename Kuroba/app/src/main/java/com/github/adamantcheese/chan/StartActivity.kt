@@ -94,7 +94,7 @@ class StartActivity : AppCompatActivity(),
   @Inject
   lateinit var controllerNavigationManager: ControllerNavigationManager
   @Inject
-  lateinit var replyViewStateManager: ReplyViewStateManager
+  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
   @Inject
@@ -140,6 +140,7 @@ class StartActivity : AppCompatActivity(),
     updateManager.onDestroy()
     imagePickDelegate.onDestroy()
     fileChooser.removeCallbacks()
+    globalWindowInsetsManager.requestInsetsApplyFunc = null
 
     while (!stack.isEmpty()) {
       val controller = stack.pop()
@@ -172,14 +173,12 @@ class StartActivity : AppCompatActivity(),
       onShow()
     }
 
+    globalWindowInsetsManager.requestInsetsApplyFunc = {
+      ViewCompat.requestApplyInsets(window.decorView)
+    }
+
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = FullScreenUtils.isKeyboardAppeared(view, insets.systemWindowInsetBottom)
-
-      globalWindowInsetsManager.updateKeyboardHeight(
-        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
-      )
-
-      globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
 
       globalWindowInsetsManager.updateInsets(
         insets.replaceSystemWindowInsets(
@@ -189,6 +188,13 @@ class StartActivity : AppCompatActivity(),
           FullScreenUtils.calculateDesiredBottomInset(view, insets.systemWindowInsetBottom)
         )
       )
+
+      globalWindowInsetsManager.updateKeyboardHeight(
+        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
+      )
+
+      globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
+      globalWindowInsetsManager.fireCallbacks()
 
       drawerController.view.updatePaddings(
         left = globalWindowInsetsManager.left(),
@@ -278,7 +284,7 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun listenForReplyViewStatesChanges() {
-    replyViewStateManager.listenForReplyViewsStateUpdates()
+    bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
       .asFlow()
       .collect {
         if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
@@ -324,9 +330,15 @@ class StartActivity : AppCompatActivity(),
     val hasRequiresNoBottomNavBarControllers = isControllerAdded { controller -> controller is RequiresNoBottomNavBar }
     if (hasRequiresNoBottomNavBarControllers) {
       drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
-    } else if (!replyViewStateManager.anyReplyViewVisible()) {
-      drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
+      return
     }
+
+    if (bottomNavBarVisibilityStateManager.anyViewIsVisible()) {
+      drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
+      return
+    }
+
+    drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
   }
 
   private fun isControllerPresent(

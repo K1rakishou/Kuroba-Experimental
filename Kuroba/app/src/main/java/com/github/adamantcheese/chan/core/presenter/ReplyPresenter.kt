@@ -53,6 +53,7 @@ import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 
 class ReplyPresenter @Inject constructor(
   private val context: Context,
@@ -68,9 +69,11 @@ class ReplyPresenter @Inject constructor(
     INPUT, AUTHENTICATION, LOADING
   }
 
+  var page = Page.INPUT
+    private set
+
   private var bound = false
   private var chanDescriptor: ChanDescriptor? = null
-  private var page = Page.INPUT
   private var previewOpen = false
   private var pickingFile = false
   private var selectedQuote = -1
@@ -135,6 +138,7 @@ class ReplyPresenter @Inject constructor(
     if (draft.file != null) {
       showPreview(draft.fileName, draft.file)
     }
+
     switchPage(Page.INPUT)
   }
 
@@ -263,36 +267,34 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     // only 4chan seems to have the post delay, this is a hack for that
-    if (chanDescriptor.siteDescriptor().is4chan() && !longClicked) {
-      if (chanDescriptor.isThreadDescriptor()) {
-        val timeLeft = lastReplyRepository.getTimeUntilReply(
-          chanDescriptor.boardDescriptor(),
-          draft.file != null
-        )
+    if (!chanDescriptor.siteDescriptor().is4chan() || longClicked) {
+      submitOrAuthenticate()
+      return
+    }
 
-        if (timeLeft < 0L) {
-          submitOrAuthenticate()
-        } else {
-          val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_reply, timeLeft)
-          switchPage(Page.INPUT)
-          callback.openMessage(errorMessage)
-        }
+    if (chanDescriptor.isThreadDescriptor()) {
+      val timeLeft = lastReplyRepository.getTimeUntilReply(
+        chanDescriptor.boardDescriptor(),
+        draft.file != null
+      )
 
+      if (timeLeft < 0L) {
+        submitOrAuthenticate()
       } else {
-        val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
-        if (timeLeft < 0L) {
-          submitOrAuthenticate()
-        } else {
-          val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_thread, timeLeft)
-          switchPage(Page.INPUT)
-          callback.openMessage(errorMessage)
-        }
+        val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_reply, timeLeft)
+        switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
       }
 
       return
     }
 
-    submitOrAuthenticate()
+    val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
+    if (timeLeft < 0L) {
+      submitOrAuthenticate()
+    } else {
+      val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_thread, timeLeft)
+      switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
+    }
   }
 
   private fun submitOrAuthenticate() {
@@ -306,7 +308,7 @@ class ReplyPresenter @Inject constructor(
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
     callback.loadViewsIntoDraft(draft)
 
-    if (!isAuthenticateOnly && draft.file == null && draft.comment.trim { it <= ' ' }.isEmpty()) {
+    if (!isAuthenticateOnly && draft.file == null && draft.comment.trim().isEmpty()) {
       callback.openMessage(AndroidUtils.getString(R.string.reply_comment_empty))
       return false
     }
@@ -487,12 +489,12 @@ class ReplyPresenter @Inject constructor(
             }
           }
         }
-    }
 
-    switchPage(Page.LOADING)
+      switchPageSuspend(Page.LOADING)
+    }
   }
 
-  private fun onPostComplete(replyResponse: ReplyResponse) {
+  private suspend fun onPostComplete(replyResponse: ReplyResponse) {
     when {
       replyResponse.posted -> onPostedSuccessfully(replyResponse)
       replyResponse.requireAuthentication -> switchPage(Page.AUTHENTICATION)
@@ -506,13 +508,12 @@ class ReplyPresenter @Inject constructor(
         }
 
         Logger.e(TAG, "onPostComplete error: $errorMessage")
-        switchPage(Page.INPUT)
-        callback.openMessage(errorMessage)
+        switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
       }
     }
   }
 
-  private fun onPostedSuccessfully(replyResponse: ReplyResponse) {
+  private suspend fun onPostedSuccessfully(replyResponse: ReplyResponse) {
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
@@ -551,7 +552,8 @@ class ReplyPresenter @Inject constructor(
       databaseManager.databaseSavedReplyManager.saveReply(savedReply)
     )
 
-    switchPage(Page.INPUT)
+    switchPageSuspend(Page.INPUT)
+
     closeAll()
     highlightQuotes()
 
@@ -600,9 +602,9 @@ class ReplyPresenter @Inject constructor(
     BackgroundUtils.runOnMainThread { callback.onUploadingProgress(percent) }
   }
 
-  private fun onPostError(exception: Throwable?) {
+  private suspend fun onPostError(exception: Throwable?) {
     Logger.e(TAG, "onPostError", exception)
-    switchPage(Page.INPUT)
+    switchPageSuspend(Page.INPUT)
 
     var errorMessage = AndroidUtils.getString(R.string.reply_error)
     if (exception != null) {
@@ -615,9 +617,25 @@ class ReplyPresenter @Inject constructor(
     callback.openMessage(errorMessage)
   }
 
+  suspend fun switchPageSuspend(
+    page: Page,
+    useV2NoJsCaptcha: Boolean = true,
+    autoReply: Boolean = true
+  ) {
+    return suspendCancellableCoroutine { cancellableContinuation ->
+      switchPage(page, { cancellableContinuation.resume(Unit) }, useV2NoJsCaptcha, autoReply)
+    }
+  }
+
   @JvmOverloads
-  fun switchPage(page: Page, useV2NoJsCaptcha: Boolean = true, autoReply: Boolean = true) {
+  fun switchPage(
+    page: Page,
+    onSwitched: (() -> Unit)? = null,
+    useV2NoJsCaptcha: Boolean = true,
+    autoReply: Boolean = true
+  ) {
     if (useV2NoJsCaptcha && this.page == page) {
+      onSwitched?.invoke()
       return
     }
 
@@ -625,25 +643,30 @@ class ReplyPresenter @Inject constructor(
 
     when (page) {
       Page.LOADING,
-      Page.INPUT -> callback.setPage(page)
+      Page.INPUT -> {
+        callback.setPage(page) { onSwitched?.invoke() }
+      }
       Page.AUTHENTICATION -> {
-        callback.setPage(Page.AUTHENTICATION)
-        val authentication = site.actions().postAuthenticate()
+        callback.setPage(Page.AUTHENTICATION) {
+          val authentication = site.actions().postAuthenticate()
 
-        // cleanup resources tied to the new captcha layout/presenter
-        callback.destroyCurrentAuthentication()
+          // cleanup resources tied to the new captcha layout/presenter
+          callback.destroyCurrentAuthentication()
 
-        try {
-          // If the user doesn't have WebView installed it will throw an error
-          callback.initializeAuthentication(
-            site,
-            authentication,
-            this,
-            useV2NoJsCaptcha,
-            autoReply
-          )
-        } catch (error: Throwable) {
-          onAuthenticationFailed(error)
+          try {
+            // If the user doesn't have WebView installed it will throw an error
+            callback.initializeAuthentication(
+              site,
+              authentication,
+              this,
+              useV2NoJsCaptcha,
+              autoReply
+            )
+          } catch (error: Throwable) {
+            onAuthenticationFailed(error)
+          }
+
+          onSwitched?.invoke()
         }
       }
     }
@@ -728,7 +751,7 @@ class ReplyPresenter @Inject constructor(
     fun loadViewsIntoDraft(draft: Reply?)
     fun loadDraftIntoViews(draft: Reply?)
     fun adjustSelection(start: Int, amount: Int)
-    fun setPage(page: Page?)
+    fun setPage(page: Page, onPageSet: () -> Unit)
     fun initializeAuthentication(
       site: Site?,
       authentication: SiteAuthentication?,

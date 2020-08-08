@@ -11,6 +11,8 @@ import io.reactivex.processors.PublishProcessor
 class GlobalWindowInsetsManager {
   private var initialized = false
 
+  var requestInsetsApplyFunc: (() -> Unit)? = null
+
   var isKeyboardOpened = false
     private set
   var keyboardHeight = 0
@@ -18,12 +20,28 @@ class GlobalWindowInsetsManager {
 
   private val currentInsets = Rect()
 
+  private val callbacksAwaitingInsetsDispatch = ArrayList<Runnable>()
+  private val callbacksAwaitingKeyboardHidden = ArrayList<Runnable>()
+  private val callbacksAwaitingKeyboardVisible = ArrayList<Runnable>()
+
   private val insetsSubject = PublishProcessor.create<Unit>()
   private val keyboardStateSubject = BehaviorProcessor.createDefault(false)
 
   fun updateIsKeyboardOpened(opened: Boolean) {
+    if (isKeyboardOpened == opened) {
+      return
+    }
+
     isKeyboardOpened = opened
     keyboardStateSubject.onNext(opened)
+
+    if (opened) {
+      callbacksAwaitingKeyboardVisible.forEach { it.run() }
+      callbacksAwaitingKeyboardVisible.clear()
+    } else {
+      callbacksAwaitingKeyboardHidden.forEach { it.run() }
+      callbacksAwaitingKeyboardHidden.clear()
+    }
   }
 
   fun updateKeyboardHeight(height: Int) {
@@ -40,6 +58,34 @@ class GlobalWindowInsetsManager {
 
     initialized = true
     insetsSubject.onNext(Unit)
+  }
+
+  fun fireCallbacks() {
+    callbacksAwaitingInsetsDispatch.forEach { it.run() }
+    callbacksAwaitingInsetsDispatch.clear()
+  }
+
+  fun requestInsetsDispatch(func: Runnable) {
+    callbacksAwaitingInsetsDispatch += func
+    requestInsetsApplyFunc!!.invoke()
+  }
+
+  fun runWhenKeyboardIsHidden(func: Runnable) {
+    if (!isKeyboardOpened) {
+      func.run()
+      return
+    }
+
+    callbacksAwaitingKeyboardHidden += func
+  }
+
+  fun runWhenKeyboardIsVisible(func: Runnable) {
+    if (isKeyboardOpened) {
+      func.run()
+      return
+    }
+
+    callbacksAwaitingKeyboardVisible += func
   }
 
   fun listenForKeyboardChanges(): Flowable<Boolean> {

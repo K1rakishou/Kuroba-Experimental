@@ -82,7 +82,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
-  lateinit var replyViewStateManager: ReplyViewStateManager
+  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
   lateinit var extractPostMapInfoHolderUseCase: ExtractPostMapInfoHolderUseCase
   @Inject
@@ -198,17 +198,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
   private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
-    val thread = showingThread
-      ?: return null
-
-    return thread.chanDescriptor.threadDescriptorOrNull()
+    return showingThread?.chanDescriptor?.threadDescriptorOrNull()
   }
 
   private fun currentChanDescriptorOrNull(): ChanDescriptor? {
-    val thread = showingThread
-      ?: return null
-
-    return thread.chanDescriptor
+    return showingThread?.chanDescriptor
   }
 
   private fun forceRecycleAllPostViews() {
@@ -269,7 +263,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.toolbar?.addToolbarHeightUpdatesCallback(this)
 
     searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
-    reply.updatePaddings(0, 0, 0, 0)
   }
 
   fun onDestroy() {
@@ -489,7 +482,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val chanDescriptor = thread.chanDescriptor
 
     if (chanDescriptor != null) {
-      replyViewStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open)
+      bottomNavBarVisibilityStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open)
     }
 
     replyOpen = open
@@ -871,9 +864,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     var recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
 
-    // reply view padding calculations (before measure)
-    reply.setPadding(0, 0, 0, 0)
-
     // measurements
     if (replyOpen) {
       reply.measure(
@@ -901,9 +891,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     recyclerView.setPadding(defaultPadding, recyclerTop, defaultPadding, recyclerBottom)
-
-    // reply view padding calculations (after measure)
-    reply.setPadding(0, 0, 0, 0)
   }
 
   override fun updatePadding() {

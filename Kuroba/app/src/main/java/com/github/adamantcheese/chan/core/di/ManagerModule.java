@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
+import com.github.adamantcheese.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
@@ -44,7 +45,6 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper;
-import com.github.adamantcheese.chan.core.manager.ReplyViewStateManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
@@ -293,10 +293,10 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ReplyViewStateManager provideReplyViewStateManager() {
+    public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
         Logger.d(AppModule.DI_TAG, "ReplyViewStateManager");
 
-        return new ReplyViewStateManager();
+        return new BottomNavBarVisibilityStateManager();
     }
 
     @Provides

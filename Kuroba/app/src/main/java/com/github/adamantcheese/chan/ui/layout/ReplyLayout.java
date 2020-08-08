@@ -90,6 +90,8 @@ import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -195,9 +197,26 @@ public class ReplyLayout
         EventBus.getDefault().register(this);
 
         Disposable disposable = globalWindowInsetsManager.listenForKeyboardChanges()
-                .subscribe((isOpened) -> setWrappingMode(presenter.isExpanded()));
+                .subscribe((isOpened) -> updateWrappingMode());
 
         compositeDisposable.add(disposable);
+    }
+
+    private void updateWrappingMode() {
+        ReplyPresenter.Page page = presenter.getPage();
+        boolean matchParent;
+
+        if (page == ReplyPresenter.Page.INPUT) {
+            matchParent = presenter.isExpanded();
+        } else if (page == ReplyPresenter.Page.LOADING) {
+            matchParent = false;
+        } else if (page == ReplyPresenter.Page.AUTHENTICATION) {
+            matchParent = true;
+        } else {
+            throw new IllegalStateException("Unknown Page: " + page);
+        }
+
+        setWrappingMode(matchParent);
     }
 
     @Override
@@ -263,7 +282,9 @@ public class ReplyLayout
         comment.addTextChangedListener(this);
         comment.setSelectionChangedListener(this);
         comment.setOnFocusChangeListener((view, focused) -> {
-            if (!focused) hideKeyboard(comment);
+            if (!focused) {
+                hideKeyboard(comment);
+            }
         });
         comment.setPlainTextPaste(true);
         setupCommentContextMenu();
@@ -365,24 +386,39 @@ public class ReplyLayout
     }
 
     private void setWrappingMode(boolean matchParent) {
-        LayoutParams params = (LayoutParams) getLayoutParams();
-        params.width = MATCH_PARENT;
-        params.height = matchParent ? MATCH_PARENT : WRAP_CONTENT;
+        LayoutParams prevLayoutParams = (LayoutParams) getLayoutParams();
+        LayoutParams newLayoutParams = new LayoutParams((LayoutParams) getLayoutParams());
+        newLayoutParams.width = MATCH_PARENT;
+        newLayoutParams.height = matchParent ? MATCH_PARENT : WRAP_CONTENT;
+
+        if (matchParent) {
+            newLayoutParams.gravity = Gravity.TOP;
+        } else {
+            newLayoutParams.gravity = Gravity.BOTTOM;
+        }
 
         int bottomPadding = 0;
         if (!globalWindowInsetsManager.isKeyboardOpened()) {
             bottomPadding = globalWindowInsetsManager.bottom();
         }
 
-        if (matchParent) {
-            setPadding(0, ((ThreadListLayout) getParent()).toolbarHeight(), 0, bottomPadding);
-            params.gravity = Gravity.TOP;
-        } else {
-            setPadding(0, 0, 0, bottomPadding);
-            params.gravity = Gravity.BOTTOM;
+        int paddingTop = ((ThreadListLayout) getParent()).toolbarHeight();
+
+        if (prevLayoutParams.width == newLayoutParams.width
+                && prevLayoutParams.height == newLayoutParams.height
+                && prevLayoutParams.gravity == newLayoutParams.gravity
+                && getPaddingBottom() == bottomPadding
+                && (matchParent && getPaddingTop() == paddingTop)) {
+            return;
         }
 
-        setLayoutParams(params);
+        if (matchParent) {
+            setPadding(0, paddingTop, 0, bottomPadding);
+        } else {
+            setPadding(0, 0, 0, bottomPadding);
+        }
+
+        setLayoutParams(newLayoutParams);
     }
 
     @Override
@@ -470,10 +506,6 @@ public class ReplyLayout
             captchaContainer.addView((View) authenticationLayout, 0);
         }
 
-        if (!(authenticationLayout instanceof LegacyCaptchaLayout)) {
-            hideKeyboard(this);
-        }
-
         authenticationLayout.initialize(site, callback, autoReply);
         authenticationLayout.reset();
     }
@@ -529,29 +561,44 @@ public class ReplyLayout
     }
 
     @Override
-    public void setPage(ReplyPresenter.Page page) {
+    public void setPage(@NotNull ReplyPresenter.Page page, @NotNull Function0<Unit> onPageSet) {
         Logger.d(TAG, "Switching to page " + page.name());
+
         switch (page) {
             case LOADING:
-                setWrappingMode(false);
                 setView(progressLayout);
 
-                //reset progress to 0 upon uploading start
-                currentProgress.setVisibility(INVISIBLE);
+                globalWindowInsetsManager.requestInsetsDispatch(() -> {
+                    setWrappingMode(false);
+
+                    //reset progress to 0 upon uploading start
+                    currentProgress.setVisibility(INVISIBLE);
+                    destroyCurrentAuthentication();
+                    onPageSet.invoke();
+                });
+
                 break;
             case INPUT:
                 setView(replyInputLayout);
-                setWrappingMode(presenter.isExpanded());
+
+                globalWindowInsetsManager.requestInsetsDispatch(() -> {
+                    setWrappingMode(presenter.isExpanded());
+                    destroyCurrentAuthentication();
+                    onPageSet.invoke();
+                });
+
                 break;
             case AUTHENTICATION:
-                setWrappingMode(true);
+                AndroidUtils.hideKeyboard(this);
                 setView(captchaContainer);
-                captchaContainer.requestFocus(View.FOCUS_DOWN);
-                break;
-        }
 
-        if (page != ReplyPresenter.Page.AUTHENTICATION) {
-            destroyCurrentAuthentication();
+                globalWindowInsetsManager.runWhenKeyboardIsHidden(() -> {
+                    setWrappingMode(true);
+                    captchaContainer.requestFocus(View.FOCUS_DOWN);
+                    onPageSet.invoke();
+                });
+
+                break;
         }
     }
 
@@ -567,10 +614,7 @@ public class ReplyLayout
         }
 
         // cleanup resources when switching from the new to the old captcha view
-        if (authenticationLayout instanceof CaptchaNoJsLayoutV2) {
-            ((CaptchaNoJsLayoutV2) authenticationLayout).onDestroy();
-        }
-
+        authenticationLayout.onDestroy();
         captchaContainer.removeView((View) authenticationLayout);
         authenticationLayout = null;
     }
@@ -778,7 +822,7 @@ public class ReplyLayout
     @Override
     public void onFallbackToV1CaptchaView(boolean autoReply) {
         // fallback to v1 captcha window
-        presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, false, autoReply);
+        presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, null, false, autoReply);
     }
 
     @Override

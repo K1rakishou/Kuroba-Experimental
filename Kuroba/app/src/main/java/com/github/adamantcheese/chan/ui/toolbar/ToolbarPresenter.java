@@ -18,21 +18,19 @@ package com.github.adamantcheese.chan.ui.toolbar;
 
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.chan.core.manager.BottomNavBarVisibilityStateManager;
+import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 
-public class ToolbarPresenter {
-    public enum AnimationStyle {
-        NONE,
-        PUSH,
-        POP,
-        FADE
-    }
+import javax.inject.Inject;
 
-    public enum TransitionAnimationStyle {
-        PUSH,
-        POP
-    }
+import static com.github.adamantcheese.chan.Chan.inject;
+
+public class ToolbarPresenter {
+
+    @Inject
+    BottomNavBarVisibilityStateManager bottomNavBarVisibilityStateManager;
 
     private Callback callback;
     private ThemeHelper themeHelper;
@@ -43,6 +41,16 @@ public class ToolbarPresenter {
     public ToolbarPresenter(Callback callback, ThemeHelper themeHelper) {
         this.callback = callback;
         this.themeHelper = themeHelper;
+
+        inject(this);
+    }
+
+    public void onAttached() {
+        // no-op
+    }
+
+    public void onDetached() {
+        // no-op
     }
 
     void set(NavigationItem newItem, Theme theme, AnimationStyle animation) {
@@ -110,16 +118,22 @@ public class ToolbarPresenter {
 
         callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
         callback.onSearchVisibilityChanged(item, true);
+
+        bottomNavBarVisibilityStateManager.searchViewStateChanged(true);
     }
 
     boolean closeSearch() {
-        if (item == null || !item.search) return false;
+        if (item == null || !item.search) {
+            return false;
+        }
 
         item.search = false;
         item.searchText = null;
         set(item, null, AnimationStyle.FADE);
 
         callback.onSearchVisibilityChanged(item, false);
+        bottomNavBarVisibilityStateManager.searchViewStateChanged(false);
+
         return true;
     }
 
@@ -143,6 +157,14 @@ public class ToolbarPresenter {
         return false;
     }
 
+    public void closeSearchPhoneMode() {
+        if (ChanSettings.layoutMode.get() == ChanSettings.LayoutMode.PHONE) {
+            closeSearchIfNeeded();
+        } else {
+            closeSearch();
+        }
+    }
+
     void searchInput(String input) {
         if (!item.search) {
             return;
@@ -150,6 +172,18 @@ public class ToolbarPresenter {
 
         item.searchText = input;
         callback.onSearchInput(item, input);
+    }
+
+    public enum AnimationStyle {
+        NONE,
+        PUSH,
+        POP,
+        FADE
+    }
+
+    public enum TransitionAnimationStyle {
+        PUSH,
+        POP
     }
 
     interface Callback {
