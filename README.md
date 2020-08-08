@@ -42,8 +42,9 @@ the thread is deleted)
 - [x] New bookmarks (they were fully rewritten from scratch, now use way less memory, don't use wakelocks, show separate notifications
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
+- [x] Edge-to-edge theme support.
 - [ ] New database (more than half of the old database have been ported).
-- [ ] Edge-to-edge theme support.
+- [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
 - [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
 
 ### Why does it not say that this is a fork of Kuroba on github page?
