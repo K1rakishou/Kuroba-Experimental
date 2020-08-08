@@ -71,6 +71,7 @@ public class Toolbar
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private boolean isInImmersiveMode = false;
+
     private int prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
     private int pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
 
@@ -160,8 +161,11 @@ public class Toolbar
         AndroidUtils.setBoundlessRoundRippleBackground(arrowMenuView);
         int toolbarSize = getDimen(R.dimen.toolbar_height);
 
-        FrameLayout.LayoutParams leftButtonContainerLp =
-                new FrameLayout.LayoutParams(toolbarSize, MATCH_PARENT, Gravity.CENTER_VERTICAL);
+        FrameLayout.LayoutParams leftButtonContainerLp = new FrameLayout.LayoutParams(
+                toolbarSize,
+                MATCH_PARENT,
+                Gravity.CENTER_VERTICAL
+        );
         leftButtonContainer.addView(arrowMenuView, leftButtonContainerLp);
 
         navigationItemContainer = new ToolbarContainer(getContext());
@@ -170,9 +174,7 @@ public class Toolbar
         navigationItemContainer.setCallback(this);
         navigationItemContainer.setArrowMenu(arrowMenuDrawable);
 
-        if (getElevation() == 0f) {
-            setElevation(dp(4f));
-        }
+        setElevation(dp(4f));
     }
 
     @Override
@@ -190,12 +192,10 @@ public class Toolbar
                         return;
                     }
 
-                    if (!updateToolbarTopPaddingAndHeight(toolbarSize)) {
-                        return;
-                    }
+                    boolean heightChanged = updateToolbarTopPaddingAndHeight(toolbarSize);
 
                     for (ToolbarHeightUpdatesCallback heightUpdatesCallback : heightUpdatesCallbacks) {
-                        heightUpdatesCallback.onToolbarHeightKnown();
+                        heightUpdatesCallback.onToolbarHeightKnown(heightChanged);
                     }
                 });
 
@@ -498,6 +498,6 @@ public class Toolbar
     }
 
     public interface ToolbarHeightUpdatesCallback {
-        void onToolbarHeightKnown();
+        void onToolbarHeightKnown(boolean heightChanged);
     }
 }

@@ -22,4 +22,5 @@ public interface AuthenticationLayoutInterface {
     void initialize(Site site, AuthenticationLayoutCallback callback, boolean autoReply);
     void reset();
     void hardReset();
+    void onDestroy();
 }

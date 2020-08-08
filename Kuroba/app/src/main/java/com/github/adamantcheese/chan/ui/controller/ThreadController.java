@@ -97,14 +97,24 @@ public abstract class ThreadController
                 return threadLayout.canChildScrollUp();
             }
         };
+
         swipeRefreshLayout.addView(threadLayout);
-
         swipeRefreshLayout.setOnRefreshListener(this);
-
-        int toolbarHeight = getToolbar().getToolbarHeight();
-        swipeRefreshLayout.setProgressViewOffset(false, toolbarHeight - dp(40), toolbarHeight + dp(64 - 40));
-
         view = swipeRefreshLayout;
+
+        Toolbar toolbar = getToolbar();
+
+        if (toolbar != null) {
+            toolbar.addToolbarHeightUpdatesCallback((heightChanged) -> {
+                int toolbarHeight = getToolbar().getToolbarHeight();
+
+                swipeRefreshLayout.setProgressViewOffset(
+                        false,
+                        toolbarHeight - dp(40),
+                        toolbarHeight + dp(64 - 40)
+                );
+            });
+        }
     }
 
     @Override

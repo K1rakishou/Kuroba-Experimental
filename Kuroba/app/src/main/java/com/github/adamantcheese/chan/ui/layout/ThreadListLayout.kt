@@ -262,7 +262,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     threadListLayoutCallback?.toolbar?.addToolbarHeightUpdatesCallback(this)
 
-    searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
+    // Wait a little bit so that the toolbar has it's updated height (which depends on the window
+    // insets)
+    post {
+      searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
+    }
   }
 
   fun onDestroy() {
@@ -273,7 +277,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.adapter = null
   }
 
-  override fun onToolbarHeightKnown() {
+  override fun onToolbarHeightKnown(heightChanged: Boolean) {
     setRecyclerViewPadding()
   }
 

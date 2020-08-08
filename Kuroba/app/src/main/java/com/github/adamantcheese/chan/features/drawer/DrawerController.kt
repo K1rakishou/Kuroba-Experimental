@@ -53,8 +53,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.*
-import com.github.adamantcheese.chan.utils.AndroidUtils.getDimen
-import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
+import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.*
@@ -130,7 +129,7 @@ class DrawerController(
     super.onCreate()
     Chan.inject(this)
 
-    view = AndroidUtils.inflate(context, R.layout.controller_navigation_drawer)
+    view = inflate(context, R.layout.controller_navigation_drawer)
     rootLayout = view.findViewById(R.id.root_layout)
     container = view.findViewById(R.id.container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
@@ -141,6 +140,7 @@ class DrawerController(
     val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomNavView.selectedItemId = R.id.action_browse
+    bottomNavView.elevation = dp(4f).toFloat()
 
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
