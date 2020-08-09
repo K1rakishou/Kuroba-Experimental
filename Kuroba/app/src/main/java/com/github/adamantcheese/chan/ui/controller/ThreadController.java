@@ -98,6 +98,7 @@ public abstract class ThreadController
             }
         };
 
+        swipeRefreshLayout.setId(R.id.swipe_refresh_layout);
         swipeRefreshLayout.addView(threadLayout);
         swipeRefreshLayout.setOnRefreshListener(this);
         view = swipeRefreshLayout;

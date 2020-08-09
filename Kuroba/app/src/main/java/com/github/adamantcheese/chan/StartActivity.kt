@@ -32,6 +32,7 @@ import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
@@ -62,17 +63,17 @@ import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
   FSAFActivityCallbacks,
-  CoroutineScope,
   StartActivityCallbacks {
 
   @Inject
@@ -119,13 +120,10 @@ class StartActivity : AppCompatActivity(),
   private lateinit var mainNavigationController: NavigationController
   private lateinit var drawerController: DrawerController
 
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("StartActivity")
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    launch {
+    lifecycleScope.launch {
       val start = System.currentTimeMillis()
       onCreateInternal(this, savedInstanceState)
       val diff = System.currentTimeMillis() - start
@@ -266,7 +264,7 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    launch {
+    lifecycleScope.launch {
       bookmarksManager.awaitUntilInitialized()
 
       when {

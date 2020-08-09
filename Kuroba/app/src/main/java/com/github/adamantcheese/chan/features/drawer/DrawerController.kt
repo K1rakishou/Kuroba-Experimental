@@ -52,8 +52,11 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
-import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
+import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.*
@@ -78,7 +81,7 @@ class DrawerController(
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
 
-  private val drawerPresenter = DrawerPresenter(getFlavorType() == AndroidUtils.FlavorType.Dev)
+  private val drawerPresenter = DrawerPresenter(getFlavorType() == FlavorType.Dev)
   private val childControllersStack = Stack<Controller>()
 
   private val topThreadController: ThreadController?

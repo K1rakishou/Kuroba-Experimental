@@ -18,7 +18,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
-class BookmarkWatcherController(
+class BookmarkWatcherCoordinator(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appContext: Context,

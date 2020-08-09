@@ -55,7 +55,7 @@ import com.github.adamantcheese.chan.core.site.ParserRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
-import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherController;
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
 import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
@@ -381,7 +381,7 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public BookmarkWatcherController provideBookmarkWatcherController(
+    public BookmarkWatcherCoordinator provideBookmarkWatcherController(
             Context appContext,
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
@@ -390,7 +390,7 @@ public class ManagerModule {
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
 
-        return new BookmarkWatcherController(
+        return new BookmarkWatcherCoordinator(
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
                 ChanSettings.verboseLogs.get(),
                 appContext,
