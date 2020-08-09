@@ -271,11 +271,11 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation "androidx.core:core-ktx:1.3.0"
-    implementation "androidx.work:work-runtime-ktx:2.3.4"
+    implementation "androidx.core:core-ktx:1.3.1"
+    implementation "androidx.work:work-runtime-ktx:2.4.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-    implementation 'com.google.android.material:material:1.1.0'
-    implementation 'com.google.android.exoplayer:exoplayer:2.11.4'
+    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'com.google.android.exoplayer:exoplayer:2.11.7'
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation 'com.j256.ormlite:ormlite-core:5.1'
     implementation 'com.j256.ormlite:ormlite-android:5.1'
@@ -311,7 +311,7 @@ dependencies {
 
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"
-    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.okhttp}"
     testImplementation "org.mockito:mockito-core:${versions.mockito_core}"
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"

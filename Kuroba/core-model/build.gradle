@@ -50,7 +50,7 @@ dependencies {
 
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"
-    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.mockwebserver}"
+    testImplementation "com.squareup.okhttp3:mockwebserver:${versions.okhttp}"
     testImplementation "org.mockito:mockito-core:${versions.mockito_core}"
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
