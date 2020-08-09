@@ -473,6 +473,8 @@ class ReplyPresenter @Inject constructor(
 
   private fun makeSubmitCall() {
     launch {
+      switchPageSuspend(Page.LOADING)
+
       site.actions().post(draft)
         .collect { postResult ->
           withContext(Dispatchers.Main) {
@@ -489,8 +491,6 @@ class ReplyPresenter @Inject constructor(
             }
           }
         }
-
-      switchPageSuspend(Page.LOADING)
     }
   }
 
