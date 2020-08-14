@@ -55,9 +55,11 @@ Because Github does not allow creating two separate forks of the same repo. So I
  not allow for forks.
  
 ### When will it be available?
-The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
+~The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
 October-November maybe even a little bit later. But there will be beta builds, before release. Expect them some time 
-in the end of the summer, maybe earlier.
+in the end of the summer, maybe earlier.~ 
+
+TBD.
 
 # 
 
