@@ -44,7 +44,7 @@ per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
 - [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
-oppurtunity to simplify current navigation code).
+oppurtunity to simplify current navigation code which is quite complex).
 - [ ] New database (more than half of the old database have been ported).
 - [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
 - [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
