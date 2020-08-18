@@ -38,14 +38,15 @@ android {
          *
          * ------------------------------------------------------------
          */
-        //bump the MAJOR (XX) version when there are incompatible changes between versions
-        //or major changes to the application that would require a reinstall
-        //bump the MINOR (YY) version when there are compatible changes between versions (ie database changes)
-        //or if there are big application level changes like tearing out/adding major features
-        //bump the PATCH (ZZ) version otherwise, for anything small
-        int major = 4
-        int minor = 12
+        // bump the MAJOR (XX) version when there are incompatible changes between versions
+        // or major changes to the application that would require a reinstall
+        // bump the MINOR (YY) version when there are compatible changes between versions (ie database changes)
+        // or if there are big application level changes like tearing out/adding major features
+        // bump the PATCH (ZZ) version otherwise, for anything small
+        int major = 0
+        int minor = 1
         int patch = 0
+        int build = getCurrentBuildNumber()
 
         /**
          * ------------------------------------------------------------
@@ -86,7 +87,7 @@ android {
          * ------------------------------------------------------------
          */
         versionCode major * 10000 + minor * 100 + patch
-        versionName "v" + major + "." + minor + "." + patch
+        versionName "v" + major + "." + minor + "." + patch + "." + build
 
         applicationVariants.all { variant ->
             variant.outputs.all {
@@ -331,10 +332,25 @@ task downloadArchives {
 }
 preBuild.dependsOn downloadArchives
 
+// Increase the build number task
+task myTask {
+    File f = file('buildnumber.property')
+    def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8").get(0))
+    def newBuildNumber = prevBuildNumber + 1
+    println("Increasing the build number: " + prevBuildNumber + " -> " + newBuildNumber)
+
+    f.write(String.valueOf(newBuildNumber))
+}
+preBuild.dependsOn myTask
+
+def getCurrentBuildNumber() {
+    File f = file('buildnumber.property')
+    return Integer.valueOf(f.readLines("UTF-8").get(0))
+}
+
 //====================================================================
 // All of the below functions are being used by the upload_apk script
 //====================================================================
-
 def getCurrentFlavor(String name) {
     Object resultFlavor = null
 

@@ -26,8 +26,7 @@ import com.github.adamantcheese.chan.R;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 
-public class DrawerWidthAdjustingLayout
-        extends DrawerLayout {
+public class DrawerWidthAdjustingLayout extends DrawerLayout {
     public DrawerWidthAdjustingLayout(Context context) {
         super(context);
     }
