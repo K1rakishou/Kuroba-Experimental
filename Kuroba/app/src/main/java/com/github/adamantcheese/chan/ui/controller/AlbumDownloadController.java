@@ -62,7 +62,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class AlbumDownloadController
         extends Controller
@@ -142,7 +141,7 @@ public class AlbumDownloadController
     private void onDownloadClicked() {
         int checkCount = getCheckCount();
         if (checkCount == 0) {
-            showToast(context, R.string.album_download_none_checked);
+            showToast(R.string.album_download_none_checked);
             return;
         }
 
@@ -214,13 +213,13 @@ public class AlbumDownloadController
 
         switch (result) {
             case BaseDirectoryDoesNotExist:
-                showToast(context, R.string.files_base_dir_does_not_exist);
+                showToast(R.string.files_base_dir_does_not_exist);
                 break;
             case NoWriteExternalStoragePermission:
-                showToast(context, R.string.could_not_start_saving_no_permissions);
+                showToast(R.string.could_not_start_saving_no_permissions);
                 break;
             case UnknownError:
-                showToast(context, R.string.album_download_could_not_save_one_or_more_images);
+                showToast(R.string.album_download_could_not_save_one_or_more_images);
                 break;
         }
 

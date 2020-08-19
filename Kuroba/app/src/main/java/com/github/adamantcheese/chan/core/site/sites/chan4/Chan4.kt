@@ -367,8 +367,12 @@ class Chan4 : SiteBase() {
     )
   }
 
+  override fun enabled(): Boolean {
+    return true
+  }
+
   override fun name(): String {
-    return "4chan"
+    return SITE_NAME
   }
 
   override fun siteDescriptor(): SiteDescriptor {
@@ -464,6 +468,7 @@ class Chan4 : SiteBase() {
   }
 
   companion object {
+    const val SITE_NAME = "4chan"
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {
@@ -478,7 +483,7 @@ class Chan4 : SiteBase() {
       }
 
       override fun matchesName(value: String): Boolean {
-        return value == "4chan"
+        return value == SITE_NAME
       }
 
       override fun respondsTo(url: HttpUrl): Boolean {

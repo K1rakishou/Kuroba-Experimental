@@ -121,7 +121,7 @@ public class SiteRepository {
                 Site site = holder.site;
                 SiteConfig config = holder.config;
                 JsonSettings settings = holder.settings;
-                site.initialize(siteModel.id, config, settings);
+                site.initialize(siteModel.id, settings);
 
                 sites.add(site);
             }
@@ -143,19 +143,19 @@ public class SiteRepository {
     public Site createFromClass(Class<? extends Site> siteClass) {
         Site site = instantiateSiteClass(siteClass);
 
-        SiteConfig config = new SiteConfig();
-        JsonSettings settings = new JsonSettings();
-
-        //the index doesn't necessarily match the key value to get the class ID anymore since sites were removed
-        config.classId = SITE_CLASSES.keyAt(SITE_CLASSES.indexOfValue(site.getClass()));
-        config.external = false;
-
-        SiteModel model = createFromClass(config, settings);
-        site.initialize(model.id, config, settings);
-        sitesObservable.add(site);
-
-        site.postInitialize();
-        sitesObservable.notifyObservers();
+//        SiteConfig config = new SiteConfig();
+//        JsonSettings settings = new JsonSettings();
+//
+//        //the index doesn't necessarily match the key value to get the class ID anymore since sites were removed
+//        config.classId = SITE_CLASSES.keyAt(SITE_CLASSES.indexOfValue(site.getClass()));
+//        config.external = false;
+//
+//        SiteModel model = createFromClass(config, settings);
+//        site.initialize(model.id, settings);
+//        sitesObservable.add(site);
+//
+//        site.postInitialize();
+//        sitesObservable.notifyObservers();
 
         return site;
     }

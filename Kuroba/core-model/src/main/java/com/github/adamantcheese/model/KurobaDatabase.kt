@@ -22,6 +22,9 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 
 @Database(
   entities = [
+    ChanSiteIdEntity::class,
+    ChanSiteEntity::class,
+    ChanBoardIdEntity::class,
     ChanBoardEntity::class,
     ChanThreadEntity::class,
     ChanPostIdEntity::class,
@@ -58,7 +61,8 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     ChanPostImageTypeTypeConverter::class,
     TextTypeTypeConverter::class,
     ReplyTypeTypeConverter::class,
-    BitSetTypeConverter::class
+    BitSetTypeConverter::class,
+    KeyValueSettingsTypeConverter::class
   ]
 )
 abstract class KurobaDatabase : RoomDatabase() {
@@ -79,6 +83,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun threadBookmarkDao(): ThreadBookmarkDao
   abstract fun threadBookmarkReplyDao(): ThreadBookmarkReplyDao
   abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao
+  abstract fun chanSiteDao(): ChanSiteDao
 
   companion object {
     const val DATABASE_NAME = "Kuroba.db"

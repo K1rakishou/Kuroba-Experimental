@@ -2,11 +2,81 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8b9c303383311b36da8b02793e22dee1",
+    "identityHash": "e7faea632e8edf8919e86eeea8d9ee61",
     "entities": [
       {
-        "tableName": "chan_board",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`board_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL)",
+        "tableName": "chan_site_id",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`site_name` TEXT NOT NULL, PRIMARY KEY(`site_name`))",
+        "fields": [
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "site_name"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "chan_site",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_site_name` TEXT NOT NULL, `site_active` INTEGER NOT NULL, `site_order` INTEGER NOT NULL, `user_settings` TEXT, PRIMARY KEY(`owner_chan_site_name`), FOREIGN KEY(`owner_chan_site_name`) REFERENCES `chan_site_id`(`site_name`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ownerChanSiteName",
+            "columnName": "owner_chan_site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteActive",
+            "columnName": "site_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteOrder",
+            "columnName": "site_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userSettings",
+            "columnName": "user_settings",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "owner_chan_site_name"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "chan_site_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_chan_site_name"
+            ],
+            "referencedColumns": [
+              "site_name"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "chan_board_id",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`board_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, FOREIGN KEY(`owner_site_name`) REFERENCES `chan_site_id`(`site_name`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "boardId",
@@ -15,8 +85,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "siteName",
-            "columnName": "site_name",
+            "fieldPath": "ownerSiteName",
+            "columnName": "owner_site_name",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -35,36 +105,224 @@
         },
         "indices": [
           {
-            "name": "chan_board_site_name_idx",
+            "name": "chan_board_id_site_name_idx",
             "unique": false,
             "columnNames": [
-              "site_name"
+              "owner_site_name"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_site_name_idx` ON `${TABLE_NAME}` (`site_name`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_id_site_name_idx` ON `${TABLE_NAME}` (`owner_site_name`)"
           },
           {
-            "name": "chan_board_board_code_idx",
+            "name": "chan_board_id_board_code_idx",
             "unique": false,
             "columnNames": [
               "board_code"
             ],
-            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_board_code_idx` ON `${TABLE_NAME}` (`board_code`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `chan_board_id_board_code_idx` ON `${TABLE_NAME}` (`board_code`)"
           },
           {
-            "name": "chan_board_board_descriptor_idx",
+            "name": "chan_board_id_board_descriptor_idx",
             "unique": true,
             "columnNames": [
-              "site_name",
+              "owner_site_name",
               "board_code"
             ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_board_board_descriptor_idx` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `chan_board_id_board_descriptor_idx` ON `${TABLE_NAME}` (`owner_site_name`, `board_code`)"
           }
         ],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "chan_site_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_site_name"
+            ],
+            "referencedColumns": [
+              "site_name"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "chan_board",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_board_id` INTEGER NOT NULL, `order` INTEGER NOT NULL, `name` TEXT, `code` TEXT, `per_page` INTEGER NOT NULL, `pages` INTEGER NOT NULL, `max_file_size` INTEGER NOT NULL, `max_webm_size` INTEGER NOT NULL, `max_comment_chars` INTEGER NOT NULL, `bump_limit` INTEGER NOT NULL, `image_limit` INTEGER NOT NULL, `cooldown_threads` INTEGER NOT NULL, `cooldown_replies` INTEGER NOT NULL, `cooldown_images` INTEGER NOT NULL, `custom_spoilers` INTEGER NOT NULL, `description` TEXT NOT NULL, `saved` INTEGER NOT NULL, `work_safe` INTEGER NOT NULL, `spoilers` INTEGER NOT NULL, `user_ids` INTEGER NOT NULL, `code_tags` INTEGER NOT NULL, `preupload_captcha` INTEGER NOT NULL, `country_flags` INTEGER NOT NULL, `math_tags` INTEGER NOT NULL, `archive` INTEGER NOT NULL, PRIMARY KEY(`owner_chan_board_id`), FOREIGN KEY(`owner_chan_board_id`) REFERENCES `chan_board_id`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ownerChanBoardId",
+            "columnName": "owner_chan_board_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "order",
+            "columnName": "order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "perPage",
+            "columnName": "per_page",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pages",
+            "columnName": "pages",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxFileSize",
+            "columnName": "max_file_size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxWebmSize",
+            "columnName": "max_webm_size",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maxCommentChars",
+            "columnName": "max_comment_chars",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bumpLimit",
+            "columnName": "bump_limit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imageLimit",
+            "columnName": "image_limit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cooldownThreads",
+            "columnName": "cooldown_threads",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cooldownReplies",
+            "columnName": "cooldown_replies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cooldownImages",
+            "columnName": "cooldown_images",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customSpoilers",
+            "columnName": "custom_spoilers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "saved",
+            "columnName": "saved",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "workSafe",
+            "columnName": "work_safe",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spoilers",
+            "columnName": "spoilers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userIds",
+            "columnName": "user_ids",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "codeTags",
+            "columnName": "code_tags",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preuploadCaptcha",
+            "columnName": "preupload_captcha",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryFlags",
+            "columnName": "country_flags",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mathTags",
+            "columnName": "math_tags",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archive",
+            "columnName": "archive",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "owner_chan_board_id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "chan_board_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_chan_board_id"
+            ],
+            "referencedColumns": [
+              "board_id"
+            ]
+          }
+        ]
       },
       {
         "tableName": "chan_thread",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `thread_no` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, `last_modified` INTEGER NOT NULL, `replies` INTEGER NOT NULL, `thread_images_count` INTEGER NOT NULL, `unique_ips` INTEGER NOT NULL, `sticky` INTEGER NOT NULL, `closed` INTEGER NOT NULL, `archived` INTEGER NOT NULL, FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`thread_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `thread_no` INTEGER NOT NULL, `owner_board_id` INTEGER NOT NULL, `last_modified` INTEGER NOT NULL, `replies` INTEGER NOT NULL, `thread_images_count` INTEGER NOT NULL, `unique_ips` INTEGER NOT NULL, `sticky` INTEGER NOT NULL, `closed` INTEGER NOT NULL, `archived` INTEGER NOT NULL, FOREIGN KEY(`owner_board_id`) REFERENCES `chan_board_id`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "threadId",
@@ -162,7 +420,7 @@
         ],
         "foreignKeys": [
           {
-            "table": "chan_board",
+            "table": "chan_board_id",
             "onDelete": "CASCADE",
             "onUpdate": "CASCADE",
             "columns": [
@@ -1425,7 +1683,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8b9c303383311b36da8b02793e22dee1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e7faea632e8edf8919e86eeea8d9ee61')"
     ]
   }
 }

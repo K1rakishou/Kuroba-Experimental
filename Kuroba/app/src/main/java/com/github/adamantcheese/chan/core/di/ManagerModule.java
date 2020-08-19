@@ -48,10 +48,10 @@ import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ParserRepository;
+import com.github.adamantcheese.chan.core.site.SiteRegistry;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
@@ -61,11 +61,13 @@ import com.github.adamantcheese.chan.ui.settings.base_directory.SavedFilesBaseDi
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
+import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
+import com.github.adamantcheese.model.repository.SiteRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
@@ -95,9 +97,22 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public BoardManager provideBoardManager(BoardRepository boardRepository) {
+    public SiteManager provideSiteManager(CoroutineScope appScope, SiteRepository siteRepository) {
+        Logger.d(AppModule.DI_TAG, "Site manager");
+        return new SiteManager(
+                appScope,
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                ChanSettings.verboseLogs.get(),
+                siteRepository,
+                SiteRegistry.INSTANCE
+        );
+    }
+
+    @Provides
+    @Singleton
+    public BoardManager provideBoardManager(CoroutineScope appScope, BoardRepository boardRepository) {
         Logger.d(AppModule.DI_TAG, "Board manager");
-        return new BoardManager(boardRepository);
+        return new BoardManager(appScope, boardRepository);
     }
 
     @Provides
@@ -125,13 +140,13 @@ public class ManagerModule {
     @Singleton
     public PageRequestManager providePageRequestManager(
             DatabaseManager databaseManager,
-            SiteRepository siteRepository
+            SiteManager siteManager
     ) {
         Logger.d(AppModule.DI_TAG, "Page request manager");
         return new PageRequestManager(
                 databaseManager,
                 databaseManager.getDatabaseBoardManager(),
-                siteRepository
+                siteManager
         );
     }
 
@@ -320,13 +335,13 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReplyParser provideReplyParser(
-            SiteRepository siteRepository,
+            SiteManager siteManager,
             ParserRepository parserRepository
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyParser");
 
         return new ReplyParser(
-                siteRepository,
+                siteManager,
                 parserRepository
         );
     }
@@ -336,7 +351,7 @@ public class ManagerModule {
     public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
-            SiteRepository siteRepository,
+            SiteManager siteManager,
             DatabaseManager databaseManager,
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
@@ -351,7 +366,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
-                siteRepository,
+                siteManager,
                 databaseManager.getDatabaseSavedReplyManager(),
                 lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,

@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.site.parser
 
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.ParserRepository
 import com.github.adamantcheese.common.groupOrNull
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -8,7 +8,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class ReplyParser(
-  private val siteRepository: SiteRepository,
+  private val siteManager: SiteManager,
   private val parserRepository: ParserRepository
 ) {
 
@@ -62,7 +62,7 @@ class ReplyParser(
   }
 
   private fun getQuotePatterns(siteDescriptor: SiteDescriptor): QuotePatterns? {
-    val site = siteRepository.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptor(siteDescriptor)
       ?: return null
 
     val commentParser = parserRepository.getCommentParser(site.commentParserType())

@@ -1,7 +1,6 @@
 package com.github.adamantcheese.chan.features.drawer.epoxy
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -88,11 +87,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
       imageSize,
       imageSize,
       listOf(CIRCLE_CROP),
-      object : ImageLoaderV2.SimpleImageListener {
-        override fun onResponse(drawable: BitmapDrawable) {
-          thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
-        }
-      })
+      { drawable -> thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+    )
   }
 
   private fun disposeRequest() {

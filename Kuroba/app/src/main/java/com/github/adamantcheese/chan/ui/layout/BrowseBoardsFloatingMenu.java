@@ -21,8 +21,6 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Point;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -48,25 +46,17 @@ import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter;
 import com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter.Item;
-import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
-import com.github.adamantcheese.chan.core.site.common.CommonSite;
-import com.github.adamantcheese.chan.core.site.parser.CommentParser;
-import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.inject.Inject;
-
-import okhttp3.HttpUrl;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -75,7 +65,6 @@ import static com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter.I
 import static com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter.Item.Type.SEARCH;
 import static com.github.adamantcheese.chan.core.presenter.BoardsMenuPresenter.Item.Type.SITE;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.removeFromParentView;
@@ -156,66 +145,67 @@ public class BrowseBoardsFloatingMenu
         items = presenter.items();
         items.addObserver(this);
 
-        if (items.items.size() == 1) {
-            CommonSite setupSite = new CommonSite() {
-                @Override
-                public void setup() {
-                    setName("App Setup");
-                    Drawable setupIcon = themeHelper.getTheme().settingsDrawable.makeDrawable(getAppContext());
-                    setupIcon.setColorFilter(themeHelper.getTheme().textPrimary, PorterDuff.Mode.SRC_IN);
-                    setIcon(SiteIcon.fromDrawable(imageLoaderV2, setupIcon));
-                    setBoardsType(BoardsType.STATIC);
-                    setConfig(new CommonConfig() {
-                    });
-                    setResolvable(new CommonSiteUrlHandler() {
-                        @Override
-                        public HttpUrl getUrl() {
-                            return null;
-                        }
-
-                        @NonNull
-                        @Override
-                        public String[] getMediaHosts() {
-                            return new String[0];
-                        }
-
-                        @NonNull
-                        @Override
-                        public String[] getNames() {
-                            return new String[0];
-                        }
-
-                        @Override
-                        public Class<? extends Site> getSiteClass() {
-                            return null;
-                        }
-                    });
-                    setEndpoints(new CommonEndpoints(null) {
-                        @Override
-                        public HttpUrl pages(Board board) {
-                            return null;
-                        }
-                    });
-                    setActions(new CommonActions(null) {
-                    });
-                    setParser(new CommentParser(getMockReplyManager()));
-                }
-
-                @NotNull
-                @Override
-                public CommentParserType commentParserType() {
-                    return CommentParserType.Default;
-                }
-
-                @NonNull
-                @Override
-                public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
-                    throw new RuntimeException("Shouldn't be called");
-                }
-            };
-            setupSite.setup();
-            items.items.add(new Item(1, setupSite));
-        }
+        // TODO(KurobaEx): remove
+//        if (items.items.size() == 1) {
+//            CommonSite setupSite = new CommonSite() {
+//                @Override
+//                public void setup() {
+//                    setName("App Setup");
+//                    Drawable setupIcon = themeHelper.getTheme().settingsDrawable.makeDrawable(getAppContext());
+//                    setupIcon.setColorFilter(themeHelper.getTheme().textPrimary, PorterDuff.Mode.SRC_IN);
+//                    setIcon(SiteIcon.fromDrawable(imageLoaderV2, setupIcon));
+//                    setBoardsType(BoardsType.STATIC);
+//                    setConfig(new CommonConfig() {
+//                    });
+//                    setResolvable(new CommonSiteUrlHandler() {
+//                        @Override
+//                        public HttpUrl getUrl() {
+//                            return null;
+//                        }
+//
+//                        @NonNull
+//                        @Override
+//                        public String[] getMediaHosts() {
+//                            return new String[0];
+//                        }
+//
+//                        @NonNull
+//                        @Override
+//                        public String[] getNames() {
+//                            return new String[0];
+//                        }
+//
+//                        @Override
+//                        public Class<? extends Site> getSiteClass() {
+//                            return null;
+//                        }
+//                    });
+//                    setEndpoints(new CommonEndpoints(null) {
+//                        @Override
+//                        public HttpUrl pages(Board board) {
+//                            return null;
+//                        }
+//                    });
+//                    setActions(new CommonActions(null) {
+//                    });
+//                    setParser(new CommentParser(getMockReplyManager()));
+//                }
+//
+//                @NotNull
+//                @Override
+//                public CommentParserType commentParserType() {
+//                    return CommentParserType.Default;
+//                }
+//
+//                @NonNull
+//                @Override
+//                public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
+//                    throw new RuntimeException("Shouldn't be called");
+//                }
+//            };
+//            setupSite.setup();
+//            items.items.add(new Item(1, setupSite));
+//        }
     }
 
     @Override

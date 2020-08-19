@@ -2,49 +2,103 @@ package com.github.adamantcheese.model.entity.chan
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.Index
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
 @Entity(
   tableName = ChanBoardEntity.TABLE_NAME,
-  indices = [
-    Index(
-      name = ChanBoardEntity.SITE_NAME_INDEX_NAME,
-      value = [ChanBoardEntity.SITE_NAME_COLUMN_NAME]
-    ),
-    Index(
-      name = ChanBoardEntity.BOARD_CODE_INDEX_NAME,
-      value = [ChanBoardEntity.BOARD_CODE_COLUMN_NAME]
-    ),
-    Index(
-      name = ChanBoardEntity.BOARD_DESCRIPTOR_INDEX_NAME,
-      value = [
-        ChanBoardEntity.SITE_NAME_COLUMN_NAME,
-        ChanBoardEntity.BOARD_CODE_COLUMN_NAME
-      ],
-      unique = true
+  foreignKeys = [
+    ForeignKey(
+      entity = ChanBoardIdEntity::class,
+      parentColumns = [ChanBoardIdEntity.BOARD_ID_COLUMN_NAME],
+      childColumns = [ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME],
+      onDelete = ForeignKey.CASCADE,
+      onUpdate = ForeignKey.CASCADE
     )
   ]
 )
 data class ChanBoardEntity(
-  @PrimaryKey(autoGenerate = true)
-  @ColumnInfo(name = BOARD_ID_COLUMN_NAME)
-  var boardId: Long = 0L,
-  @ColumnInfo(name = SITE_NAME_COLUMN_NAME)
-  val siteName: String,
-  @ColumnInfo(name = BOARD_CODE_COLUMN_NAME)
-  val boardCode: String
+  @PrimaryKey(autoGenerate = false)
+  @ColumnInfo(name = OWNER_CHAN_BOARD_ID_COLUMN_NAME)
+  var ownerChanBoardId: Long,
+  @ColumnInfo(name = ORDER_COLUMN_NAME)
+  val order: Int = 0,
+  @ColumnInfo(name = NAME_COLUMN_NAME)
+  val name: String? = null,
+  @ColumnInfo(name = CODE_COLUMN_NAME)
+  val code: String? = null,
+  @ColumnInfo(name = PER_PAGE_COLUMN_NAME)
+  val perPage: Int = 15,
+  @ColumnInfo(name = PAGES_COLUMN_NAME)
+  val pages: Int = 10,
+  @ColumnInfo(name = MAX_FILE_SIZE_COLUMN_NAME)
+  val maxFileSize: Int = -1,
+  @ColumnInfo(name = MAX_WEBM_SIZE_COLUMN_NAME)
+  val maxWebmSize: Int = -1,
+  @ColumnInfo(name = MAX_COMMENT_CHARS_COLUMN_NAME)
+  val maxCommentChars: Int = -1,
+  @ColumnInfo(name = BUMP_LIMIT_COLUMN_NAME)
+  val bumpLimit: Int = -1,
+  @ColumnInfo(name = IMAGE_LIMIT_COLUMN_NAME)
+  val imageLimit: Int = -1,
+  @ColumnInfo(name = COOLDOWN_THREADS_COLUMN_NAME)
+  val cooldownThreads: Int = 0,
+  @ColumnInfo(name = COOLDOWN_REPLIES_COLUMN_NAME)
+  val cooldownReplies: Int = 0,
+  @ColumnInfo(name = COOLDOWN_IMAGES_COLUMN_NAME)
+  val cooldownImages: Int = 0,
+  @ColumnInfo(name = CUSTOM_SPOILERS_COLUMN_NAME)
+  val customSpoilers: Int = -1,
+  @ColumnInfo(name = DESCRIPTION_COLUMN_NAME)
+  val description: String = "",
+  @ColumnInfo(name = SAVED_COLUMN_NAME)
+  val saved: Boolean = false,
+  @ColumnInfo(name = WORK_SAFE_COLUMN_NAME)
+  val workSafe: Boolean = false,
+  @ColumnInfo(name = SPOILERS_COLUMN_NAME)
+  val spoilers: Boolean = false,
+  @ColumnInfo(name = USER_IDS_COLUMN_NAME)
+  val userIds: Boolean = false,
+  @ColumnInfo(name = CODE_TAGS_COLUMN_NAME)
+  val codeTags: Boolean = false,
+  @ColumnInfo(name = PREUPLOAD_CAPTCHA_COLUMN_NAME)
+  val preuploadCaptcha: Boolean = false,
+  @ColumnInfo(name = COUNTRY_FLAGS_COLUMN_NAME)
+  val countryFlags: Boolean = false,
+  @ColumnInfo(name = MATH_TAGS_COLUMN_NAME)
+  val mathTags: Boolean = false,
+  @ColumnInfo(name = ARCHIVE_COLUMN_NAME)
+  val archive: Boolean = false
 ) {
 
   companion object {
     const val TABLE_NAME = "chan_board"
 
-    const val BOARD_ID_COLUMN_NAME = "board_id"
-    const val SITE_NAME_COLUMN_NAME = "site_name"
-    const val BOARD_CODE_COLUMN_NAME = "board_code"
-
-    const val BOARD_DESCRIPTOR_INDEX_NAME = "${TABLE_NAME}_board_descriptor_idx"
-    const val SITE_NAME_INDEX_NAME = "${TABLE_NAME}_site_name_idx"
-    const val BOARD_CODE_INDEX_NAME = "${TABLE_NAME}_board_code_idx"
+    const val OWNER_CHAN_BOARD_ID_COLUMN_NAME = "owner_chan_board_id"
+    const val ORDER_COLUMN_NAME = "order"
+    const val NAME_COLUMN_NAME = "name"
+    const val CODE_COLUMN_NAME = "code"
+    const val PER_PAGE_COLUMN_NAME = "per_page"
+    const val PAGES_COLUMN_NAME = "pages"
+    const val MAX_FILE_SIZE_COLUMN_NAME = "max_file_size"
+    const val MAX_WEBM_SIZE_COLUMN_NAME = "max_webm_size"
+    const val MAX_COMMENT_CHARS_COLUMN_NAME = "max_comment_chars"
+    const val BUMP_LIMIT_COLUMN_NAME = "bump_limit"
+    const val IMAGE_LIMIT_COLUMN_NAME = "image_limit"
+    const val COOLDOWN_THREADS_COLUMN_NAME = "cooldown_threads"
+    const val COOLDOWN_REPLIES_COLUMN_NAME = "cooldown_replies"
+    const val COOLDOWN_IMAGES_COLUMN_NAME = "cooldown_images"
+    const val CUSTOM_SPOILERS_COLUMN_NAME = "custom_spoilers"
+    const val DESCRIPTION_COLUMN_NAME = "description"
+    const val SAVED_COLUMN_NAME = "saved"
+    const val WORK_SAFE_COLUMN_NAME = "work_safe"
+    const val SPOILERS_COLUMN_NAME = "spoilers"
+    const val USER_IDS_COLUMN_NAME = "user_ids"
+    const val CODE_TAGS_COLUMN_NAME = "code_tags"
+    const val PREUPLOAD_CAPTCHA_COLUMN_NAME = "preupload_captcha"
+    const val COUNTRY_FLAGS_COLUMN_NAME = "country_flags"
+    const val MATH_TAGS_COLUMN_NAME = "math_tags"
+    const val ARCHIVE_COLUMN_NAME = "archive"
   }
+
 }

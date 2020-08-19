@@ -28,7 +28,6 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
-import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.common.exhaustive
 import kotlinx.coroutines.FlowPreview
@@ -47,7 +46,6 @@ class MainSettingsControllerV2(context: Context)
   lateinit var recyclerView: EpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
 
-  private val cancellableToast = CancellableToast()
   private val defaultScreen = MainScreen
 
   private var hasPendingRestart = false

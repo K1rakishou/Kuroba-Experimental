@@ -4,10 +4,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase
 import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase
 import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
-import com.github.adamantcheese.chan.core.manager.BookmarksManager
-import com.github.adamantcheese.chan.core.manager.LastPageNotificationsHelper
-import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder
-import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -34,7 +31,7 @@ class BookmarkWatcherDelegate(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
-  private val siteRepository: SiteRepository,
+  private val siteManager: SiteManager,
   private val savedReplyManager: DatabaseSavedReplyManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
@@ -373,11 +370,7 @@ class BookmarkWatcherDelegate(
   private suspend fun awaitUntilAllDependenciesAreReady() {
     bookmarksManager.awaitUntilInitialized()
 
-    if (!siteRepository.isReady) {
-      Logger.d(TAG, "siteRepository is not ready yet, waiting...")
-      val duration = measureTime { siteRepository.awaitUntilInitialized() }
-      Logger.d(TAG, "siteRepository initialization completed, took $duration")
-    }
+    siteManager.awaitUntilInitialized()
 
     if (!savedReplyManager.isReady) {
       Logger.d(TAG, "savedReplyManager is not ready yet, waiting...")

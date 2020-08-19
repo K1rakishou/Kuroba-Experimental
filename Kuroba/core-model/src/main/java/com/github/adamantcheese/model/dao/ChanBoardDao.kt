@@ -4,31 +4,31 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
 
 @Dao
 abstract class ChanBoardDao {
 
   @Insert(onConflict = OnConflictStrategy.ABORT)
-  abstract suspend fun insert(chanBoardEntity: ChanBoardEntity): Long
+  abstract suspend fun insert(chanBoardIdEntity: ChanBoardIdEntity): Long
 
   @Query("""
         SELECT * 
-        FROM ${ChanBoardEntity.TABLE_NAME}
+        FROM ${ChanBoardIdEntity.TABLE_NAME}
         WHERE 
-            ${ChanBoardEntity.SITE_NAME_COLUMN_NAME} = :siteName
+            ${ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME} = :siteName
         AND
-            ${ChanBoardEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
+            ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
-  abstract suspend fun select(siteName: String, boardCode: String): ChanBoardEntity?
+  abstract suspend fun select(siteName: String, boardCode: String): ChanBoardIdEntity?
 
   @Query("""
-        SELECT ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} 
-        FROM ${ChanBoardEntity.TABLE_NAME}
+        SELECT ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} 
+        FROM ${ChanBoardIdEntity.TABLE_NAME}
         WHERE 
-            ${ChanBoardEntity.SITE_NAME_COLUMN_NAME} = :siteName
+            ${ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME} = :siteName
         AND
-            ${ChanBoardEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
+            ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
   abstract suspend fun selectBoardId(siteName: String, boardCode: String): Long?
 
@@ -38,27 +38,27 @@ abstract class ChanBoardDao {
 
   @Query("""
         SELECT *
-        FROM ${ChanBoardEntity.TABLE_NAME}
-        WHERE ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} = :boardId
+        FROM ${ChanBoardIdEntity.TABLE_NAME}
+        WHERE ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = :boardId
     """)
-  abstract suspend fun select(boardId: Long): ChanBoardEntity?
+  abstract suspend fun select(boardId: Long): ChanBoardIdEntity?
 
   @Query("""
         SELECT *
-        FROM ${ChanBoardEntity.TABLE_NAME}
-        WHERE ${ChanBoardEntity.BOARD_ID_COLUMN_NAME} IN (:boardIdList)
+        FROM ${ChanBoardIdEntity.TABLE_NAME}
+        WHERE ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} IN (:boardIdList)
     """)
-  abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardEntity>
+  abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardIdEntity>
 
-  suspend fun insert(siteName: String, boardCode: String): ChanBoardEntity {
+  suspend fun insert(siteName: String, boardCode: String): ChanBoardIdEntity {
     val prev = select(siteName, boardCode)
     if (prev != null) {
       return prev
     }
 
-    val chanBoardEntity = ChanBoardEntity(
+    val chanBoardEntity = ChanBoardIdEntity(
       boardId = 0L,
-      siteName = siteName,
+      ownerSiteName = siteName,
       boardCode = boardCode
     )
 

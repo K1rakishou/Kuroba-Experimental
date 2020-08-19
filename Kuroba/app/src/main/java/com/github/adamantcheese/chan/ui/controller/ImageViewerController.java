@@ -95,7 +95,6 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLink;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.openLinkInBrowser;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.shareLink;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout;
 
 public class ImageViewerController
@@ -410,7 +409,7 @@ public class ImageViewerController
                     message
             );
 
-            showToast(context, errorMessage, Toast.LENGTH_LONG);
+            showToast(errorMessage, Toast.LENGTH_LONG);
         });
     }
 

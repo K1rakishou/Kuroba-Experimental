@@ -11,10 +11,10 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.*
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
+import com.github.adamantcheese.chan.features.setup.SitesSetupController
 import com.github.adamantcheese.chan.ui.controller.FiltersController
 import com.github.adamantcheese.chan.ui.controller.LicensesController
 import com.github.adamantcheese.chan.ui.controller.ReportProblemController
-import com.github.adamantcheese.chan.ui.controller.SitesSetupController
 import com.github.adamantcheese.chan.ui.controller.crashlogs.ReviewCrashLogsController
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType

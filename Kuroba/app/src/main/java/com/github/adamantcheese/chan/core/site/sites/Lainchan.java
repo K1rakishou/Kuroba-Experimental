@@ -37,6 +37,7 @@ import okhttp3.HttpUrl;
 
 public class Lainchan extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
+    public static final String SITE_NAME = "Lainchan";
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
         private static final String ROOT = "https://lainchan.org/";
@@ -83,7 +84,8 @@ public class Lainchan extends CommonSite {
 
     @Override
     public void setup() {
-        setName("Lainchan");
+        setEnabled(true);
+        setName(SITE_NAME);
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://lainchan.org/favicon.ico")));
 
         setBoards(

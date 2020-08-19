@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
+import com.github.adamantcheese.chan.features.setup.SitesSetupController
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -161,8 +162,17 @@ class BrowseController(context: Context) : ThreadController(context),
     // Navigation item
     navigation.hasDrawer = true
     navigation.setMiddleMenu { anchor: View? ->
-      val boardsFloatingMenu = BrowseBoardsFloatingMenu(context)
-      boardsFloatingMenu.show(view, anchor, this@BrowseController, presenter.currentBoardDescriptor())
+//      val boardsFloatingMenu = BrowseBoardsFloatingMenu(context)
+//      boardsFloatingMenu.show(view, anchor, this@BrowseController, presenter.currentBoardDescriptor())
+
+      val setupController = SitesSetupController(context)
+      if (doubleNavigationController != null) {
+        doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(setupController)
+      } else {
+        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(setupController)
+      }
+
+      requireStartActivity().setSettingsMenuItemSelected()
     }
 
     // Toolbar menu

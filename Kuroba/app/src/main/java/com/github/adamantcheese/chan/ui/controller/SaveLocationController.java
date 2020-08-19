@@ -40,7 +40,6 @@ import java.io.File;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class SaveLocationController
         extends Controller
@@ -104,7 +103,7 @@ public class SaveLocationController
 
     private void onPositionButtonClick(NewFolderLayout dialogView, DialogInterface dialog) {
         if (!dialogView.getFolderName().matches("\\A\\w+\\z")) {
-            showToast(context, "Folder must be a word, no spaces");
+            showToast("Folder must be a word, no spaces");
         } else {
             File newDir = new File(
                     fileWatcher.getCurrentPath().getAbsolutePath() + File.separator + dialogView.getFolderName());

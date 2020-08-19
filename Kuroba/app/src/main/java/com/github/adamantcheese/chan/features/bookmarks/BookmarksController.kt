@@ -24,11 +24,9 @@ import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.adamantcheese.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
 import com.github.adamantcheese.chan.utils.DialogUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -78,27 +76,15 @@ class BookmarksController(
       .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
-        object : ToolbarMenuSubItem.ClickCallback {
-          override fun clicked(subItem: ToolbarMenuSubItem) {
-            onMarkAllBookmarksAsSeenClicked(subItem)
-          }
-        })
+        ToolbarMenuSubItem.ClickCallback { subItem -> onMarkAllBookmarksAsSeenClicked(subItem) })
       .withSubItem(
         ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
         R.string.controller_bookmarks_prune_inactive_bookmarks,
-        object : ToolbarMenuSubItem.ClickCallback {
-          override fun clicked(subItem: ToolbarMenuSubItem) {
-            onPruneNonActiveBookmarksClicked(subItem)
-          }
-        })
+        ToolbarMenuSubItem.ClickCallback { subItem -> onPruneNonActiveBookmarksClicked(subItem) })
       .withSubItem(
         ACTION_CLEAR_ALL_BOOKMARKS,
         R.string.controller_bookmarks_clear_all_bookmarks,
-        object : ToolbarMenuSubItem.ClickCallback {
-          override fun clicked(subItem: ToolbarMenuSubItem) {
-            onClearAllBookmarksClicked(subItem)
-          }
-        }
+        ToolbarMenuSubItem.ClickCallback { subItem -> onClearAllBookmarksClicked(subItem) }
       )
       .build()
       .build()
@@ -111,9 +97,6 @@ class BookmarksController(
     mainScope.launch {
       bookmarksPresenter.listenForStateChanges()
         .asFlow()
-        .catch { error ->
-          Logger.e(TAG, "Unknown error subscribed to bookmarksPresenter.listenForStateChanges()", error)
-        }
         .collect { state -> onStateChanged(state) }
     }
 

@@ -6,8 +6,8 @@ import androidx.room.*
   tableName = ChanThreadEntity.TABLE_NAME,
   foreignKeys = [
     ForeignKey(
-      entity = ChanBoardEntity::class,
-      parentColumns = [ChanBoardEntity.BOARD_ID_COLUMN_NAME],
+      entity = ChanBoardIdEntity::class,
+      parentColumns = [ChanBoardIdEntity.BOARD_ID_COLUMN_NAME],
       childColumns = [ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME],
       onUpdate = ForeignKey.CASCADE,
       onDelete = ForeignKey.CASCADE

@@ -24,10 +24,8 @@ import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.Executor;
@@ -63,15 +61,15 @@ public class BoardSetupPresenter
         this.callback = callback;
         this.site = site;
 
-        savedBoards = boardManager.getSiteSavedBoards(site);
-        callback.setSavedBoards(savedBoards);
-
-        allBoardsObservable = boardManager.getAllBoardsObservable();
-        allBoardsObservable.addObserver(this);
+//        savedBoards = boardManager.getSiteSavedBoards(site);
+//        callback.setSavedBoards(savedBoards);
+//
+//        allBoardsObservable = boardManager.getAllBoardsObservable();
+//        allBoardsObservable.addObserver(this);
     }
 
     public void destroy() {
-        boardManager.updateBoardOrders(savedBoards);
+//        boardManager.updateBoardOrders(savedBoards);
 
         allBoardsObservable.deleteObserver(this);
     }
@@ -127,32 +125,32 @@ public class BoardSetupPresenter
     public void onAddDialogPositiveClicked() {
         int count = 0;
 
-        List<Board> boardsToSave = new ArrayList<>();
-
-        if (site.boardsType().getCanList()) {
-            List<Board> siteBoards = boardManager.getSiteBoards(site);
-            Map<String, Board> siteBoardsByCode = new HashMap<>();
-            for (Board siteBoard : siteBoards) {
-                siteBoardsByCode.put(siteBoard.code, siteBoard);
-            }
-            for (String selectedSuggestion : selectedSuggestions) {
-                Board board = siteBoardsByCode.get(selectedSuggestion);
-                if (board != null) {
-                    boardsToSave.add(board);
-                    savedBoards.add(board);
-                    count++;
-                }
-            }
-        } else {
-            for (String suggestion : selectedSuggestions) {
-                Board board = site.createBoard(suggestion, suggestion);
-                boardsToSave.add(board);
-                savedBoards.add(board);
-                count++;
-            }
-        }
-
-        boardManager.setAllSaved(boardsToSave, true);
+//        List<Board> boardsToSave = new ArrayList<>();
+//
+//        if (site.boardsType().getCanList()) {
+//            List<Board> siteBoards = boardManager.getSiteBoards(site);
+//            Map<String, Board> siteBoardsByCode = new HashMap<>();
+//            for (Board siteBoard : siteBoards) {
+//                siteBoardsByCode.put(siteBoard.code, siteBoard);
+//            }
+//            for (String selectedSuggestion : selectedSuggestions) {
+//                Board board = siteBoardsByCode.get(selectedSuggestion);
+//                if (board != null) {
+//                    boardsToSave.add(board);
+//                    savedBoards.add(board);
+//                    count++;
+//                }
+//            }
+//        } else {
+//            for (String suggestion : selectedSuggestions) {
+//                Board board = site.createBoard(suggestion, suggestion);
+//                boardsToSave.add(board);
+//                savedBoards.add(board);
+//                count++;
+//            }
+//        }
+//
+//        boardManager.setAllSaved(boardsToSave, true);
 
         setOrder();
         callback.setSavedBoards(savedBoards);
@@ -169,7 +167,7 @@ public class BoardSetupPresenter
 
     public void remove(int position) {
         Board board = savedBoards.remove(position);
-        boardManager.setSaved(board, false);
+//        boardManager.setSaved(board, false);
 
         setOrder();
         callback.setSavedBoards(savedBoards);
@@ -178,7 +176,7 @@ public class BoardSetupPresenter
     }
 
     public void undoRemoveBoard(Board board) {
-        boardManager.setSaved(board, true);
+//        boardManager.setSaved(board, true);
         savedBoards.add(board.order, board);
         setOrder();
         callback.setSavedBoards(savedBoards);
@@ -198,25 +196,25 @@ public class BoardSetupPresenter
         suggestionCall = BackgroundUtils.runWithExecutor(executor, () -> {
             List<BoardSuggestion> suggestions = new ArrayList<>();
             if (site.boardsType().getCanList()) {
-                List<Board> siteBoards = boardManager.getSiteBoards(site);
-                List<Board> allUnsavedBoards = new ArrayList<>();
-                for (Board siteBoard : siteBoards) {
-                    if (!siteBoard.saved) {
-                        allUnsavedBoards.add(siteBoard);
-                    }
-                }
-
-                List<Board> toSuggest;
-                if (query == null || query.equals("")) {
-                    toSuggest = new ArrayList<>(allUnsavedBoards);
-                } else {
-                    toSuggest = BoardHelper.search(allUnsavedBoards, query);
-                }
-
-                for (Board board : toSuggest) {
-                    BoardSuggestion suggestion = new BoardSuggestion(board);
-                    suggestions.add(suggestion);
-                }
+//                List<Board> siteBoards = boardManager.getSiteBoards(site);
+//                List<Board> allUnsavedBoards = new ArrayList<>();
+//                for (Board siteBoard : siteBoards) {
+//                    if (!siteBoard.saved) {
+//                        allUnsavedBoards.add(siteBoard);
+//                    }
+//                }
+//
+//                List<Board> toSuggest;
+//                if (query == null || query.equals("")) {
+//                    toSuggest = new ArrayList<>(allUnsavedBoards);
+//                } else {
+//                    toSuggest = BoardHelper.search(allUnsavedBoards, query);
+//                }
+//
+//                for (Board board : toSuggest) {
+//                    BoardSuggestion suggestion = new BoardSuggestion(board);
+//                    suggestions.add(suggestion);
+//                }
             } else {
                 if (query != null && !query.equals("")) {
                     suggestions.add(new BoardSuggestion(query));

@@ -36,7 +36,6 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.setClipboardContent;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public class LogsController
         extends Controller {
@@ -84,7 +83,7 @@ public class LogsController
 
     private void copyLogsClicked(ToolbarMenuSubItem item) {
         setClipboardContent("Logs", logText);
-        showToast(context, R.string.settings_logs_copied_to_clipboard);
+        showToast(R.string.settings_logs_copied_to_clipboard);
     }
 
     @Nullable

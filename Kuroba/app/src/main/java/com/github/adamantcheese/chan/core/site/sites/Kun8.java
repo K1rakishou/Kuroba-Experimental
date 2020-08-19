@@ -30,6 +30,7 @@ import okhttp3.HttpUrl;
 public class Kun8
         extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
+    public static final String SITE_NAME = "8kun";
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
         private final String[] mediaHosts = new String[]{"media.8kun.top"};
@@ -78,7 +79,8 @@ public class Kun8
 
     @Override
     public void setup() {
-        setName("8kun");
+        setEnabled(true);
+        setName(SITE_NAME);
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://8kun.top/static/favicon.ico")));
         setBoardsType(BoardsType.INFINITE);
         setResolvable(URL_HANDLER);

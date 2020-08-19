@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.site
 
-import android.util.SparseArray
 import com.github.adamantcheese.chan.core.site.sites.Kun8
 import com.github.adamantcheese.chan.core.site.sites.Lainchan
 import com.github.adamantcheese.chan.core.site.sites.Sushichan
@@ -24,6 +23,7 @@ import com.github.adamantcheese.chan.core.site.sites.Wired7
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.chan420.Chan420
 import com.github.adamantcheese.chan.core.site.sites.dvach.Dvach
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import java.util.*
 
 /**
@@ -33,7 +33,9 @@ object SiteRegistry {
   @JvmField
   val URL_HANDLERS: MutableList<SiteUrlHandler> = ArrayList()
   @JvmField
-  val SITE_CLASSES = SparseArray<Class<out Site?>>()
+  val SITE_CLASSES = mutableMapOf<Int, Class<out Site>>()
+  @JvmField
+  val SITE_CLASSES_MAP = mutableMapOf<SiteDescriptor, Class<out Site>>()
 
   init {
     URL_HANDLERS.add(Chan4.URL_HANDLER)
@@ -46,9 +48,7 @@ object SiteRegistry {
     //chan55 was here but was removed
     URL_HANDLERS.add(Kun8.URL_HANDLER)
     URL_HANDLERS.add(Chan420.URL_HANDLER)
-  }
 
-  init {
     // This id-siteclass mapping is used to look up the correct site class at deserialization.
     // This differs from the Site.id() id, that id is used for site instance linking, this is just to
     // find the correct class to use.
@@ -62,5 +62,23 @@ object SiteRegistry {
     //chan55 was here but was removed; don't use ID 7
     SITE_CLASSES.put(8, Kun8::class.java)
     SITE_CLASSES.put(9, Chan420::class.java)
+
+    addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
+    addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
+    addSiteToSiteClassesMap(Sushichan.SITE_NAME, Sushichan::class.java)
+    addSiteToSiteClassesMap(Dvach.SITE_NAME, Dvach::class.java)
+    addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
+    addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
+    addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
+  }
+
+  private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {
+    val siteDescriptor = SiteDescriptor(siteName)
+
+    require(!SITE_CLASSES_MAP.contains(siteDescriptor)) {
+      "Site $siteName already added! Make sure that no sites share the same name!"
+    }
+
+    SITE_CLASSES_MAP[siteDescriptor] = siteClass
   }
 }

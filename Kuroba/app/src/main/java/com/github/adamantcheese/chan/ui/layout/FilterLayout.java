@@ -40,13 +40,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatCheckBox;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterEngine.FilterAction;
 import com.github.adamantcheese.chan.core.manager.FilterType;
 import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -84,8 +82,8 @@ public class FilterLayout
     private AppCompatCheckBox onlyOnOP;
     private AppCompatCheckBox applyToSaved;
 
-    @Inject
-    BoardManager boardManager;
+//    @Inject
+//    BoardManager boardManager;
     @Inject
     FilterEngine filterEngine;
     @Inject
@@ -264,9 +262,9 @@ public class FilterLayout
             List<SelectLayout.SelectItem<Board>> items = new ArrayList<>();
 
             List<Board> allSavedBoards = new ArrayList<>();
-            for (BoardRepository.SiteBoards item : boardManager.getSavedBoardsObservable().get()) {
-                allSavedBoards.addAll(item.boards);
-            }
+//            for (BoardRepository.SiteBoards item : boardManager.getSavedBoardsObservable().get()) {
+//                allSavedBoards.addAll(item.boards);
+//            }
 
             for (Board board : allSavedBoards) {
                 String name = BoardHelper.getName(board);

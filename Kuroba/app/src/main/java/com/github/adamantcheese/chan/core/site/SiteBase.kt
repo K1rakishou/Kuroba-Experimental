@@ -22,8 +22,6 @@ import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
-import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
@@ -33,6 +31,8 @@ import com.github.adamantcheese.chan.core.settings.json.JsonSettingsProvider
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import java.util.*
@@ -40,7 +40,6 @@ import kotlin.coroutines.CoroutineContext
 
 abstract class SiteBase : Site, CoroutineScope {
   protected var id = 0
-  private var siteConfig: SiteConfig? = null
   private val job = SupervisorJob()
 
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
@@ -62,25 +61,21 @@ abstract class SiteBase : Site, CoroutineScope {
   private var userSettings: JsonSettings? = null
   private var initialized = false
 
-  override fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings) {
+  override fun initialize(id: Int, userSettings: JsonSettings) {
     if (initialized) {
       throw IllegalStateException("Already initialized")
     }
 
     this.id = id
-    this.siteConfig = siteConfig
     this.userSettings = userSettings
 
     initialized = true
   }
 
   override fun postInitialize() {
-    settingsProvider = JsonSettingsProvider(
-      userSettings,
-      JsonSettingsProvider.Callback {
-        runBlocking(Dispatchers.Default) { siteService.updateUserSettings(this@SiteBase, userSettings!!) }
-      }
-    )
+    settingsProvider = JsonSettingsProvider(userSettings) {
+      siteService.updateUserSettings(this@SiteBase, userSettings!!)
+    }
 
     initializeSettings()
 
@@ -90,10 +85,11 @@ abstract class SiteBase : Site, CoroutineScope {
 
         when (val readerResponse = actions().boards()) {
           is JsonReaderRequest.JsonReaderResponse.Success -> {
-            boardManager.updateAvailableBoardsForSite(
-              readerResponse.result.site,
-              readerResponse.result.boards
-            )
+            // TODO(KurobaEx):
+//            boardManager.updateAvailableBoardsForSite(
+//              readerResponse.result.site,
+//              readerResponse.result.boards
+//            )
 
             Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
               "boards count = ${readerResponse.result.boards.size}")
@@ -116,8 +112,9 @@ abstract class SiteBase : Site, CoroutineScope {
     return id
   }
 
-  override fun board(code: String): Board? {
-    return boardManager.getBoard(this, code)
+  override fun board(code: String): ChanBoard? {
+    val boardDescriptor = BoardDescriptor.create(siteDescriptor(), code)
+    return boardManager.getBoard(boardDescriptor)
   }
 
   override fun settings(): List<SiteSetting> {
@@ -128,14 +125,16 @@ abstract class SiteBase : Site, CoroutineScope {
     // no-op
   }
 
-  override fun createBoard(boardName: String, boardCode: String): Board {
+  override fun createBoard(boardName: String, boardCode: String): ChanBoard {
     val existing = board(boardCode)
     if (existing != null) {
       return existing
     }
 
-    val board = Board.fromSiteNameCode(this, boardName, boardCode)
-    boardManager.updateAvailableBoardsForSite(this, listOf(board))
+    val boardDescriptor = BoardDescriptor.create(siteDescriptor(), boardCode)
+    val board = ChanBoard.create(boardDescriptor, boardName)
+    // TODO(KurobaEx):
+//    boardManager.updateAvailableBoardsForSite(this, listOf(board))
 
     return board
   }

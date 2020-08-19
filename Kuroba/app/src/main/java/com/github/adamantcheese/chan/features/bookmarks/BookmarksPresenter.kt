@@ -114,6 +114,10 @@ class BookmarksPresenter(
     return bookmarksControllerStateSubject
       .observeOn(AndroidSchedulers.mainThread())
       .debounce(250, TimeUnit.MILLISECONDS)
+      .doOnError { error ->
+        Logger.e(TAG, "Unknown error subscribed to bookmarksPresenter.listenForStateChanges()", error)
+      }
+      .onErrorReturn { error -> BookmarksControllerState.Error(error.errorMessageOrClassName()) }
       .hide()
   }
 

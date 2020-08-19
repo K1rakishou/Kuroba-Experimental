@@ -16,11 +16,11 @@
  */
 package com.github.adamantcheese.chan.core.site
 
-import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
 interface Site {
@@ -97,7 +97,7 @@ interface Site {
     /**
      * Can the boards be listed, in other words, can
      * [SiteActions.boards] be used, and is
-     * [.board] available.
+     * [board] available.
      */
     val canList: Boolean
   ) {
@@ -115,20 +115,10 @@ interface Site {
      * The site's boards are dynamic and infinite, existence of boards should be checked per board.
      */
     INFINITE(false);
-
   }
 
-  /**
-   * Initialize the site with the given id, config, and userSettings.
-   *
-   * **Note: do not use any managers at this point, because they rely on the sites being initialized.
-   * Instead, use [.postInitialize]**
-   *
-   * @param id           the site id
-   * @param siteConfig   the site config
-   * @param userSettings the site user settings
-   */
-  fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings)
+  fun enabled(): Boolean
+  fun initialize(id: Int, userSettings: JsonSettings)
   fun postInitialize()
 
   /**
@@ -169,7 +159,7 @@ interface Site {
    * @param code the board code
    * @return a board with the board code, or `null`.
    */
-  fun board(code: String): Board?
+  fun board(code: String): ChanBoard?
 
   /**
    * Create a new board with the specified `code` and `name`.
@@ -178,6 +168,6 @@ interface Site {
    *
    * @return the created board.
    */
-  fun createBoard(boardName: String, boardCode: String): Board
+  fun createBoard(boardName: String, boardCode: String): ChanBoard
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
 }

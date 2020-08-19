@@ -11,7 +11,6 @@ import com.github.adamantcheese.chan.features.archives.epoxy.epoxyArchiveSetting
 import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.view.DividerItemDecoration
-import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.AndroidUtils.inflate
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -27,7 +26,6 @@ class ArchivesSettingsController(context: Context)
   lateinit var recyclerView: EpoxyRecyclerView
 
   private val presenter = ArchivesSettingsPresenter()
-  private val cancellableToast = CancellableToast()
 
   override fun onCreate() {
     super.onCreate()

@@ -188,7 +188,7 @@ class ThirdPartyArchiveInfoLocalSource(
           ?: return@mapNotNull null
 
         val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          chanBoardEntity.siteName,
+          chanBoardEntity.ownerSiteName,
           chanBoardEntity.boardCode,
           chanThreadEntity.threadNo
         )

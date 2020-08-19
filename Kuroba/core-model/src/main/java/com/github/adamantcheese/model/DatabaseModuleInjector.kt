@@ -10,6 +10,7 @@ import okhttp3.Dns
 import okhttp3.Protocol
 
 object DatabaseModuleInjector {
+  lateinit var modelMainComponent: ModelMainComponent
 
   @JvmStatic
   fun build(
@@ -22,7 +23,7 @@ object DatabaseModuleInjector {
     appConstants: AppConstants,
     scope: CoroutineScope
   ): ModelMainComponent {
-    return DaggerModelMainComponent.builder()
+    val mainComponent = DaggerModelMainComponent.builder()
       .application(application)
       .okHttpDns(dns)
       .okHttpProtocols(NetworkModule.OkHttpProtocolList(protocols))
@@ -32,6 +33,9 @@ object DatabaseModuleInjector {
       .appConstants(appConstants)
       .appCoroutineScope(scope)
       .build()
+
+    modelMainComponent = mainComponent
+    return modelMainComponent
   }
 
 }

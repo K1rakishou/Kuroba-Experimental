@@ -38,7 +38,7 @@ class BrowsePresenter @Inject constructor(
   private var callback: Callback? = null
   private var hadBoards: Boolean
   private var currentBoardDescriptor: BoardDescriptor? = null
-  private val savedBoardsObservable = boardManager.savedBoardsObservable
+//  private val savedBoardsObservable = boardManager.savedBoardsObservable
   private val compositeDisposable = CompositeDisposable()
 
   init {
@@ -47,13 +47,13 @@ class BrowsePresenter @Inject constructor(
 
   fun create(callback: Callback?) {
     this.callback = callback
-    savedBoardsObservable.addObserver(this)
+//    savedBoardsObservable.addObserver(this)
   }
 
   fun destroy() {
     callback = null
     compositeDisposable.clear()
-    savedBoardsObservable.deleteObserver(this)
+//    savedBoardsObservable.deleteObserver(this)
   }
 
   fun currentBoardDescriptor(): BoardDescriptor? {
@@ -76,12 +76,12 @@ class BrowsePresenter @Inject constructor(
   }
 
   override fun update(o: Observable, arg: Any?) {
-    if (o === savedBoardsObservable) {
-      if (!hadBoards && hasBoards()) {
-        hadBoards = true
-        loadWithDefaultBoard(true)
-      }
-    }
+//    if (o === savedBoardsObservable) {
+//      if (!hadBoards && hasBoards()) {
+//        hadBoards = true
+//        loadWithDefaultBoard(true)
+//      }
+//    }
   }
 
   private fun hasBoards(): Boolean {
@@ -89,11 +89,11 @@ class BrowsePresenter @Inject constructor(
   }
 
   private fun firstBoardDescriptor(): BoardDescriptor? {
-    for (item in savedBoardsObservable.get()) {
-      if (item.boards.isNotEmpty()) {
-        return item.boards[0]?.boardDescriptor()
-      }
-    }
+//    for (item in savedBoardsObservable.get()) {
+//      if (item.boards.isNotEmpty()) {
+//        return item.boards[0]?.boardDescriptor()
+//      }
+//    }
 
     return null
   }

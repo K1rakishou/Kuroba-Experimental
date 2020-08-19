@@ -38,6 +38,7 @@ import okhttp3.HttpUrl;
 public class Sushichan
         extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
+    public static final String SITE_NAME = "Sushichan";
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
         private static final String ROOT = "https://sushigirl.us/";
@@ -86,7 +87,8 @@ public class Sushichan
 
     @Override
     public void setup() {
-        setName("Sushichan");
+        setEnabled(true);
+        setName(SITE_NAME);
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(

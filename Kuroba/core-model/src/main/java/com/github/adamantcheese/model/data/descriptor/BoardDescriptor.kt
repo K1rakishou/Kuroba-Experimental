@@ -28,6 +28,12 @@ class BoardDescriptor(
   }
 
   companion object {
+
+    @JvmStatic
+    fun create(siteDescriptor: SiteDescriptor, boardCode: String): BoardDescriptor {
+      return BoardDescriptor(siteDescriptor, boardCode)
+    }
+
     @JvmStatic
     fun create(siteName: String, boardCode: String): BoardDescriptor {
       return BoardDescriptor(

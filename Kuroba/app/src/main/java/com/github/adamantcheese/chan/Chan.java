@@ -43,9 +43,9 @@ import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.net.DnsSelector;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.core.site.SiteService;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
@@ -90,7 +90,7 @@ public class Chan
     @Inject
     DatabaseManager databaseManager;
     @Inject
-    SiteService siteService;
+    SiteManager siteManager;
     @Inject
     BoardManager boardManager;
     @Inject
@@ -197,12 +197,15 @@ public class Chan
         );
         feather.injectFields(this);
 
-        siteService.initialize();
-        boardManager.initialize();
+        siteManager.loadSites();
+        boardManager.loadBoards();
+
+        // TODO(KurobaEx): remove me!
         databaseManager.initializeAndTrim();
 
         setupErrorHandlers();
 
+        // TODO(KurobaEx): move to background thread!
         if (ChanSettings.collectCrashLogs.get()) {
             if (reportManager.hasCrashLogs()) {
                 settingsNotificationManager.notify(SettingNotificationType.CrashLog);

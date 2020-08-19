@@ -2,7 +2,7 @@ package com.github.adamantcheese.chan.core.image
 
 import android.content.Context
 import android.graphics.drawable.BitmapDrawable
-import androidx.appcompat.content.res.AppCompatResources
+import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
 import coil.network.HttpException
@@ -12,6 +12,7 @@ import coil.size.Scale
 import coil.transform.Transformation
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.model.PostImage
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.getLifecycleFromContext
@@ -19,7 +20,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 class ImageLoaderV2(
   private val imageLoader: ImageLoader,
-  private val verboseLogsEnabled: Boolean
+  private val verboseLogsEnabled: Boolean,
+  private val themeHelper: ThemeHelper
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
@@ -39,7 +41,9 @@ class ImageLoaderV2(
     width: Int?,
     height: Int?,
     transformations: List<Transformation>,
-    listener: SimpleImageListener
+    listener: SimpleImageListener,
+    @DrawableRes errorDrawableId: Int? = null,
+    @DrawableRes notFoundDrawableId: Int? = errorDrawableId
   ): RequestDisposable {
     val listenerRef = AtomicReference(listener)
     val contextRef = AtomicReference(context)
@@ -72,8 +76,18 @@ class ImageLoaderV2(
           try {
             if (realContext != null) {
               if (throwable is HttpException && throwable.response.code == 404) {
+                if (notFoundDrawableId != null) {
+                  loadFromResources(context, notFoundDrawableId, width, height, transformations, listener)
+                  return@listener
+                }
+
                 listenerRef.get()?.onResponse(getImageNotFoundDrawable(realContext))
               } else {
+                if (errorDrawableId != null) {
+                  loadFromResources(context, errorDrawableId, width, height, transformations, listener)
+                  return@listener
+                }
+
                 listenerRef.get()?.onResponse(getImageErrorLoadingDrawable(realContext))
               }
             }
@@ -81,6 +95,62 @@ class ImageLoaderV2(
             listenerRef.set(null)
             contextRef.set(null)
           }
+        },
+        onCancel = {
+          listenerRef.set(null)
+          contextRef.set(null)
+        }
+      )
+      target(
+        onSuccess = { drawable ->
+          try {
+            listenerRef.get()?.onResponse(drawable as BitmapDrawable)
+          } finally {
+            listenerRef.set(null)
+            contextRef.set(null)
+          }
+        }
+      )
+
+      build()
+    }
+
+    return imageLoader.execute(request)
+  }
+
+  fun loadFromResources(
+    context: Context,
+    @DrawableRes drawableId: Int,
+    width: Int?,
+    height: Int?,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ): RequestDisposable {
+    val listenerRef = AtomicReference(listener)
+    val contextRef = AtomicReference(context)
+    val lifecycle = context.getLifecycleFromContext()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
+    }
+
+    val request = with(LoadRequest.Builder(context)) {
+      data(drawableId)
+      lifecycle(lifecycle)
+      transformations(transformations)
+      allowHardware(true)
+      scale(Scale.FIT)
+
+      if ((width != null && width > 0) && (height != null && height > 0)) {
+        size(width, height)
+      }
+
+      listener(
+        onError = { _, throwable ->
+          listenerRef.set(null)
+          contextRef.set(null)
+
+          throw throwable
         },
         onCancel = {
           listenerRef.set(null)
@@ -185,9 +255,10 @@ class ImageLoaderV2(
       return imageNotFoundDrawable!!
     }
 
-    val drawable = AppCompatResources.getDrawable(
+    val drawable = themeHelper.tintDrawable(
       context,
-      R.drawable.ic_image_not_found
+      R.drawable.ic_image_not_found,
+      themeHelper.theme.textHint
     )
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_not_found" }
@@ -198,6 +269,7 @@ class ImageLoaderV2(
       imageNotFoundDrawable = BitmapDrawable(context.resources, drawable.toBitmap())
     }
 
+
     return imageNotFoundDrawable!!
   }
 
@@ -207,9 +279,10 @@ class ImageLoaderV2(
       return imageErrorLoadingDrawable!!
     }
 
-    val drawable = AppCompatResources.getDrawable(
+    val drawable = themeHelper.tintDrawable(
       context,
-      R.drawable.ic_image_error_loading
+      R.drawable.ic_image_error_loading,
+      themeHelper.theme.textHint
     )
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_error_loading" }
@@ -223,7 +296,7 @@ class ImageLoaderV2(
     return imageErrorLoadingDrawable!!
   }
 
-  interface SimpleImageListener {
+  fun interface SimpleImageListener {
     fun onResponse(drawable: BitmapDrawable)
   }
 

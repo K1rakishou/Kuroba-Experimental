@@ -149,11 +149,11 @@ public class SitesSetupPresenter
     }
 
     private void updateSitesInUi() {
-        List<SiteBoardCount> r = new ArrayList<>();
-        for (Site site : sitesShown) {
-            r.add(new SiteBoardCount(site, boardManager.getSiteSavedBoards(site).size()));
-        }
-        callback.setSites(r);
+//        List<SiteBoardCount> r = new ArrayList<>();
+//        for (Site site : sitesShown) {
+//            r.add(new SiteBoardCount(site, boardManager.getSiteSavedBoards(site).size()));
+//        }
+//        callback.setSites(r);
     }
 
     public void removeSite(Site site) {

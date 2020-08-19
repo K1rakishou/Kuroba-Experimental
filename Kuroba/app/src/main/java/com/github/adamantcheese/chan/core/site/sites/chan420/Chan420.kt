@@ -41,7 +41,8 @@ class Chan420 : CommonSite() {
   )
   
   override fun setup() {
-    setName("420Chan")
+    setEnabled(true)
+    setName(SITE_NAME)
     setIcon(fromFavicon(imageLoaderV2, "https://420chan.org/favicon.ico".toHttpUrl()))
     setBoardsType(Site.BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
@@ -63,7 +64,7 @@ class Chan420 : CommonSite() {
               .url(site!!.endpoints().boards().toString())
               .get()
               .build()
-            
+
             Chan420BoardsRequest(
               request,
               okHttpClient
@@ -94,6 +95,7 @@ class Chan420 : CommonSite() {
   
   companion object {
     private const val TAG = "420Chan"
+    const val SITE_NAME = "420Chan"
 
     @JvmStatic
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {

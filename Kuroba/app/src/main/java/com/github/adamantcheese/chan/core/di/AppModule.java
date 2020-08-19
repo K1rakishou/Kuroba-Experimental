@@ -139,11 +139,12 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader) {
+    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeHelper themeHelper) {
         Logger.d(DI_TAG, "Image loader v2");
         return new ImageLoaderV2(
                 coilImageLoader,
-                ChanSettings.verboseLogs.get()
+                ChanSettings.verboseLogs.get(),
+                themeHelper
         );
     }
 

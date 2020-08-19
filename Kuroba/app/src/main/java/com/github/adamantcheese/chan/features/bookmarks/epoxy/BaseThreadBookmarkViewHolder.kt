@@ -5,7 +5,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
-import android.graphics.drawable.BitmapDrawable
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -269,11 +268,8 @@ open class BaseThreadBookmarkViewHolder(
       bookmarkImage.width,
       imageSize,
       transformations,
-      object : ImageLoaderV2.SimpleImageListener {
-        override fun onResponse(drawable: BitmapDrawable) {
-          thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
-        }
-      })
+      { drawable -> thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+    )
   }
 
   data class ImageLoaderRequestData(val url: HttpUrl?)

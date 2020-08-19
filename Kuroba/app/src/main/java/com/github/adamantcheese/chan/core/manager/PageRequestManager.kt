@@ -20,7 +20,6 @@ import com.github.adamantcheese.chan.core.database.DatabaseBoardManager
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.adamantcheese.chan.utils.Logger
@@ -40,7 +39,7 @@ import kotlin.coroutines.CoroutineContext
 class PageRequestManager(
   private val databaseManager: DatabaseManager,
   private val databaseBoardManager: DatabaseBoardManager,
-  private val siteRepository: SiteRepository
+  private val siteManager: SiteManager
 ) : CoroutineScope {
   private val requestedBoards = Collections.synchronizedSet(HashSet<String>())
   private val savedBoards = Collections.synchronizedSet(HashSet<String>())
@@ -173,7 +172,7 @@ class PageRequestManager(
 
   private fun shouldUpdate(boardDescriptor: BoardDescriptor) {
     launch {
-      val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       if (site == null) {
         Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
         return@launch
@@ -211,7 +210,7 @@ class PageRequestManager(
       return
     }
 
-    val site = siteRepository.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
       return

@@ -4,7 +4,7 @@ import androidx.room.*
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkFull
-import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
 import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
 
 @Dao
@@ -35,8 +35,8 @@ abstract class ThreadBookmarkDao {
     FROM ${ThreadBookmarkEntity.TABLE_NAME} bookmarks
     INNER JOIN ${ChanThreadEntity.TABLE_NAME} threads 
         ON bookmarks.${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
-    INNER JOIN ${ChanBoardEntity.TABLE_NAME} boards
-        ON boards.${ChanBoardEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
+    INNER JOIN ${ChanBoardIdEntity.TABLE_NAME} boards
+        ON boards.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
     ORDER BY ${ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME} DESC
   """)
   abstract suspend fun selectAllOrderedDesc(): List<ThreadBookmarkFull>

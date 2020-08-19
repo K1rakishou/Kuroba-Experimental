@@ -20,7 +20,6 @@ import android.text.TextUtils
 import android.webkit.WebView
 import androidx.annotation.CallSuper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.json.site.SiteConfig
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
@@ -50,6 +49,7 @@ import java.util.regex.Pattern
 
 abstract class CommonSite : SiteBase() {
   private val secureRandom: Random = SecureRandom()
+  private var enabled: Boolean = true
   private var name: String? = null
   private var icon: SiteIcon? = null
   private var boardsType: Site.BoardsType? = null
@@ -65,8 +65,8 @@ abstract class CommonSite : SiteBase() {
 
   private val staticBoards: MutableList<Board> = ArrayList()
   
-  override fun initialize(id: Int, siteConfig: SiteConfig, userSettings: JsonSettings) {
-    super.initialize(id, siteConfig, userSettings)
+  override fun initialize(id: Int, userSettings: JsonSettings) {
+    super.initialize(id, userSettings)
     setup()
     
     if (name == null) {
@@ -104,6 +104,10 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract fun setup()
+
+  fun setEnabled(enabled: Boolean) {
+    this.enabled = enabled
+  }
   
   fun setName(name: String?) {
     this.name = name
@@ -145,7 +149,11 @@ abstract class CommonSite : SiteBase() {
   open fun setParser(commentParser: CommentParser) {
     postParser = DefaultPostParser(commentParser, postFilterManager)
   }
-  
+
+  override fun enabled(): Boolean {
+    return enabled
+  }
+
   /**
    * Site implementation:
    * */
@@ -256,10 +264,9 @@ abstract class CommonSite : SiteBase() {
 
           val threadNo = threadPattern.group(3).toInt().toLong()
 
-
           val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
             site.name(),
-            board.code,
+            board.boardCode(),
             threadNo
           )
           
@@ -280,7 +287,7 @@ abstract class CommonSite : SiteBase() {
 
         val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
           site.name(),
-          board.code
+          board.boardCode()
         )
 
         return ResolvedChanDescriptor(catalogDescriptor)

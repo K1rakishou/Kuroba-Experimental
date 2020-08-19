@@ -53,6 +53,7 @@ import static android.text.TextUtils.isEmpty;
 public class Wired7
         extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
+    public static final String SITE_NAME = "Wired-7";
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSite.CommonSiteUrlHandler() {
         private static final String ROOT = "https://wired-7.org/";
@@ -105,7 +106,8 @@ public class Wired7
 
     @Override
     public void setup() {
-        setName("Wired-7");
+        setEnabled(true);
+        setName(SITE_NAME);
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://wired-7.org/favicon.ico")));
 
         setBoards(

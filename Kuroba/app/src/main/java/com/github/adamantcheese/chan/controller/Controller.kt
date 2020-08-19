@@ -21,7 +21,9 @@ import android.content.res.Configuration
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.CallSuper
+import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.StartActivityCallbacks
@@ -32,6 +34,7 @@ import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationCo
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
+import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.disposables.CompositeDisposable
@@ -99,6 +102,8 @@ abstract class Controller(@JvmField var context: Context) {
   var shown = false
     @JvmName("shown") get
     private set
+
+  protected val cancellableToast = CancellableToast()
 
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
     "Toolbar was not set"
@@ -284,6 +289,16 @@ abstract class Controller(@JvmField var context: Context) {
     (context as StartActivity).popController(this)
     presentedByController?.presentingThisController = null
     controllerNavigationManager.onControllerUnpresented(this)
+  }
+
+  @JvmOverloads
+  protected fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    cancellableToast.showToast(context, message, duration)
+  }
+
+  @JvmOverloads
+  protected fun showToast(@StringRes messageId: Int, duration: Int = Toast.LENGTH_SHORT) {
+    cancellableToast.showToast(context, messageId, duration)
   }
 
   private fun finishPresenting() {

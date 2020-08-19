@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.model.di.annotation.*
 import com.github.adamantcheese.model.repository.*
+import com.google.gson.Gson
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +21,7 @@ import javax.inject.Singleton
 interface ModelMainComponent {
   fun inject(application: Application)
 
+  fun getGson(): Gson
   fun getMediaServiceLinkExtraContentRepository(): MediaServiceLinkExtraContentRepository
   fun getSeenPostRepository(): SeenPostRepository
   fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
@@ -28,6 +30,8 @@ interface ModelMainComponent {
   fun getHistoryNavigationRepository(): HistoryNavigationRepository
   fun getBookmarksRepository(): BookmarksRepository
   fun getChanThreadViewableInfoRepository(): ChanThreadViewableInfoRepository
+  fun getSiteRepository(): SiteRepository
+  fun getBoardRepository(): BoardRepository
 
   @Component.Builder
   interface Builder {

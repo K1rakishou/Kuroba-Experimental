@@ -47,7 +47,7 @@ public class BoardsMenuPresenter
 
     @Inject
     public BoardsMenuPresenter(BoardManager boardManager) {
-        allBoards = boardManager.getAllBoardsObservable();
+//        allBoards = boardManager.getAllBoardsObservable();
     }
 
     public void create(Callback callback, BoardDescriptor selectedBoardDescriptor) {

@@ -63,7 +63,8 @@ class Dvach : CommonSite() {
   }
 
   override fun setup() {
-    setName("2ch.hk")
+    setEnabled(true)
+    setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://2ch.hk/favicon.ico".toHttpUrl()))
     setBoardsType(BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
@@ -203,6 +204,7 @@ class Dvach : CommonSite() {
 
   companion object {
     private const val TAG = "Dvach"
+    const val SITE_NAME = "2ch.hk"
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {

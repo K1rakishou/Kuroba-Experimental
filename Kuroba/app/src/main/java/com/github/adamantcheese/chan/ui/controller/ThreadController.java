@@ -56,7 +56,6 @@ import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.showToast;
 
 public abstract class ThreadController
         extends Controller
@@ -185,7 +184,7 @@ public abstract class ThreadController
     @Override
     public NdefMessage createNdefMessage(NfcEvent event) {
         if (threadLayout.presenter.getChanThread() == null) {
-            showToast(context, R.string.cannot_send_thread_via_nfc_already_deleted);
+            showToast(R.string.cannot_send_thread_via_nfc_already_deleted);
             return null;
         }
 

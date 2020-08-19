@@ -189,6 +189,42 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideSiteLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger,
+    chanDescriptorCache: ChanDescriptorCache
+  ): SiteLocalSource {
+    return SiteLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger,
+      chanDescriptorCache
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideBoardLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger,
+    chanDescriptorCache: ChanDescriptorCache
+  ): BoardLocalSource {
+    return BoardLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger,
+      chanDescriptorCache
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -385,4 +421,41 @@ class ModelMainModule {
       chanThreadViewableInfoLocalSource
     )
   }
+
+  @Singleton
+  @Provides
+  fun provideSiteRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    siteLocalSource: SiteLocalSource
+  ): SiteRepository {
+    return SiteRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      siteLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideBoardRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    boardLocalSource: BoardLocalSource
+  ): BoardRepository {
+    return BoardRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      boardLocalSource
+    )
+  }
+
 }

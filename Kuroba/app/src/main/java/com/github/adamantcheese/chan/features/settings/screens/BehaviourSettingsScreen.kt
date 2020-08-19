@@ -10,7 +10,7 @@ import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.setting.BooleanSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
-import com.github.adamantcheese.chan.ui.controller.SitesSetupController
+import com.github.adamantcheese.chan.features.setup.SitesSetupController
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage

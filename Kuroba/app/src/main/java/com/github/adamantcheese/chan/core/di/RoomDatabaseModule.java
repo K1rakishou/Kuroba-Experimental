@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.model.di.ModelMainComponent;
+import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
@@ -8,6 +9,7 @@ import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
+import com.github.adamantcheese.model.repository.SiteRepository;
 import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.feather2.Provides;
 
@@ -66,5 +68,17 @@ public class RoomDatabaseModule {
     @Singleton
     public ChanThreadViewableInfoRepository provideChanThreadViewableInfoRepository() {
         return modelMainComponent.getChanThreadViewableInfoRepository();
+    }
+
+    @Provides
+    @Singleton
+    public SiteRepository provideSiteRepository() {
+        return modelMainComponent.getSiteRepository();
+    }
+
+    @Provides
+    @Singleton
+    public BoardRepository provideBoardRepository() {
+        return modelMainComponent.getBoardRepository();
     }
 }
