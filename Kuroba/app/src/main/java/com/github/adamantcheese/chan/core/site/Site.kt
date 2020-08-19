@@ -17,9 +17,9 @@
 package com.github.adamantcheese.chan.core.site
 
 import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
@@ -119,7 +119,7 @@ interface Site {
 
   fun enabled(): Boolean
   fun initialize(id: Int, userSettings: JsonSettings)
-  fun postInitialize()
+  fun loadBoardInfo()
 
   /**
    * Global positive (>0) integer that uniquely identifies this site.<br></br>

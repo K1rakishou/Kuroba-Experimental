@@ -21,7 +21,7 @@ import android.view.View
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
-import com.github.adamantcheese.chan.core.presenter.SiteSetupPresenter
+import com.github.adamantcheese.chan.core.presenter.SiteSetupPresenterOld
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
@@ -37,14 +37,14 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
-class SiteSetupController(
+class SiteSetupControllerOld(
   private val site: Site,
   context: Context
 ) : SettingsController(context),
-  SiteSetupPresenter.Callback {
+  SiteSetupPresenterOld.Callback {
 
   @Inject
-  lateinit var presenter: SiteSetupPresenter
+  lateinit var presenterOld: SiteSetupPresenterOld
   @Inject
   lateinit var loadArchiveInfoListUseCase: LoadArchiveInfoListUseCase
 
@@ -57,7 +57,6 @@ class SiteSetupController(
     Chan.inject(this)
 
     // Navigation
-    navigation.setTitle(R.string.settings_screen)
     navigation.title = getString(R.string.setup_site_title, site.name())
 
     // View binding
@@ -69,14 +68,14 @@ class SiteSetupController(
 
     // Presenter
     mainScope.launch {
-      presenter.create(this@SiteSetupController, site)
+      presenterOld.create(this@SiteSetupControllerOld, site)
       buildPreferences()
     }
   }
 
   override fun onShow() {
     super.onShow()
-    presenter.show(this, site)
+    presenterOld.show(this, site)
   }
 
   override fun setBoardCount(boardCount: Int) {
@@ -184,7 +183,7 @@ class SiteSetupController(
     val archives = SettingsGroup(getString(R.string.setup_site_third_party_archives))
 
     archivesLink = LinkSettingView(
-      this@SiteSetupController,
+      this@SiteSetupControllerOld,
       getString(R.string.setup_site_setup_archives_title),
       getString(
         R.string.setup_site_setup_archives_description,

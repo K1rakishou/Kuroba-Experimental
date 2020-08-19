@@ -30,9 +30,9 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
     super.onCreate(view)
     Chan.inject(this)
 
-    scope.launch {
-      setState(SitesSetupControllerState.Loading)
+    setState(SitesSetupControllerState.Loading)
 
+    scope.launch {
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 

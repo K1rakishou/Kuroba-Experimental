@@ -67,34 +67,36 @@ public class SiteIcon {
             return;
         }
 
-        if (url != null) {
-            if (requestDisposable != null) {
-                requestDisposable.dispose();
-                requestDisposable = null;
-            }
-
-            requestDisposable = imageLoaderV2.loadFromNetwork(
-                    context,
-                    url.toString(),
-                    FAVICON_SIZE,
-                    FAVICON_SIZE,
-                    new ImageLoaderV2.ImageListener() {
-                        @Override
-                        public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                            result.onSiteIcon(SiteIcon.this, drawable);
-                        }
-
-                        @Override
-                        public void onNotFound() {
-                            onResponseError(new IOException("Not found"));
-                        }
-
-                        @Override
-                        public void onResponseError(@NotNull Throwable error) {
-                            Logger.e(TAG, "Error loading favicon", error);
-                        }
-                    });
+        if (url == null) {
+            return;
         }
+
+        if (requestDisposable != null) {
+            requestDisposable.dispose();
+            requestDisposable = null;
+        }
+
+        requestDisposable = imageLoaderV2.loadFromNetwork(
+                context,
+                url.toString(),
+                FAVICON_SIZE,
+                FAVICON_SIZE,
+                new ImageLoaderV2.ImageListener() {
+                    @Override
+                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                        result.onSiteIcon(SiteIcon.this, drawable);
+                    }
+
+                    @Override
+                    public void onNotFound() {
+                        onResponseError(new IOException("Not found"));
+                    }
+
+                    @Override
+                    public void onResponseError(@NotNull Throwable error) {
+                        Logger.e(TAG, "Error loading favicon", error);
+                    }
+                });
     }
 
     public interface SiteIconResult {

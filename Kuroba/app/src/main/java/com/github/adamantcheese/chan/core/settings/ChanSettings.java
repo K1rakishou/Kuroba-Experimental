@@ -20,6 +20,7 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import com.github.adamantcheese.SettingProvider;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.base_dir.SavedFilesBaseDirSetting;

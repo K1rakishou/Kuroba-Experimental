@@ -16,21 +16,22 @@
  */
 package com.github.adamantcheese.chan.core.site
 
+import com.github.adamantcheese.SettingProvider
 import com.github.adamantcheese.chan.Chan.instance
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.SiteRepository
-import com.github.adamantcheese.chan.core.settings.SettingProvider
-import com.github.adamantcheese.chan.core.settings.json.JsonSettings
-import com.github.adamantcheese.chan.core.settings.json.JsonSettingsProvider
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.json.JsonSettings
+import com.github.adamantcheese.json.JsonSettingsProvider
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import kotlinx.coroutines.*
@@ -44,7 +45,7 @@ abstract class SiteBase : Site, CoroutineScope {
 
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
   protected val okHttpClient: NetModule.ProxiedOkHttpClient by lazy { instance(NetModule.ProxiedOkHttpClient::class.java) }
-  protected val siteService: SiteService by lazy { instance(SiteService::class.java) }
+  protected val siteManager: SiteManager by lazy { instance(SiteManager::class.java) }
   protected val siteRepository: SiteRepository by lazy { instance(SiteRepository::class.java) }
   protected val boardRepository: BoardRepository by lazy { instance(BoardRepository::class.java) }
   protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
@@ -69,40 +70,48 @@ abstract class SiteBase : Site, CoroutineScope {
     this.id = id
     this.userSettings = userSettings
 
-    initialized = true
-  }
-
-  override fun postInitialize() {
     settingsProvider = JsonSettingsProvider(userSettings) {
-      siteService.updateUserSettings(this@SiteBase, userSettings!!)
+      siteManager.updateUserSettings(this@SiteBase.siteDescriptor(), userSettings)
     }
 
     initializeSettings()
 
-    if (boardsType().canList) {
-      launch(Dispatchers.IO) {
-        Logger.d(TAG, "Requesting boards for site ${name()}")
+    initialized = true
+  }
 
-        when (val readerResponse = actions().boards()) {
-          is JsonReaderRequest.JsonReaderResponse.Success -> {
-            // TODO(KurobaEx):
+  override fun loadBoardInfo() {
+    if (!enabled()) {
+      return
+    }
+
+    if (!boardsType().canList) {
+      return
+    }
+
+    // TODO(KurobaEx): move this to board manager and make it chunked so that we don't spawn a
+    //  separate update coroutine per site all at once
+    launch(Dispatchers.IO) {
+      Logger.d(TAG, "Requesting boards for site ${name()}")
+
+      when (val readerResponse = actions().boards()) {
+        is JsonReaderRequest.JsonReaderResponse.Success -> {
+          // TODO(KurobaEx):
 //            boardManager.updateAvailableBoardsForSite(
 //              readerResponse.result.site,
 //              readerResponse.result.boards
 //            )
 
-            Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
-              "boards count = ${readerResponse.result.boards.size}")
-          }
-          is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
-          }
-          is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-            Logger.e(TAG, "Couldn't get site boards, unknown server error", readerResponse.error)
-          }
-          is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-            Logger.e(TAG, "Couldn't get site boards, parsing error", readerResponse.error)
-          }
+          Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
+            "boards count = ${readerResponse.result.boards.size}")
+        }
+        is JsonReaderRequest.JsonReaderResponse.ServerError -> {
+          Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
+        }
+        is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
+          Logger.e(TAG, "Couldn't get site boards, unknown server error", readerResponse.error)
+        }
+        is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
+          Logger.e(TAG, "Couldn't get site boards, parsing error", readerResponse.error)
         }
       }
     }
@@ -153,6 +162,7 @@ abstract class SiteBase : Site, CoroutineScope {
           return true
         }
       }
+
       return false
     }
   }

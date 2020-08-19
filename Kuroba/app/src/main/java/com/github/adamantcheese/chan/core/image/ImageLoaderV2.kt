@@ -257,8 +257,7 @@ class ImageLoaderV2(
 
     val drawable = themeHelper.tintDrawable(
       context,
-      R.drawable.ic_image_not_found,
-      themeHelper.theme.textHint
+      R.drawable.ic_image_not_found
     )
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_not_found" }
@@ -281,8 +280,7 @@ class ImageLoaderV2(
 
     val drawable = themeHelper.tintDrawable(
       context,
-      R.drawable.ic_image_error_loading,
-      themeHelper.theme.textHint
+      R.drawable.ic_image_error_loading
     )
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_error_loading" }

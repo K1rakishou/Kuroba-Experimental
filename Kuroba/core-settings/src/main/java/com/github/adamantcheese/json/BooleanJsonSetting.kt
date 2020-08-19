@@ -14,12 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.settings.json;
+package com.github.adamantcheese.json
 
-import com.google.gson.annotations.SerializedName;
+import com.google.gson.annotations.SerializedName
 
-public class StringJsonSetting
-        extends JsonSetting {
-    @SerializedName("value")
-    public String value;
-}
+data class BooleanJsonSetting(
+  @JvmField
+  @SerializedName("value")
+  var value: Boolean
+) : JsonSetting()

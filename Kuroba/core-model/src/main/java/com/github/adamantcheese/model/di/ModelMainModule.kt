@@ -2,6 +2,7 @@ package com.github.adamantcheese.model.di
 
 import android.app.Application
 import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.json.*
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.di.annotation.AppCoroutineScope
@@ -41,7 +42,19 @@ class ModelMainModule {
   @Singleton
   @Provides
   fun provideGson(): Gson {
-    return Gson().newBuilder().create()
+    val gson = Gson().newBuilder()
+
+    val userSettingAdapter = RuntimeTypeAdapterFactory.of(
+      JsonSetting::class.java,
+      "type"
+    ).registerSubtype(StringJsonSetting::class.java, "string")
+      .registerSubtype(IntegerJsonSetting::class.java, "integer")
+      .registerSubtype(LongJsonSetting::class.java, "long")
+      .registerSubtype(BooleanJsonSetting::class.java, "boolean")
+
+    return gson
+      .registerTypeAdapterFactory(userSettingAdapter)
+      .create()
   }
 
   @Singleton

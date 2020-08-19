@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.adamantcheese.chan.core.settings.json;
+package com.github.adamantcheese.json;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;

@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.data.site.ChanSiteData
+import com.github.adamantcheese.model.entity.chan.ChanSiteSettingsEntity
 import com.github.adamantcheese.model.mapper.ChanSiteMapper
 import com.github.adamantcheese.model.source.cache.ChanDescriptorCache
 
@@ -26,7 +27,7 @@ class SiteLocalSource(
   suspend fun selectAllOrderedDesc(): List<ChanSiteData> {
     ensureInTransaction()
 
-    return chanSiteDao.selectAllOrderedDesc()
+    return chanSiteDao.selectAllOrderedDescWithSettings()
       .map { chanSiteEntity -> ChanSiteMapper.fromChanSiteEntity(chanSiteEntity) }
   }
 
@@ -37,7 +38,20 @@ class SiteLocalSource(
       ChanSiteMapper.toChanSiteEntity(index, chanSiteData)
     }
 
-    chanSiteDao.updateMany(entities)
+    chanSiteDao.updateManySites(entities)
+
+    val settings = chanSiteDataList.mapNotNull { chanSiteData ->
+      if (chanSiteData.siteUserSettings == null) {
+        return@mapNotNull null
+      }
+
+      return@mapNotNull ChanSiteSettingsEntity(
+        chanSiteData.siteDescriptor.siteName,
+        chanSiteData.siteUserSettings
+      )
+    }
+
+    chanSiteDao.updateManySettings(settings)
   }
 
 }

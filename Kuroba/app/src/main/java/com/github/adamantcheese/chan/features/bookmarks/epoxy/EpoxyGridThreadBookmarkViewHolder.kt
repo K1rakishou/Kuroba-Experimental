@@ -39,7 +39,9 @@ abstract class EpoxyGridThreadBookmarkViewHolder : EpoxyModelWithHolder<BaseThre
     holder.setTitle(titleString)
     holder.highlightBookmark(highlightBookmark)
 
-    val watching = threadBookmarkStats?.watching ?: true
+    val watching = threadBookmarkStats?.watching
+      ?: true
+    
     context?.let { holder.bindImage(true, watching, it) }
   }
 

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e7faea632e8edf8919e86eeea8d9ee61",
+    "identityHash": "4040083c8309f07c85cf199a558fe8da",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -26,7 +26,7 @@
       },
       {
         "tableName": "chan_site",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_site_name` TEXT NOT NULL, `site_active` INTEGER NOT NULL, `site_order` INTEGER NOT NULL, `user_settings` TEXT, PRIMARY KEY(`owner_chan_site_name`), FOREIGN KEY(`owner_chan_site_name`) REFERENCES `chan_site_id`(`site_name`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_site_name` TEXT NOT NULL, `site_active` INTEGER NOT NULL, `site_order` INTEGER NOT NULL, PRIMARY KEY(`owner_chan_site_name`), FOREIGN KEY(`owner_chan_site_name`) REFERENCES `chan_site_id`(`site_name`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "ownerChanSiteName",
@@ -44,6 +44,38 @@
             "fieldPath": "siteOrder",
             "columnName": "site_order",
             "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "owner_chan_site_name"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": [
+          {
+            "table": "chan_site_id",
+            "onDelete": "CASCADE",
+            "onUpdate": "CASCADE",
+            "columns": [
+              "owner_chan_site_name"
+            ],
+            "referencedColumns": [
+              "site_name"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "chan_site_settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_site_name` TEXT NOT NULL, `user_settings` TEXT, PRIMARY KEY(`owner_chan_site_name`), FOREIGN KEY(`owner_chan_site_name`) REFERENCES `chan_site_id`(`site_name`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "ownerChanSiteName",
+            "columnName": "owner_chan_site_name",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -1683,7 +1715,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e7faea632e8edf8919e86eeea8d9ee61')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4040083c8309f07c85cf199a558fe8da')"
     ]
   }
 }

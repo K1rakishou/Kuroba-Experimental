@@ -30,7 +30,6 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     super.onCreate()
 
     view = AndroidUtils.inflate(context, R.layout.controller_sites_setup)
-
     navigation.title = "Sites"
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -100,7 +99,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
 
               bindRowClickCallback(Pair(callback, siteCellData.siteEnableState))
               bindSettingClickCallback {
-                showToast("Site settings clicked")
+                navigationController!!.pushController(SiteSettingsController(context, siteCellData.siteDescriptor))
               }
             }
           }

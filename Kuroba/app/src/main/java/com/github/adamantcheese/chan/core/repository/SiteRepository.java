@@ -10,10 +10,9 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.json.site.SiteConfig;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.model.orm.SiteModel;
-import com.github.adamantcheese.chan.core.settings.json.JsonSettings;
 import com.github.adamantcheese.chan.core.site.Site;
-import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.SuspendableInitializer;
+import com.github.adamantcheese.json.JsonSettings;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import java.util.ArrayList;
@@ -102,42 +101,42 @@ public class SiteRepository {
     }
 
     public void initialize() {
-        try {
-            List<Site> sites = new ArrayList<>();
-
-            List<SiteModel> models = databaseManager.runTask(
-                    databaseManager.getDatabaseSiteManager().getAll()
-            );
-
-            for (SiteModel siteModel : models) {
-                SiteConfigSettingsHolder holder;
-                try {
-                    holder = instantiateSiteFromModel(siteModel);
-                } catch (IllegalArgumentException e) {
-                    Logger.e(TAG, "instantiateSiteFromModel", e);
-                    break;
-                }
-
-                Site site = holder.site;
-                SiteConfig config = holder.config;
-                JsonSettings settings = holder.settings;
-                site.initialize(siteModel.id, settings);
-
-                sites.add(site);
-            }
-
-            sitesObservable.addAll(sites);
-
-            for (Site site : sites) {
-                site.postInitialize();
-            }
-
-            sitesObservable.notifyObservers();
-            suspendableInitializer.initWithValue(Unit.INSTANCE);
-        } catch (Throwable error) {
-            Logger.e(TAG, "Error while initializing SiteRepository", error);
-            suspendableInitializer.initWithError(error);
-        }
+//        try {
+//            List<Site> sites = new ArrayList<>();
+//
+//            List<SiteModel> models = databaseManager.runTask(
+//                    databaseManager.getDatabaseSiteManager().getAll()
+//            );
+//
+//            for (SiteModel siteModel : models) {
+//                SiteConfigSettingsHolder holder;
+//                try {
+//                    holder = instantiateSiteFromModel(siteModel);
+//                } catch (IllegalArgumentException e) {
+//                    Logger.e(TAG, "instantiateSiteFromModel", e);
+//                    break;
+//                }
+//
+//                Site site = holder.site;
+//                SiteConfig config = holder.config;
+//                JsonSettings settings = holder.settings;
+//                site.initialize(siteModel.id, settings);
+//
+//                sites.add(site);
+//            }
+//
+//            sitesObservable.addAll(sites);
+//
+//            for (Site site : sites) {
+//                site.postInitialize();
+//            }
+//
+//            sitesObservable.notifyObservers();
+//            suspendableInitializer.initWithValue(Unit.INSTANCE);
+//        } catch (Throwable error) {
+//            Logger.e(TAG, "Error while initializing SiteRepository", error);
+//            suspendableInitializer.initWithError(error);
+//        }
     }
 
     public Site createFromClass(Class<? extends Site> siteClass) {

@@ -16,13 +16,13 @@
  */
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.chan.core.settings.json.BooleanJsonSetting;
-import com.github.adamantcheese.chan.core.settings.json.IntegerJsonSetting;
-import com.github.adamantcheese.chan.core.settings.json.JsonSetting;
-import com.github.adamantcheese.chan.core.settings.json.LongJsonSetting;
-import com.github.adamantcheese.chan.core.settings.json.RuntimeTypeAdapterFactory;
-import com.github.adamantcheese.chan.core.settings.json.StringJsonSetting;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.json.BooleanJsonSetting;
+import com.github.adamantcheese.json.IntegerJsonSetting;
+import com.github.adamantcheese.json.JsonSetting;
+import com.github.adamantcheese.json.LongJsonSetting;
+import com.github.adamantcheese.json.RuntimeTypeAdapterFactory;
+import com.github.adamantcheese.json.StringJsonSetting;
 import com.github.k1rakishou.feather2.Provides;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,12 +34,13 @@ public class GsonModule {
     @Provides
     @Singleton
     public Gson provideGson() {
-        RuntimeTypeAdapterFactory<JsonSetting> userSettingAdapter =
-                RuntimeTypeAdapterFactory.of(JsonSetting.class, "type")
-                        .registerSubtype(StringJsonSetting.class, "string")
-                        .registerSubtype(IntegerJsonSetting.class, "integer")
-                        .registerSubtype(LongJsonSetting.class, "long")
-                        .registerSubtype(BooleanJsonSetting.class, "boolean");
+        RuntimeTypeAdapterFactory<JsonSetting> userSettingAdapter = RuntimeTypeAdapterFactory.of(
+                JsonSetting.class,
+                "type"
+        ).registerSubtype(StringJsonSetting.class, "string")
+                .registerSubtype(IntegerJsonSetting.class, "integer")
+                .registerSubtype(LongJsonSetting.class, "long")
+                .registerSubtype(BooleanJsonSetting.class, "boolean");
 
         Logger.d(AppModule.DI_TAG, "Gson module");
 

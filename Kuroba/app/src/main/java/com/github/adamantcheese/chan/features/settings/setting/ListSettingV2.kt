@@ -130,20 +130,21 @@ class ListSettingV2<T : Any> : SettingV2() {
 
           val listSettingV2 = ListSettingV2<T>()
 
-          val topDescResult = listOf(
+          val topDescResult: Any? = listOf(
             topDescriptionIdFunc,
             topDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
+          )
+            .mapNotNull { func -> func?.invoke() }
             .lastOrNull()
 
           listSettingV2.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult as Int)
-            is String -> topDescResult as String
+            is Int -> context.getString(topDescResult)
+            is String -> topDescResult
             null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
             else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
           }
 
-          val bottomDescResult = listOf(
+          val bottomDescResult: Any? = listOf(
             bottomDescriptionIdFunc,
             bottomDescriptionStringFunc
           ).mapNotNull { func ->
@@ -158,12 +159,12 @@ class ListSettingV2<T : Any> : SettingV2() {
               return@mapNotNull func?.invoke(itemNameMapper(setting.default))
             }
 
-            func?.invoke(itemNameMapper(item))
+            return@mapNotNull func?.invoke(itemNameMapper(item))
           }.lastOrNull()
 
           listSettingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
+            is Int -> context.getString(bottomDescResult)
+            is String -> bottomDescResult
             null -> null
             else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
           }

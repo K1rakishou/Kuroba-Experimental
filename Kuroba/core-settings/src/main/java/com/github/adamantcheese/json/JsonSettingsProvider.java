@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.settings.json;
+package com.github.adamantcheese.json;
 
-import com.github.adamantcheese.chan.core.settings.SettingProvider;
+import com.github.adamantcheese.SettingProvider;
 
-public class JsonSettingsProvider
-        implements SettingProvider {
+public class JsonSettingsProvider implements SettingProvider {
     public final JsonSettings jsonSettings;
     private Callback callback;
 
@@ -43,8 +42,7 @@ public class JsonSettingsProvider
     public void putInt(String key, int value) {
         JsonSetting jsonSetting = jsonSettings.settings.get(key);
         if (jsonSetting == null) {
-            IntegerJsonSetting v = new IntegerJsonSetting();
-            v.value = value;
+            IntegerJsonSetting v = new IntegerJsonSetting(value);
             jsonSettings.settings.put(key, v);
         } else {
             ((IntegerJsonSetting) jsonSetting).value = value;
@@ -73,8 +71,7 @@ public class JsonSettingsProvider
     public void putLong(String key, long value) {
         JsonSetting jsonSetting = jsonSettings.settings.get(key);
         if (jsonSetting == null) {
-            LongJsonSetting v = new LongJsonSetting();
-            v.value = value;
+            LongJsonSetting v = new LongJsonSetting(value);
             jsonSettings.settings.put(key, v);
         } else {
             ((LongJsonSetting) jsonSetting).value = value;
@@ -103,8 +100,7 @@ public class JsonSettingsProvider
     public void putBoolean(String key, boolean value) {
         JsonSetting jsonSetting = jsonSettings.settings.get(key);
         if (jsonSetting == null) {
-            BooleanJsonSetting v = new BooleanJsonSetting();
-            v.value = value;
+            BooleanJsonSetting v = new BooleanJsonSetting(value);
             jsonSettings.settings.put(key, v);
         } else {
             ((BooleanJsonSetting) jsonSetting).value = value;
@@ -133,8 +129,7 @@ public class JsonSettingsProvider
     public void putString(String key, String value) {
         JsonSetting jsonSetting = jsonSettings.settings.get(key);
         if (jsonSetting == null) {
-            StringJsonSetting v = new StringJsonSetting();
-            v.value = value;
+            StringJsonSetting v = new StringJsonSetting(value);
             jsonSettings.settings.put(key, v);
         } else {
             ((StringJsonSetting) jsonSetting).value = value;

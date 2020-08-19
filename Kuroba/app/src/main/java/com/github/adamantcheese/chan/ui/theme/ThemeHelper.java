@@ -25,7 +25,6 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.AnyThread;
-import androidx.annotation.ColorInt;
 import androidx.annotation.DrawableRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -158,14 +157,19 @@ public class ThemeHelper {
         return Arrays.asList(PrimaryColor.values());
     }
 
-    public Drawable tintDrawable(Context context, @DrawableRes int drawableId, @ColorInt int tintColor) {
+    public Drawable tintDrawable(Context context, @DrawableRes int drawableId) {
         Drawable drawable = ContextCompat.getDrawable(context, drawableId);
         if (drawable == null) {
             throw new IllegalArgumentException("Couldn't find drawable with drawableId: " + drawableId);
         }
 
         Drawable drawableMutable = DrawableCompat.wrap(drawable).mutate();
-        DrawableCompat.setTint(drawableMutable, tintColor);
+
+        if (theme.isLightTheme) {
+            DrawableCompat.setTint(drawableMutable, PrimaryColor.GREY.color500);
+        } else {
+            DrawableCompat.setTint(drawableMutable, PrimaryColor.GREY.color200);
+        }
 
         return drawableMutable;
     }
@@ -191,7 +195,8 @@ public class ThemeHelper {
         GREY("Grey", "grey", 0xFFFAFAFA, 0xFFF5F5F5, 0xFFEEEEEE, 0xFFE0E0E0, 0xFFBDBDBD, 0xFF9E9E9E, 0xFF757575, 0xFF616161, 0xFF616161, 0xFF212121),
         BLUE_GREY("Blue Grey", "blue_grey", 0xFFECEFF1, 0xFFCFD8DC, 0xFFB0BEC5, 0xFF90A4AE, 0xFF78909C, 0xFF607D8B, 0xFF546E7A, 0xFF455A64, 0xFF455A64, 0xFF263238),
         DARK("Dark", "dark", 0xff212121, 0xff212121, 0xff212121, 0xff212121, 0xff212121, 0xff212121, 0xff000000, 0xff000000, 0xff000000, 0xff000000),
-        BLACK("Black", "black", 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000);
+        BLACK("Black", "black", 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000),
+        WHITE("White", "white", 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff);
 
         public final String displayName;
         public final String name;

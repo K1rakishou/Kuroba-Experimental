@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
+import com.github.adamantcheese.SettingProvider;
+
 import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.processors.BehaviorProcessor;

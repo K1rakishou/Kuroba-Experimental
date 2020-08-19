@@ -51,7 +51,7 @@ abstract class IGroupIdentifier : IScreenIdentifier() {
   }
 }
 
-sealed class SettingsIdentifier(
+abstract class SettingsIdentifier(
   private val screenIdentifier: ScreenIdentifier,
   private val groupIdentifier: GroupIdentifier,
   private val settingsIdentifier: SettingIdentifier
@@ -234,7 +234,7 @@ sealed class ThreadWatcherScreen(
     object UseSoundForLastPageNotifications : MainGroup("use_sound_for_last_page_notifications")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = ThreadWatcherScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
     }
   }
@@ -265,7 +265,7 @@ sealed class AppearanceScreen(
     object ThemeCustomization : MainGroup("theme_customization")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
     }
   }
@@ -284,7 +284,7 @@ sealed class AppearanceScreen(
     object NeverShowPages : LayoutGroup("never_show_pages")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("layout_group")
     }
   }
@@ -309,7 +309,7 @@ sealed class AppearanceScreen(
     object ShowYoutubeLinkAlongWithTitleAndDuration : PostGroup("show_youtube_links_along_with_title_and_duration")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("post_group")
     }
   }
@@ -329,7 +329,7 @@ sealed class AppearanceScreen(
     object TransparencyOn : ImagesGroup("transparency_on")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("images_group")
     }
   }
@@ -367,7 +367,7 @@ sealed class BehaviorScreen(
     object ClearThreadHides : GeneralGroup("clear_thread_hides")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("general_group")
     }
   }
@@ -382,7 +382,7 @@ sealed class BehaviorScreen(
     object PostDefaultName : RepliesGroup("post_default_name")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("replies_group")
     }
   }
@@ -398,7 +398,7 @@ sealed class BehaviorScreen(
     object MarkUnseenPosts : PostGroup("mark_unseen_posts")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("post_group")
     }
   }
@@ -415,7 +415,7 @@ sealed class BehaviorScreen(
     object ShowCopyApkUpdateDialog : OtherSettingsGroup("show_copy_apk_update_dialog")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("other_settings_group")
     }
   }
@@ -431,7 +431,7 @@ sealed class BehaviorScreen(
     object ProxyPort : ProxySettingsGroup("proxy_port")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("proxy_settings_group")
     }
   }
@@ -465,7 +465,7 @@ sealed class MediaScreen(
     object SaveServerFilename : MediaSavingGroup("save_server_file_name")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("media_saving_group")
     }
   }
@@ -483,7 +483,7 @@ sealed class MediaScreen(
     object VideoStream : VideoGroup("video_stream")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("video_group")
     }
   }
@@ -501,7 +501,7 @@ sealed class MediaScreen(
     object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("loading_group")
     }
   }
@@ -533,7 +533,7 @@ sealed class ImportExportScreen(
     object ImportSetting : MainSettingsGroup("import_settings")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = ImportExportScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_settings_group")
     }
   }
@@ -569,7 +569,7 @@ sealed class ExperimentalScreen(
     object OkHttpAllowIpv6 : MainSettingsGroup("ok_http_allow_ipv6")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_settings_group")
     }
   }

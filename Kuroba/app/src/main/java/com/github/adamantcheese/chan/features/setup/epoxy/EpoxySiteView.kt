@@ -54,8 +54,7 @@ class EpoxySiteView @JvmOverloads constructor(
 
     val tintedDrawable = themeHelper.tintDrawable(
       context,
-      R.drawable.ic_settings_white_24dp,
-      themeHelper.theme.textHint
+      R.drawable.ic_settings_white_24dp
     )
 
     siteSettings.setImageDrawable(tintedDrawable)
@@ -102,6 +101,7 @@ class EpoxySiteView @JvmOverloads constructor(
     if (siteEnableState == null) {
       siteSwitch.isEnabled = true
       siteSwitch.isChecked = false
+      siteSettings.alpha = 0.6f
       return
     }
 
@@ -110,12 +110,19 @@ class EpoxySiteView @JvmOverloads constructor(
       siteSwitch.isEnabled = false
 
       siteSettings.isEnabled = false
+      siteSettings.alpha = 0.6f
       return
     }
 
     siteSwitch.isEnabled = true
     siteSwitch.isChecked = siteEnableState == SiteEnableState.Active
     siteSettings.isEnabled = siteEnableState == SiteEnableState.Active
+
+    siteSettings.alpha = if (siteEnableState == SiteEnableState.Active) {
+      1f
+    } else {
+      0.6f
+    }
   }
 
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])

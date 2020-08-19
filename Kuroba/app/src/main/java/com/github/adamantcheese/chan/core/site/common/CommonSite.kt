@@ -23,7 +23,6 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.settings.json.JsonSettings
 import com.github.adamantcheese.chan.core.site.*
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.adamantcheese.chan.core.site.http.*
@@ -33,6 +32,7 @@ import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor

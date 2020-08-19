@@ -706,6 +706,9 @@ Don't have a 4chan Pass?<br>
     <string name="apply_options">Apply</string>
     <string name="image_quality">Image quality: %1$d</string>
 
+    <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
+    <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
+
     <string name="archives_settings_title">Archives settings</string>
     <string name="archives_settings_repository_error">Repository error: %1$s</string>
     <string name="archives_settings_archive_is_disabled">Archive is disabled</string>

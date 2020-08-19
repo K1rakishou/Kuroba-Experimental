@@ -28,7 +28,7 @@ class SettingsGroup(
     settingsBuilderMap[settingIdentifier] = settingBuildFunction
   }
 
-  fun iterateGroups(iterator: (SettingV2) -> Unit) {
+  fun iterateSettings(iterator: (SettingV2) -> Unit) {
     settingsMap.values.forEach { settingV2 -> iterator(settingV2) }
   }
 

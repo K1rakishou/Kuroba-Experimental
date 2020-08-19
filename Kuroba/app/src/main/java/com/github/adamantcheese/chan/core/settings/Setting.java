@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
+import com.github.adamantcheese.SettingProvider;
+
 import java.util.ArrayList;
 import java.util.List;
 

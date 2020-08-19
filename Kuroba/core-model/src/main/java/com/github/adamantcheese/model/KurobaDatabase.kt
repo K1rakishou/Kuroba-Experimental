@@ -24,6 +24,7 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
   entities = [
     ChanSiteIdEntity::class,
     ChanSiteEntity::class,
+    ChanSiteSettingsEntity::class,
     ChanBoardIdEntity::class,
     ChanBoardEntity::class,
     ChanThreadEntity::class,
@@ -62,7 +63,7 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     TextTypeTypeConverter::class,
     ReplyTypeTypeConverter::class,
     BitSetTypeConverter::class,
-    KeyValueSettingsTypeConverter::class
+    JsonSettingsTypeConverter::class
   ]
 )
 abstract class KurobaDatabase : RoomDatabase() {
@@ -85,8 +86,13 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao
   abstract fun chanSiteDao(): ChanSiteDao
 
+  suspend fun ensureInTransaction() {
+    require(inTransaction()) { "Must be executed in a transaction!" }
+  }
+
   companion object {
     const val DATABASE_NAME = "Kuroba.db"
+    const val EMPTY_JSON = "{}"
 
     // SQLite will thrown an exception if you attempt to pass more than 999 values into the IN
     // operator so we need to use batching to avoid this crash. And we use 950 instead of 999
@@ -104,9 +110,5 @@ abstract class KurobaDatabase : RoomDatabase() {
         .fallbackToDestructiveMigration()
         .build()
     }
-  }
-
-  suspend fun ensureInTransaction() {
-    require(inTransaction()) { "Must be executed in a transaction!" }
   }
 }

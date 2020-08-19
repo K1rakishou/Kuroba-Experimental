@@ -546,7 +546,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   override fun loadSiteSetup(site: Site) {
-    val siteSetupController = SiteSetupController(site, context)
+    val siteSetupController = SiteSetupControllerOld(site, context)
     if (doubleNavigationController != null) {
       doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(siteSetupController)
     } else {

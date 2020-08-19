@@ -16,6 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.settings;
 
+import com.github.adamantcheese.SettingProvider;
+
 public class CounterSetting
         extends IntegerSetting {
     public CounterSetting(SettingProvider settingProvider, String key) {

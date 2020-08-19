@@ -18,8 +18,9 @@ package com.github.adamantcheese.chan.core.settings;
 
 import android.content.SharedPreferences;
 
-public class SharedPreferencesSettingProvider
-        implements SettingProvider {
+import com.github.adamantcheese.SettingProvider;
+
+public class SharedPreferencesSettingProvider implements SettingProvider {
     private SharedPreferences prefs;
 
     public SharedPreferencesSettingProvider(SharedPreferences prefs) {

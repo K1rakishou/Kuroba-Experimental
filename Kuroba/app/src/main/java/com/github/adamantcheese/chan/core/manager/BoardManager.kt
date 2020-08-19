@@ -7,6 +7,7 @@ import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.repository.BoardRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -50,6 +51,11 @@ class BoardManager(
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read { boards[boardDescriptor] }
+  }
+
+  fun activeBoardsCount(siteDescriptor: SiteDescriptor): Int {
+    // TODO(KurobaEx):
+    return 0
   }
 
   @OptIn(ExperimentalTime::class)

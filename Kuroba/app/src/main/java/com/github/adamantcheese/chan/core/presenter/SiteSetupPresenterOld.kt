@@ -5,7 +5,7 @@ import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
 import javax.inject.Inject
 
-class SiteSetupPresenter @Inject constructor(
+class SiteSetupPresenterOld @Inject constructor(
   private val databaseManager: DatabaseManager
 ) {
   private var hasLogin = false
