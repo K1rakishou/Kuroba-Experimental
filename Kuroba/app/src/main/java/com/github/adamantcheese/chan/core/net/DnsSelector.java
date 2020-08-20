@@ -21,8 +21,7 @@ public class DnsSelector implements Dns {
 
     @NonNull
     @Override
-    public List<InetAddress> lookup(@NonNull String hostname)
-            throws UnknownHostException {
+    public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
         List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
         if (mode == Mode.SYSTEM) {
             return addresses;

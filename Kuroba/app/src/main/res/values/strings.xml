@@ -743,13 +743,11 @@ Don't have a 4chan Pass?<br>
             archives.<br><br>
 
             You can also manually delete fetch results to change the score so that an archive can
-            be used again if you don\'t want to wait until it\'s done automatically.
+            be used again if you don\'t want to wait until it\'s done automatically.<br><br>
 
-            The score is ignored when "Reload" button (the one in Toolbar) is clicked or when the
-            bottom status view is clicked.<br><br>
-
-            If one of the archives for some reason does not load at all (blocked by an ISP) you should
-            disable it (so that you don\'t have to wait ~20 seconds each time you open a thread).]]>
+            If one of the archives for some reason does not load at all (blocked by an ISP) you can
+            just disable it so we don\'t use it\'s score to figure out what archive to use (because
+            requests for blocked sites will just end up in failures with huge timeouts).]]>
     </string>
 
     <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>

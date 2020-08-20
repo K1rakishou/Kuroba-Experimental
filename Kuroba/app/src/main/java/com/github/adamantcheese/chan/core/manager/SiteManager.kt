@@ -53,21 +53,26 @@ class SiteManager(
         return@launch
       }
 
-      result as ModularResult.Value
+      try {
+        result as ModularResult.Value
 
-      lock.write {
-        result.value.forEach { chanSiteData ->
-          siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
-          // TODO(KurobaEx): maybe I don't need to instantiate every singe site, but only the
-          //  active ones
-          siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
+        lock.write {
+          result.value.forEach { chanSiteData ->
+            siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
+            // TODO(KurobaEx): maybe I don't need to instantiate every singe site, but only the
+            //  active ones
+            siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
 
-          orders.add(0, chanSiteData.siteDescriptor)
+            orders.add(0, chanSiteData.siteDescriptor)
+          }
         }
-      }
 
-      ensureSitesAndOrdersConsistency()
-      suspendableInitializer.initWithValue(Unit)
+        ensureSitesAndOrdersConsistency()
+        suspendableInitializer.initWithValue(Unit)
+      } catch (error: Throwable) {
+        Logger.e(TAG, "SiteManager initialization error", error)
+        suspendableInitializer.initWithError(error)
+      }
     }
   }
 

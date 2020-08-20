@@ -252,8 +252,8 @@ public class Chan
                 return;
             }
 
-            onUnhandledException(e, exceptionToString(true, e));
             Logger.e("APP", "RxJava undeliverable exception", e);
+            onUnhandledException(e, exceptionToString(true, e));
 
             // Do not exit the app here! Most of the time an exception that comes here is not a
             // fatal one. We only want to log and report them to analyze later. The app should be
@@ -261,19 +261,9 @@ public class Chan
         });
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            //if there's any uncaught crash stuff, just dump them to the log and exit immediately
-            String errorText = exceptionToString(false, e);
-
-            Logger.e("UNCAUGHT", errorText);
-            Logger.e("UNCAUGHT", "------------------------------");
-            Logger.e("UNCAUGHT", "END OF CURRENT RUNTIME MESSAGES");
-            Logger.e("UNCAUGHT", "------------------------------");
-            Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT);
-            Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME);
-            Logger.e("UNCAUGHT", "Development Build: " + getVerifiedBuildType().name());
-            Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL);
-
-            onUnhandledException(e, errorText);
+            // if there's any uncaught crash stuff, just dump them to the log and exit immediately
+            Logger.e("APP", "Unhandled exception", e);
+            onUnhandledException(e, exceptionToString(false, e));
             System.exit(999);
         });
     }
@@ -329,7 +319,16 @@ public class Chan
         }
     }
 
-    private void onUnhandledException(Throwable exception, String error) {
+    private void onUnhandledException(Throwable exception, String errorText) {
+        Logger.e("UNCAUGHT", errorText);
+        Logger.e("UNCAUGHT", "------------------------------");
+        Logger.e("UNCAUGHT", "END OF CURRENT RUNTIME MESSAGES");
+        Logger.e("UNCAUGHT", "------------------------------");
+        Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT);
+        Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME);
+        Logger.e("UNCAUGHT", "Development Build: " + getVerifiedBuildType().name());
+        Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL);
+
         // don't upload debug crashes
         if ("Debug crash".equals(exception.getMessage())) {
             return;
@@ -340,7 +339,7 @@ public class Chan
         }
 
         if (ChanSettings.collectCrashLogs.get()) {
-            reportManager.storeCrashLog(exception.getMessage(), error);
+            reportManager.storeCrashLog(exception.getMessage(), errorText);
         }
     }
 

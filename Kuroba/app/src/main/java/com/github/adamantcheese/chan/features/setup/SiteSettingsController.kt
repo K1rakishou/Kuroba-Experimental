@@ -4,6 +4,7 @@ import android.content.Context
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.features.settings.BaseSettingsController
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.epoxy.epoxyLinkSetting
@@ -91,7 +92,7 @@ class SiteSettingsController(
           bindNotificationIcon(SettingNotificationType.Default)
 
           clickListener {
-            // TODO(KurobaEx):
+            settingV2.callback.invoke()
           }
         }
       }
@@ -101,24 +102,18 @@ class SiteSettingsController(
           topDescription(settingV2.topDescription)
           bottomDescription(settingV2.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
+          settingEnabled(true)
 
-          if (settingV2.isEnabled()) {
-            settingEnabled(true)
+          clickListener {
+            val prev = settingV2.getValue()
 
-            clickListener {
-              val prev = settingV2.getValue()
-
-              showListDialog(settingV2) { curr ->
-                if (prev == curr) {
-                  return@showListDialog
-                }
-
-                rebuildSettings()
+            showListDialog(settingV2) { curr ->
+              if (prev == curr) {
+                return@showListDialog
               }
+
+              rebuildSettings()
             }
-          } else {
-            settingEnabled(false)
-            clickListener(null)
           }
         }
       }
@@ -128,24 +123,18 @@ class SiteSettingsController(
           topDescription(settingV2.topDescription)
           bottomDescription(settingV2.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
+          settingEnabled(true)
 
-          if (settingV2.isEnabled()) {
-            settingEnabled(true)
+          clickListener { view ->
+            val prev = settingV2.getCurrent()
 
-            clickListener { view ->
-              val prev = settingV2.getCurrent()
-
-              showInputDialog(view, settingV2) { curr ->
-                if (prev == curr) {
-                  return@showInputDialog
-                }
-
-                rebuildSettings()
+            showInputDialog(view, settingV2) { curr ->
+              if (prev == curr) {
+                return@showInputDialog
               }
+
+              rebuildSettings()
             }
-          } else {
-            settingEnabled(false)
-            clickListener(null)
           }
         }
       }
@@ -160,6 +149,15 @@ class SiteSettingsController(
 
   override suspend fun showErrorToast(message: String) {
     withContext(Dispatchers.Main) { showToast(message) }
+  }
+
+  override fun pushController(controller: Controller) {
+    navigationController!!.pushController(controller)
+  }
+
+  override fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
+    requireStartActivity().openControllerWrappedIntoBottomNavAwareController(controller)
+    requireStartActivity().setSettingsMenuItemSelected()
   }
 
   override fun onDestroy() {

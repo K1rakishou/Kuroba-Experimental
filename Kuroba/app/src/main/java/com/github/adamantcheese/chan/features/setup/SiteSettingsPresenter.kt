@@ -11,12 +11,14 @@ import com.github.adamantcheese.chan.core.settings.OptionSettingItem
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
+import com.github.adamantcheese.chan.features.archives.ArchivesSettingsController
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus
 import com.github.adamantcheese.chan.features.settings.*
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
+import com.github.adamantcheese.chan.ui.controller.LoginController
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -156,7 +158,7 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
           topDescriptionStringFunc = { "Setup third party archives" },
           bottomDescriptionStringFunc = { formatArchivesDescription() ?: "Error" },
           callback = {
-            // TODO(KurobaEx): Open archives setup controller
+            withViewNormal { pushController(ArchivesSettingsController(context)) }
           }
         )
 
@@ -189,7 +191,9 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
             }
           },
           callback = {
-            // TODO(KurobaEx): Open login controller
+            withViewNormal {
+              openControllerWrappedIntoBottomNavAwareController(LoginController(context, site))
+            }
           }
         )
 
