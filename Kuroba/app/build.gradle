@@ -46,7 +46,6 @@ android {
         int major = 0
         int minor = 1
         int patch = 0
-        int build = getCurrentBuildNumber()
 
         /**
          * ------------------------------------------------------------
@@ -75,6 +74,7 @@ android {
         // this is the default dev signing signature, update it if you change the dev keystore
         buildConfigField "String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\""
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
+        buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
         /**
          * ------------------------------------------------------------
@@ -87,7 +87,7 @@ android {
          * ------------------------------------------------------------
          */
         versionCode major * 10000 + minor * 100 + patch
-        versionName "v" + major + "." + minor + "." + patch + "." + build
+        versionName "v" + major + "." + minor + "." + patch
 
         applicationVariants.all { variant ->
             variant.outputs.all {

@@ -243,9 +243,10 @@ class MainSettingsScreen(
     }
 
     return String.format(
-      "%s %s %s (commit %s)",
+      "%s %s.%s %s (commit %s)",
       getApplicationLabel().toString(),
       BuildConfig.VERSION_NAME,
+      BuildConfig.BUILD_NUMBER,
       verificationBadge,
       BuildConfig.COMMIT_HASH.take(12)
     )
