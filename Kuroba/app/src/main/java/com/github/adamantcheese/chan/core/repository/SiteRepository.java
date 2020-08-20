@@ -197,7 +197,6 @@ public class SiteRepository {
     public void removeSite(Site site) {
         databaseManager.runTask(() -> {
             removeFilters(site);
-            databaseManager.getDatabaseBoardManager().deleteBoards(site).call();
             databaseManager.getDatabaseSavedReplyManager().deleteSavedReplies(site).call();
             databaseManager.getDatabaseHideManager().deleteThreadHides(site).call();
             databaseManager.getDatabaseSiteManager().deleteSite(site).call();

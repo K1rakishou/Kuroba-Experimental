@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.interactors
+package com.github.adamantcheese.chan.core.usecase
 
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule

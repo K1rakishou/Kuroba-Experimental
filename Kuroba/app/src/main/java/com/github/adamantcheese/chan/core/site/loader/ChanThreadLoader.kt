@@ -19,14 +19,9 @@ package com.github.adamantcheese.chan.core.site.loader
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.BookmarksManager
-import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
@@ -84,9 +79,9 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var bookmarksManager: BookmarksManager
   @Inject
-  lateinit var siteRepository: SiteRepository
+  lateinit var siteManager: SiteManager
   @Inject
-  lateinit var boardRepository: BoardRepository
+  lateinit var boardManager: BoardManager
 
   @Volatile
   var thread: ChanThread? = null
@@ -110,8 +105,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       postFilterManager,
       ChanSettings.verboseLogs.get(),
       themeHelper,
-      boardRepository,
-      siteRepository
+      boardManager
     )
   }
 
@@ -322,8 +316,8 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       }
     }
 
-    val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
-    requireNotNull(site) { "site == null, siteDescriptor = ${chanDescriptor.siteDescriptor()}" }
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?: return null
     val chanReader = site.chanReader()
 
     val requestParams = ChanLoaderRequestParams(

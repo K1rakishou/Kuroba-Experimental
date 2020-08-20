@@ -1,18 +1,18 @@
 package com.github.adamantcheese.chan.core.site.common.taimaba
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostHttpIcon
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
 import com.github.adamantcheese.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -23,8 +23,8 @@ import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class TaimabaApi(
-  private val siteRepository: SiteRepository,
-  private val boardRepository: BoardRepository,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   commonSite: CommonSite
 ) : CommonApi(commonSite) {
 
@@ -43,9 +43,9 @@ class TaimabaApi(
     val builder = Post.Builder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val site = siteRepository.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
-    val board = boardRepository.getFromBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+    val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
     val endpoints = site.endpoints()
@@ -191,7 +191,7 @@ class TaimabaApi(
   private fun readPostImage(
     reader: JsonReader,
     builder: Post.Builder,
-    board: Board,
+    board: ChanBoard,
     endpoints: SiteEndpoints
   ): PostImage? {
     var fileSize: Long = 0

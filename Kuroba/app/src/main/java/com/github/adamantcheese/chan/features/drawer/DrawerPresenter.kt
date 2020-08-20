@@ -2,10 +2,10 @@ package com.github.adamantcheese.chan.features.drawer
 
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.base.BasePresenter
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.features.drawer.data.HistoryControllerState
 import com.github.adamantcheese.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -31,9 +31,9 @@ class DrawerPresenter(
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
-  lateinit var siteRepository: SiteRepository
+  lateinit var siteManager: SiteManager
   @Inject
-  lateinit var boardRepository: BoardRepository
+  lateinit var boardManager: BoardManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
 
@@ -108,11 +108,11 @@ class DrawerPresenter(
         is NavHistoryElement.Thread -> navigationElement.descriptor.boardDescriptor
       }
 
-      if (!siteRepository.containsSite(siteDescriptor)) {
+      if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
         return@mapNotNull null
       }
 
-      if (!boardRepository.containsBoard(boardDescriptor)) {
+      if (boardManager.byBoardDescriptor(boardDescriptor) == null) {
         return@mapNotNull null
       }
 

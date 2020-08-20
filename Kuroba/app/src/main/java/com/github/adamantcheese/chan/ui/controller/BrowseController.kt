@@ -28,15 +28,15 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
-import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
+import com.github.adamantcheese.chan.features.setup.SiteSettingsController
 import com.github.adamantcheese.chan.features.setup.SitesSetupController
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
@@ -45,7 +45,6 @@ import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationCon
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.adamantcheese.chan.ui.helper.HintPopup
-import com.github.adamantcheese.chan.ui.layout.BrowseBoardsFloatingMenu
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
@@ -57,13 +56,13 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import java.util.*
 import javax.inject.Inject
 
 class BrowseController(context: Context) : ThreadController(context),
   ThreadLayoutCallback,
   BrowsePresenter.Callback,
-  BrowseBoardsFloatingMenu.ClickCallback,
   SlideChangeListener,
   ReplyAutoCloseListener {
 
@@ -72,7 +71,7 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
-  lateinit var boardRepository: BoardRepository
+  lateinit var boardManager: BoardManager
   @Inject
   lateinit var databaseManager: DatabaseManager
   @Inject
@@ -122,6 +121,7 @@ class BrowseController(context: Context) : ThreadController(context),
 
   override fun onDestroy() {
     super.onDestroy()
+
     if (hint != null) {
       hint!!.dismiss()
       hint = null
@@ -144,17 +144,26 @@ class BrowseController(context: Context) : ThreadController(context),
       alignCenter()
       wiggle()
     }
+
+    // this controller is used for catalog views; displaying things on two rows for them middle
+    // menu is how we want it done these need to be setup before the view is rendered,
+    // otherwise the subtitle view is removed
+    navigation.title = "App Setup"
+    navigation.subtitle = "Tap for site/board setup"
+    requireNavController().requireToolbar().updateTitle(navigation)
+
+    buildMenu()
   }
 
   public override fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
     super.setDrawerCallbacks(drawerCallbacks)
   }
 
-  override fun setBoard(descriptor: BoardDescriptor) {
+  suspend fun setBoard(descriptor: BoardDescriptor) {
     presenter.setBoard(descriptor)
   }
 
-  fun loadWithDefaultBoard() {
+  suspend fun loadWithDefaultBoard() {
     presenter.loadWithDefaultBoard(false)
   }
 
@@ -181,9 +190,8 @@ class BrowseController(context: Context) : ThreadController(context),
     // this controller is used for catalog views; displaying things on two rows for them middle
     // menu is how we want it done these need to be setup before the view is rendered,
     // otherwise the subtitle view is removed
-    navigation.title = "App Setup"
-    navigation.subtitle = "Tap for site/board setup"
-    buildMenu()
+    navigation.title = "Loading..."
+    requireNavController().requireToolbar().updateTitle(navigation)
 
     // Presenter
     presenter.create(this)
@@ -458,11 +466,13 @@ class BrowseController(context: Context) : ThreadController(context),
     threadLayout.openReply(false)
   }
 
-  override fun onSiteClicked(site: Site) {
-    presenter.onBoardsFloatingMenuSiteClicked(site)
+  // TODO(KurobaEx):
+  fun onSiteClicked(siteDescriptor: SiteDescriptor) {
+    presenter.onBoardsFloatingMenuSiteClicked(siteDescriptor)
   }
 
-  override fun openSetup() {
+  // TODO(KurobaEx):
+  fun openSetup() {
     Objects.requireNonNull(navigationController, "navigationController is null")
 
     val setupController = SitesSetupController(context)
@@ -531,9 +541,11 @@ class BrowseController(context: Context) : ThreadController(context),
     threadLayout.setPostViewMode(postViewMode)
   }
 
-  override fun loadBoard(boardDescriptor: BoardDescriptor) {
-    val board = boardRepository.getFromBoardDescriptor(boardDescriptor)
-    requireNotNull(board) { "Couldn't find board by boardDescriptor: ${boardDescriptor}" }
+  override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
+    boardManager.awaitUntilInitialized()
+
+    val board = boardManager.byBoardDescriptor(boardDescriptor)
+      ?: return
 
     navigation.title = "/" + boardDescriptor.boardCode + "/"
     navigation.subtitle = board.name
@@ -545,8 +557,8 @@ class BrowseController(context: Context) : ThreadController(context),
     requireNavController().requireToolbar().updateTitle(navigation)
   }
 
-  override fun loadSiteSetup(site: Site) {
-    val siteSetupController = SiteSetupControllerOld(site, context)
+  override fun loadSiteSetup(siteDescriptor: SiteDescriptor) {
+    val siteSetupController = SiteSettingsController(context, siteDescriptor)
     if (doubleNavigationController != null) {
       doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(siteSetupController)
     } else {
@@ -564,11 +576,11 @@ class BrowseController(context: Context) : ThreadController(context),
     showThread(descriptor, true)
   }
 
-  override fun showBoard(descriptor: BoardDescriptor) {
+  override suspend fun showBoard(descriptor: BoardDescriptor) {
     showBoardInternal(descriptor)
   }
 
-  override fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
     // we don't actually need to do anything here because you can't tap board links in the browse
     // controller set the board just in case?
     setBoard(descriptor)
@@ -646,7 +658,7 @@ class BrowseController(context: Context) : ThreadController(context),
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
   }
 
-  private fun showBoardInternal(boardDescriptor: BoardDescriptor) {
+  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor) {
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null

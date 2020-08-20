@@ -17,23 +17,24 @@
 package com.github.adamantcheese.chan.core.site.sites.chan4
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.site.Site
+import com.github.adamantcheese.model.data.board.BoardBuilder
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
 
 class Chan4BoardsRequest(
-  private val site: Site,
+  private val siteDescriptor: SiteDescriptor,
   request: Request,
   okHttpClient: OkHttpClient
-) : JsonReaderRequest<BoardRepository.SiteBoards>(RequestType.Chan4BoardsRequest, request, okHttpClient) {
+) : JsonReaderRequest<SiteBoards>(RequestType.Chan4BoardsRequest, request, okHttpClient) {
   
-  override suspend fun readJson(reader: JsonReader): BoardRepository.SiteBoards {
-    val list: MutableList<Board> = ArrayList()
+  override suspend fun readJson(reader: JsonReader): SiteBoards {
+    val list: MutableList<ChanBoard> = ArrayList()
     
     reader.withObject {
       while (hasNext()) {
@@ -53,16 +54,14 @@ class Chan4BoardsRequest(
       }
     }
     
-    return BoardRepository.SiteBoards(site, list)
+    return SiteBoards(siteDescriptor, list)
   }
   
   @Throws(IOException::class)
-  private fun readBoardEntry(reader: JsonReader): Board? {
+  private fun readBoardEntry(reader: JsonReader): ChanBoard? {
     return reader.withObject {
-      val board = Board()
-      board.siteId = site.id()
-      board.site = site
-      
+      val board = BoardBuilder(siteDescriptor)
+
       while (hasNext()) {
         when (nextName()) {
           "title" -> board.name = nextString()
@@ -93,18 +92,18 @@ class Chan4BoardsRequest(
         return@withObject null
       }
 
-      return@withObject board
+      return@withObject board.toChanBoard()
     }
     
   }
   
-  private fun readCooldowns(reader: JsonReader, board: Board) {
+  private fun readCooldowns(reader: JsonReader, boardBuilder: BoardBuilder) {
     reader.withObject {
       while (hasNext()) {
         when (nextName()) {
-          "threads" -> board.cooldownThreads = nextInt()
-          "replies" -> board.cooldownReplies = nextInt()
-          "images" -> board.cooldownImages = nextInt()
+          "threads" -> boardBuilder.cooldownThreads = nextInt()
+          "replies" -> boardBuilder.cooldownReplies = nextInt()
+          "images" -> boardBuilder.cooldownImages = nextInt()
           else -> skipValue()
         }
       }

@@ -27,10 +27,10 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -151,7 +151,7 @@ public class FilterEngine {
     }
 
     @AnyThread
-    public boolean matchesBoard(Filter filter, Board board) {
+    public boolean matchesBoard(Filter filter, ChanBoard board) {
         if (filter.allBoards || TextUtils.isEmpty(filter.boards)) {
             return true;
         } else {
@@ -172,7 +172,7 @@ public class FilterEngine {
         }
     }
 
-    public void saveBoardsToFilter(List<Board> appliedBoards, boolean all, Filter filter) {
+    public void saveBoardsToFilter(List<ChanBoard> appliedBoards, boolean all, Filter filter) {
         filter.allBoards = all;
         if (all) {
             filter.boards = "";

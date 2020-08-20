@@ -1,12 +1,12 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
-import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase
-import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase
-import com.github.adamantcheese.chan.core.interactors.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase
+import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase
+import com.github.adamantcheese.chan.core.usecase.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try

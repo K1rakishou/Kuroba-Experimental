@@ -18,8 +18,9 @@ package com.github.adamantcheese.chan.core.site.common.vichan
 
 import android.text.TextUtils
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.SiteAuthentication
+import com.github.adamantcheese.chan.core.site.common.CommonClientException
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonActions
 import com.github.adamantcheese.chan.core.site.common.MultipartHttpCall
@@ -37,7 +38,7 @@ import java.util.regex.Pattern
 open class VichanActions(
   commonSite: CommonSite,
   private val okHttpClient: ProxiedOkHttpClient,
-  private val siteRepository: SiteRepository
+  private val siteManager: SiteManager
 ) : CommonActions(commonSite) {
 
   override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
@@ -74,11 +75,16 @@ open class VichanActions(
     return true
   }
 
-  override suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse) {
+  override suspend fun prepare(
+    call: MultipartHttpCall,
+    reply: Reply,
+    replyResponse: ReplyResponse
+  ): ModularResult<Unit> {
     val siteDescriptor = reply.chanDescriptor!!.siteDescriptor()
 
-    val site = checkNotNull(siteRepository.bySiteDescriptor(siteDescriptor)) {
-      "Couldn't find site ${siteDescriptor}"
+    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    if (site == null) {
+      return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
     }
 
     val antispam = VichanAntispam(
@@ -91,6 +97,8 @@ open class VichanActions(
     for ((key, value) in antispam.get()) {
       call.parameter(key, value)
     }
+
+    return ModularResult.value(Unit)
   }
 
   override fun handlePost(replyResponse: ReplyResponse, response: Response, result: String) {

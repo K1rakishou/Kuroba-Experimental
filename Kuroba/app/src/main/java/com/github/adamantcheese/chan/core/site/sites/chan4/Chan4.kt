@@ -4,9 +4,8 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.OptionSettingItem
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.settings.SharedPreferencesSettingProvider
@@ -22,6 +21,7 @@ import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -149,12 +149,12 @@ class Chan4 : SiteBase() {
       return a.newBuilder().addPathSegment("boards.json").build()
     }
 
-    override fun pages(board: Board): HttpUrl {
-      return a.newBuilder().addPathSegment(board.code).addPathSegment("threads.json").build()
+    override fun pages(board: ChanBoard): HttpUrl {
+      return a.newBuilder().addPathSegment(board.boardCode()).addPathSegment("threads.json").build()
     }
 
-    override fun archive(board: Board): HttpUrl {
-      return b.newBuilder().addPathSegment(board.code).addPathSegment("archive").build()
+    override fun archive(board: ChanBoard): HttpUrl {
+      return b.newBuilder().addPathSegment(board.boardCode()).addPathSegment("archive").build()
     }
 
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
@@ -219,27 +219,27 @@ class Chan4 : SiteBase() {
   @OptIn(InternalCoroutinesApi::class)
   private val actions: SiteActions = object : SiteActions {
 
-    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
+    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
       val request = Request.Builder()
         .url(endpoints().boards().toString())
         .get()
         .build()
 
       return Chan4BoardsRequest(
-        this@Chan4,
+        siteDescriptor(),
         request,
         okHttpClient
       ).execute()
     }
 
-    override suspend fun pages(board: Board): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
+    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
       val request = Request.Builder()
         .url(endpoints().pages(board))
         .get()
         .build()
 
       return Chan4PagesRequest(
-        board.boardDescriptor(),
+        board.boardDescriptor,
         board.pages,
         request,
         okHttpClient
@@ -252,7 +252,6 @@ class Chan4 : SiteBase() {
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {
               return@map SiteActions.PostResult.PostComplete(
-                replyCallResult.httpCall,
                 replyCallResult.httpCall.replyResponse
               )
             }
@@ -261,7 +260,6 @@ class Chan4 : SiteBase() {
             }
             is HttpCall.HttpCallWithProgressResult.Fail -> {
               return@map SiteActions.PostResult.PostError(
-                replyCallResult.httpCall,
                 replyCallResult.error
               )
             }
@@ -277,13 +275,11 @@ class Chan4 : SiteBase() {
       when (deleteResult) {
         is HttpCall.HttpCallResult.Success -> {
           return SiteActions.DeleteResult.DeleteComplete(
-            deleteResult.httpCall,
             deleteResult.httpCall.deleteResponse
           )
         }
         is HttpCall.HttpCallResult.Fail -> {
           return SiteActions.DeleteResult.DeleteError(
-            deleteResult.httpCall,
             deleteResult.error
           )
         }
@@ -306,13 +302,11 @@ class Chan4 : SiteBase() {
           }
 
           return SiteActions.LoginResult.LoginComplete(
-            loginResult.httpCall,
             loginResult.httpCall.loginResponse
           )
         }
         is HttpCall.HttpCallResult.Fail -> {
           return SiteActions.LoginResult.LoginError(
-            loginResult.httpCall,
             loginResult.error
           )
         }
@@ -396,7 +390,7 @@ class Chan4 : SiteBase() {
     return Site.BoardsType.DYNAMIC
   }
 
-  override fun boardFeature(boardFeature: Site.BoardFeature, board: Board): Boolean {
+  override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
     return when (boardFeature) {
       // yes, we support image posting.
       Site.BoardFeature.POSTING_IMAGE -> true
@@ -420,8 +414,8 @@ class Chan4 : SiteBase() {
       archivesManager,
       postFilterManager,
       mockReplyManager,
-      siteRepository,
-      boardRepository
+      siteManager,
+      boardManager
     )
   }
 

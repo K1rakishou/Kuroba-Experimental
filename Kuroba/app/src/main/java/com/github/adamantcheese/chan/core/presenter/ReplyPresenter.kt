@@ -22,22 +22,20 @@ import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.ReplyManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.model.orm.SavedReply
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
 import com.github.adamantcheese.chan.core.site.SiteAuthentication
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse
-import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
@@ -45,6 +43,8 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate.ImagePickCallba
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -60,8 +60,8 @@ class ReplyPresenter @Inject constructor(
   private val replyManager: ReplyManager,
   private val databaseManager: DatabaseManager,
   private val lastReplyRepository: LastReplyRepository,
-  private val siteRepository: SiteRepository,
-  private val boardRepository: BoardRepository,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager
 ) : AuthenticationLayoutCallback, ImagePickCallback, CoroutineScope {
 
@@ -81,7 +81,7 @@ class ReplyPresenter @Inject constructor(
   private lateinit var job: Job
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var draft: Reply
-  private lateinit var board: Board
+  private lateinit var chanBoard: ChanBoard
   private lateinit var site: Site
 
   var isExpanded = false
@@ -101,7 +101,7 @@ class ReplyPresenter @Inject constructor(
     this.callback = callback
   }
 
-  fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+  fun bindChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
     if (this.chanDescriptor != null) {
       unbindChanDescriptor()
     }
@@ -122,24 +122,26 @@ class ReplyPresenter @Inject constructor(
       R.string.reply_comment_board
     }
 
-    val thisBoard = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
-    requireNotNull(thisBoard) { "Couldn't get board by board descriptor: ${chanDescriptor.boardDescriptor()}" }
-    this.board = thisBoard
+    val thisBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?: return false
 
-    val thisSite = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
-    requireNotNull(thisSite) { "Couldn't get site by site descriptor: ${chanDescriptor.siteDescriptor()}" }
+    val thisSite = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?: return false
+
+    this.chanBoard = thisBoard
     this.site = thisSite
 
     callback.loadDraftIntoViews(draft)
-    callback.updateCommentCount(0, board.maxCommentChars, false)
+    callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
     callback.setCommentHint(AndroidUtils.getString(stringId))
-    callback.showCommentCounter(board.maxCommentChars > 0)
+    callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
     if (draft.file != null) {
       showPreview(draft.fileName, draft.file)
     }
 
     switchPage(Page.INPUT)
+    return true
   }
 
   fun unbindChanDescriptor() {
@@ -193,32 +195,32 @@ class ReplyPresenter @Inject constructor(
 
     if (previewOpen) {
       callback.openFileName(isExpanded)
-      if (board.spoilers) {
+      if (chanBoard.spoilers) {
         callback.openSpoiler(isExpanded, false)
       }
     }
 
-    val is4chan = board.site is Chan4
+    val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
     callback.openCommentQuoteButton(isExpanded)
 
-    if (board.spoilers) {
+    if (chanBoard.spoilers) {
       callback.openCommentSpoilerButton(isExpanded)
     }
 
-    if (is4chan && board.code == "g") {
+    if (is4chan && chanBoard.boardCode() == "g") {
       callback.openCommentCodeButton(isExpanded)
     }
 
-    if (is4chan && board.code == "sci") {
+    if (is4chan && chanBoard.boardCode() == "sci") {
       callback.openCommentEqnButton(isExpanded)
       callback.openCommentMathButton(isExpanded)
     }
 
-    if (is4chan && (board.code == "jp" || board.code == "vip")) {
+    if (is4chan && (chanBoard.boardCode() == "jp" || chanBoard.boardCode() == "vip")) {
       callback.openCommentSJISButton(isExpanded)
     }
 
-    if (is4chan && board.code == "pol") {
+    if (is4chan && chanBoard.boardCode() == "pol") {
       callback.openFlag(isExpanded)
     }
   }
@@ -236,7 +238,7 @@ class ReplyPresenter @Inject constructor(
 
       if (isExpanded) {
         callback.openFileName(false)
-        if (board.spoilers) {
+        if (chanBoard.spoilers) {
           callback.openSpoiler(show = false, setUnchecked = true)
         }
       }
@@ -314,7 +316,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     draft.chanDescriptor = chanDescriptor
-    draft.spoilerImage = draft.spoilerImage && board.spoilers
+    draft.spoilerImage = draft.spoilerImage && chanBoard.spoilers
     draft.captchaResponse = null
     return true
   }
@@ -346,7 +348,7 @@ class ReplyPresenter @Inject constructor(
 
   fun onCommentTextChanged(text: CharSequence) {
     val length = text.toString().toByteArray(UTF_8).size
-    callback.updateCommentCount(length, board.maxCommentChars, length > board.maxCommentChars)
+    callback.updateCommentCount(length, chanBoard.maxCommentChars, length > chanBoard.maxCommentChars)
   }
 
   fun onSelectionChanged() {
@@ -514,11 +516,18 @@ class ReplyPresenter @Inject constructor(
   }
 
   private suspend fun onPostedSuccessfully(replyResponse: ReplyResponse) {
+    val siteDescriptor = replyResponse.siteDescriptor
+      ?: return
+
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
-    val localSite = siteRepository.bySiteDescriptor(replyResponse.siteDescriptor)
-    val localBoard = requireNotNull(boardRepository.getFromCode(localSite, replyResponse.boardCode))
+    val localSite = siteManager.bySiteDescriptor(siteDescriptor)
+      ?: return
+
+    val boardDescriptor = BoardDescriptor(siteDescriptor, replyResponse.boardCode)
+    val localBoard = boardManager.byBoardDescriptor(boardDescriptor)
+      ?: return
 
     val threadNo = if (replyResponse.threadNo <= 0L) {
       replyResponse.postNo
@@ -527,8 +536,8 @@ class ReplyPresenter @Inject constructor(
     }
 
     val newThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      localSite!!.name(),
-      localBoard.code,
+      localSite.name(),
+      localBoard.boardCode(),
       threadNo
     )
 
@@ -699,7 +708,7 @@ class ReplyPresenter @Inject constructor(
 
     if (isExpanded) {
       callback.openFileName(true)
-      if (board.spoilers) {
+      if (chanBoard.spoilers) {
         callback.openSpoiler(show = true, setUnchecked = false)
       }
     }
@@ -710,9 +719,9 @@ class ReplyPresenter @Inject constructor(
     val probablyWebm = "webm" == StringUtils.extractFileNameExtension(name)
 
     val maxSize = if (probablyWebm) {
-      board.maxWebmSize
+      chanBoard.maxWebmSize
     } else {
-      board.maxFileSize
+      chanBoard.maxFileSize
     }
 
     //if the max size is undefined for the board, ignore this message

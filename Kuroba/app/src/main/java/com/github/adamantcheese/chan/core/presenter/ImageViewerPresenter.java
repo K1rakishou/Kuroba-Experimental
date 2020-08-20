@@ -29,9 +29,8 @@ import com.github.adamantcheese.chan.core.cache.FileCacheListener;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload;
 import com.github.adamantcheese.chan.core.cache.downloader.DownloadRequestExtraInfo;
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ImageSearch;
 import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
@@ -40,6 +39,7 @@ import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
@@ -90,7 +90,7 @@ public class ImageViewerPresenter
     @Inject
     ThemeHelper themeHelper;
     @Inject
-    BoardRepository boardRepository;
+    BoardManager boardManager;
 
     private boolean entering = true;
     private boolean exiting = false;
@@ -207,12 +207,12 @@ public class ImageViewerPresenter
 
     @Override
     public boolean isWorkSafe() {
-        Board board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor());
-        if (board == null) {
+        ChanBoard chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor());
+        if (chanBoard == null) {
             return false;
         }
 
-        return board.workSafe;
+        return chanBoard.getWorkSafe();
     }
 
     @Override

@@ -20,10 +20,9 @@ import android.util.JsonReader
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
@@ -78,8 +77,7 @@ class ChanThreadLoaderCoordinator(
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
   private val themeHelper: ThemeHelper,
-  private val boardRepository: BoardRepository,
-  private val siteRepository: SiteRepository
+  private val boardManager: BoardManager
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -92,7 +90,7 @@ class ChanThreadLoaderCoordinator(
       archivesManager,
       chanPostRepository,
       themeHelper,
-      boardRepository
+      boardManager
     )
   }
 
@@ -106,8 +104,7 @@ class ChanThreadLoaderCoordinator(
       postFilterManager,
       databaseSavedReplyManager,
       themeHelper,
-      boardRepository,
-      siteRepository
+      boardManager
     )
   }
 

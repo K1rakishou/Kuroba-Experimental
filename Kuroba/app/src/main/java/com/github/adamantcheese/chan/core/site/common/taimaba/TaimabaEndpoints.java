@@ -18,8 +18,8 @@ package com.github.adamantcheese.chan.core.site.common.taimaba;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.common.CommonSite;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -102,8 +102,8 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl pages(Board board) {
-        return root.builder().s(board.code).s("threads.json").url();
+    public HttpUrl pages(ChanBoard board) {
+        return root.builder().s(board.boardCode()).s("threads.json").url();
     }
 
     @Override

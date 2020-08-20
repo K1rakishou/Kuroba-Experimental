@@ -20,9 +20,8 @@ import android.text.TextUtils
 import android.webkit.WebView
 import androidx.annotation.CallSuper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.*
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.adamantcheese.chan.core.site.http.*
@@ -33,6 +32,7 @@ import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.json.JsonSettings
+import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -63,7 +63,7 @@ abstract class CommonSite : SiteBase() {
   @JvmField
   var postParser: PostParser? = null
 
-  private val staticBoards: MutableList<Board> = ArrayList()
+  private val staticBoards: MutableList<ChanBoard> = ArrayList()
   
   override fun initialize(id: Int, userSettings: JsonSettings) {
     super.initialize(id, userSettings)
@@ -121,7 +121,7 @@ abstract class CommonSite : SiteBase() {
     this.boardsType = boardsType
   }
   
-  fun setBoards(vararg boards: Board) {
+  fun setBoards(vararg boards: ChanBoard) {
     boardsType = Site.BoardsType.STATIC
     staticBoards.addAll(listOf(*boards))
   }
@@ -181,7 +181,7 @@ abstract class CommonSite : SiteBase() {
     return commonConfig!!.siteFeature(siteFeature)
   }
   
-  override fun boardFeature(boardFeature: Site.BoardFeature, board: Board): Boolean {
+  override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
     return commonConfig!!.boardFeature(boardFeature, board)
   }
   
@@ -208,7 +208,7 @@ abstract class CommonSite : SiteBase() {
       return siteFeature == Site.SiteFeature.IMAGE_FILE_HASH
     }
     
-    fun boardFeature(boardFeature: Site.BoardFeature, board: Board): Boolean {
+    fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
       return false
     }
   }
@@ -339,7 +339,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun archive(board: Board): HttpUrl {
+    override fun archive(board: ChanBoard): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
@@ -410,8 +410,11 @@ abstract class CommonSite : SiteBase() {
       
       return flow {
         if (requirePrepare()) {
-          prepare(call, reply, replyResponse)
-          
+          prepare(call, reply, replyResponse).safeUnwrap { error ->
+            emit(SiteActions.PostResult.PostError(error))
+            return@flow
+          }
+
           setupPost(reply, call)
           emit(makePostCall(call, replyResponse))
         } else {
@@ -440,10 +443,10 @@ abstract class CommonSite : SiteBase() {
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
       return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
-          SiteActions.PostResult.PostComplete(result.httpCall, replyResponse)
+          SiteActions.PostResult.PostComplete(replyResponse)
         }
         is HttpCall.HttpCallResult.Fail -> {
-          SiteActions.PostResult.PostError(result.httpCall, result.error)
+          SiteActions.PostResult.PostError(result.error)
         }
       }
     }
@@ -452,8 +455,8 @@ abstract class CommonSite : SiteBase() {
       return false
     }
     
-    open suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse) {
-
+    open suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse): ModularResult<Unit> {
+      return ModularResult.error(NotImplementedError("Not implemented"))
     }
     
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
@@ -470,10 +473,10 @@ abstract class CommonSite : SiteBase() {
       
       return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
-          SiteActions.DeleteResult.DeleteComplete(result.httpCall, deleteResponse)
+          SiteActions.DeleteResult.DeleteComplete(deleteResponse)
         }
         is HttpCall.HttpCallResult.Fail -> {
-          SiteActions.DeleteResult.DeleteError(result.httpCall, result.error)
+          SiteActions.DeleteResult.DeleteError(result.error)
         }
       }
     }
@@ -486,20 +489,20 @@ abstract class CommonSite : SiteBase() {
     
     }
     
-    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
+    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
       return JsonReaderRequest.JsonReaderResponse.Success(
-        BoardRepository.SiteBoards(site, site!!.staticBoards)
+        SiteBoards(site!!.siteDescriptor(), site!!.staticBoards)
       )
     }
     
     protected suspend fun genericBoardsRequestResponseHandler(
-      requestProvider: () -> JsonReaderRequest<List<Board>>,
-      defaultBoardsProvider: () -> List<Board>
-    ): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
+      requestProvider: () -> JsonReaderRequest<List<ChanBoard>>,
+      defaultBoardsProvider: () -> List<ChanBoard>
+    ): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
       when (val result = requestProvider().execute()) {
         is JsonReaderRequest.JsonReaderResponse.Success -> {
           return JsonReaderRequest.JsonReaderResponse.Success(
-            BoardRepository.SiteBoards(site, result.result)
+            SiteBoards(site!!.siteDescriptor(), result.result)
           )
         }
         is JsonReaderRequest.JsonReaderResponse.ServerError,
@@ -519,15 +522,15 @@ abstract class CommonSite : SiteBase() {
           Logger.e(TAG, "Error while trying to get board for site ${site!!.name}", error)
           
           return JsonReaderRequest.JsonReaderResponse.Success(
-            BoardRepository.SiteBoards(site, defaultBoardsProvider())
+            SiteBoards(site!!.siteDescriptor(), defaultBoardsProvider())
           )
         }
       }
     }
     
-    override suspend fun pages(board: Board): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
+    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
       return JsonReaderRequest.JsonReaderResponse.Success(
-        Chan4PagesRequest.BoardPages(board.boardDescriptor(), listOf())
+        Chan4PagesRequest.BoardPages(board.boardDescriptor, listOf())
       )
     }
     

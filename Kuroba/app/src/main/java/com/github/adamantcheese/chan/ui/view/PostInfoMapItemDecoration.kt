@@ -6,7 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.graphics.withTranslation
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.interactors.PostMapInfoHolder
+import com.github.adamantcheese.chan.core.usecase.PostMapInfoHolder
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 
 class PostInfoMapItemDecoration(

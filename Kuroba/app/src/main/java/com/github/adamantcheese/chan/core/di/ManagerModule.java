@@ -20,8 +20,6 @@ import android.content.Context;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
-import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase;
-import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.adamantcheese.chan.core.loader.impl.PostExtraContentLoader;
@@ -54,6 +52,8 @@ import com.github.adamantcheese.chan.core.site.ParserRepository;
 import com.github.adamantcheese.chan.core.site.SiteRegistry;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
+import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
@@ -112,7 +112,11 @@ public class ManagerModule {
     @Singleton
     public BoardManager provideBoardManager(CoroutineScope appScope, BoardRepository boardRepository) {
         Logger.d(AppModule.DI_TAG, "Board manager");
-        return new BoardManager(appScope, boardRepository);
+        return new BoardManager(
+                appScope,
+                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                boardRepository
+        );
     }
 
     @Provides
@@ -139,14 +143,13 @@ public class ManagerModule {
     @Provides
     @Singleton
     public PageRequestManager providePageRequestManager(
-            DatabaseManager databaseManager,
-            SiteManager siteManager
+            SiteManager siteManager,
+            BoardManager boardManager
     ) {
         Logger.d(AppModule.DI_TAG, "Page request manager");
         return new PageRequestManager(
-                databaseManager,
-                databaseManager.getDatabaseBoardManager(),
-                siteManager
+                siteManager,
+                boardManager
         );
     }
 

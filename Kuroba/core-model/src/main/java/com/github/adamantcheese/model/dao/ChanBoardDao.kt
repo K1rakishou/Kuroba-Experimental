@@ -4,6 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.github.adamantcheese.model.KurobaDatabase
+import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.ChanBoardFull
 import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
 
 @Dao
@@ -31,6 +34,15 @@ abstract class ChanBoardDao {
             ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
   abstract suspend fun selectBoardId(siteName: String, boardCode: String): Long?
+
+  @Query("""
+    SELECT *
+    FROM ${ChanBoardIdEntity.TABLE_NAME} cbie
+    INNER JOIN ${ChanBoardEntity.TABLE_NAME} cbe 
+        ON cbie.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = cbe.${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME}
+    WHERE cbe.${ChanBoardEntity.BOARD_ACTIVE_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
+  """)
+  abstract suspend fun selectAllActiveBoards(): List<ChanBoardFull>
 
   suspend fun contains(siteName: String, boardCode: String): Boolean {
     return select(siteName, boardCode) != null
@@ -68,4 +80,5 @@ abstract class ChanBoardDao {
     chanBoardEntity.boardId = insertedId
     return chanBoardEntity
   }
+
 }

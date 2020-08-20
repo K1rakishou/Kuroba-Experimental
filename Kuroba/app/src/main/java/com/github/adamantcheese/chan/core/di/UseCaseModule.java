@@ -1,15 +1,15 @@
 package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
-import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase;
-import com.github.adamantcheese.chan.core.interactors.FetchThreadBookmarkInfoUseCase;
-import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase;
-import com.github.adamantcheese.chan.core.interactors.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
+import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
+import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.adamantcheese.chan.core.usecase.LoadArchiveInfoListUseCase;
+import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;

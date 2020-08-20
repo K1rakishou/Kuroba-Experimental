@@ -25,8 +25,6 @@ import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.utils.Logger
@@ -46,8 +44,6 @@ abstract class SiteBase : Site, CoroutineScope {
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
   protected val okHttpClient: NetModule.ProxiedOkHttpClient by lazy { instance(NetModule.ProxiedOkHttpClient::class.java) }
   protected val siteManager: SiteManager by lazy { instance(SiteManager::class.java) }
-  protected val siteRepository: SiteRepository by lazy { instance(SiteRepository::class.java) }
-  protected val boardRepository: BoardRepository by lazy { instance(BoardRepository::class.java) }
   protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
   protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }
   protected val boardManager: BoardManager by lazy { instance(BoardManager::class.java) }
@@ -88,20 +84,14 @@ abstract class SiteBase : Site, CoroutineScope {
       return
     }
 
-    // TODO(KurobaEx): move this to board manager and make it chunked so that we don't spawn a
-    //  separate update coroutine per site all at once
     launch(Dispatchers.IO) {
+      boardManager.awaitUntilInitialized()
       Logger.d(TAG, "Requesting boards for site ${name()}")
 
       when (val readerResponse = actions().boards()) {
         is JsonReaderRequest.JsonReaderResponse.Success -> {
-          // TODO(KurobaEx):
-//            boardManager.updateAvailableBoardsForSite(
-//              readerResponse.result.site,
-//              readerResponse.result.boards
-//            )
-
-          Logger.d(TAG, "Got the boards for site ${readerResponse.result.site.name()}, " +
+          boardManager.updateAvailableBoardsForSite(readerResponse.result.boards)
+          Logger.d(TAG, "Got the boards for site ${readerResponse.result.siteDescriptor.siteName}, " +
             "boards count = ${readerResponse.result.boards.size}")
         }
         is JsonReaderRequest.JsonReaderResponse.ServerError -> {
@@ -122,8 +112,9 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   override fun board(code: String): ChanBoard? {
+    // TODO(KurobaEx): wait until initialized
     val boardDescriptor = BoardDescriptor.create(siteDescriptor(), code)
-    return boardManager.getBoard(boardDescriptor)
+    return boardManager.byBoardDescriptor(boardDescriptor)
   }
 
   override fun settings(): List<SiteSetting> {
@@ -134,7 +125,7 @@ abstract class SiteBase : Site, CoroutineScope {
     // no-op
   }
 
-  override fun createBoard(boardName: String, boardCode: String): ChanBoard {
+  override suspend fun createBoard(boardName: String, boardCode: String): ChanBoard {
     val existing = board(boardCode)
     if (existing != null) {
       return existing
@@ -142,8 +133,7 @@ abstract class SiteBase : Site, CoroutineScope {
 
     val boardDescriptor = BoardDescriptor.create(siteDescriptor(), boardCode)
     val board = ChanBoard.create(boardDescriptor, boardName)
-    // TODO(KurobaEx):
-//    boardManager.updateAvailableBoardsForSite(this, listOf(board))
+    boardManager.createBoard(board)
 
     return board
   }

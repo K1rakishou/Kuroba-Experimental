@@ -140,6 +140,10 @@ public abstract class ThreadController
         return drawerCallbacks.passMotionEventIntoDrawer(event);
     }
 
+    public void showLoading() {
+        threadLayout.showLoading();
+    }
+
     public void showSitesNotSetup() {
         threadLayout.presenter.showNoContent();
     }

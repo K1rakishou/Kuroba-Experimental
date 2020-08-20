@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.features.setup
 
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.base.BasePresenter
-import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.features.setup.data.SiteCellData
 import com.github.adamantcheese.chan.features.setup.data.SiteEnableState
@@ -20,8 +19,6 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
 
   @Inject
   lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
 
   private val addSiteControllerSubject = PublishProcessor.create<SitesSetupControllerState>()
     .toSerialized()
@@ -34,7 +31,6 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
 
     scope.launch {
       siteManager.awaitUntilInitialized()
-      boardManager.awaitUntilInitialized()
 
       showSites()
     }

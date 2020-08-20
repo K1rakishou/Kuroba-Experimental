@@ -2,8 +2,8 @@ package com.github.adamantcheese.chan.features.archives
 
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
-import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.usecase.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.features.archives.data.ArchiveInfo
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus

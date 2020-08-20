@@ -40,10 +40,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatCheckBox;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterEngine.FilterAction;
 import com.github.adamantcheese.chan.core.manager.FilterType;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
@@ -52,12 +52,15 @@ import com.github.adamantcheese.chan.ui.view.ColorPickerView;
 import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
@@ -82,8 +85,8 @@ public class FilterLayout
     private AppCompatCheckBox onlyOnOP;
     private AppCompatCheckBox applyToSaved;
 
-//    @Inject
-//    BoardManager boardManager;
+    @Inject
+    BoardManager boardManager;
     @Inject
     FilterEngine filterEngine;
     @Inject
@@ -256,32 +259,38 @@ public class FilterLayout
         } else if (v == boardsSelector) {
             @SuppressLint("InflateParams")
             @SuppressWarnings("unchecked")
-            final SelectLayout<Board> selectLayout =
-                    (SelectLayout<Board>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+            final SelectLayout<ChanBoard> selectLayout =
+                    (SelectLayout<ChanBoard>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
 
-            List<SelectLayout.SelectItem<Board>> items = new ArrayList<>();
+            List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
 
-            List<Board> allSavedBoards = new ArrayList<>();
-//            for (BoardRepository.SiteBoards item : boardManager.getSavedBoardsObservable().get()) {
-//                allSavedBoards.addAll(item.boards);
-//            }
+            boardManager.viewAllBoards(chanBoard -> {
+                String name = BoardHelper.getName(chanBoard);
+                boolean checked = filterEngine.matchesBoard(filter, chanBoard);
 
-            for (Board board : allSavedBoards) {
-                String name = BoardHelper.getName(board);
-                boolean checked = filterEngine.matchesBoard(filter, board);
+                items.add(
+                        new SelectLayout.SelectItem<>(
+                                chanBoard,
+                                chanBoard.getBoardDescriptor().hashCode(),
+                                name,
+                                "",
+                                name,
+                                checked
+                        )
+                );
 
-                items.add(new SelectLayout.SelectItem<>(board, board.id, name, "", name, checked));
-            }
+                return Unit.INSTANCE;
+            });
 
             selectLayout.setItems(items);
 
             new AlertDialog.Builder(getContext()).setView(selectLayout)
                     .setPositiveButton(R.string.ok, (dialog, which) -> {
-                        List<SelectLayout.SelectItem<Board>> items1 = selectLayout.getItems();
+                        List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
                         boolean all = selectLayout.areAllChecked();
-                        List<Board> boardList = new ArrayList<>(items1.size());
+                        List<ChanBoard> boardList = new ArrayList<>(items1.size());
                         if (!all) {
-                            for (SelectLayout.SelectItem<Board> item : items1) {
+                            for (SelectLayout.SelectItem<ChanBoard> item : items1) {
                                 if (item.checked) {
                                     boardList.add(item.item);
                                 }

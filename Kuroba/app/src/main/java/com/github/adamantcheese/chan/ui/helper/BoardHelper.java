@@ -18,7 +18,7 @@ package com.github.adamantcheese.chan.ui.helper;
 
 import androidx.core.util.Pair;
 
-import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 
 import org.jsoup.parser.Parser;
 
@@ -32,31 +32,31 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 public class BoardHelper {
     private static final String TAG = "BoardHelper";
 
-    public static String getName(Board board) {
-        return "/" + board.code + "/ \u2013 " + board.name;
+    public static String getName(ChanBoard board) {
+        return "/" + board.boardCode() + "/ \u2013 " + board.getName();
     }
 
-    public static String getDescription(Board board) {
-        return Parser.unescapeEntities(board.description, false);
+    public static String getDescription(ChanBoard board) {
+        return Parser.unescapeEntities(board.getDescription(), false);
     }
 
-    public static List<Board> quickSearch(List<Board> from, String query) {
+    public static List<ChanBoard> quickSearch(List<ChanBoard> from, String query) {
         from = new ArrayList<>(from);
         query = query.toLowerCase();
 
-        List<Board> res = new ArrayList<>();
+        List<ChanBoard> res = new ArrayList<>();
 
-        for (Iterator<Board> iterator = from.iterator(); iterator.hasNext(); ) {
-            Board board = iterator.next();
-            if (board.code.toLowerCase().startsWith(query)) {
+        for (Iterator<ChanBoard> iterator = from.iterator(); iterator.hasNext(); ) {
+            ChanBoard board = iterator.next();
+            if (board.boardCode().toLowerCase().startsWith(query)) {
                 iterator.remove();
                 res.add(board);
             }
         }
 
-        for (Iterator<Board> iterator = from.iterator(); iterator.hasNext(); ) {
-            Board board = iterator.next();
-            if (board.name.toLowerCase().contains(query)) {
+        for (Iterator<ChanBoard> iterator = from.iterator(); iterator.hasNext(); ) {
+            ChanBoard board = iterator.next();
+            if (board.getName().toLowerCase().contains(query)) {
                 iterator.remove();
                 res.add(board);
             }
@@ -65,25 +65,25 @@ public class BoardHelper {
         return res;
     }
 
-    public static List<Board> search(List<Board> from, final String query) {
-        List<Pair<Board, Integer>> ratios = new ArrayList<>();
-        Board exact = null;
-        for (Board board : from) {
+    public static List<ChanBoard> search(List<ChanBoard> from, final String query) {
+        List<Pair<ChanBoard, Integer>> ratios = new ArrayList<>();
+        ChanBoard exact = null;
+        for (ChanBoard board : from) {
             int ratio = getTokenSortRatio(board, query);
 
             if (ratio > 2) {
                 ratios.add(new Pair<>(board, ratio));
             }
 
-            if (board.code.equalsIgnoreCase(query) && exact == null) {
+            if (board.boardCode().equalsIgnoreCase(query) && exact == null) {
                 exact = board;
             }
         }
 
         Collections.sort(ratios, (o1, o2) -> o2.second - o1.second);
 
-        List<Board> result = new ArrayList<>(ratios.size());
-        for (Pair<Board, Integer> ratio : ratios) {
+        List<ChanBoard> result = new ArrayList<>(ratios.size());
+        for (Pair<ChanBoard, Integer> ratio : ratios) {
             result.add(ratio.first);
         }
 
@@ -96,33 +96,33 @@ public class BoardHelper {
         return result;
     }
 
-    private static int getTokenSortRatio(Board board, String query) {
-        int code = FuzzySearch.ratio(board.code, query);
-        int name = FuzzySearch.ratio(board.name, query);
+    private static int getTokenSortRatio(ChanBoard board, String query) {
+        int code = FuzzySearch.ratio(board.boardCode(), query);
+        int name = FuzzySearch.ratio(board.getName(), query);
         int description = FuzzySearch.weightedRatio(getDescription(board), query);
 
         return code * 8 + name * 5 + Math.max(0, description - 30) * 4;
     }
 
-    public static String boardUniqueId(Board board) {
-        String code = board.code.replace(":", "").replace(",", "");
-        return board.siteId + ":" + code;
+    public static String boardUniqueId(ChanBoard board) {
+        String code = board.boardCode().replace(":", "").replace(",", "");
+        return board.getBoardDescriptor().siteName() + ":" + code;
     }
 
-    public static boolean matchesUniqueId(Board board, String uniqueId) {
+    public static boolean matchesUniqueId(ChanBoard board, String uniqueId) {
         if (!uniqueId.contains(":")) {
-            return board.siteId == 0 && board.code.equals(uniqueId);
-        } else {
-            String[] splitted = uniqueId.split(":");
-            if (splitted.length != 2) {
-                return false;
-            }
+            return board.getBoardDescriptor().getSiteDescriptor().is4chan() && board.boardCode().equals(uniqueId);
+        }
 
-            try {
-                return Integer.parseInt(splitted[0]) == board.siteId && splitted[1].equals(board.code);
-            } catch (NumberFormatException ignored) {
-                return false;
-            }
+        String[] splitted = uniqueId.split(":");
+        if (splitted.length != 2) {
+            return false;
+        }
+
+        try {
+            return splitted[0].equals(board.getBoardDescriptor().siteName()) && splitted[1].equals(board.boardCode());
+        } catch (NumberFormatException ignored) {
+            return false;
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
@@ -17,7 +17,7 @@ class ReloadPostsFromDatabaseUseCase(
   private val archivesManager: ArchivesManager,
   private val chanPostRepository: ChanPostRepository,
   private val themeHelper: ThemeHelper,
-  private val boardRepository: BoardRepository
+  private val boardManager: BoardManager
 ) {
 
   suspend fun reloadPosts(
@@ -80,7 +80,7 @@ class ReloadPostsFromDatabaseUseCase(
           .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor)
+        val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
           ?: return emptyList()
 
         val postsToLoadCount = board.pages * board.perPage

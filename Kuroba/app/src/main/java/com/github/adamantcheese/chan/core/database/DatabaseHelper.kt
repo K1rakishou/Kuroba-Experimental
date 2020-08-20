@@ -18,7 +18,10 @@ package com.github.adamantcheese.chan.core.database
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import com.github.adamantcheese.chan.core.model.orm.*
+import com.github.adamantcheese.chan.core.model.orm.Filter
+import com.github.adamantcheese.chan.core.model.orm.PostHide
+import com.github.adamantcheese.chan.core.model.orm.SavedReply
+import com.github.adamantcheese.chan.core.model.orm.SiteModel
 import com.github.adamantcheese.chan.utils.Logger
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper
 import com.j256.ormlite.dao.Dao
@@ -33,7 +36,6 @@ class DatabaseHelper @Inject constructor(
 ) : OrmLiteSqliteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
   val savedDao by lazy { getDao(SavedReply::class.java)!! as Dao<SavedReply, Int> }
-  val boardsDao by lazy { getDao(Board::class.java)!! as Dao<Board, Int> }
   val postHideDao by lazy { getDao(PostHide::class.java)!! as Dao<PostHide, Int> }
   val filterDao by lazy { getDao(Filter::class.java)!! as Dao<Filter, Int> }
   val siteDao by lazy { getDao(SiteModel::class.java)!! as Dao<SiteModel, Int> }
@@ -50,7 +52,6 @@ class DatabaseHelper @Inject constructor(
   @Throws(SQLException::class)
   fun createTables(connectionSource: ConnectionSource?) {
     TableUtils.createTable(connectionSource, SavedReply::class.java)
-    TableUtils.createTable(connectionSource, Board::class.java)
     TableUtils.createTable(connectionSource, PostHide::class.java)
     TableUtils.createTable(connectionSource, Filter::class.java)
     TableUtils.createTable(connectionSource, SiteModel::class.java)
@@ -59,7 +60,6 @@ class DatabaseHelper @Inject constructor(
   @Throws(SQLException::class)
   fun dropTables(connectionSource: ConnectionSource?) {
     TableUtils.dropTable<SavedReply, Any>(connectionSource, SavedReply::class.java, true)
-    TableUtils.dropTable<Board, Any>(connectionSource, Board::class.java, true)
     TableUtils.dropTable<PostHide, Any>(connectionSource, PostHide::class.java, true)
     TableUtils.dropTable<Filter, Any>(connectionSource, Filter::class.java, true)
     TableUtils.dropTable<SiteModel, Any>(connectionSource, SiteModel::class.java, true)

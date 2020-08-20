@@ -17,20 +17,23 @@
 package com.github.adamantcheese.chan.core.site.sites.chan420
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.model.data.board.BoardBuilder
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
 
 class Chan420BoardsRequest(
+  private val siteDescriptor: SiteDescriptor,
   request: Request,
   okHttpClient: OkHttpClient
-) : JsonReaderRequest<List<Board>>(RequestType.Chan420BoardsRequest, request, okHttpClient) {
+) : JsonReaderRequest<List<ChanBoard>>(RequestType.Chan420BoardsRequest, request, okHttpClient) {
 
-  override suspend fun readJson(reader: JsonReader): List<Board> {
-    val list: MutableList<Board> = ArrayList()
+  override suspend fun readJson(reader: JsonReader): List<ChanBoard> {
+    val list: MutableList<ChanBoard> = ArrayList()
 
     reader.withObject {
       while (hasNext()) {
@@ -54,9 +57,9 @@ class Chan420BoardsRequest(
   }
 
   @Throws(IOException::class)
-  private fun readBoardEntry(reader: JsonReader): Board? {
+  private fun readBoardEntry(reader: JsonReader): ChanBoard? {
     return reader.withObject {
-      val board = Board()
+      val board = BoardBuilder(siteDescriptor)
 
       while (hasNext()) {
         when (nextName()) {
@@ -81,7 +84,7 @@ class Chan420BoardsRequest(
         return@withObject null
       }
 
-      return@withObject board
+      return@withObject board.toChanBoard()
     }
 
   }

@@ -22,7 +22,6 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostFilter
 import com.github.adamantcheese.chan.core.model.orm.Filter
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
@@ -34,7 +33,6 @@ internal class PostParseWorker(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: DatabaseSavedReplyManager,
-  private val siteRepository: SiteRepository,
   private val currentTheme: Theme,
   private val filters: List<Filter>,
   private val postBuilder: Post.Builder,
@@ -44,12 +42,9 @@ internal class PostParseWorker(
 
   suspend fun parse(): Post? {
     return Try {
-      val siteId = siteRepository.bySiteDescriptor(postBuilder.boardDescriptor!!.siteDescriptor)?.id()
-        ?: return@Try null
-
       // needed for "Apply to own posts" to work correctly
       postBuilder.isSavedReply(
-        savedReplyManager.isSaved(postBuilder.boardDescriptor, siteId, postBuilder.id)
+        savedReplyManager.isSaved(postBuilder.boardDescriptor, postBuilder.id)
       )
 
       // Process the filters before finish, because parsing the html is dependent on filter matches
@@ -60,10 +55,7 @@ internal class PostParseWorker(
 
       return@Try parser.parse(currentTheme, postBuilder, object : PostParser.Callback {
         override fun isSaved(postNo: Long): Boolean {
-          val savedPostSiteId = siteRepository.bySiteDescriptor(postBuilder.boardDescriptor!!.siteDescriptor)?.id()
-            ?: return false
-
-          return savedReplyManager.isSaved(postBuilder.boardDescriptor, savedPostSiteId, postNo)
+          return savedReplyManager.isSaved(postBuilder.boardDescriptor, postNo)
         }
 
         override fun isInternal(postNo: Long): Boolean {
@@ -81,6 +73,8 @@ internal class PostParseWorker(
     for (filter in filters) {
       val postDescriptor = post.postDescriptor
 
+      // TODO(KurobaEx): do not match filters against posts that we already have in postFilterManager.
+      //  Clear that map when the user adds/updates/removes a filter.
       if (filterEngine.matches(filter, post)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
         return

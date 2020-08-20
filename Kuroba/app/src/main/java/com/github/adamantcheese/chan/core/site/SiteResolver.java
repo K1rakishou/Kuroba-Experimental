@@ -119,20 +119,22 @@ public class SiteResolver {
         }
 
         for (Site site : siteRepository.all().getAll()) {
-            if (site.resolvable().respondsTo(httpUrl)) {
-                ResolvedChanDescriptor resolveChanDescriptor =
-                        site.resolvable().resolveChanDescriptor(site, httpUrl);
+            if (!site.resolvable().respondsTo(httpUrl)) {
+                continue;
+            }
 
-                if (resolveChanDescriptor != null) {
-                    ChanDescriptor chanDescriptor = resolveChanDescriptor.getChanDescriptor();
-                    Long markedPostNo = resolveChanDescriptor.getMarkedPostNo();
+            ResolvedChanDescriptor resolveChanDescriptor =
+                    site.resolvable().resolveChanDescriptor(site, httpUrl);
 
-                    if (markedPostNo != null) {
-                        return new ChanDescriptorResult(chanDescriptor, markedPostNo);
-                    }
+            if (resolveChanDescriptor != null) {
+                ChanDescriptor chanDescriptor = resolveChanDescriptor.getChanDescriptor();
+                Long markedPostNo = resolveChanDescriptor.getMarkedPostNo();
 
-                    return new ChanDescriptorResult(chanDescriptor);
+                if (markedPostNo != null) {
+                    return new ChanDescriptorResult(chanDescriptor, markedPostNo);
                 }
+
+                return new ChanDescriptorResult(chanDescriptor);
             }
         }
 

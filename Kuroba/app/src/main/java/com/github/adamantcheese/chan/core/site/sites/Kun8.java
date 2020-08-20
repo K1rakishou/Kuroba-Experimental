@@ -127,7 +127,7 @@ public class Kun8
             }
         });
 
-        setActions(new VichanActions(this, getOkHttpClient(), getSiteRepository()) {
+        setActions(new VichanActions(this, getOkHttpClient(), getSiteManager()) {
             @Override
             public ModularResult<Unit> setupPost(Reply reply, MultipartHttpCall call) {
                 return super.setupPost(reply, call)
@@ -160,7 +160,7 @@ public class Kun8
             }
         });
 
-        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
+        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
 
         setParser(new VichanCommentParser(getMockReplyManager()));
     }

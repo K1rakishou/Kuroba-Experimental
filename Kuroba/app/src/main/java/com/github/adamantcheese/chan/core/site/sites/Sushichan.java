@@ -19,7 +19,6 @@ package com.github.adamantcheese.chan.core.site.sites;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
@@ -29,6 +28,8 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.model.data.board.ChanBoard;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -92,17 +93,17 @@ public class Sushichan
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(
-                Board.fromSiteNameCode(this, "artsy", "wildcard"),
-                Board.fromSiteNameCode(this, "sushi social", "lounge"),
-                Board.fromSiteNameCode(this, "vidya gaems", "arcade"),
-                Board.fromSiteNameCode(this, "cute things", "kawaii"),
-                Board.fromSiteNameCode(this, "tasty morsels & delights", "kitchen"),
-                Board.fromSiteNameCode(this, "enjoyable sounds", "tunes"),
-                Board.fromSiteNameCode(this, "arts & literature", "culture"),
-                Board.fromSiteNameCode(this, "technology", "silicon"),
-                Board.fromSiteNameCode(this, "site meta-discussion", "yakuza"),
-                Board.fromSiteNameCode(this, "internet death cult", "hell"),
-                Board.fromSiteNameCode(this, "dat ecchi & hentai goodness", "lewd")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "wildcard"), "artsy"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lounge"), "sushi social"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "arcade"), "vidya gaems"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "kawaii"), "cute things"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "kitchen"), "tasty morsels & delights"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "tunes"), "enjoyable sounds"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "culture"), "arts & literature"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "silicon"), "technology"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "yakuza"), "site meta-discussion"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hell"), "internet death cult"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lewd"), "dat ecchi & hentai goodness")
         );
 
         setResolvable(URL_HANDLER);
@@ -115,8 +116,8 @@ public class Sushichan
         });
 
         setEndpoints(new VichanEndpoints(this, "https://sushigirl.us/", "https://sushigirl.us/"));
-        setActions(new VichanActions(this, getOkHttpClient(), getSiteRepository()));
-        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
+        setActions(new VichanActions(this, getOkHttpClient(), getSiteManager()));
+        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
 

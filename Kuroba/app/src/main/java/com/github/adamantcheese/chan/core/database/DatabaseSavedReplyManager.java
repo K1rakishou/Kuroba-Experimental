@@ -20,10 +20,10 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.common.SuspendableInitializer;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
@@ -85,12 +85,14 @@ public class DatabaseSavedReplyManager {
      * @return {@code true} if the post is in the saved reply database, {@code false} otherwise.
      */
     @AnyThread
-    public boolean isSaved(Board board, long postNo) {
-        return getSavedReply(board, postNo) != null;
+    public boolean isSaved(ChanBoard board, long postNo) {
+//        return getSavedReply(board, postNo) != null;
+        return false;
     }
 
-    public boolean isSaved(BoardDescriptor boardDescriptor, int siteId, long postNo) {
-        return getSavedReply(boardDescriptor, siteId, postNo) != null;
+    public boolean isSaved(BoardDescriptor boardDescriptor, long postNo) {
+//        return getSavedReply(boardDescriptor, siteId, postNo) != null;
+        return false;
     }
 
     public Callable<Void> load() {
@@ -188,7 +190,7 @@ public class DatabaseSavedReplyManager {
         }
     }
 
-    public SavedReply getSavedReply(Board board, long postNo) {
+    public SavedReply getSavedReply(BoardDescriptor boardDescriptor, long postNo) {
         synchronized (savedRepliesByNo) {
             if (savedRepliesByNo.containsKey(postNo)) {
                 List<SavedReply> items = savedRepliesByNo.get(postNo);
@@ -196,11 +198,11 @@ public class DatabaseSavedReplyManager {
                     return null;
                 }
 
-                for (SavedReply item : items) {
-                    if (item.board.equals(board.code) && item.siteId == board.siteId) {
-                        return item;
-                    }
-                }
+//                for (SavedReply item : items) {
+//                    if (item.board.equals(board.code) && item.siteId == board.siteId) {
+//                        return item;
+//                    }
+//                }
             }
 
             return null;

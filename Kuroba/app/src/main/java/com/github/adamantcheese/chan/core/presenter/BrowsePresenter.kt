@@ -16,76 +16,52 @@
  */
 package com.github.adamantcheese.chan.core.presenter
 
-import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.model.ChanThread
-import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.disposables.CompositeDisposable
-import java.util.*
 import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
-  boardManager: BoardManager,
   private val historyNavigationManager: HistoryNavigationManager,
   private val bookmarksManager: BookmarksManager
-) : Observer {
+) {
   private var callback: Callback? = null
-  private var hadBoards: Boolean
   private var currentBoardDescriptor: BoardDescriptor? = null
-//  private val savedBoardsObservable = boardManager.savedBoardsObservable
   private val compositeDisposable = CompositeDisposable()
-
-  init {
-    hadBoards = hasBoards()
-  }
 
   fun create(callback: Callback?) {
     this.callback = callback
-//    savedBoardsObservable.addObserver(this)
   }
 
   fun destroy() {
     callback = null
     compositeDisposable.clear()
-//    savedBoardsObservable.deleteObserver(this)
   }
 
   fun currentBoardDescriptor(): BoardDescriptor? {
     return currentBoardDescriptor
   }
 
-  fun setBoard(boardDescriptor: BoardDescriptor) {
+  suspend fun setBoard(boardDescriptor: BoardDescriptor) {
     loadBoard(boardDescriptor)
   }
 
-  fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
+  suspend fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
     val boardDescriptor = firstBoardDescriptor()
     if (boardDescriptor != null) {
       loadBoard(boardDescriptor, !boardSetViaBoardSetup)
     }
   }
 
-  fun onBoardsFloatingMenuSiteClicked(site: Site) {
-    callback?.loadSiteSetup(site)
-  }
-
-  override fun update(o: Observable, arg: Any?) {
-//    if (o === savedBoardsObservable) {
-//      if (!hadBoards && hasBoards()) {
-//        hadBoards = true
-//        loadWithDefaultBoard(true)
-//      }
-//    }
-  }
-
-  private fun hasBoards(): Boolean {
-    return firstBoardDescriptor() != null
+  fun onBoardsFloatingMenuSiteClicked(siteDescriptor: SiteDescriptor) {
+    callback?.loadSiteSetup(siteDescriptor)
   }
 
   private fun firstBoardDescriptor(): BoardDescriptor? {
@@ -98,7 +74,7 @@ class BrowsePresenter @Inject constructor(
     return null
   }
 
-  private fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
+  private suspend fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
     if (callback == null) {
       return
     }
@@ -161,8 +137,8 @@ class BrowsePresenter @Inject constructor(
   }
 
   interface Callback {
-    fun loadBoard(boardDescriptor: BoardDescriptor)
-    fun loadSiteSetup(site: Site)
+    suspend fun loadBoard(boardDescriptor: BoardDescriptor)
+    fun loadSiteSetup(siteDescriptor: SiteDescriptor)
   }
 
   companion object {

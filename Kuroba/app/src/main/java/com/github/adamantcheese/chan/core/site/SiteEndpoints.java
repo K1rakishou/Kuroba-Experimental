@@ -19,7 +19,7 @@ package com.github.adamantcheese.chan.core.site;
 import androidx.collection.ArrayMap;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.Board;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -44,9 +44,9 @@ public interface SiteEndpoints {
 
     HttpUrl boards();
 
-    HttpUrl pages(Board board);
+    HttpUrl pages(ChanBoard board);
 
-    HttpUrl archive(Board board);
+    HttpUrl archive(ChanBoard board);
 
     HttpUrl reply(ChanDescriptor chanDescriptor);
 

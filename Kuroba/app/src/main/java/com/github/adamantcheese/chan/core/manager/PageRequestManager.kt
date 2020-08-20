@@ -16,8 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.manager
 
-import com.github.adamantcheese.chan.core.database.DatabaseBoardManager
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
@@ -37,9 +35,8 @@ import kotlin.collections.HashSet
 import kotlin.coroutines.CoroutineContext
 
 class PageRequestManager(
-  private val databaseManager: DatabaseManager,
-  private val databaseBoardManager: DatabaseBoardManager,
-  private val siteManager: SiteManager
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager
 ) : CoroutineScope {
   private val requestedBoards = Collections.synchronizedSet(HashSet<String>())
   private val savedBoards = Collections.synchronizedSet(HashSet<String>())
@@ -178,7 +175,7 @@ class PageRequestManager(
         return@launch
       }
 
-      val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
       if (board == null) {
         Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
           "and boardCode (${boardDescriptor.boardCode})")
@@ -186,11 +183,11 @@ class PageRequestManager(
       }
 
       // Had some null issues for some reason? arisuchan in particular?
-      val lastUpdate = boardTimeMap[board.code]
+      val lastUpdate = boardTimeMap[board.boardCode()]
       val lastUpdateTime = lastUpdate ?: 0L
 
       if (lastUpdateTime + UPDATE_INTERVAL <= System.currentTimeMillis()) {
-        Logger.d(TAG, "Requesting existing board pages for /${board.code}/, timeout")
+        Logger.d(TAG, "Requesting existing board pages for /${board.boardCode()}/, timeout")
         requestBoard(boardDescriptor)
       }
     }
@@ -216,7 +213,7 @@ class PageRequestManager(
       return
     }
 
-    val board = databaseManager.runTask(databaseBoardManager.getBoard(site, boardDescriptor.boardCode))
+    val board = boardManager.byBoardDescriptor(boardDescriptor)
     if (board == null) {
       Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
         "and boardCode (${boardDescriptor.boardCode})")

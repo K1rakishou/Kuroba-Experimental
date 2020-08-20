@@ -333,7 +333,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun openLinkConfirmed(link: String) {
+  private fun openLinkConfirmed(link: String) {
     if (ChanSettings.openLinkBrowser.get()) {
       AndroidUtils.openLink(link)
     } else {
@@ -349,11 +349,11 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openThread(threadDescriptor)
   }
 
-  override fun showBoard(boardDescriptor: BoardDescriptor) {
+  override suspend fun showBoard(boardDescriptor: BoardDescriptor) {
     callback.showBoard(boardDescriptor)
   }
 
-  override fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?) {
+  override suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?) {
     callback.showBoardAndSearch(boardDescriptor, searchQuery)
   }
 
@@ -809,8 +809,8 @@ class ThreadLayout @JvmOverloads constructor(
 
     fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
     fun openThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    fun showBoard(descriptor: BoardDescriptor)
-    fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
+    suspend fun showBoard(descriptor: BoardDescriptor)
+    suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
     fun onShowPosts()

@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.interactors
+package com.github.adamantcheese.chan.core.usecase
 
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.features.archives.data.ArchiveInfo

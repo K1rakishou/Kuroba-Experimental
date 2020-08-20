@@ -1,0 +1,68 @@
+package com.github.adamantcheese.model.data.board
+
+import android.text.TextUtils
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+
+class BoardBuilder(
+  private val siteDescriptor: SiteDescriptor
+) {
+  var code: String? = null
+  var order: Int = 0
+  var name: String? = null
+  var perPage: Int = 15
+  var pages: Int = 10
+  var maxFileSize: Int = -1
+  var maxWebmSize: Int = -1
+  var maxCommentChars: Int = -1
+  var bumpLimit: Int = -1
+  var imageLimit: Int = -1
+  var cooldownThreads: Int = 0
+  var cooldownReplies: Int = 0
+  var cooldownImages: Int = 0
+  var customSpoilers: Int = -1
+  var description: String = ""
+  var saved: Boolean = false
+  var workSafe: Boolean = false
+  var spoilers: Boolean = false
+  var userIds: Boolean = false
+  var codeTags: Boolean = false
+  var preuploadCaptcha: Boolean = false
+  var countryFlags: Boolean = false
+  var mathTags: Boolean = false
+  var archive: Boolean = false
+
+  fun hasMissingInfo(): Boolean {
+    return TextUtils.isEmpty(name) || TextUtils.isEmpty(code) || perPage < 0 || pages < 0
+  }
+
+  fun toChanBoard(): ChanBoard {
+    return ChanBoard(
+      boardDescriptor = BoardDescriptor.create(siteDescriptor, code!!),
+      order = order,
+      name = name,
+      perPage = perPage,
+      pages = pages,
+      maxFileSize = maxFileSize,
+      maxWebmSize = maxWebmSize,
+      maxCommentChars = maxCommentChars,
+      bumpLimit = bumpLimit,
+      imageLimit = imageLimit,
+      cooldownThreads = cooldownThreads,
+      cooldownReplies = cooldownReplies,
+      cooldownImages = cooldownImages,
+      customSpoilers = customSpoilers,
+      description = description,
+      saved = saved,
+      workSafe = workSafe,
+      spoilers = spoilers,
+      userIds = userIds,
+      codeTags = codeTags,
+      preuploadCaptcha = preuploadCaptcha,
+      countryFlags = countryFlags,
+      mathTags = mathTags,
+      archive = archive
+    )
+  }
+
+}

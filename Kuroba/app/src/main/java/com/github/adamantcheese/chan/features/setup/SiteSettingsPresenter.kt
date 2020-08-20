@@ -4,13 +4,13 @@ import android.content.Context
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.base.BasePresenter
-import com.github.adamantcheese.chan.core.interactors.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.settings.OptionSettingItem
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
+import com.github.adamantcheese.chan.core.usecase.LoadArchiveInfoListUseCase
 import com.github.adamantcheese.chan.features.archives.ArchivesSettingsController
 import com.github.adamantcheese.chan.features.archives.data.ArchiveState
 import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus
@@ -220,7 +220,7 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
           topDescriptionStringFunc = { "Set up boards" },
           bottomDescriptionStringFunc = { "${boardManager.activeBoardsCount(siteDescriptor)} board(s) added" },
           callback = {
-            // TODO(KurobaEx): open boards setup controller
+            withViewNormal { pushController(BoardsSetupController(context, siteDescriptor)) }
           }
         )
 

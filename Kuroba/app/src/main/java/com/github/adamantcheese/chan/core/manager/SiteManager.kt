@@ -125,7 +125,13 @@ class SiteManager(
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
-    return lock.read { siteMap[siteDescriptor] }
+    return lock.read {
+      if (!isSiteActive(siteDescriptor)) {
+        return@read null
+      }
+
+      return@read siteMap[siteDescriptor]
+    }
   }
 
   fun viewAllSitesOrdered(viewer: (ChanSiteData, Site) -> Unit) {
@@ -134,6 +140,10 @@ class SiteManager(
 
     lock.read {
       orders.forEach { siteDescriptor ->
+        if (!isSiteActive(siteDescriptor)) {
+          return@forEach
+        }
+
         val chanSiteData = requireNotNull(siteDataMap[siteDescriptor]) {
           "Couldn't find chanSiteData by siteDescriptor: $siteDescriptor in orders"
         }
@@ -163,6 +173,10 @@ class SiteManager(
   fun updateUserSettings(siteDescriptor: SiteDescriptor, userSettings: JsonSettings) {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
+
+    if (!isSiteActive(siteDescriptor)) {
+      return
+    }
 
     val shouldPersist = lock.write {
       val chanSiteData = siteDataMap[siteDescriptor]

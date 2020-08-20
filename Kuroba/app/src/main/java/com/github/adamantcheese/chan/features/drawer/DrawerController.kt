@@ -59,6 +59,7 @@ import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -523,7 +524,7 @@ class DrawerController(
             threadController.showThread(descriptor)
           }
           is ChanDescriptor.CatalogDescriptor -> {
-            threadController.showBoard(descriptor.boardDescriptor)
+            mainScope.launch { threadController.showBoard(descriptor.boardDescriptor) }
           }
         }
       }

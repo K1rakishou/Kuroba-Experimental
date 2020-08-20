@@ -1,11 +1,10 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.Board
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.SiteEndpoints
 import com.github.adamantcheese.chan.core.site.common.CommonSite
 import com.github.adamantcheese.chan.core.site.common.CommonSite.CommonApi
@@ -14,6 +13,7 @@ import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.StringUtils
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
@@ -25,8 +25,8 @@ import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class DvachApi internal constructor(
-  private val siteRepository: SiteRepository,
-  private val boardRepository: BoardRepository,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   commonSite: CommonSite
 ) : CommonApi(commonSite) {
 
@@ -45,9 +45,9 @@ class DvachApi internal constructor(
     val builder = Post.Builder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val site = siteRepository.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
-    val board = boardRepository.getFromBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+    val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
     val endpoints = site.endpoints()
@@ -123,7 +123,12 @@ class DvachApi internal constructor(
   }
 
   @Throws(IOException::class)
-  private fun readPostImage(reader: JsonReader, builder: Post.Builder, board: Board, endpoints: SiteEndpoints): PostImage? {
+  private fun readPostImage(
+    reader: JsonReader,
+    builder: Post.Builder,
+    board: ChanBoard,
+    endpoints: SiteEndpoints
+  ): PostImage? {
     var path: String? = null
     var fileSize: Long = 0
     var fileExt: String? = null

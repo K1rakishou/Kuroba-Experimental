@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.model.orm;
 
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -24,10 +25,10 @@ public class SavedReply {
     public SavedReply() {
     }
 
-    public static SavedReply fromBoardNoPassword(Board board, long no, String password) {
+    public static SavedReply fromBoardNoPassword(ChanBoard chanBoard, long no, String password) {
         SavedReply savedReply = new SavedReply();
-        savedReply.siteId = board.site.id();
-        savedReply.board = board.code;
+//        savedReply.siteId = board.site.id();
+//        savedReply.board = board.code;
         savedReply.no = (int) no;
         savedReply.password = password;
         return savedReply;

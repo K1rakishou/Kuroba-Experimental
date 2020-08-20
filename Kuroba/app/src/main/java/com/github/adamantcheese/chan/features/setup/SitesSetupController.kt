@@ -60,6 +60,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     sitesPresenter.onCreate(this)
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+
+    sitesPresenter.onDestroy()
+  }
+
   private fun onStateChanged(state: SitesSetupControllerState) {
     controller.callback = {
       when (state) {
@@ -108,12 +114,6 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     }
 
     controller.requestModelBuild()
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    sitesPresenter.onDestroy()
   }
 
   private class SitesEpoxyController : EpoxyController() {

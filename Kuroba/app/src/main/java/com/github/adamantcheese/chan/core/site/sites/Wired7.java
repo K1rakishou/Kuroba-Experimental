@@ -20,8 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.di.NetModule;
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
@@ -35,6 +34,8 @@ import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
 import com.github.adamantcheese.common.ModularResult;
+import com.github.adamantcheese.model.data.board.ChanBoard;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -111,20 +112,20 @@ public class Wired7
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://wired-7.org/favicon.ico")));
 
         setBoards(
-                Board.fromSiteNameCode(this, "Random", "b"),
-                Board.fromSiteNameCode(this, "Hentai", "h"),
-                Board.fromSiteNameCode(this, "Humanidad", "hum"),
-                Board.fromSiteNameCode(this, "Internacional/Random", "i"),
-                Board.fromSiteNameCode(this, "Política", "pol"),
-                Board.fromSiteNameCode(this, "Wired-7 Metaboard", "meta"),
-                Board.fromSiteNameCode(this, "Anime", "a"),
-                Board.fromSiteNameCode(this, "Cultura Japonesa", "jp"),
-                Board.fromSiteNameCode(this, "Musica & Audio", "mu"),
-                Board.fromSiteNameCode(this, "Tecnología", "tech"),
-                Board.fromSiteNameCode(this, "Videojuegos y Gaming", "v"),
-                Board.fromSiteNameCode(this, "Medios Visuales", "vis"),
-                Board.fromSiteNameCode(this, "Paranormal", "x"),
-                Board.fromSiteNameCode(this, "Lain", "lain")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Random"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "h"), "Hentai"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hum"), "Humanidad"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "i"), "Internacional/Random"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "pol"), "Política"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "meta"), "Wired-7 Metaboard"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "Anime"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "jp"), "Cultura Japonesa"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mu"), "Musica & Audio"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "tech"), "Tecnología"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "v"), "Videojuegos y Gaming"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "vis"), "Medios Visuales"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "x"), "Paranormal"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lain"), "Lain")
         );
 
         setResolvable(URL_HANDLER);
@@ -137,8 +138,8 @@ public class Wired7
         });
 
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
-        setActions(new Wired7Actions(this, getOkHttpClient(), getSiteRepository()));
-        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
+        setActions(new Wired7Actions(this, getOkHttpClient(), getSiteManager()));
+        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
 
@@ -147,9 +148,9 @@ public class Wired7
         Wired7Actions(
                 CommonSite commonSite,
                 NetModule.ProxiedOkHttpClient okHttpClient,
-                SiteRepository siteRepository
+                SiteManager siteManager
         ) {
-            super(commonSite, okHttpClient, siteRepository);
+            super(commonSite, okHttpClient, siteManager);
         }
 
         @Override

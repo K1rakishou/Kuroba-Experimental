@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.core.database.DatabaseHelper;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
@@ -58,19 +57,11 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public BoardRepository provideBoardRepository(DatabaseManager databaseManager, SiteRepository siteRepository) {
-        Logger.d(AppModule.DI_TAG, "Board repository");
-        return new BoardRepository(databaseManager, siteRepository);
-    }
-
-    @Provides
-    @Singleton
     public LastReplyRepository provideLastReplyRepository(
-            SiteRepository siteRepository,
-            BoardRepository boardRepository
+            SiteRepository siteRepository
     ) {
         Logger.d(AppModule.DI_TAG, "Last reply repository");
-        return new LastReplyRepository(siteRepository, boardRepository);
+        return new LastReplyRepository(siteRepository);
     }
 
 }

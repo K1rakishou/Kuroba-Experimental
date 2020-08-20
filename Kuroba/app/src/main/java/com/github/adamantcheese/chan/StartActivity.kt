@@ -38,8 +38,6 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.core.site.SiteService
@@ -87,9 +85,9 @@ class StartActivity : AppCompatActivity(),
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
-  lateinit var siteRepository: SiteRepository
+  lateinit var siteManager: SiteManager
   @Inject
-  lateinit var boardRepository: BoardRepository
+  lateinit var boardManager: BoardManager
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
@@ -232,8 +230,11 @@ class StartActivity : AppCompatActivity(),
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
     }
 
-    historyNavigationManager.awaitUntilInitialized()
-    setupFromStateOrFreshLaunch(savedInstanceState)
+    browseController?.showLoading()
+
+    coroutineScope.launch {
+      setupFromStateOrFreshLaunch(savedInstanceState)
+    }
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
       coroutineScope.launch {
@@ -356,9 +357,12 @@ class StartActivity : AppCompatActivity(),
     return false
   }
 
-  private fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
-    val handled = savedInstanceState?.let { restoreFromSavedState(it) }
-      ?: restoreFromUrl()
+  private suspend fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
+    val handled = if (savedInstanceState != null) {
+      restoreFromSavedState(savedInstanceState)
+    } else {
+      restoreFromUrl()
+    }
 
     // Not from a state or from an url, launch the setup controller if no boards are setup up yet,
     // otherwise load the default saved board.
@@ -367,41 +371,37 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private fun restoreFresh() {
+  private suspend fun restoreFresh() {
     if (!siteService.areSitesSetup()) {
       browseController?.showSitesNotSetup()
       return
     }
 
-    historyNavigationManager.runAfterInitialized { error ->
-      if (error != null) {
-        throw error
+    historyNavigationManager.awaitUntilInitialized()
+
+    val topNavElement = historyNavigationManager.getNavElementAtTop()
+    if (topNavElement == null) {
+      browseController?.loadWithDefaultBoard()
+      return
+    }
+
+    when (topNavElement) {
+      is NavHistoryElement.Catalog -> {
+        browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
       }
-
-      val topNavElement = historyNavigationManager.getNavElementAtTop()
-      if (topNavElement == null) {
-        browseController?.loadWithDefaultBoard()
-        return@runAfterInitialized
-      }
-
-      when (topNavElement) {
-        is NavHistoryElement.Catalog -> {
-          browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
-        }
-        is NavHistoryElement.Thread -> {
-          val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
-          if (catalogNavElement != null) {
-            require(catalogNavElement is NavHistoryElement.Catalog) {
-              "catalogNavElement is not catalog!"
-            }
-
-            browseController?.setBoard(catalogNavElement.descriptor.boardDescriptor)
-          } else {
-            browseController?.loadWithDefaultBoard()
+      is NavHistoryElement.Thread -> {
+        val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
+        if (catalogNavElement != null) {
+          require(catalogNavElement is NavHistoryElement.Catalog) {
+            "catalogNavElement is not catalog!"
           }
 
-          loadThread(topNavElement.descriptor)
+          browseController?.setBoard(catalogNavElement.descriptor.boardDescriptor)
+        } else {
+          browseController?.loadWithDefaultBoard()
         }
+
+        loadThread(topNavElement.descriptor)
       }
     }
   }
@@ -422,7 +422,7 @@ class StartActivity : AppCompatActivity(),
     drawerController.setBookmarksMenuItemSelected()
   }
 
-  private fun restoreFromUrl(): Boolean {
+  private suspend fun restoreFromUrl(): Boolean {
     val data = intent.data
       ?: return false
 
@@ -449,7 +449,7 @@ class StartActivity : AppCompatActivity(),
     return false
   }
 
-  private fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
+  private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
     var handled = false
 
     // Restore the activity state from the previously saved state.
@@ -472,7 +472,7 @@ class StartActivity : AppCompatActivity(),
     return handled
   }
 
-  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+  private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
     val boardDescriptor =
       (resolveChanDescriptor(state.board) as ChanDescriptor.CatalogDescriptor).boardDescriptor
     val threadDescriptor =
@@ -481,17 +481,19 @@ class StartActivity : AppCompatActivity(),
     return Pair(boardDescriptor, threadDescriptor)
   }
 
-  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
+  private suspend fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
     val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
       ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
     } else {
       ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
     }
 
-    siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    siteManager.awaitUntilInitialized()
+    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return null
 
-    boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
+    boardManager.awaitUntilInitialized()
+    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return null
 
     return chanDescriptor

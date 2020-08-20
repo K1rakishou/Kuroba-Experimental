@@ -2,12 +2,11 @@ package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -30,8 +29,7 @@ class ParsePostsUseCase(
   private val postFilterManager: PostFilterManager,
   private val databaseSavedReplyManager: DatabaseSavedReplyManager,
   private val themeHelper: ThemeHelper,
-  private val boardRepository: BoardRepository,
-  private val siteRepository: SiteRepository
+  private val boardManager: BoardManager
 ) {
 
   suspend fun parseNewPostsPosts(
@@ -72,8 +70,9 @@ class ParsePostsUseCase(
       }
     }
 
-    val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
-      ?: return emptyList()
+    if (boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor()) == null) {
+      return emptyList()
+    }
 
     return supervisorScope {
       return@supervisorScope postBuildersToParse
@@ -85,7 +84,6 @@ class ParsePostsUseCase(
                 filterEngine,
                 postFilterManager,
                 databaseSavedReplyManager,
-                siteRepository,
                 themeHelper.theme,
                 loadFilters(chanDescriptor),
                 postToParse,
@@ -103,7 +101,7 @@ class ParsePostsUseCase(
   private fun loadFilters(chanDescriptor: ChanDescriptor): List<Filter> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor())
+    val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return emptyList()
 
     return filterEngine.enabledFilters

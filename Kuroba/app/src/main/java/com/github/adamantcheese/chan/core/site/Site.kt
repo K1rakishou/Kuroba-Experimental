@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.site
 
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.json.JsonSettings
@@ -141,7 +140,7 @@ interface Site {
   fun boardsType(): BoardsType
   fun resolvable(): SiteUrlHandler
   fun siteFeature(siteFeature: SiteFeature): Boolean
-  fun boardFeature(boardFeature: BoardFeature, board: Board): Boolean
+  fun boardFeature(boardFeature: BoardFeature, board: ChanBoard): Boolean
   fun settings(): List<SiteSetting>
   fun endpoints(): SiteEndpoints
   fun requestModifier(): SiteRequestModifier
@@ -168,6 +167,6 @@ interface Site {
    *
    * @return the created board.
    */
-  fun createBoard(boardName: String, boardCode: String): ChanBoard
+  suspend fun createBoard(boardName: String, boardCode: String): ChanBoard
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
 }

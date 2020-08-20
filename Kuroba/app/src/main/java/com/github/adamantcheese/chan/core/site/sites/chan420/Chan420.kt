@@ -16,9 +16,8 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.chan420
 
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteIcon.fromFavicon
@@ -28,6 +27,8 @@ import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaApi
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaEndpoints
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -57,7 +58,7 @@ class Chan420 : CommonSite() {
     
     setEndpoints(TaimabaEndpoints(this, "https://api.420chan.org", "https://boards.420chan.org"))
     setActions(object : TaimabaActions(this@Chan420) {
-      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
+      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()
@@ -66,22 +67,23 @@ class Chan420 : CommonSite() {
               .build()
 
             Chan420BoardsRequest(
+              siteDescriptor(),
               request,
               okHttpClient
             )
           },
           defaultBoardsProvider = {
-            ArrayList<Board>().apply {
-              add(Board.fromSiteNameCode(this@Chan420, "Cannabis Discussion", "weed"))
-              add(Board.fromSiteNameCode(this@Chan420, "Alcohol Discussion", "hooch"))
-              add(Board.fromSiteNameCode(this@Chan420, "Dream Discussion", "dr"))
-              add(Board.fromSiteNameCode(this@Chan420, "Detoxing & Rehabilitation", "detox"))
+            ArrayList<ChanBoard>().apply {
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "weed"), "Cannabis Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "hooch"), "Alcohol Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "dr"), "Dream Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "detox"), "Detoxing & Rehabilitation"))
             }.shuffled()
           }
         )
       }
     })
-    setApi(TaimabaApi(siteRepository, boardRepository, this))
+    setApi(TaimabaApi(siteManager, boardManager, this))
     setParser(TaimabaCommentParser(mockReplyManager))
   }
 

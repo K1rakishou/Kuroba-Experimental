@@ -39,7 +39,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.interactors.ExtractPostMapInfoHolderUseCase
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
@@ -48,6 +47,7 @@ import com.github.adamantcheese.chan.core.presenter.ReplyPresenter
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.http.Reply
+import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter

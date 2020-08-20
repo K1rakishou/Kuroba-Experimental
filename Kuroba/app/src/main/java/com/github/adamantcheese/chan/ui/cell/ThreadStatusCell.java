@@ -31,16 +31,16 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.common.KotlinExtensionsKt;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
@@ -60,7 +60,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     @Inject
     ThemeHelper themeHelper;
     @Inject
-    BoardRepository boardRepository;
+    BoardManager boardManager;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -159,7 +159,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         BoardDescriptor boardDescriptor = op.boardDescriptor;
 
         if (boardDescriptor != null) {
-            Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
+            ChanBoard board = boardManager.byBoardDescriptor(boardDescriptor);
             if (board != null) {
                 appendThreadStatisticsPart(chanThread, builder, op, board);
             }
@@ -198,23 +198,23 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
 
     }
 
-    private void appendThreadStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder, Post op, Board board) {
+    private void appendThreadStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder, Post op, ChanBoard board) {
         boolean hasReplies = op.getTotalRepliesCount() >= 0 || chanThread.getPostsCount() - 1 > 0;
         boolean hasImages = op.getThreadImagesCount() >= 0 || chanThread.getImagesCount() > 0;
 
         if (hasReplies && hasImages) {
-            boolean hasBumpLimit = board.bumpLimit > 0;
-            boolean hasImageLimit = board.imageLimit > 0;
+            boolean hasBumpLimit = board.getBumpLimit() > 0;
+            boolean hasImageLimit = board.getImageLimit() > 0;
 
             SpannableString replies = new SpannableString(
                     (op.getTotalRepliesCount() >= 0 ? op.getTotalRepliesCount() : chanThread.getPostsCount() - 1) + "R");
-            if (hasBumpLimit && op.getTotalRepliesCount() >= board.bumpLimit) {
+            if (hasBumpLimit && op.getTotalRepliesCount() >= board.getBumpLimit()) {
                 replies.setSpan(new StyleSpan(Typeface.ITALIC), 0, replies.length(), 0);
             }
 
             SpannableString images = new SpannableString(
                     (op.getThreadImagesCount() >= 0 ? op.getThreadImagesCount() : chanThread.getImagesCount()) + "I");
-            if (hasImageLimit && op.getThreadImagesCount() >= board.imageLimit) {
+            if (hasImageLimit && op.getThreadImagesCount() >= board.getImageLimit()) {
                 images.setSpan(new StyleSpan(Typeface.ITALIC), 0, images.length(), 0);
             }
 
@@ -229,7 +229,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         Chan4PagesRequest.BoardPage boardPage = callback.getPage(op);
         if (boardPage != null) {
             SpannableString page = new SpannableString(String.valueOf(boardPage.getCurrentPage()));
-            if (boardPage.getCurrentPage() >= board.pages) {
+            if (boardPage.getCurrentPage() >= board.getPages()) {
                 page.setSpan(new StyleSpan(Typeface.ITALIC), 0, page.length(), 0);
             }
 

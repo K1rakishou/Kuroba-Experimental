@@ -45,6 +45,12 @@ class SiteSettingsController(
     rebuildSettings()
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+
+    presenter.onDestroy()
+  }
+
   private fun rebuildSettings() {
     mainScope.launch {
       val groups = presenter.showSiteSettings(context, siteDescriptor)
@@ -160,9 +166,4 @@ class SiteSettingsController(
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    presenter.onDestroy()
-  }
 }

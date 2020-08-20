@@ -17,21 +17,22 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.core.model.orm.Board
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.site.Site
+import com.github.adamantcheese.model.data.board.BoardBuilder
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.*
 
 class DvachBoardsRequest internal constructor(
-  private val site: Site,
+  private val siteDescriptor: SiteDescriptor,
   request: Request,
   okHttpClient: OkHttpClient
-) : JsonReaderRequest<List<Board>>(RequestType.DvachBoardsRequest, request, okHttpClient) {
+) : JsonReaderRequest<List<ChanBoard>>(RequestType.DvachBoardsRequest, request, okHttpClient) {
   
-  override suspend fun readJson(reader: JsonReader): List<Board> {
-    val list: MutableList<Board> = ArrayList()
+  override suspend fun readJson(reader: JsonReader): List<ChanBoard> {
+    val list: MutableList<ChanBoard> = ArrayList()
     
     reader.withObject {
       while (hasNext()) {
@@ -54,12 +55,10 @@ class DvachBoardsRequest internal constructor(
     return list
   }
 
-  private fun readBoardEntry(reader: JsonReader): Board? {
+  private fun readBoardEntry(reader: JsonReader): ChanBoard? {
     return reader.withObject {
-      val board = Board()
-      board.siteId = site.id()
-      board.site = site
-  
+      val board = BoardBuilder(siteDescriptor)
+
       while (hasNext()) {
         when (nextName()) {
           "name" -> board.name = nextString()
@@ -78,7 +77,7 @@ class DvachBoardsRequest internal constructor(
         return@withObject null
       }
       
-      return@withObject board
+      return@withObject board.toChanBoard()
     }
   }
 

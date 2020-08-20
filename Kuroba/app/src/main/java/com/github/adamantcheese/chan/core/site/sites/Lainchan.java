@@ -19,7 +19,6 @@ package com.github.adamantcheese.chan.core.site.sites;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteIcon;
@@ -29,6 +28,8 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.model.data.board.ChanBoard;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -89,24 +90,24 @@ public class Lainchan extends CommonSite {
         setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://lainchan.org/favicon.ico")));
 
         setBoards(
-                Board.fromSiteNameCode(this, "Programming", "λ"),
-                Board.fromSiteNameCode(this, "Do It Yourself", "Δ"),
-                Board.fromSiteNameCode(this, "Security", "sec"),
-                Board.fromSiteNameCode(this, "Technology", "Ω"),
-                Board.fromSiteNameCode(this, "Games and Interactive Media", "inter"),
-                Board.fromSiteNameCode(this, "Literature", "lit"),
-                Board.fromSiteNameCode(this, "Musical and Audible Media", "music"),
-                Board.fromSiteNameCode(this, "Visual Media", "vis"),
-                Board.fromSiteNameCode(this, "Humanity", "hum"),
-                Board.fromSiteNameCode(this, "Drugs 3.0", "drug"),
-                Board.fromSiteNameCode(this, "Consciousness and Dreams", "zzz"),
-                Board.fromSiteNameCode(this, "layer", "layer"),
-                Board.fromSiteNameCode(this, "Questions and Complaints", "q"),
-                Board.fromSiteNameCode(this, "Random", "r"),
-                Board.fromSiteNameCode(this, "Lain", "lain"),
-                Board.fromSiteNameCode(this, "Culture 15 freshly bumped threads", "culture"),
-                Board.fromSiteNameCode(this, "Psychopharmacology 15 freshly bumped threads", "psy"),
-                Board.fromSiteNameCode(this, "15 freshly bumped threads", "mega")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "λ"), "Programming"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "Δ"), "Do It Yourself"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sec"), "Security"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "Ω"), "Technology"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "inter"), "Games and Interactive Media"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lit"), "Literature"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "music"), "Musical and Audible Media"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "vis"), "Visual Media"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hum"), "Humanity"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "drug"), "Drugs 3.0"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "zzz"), "Consciousness and Dreams"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "layer"), "layer"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "q"), "Questions and Complaints"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "r"), "Random"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lain"), "Lain"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "culture"), "Culture 15 freshly bumped threads"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "psy"), "Psychopharmacology 15 freshly bumped threads"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mega"), "15 freshly bumped threads")
         );
 
         setResolvable(URL_HANDLER);
@@ -119,8 +120,8 @@ public class Lainchan extends CommonSite {
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this, getOkHttpClient(), getSiteRepository()));
-        setApi(new VichanApi(getSiteRepository(), getBoardRepository(), this));
+        setActions(new VichanActions(this, getOkHttpClient(), getSiteManager()));
+        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
 

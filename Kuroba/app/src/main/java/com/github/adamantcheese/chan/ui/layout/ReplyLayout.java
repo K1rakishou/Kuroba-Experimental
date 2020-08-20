@@ -50,11 +50,10 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
-import com.github.adamantcheese.chan.core.model.orm.Board;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
-import com.github.adamantcheese.chan.core.repository.BoardRepository;
 import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -78,6 +77,7 @@ import com.github.adamantcheese.chan.ui.view.SelectionListeningEditText;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.ImageDecoder;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.greenrobot.eventbus.EventBus;
@@ -124,7 +124,7 @@ public class ReplyLayout
     @Inject
     SiteRepository siteRepository;
     @Inject
-    BoardRepository boardRepository;
+    BoardManager boardManager;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -362,7 +362,12 @@ public class ReplyLayout
     public void bindLoadable(ChanDescriptor chanDescriptor) {
         Site site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor());
         if (site == null) {
-            throw new IllegalStateException("Couldn't find site by siteDescriptor " + chanDescriptor.siteDescriptor());
+            return;
+        }
+
+        if (presenter.bindChanDescriptor(chanDescriptor)) {
+            cleanup();
+            return;
         }
 
         if (site.actions().postRequiresAuthentication()) {
@@ -371,7 +376,6 @@ public class ReplyLayout
             captcha.setVisibility(GONE);
         }
 
-        presenter.bindChanDescriptor(chanDescriptor);
         captchaHolder.setListener(this);
     }
 
@@ -903,7 +907,7 @@ public class ReplyLayout
                 }
 
                 ChanDescriptor chanDescriptor = thread.getChanDescriptor();
-                Board board = boardRepository.getFromBoardDescriptor(chanDescriptor.boardDescriptor());
+                ChanBoard board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor());
                 if (board == null) {
                     return true;
                 }
@@ -923,7 +927,7 @@ public class ReplyLayout
                 quoteMenuItem = menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote);
 
                 // [spoiler] tags
-                if (board.spoilers) {
+                if (board.getSpoilers()) {
                     spoilerMenuItem = menu.add(Menu.NONE,
                             R.id.reply_selection_action_spoiler,
                             2,

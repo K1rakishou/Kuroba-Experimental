@@ -16,51 +16,38 @@
  */
 package com.github.adamantcheese.chan.core.site
 
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.site.http.*
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
+import com.github.adamantcheese.model.data.board.ChanBoard
 import kotlinx.coroutines.flow.Flow
 
 interface SiteActions {
-  suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards>
-  suspend fun pages(board: Board): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
+  suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
+  suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
   suspend fun post(reply: Reply): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun login(loginRequest: LoginRequest): LoginResult
   fun postRequiresAuthentication(): Boolean
-
-  /**
-   * If [ReplyResponse.requireAuthentication] was `true`, or if
-   * [.postRequiresAuthentication] is `true`, get the authentication
-   * required to post.
-   *
-   *
-   *
-   * Some sites know beforehand if you need to authenticate, some sites only report it
-   * after posting. That's why there are two methods.
-   *
-   * @return an [SiteAuthentication] model that describes the way to authenticate.
-   */
   fun postAuthenticate(): SiteAuthentication
   fun logout()
   fun isLoggedIn(): Boolean
   fun loginDetails(): LoginRequest?
 
   sealed class PostResult {
-    class PostComplete(val httpCall: HttpCall, val replyResponse: ReplyResponse) : PostResult()
+    class PostComplete(val replyResponse: ReplyResponse) : PostResult()
     class UploadingProgress(val percent: Int) : PostResult()
-    class PostError(val httpCall: HttpCall, val error: Throwable) : PostResult()
+    class PostError(val error: Throwable) : PostResult()
   }
 
   sealed class DeleteResult {
-    class DeleteComplete(val httpCall: HttpCall, val deleteResponse: DeleteResponse) : DeleteResult()
-    class DeleteError(val httpCall: HttpCall, val error: Throwable) : DeleteResult()
+    class DeleteComplete(val deleteResponse: DeleteResponse) : DeleteResult()
+    class DeleteError(val error: Throwable) : DeleteResult()
   }
 
   sealed class LoginResult {
-    class LoginComplete(val httpCall: HttpCall, val loginResponse: LoginResponse) : LoginResult()
-    class LoginError(val httpCall: HttpCall, val error: Throwable) : LoginResult()
+    class LoginComplete(val loginResponse: LoginResponse) : LoginResult()
+    class LoginError(val error: Throwable) : LoginResult()
   }
 }

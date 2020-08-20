@@ -27,7 +27,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
-import com.github.adamantcheese.chan.core.site.http.HttpCall
 import com.github.adamantcheese.chan.core.site.http.LoginRequest
 import com.github.adamantcheese.chan.core.site.http.LoginResponse
 import com.github.adamantcheese.chan.ui.view.CrossfadeView
@@ -118,15 +117,15 @@ class LoginController(
     
     when (val loginResult = site.actions().login(LoginRequest(user, pass))) {
       is SiteActions.LoginResult.LoginComplete -> {
-        onLoginComplete(loginResult.httpCall, loginResult.loginResponse)
+        onLoginComplete(loginResult.loginResponse)
       }
       is SiteActions.LoginResult.LoginError -> {
-        onLoginError(loginResult.httpCall)
+        onLoginError()
       }
     }
   }
   
-  private fun onLoginComplete(httpCall: HttpCall?, loginResponse: LoginResponse) {
+  private fun onLoginComplete(loginResponse: LoginResponse) {
     if (loginResponse.success) {
       authSuccess(loginResponse)
     } else {
@@ -136,7 +135,7 @@ class LoginController(
     authAfter()
   }
   
-  private fun onLoginError(httpCall: HttpCall?) {
+  private fun onLoginError() {
     authFail(null)
     authAfter()
   }

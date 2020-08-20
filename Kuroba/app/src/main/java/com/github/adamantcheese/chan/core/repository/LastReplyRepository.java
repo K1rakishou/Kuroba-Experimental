@@ -18,8 +18,6 @@ package com.github.adamantcheese.chan.core.repository;
 
 import androidx.annotation.GuardedBy;
 
-import com.github.adamantcheese.chan.core.model.orm.Board;
-import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import java.util.HashMap;
@@ -27,16 +25,14 @@ import java.util.Map;
 
 public class LastReplyRepository {
     private final SiteRepository siteRepository;
-    private final BoardRepository boardRepository;
 
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastReplyMap = new HashMap<>();
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastThreadMap = new HashMap<>();
 
-    public LastReplyRepository(SiteRepository siteRepository, BoardRepository boardRepository) {
+    public LastReplyRepository(SiteRepository siteRepository) {
         this.siteRepository = siteRepository;
-        this.boardRepository = boardRepository;
     }
 
     public void putLastReply(BoardDescriptor boardDescriptor) {
@@ -56,25 +52,27 @@ public class LastReplyRepository {
                 ? lastTime
                 : 0L;
 
-        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
-        if (board == null) {
-            return 0L;
-        }
+//        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
+//        if (board == null) {
+//            return 0L;
+//        }
 
-        long waitTime = hasImage
-                ? board.cooldownImages
-                : board.cooldownReplies;
+//        long waitTime = hasImage
+//                ? board.cooldownImages
+//                : board.cooldownReplies;
+//
+//        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
+//        if (site == null) {
+//            return 0;
+//        }
+//
+//        if (site.actions().isLoggedIn()) {
+//            waitTime /= 2;
+//        }
+//
+//        return waitTime - ((System.currentTimeMillis() - lastReplyTime) / 1000L);
 
-        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
-        if (site == null) {
-            return 0;
-        }
-
-        if (site.actions().isLoggedIn()) {
-            waitTime /= 2;
-        }
-
-        return waitTime - ((System.currentTimeMillis() - lastReplyTime) / 1000L);
+        return 0;
     }
 
     public void putLastThread(BoardDescriptor boardDescriptor) {
@@ -86,29 +84,31 @@ public class LastReplyRepository {
     public long getTimeUntilThread(BoardDescriptor boardDescriptor) {
         Long lastTime = 0L;
 
-        synchronized (this) {
-            lastTime = lastThreadMap.get(boardDescriptor);
-        }
+//        synchronized (this) {
+//            lastTime = lastThreadMap.get(boardDescriptor);
+//        }
+//
+//        long lastThreadTime = lastTime != null
+//                ? lastTime
+//                : 0L;
+//
+//        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
+//        if (board == null) {
+//            return 0L;
+//        }
+//
+//        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
+//        if (site == null) {
+//            return 0;
+//        }
+//
+//        long waitTime = board.cooldownThreads;
+//        if (site.actions().isLoggedIn()) {
+//            waitTime /= 2;
+//        }
+//
+//        return waitTime - ((System.currentTimeMillis() - lastThreadTime) / 1000L);
 
-        long lastThreadTime = lastTime != null
-                ? lastTime
-                : 0L;
-
-        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
-        if (board == null) {
-            return 0L;
-        }
-
-        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
-        if (site == null) {
-            return 0;
-        }
-
-        long waitTime = board.cooldownThreads;
-        if (site.actions().isLoggedIn()) {
-            waitTime /= 2;
-        }
-
-        return waitTime - ((System.currentTimeMillis() - lastThreadTime) / 1000L);
+        return 0;
     }
 }

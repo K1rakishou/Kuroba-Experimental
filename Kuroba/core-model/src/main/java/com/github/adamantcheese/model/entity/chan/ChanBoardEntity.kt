@@ -23,10 +23,10 @@ data class ChanBoardEntity(
   var ownerChanBoardId: Long,
   @ColumnInfo(name = ORDER_COLUMN_NAME)
   val order: Int = 0,
+  @ColumnInfo(name = BOARD_ACTIVE_COLUMN_NAME)
+  val active: Boolean = false,
   @ColumnInfo(name = NAME_COLUMN_NAME)
   val name: String? = null,
-  @ColumnInfo(name = CODE_COLUMN_NAME)
-  val code: String? = null,
   @ColumnInfo(name = PER_PAGE_COLUMN_NAME)
   val perPage: Int = 15,
   @ColumnInfo(name = PAGES_COLUMN_NAME)
@@ -76,8 +76,8 @@ data class ChanBoardEntity(
 
     const val OWNER_CHAN_BOARD_ID_COLUMN_NAME = "owner_chan_board_id"
     const val ORDER_COLUMN_NAME = "order"
+    const val BOARD_ACTIVE_COLUMN_NAME = "board_active"
     const val NAME_COLUMN_NAME = "name"
-    const val CODE_COLUMN_NAME = "code"
     const val PER_PAGE_COLUMN_NAME = "per_page"
     const val PAGES_COLUMN_NAME = "pages"
     const val MAX_FILE_SIZE_COLUMN_NAME = "max_file_size"

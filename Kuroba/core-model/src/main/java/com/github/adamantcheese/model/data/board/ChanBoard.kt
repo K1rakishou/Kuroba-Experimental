@@ -32,6 +32,7 @@ data class ChanBoard(
   fun boardCode(): String = boardDescriptor.boardCode
 
   companion object {
+    @JvmStatic
     fun create(boardDescriptor: BoardDescriptor, boardName: String): ChanBoard {
       return ChanBoard(
         boardDescriptor = boardDescriptor,

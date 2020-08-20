@@ -1,9 +1,8 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Board
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.repository.BoardRepository
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
 import com.github.adamantcheese.chan.core.site.*
 import com.github.adamantcheese.chan.core.site.Site.BoardsType
@@ -20,6 +19,8 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.model.data.board.ChanBoard
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -97,7 +98,7 @@ class Dvach : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this, okHttpClient, siteRepository) {
+    setActions(object : VichanActions(this, okHttpClient, siteManager) {
       override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
         return super.setupPost(reply, call)
           .mapValue {
@@ -123,7 +124,6 @@ class Dvach : CommonSite() {
             when (replyCallResult) {
               is HttpCall.HttpCallWithProgressResult.Success -> {
                 return@map SiteActions.PostResult.PostComplete(
-                  replyCallResult.httpCall,
                   replyCallResult.httpCall.replyResponse
                 )
               }
@@ -132,7 +132,6 @@ class Dvach : CommonSite() {
               }
               is HttpCall.HttpCallWithProgressResult.Fail -> {
                 return@map SiteActions.PostResult.PostError(
-                  replyCallResult.httpCall,
                   replyCallResult.error
                 )
               }
@@ -164,7 +163,7 @@ class Dvach : CommonSite() {
         return super.delete(deleteRequest)
       }
 
-      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<BoardRepository.SiteBoards> {
+      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()
@@ -173,24 +172,24 @@ class Dvach : CommonSite() {
               .build()
 
             DvachBoardsRequest(
-              this@Dvach,
+              siteDescriptor(),
               request,
               okHttpClient
             )
           },
           defaultBoardsProvider = {
-            ArrayList<Board>().apply {
-              add(Board.fromSiteNameCode(this@Dvach, "бред", "b"))
-              add(Board.fromSiteNameCode(this@Dvach, "Видеоигры, general, официальные треды", "vg"))
-              add(Board.fromSiteNameCode(this@Dvach, "новости", "news"))
-              add(Board.fromSiteNameCode(this@Dvach, "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi", "po"))
+            ArrayList<ChanBoard>().apply {
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "b"), "бред"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "vg"), "Видеоигры, general, официальные треды"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "news"), "новости"))
+              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "po"), "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi"))
             }.shuffled()
           }
         )
       }
     })
 
-    setApi(DvachApi(siteRepository, boardRepository, this))
+    setApi(DvachApi(siteManager, boardManager, this))
     setParser(DvachCommentParser(mockReplyManager))
   }
 

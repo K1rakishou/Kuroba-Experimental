@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.core.interactors
+package com.github.adamantcheese.chan.core.usecase
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.repository.SiteRepository

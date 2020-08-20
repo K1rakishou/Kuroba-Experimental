@@ -60,7 +60,6 @@ public class DatabaseManager {
 
     private final DatabaseSavedReplyManager databaseSavedReplyManager;
     private final DatabaseFilterManager databaseFilterManager;
-    private final DatabaseBoardManager databaseBoardManager;
     private final DatabaseSiteManager databaseSiteManager;
     private final DatabaseHideManager databaseHideManager;
 
@@ -72,7 +71,6 @@ public class DatabaseManager {
 
         databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
-        databaseBoardManager = new DatabaseBoardManager(helper);
         databaseSiteManager = new DatabaseSiteManager(helper);
         databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
     }
@@ -93,10 +91,6 @@ public class DatabaseManager {
         return databaseFilterManager;
     }
 
-    public DatabaseBoardManager getDatabaseBoardManager() {
-        return databaseBoardManager;
-    }
-
     public DatabaseSiteManager getDatabaseSiteManager() {
         return databaseSiteManager;
     }
@@ -111,27 +105,6 @@ public class DatabaseManager {
     public void reset() {
         helper.reset();
         initializeAndTrim();
-    }
-
-    /**
-     * Summary of the database tables row count, for the developer screen.
-     *
-     * @return list of all tables and their row count.
-     */
-    public String getSummary() {
-        String o = "";
-
-        try {
-            o += "SavedReply rows: " + helper.getSavedDao().countOf() + "\n";
-            o += "Board rows: " + helper.getBoardsDao().countOf() + "\n";
-            o += "PostHide rows: " + helper.getPostHideDao().countOf() + "\n";
-            o += "Filter rows: " + helper.getFilterDao().countOf() + "\n";
-            o += "Site rows: " + helper.getSiteDao().countOf() + "\n";
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return o;
     }
 
     /**

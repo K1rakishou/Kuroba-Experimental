@@ -31,8 +31,6 @@ import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.SavedReply
-import com.github.adamantcheese.chan.core.repository.BoardRepository
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
@@ -74,8 +72,8 @@ class ThreadPresenter @Inject constructor(
   private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
-  private val siteRepository: SiteRepository,
-  private val boardRepository: BoardRepository,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   private val chanPostRepository: ChanPostRepository,
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
@@ -576,7 +574,7 @@ class ThreadPresenter @Inject constructor(
   private fun createNewNavHistoryElement(chanDescriptor: ChanDescriptor, chanThread: ChanThread) {
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
           ?: return
 
         val siteIconUrl = site.icon().url
@@ -849,7 +847,7 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return
 
-    val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return
 
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
@@ -893,13 +891,13 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    val siteId = siteRepository.bySiteDescriptor(post.boardDescriptor.siteDescriptor)?.id()
+    val siteDescriptor = post.boardDescriptor.siteDescriptor
+    val containsSite = siteManager.bySiteDescriptor(siteDescriptor) != null
 
     if (site.siteFeature(Site.SiteFeature.POST_DELETE)) {
-      if (siteId != null) {
+      if (containsSite) {
         val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
           post.boardDescriptor,
-          siteId,
           post.no
         )
 
@@ -918,10 +916,9 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
-    if (siteId != null) {
+    if (containsSite) {
       val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
         post.boardDescriptor,
-        siteId,
         post.no
       )
 
@@ -976,7 +973,7 @@ class ThreadPresenter @Inject constructor(
       POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
       POST_OPTION_DELETE -> requestDeletePost(post)
       POST_OPTION_SAVE -> {
-        val board = boardRepository.getFromBoardDescriptor(post.boardDescriptor)
+        val board = boardManager.byBoardDescriptor(post.boardDescriptor)
         if (board != null) {
           val savedReply = SavedReply.fromBoardNoPassword(board, post.no, "")
           if (databaseManager.databaseSavedReplyManager.isSaved(board, post.no)) {
@@ -1001,7 +998,7 @@ class ThreadPresenter @Inject constructor(
       }
       POST_OPTION_OPEN_BROWSER -> if (isBound) {
         val site = currentChanDescriptor?.let { chanDescriptor ->
-          siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
         } ?: return
 
         val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
@@ -1009,7 +1006,7 @@ class ThreadPresenter @Inject constructor(
       }
       POST_OPTION_SHARE -> if (isBound) {
         val site = currentChanDescriptor?.let { chanDescriptor ->
-          siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
         } ?: return
 
         val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
@@ -1091,9 +1088,8 @@ class ThreadPresenter @Inject constructor(
         return
       }
 
-      val board = boardRepository.getFromBoardDescriptor(
-        BoardDescriptor.create(siteName, threadLink.board)
-      )
+      val boardDescriptor = BoardDescriptor.create(siteName, threadLink.board)
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
 
       if (board != null) {
         val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
@@ -1120,14 +1116,17 @@ class ThreadPresenter @Inject constructor(
       }
 
       val boardDescriptor = BoardDescriptor.create(siteName, link.toString())
-      val board = boardRepository.getFromBoardDescriptor(boardDescriptor)
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
 
       if (board == null) {
         showToast(context, R.string.site_uses_dynamic_boards)
         return
       }
 
-      threadPresenterCallback?.showBoard(boardDescriptor)
+      launch {
+        threadPresenterCallback?.showBoard(boardDescriptor)
+      }
+
       return
     }
 
@@ -1139,14 +1138,16 @@ class ThreadPresenter @Inject constructor(
       }
 
       val boardDescriptor = BoardDescriptor.create(siteName, searchLink.toString())
-      val board = boardRepository.getFromBoardDescriptor(boardDescriptor)
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
 
       if (board == null) {
         showToast(context, R.string.site_uses_dynamic_boards)
         return
       }
 
-      threadPresenterCallback?.showBoardAndSearch(boardDescriptor, searchLink.search)
+      launch {
+        threadPresenterCallback?.showBoardAndSearch(boardDescriptor, searchLink.search)
+      }
     }
   }
 
@@ -1260,7 +1261,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun requestDeletePost(post: Post) {
-    val siteId = siteRepository.bySiteDescriptor(post.boardDescriptor.siteDescriptor)?.id()
+    val siteId = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)?.id()
       ?: return
 
     val reply = databaseManager.databaseSavedReplyManager.getSavedReply(post.boardDescriptor, siteId, post.no)
@@ -1272,36 +1273,37 @@ class ThreadPresenter @Inject constructor(
   @Suppress("MoveVariableDeclarationIntoWhen")
   fun deletePostConfirmed(post: Post, onlyImageDelete: Boolean) {
     launch {
-      val siteId = siteRepository.bySiteDescriptor(post.boardDescriptor.siteDescriptor)?.id()
+      val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
         ?: return@launch
 
       threadPresenterCallback?.showDeleting()
 
-      val reply = databaseManager.databaseSavedReplyManager.getSavedReply(post.boardDescriptor, siteId, post.no)
-      if (reply != null) {
-        val deleteRequest = DeleteRequest(post, reply, onlyImageDelete)
-        val siteProtocol = siteRepository.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
+      val reply = databaseManager.databaseSavedReplyManager.getSavedReply(
+        post.boardDescriptor,
+        post.no
+      )
 
-        if (siteProtocol == null) {
-          return@launch
+      if (reply == null) {
+        return@launch
+      }
+
+      val deleteRequest = DeleteRequest(post, reply, onlyImageDelete)
+      val deleteResult = site.actions().delete(deleteRequest)
+
+      when (deleteResult) {
+        is SiteActions.DeleteResult.DeleteComplete -> {
+          val deleteResponse = deleteResult.deleteResponse
+
+          val message = when {
+            deleteResponse.deleted -> AndroidUtils.getString(R.string.delete_success)
+            !TextUtils.isEmpty(deleteResponse.errorMessage) -> deleteResponse.errorMessage
+            else -> AndroidUtils.getString(R.string.delete_error)
+          }
+
+          threadPresenterCallback?.hideDeleting(message)
         }
-
-        val deleteResult = siteProtocol.actions().delete(deleteRequest)
-        when (deleteResult) {
-          is SiteActions.DeleteResult.DeleteComplete -> {
-            val deleteResponse = deleteResult.deleteResponse
-
-            val message = when {
-              deleteResponse.deleted -> AndroidUtils.getString(R.string.delete_success)
-              !TextUtils.isEmpty(deleteResponse.errorMessage) -> deleteResponse.errorMessage
-              else -> AndroidUtils.getString(R.string.delete_error)
-            }
-
-            threadPresenterCallback?.hideDeleting(message)
-          }
-          is SiteActions.DeleteResult.DeleteError -> {
-            threadPresenterCallback?.hideDeleting(AndroidUtils.getString(R.string.delete_error))
-          }
+        is SiteActions.DeleteResult.DeleteError -> {
+          threadPresenterCallback?.hideDeleting(AndroidUtils.getString(R.string.delete_error))
         }
       }
     }
@@ -1456,8 +1458,8 @@ class ThreadPresenter @Inject constructor(
     fun showPostLinkables(post: Post)
     fun clipboardPost(post: Post)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
-    fun showBoard(boardDescriptor: BoardDescriptor)
-    fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?)
+    suspend fun showBoard(boardDescriptor: BoardDescriptor)
+    suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?)
     fun openLink(link: String)
     fun openReportView(post: Post)
     fun showPostsPopup(forPost: Post, posts: List<Post>)

@@ -426,15 +426,15 @@ open class ViewThreadController(
     loadThread(descriptor)
   }
 
-  override fun showBoard(descriptor: BoardDescriptor) {
+  override suspend fun showBoard(descriptor: BoardDescriptor) {
     showBoardInternal(descriptor, null)
   }
 
-  override fun showBoardAndSearch(descriptor: BoardDescriptor, search: String?) {
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, search: String?) {
     showBoardInternal(descriptor, search)
   }
 
-  private fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {
+  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
