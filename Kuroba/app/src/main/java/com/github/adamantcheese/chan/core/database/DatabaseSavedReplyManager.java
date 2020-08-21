@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.common.SuspendableInitializer;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
 
@@ -214,7 +215,7 @@ public class DatabaseSavedReplyManager {
             Set<Long> postSet,
             Map<Long, Set<Long>> quoteOwnerPostsMap,
             String boardCode,
-            int siteId
+            SiteDescriptor siteDescriptor
     ) {
         if (postSet.isEmpty()) {
             return Collections.emptyMap();
@@ -234,9 +235,9 @@ public class DatabaseSavedReplyManager {
                 }
 
                 for (SavedReply item : items) {
-                    if (!item.board.equals(boardCode) || item.siteId != siteId) {
-                        continue;
-                    }
+//                    if (!item.board.equals(boardCode) || item.siteId != siteId) {
+//                        continue;
+//                    }
 
                     if (!quoteOwnerPostsMap.containsKey(postNo)) {
                         continue;
@@ -258,7 +259,7 @@ public class DatabaseSavedReplyManager {
     }
 
     @NonNull
-    public List<Long> retainSavedPostNos(List<Post> postList, int siteId) {
+    public List<Long> retainSavedPostNos(List<Post> postList, SiteDescriptor siteDescriptor) {
         if (postList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -279,9 +280,9 @@ public class DatabaseSavedReplyManager {
                 for (SavedReply item : items) {
                     String boardCode = post.boardDescriptor.getBoardCode();
 
-                    if (item.board.equals(boardCode) && item.siteId == siteId) {
-                        resultList.add(post.no);
-                    }
+//                    if (item.board.equals(boardCode) && item.siteId == siteId) {
+//                        resultList.add(post.no);
+//                    }
                 }
             }
         }

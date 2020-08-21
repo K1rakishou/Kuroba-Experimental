@@ -11,6 +11,9 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.repository.BoardRepository
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -26,6 +29,8 @@ class BoardManager(
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = SuspendDebouncer(appScope)
+
+  private val currentBoardSubject = BehaviorProcessor.create<CurrentBoard>()
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -67,11 +72,38 @@ class BoardManager(
     }
   }
 
+  fun listenForCurrentSelectedBoard(): Flowable<CurrentBoard> {
+    return currentBoardSubject
+      .onBackpressureBuffer()
+      .distinctUntilChanged()
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "Error while listening for currentBoardSubject", error) }
+      .hide()
+  }
+
   fun createBoard(board: ChanBoard) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
     // TODO(KurobaEx):
+  }
+
+  fun firstBoardDescriptor(siteDescriptor: SiteDescriptor): BoardDescriptor? {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read { ordersMap[siteDescriptor]?.firstOrNull() }
+  }
+
+  fun updateCurrentBoard(boardDescriptor: BoardDescriptor?) {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    if (currentBoardSubject.value?.boardDescriptor == boardDescriptor) {
+      return
+    }
+
+    currentBoardSubject.onNext(CurrentBoard.create(boardDescriptor))
   }
 
   fun viewAllBoards(func: (ChanBoard) -> Unit) {
@@ -164,6 +196,21 @@ class BoardManager(
   }
 
   private fun isReady() = suspendableInitializer.isInitialized()
+
+  sealed class CurrentBoard(val boardDescriptor: BoardDescriptor?) {
+    object Empty : CurrentBoard(null)
+    class Board(boardDescriptor: BoardDescriptor) : CurrentBoard(boardDescriptor)
+
+    companion object {
+      fun create(boardDescriptor: BoardDescriptor?): CurrentBoard {
+        if (boardDescriptor == null) {
+          return Empty
+        }
+
+        return Board(boardDescriptor)
+      }
+    }
+  }
 
   companion object {
     private const val TAG = "BoardManager"

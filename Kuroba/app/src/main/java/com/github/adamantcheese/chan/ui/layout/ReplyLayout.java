@@ -52,9 +52,9 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
@@ -122,7 +122,7 @@ public class ReplyLayout
     @Inject
     ThemeHelper themeHelper;
     @Inject
-    SiteRepository siteRepository;
+    SiteManager siteManager;
     @Inject
     BoardManager boardManager;
     @Inject
@@ -360,7 +360,7 @@ public class ReplyLayout
     }
 
     public void bindLoadable(ChanDescriptor chanDescriptor) {
-        Site site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor());
+        Site site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor());
         if (site == null) {
             return;
         }

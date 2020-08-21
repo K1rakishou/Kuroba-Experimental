@@ -310,7 +310,7 @@ open class ViewThreadController(
       return
     }
 
-    val url = getUrlForSharing(siteRepository, threadDescriptor)
+    val url = getUrlForSharing(siteManager, threadDescriptor)
     if (url == null) {
       AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
       return
@@ -325,7 +325,7 @@ open class ViewThreadController(
       return
     }
 
-    val url = getUrlForSharing(siteRepository, threadDescriptor)
+    val url = getUrlForSharing(siteManager, threadDescriptor)
     if (url == null) {
       AndroidUtils.showToast(context, R.string.cannot_shared_thread_already_deleted)
       return

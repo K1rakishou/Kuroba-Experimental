@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.features.bookmarks.watcher
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.*
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase
 import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase
@@ -369,7 +368,6 @@ class BookmarkWatcherDelegate(
   @OptIn(ExperimentalTime::class)
   private suspend fun awaitUntilAllDependenciesAreReady() {
     bookmarksManager.awaitUntilInitialized()
-
     siteManager.awaitUntilInitialized()
 
     if (!savedReplyManager.isReady) {
@@ -446,18 +444,6 @@ class BookmarkWatcherDelegate(
       "errorsCount=$errorsCount, alreadyDeletedCount=$alreadyDeletedCount, " +
       "notFoundOnServerCount=$notFoundOnServerCount, badStatusCount=$badStatusCount, " +
       "successCount=$successCount")
-  }
-
-  private suspend fun SiteRepository.awaitUntilInitialized() {
-    return suspendCancellableCoroutine { continuation ->
-      this.invokeAfterInitialized { error ->
-        if (error != null) {
-          continuation.resumeWithException(error)
-        } else {
-          continuation.resume(Unit)
-        }
-      }
-    }
   }
 
   private suspend fun DatabaseSavedReplyManager.awaitUntilInitialized() {

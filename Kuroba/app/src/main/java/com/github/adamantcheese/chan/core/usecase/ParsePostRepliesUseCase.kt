@@ -1,7 +1,7 @@
 package com.github.adamantcheese.chan.core.usecase
 
 import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
@@ -19,12 +19,12 @@ typealias YousPerThreadMap = Map<ChanDescriptor.ThreadDescriptor, Map<Long, List
 class ParsePostRepliesUseCase(
   private val appScope: CoroutineScope,
   private val replyParser: ReplyParser,
-  private val siteRepository: SiteRepository,
+  private val siteManager: SiteManager,
   private val savedReplyManager: DatabaseSavedReplyManager
 ) : ISuspendUseCase<List<ThreadBookmarkFetchResult.Success>, YousPerThreadMap> {
 
   override suspend fun execute(parameter: List<ThreadBookmarkFetchResult.Success>): YousPerThreadMap {
-    require(siteRepository.isReady) { "SiteRepository is not initialized yet!" }
+    require(siteManager.isReady()) { "SiteManager is not initialized yet!" }
     require(savedReplyManager.isReady) { "DatabaseSavedReplyManager is not initialized yet!" }
 
     return parsePostReplies(parameter)
@@ -100,17 +100,17 @@ class ParsePostRepliesUseCase(
     }
 
     val boardDescriptor = threadDescriptor.boardDescriptor
-    val siteId = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())?.id()
+    val siteDescriptor = threadDescriptor.siteDescriptor()
 
-    checkNotNull(siteId) {
-      "Site with descriptor ${threadDescriptor.siteDescriptor()} not found in SiteRepository"
+    if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
+      return emptyMap()
     }
 
     val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNos(
       allQuotesInThread,
       quoteOwnerPostsMap,
       boardDescriptor.boardCode,
-      siteId
+      siteDescriptor
     )
 
     if (quotesToMeInThreadMap.isEmpty()) {

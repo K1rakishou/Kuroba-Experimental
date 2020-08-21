@@ -24,7 +24,7 @@ import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-class SiteManager(
+open class SiteManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
@@ -121,7 +121,29 @@ class SiteManager(
     }
   }
 
-  fun bySiteDescriptor(siteDescriptor: SiteDescriptor): Site? {
+  fun areSitesSetup(): Boolean {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read {
+      for ((siteDescriptor, site) in siteMap) {
+        if (!site.enabled()) {
+          continue
+        }
+
+        val isActive = siteDataMap[siteDescriptor]?.active ?: false
+        if (!isActive) {
+          continue
+        }
+
+        return@read true
+      }
+
+      return@read false
+    }
+  }
+
+  open fun bySiteDescriptor(siteDescriptor: SiteDescriptor): Site? {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
@@ -134,7 +156,85 @@ class SiteManager(
     }
   }
 
-  fun viewAllSitesOrdered(viewer: (ChanSiteData, Site) -> Unit) {
+  fun viewSitesOrdered(viewer: (ChanSiteData, Site) -> Boolean) {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    lock.read {
+      orders.forEach { siteDescriptor ->
+        val chanSiteData = requireNotNull(siteDataMap[siteDescriptor]) {
+          "Couldn't find chanSiteData by siteDescriptor: $siteDescriptor in orders"
+        }
+
+        val site = requireNotNull(siteMap[siteDescriptor]) {
+          "Couldn't find site by siteDescriptor: $siteDescriptor"
+        }
+
+        if (!viewer(chanSiteData, site)) {
+          return@read
+        }
+      }
+    }
+  }
+
+  fun <T> mapFirstActiveSiteOrNull(mapper: (ChanSiteData, Site) -> T?): T? {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read {
+      for (siteDescriptor in orders) {
+        if (!isSiteActive(siteDescriptor)) {
+          continue
+        }
+
+        val chanSiteData = requireNotNull(siteDataMap[siteDescriptor]) {
+          "Couldn't find chanSiteData by siteDescriptor: $siteDescriptor in orders"
+        }
+
+        val site = requireNotNull(siteMap[siteDescriptor]) {
+          "Couldn't find site by siteDescriptor: $siteDescriptor"
+        }
+
+        val mapped = mapper(chanSiteData, site)
+        if (mapped != null) {
+          return@read mapped
+        }
+      }
+
+      return@read null
+    }
+  }
+
+  fun firstActiveSiteOrNull(predicate: (ChanSiteData, Site) -> Boolean): Site? {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read {
+      val descriptor = orders.firstOrNull { siteDescriptor ->
+        if (!isSiteActive(siteDescriptor)) {
+          return@firstOrNull false
+        }
+
+        val chanSiteData = requireNotNull(siteDataMap[siteDescriptor]) {
+          "Couldn't find chanSiteData by siteDescriptor: $siteDescriptor in orders"
+        }
+
+        val site = requireNotNull(siteMap[siteDescriptor]) {
+          "Couldn't find site by siteDescriptor: $siteDescriptor"
+        }
+
+        return@firstOrNull predicate(chanSiteData, site)
+      }
+
+      if (descriptor == null) {
+        return@read null
+      }
+
+      return@read siteMap[descriptor]
+    }
+  }
+
+  fun viewActiveSitesOrdered(viewer: (ChanSiteData, Site) -> Boolean) {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
@@ -152,7 +252,9 @@ class SiteManager(
           "Couldn't find site by siteDescriptor: $siteDescriptor"
         }
 
-        viewer(chanSiteData, site)
+        if (!viewer(chanSiteData, site)) {
+          return@read
+        }
       }
     }
   }
@@ -275,7 +377,7 @@ class SiteManager(
     }
   }
 
-  private fun isReady() = suspendableInitializer.isInitialized()
+  fun isReady() = suspendableInitializer.isInitialized()
 
   companion object {
     private const val TAG = "SiteManager"

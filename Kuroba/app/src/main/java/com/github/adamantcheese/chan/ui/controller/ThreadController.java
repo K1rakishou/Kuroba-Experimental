@@ -32,10 +32,10 @@ import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.manager.FilterType;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -68,7 +68,7 @@ public abstract class ThreadController
     private static final String TAG = "ThreadController";
 
     @Inject
-    SiteRepository siteRepository;
+    SiteManager siteManager;
 
     protected ThreadLayout threadLayout;
     @Nullable
@@ -197,7 +197,7 @@ public abstract class ThreadController
 
         ChanDescriptor chanDescriptor = getChanDescriptor();
         SiteDescriptor siteDescriptor = chanDescriptor.siteDescriptor();
-        Site site = siteRepository.bySiteDescriptor(siteDescriptor);
+        Site site = siteManager.bySiteDescriptor(siteDescriptor);
 
         if (site != null) {
             url = site.resolvable().desktopUrl(chanDescriptor, null);
@@ -218,8 +218,7 @@ public abstract class ThreadController
 
     @Override
     public void openReportController(final Post post) {
-        Site site = siteRepository.bySiteDescriptor(post.boardDescriptor.getSiteDescriptor());
-
+        Site site = siteManager.bySiteDescriptor(post.boardDescriptor.getSiteDescriptor());
         if (site != null) {
             navigationController.pushController(new ReportController(context, post, site));
         }

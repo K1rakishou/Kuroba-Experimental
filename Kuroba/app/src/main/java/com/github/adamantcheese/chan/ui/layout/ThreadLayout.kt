@@ -38,13 +38,13 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterType
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
-import com.github.adamantcheese.chan.core.repository.SiteRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.http.Reply
@@ -102,7 +102,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
-  lateinit var siteRepository: SiteRepository
+  lateinit var siteManager: SiteManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -581,7 +581,7 @@ class ThreadLayout @JvmOverloads constructor(
   override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<Long>) {
     val postsToRestore: MutableList<PostHide> = ArrayList()
     for (postNo in selectedPosts) {
-      val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
         ?: continue
 
       val postHide = PostHide.unhidePost(

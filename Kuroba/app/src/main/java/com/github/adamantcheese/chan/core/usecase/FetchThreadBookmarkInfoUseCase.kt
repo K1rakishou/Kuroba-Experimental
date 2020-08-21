@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.usecase
 import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
@@ -26,7 +26,7 @@ class FetchThreadBookmarkInfoUseCase(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val okHttpClient: NetModule.ProxiedOkHttpClient,
-  private val siteRepository: SiteRepository,
+  private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager
 ) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, ModularResult<List<ThreadBookmarkFetchResult>>> {
 
@@ -44,7 +44,7 @@ class FetchThreadBookmarkInfoUseCase(
         return@flatMap supervisorScope {
           return@supervisorScope chunk.map { threadDescriptor ->
             return@map appScope.async(Dispatchers.IO) {
-              val site = siteRepository.bySiteDescriptor(threadDescriptor.siteDescriptor())
+              val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
               if (site == null) {
                 Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
                   "not found in siteRepository!")

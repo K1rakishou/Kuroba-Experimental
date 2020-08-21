@@ -46,6 +46,7 @@ import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -476,6 +477,8 @@ public class ToolbarContainer extends FrameLayout {
                 arrowDrawable.setBounds(0, 0, arrowDrawable.getIntrinsicWidth(), arrowDrawable.getIntrinsicHeight());
                 ImageView dropdown = new ImageView(getContext());
                 dropdown.setImageDrawable(arrowDrawable);
+                KotlinExtensionsKt.updatePaddings(dropdown, null, dp(16), null, null);
+
                 titleContainer.addView(
                         dropdown,
                         new LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.CENTER_VERTICAL | Gravity.RIGHT)

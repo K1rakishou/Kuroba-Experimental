@@ -30,6 +30,7 @@ import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainer
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
@@ -71,6 +72,8 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var databaseManager: DatabaseManager
@@ -79,6 +82,7 @@ class BrowseController(context: Context) : ThreadController(context),
 
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var hint: HintPopup? = null
+  private var initialized = false
 
   @JvmField
   var searchQuery: String? = null
@@ -150,9 +154,10 @@ class BrowseController(context: Context) : ThreadController(context),
     // otherwise the subtitle view is removed
     navigation.title = "App Setup"
     navigation.subtitle = "Tap for site/board setup"
-    requireNavController().requireToolbar().updateTitle(navigation)
-
     buildMenu()
+
+    requireNavController().requireToolbar().setNavigationItem(true, true, navigation, themeHelper.theme)
+    initialized = true
   }
 
   public override fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
@@ -161,18 +166,21 @@ class BrowseController(context: Context) : ThreadController(context),
 
   suspend fun setBoard(descriptor: BoardDescriptor) {
     presenter.setBoard(descriptor)
+    initialized = true
   }
 
   suspend fun loadWithDefaultBoard() {
     presenter.loadWithDefaultBoard(false)
+    initialized = true
   }
 
   private fun initNavigation() {
     // Navigation item
     navigation.hasDrawer = true
-    navigation.setMiddleMenu { anchor: View? ->
-//      val boardsFloatingMenu = BrowseBoardsFloatingMenu(context)
-//      boardsFloatingMenu.show(view, anchor, this@BrowseController, presenter.currentBoardDescriptor())
+    navigation.setMiddleMenu {
+      if (!initialized) {
+        return@setMiddleMenu
+      }
 
       val setupController = SitesSetupController(context)
       if (doubleNavigationController != null) {
@@ -194,7 +202,7 @@ class BrowseController(context: Context) : ThreadController(context),
     requireNavController().requireToolbar().updateTitle(navigation)
 
     // Presenter
-    presenter.create(this)
+    presenter.create(mainScope, this)
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -504,7 +512,7 @@ class BrowseController(context: Context) : ThreadController(context),
       return
     }
 
-    val site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       Logger.e(TAG, "handleShareAndOpenInBrowser() site == null " +
         "(siteDescriptor = ${chanDescriptor.siteDescriptor()})")
@@ -549,12 +557,13 @@ class BrowseController(context: Context) : ThreadController(context),
 
     navigation.title = "/" + boardDescriptor.boardCode + "/"
     navigation.subtitle = board.name
+    buildMenu()
 
     val presenter = threadLayout.presenter
     presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
     presenter.requestData()
 
-    requireNavController().requireToolbar().updateTitle(navigation)
+    requireNavController().requireToolbar().setNavigationItem(true, true, navigation, themeHelper.theme)
   }
 
   override fun loadSiteSetup(siteDescriptor: SiteDescriptor) {
@@ -578,6 +587,7 @@ class BrowseController(context: Context) : ThreadController(context),
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {
     showBoardInternal(descriptor)
+    initialized = true
   }
 
   override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
@@ -656,6 +666,7 @@ class BrowseController(context: Context) : ThreadController(context),
     }
 
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
+    initialized = true
   }
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor) {

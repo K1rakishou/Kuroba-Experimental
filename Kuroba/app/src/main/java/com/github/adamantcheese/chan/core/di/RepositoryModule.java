@@ -18,9 +18,9 @@ package com.github.adamantcheese.chan.core.di;
 
 import com.github.adamantcheese.chan.core.database.DatabaseHelper;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.ParserRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -43,13 +43,6 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public SiteRepository provideSiteRepository(DatabaseManager databaseManager) {
-        Logger.d(AppModule.DI_TAG, "Site repository");
-        return new SiteRepository(databaseManager);
-    }
-
-    @Provides
-    @Singleton
     public ParserRepository provideParserRepository(MockReplyManager mockReplyManager) {
         Logger.d(AppModule.DI_TAG, "ParserRepository");
         return new ParserRepository(mockReplyManager);
@@ -58,10 +51,10 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public LastReplyRepository provideLastReplyRepository(
-            SiteRepository siteRepository
+            SiteManager siteManager
     ) {
         Logger.d(AppModule.DI_TAG, "Last reply repository");
-        return new LastReplyRepository(siteRepository);
+        return new LastReplyRepository(siteManager);
     }
 
 }

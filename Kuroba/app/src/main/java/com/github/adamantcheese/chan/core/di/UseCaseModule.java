@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.core.di;
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
@@ -38,13 +38,13 @@ public class UseCaseModule {
     @Provides
     public ExtractPostMapInfoHolderUseCase provideExtractReplyPostsPositionsFromPostsListUseCase(
             DatabaseManager databaseManager,
-            SiteRepository siteRepository
+            SiteManager siteManager
     ) {
         Logger.d(AppModule.DI_TAG, "ExtractPostMapInfoHolderUseCase");
 
         return new ExtractPostMapInfoHolderUseCase(
                 databaseManager.getDatabaseSavedReplyManager(),
-                siteRepository
+                siteManager
         );
     }
 
@@ -53,7 +53,7 @@ public class UseCaseModule {
     public FetchThreadBookmarkInfoUseCase provideFetchThreadBookmarkInfoUseCase(
             CoroutineScope appScope,
             NetModule.ProxiedOkHttpClient okHttpClient,
-            SiteRepository siteRepository,
+            SiteManager siteManager,
             BookmarksManager bookmarksManager
 
     ) {
@@ -64,7 +64,7 @@ public class UseCaseModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 okHttpClient,
-                siteRepository,
+                siteManager,
                 bookmarksManager
         );
     }
@@ -74,7 +74,7 @@ public class UseCaseModule {
     public ParsePostRepliesUseCase provideParsePostRepliesUseCase(
             CoroutineScope appScope,
             ReplyParser replyParser,
-            SiteRepository siteRepository,
+            SiteManager siteManager,
             DatabaseManager databaseManager
     ) {
         Logger.d(AppModule.DI_TAG, "ParsePostRepliesUseCase");
@@ -82,7 +82,7 @@ public class UseCaseModule {
         return new ParsePostRepliesUseCase(
                 appScope,
                 replyParser,
-                siteRepository,
+                siteManager,
                 databaseManager.getDatabaseSavedReplyManager()
         );
     }

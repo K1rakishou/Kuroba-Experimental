@@ -16,8 +16,10 @@
  */
 package com.github.adamantcheese.chan.core.presenter
 
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.Logger
@@ -26,18 +28,38 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
   private val historyNavigationManager: HistoryNavigationManager,
-  private val bookmarksManager: BookmarksManager
+  private val bookmarksManager: BookmarksManager,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager
 ) {
   private var callback: Callback? = null
-  private var currentBoardDescriptor: BoardDescriptor? = null
   private val compositeDisposable = CompositeDisposable()
 
-  fun create(callback: Callback?) {
+  fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback
+
+    controllerScope.launch {
+      boardManager.listenForCurrentSelectedBoard()
+        .asFlow()
+        .collect { currentBoard ->
+          val boardDescriptor = currentBoard.boardDescriptor
+
+          if (boardDescriptor == null) {
+            callback?.showSitesNotSetup()
+          } else {
+            callback?.loadBoard(boardDescriptor)
+          }
+        }
+    }
+
   }
 
   fun destroy() {
@@ -45,18 +67,27 @@ class BrowsePresenter @Inject constructor(
     compositeDisposable.clear()
   }
 
-  fun currentBoardDescriptor(): BoardDescriptor? {
-    return currentBoardDescriptor
-  }
-
   suspend fun setBoard(boardDescriptor: BoardDescriptor) {
     loadBoard(boardDescriptor)
   }
 
   suspend fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
-    val boardDescriptor = firstBoardDescriptor()
-    if (boardDescriptor != null) {
-      loadBoard(boardDescriptor, !boardSetViaBoardSetup)
+    var firstActiveBoardDescriptor: BoardDescriptor? = null
+
+    siteManager.viewActiveSitesOrdered { chanSiteData, _ ->
+      val boardDescriptor = boardManager.firstBoardDescriptor(chanSiteData.siteDescriptor)
+      if (boardDescriptor != null) {
+        firstActiveBoardDescriptor = boardDescriptor
+        return@viewActiveSitesOrdered false
+      }
+
+      return@viewActiveSitesOrdered true
+    }
+
+    if (firstActiveBoardDescriptor != null) {
+      loadBoard(firstActiveBoardDescriptor!!, !boardSetViaBoardSetup)
+    } else {
+      callback?.showSitesNotSetup()
     }
   }
 
@@ -64,17 +95,7 @@ class BrowsePresenter @Inject constructor(
     callback?.loadSiteSetup(siteDescriptor)
   }
 
-  private fun firstBoardDescriptor(): BoardDescriptor? {
-//    for (item in savedBoardsObservable.get()) {
-//      if (item.boards.isNotEmpty()) {
-//        return item.boards[0]?.boardDescriptor()
-//      }
-//    }
-
-    return null
-  }
-
-  private suspend fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
+  private fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
     if (callback == null) {
       return
     }
@@ -88,12 +109,7 @@ class BrowsePresenter @Inject constructor(
       )
     }
 
-    if (boardDescriptor == currentBoardDescriptor) {
-      return
-    }
-
-    currentBoardDescriptor = boardDescriptor
-    callback!!.loadBoard(boardDescriptor)
+    boardManager.updateCurrentBoard(boardDescriptor)
   }
 
   fun bookmarkEveryThread(chanThread: ChanThread?) {
@@ -139,6 +155,7 @@ class BrowsePresenter @Inject constructor(
   interface Callback {
     suspend fun loadBoard(boardDescriptor: BoardDescriptor)
     fun loadSiteSetup(siteDescriptor: SiteDescriptor)
+    fun showSitesNotSetup()
   }
 
   companion object {

@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.site.parser
 
-import com.github.adamantcheese.chan.core.repository.SiteRepository
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.ParserRepository
 import com.github.adamantcheese.chan.core.site.sites.Lainchan
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
@@ -21,7 +21,7 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class ReplyParserTest {
-  lateinit var siteRepository: SiteRepository
+  lateinit var siteManager: SiteManager
   lateinit var parserRepository: ParserRepository
   lateinit var replyParser: ReplyParser
 
@@ -30,16 +30,16 @@ class ReplyParserTest {
     AndroidUtils.init(RuntimeEnvironment.application)
     ShadowLog.stream = System.out
 
-    siteRepository = Mockito.mock(SiteRepository::class.java)
+    siteManager = Mockito.mock(SiteManager::class.java)
     val mockReplyManager = Mockito.mock(MockReplyManager::class.java)
     parserRepository = ParserRepository(mockReplyManager)
 
-    replyParser = ReplyParser(siteRepository, parserRepository)
+    replyParser = ReplyParser(siteManager, parserRepository)
   }
 
   @Test
   fun `test extract quotes from 2ch_hk comment`() {
-    whenever(siteRepository.bySiteDescriptor(any())).thenReturn(Dvach())
+    whenever(siteManager.bySiteDescriptor(any())).thenReturn(Dvach())
 
     val replies = replyParser.extractCommentReplies(SiteDescriptor("2ch.hk"), DVACH_PARSER_TEST_COMMENT)
     assertEquals(2, replies.size)
@@ -56,7 +56,7 @@ class ReplyParserTest {
 
   @Test
   fun `test extract quotes from 4chan_org comment`() {
-    whenever(siteRepository.bySiteDescriptor(any())).thenReturn(Chan4())
+    whenever(siteManager.bySiteDescriptor(any())).thenReturn(Chan4())
 
     val replies = replyParser.extractCommentReplies(SiteDescriptor("4chan.org"), COMMON_PARSER_TEST_COMMENT)
     assertEquals(3, replies.size)
@@ -69,7 +69,7 @@ class ReplyParserTest {
 
   @Test
   fun `test extract quotes from lainchan_org comment`() {
-    whenever(siteRepository.bySiteDescriptor(any())).thenReturn(Lainchan())
+    whenever(siteManager.bySiteDescriptor(any())).thenReturn(Lainchan())
 
     val replies = replyParser.extractCommentReplies(SiteDescriptor("lainchan.org"), VICHAN_PARSER_TEST_COMMENT)
     assertEquals(2, replies.size)

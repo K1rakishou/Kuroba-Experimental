@@ -40,7 +40,6 @@ import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
-import com.github.adamantcheese.chan.core.site.SiteService
 import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.AlbumViewController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
@@ -78,8 +77,6 @@ class StartActivity : AppCompatActivity(),
   lateinit var databaseManager: DatabaseManager
   @Inject
   lateinit var siteResolver: SiteResolver
-  @Inject
-  lateinit var siteService: SiteService
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject
@@ -358,6 +355,10 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
+    historyNavigationManager.awaitUntilInitialized()
+    siteManager.awaitUntilInitialized()
+    boardManager.awaitUntilInitialized()
+
     val handled = if (savedInstanceState != null) {
       restoreFromSavedState(savedInstanceState)
     } else {
@@ -372,12 +373,10 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun restoreFresh() {
-    if (!siteService.areSitesSetup()) {
+    if (!siteManager.areSitesSetup()) {
       browseController?.showSitesNotSetup()
       return
     }
-
-    historyNavigationManager.awaitUntilInitialized()
 
     val topNavElement = historyNavigationManager.getNavElementAtTop()
     if (topNavElement == null) {
@@ -488,11 +487,9 @@ class StartActivity : AppCompatActivity(),
       ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
     }
 
-    siteManager.awaitUntilInitialized()
     siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return null
 
-    boardManager.awaitUntilInitialized()
     boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return null
 

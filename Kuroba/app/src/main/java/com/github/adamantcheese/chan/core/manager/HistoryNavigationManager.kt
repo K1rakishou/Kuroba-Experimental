@@ -77,10 +77,6 @@ class HistoryNavigationManager(
     }
   }
 
-  fun runAfterInitialized(func: (Throwable?) -> Unit) {
-    suspendableInitializer.invokeAfterInitialized(func)
-  }
-
   fun getAll(): List<NavHistoryElement> {
     BackgroundUtils.ensureMainThread()
 
@@ -88,16 +84,22 @@ class HistoryNavigationManager(
   }
 
   fun getNavElementAtTop(): NavHistoryElement? {
+    BackgroundUtils.ensureMainThread()
+
     return navigationStack.firstOrNull()
   }
 
   fun getFirstCatalogNavElement(): NavHistoryElement? {
+    BackgroundUtils.ensureMainThread()
+
     return navigationStack.firstOrNull { navHistoryElement ->
       navHistoryElement is NavHistoryElement.Catalog
     }
   }
 
   fun listenForNavigationStackChanges(): Flowable<Unit> {
+    BackgroundUtils.ensureMainThread()
+
     return navigationStackChangesSubject
       .observeOn(AndroidSchedulers.mainThread())
       .hide()
@@ -110,6 +112,8 @@ class HistoryNavigationManager(
     thumbnailImageUrl: HttpUrl,
     title: String
   ) {
+    BackgroundUtils.ensureMainThread()
+
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 
@@ -128,6 +132,8 @@ class HistoryNavigationManager(
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 
@@ -149,6 +155,8 @@ class HistoryNavigationManager(
   }
 
   fun onNavElementRemoved(descriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 

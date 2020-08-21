@@ -19,10 +19,10 @@ package com.github.adamantcheese.chan.ui.adapter;
 import android.text.TextUtils;
 
 import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.model.PostIndexed;
-import com.github.adamantcheese.chan.core.repository.SiteRepository;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -66,7 +66,7 @@ public class PostsFilter {
     @Inject
     DatabaseManager databaseManager;
     @Inject
-    SiteRepository siteRepository;
+    SiteManager siteManager;
 
     private Order order;
     private String query;
@@ -78,7 +78,7 @@ public class PostsFilter {
     }
 
     public List<PostIndexed> apply(List<Post> original, ChanDescriptor chanDescriptor) {
-        Site site = siteRepository.bySiteDescriptor(chanDescriptor.siteDescriptor());
+        Site site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor());
         if (site == null) {
             return Collections.emptyList();
         }

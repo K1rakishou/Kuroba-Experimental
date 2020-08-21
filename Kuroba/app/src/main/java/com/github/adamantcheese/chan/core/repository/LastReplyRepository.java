@@ -18,21 +18,22 @@ package com.github.adamantcheese.chan.core.repository;
 
 import androidx.annotation.GuardedBy;
 
+import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class LastReplyRepository {
-    private final SiteRepository siteRepository;
+    private final SiteManager siteManager;
 
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastReplyMap = new HashMap<>();
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastThreadMap = new HashMap<>();
 
-    public LastReplyRepository(SiteRepository siteRepository) {
-        this.siteRepository = siteRepository;
+    public LastReplyRepository(SiteManager siteManager) {
+        this.siteManager = siteManager;
     }
 
     public void putLastReply(BoardDescriptor boardDescriptor) {

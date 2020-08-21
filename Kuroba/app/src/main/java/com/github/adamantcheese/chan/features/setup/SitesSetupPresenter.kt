@@ -62,7 +62,7 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
   private fun showSites() {
     val siteCellDataList = mutableListOf<SiteCellData>()
 
-    siteManager.viewAllSitesOrdered { chanSiteData, site ->
+    siteManager.viewSitesOrdered { chanSiteData, site ->
       val siteEnableState = SiteEnableState.create(chanSiteData.active, site.enabled())
 
       siteCellDataList += SiteCellData(
@@ -71,6 +71,8 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
         site.name(),
         siteEnableState
       )
+
+      return@viewSitesOrdered true
     }
 
     if (siteCellDataList.isEmpty()) {
