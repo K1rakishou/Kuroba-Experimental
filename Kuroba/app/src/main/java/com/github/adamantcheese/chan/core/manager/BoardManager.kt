@@ -44,7 +44,7 @@ class BoardManager(
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
 
   @OptIn(ExperimentalTime::class)
-  fun loadBoards() {
+  fun initialize() {
     appScope.launch(Dispatchers.Default) {
       val time = measureTime { loadBoardsInternal() }
       Logger.d(TAG, "loadBoards() took ${time}")

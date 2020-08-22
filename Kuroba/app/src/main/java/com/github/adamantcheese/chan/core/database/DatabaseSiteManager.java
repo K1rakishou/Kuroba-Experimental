@@ -17,8 +17,6 @@
 package com.github.adamantcheese.chan.core.database;
 
 import com.github.adamantcheese.chan.core.model.orm.SiteModel;
-import com.github.adamantcheese.chan.core.site.Site;
-import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 
 import java.util.HashMap;
@@ -91,13 +89,4 @@ public class DatabaseSiteManager {
         };
     }
 
-    public Callable<Void> deleteSite(Site site) {
-        return () -> {
-            DeleteBuilder<SiteModel, Integer> builder = helper.getSiteDao().deleteBuilder();
-            builder.where().eq("id", site.id());
-            builder.delete();
-
-            return null;
-        };
-    }
 }

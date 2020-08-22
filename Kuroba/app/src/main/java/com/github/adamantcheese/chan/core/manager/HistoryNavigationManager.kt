@@ -14,6 +14,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -37,43 +38,45 @@ class HistoryNavigationManager(
   private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
 
-  init {
-    appScope.launch {
-      suspendableInitializer.awaitUntilInitialized()
+  fun initialize() {
+    appScope.launch(Dispatchers.Default) {
+      appScope.launch {
+        suspendableInitializer.awaitUntilInitialized()
 
-      applicationVisibilityManager.listenForAppVisibilityUpdates()
-        .asFlow()
-        .filter { visibility -> visibility == ApplicationVisibility.Background }
-        .collect { persisNavigationStack(true) }
-    }
-
-    appScope.launch {
-      persistTaskSubject
-        .debounce(1, TimeUnit.SECONDS)
-        .collect {
-          persisNavigationStack()
-        }
-    }
-
-    appScope.launch {
-      @Suppress("MoveVariableDeclarationIntoWhen")
-      val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
-      when (loadedNavElementsResult) {
-        is ModularResult.Value -> {
-          BackgroundUtils.ensureMainThread()
-
-          navigationStack.addAll(loadedNavElementsResult.value)
-          suspendableInitializer.initWithValue(Unit)
-
-          Logger.d(TAG, "HistoryNavigationManager initialized!")
-        }
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Exception while initializing HistoryNavigationManager", loadedNavElementsResult.error)
-          suspendableInitializer.initWithError(loadedNavElementsResult.error)
-        }
+        applicationVisibilityManager.listenForAppVisibilityUpdates()
+          .asFlow()
+          .filter { visibility -> visibility == ApplicationVisibility.Background }
+          .collect { persisNavigationStack(true) }
       }
 
-      navStackChanged()
+      appScope.launch {
+        persistTaskSubject
+          .debounce(1, TimeUnit.SECONDS)
+          .collect {
+            persisNavigationStack()
+          }
+      }
+
+      appScope.launch {
+        @Suppress("MoveVariableDeclarationIntoWhen")
+        val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
+        when (loadedNavElementsResult) {
+          is ModularResult.Value -> {
+            BackgroundUtils.ensureMainThread()
+
+            navigationStack.addAll(loadedNavElementsResult.value)
+            suspendableInitializer.initWithValue(Unit)
+
+            Logger.d(TAG, "HistoryNavigationManager initialized!")
+          }
+          is ModularResult.Error -> {
+            Logger.e(TAG, "Exception while initializing HistoryNavigationManager", loadedNavElementsResult.error)
+            suspendableInitializer.initWithError(loadedNavElementsResult.error)
+          }
+        }
+
+        navStackChanged()
+      }
     }
   }
 

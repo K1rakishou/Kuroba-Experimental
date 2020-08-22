@@ -40,6 +40,7 @@ import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.SiteResolver
+import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
 import com.github.adamantcheese.chan.features.drawer.DrawerController
 import com.github.adamantcheese.chan.ui.controller.AlbumViewController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
@@ -94,6 +95,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -222,6 +225,10 @@ class StartActivity : AppCompatActivity(),
     val adapter = NfcAdapter.getDefaultAdapter(this)
     adapter?.setNdefPushMessageCallback(this, this)
 
+    bookmarksManager.initialize()
+    historyNavigationManager.initialize()
+    bookmarkWatcherCoordinator.initialize()
+
     updateManager.autoUpdateCheck()
 
     if (ChanSettings.fullUserRotationEnable.get()) {
@@ -345,6 +352,7 @@ class StartActivity : AppCompatActivity(),
     historyNavigationManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
 
     val handled = if (savedInstanceState != null) {
       restoreFromSavedState(savedInstanceState)

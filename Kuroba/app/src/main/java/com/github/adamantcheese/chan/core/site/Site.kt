@@ -120,17 +120,8 @@ interface Site {
   }
 
   fun enabled(): Boolean
-  fun initialize(id: Int, userSettings: JsonSettings)
+  fun initialize(userSettings: JsonSettings)
   fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)? = null)
-
-  /**
-   * Global positive (>0) integer that uniquely identifies this site.<br></br>
-   * Use the id received from [.initialize].
-   *
-   * @return a positive (>0) integer that uniquely identifies this site.
-   */
-  @Deprecated("Use SiteDescriptor instead")
-  fun id(): Int
 
   /**
    * Name of the site. Must be unique. This will be used to find a site among other sites. Usually

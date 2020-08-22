@@ -21,12 +21,10 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
-import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.common.SuspendableInitializer;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
-import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.table.TableUtils;
 
 import java.util.ArrayList;
@@ -290,13 +288,4 @@ public class DatabaseSavedReplyManager {
         return resultList;
     }
 
-    public Callable<Void> deleteSavedReplies(Site site) {
-        return () -> {
-            DeleteBuilder<SavedReply, Integer> builder = helper.getSavedDao().deleteBuilder();
-            builder.where().eq("site", site.id());
-            builder.delete();
-
-            return null;
-        };
-    }
 }

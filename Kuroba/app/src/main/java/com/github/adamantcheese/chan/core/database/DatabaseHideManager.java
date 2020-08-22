@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.PostHide;
-import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.PostUtils;
 import com.j256.ormlite.stmt.DeleteBuilder;
@@ -403,13 +402,4 @@ public class DatabaseHideManager {
         return helper.getPostHideDao().queryBuilder().where().eq("thread_no", threadNo).and().eq("hide", false).query();
     }
 
-    public Callable<Void> deleteThreadHides(Site site) {
-        return () -> {
-            DeleteBuilder<PostHide, Integer> builder = helper.getPostHideDao().deleteBuilder();
-            builder.where().eq("site", site.id());
-            builder.delete();
-
-            return null;
-        };
-    }
 }

@@ -1261,10 +1261,11 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun requestDeletePost(post: Post) {
-    val siteId = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)?.id()
-      ?: return
+    if (siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor) == null) {
+      return
+    }
 
-    val reply = databaseManager.databaseSavedReplyManager.getSavedReply(post.boardDescriptor, siteId, post.no)
+    val reply = databaseManager.databaseSavedReplyManager.getSavedReply(post.boardDescriptor, post.no)
     if (reply != null) {
       threadPresenterCallback?.confirmPostDelete(post)
     }

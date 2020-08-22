@@ -25,7 +25,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.di.AppModule;
 import com.github.adamantcheese.chan.core.di.DatabaseModule;
 import com.github.adamantcheese.chan.core.di.ExecutorsModule;
@@ -39,14 +38,11 @@ import com.github.adamantcheese.chan.core.di.SiteModule;
 import com.github.adamantcheese.chan.core.di.UseCaseModule;
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
-import com.github.adamantcheese.chan.core.manager.BookmarksManager;
-import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.net.DnsSelector;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.adamantcheese.chan.ui.service.SavingNotification;
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
@@ -88,8 +84,6 @@ public class Chan
     private int activityForegroundCounter = 0;
 
     @Inject
-    DatabaseManager databaseManager;
-    @Inject
     SiteManager siteManager;
     @Inject
     BoardManager boardManager;
@@ -99,14 +93,6 @@ public class Chan
     SettingsNotificationManager settingsNotificationManager;
     @Inject
     ApplicationVisibilityManager applicationVisibilityManager;
-
-    // These here are so that they start initializing as soon as the app starts.
-    @Inject
-    HistoryNavigationManager historyNavigationManager;
-    @Inject
-    BookmarksManager bookmarksManager;
-    @Inject
-    BookmarkWatcherCoordinator bookmarkWatcherCoordinator;
 
     @NotNull
     @Override
@@ -197,8 +183,8 @@ public class Chan
         );
         feather.injectFields(this);
 
-        siteManager.loadSites();
-        boardManager.loadBoards();
+        siteManager.initialize();
+        boardManager.initialize();
 
         setupErrorHandlers();
 
@@ -295,8 +281,9 @@ public class Chan
     }
 
     private boolean isEmulator() {
-        return Build.MODEL.contains("google_sdk") || Build.MODEL.contains("Emulator") || Build.MODEL.contains(
-                "Android SDK");
+        return Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK");
     }
 
     private String exceptionToString(boolean isCalledFromRxJavaHandler, Throwable e) {

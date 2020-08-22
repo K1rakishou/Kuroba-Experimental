@@ -46,7 +46,7 @@ open class SiteManager(
   private val orders = mutableListWithCap<SiteDescriptor>(128)
 
   @OptIn(ExperimentalTime::class)
-  fun loadSites() {
+  fun initialize() {
     appScope.launch(Dispatchers.Default) {
       val time = measureTime { loadSitesInternal() }
       Logger.d(TAG, "loadSites() took ${time}")
@@ -360,13 +360,7 @@ open class SiteManager(
     val settings = chanSiteData.siteUserSettings
       ?: JsonSettings(hashMapOf())
 
-    val siteId = siteRegistry.SITE_CLASSES.entries.firstOrNull { (_, siteClass) ->
-      return@firstOrNull siteClass == clazz
-    }
-      ?.key
-      ?: throw IllegalStateException("Couldn't find siteId in the site registry: ${clazz::class.java.simpleName}")
-
-    site.initialize(siteId, settings)
+    site.initialize(settings)
 
     if (chanSiteData.active) {
       site.loadBoardInfo()

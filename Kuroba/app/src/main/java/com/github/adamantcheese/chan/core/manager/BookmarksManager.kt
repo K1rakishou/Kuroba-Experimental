@@ -15,6 +15,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -53,61 +54,63 @@ class BookmarksManager(
   @GuardedBy("lock")
   private val orders = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(256)
 
-  init {
-    appScope.launch {
-      suspendableInitializer.awaitUntilInitialized()
+  fun initialize() {
+    appScope.launch(Dispatchers.Default) {
+      appScope.launch {
+        suspendableInitializer.awaitUntilInitialized()
 
-      applicationVisibilityManager.listenForAppVisibilityUpdates()
-        .asFlow()
-        .filter { visibility -> visibility == ApplicationVisibility.Background }
-        .collect { persistBookmarks(true) }
-    }
-
-    appScope.launch {
-      persistTaskSubject
-        .onBackpressureLatest()
-        .debounce(1, TimeUnit.SECONDS)
-        .collect { persistBookmarks() }
-    }
-
-    appScope.launch {
-      delayedBookmarksChangedSubject
-        .onBackpressureLatest()
-        .debounce(1, TimeUnit.SECONDS)
-        .doOnNext { bookmarkChange ->
-          if (verboseLogsEnabled) {
-            Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
-          }
-        }
-        .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
-    }
-
-    appScope.launch {
-      @Suppress("MoveVariableDeclarationIntoWhen")
-      val bookmarksResult = bookmarksRepository.initialize()
-      when (bookmarksResult) {
-        is ModularResult.Value -> {
-          BackgroundUtils.ensureMainThread()
-
-          lock.write {
-            bookmarksResult.value.forEach { threadBookmark ->
-              bookmarks[threadBookmark.threadDescriptor] = threadBookmark
-              orders.add(threadBookmark.threadDescriptor)
-            }
-          }
-
-          suspendableInitializer.initWithValue(Unit)
-
-          Logger.d(TAG, "BookmarksManager initialized! Loaded ${bookmarks.size} total " +
-            "bookmarks and ${activeBookmarksCount()} active bookmarks")
-        }
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Exception while initializing BookmarksManager", bookmarksResult.error)
-          suspendableInitializer.initWithError(bookmarksResult.error)
-        }
+        applicationVisibilityManager.listenForAppVisibilityUpdates()
+          .asFlow()
+          .filter { visibility -> visibility == ApplicationVisibility.Background }
+          .collect { persistBookmarks(true) }
       }
 
-      bookmarksChanged(BookmarkChange.BookmarksInitialized)
+      appScope.launch {
+        persistTaskSubject
+          .onBackpressureLatest()
+          .debounce(1, TimeUnit.SECONDS)
+          .collect { persistBookmarks() }
+      }
+
+      appScope.launch {
+        delayedBookmarksChangedSubject
+          .onBackpressureLatest()
+          .debounce(1, TimeUnit.SECONDS)
+          .doOnNext { bookmarkChange ->
+            if (verboseLogsEnabled) {
+              Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
+            }
+          }
+          .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
+      }
+
+      appScope.launch {
+        @Suppress("MoveVariableDeclarationIntoWhen")
+        val bookmarksResult = bookmarksRepository.initialize()
+        when (bookmarksResult) {
+          is ModularResult.Value -> {
+            BackgroundUtils.ensureMainThread()
+
+            lock.write {
+              bookmarksResult.value.forEach { threadBookmark ->
+                bookmarks[threadBookmark.threadDescriptor] = threadBookmark
+                orders.add(threadBookmark.threadDescriptor)
+              }
+            }
+
+            suspendableInitializer.initWithValue(Unit)
+
+            Logger.d(TAG, "BookmarksManager initialized! Loaded ${bookmarks.size} total " +
+              "bookmarks and ${activeBookmarksCount()} active bookmarks")
+          }
+          is ModularResult.Error -> {
+            Logger.e(TAG, "Exception while initializing BookmarksManager", bookmarksResult.error)
+            suspendableInitializer.initWithError(bookmarksResult.error)
+          }
+        }
+
+        bookmarksChanged(BookmarkChange.BookmarksInitialized)
+      }
     }
   }
 

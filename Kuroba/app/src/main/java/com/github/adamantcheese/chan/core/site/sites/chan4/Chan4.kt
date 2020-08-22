@@ -35,11 +35,10 @@ import java.util.*
 
 @Suppress("PropertyName")
 class Chan4 : SiteBase() {
-  private lateinit var chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
+  private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 
   private val TAG = "Chan4"
   private val CAPTCHA_KEY = "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc"
-  private val random = Random()
 
   // Legacy settings that were global before
   private var passUser: StringSetting
@@ -104,7 +103,7 @@ class Chan4 : SiteBase() {
       return if (spoiler) {
         val image = s.newBuilder().addPathSegment("image")
         if (customSpoilers >= 0) {
-          val i = random.nextInt(customSpoilers) + 1
+          val i = secureRandom.nextInt(customSpoilers) + 1
           image.addPathSegment("spoiler-${boardCode}$i.png")
         } else {
           image.addPathSegment("spoiler.png")

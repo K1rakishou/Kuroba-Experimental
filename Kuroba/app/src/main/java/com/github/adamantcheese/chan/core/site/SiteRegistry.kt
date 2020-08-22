@@ -33,8 +33,6 @@ object SiteRegistry {
   @JvmField
   val URL_HANDLERS: MutableList<SiteUrlHandler> = ArrayList()
   @JvmField
-  val SITE_CLASSES = mutableMapOf<Int, Class<out Site>>()
-  @JvmField
   val SITE_CLASSES_MAP = mutableMapOf<SiteDescriptor, Class<out Site>>()
 
   init {
@@ -48,20 +46,6 @@ object SiteRegistry {
     //chan55 was here but was removed
     URL_HANDLERS.add(Kun8.URL_HANDLER)
     URL_HANDLERS.add(Chan420.URL_HANDLER)
-
-    // This id-siteclass mapping is used to look up the correct site class at deserialization.
-    // This differs from the Site.id() id, that id is used for site instance linking, this is just to
-    // find the correct class to use.
-    SITE_CLASSES.put(0, Chan4::class.java)
-    //8chan was here but was removed; don't use ID 1
-    SITE_CLASSES.put(2, Lainchan::class.java)
-    //arisuchan was here but was removed; don't use ID 3
-    SITE_CLASSES.put(4, Sushichan::class.java)
-    SITE_CLASSES.put(5, Dvach::class.java)
-    SITE_CLASSES.put(6, Wired7::class.java)
-    //chan55 was here but was removed; don't use ID 7
-    SITE_CLASSES.put(8, Kun8::class.java)
-    SITE_CLASSES.put(9, Chan420::class.java)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)

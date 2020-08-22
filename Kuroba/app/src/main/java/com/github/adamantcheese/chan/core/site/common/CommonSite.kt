@@ -43,12 +43,11 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
-import java.security.SecureRandom
+import java.lang.Long.toHexString
 import java.util.*
 import java.util.regex.Pattern
 
 abstract class CommonSite : SiteBase() {
-  private val secureRandom: Random = SecureRandom()
   private var enabled: Boolean = true
   private var name: String? = null
   private var icon: SiteIcon? = null
@@ -65,8 +64,8 @@ abstract class CommonSite : SiteBase() {
 
   private val staticBoards: MutableList<ChanBoard> = ArrayList()
   
-  override fun initialize(id: Int, userSettings: JsonSettings) {
-    super.initialize(id, userSettings)
+  override fun initialize(userSettings: JsonSettings) {
+    super.initialize(userSettings)
     setup()
     
     if (name == null) {
@@ -395,7 +394,7 @@ abstract class CommonSite : SiteBase() {
       val replyResponse = ReplyResponse()
       val chanDescriptor = reply.chanDescriptor!!
       
-      reply.password = java.lang.Long.toHexString(site.secureRandom.nextLong())
+      reply.password = toHexString(secureRandom.nextLong())
       replyResponse.password = reply.password
       replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
       replyResponse.boardCode = chanDescriptor.boardCode()

@@ -36,11 +36,11 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
+import java.security.SecureRandom
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 abstract class SiteBase : Site, CoroutineScope {
-  protected var id = 0
   private val job = SupervisorJob()
 
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
@@ -60,12 +60,11 @@ abstract class SiteBase : Site, CoroutineScope {
   private var userSettings: JsonSettings? = null
   private var initialized = false
 
-  override fun initialize(id: Int, userSettings: JsonSettings) {
+  override fun initialize(userSettings: JsonSettings) {
     if (initialized) {
       throw IllegalStateException("Already initialized")
     }
 
-    this.id = id
     this.userSettings = userSettings
 
     settingsProvider = JsonSettingsProvider(userSettings) {
@@ -128,10 +127,6 @@ abstract class SiteBase : Site, CoroutineScope {
     }
   }
 
-  override fun id(): Int {
-    return id
-  }
-
   override fun board(code: String): ChanBoard? {
     // TODO(KurobaEx): wait until initialized
     val boardDescriptor = BoardDescriptor.create(siteDescriptor(), code)
@@ -165,6 +160,7 @@ abstract class SiteBase : Site, CoroutineScope {
 
   companion object {
     private const val TAG = "SiteBase"
+    val secureRandom: Random = SecureRandom()
 
     @JvmStatic
     fun containsMediaHostUrl(desiredSiteUrl: HttpUrl, mediaHosts: Array<String>): Boolean {

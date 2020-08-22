@@ -27,7 +27,7 @@ class BookmarkWatcherCoordinator(
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
 
-  init {
+  fun initialize() {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .debounce(1, TimeUnit.SECONDS)
