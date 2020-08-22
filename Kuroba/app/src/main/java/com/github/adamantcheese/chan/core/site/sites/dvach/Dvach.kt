@@ -173,6 +173,7 @@ class Dvach : CommonSite() {
 
             DvachBoardsRequest(
               siteDescriptor(),
+              boardManager,
               request,
               okHttpClient
             )

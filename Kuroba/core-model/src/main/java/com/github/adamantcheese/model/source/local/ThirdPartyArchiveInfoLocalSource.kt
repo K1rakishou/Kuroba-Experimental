@@ -247,7 +247,7 @@ class ThirdPartyArchiveInfoLocalSource(
   }
 
   suspend fun getChanThreadIdOrNull(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
     )

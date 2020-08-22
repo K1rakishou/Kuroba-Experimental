@@ -110,11 +110,16 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public BoardManager provideBoardManager(CoroutineScope appScope, BoardRepository boardRepository) {
+    public BoardManager provideBoardManager(
+            CoroutineScope appScope,
+            SiteRepository siteRepository,
+            BoardRepository boardRepository
+    ) {
         Logger.d(AppModule.DI_TAG, "Board manager");
         return new BoardManager(
                 appScope,
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
+                siteRepository,
                 boardRepository
         );
     }

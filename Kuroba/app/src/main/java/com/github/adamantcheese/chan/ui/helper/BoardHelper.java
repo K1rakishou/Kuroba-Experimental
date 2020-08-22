@@ -33,7 +33,11 @@ public class BoardHelper {
     private static final String TAG = "BoardHelper";
 
     public static String getName(ChanBoard board) {
-        return "/" + board.boardCode() + "/ \u2013 " + board.getName();
+        return getName(board.boardCode(), board.getName());
+    }
+
+    public static String getName(String boardCode, String boardName) {
+        return "/" + boardCode + "/ \u2013 " + boardName;
     }
 
     public static String getDescription(ChanBoard board) {

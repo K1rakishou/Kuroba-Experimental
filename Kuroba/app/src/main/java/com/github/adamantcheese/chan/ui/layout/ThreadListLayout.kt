@@ -863,6 +863,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.isVerticalScrollBarEnabled = !enabled
   }
 
+  override fun updatePadding() {
+    setRecyclerViewPadding()
+  }
+
   private fun setRecyclerViewPadding() {
     val defaultPadding = if (postViewMode == PostViewMode.CARD) AndroidUtils.dp(1f) else 0
     var recyclerTop = defaultPadding + toolbarHeight()
@@ -874,6 +878,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
       )
+
+      // recycler view padding calculations
+      recyclerBottom += reply.measuredHeight
     }
 
     if (searchOpen) {
@@ -881,24 +888,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
       )
-    }
 
-    // recycler view padding calculations
-    if (replyOpen) {
-      recyclerBottom += reply.measuredHeight
-    }
-
-    if (searchOpen) {
       // search status has built-in padding for the toolbar height
       recyclerTop += searchStatus.measuredHeight
       recyclerTop -= toolbarHeight()
     }
 
     recyclerView.setPadding(defaultPadding, recyclerTop, defaultPadding, recyclerBottom)
-  }
-
-  override fun updatePadding() {
-    setRecyclerViewPadding()
   }
 
   fun toolbarHeight(): Int {

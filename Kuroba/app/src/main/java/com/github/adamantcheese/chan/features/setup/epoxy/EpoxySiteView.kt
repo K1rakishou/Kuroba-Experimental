@@ -16,6 +16,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.features.setup.data.SiteEnableState
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
@@ -38,6 +39,7 @@ class EpoxySiteView @JvmOverloads constructor(
   private val siteSwitch: SwitchMaterial
   private val siteSettings: AppCompatImageView
 
+  private var descriptor: SiteDescriptor? = null
   private var requestDisposable: RequestDisposable? = null
 
   init {
@@ -158,6 +160,11 @@ class EpoxySiteView @JvmOverloads constructor(
     }
 
     siteSettings.setOnClickListener { callback.invoke() }
+  }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
+  fun setSiteDescriptor(siteDescriptor: SiteDescriptor?) {
+    this.descriptor = siteDescriptor
   }
 
   @OnViewRecycled

@@ -62,12 +62,13 @@ class Chan420 : CommonSite() {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()
-              .url(site!!.endpoints().boards().toString())
+              .url(site.endpoints().boards().toString())
               .get()
               .build()
 
             Chan420BoardsRequest(
               siteDescriptor(),
+              boardManager,
               request,
               okHttpClient
             )
@@ -78,7 +79,7 @@ class Chan420 : CommonSite() {
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "hooch"), "Alcohol Discussion"))
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "dr"), "Dream Discussion"))
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "detox"), "Detoxing & Rehabilitation"))
-            }.shuffled()
+            }
           }
         )
       }

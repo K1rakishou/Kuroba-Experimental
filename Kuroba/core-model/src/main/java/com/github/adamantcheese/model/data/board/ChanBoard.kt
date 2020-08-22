@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 
 data class ChanBoard(
   val boardDescriptor: BoardDescriptor,
+  var active: Boolean = false,
   val order: Int = 0,
   val name: String? = null,
   val perPage: Int = 15,
@@ -29,6 +30,8 @@ data class ChanBoard(
   val archive: Boolean = false
 ) {
 
+  fun boardName(): String = name ?: "No board name"
+  fun siteName(): String =  boardDescriptor.siteName()
   fun boardCode(): String = boardDescriptor.boardCode
 
   companion object {

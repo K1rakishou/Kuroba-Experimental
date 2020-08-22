@@ -20,7 +20,7 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
   @Inject
   lateinit var siteManager: SiteManager
 
-  private val addSiteControllerSubject = PublishProcessor.create<SitesSetupControllerState>()
+  private val stateSubject = PublishProcessor.create<SitesSetupControllerState>()
     .toSerialized()
 
   override fun onCreate(view: SitesSetupView) {
@@ -37,11 +37,11 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
   }
 
   fun listenForStateChanges(): Flowable<SitesSetupControllerState> {
-    return addSiteControllerSubject
+    return stateSubject
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error ->
-        Logger.e(TAG, "Unknown error subscribed to addSiteControllerSubject.listenForStateChanges()", error)
+        Logger.e(TAG, "Unknown error subscribed to stateSubject.listenForStateChanges()", error)
       }
       .onErrorReturn { error -> SitesSetupControllerState.Error(error.errorMessageOrClassName()) }
       .hide()
@@ -49,14 +49,16 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
 
   fun onSiteEnableStateChanged(siteDescriptor: SiteDescriptor, enabled: Boolean) {
     scope.launch {
-      siteManager.activateOrDeactivateSite(siteDescriptor, enabled)
-      showSites()
+      if (siteManager.activateOrDeactivateSite(siteDescriptor, enabled)) {
+        showSites()
+      }
     }
   }
 
-  fun onSiteMoved(fromPosition: Int, toPosition: Int) {
-    siteManager.onSiteMoved(fromPosition, toPosition)
-    showSites()
+  fun onSiteMoved(siteDescriptor: SiteDescriptor, fromPosition: Int, toPosition: Int) {
+    if (siteManager.onSiteMoved(siteDescriptor, fromPosition, toPosition)) {
+      showSites()
+    }
   }
 
   private fun showSites() {
@@ -84,7 +86,7 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
   }
 
   private fun setState(stateSetup: SitesSetupControllerState) {
-    addSiteControllerSubject.onNext(stateSetup)
+    stateSubject.onNext(stateSetup)
   }
 
   companion object {

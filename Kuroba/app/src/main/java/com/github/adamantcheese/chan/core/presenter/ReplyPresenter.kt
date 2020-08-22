@@ -47,6 +47,7 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import java.io.File
 import java.nio.charset.StandardCharsets
@@ -400,12 +401,9 @@ class ReplyPresenter @Inject constructor(
 
     if (textQuote != null) {
       val lines = textQuote.split("\n+").toTypedArray()
-      // matches for >>123, >>123 (text), >>>/fit/123
-      val quotePattern = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$")
-
       for (line in lines) {
         // do not include post no from quoted post
-        if (!quotePattern.matcher(line).matches()) {
+        if (!QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
           insert
             .append(">")
             .append(line)
@@ -478,6 +476,7 @@ class ReplyPresenter @Inject constructor(
       switchPageSuspend(Page.LOADING)
 
       site.actions().post(draft)
+        .catch { error -> onPostError(error) }
         .collect { postResult ->
           withContext(Dispatchers.Main) {
             when (postResult) {
@@ -802,6 +801,8 @@ class ReplyPresenter @Inject constructor(
   companion object {
     private const val TAG = "ReplyPresenter"
     private val QUOTE_PATTERN = Pattern.compile(">>\\d+")
+    // matches for >>123, >>123 (text), >>>/fit/123
+    private val QUOTE_PATTERN_COMPLEX = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$")
     private val UTF_8 = StandardCharsets.UTF_8
   }
 

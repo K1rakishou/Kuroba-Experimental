@@ -11,9 +11,11 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.repository.BoardRepository
+import com.github.adamantcheese.model.repository.SiteRepository
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
+import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -25,12 +27,14 @@ import kotlin.time.measureTime
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
+  private val siteRepository: SiteRepository,
   private val boardRepository: BoardRepository
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = SuspendDebouncer(appScope)
 
   private val currentBoardSubject = BehaviorProcessor.create<CurrentBoard>()
+  private val boardsChangedSubject = PublishProcessor.create<Unit>()
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -38,61 +42,175 @@ class BoardManager(
   @GuardedBy("lock")
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
 
+  @OptIn(ExperimentalTime::class)
   fun loadBoards() {
     appScope.launch {
-      val result = boardRepository.initialize()
-      if (result is ModularResult.Error) {
-        Logger.e(TAG, "boardRepository.initialize() error", result.error)
-        suspendableInitializer.initWithError(result.error)
-        return@launch
-      }
+      val time = measureTime { loadBoardsInternal() }
+      Logger.d(TAG, "loadBoards() took ${time}")
+    }
+  }
 
-      try {
-        result as ModularResult.Value
+  private suspend fun loadBoardsInternal() {
+    val loadBoardsResult = boardRepository.loadAllBoards()
+    if (loadBoardsResult is ModularResult.Error) {
+      Logger.e(TAG, "boardRepository.loadAllBoards() error", loadBoardsResult.error)
+      suspendableInitializer.initWithError(loadBoardsResult.error)
+      return
+    }
 
-        lock.write {
-          result.value.forEach { (siteDescriptor, chanBoards) ->
-            val sortedBoards = chanBoards.sortedByDescending { chanBoard -> chanBoard.order }
-            ordersMap[siteDescriptor] = mutableListWithCap(64)
-            boardsMap[siteDescriptor] = mutableMapWithCap(64)
+    siteRepository.awaitUntilSitesLoaded()
 
-            sortedBoards.forEach { chanBoard ->
-              boardsMap[siteDescriptor]!!.put(chanBoard.boardDescriptor, chanBoard)
-              ordersMap[siteDescriptor]!!.add(chanBoard.boardDescriptor)
-            }
-          }
+    val loadSitesResult = siteRepository.loadAllSites()
+    if (loadSitesResult is ModularResult.Error) {
+      Logger.e(TAG, "siteRepository.loadAllSites() error", loadSitesResult.error)
+      suspendableInitializer.initWithError(loadSitesResult.error)
+      return
+    }
+
+    try {
+      loadBoardsResult as ModularResult.Value
+      loadSitesResult as ModularResult.Value
+
+      lock.write {
+        loadSitesResult.value.forEach { chanSiteData ->
+          ordersMap[chanSiteData.siteDescriptor] = mutableListWithCap(64)
+          boardsMap[chanSiteData.siteDescriptor] = mutableMapWithCap(64)
         }
 
-        ensureBoardsAndOrdersConsistency()
-        suspendableInitializer.initWithValue(Unit)
-      } catch (error: Throwable) {
-        Logger.e(TAG, "BoardManager initialization error", error)
-        suspendableInitializer.initWithError(error)
+        loadBoardsResult.value.forEach { (siteDescriptor, chanBoards) ->
+          val sortedBoards = chanBoards.sortedByDescending { chanBoard -> chanBoard.order }
+
+          sortedBoards.forEach { chanBoard ->
+            boardsMap[siteDescriptor]!!.put(chanBoard.boardDescriptor, chanBoard)
+            ordersMap[siteDescriptor]!!.add(chanBoard.boardDescriptor)
+          }
+        }
       }
+
+      ensureBoardsAndOrdersConsistency()
+      suspendableInitializer.initWithValue(Unit)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "BoardManager initialization error", error)
+      suspendableInitializer.initWithError(error)
     }
+  }
+
+  fun listenForSitesChanges(): Flowable<Unit> {
+    return boardsChangedSubject
+      .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "Error while listening for sitesChangedSubject updates", error) }
+      .hide()
   }
 
   fun listenForCurrentSelectedBoard(): Flowable<CurrentBoard> {
     return currentBoardSubject
-      .onBackpressureBuffer()
+      .onBackpressureLatest()
       .distinctUntilChanged()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "Error while listening for currentBoardSubject", error) }
       .hide()
   }
 
-  fun createBoard(board: ChanBoard) {
+  suspend fun createOrUpdateBoards(boards: List<ChanBoard>): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    // TODO(KurobaEx):
+    val updated = lock.write {
+      var updated = false
+
+      boards.forEach { board ->
+        val siteDescriptor = board.boardDescriptor.siteDescriptor
+
+        val innerMap = boardsMap[siteDescriptor]
+          ?: return@forEach
+
+        var prevBoard = innerMap[board.boardDescriptor]
+        if (prevBoard != null) {
+          val newBoard = mergePrevAndNewBoards(prevBoard, board)
+          if (prevBoard == newBoard) {
+            return@forEach
+          }
+
+          prevBoard = newBoard
+        } else {
+          prevBoard = board
+          ordersMap[siteDescriptor]?.add(board.boardDescriptor)
+        }
+
+        innerMap[board.boardDescriptor] = prevBoard
+        updated = true
+      }
+
+      return@write updated
+    }
+
+    ensureBoardsAndOrdersConsistency()
+
+    if (!updated) {
+      return false
+    }
+
+    persistBoards()
+    return true
+  }
+
+  suspend fun activateDeactivateBoard(boardDescriptor: BoardDescriptor, activate: Boolean): Boolean {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    val result = boardRepository.activateDeactivateBoard(boardDescriptor, activate)
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "boardRepository.activateDeactivateBoard() error", result.error)
+      return false
+    }
+
+    val updated = result.valueOrNull() ?: false
+    if (!updated) {
+      return false
+    }
+
+    val changed = lock.write {
+      val innerMap = boardsMap[boardDescriptor.siteDescriptor]
+        ?: return@write false
+
+      val board = innerMap.get(boardDescriptor)
+        ?: return@write false
+
+      if (board.active == activate) {
+        return@write false
+      }
+
+      board.active = activate
+      return@write true
+    }
+
+    if (!changed) {
+      return false
+    }
+
+    return true
   }
 
   fun firstBoardDescriptor(siteDescriptor: SiteDescriptor): BoardDescriptor? {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    return lock.read { ordersMap[siteDescriptor]?.firstOrNull() }
+    return lock.read {
+      val boardDescriptorsOrdered = ordersMap[siteDescriptor]
+        ?: return@read null
+
+      for (boardDescriptor in boardDescriptorsOrdered) {
+        val board = boardsMap[siteDescriptor]?.get(boardDescriptor)
+          ?: continue
+
+        if (board.active) {
+          return@read boardDescriptor
+        }
+      }
+
+      return@read null
+    }
   }
 
   fun updateCurrentBoard(boardDescriptor: BoardDescriptor?) {
@@ -106,44 +224,35 @@ class BoardManager(
     currentBoardSubject.onNext(CurrentBoard.create(boardDescriptor))
   }
 
-  fun viewAllBoards(func: (ChanBoard) -> Unit) {
+  fun viewAllActiveBoards(func: (ChanBoard) -> Unit) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
     lock.read {
       boardsMap.values.forEach { innerMap ->
         innerMap.values.forEach { chanBoard ->
-          func(chanBoard)
+          if (chanBoard.active) {
+            func(chanBoard)
+          }
         }
       }
     }
   }
 
-  fun updateAvailableBoardsForSite(boards: List<ChanBoard>) {
+  fun viewActiveBoardsOrdered(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    lock.write {
-      boards.forEach { chanBoard ->
-        val siteDescriptor = chanBoard.boardDescriptor.siteDescriptor
+    lock.read {
+      ordersMap[siteDescriptor]?.forEach { boardDescriptor ->
+        val chanBoard = boardsMap[siteDescriptor]?.get(boardDescriptor)
+          ?: return@forEach
 
-        val alreadyContains = boardsMap[siteDescriptor]?.contains(chanBoard.boardDescriptor)
-          ?: false
-
-        boardsMap[siteDescriptor]?.put(chanBoard.boardDescriptor, chanBoard)
-
-        if (!alreadyContains) {
-          ordersMap[siteDescriptor]?.add(chanBoard.boardDescriptor)
-        } else {
-          val index = ordersMap[siteDescriptor]?.indexOf(chanBoard.boardDescriptor) ?: -1
-          if (index >= 0) {
-            ordersMap[siteDescriptor]?.set(index, chanBoard.boardDescriptor)
-          }
+        if (chanBoard.active) {
+          func(chanBoard)
         }
       }
     }
-
-    persistBoardsDebouncer.post(500) { boardRepository.updateBoards(boards) }
   }
 
   fun byBoardDescriptor(boardDescriptor: BoardDescriptor): ChanBoard? {
@@ -158,10 +267,70 @@ class BoardManager(
     ensureBoardsAndOrdersConsistency()
 
     return lock.read {
-      return@read boardsMap[siteDescriptor]?.keys?.count { boardDescriptor ->
-        boardDescriptor.siteDescriptor == siteDescriptor
+      return@read boardsMap[siteDescriptor]?.entries?.count { (boardDescriptor, board) ->
+        board.active && boardDescriptor.siteDescriptor == siteDescriptor
       } ?: 0
     }
+  }
+
+  fun onBoardMoved(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    val moved = lock.write {
+      val orders = ordersMap[boardDescriptor.siteDescriptor]
+        ?: return@write false
+
+      if (orders.get(from) != boardDescriptor) {
+        return@write false
+      }
+
+      orders.add(to, orders.removeAt(from))
+      return@write true
+    }
+
+    if (!moved) {
+      return false
+    }
+
+    persistBoardsDebouncer.post(DEBOUNCE_TIME_MS) { persistBoards() }
+    sitesChanged()
+
+    return true
+  }
+
+  fun onBoardRemoved(boardDescriptor: BoardDescriptor): Boolean {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    val removed = lock.write {
+      var contains = boardsMap.containsKey(boardDescriptor.siteDescriptor)
+      if (contains) {
+        val removed = boardsMap[boardDescriptor.siteDescriptor]!!.remove(boardDescriptor) != null
+        if (!removed) {
+          return@write false
+        }
+      }
+
+      contains = ordersMap.containsKey(boardDescriptor.siteDescriptor)
+      if (contains) {
+        val removed = ordersMap[boardDescriptor.siteDescriptor]!!.remove(boardDescriptor)
+        if (!removed) {
+          return@write false
+        }
+      }
+
+      return@write true
+    }
+
+    if (!removed) {
+      return false
+    }
+
+    persistBoardsDebouncer.post(DEBOUNCE_TIME_MS) { persistBoards() }
+    sitesChanged()
+
+    return true
   }
 
   @OptIn(ExperimentalTime::class)
@@ -173,6 +342,14 @@ class BoardManager(
     Logger.d(TAG, "BoardManager is not ready yet, waiting...")
     val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
     Logger.d(TAG, "BoardManager initialization completed, took $duration")
+  }
+
+  private suspend fun persistBoards() {
+    val result = boardRepository.persist(getBoardsOrdered())
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "boardRepository.persist() error", result.error)
+      return
+    }
   }
 
   private fun ensureBoardsAndOrdersConsistency() {
@@ -195,7 +372,68 @@ class BoardManager(
     }
   }
 
+  private fun getBoardsOrdered(): Map<SiteDescriptor, List<ChanBoard>> {
+    ensureBoardsAndOrdersConsistency()
+    val resultMap = mutableMapOf<SiteDescriptor, MutableList<ChanBoard>>()
+
+    lock.read {
+      ordersMap.forEach { (siteDescriptor, boardDescriptorsOrdered) ->
+        if (!resultMap.containsKey(siteDescriptor)) {
+          resultMap.put(siteDescriptor, mutableListWithCap(boardDescriptorsOrdered))
+        }
+
+        boardDescriptorsOrdered.forEach { boardDescriptor ->
+          val board = boardsMap[siteDescriptor]?.get(boardDescriptor)
+            ?: return@forEach
+
+          resultMap[siteDescriptor]!!.add(board)
+        }
+
+      }
+    }
+
+    return resultMap
+  }
+
+  private fun sitesChanged() {
+    if (isDevFlavor) {
+      ensureBoardsAndOrdersConsistency()
+    }
+
+    boardsChangedSubject.onNext(Unit)
+  }
+
   private fun isReady() = suspendableInitializer.isInitialized()
+
+  private fun mergePrevAndNewBoards(prevBoard: ChanBoard, newBoard: ChanBoard): ChanBoard {
+    return ChanBoard(
+      boardDescriptor = prevBoard.boardDescriptor,
+      active = prevBoard.active,
+      order = prevBoard.order,
+      name = newBoard.name,
+      perPage = newBoard.perPage,
+      pages = newBoard.pages,
+      maxFileSize = newBoard.maxFileSize,
+      maxWebmSize = newBoard.maxWebmSize,
+      maxCommentChars = newBoard.maxCommentChars,
+      bumpLimit = newBoard.bumpLimit,
+      imageLimit = newBoard.imageLimit,
+      cooldownThreads = newBoard.cooldownThreads,
+      cooldownReplies = newBoard.cooldownReplies,
+      cooldownImages = newBoard.cooldownImages,
+      customSpoilers = newBoard.customSpoilers,
+      description = newBoard.description,
+      saved = newBoard.saved,
+      workSafe = newBoard.workSafe,
+      spoilers = newBoard.spoilers,
+      userIds = newBoard.userIds,
+      codeTags = newBoard.codeTags,
+      preuploadCaptcha = newBoard.preuploadCaptcha,
+      countryFlags = newBoard.countryFlags,
+      mathTags = newBoard.mathTags,
+      archive = newBoard.archive,
+    )
+  }
 
   sealed class CurrentBoard(val boardDescriptor: BoardDescriptor?) {
     object Empty : CurrentBoard(null)
@@ -214,5 +452,6 @@ class BoardManager(
 
   companion object {
     private const val TAG = "BoardManager"
+    private const val DEBOUNCE_TIME_MS = 500L
   }
 }

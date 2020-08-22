@@ -36,9 +36,15 @@ class BoardBuilder(
     return TextUtils.isEmpty(name) || TextUtils.isEmpty(code) || perPage < 0 || pages < 0
   }
 
-  fun toChanBoard(): ChanBoard {
+  fun boardDescriptor(): BoardDescriptor = BoardDescriptor.create(siteDescriptor, code!!)
+
+  fun toChanBoard(prevChanBoard: ChanBoard?): ChanBoard {
+    val active = prevChanBoard?.active ?: false
+    val order = prevChanBoard?.order ?: this.order
+
     return ChanBoard(
-      boardDescriptor = BoardDescriptor.create(siteDescriptor, code!!),
+      boardDescriptor = boardDescriptor(),
+      active = active,
       order = order,
       name = name,
       perPage = perPage,

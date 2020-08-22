@@ -1,9 +1,6 @@
 package com.github.adamantcheese.model.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
 import com.github.adamantcheese.model.entity.chan.ChanBoardFull
@@ -13,7 +10,23 @@ import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
 abstract class ChanBoardDao {
 
   @Insert(onConflict = OnConflictStrategy.ABORT)
-  abstract suspend fun insert(chanBoardIdEntity: ChanBoardIdEntity): Long
+  abstract suspend fun insertBoardId(chanBoardIdEntity: ChanBoardIdEntity): Long
+
+  @Insert(onConflict = OnConflictStrategy.ABORT)
+  abstract suspend fun insertBoard(chanBoardEntity: ChanBoardEntity)
+
+  @Update(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun updateBoard(chanBoardEntity: ChanBoardEntity)
+
+  @Update(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun updateBoards(chanBoardEntities: List<ChanBoardEntity>)
+
+  @Query("""
+    UPDATE ${ChanBoardEntity.TABLE_NAME}
+    SET ${ChanBoardEntity.BOARD_ACTIVE_COLUMN_NAME} = :activate
+    WHERE ${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME} = :boardId
+  """)
+  abstract suspend fun activateDeactivateBoard(boardId: Long, activate: Boolean): Int
 
   @Query("""
         SELECT * 
@@ -23,7 +36,14 @@ abstract class ChanBoardDao {
         AND
             ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
-  abstract suspend fun select(siteName: String, boardCode: String): ChanBoardIdEntity?
+  abstract suspend fun selectBoardId(siteName: String, boardCode: String): ChanBoardIdEntity?
+
+  @Query("""
+    SELECT * 
+    FROM ${ChanBoardEntity.TABLE_NAME}
+    WHERE ${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME} = :boardId
+  """)
+  abstract suspend fun selectBoard(boardId: Long): ChanBoardEntity?
 
   @Query("""
         SELECT ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} 
@@ -33,7 +53,7 @@ abstract class ChanBoardDao {
         AND
             ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
     """)
-  abstract suspend fun selectBoardId(siteName: String, boardCode: String): Long?
+  abstract suspend fun selectBoardDatabaseId(siteName: String, boardCode: String): Long?
 
   @Query("""
     SELECT *
@@ -45,7 +65,7 @@ abstract class ChanBoardDao {
   abstract suspend fun selectAllActiveBoards(): List<ChanBoardFull>
 
   suspend fun contains(siteName: String, boardCode: String): Boolean {
-    return select(siteName, boardCode) != null
+    return selectBoardId(siteName, boardCode) != null
   }
 
   @Query("""
@@ -53,7 +73,7 @@ abstract class ChanBoardDao {
         FROM ${ChanBoardIdEntity.TABLE_NAME}
         WHERE ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = :boardId
     """)
-  abstract suspend fun select(boardId: Long): ChanBoardIdEntity?
+  abstract suspend fun selectBoardId(boardId: Long): ChanBoardIdEntity?
 
   @Query("""
         SELECT *
@@ -62,8 +82,8 @@ abstract class ChanBoardDao {
     """)
   abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardIdEntity>
 
-  suspend fun insert(siteName: String, boardCode: String): ChanBoardIdEntity {
-    val prev = select(siteName, boardCode)
+  suspend fun insertBoardId(siteName: String, boardCode: String): ChanBoardIdEntity {
+    val prev = selectBoardId(siteName, boardCode)
     if (prev != null) {
       return prev
     }
@@ -74,7 +94,7 @@ abstract class ChanBoardDao {
       boardCode = boardCode
     )
 
-    val insertedId = insert(chanBoardEntity)
+    val insertedId = insertBoardId(chanBoardEntity)
     check(insertedId >= 0L) { "Couldn't insert entity, insert() returned ${insertedId}" }
 
     chanBoardEntity.boardId = insertedId

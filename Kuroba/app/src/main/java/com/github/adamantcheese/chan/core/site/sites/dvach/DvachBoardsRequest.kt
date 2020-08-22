@@ -17,6 +17,7 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.model.data.board.BoardBuilder
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -27,6 +28,7 @@ import java.util.*
 
 class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
+  private val boardManager: BoardManager,
   request: Request,
   okHttpClient: OkHttpClient
 ) : JsonReaderRequest<List<ChanBoard>>(RequestType.DvachBoardsRequest, request, okHttpClient) {
@@ -77,7 +79,7 @@ class DvachBoardsRequest internal constructor(
         return@withObject null
       }
       
-      return@withObject board.toChanBoard()
+      return@withObject board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
     }
   }
 

@@ -264,7 +264,7 @@ public class FilterLayout
 
             List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
 
-            boardManager.viewAllBoards(chanBoard -> {
+            boardManager.viewAllActiveBoards(chanBoard -> {
                 String name = BoardHelper.getName(chanBoard);
                 boolean checked = filterEngine.matchesBoard(filter, chanBoard);
 

@@ -786,6 +786,8 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
 
+    <string name="controller_boards_setup_no_boards">No boards added</string>
+
     <string name="successfully_exported_text">Exported successfully"</string>
     <string name="import_warning_title">Warning</string>
     <string name="import_warning_text">You are about to import settings/saved pins/filters/hidden posts from a file.

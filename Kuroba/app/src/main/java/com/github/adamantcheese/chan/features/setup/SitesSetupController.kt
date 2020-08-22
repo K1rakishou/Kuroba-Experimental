@@ -47,7 +47,9 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
           modelBeingMoved: EpoxySiteViewModel_,
           itemView: View?
         ) {
-          sitesPresenter.onSiteMoved(fromPosition, toPosition)
+          modelBeingMoved.siteDescriptor()?.let { siteDescriptor ->
+            sitesPresenter.onSiteMoved(siteDescriptor, fromPosition, toPosition)
+          }
         }
       })
 
@@ -89,10 +91,11 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
         is SitesSetupControllerState.Data -> {
           state.siteCellDataList.forEach { siteCellData ->
             epoxySiteView {
-              id("site_view_${siteCellData.siteDescriptor}")
+              id("sites_setup_site_view_${siteCellData.siteDescriptor}")
               bindIcon(Pair(siteCellData.siteIcon, siteCellData.siteEnableState))
               bindSiteName(siteCellData.siteName)
               bindSwitch(siteCellData.siteEnableState)
+              siteDescriptor(siteCellData.siteDescriptor)
 
               val callback = fun (enabled: Boolean) {
                 if (siteCellData.siteEnableState == SiteEnableState.Disabled) {

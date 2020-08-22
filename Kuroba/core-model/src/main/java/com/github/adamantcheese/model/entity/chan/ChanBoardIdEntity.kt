@@ -1,6 +1,8 @@
 package com.github.adamantcheese.model.entity.chan
 
 import androidx.room.*
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
 @Entity(
   tableName = ChanBoardIdEntity.TABLE_NAME,
@@ -41,6 +43,8 @@ data class ChanBoardIdEntity(
   @ColumnInfo(name = BOARD_CODE_COLUMN_NAME)
   val boardCode: String
 ) {
+
+  fun boardDescriptor(): BoardDescriptor = BoardDescriptor(SiteDescriptor(ownerSiteName), boardCode)
 
   companion object {
     const val TABLE_NAME = "chan_board_id"

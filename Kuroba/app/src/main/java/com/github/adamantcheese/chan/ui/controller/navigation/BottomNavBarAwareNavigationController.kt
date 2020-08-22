@@ -89,8 +89,6 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onMenuOrBackClicked(isArrow: Boolean) {
-    super.onMenuOrBackClicked(isArrow)
-
     listener.onCloseController()
   }
 

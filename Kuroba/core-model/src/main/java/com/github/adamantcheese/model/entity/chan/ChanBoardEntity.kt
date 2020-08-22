@@ -21,10 +21,10 @@ data class ChanBoardEntity(
   @PrimaryKey(autoGenerate = false)
   @ColumnInfo(name = OWNER_CHAN_BOARD_ID_COLUMN_NAME)
   var ownerChanBoardId: Long,
-  @ColumnInfo(name = ORDER_COLUMN_NAME)
-  val order: Int = 0,
   @ColumnInfo(name = BOARD_ACTIVE_COLUMN_NAME)
   val active: Boolean = false,
+  @ColumnInfo(name = ORDER_COLUMN_NAME)
+  val order: Int = 0,
   @ColumnInfo(name = NAME_COLUMN_NAME)
   val name: String? = null,
   @ColumnInfo(name = PER_PAGE_COLUMN_NAME)

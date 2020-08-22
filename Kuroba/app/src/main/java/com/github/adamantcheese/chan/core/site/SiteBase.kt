@@ -24,10 +24,12 @@ import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
+import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.http.HttpCallManager
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.json.JsonSettingsProvider
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -75,34 +77,53 @@ abstract class SiteBase : Site, CoroutineScope {
     initialized = true
   }
 
-  override fun loadBoardInfo() {
+  override fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)?) {
     if (!enabled()) {
+      callback?.invoke(ModularResult.value(JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))))
       return
     }
 
     if (!boardsType().canList) {
+      callback?.invoke(ModularResult.value(JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))))
       return
     }
 
     launch(Dispatchers.IO) {
-      boardManager.awaitUntilInitialized()
-      Logger.d(TAG, "Requesting boards for site ${name()}")
+      val result = ModularResult.Try {
+        boardManager.awaitUntilInitialized()
+        Logger.d(TAG, "Requesting boards for site ${name()}")
 
-      when (val readerResponse = actions().boards()) {
-        is JsonReaderRequest.JsonReaderResponse.Success -> {
-          boardManager.updateAvailableBoardsForSite(readerResponse.result.boards)
-          Logger.d(TAG, "Got the boards for site ${readerResponse.result.siteDescriptor.siteName}, " +
-            "boards count = ${readerResponse.result.boards.size}")
+        val readerResponse = actions().boards()
+
+        when (readerResponse) {
+          is JsonReaderRequest.JsonReaderResponse.Success -> {
+            boardManager.createOrUpdateBoards(readerResponse.result.boards)
+
+            Logger.d(TAG, "Got the boards for site ${readerResponse.result.siteDescriptor.siteName}, " +
+              "boards count = ${readerResponse.result.boards.size}")
+          }
+          is JsonReaderRequest.JsonReaderResponse.ServerError -> {
+            Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
+          }
+          is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
+            Logger.e(TAG, "Couldn't get site boards, unknown server error", readerResponse.error)
+          }
+          is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
+            Logger.e(TAG, "Couldn't get site boards, parsing error", readerResponse.error)
+          }
         }
-        is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-          Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
-        }
-        is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-          Logger.e(TAG, "Couldn't get site boards, unknown server error", readerResponse.error)
-        }
-        is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-          Logger.e(TAG, "Couldn't get site boards, parsing error", readerResponse.error)
-        }
+
+        return@Try readerResponse
+      }
+
+      if (callback != null) {
+        callback.invoke(result)
+        return@launch
+      }
+
+      if (result is ModularResult.Error) {
+        Logger.e(TAG, "loadBoardInfo error", result.error)
+        throw result.error
       }
     }
   }
@@ -125,17 +146,21 @@ abstract class SiteBase : Site, CoroutineScope {
     // no-op
   }
 
-  override suspend fun createBoard(boardName: String, boardCode: String): ChanBoard {
+  override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {
     val existing = board(boardCode)
     if (existing != null) {
-      return existing
+      return ModularResult.value(existing)
     }
 
     val boardDescriptor = BoardDescriptor.create(siteDescriptor(), boardCode)
     val board = ChanBoard.create(boardDescriptor, boardName)
-    boardManager.createBoard(board)
 
-    return board
+    val created = boardManager.createOrUpdateBoards(listOf(board))
+    if (!created) {
+      return ModularResult.value(null)
+    }
+
+    return ModularResult.value(board)
   }
 
   companion object {
@@ -148,6 +173,7 @@ abstract class SiteBase : Site, CoroutineScope {
         if (host == mediaHost) {
           return true
         }
+
         if (host == "www.$mediaHost") {
           return true
         }

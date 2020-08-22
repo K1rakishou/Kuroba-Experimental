@@ -20,7 +20,7 @@ open class SeenPostLocalSource(
   open suspend fun insert(seenPost: SeenPost) {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.insert(
+    val chanBoardEntity = chanBoardDao.insertBoardId(
       seenPost.threadDescriptor.siteName(),
       seenPost.threadDescriptor.boardCode()
     )
@@ -41,7 +41,7 @@ open class SeenPostLocalSource(
   ): List<SeenPost> {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
     ) ?: return emptyList()

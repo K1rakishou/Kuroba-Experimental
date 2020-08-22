@@ -21,6 +21,13 @@ class ChanDescriptorCache(
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
 
+  // TODO(KurobaEx): handle deletion of boards and threads when deleting (deactivating)
+  //  sites/boards/threads
+
+  suspend fun putBoardDescriptor(boardId: Long, boardDescriptor: BoardDescriptor) {
+    mutex.withLock { boardIdCache.put(boardDescriptor, boardId) }
+  }
+
   suspend fun getBoardIdByBoardDescriptor(boardDescriptor: BoardDescriptor): Long? {
     database.ensureInTransaction()
 
@@ -29,7 +36,7 @@ class ChanDescriptorCache(
       return fromCache
     }
 
-    val fromDatabase = chanBoardDao.selectBoardId(boardDescriptor.siteName(), boardDescriptor.boardCode)
+    val fromDatabase = chanBoardDao.selectBoardDatabaseId(boardDescriptor.siteName(), boardDescriptor.boardCode)
       ?: return null
 
     mutex.withLock { boardIdCache[boardDescriptor] = fromDatabase }
@@ -54,12 +61,52 @@ class ChanDescriptorCache(
     return fromDatabase
   }
 
+  suspend fun getBoardIdByBoardDescriptors(
+    boardDescriptors: List<BoardDescriptor>
+  ): Map<BoardDescriptor, Long> {
+    database.ensureInTransaction()
+
+    val resultMap = mutableMapWithCap<BoardDescriptor, Long>(boardDescriptors)
+
+    mutex.withLock {
+      boardDescriptors.forEach { boardDescriptor ->
+        if (boardIdCache.containsKey(boardDescriptor)) {
+          resultMap[boardDescriptor] = boardIdCache[boardDescriptor]!!
+        }
+      }
+    }
+
+    if (resultMap.size == boardDescriptors.size) {
+      return resultMap
+    }
+
+    val notCached = boardDescriptors.filter { boardDescriptor ->
+      !resultMap.containsKey(boardDescriptor)
+    }
+
+    notCached.forEach { boardDescriptor ->
+      val boardId = chanBoardDao.selectBoardId(boardDescriptor.siteName(), boardDescriptor.boardCode)
+        ?.boardId
+        ?: return@forEach
+
+      resultMap[boardDescriptor] = boardId
+    }
+
+    mutex.withLock {
+      resultMap.forEach { (boardDescriptor, boardId) ->
+        boardIdCache[boardDescriptor] = boardId
+      }
+    }
+
+    return resultMap
+  }
+
   suspend fun getManyThreadIdsByThreadDescriptors(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ): Map<ChanDescriptor.ThreadDescriptor, Long> {
     database.ensureInTransaction()
 
-    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadDescriptors.size)
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadDescriptors)
 
     mutex.withLock {
       threadDescriptors.forEach { threadDescriptor ->
@@ -107,4 +154,5 @@ class ChanDescriptorCache(
 
     return resultMap
   }
+
 }

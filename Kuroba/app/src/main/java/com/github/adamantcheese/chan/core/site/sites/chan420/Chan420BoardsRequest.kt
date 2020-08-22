@@ -17,6 +17,7 @@
 package com.github.adamantcheese.chan.core.site.sites.chan420
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.model.data.board.BoardBuilder
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -28,6 +29,7 @@ import java.util.*
 
 class Chan420BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
+  private val boardManager: BoardManager,
   request: Request,
   okHttpClient: OkHttpClient
 ) : JsonReaderRequest<List<ChanBoard>>(RequestType.Chan420BoardsRequest, request, okHttpClient) {
@@ -84,7 +86,7 @@ class Chan420BoardsRequest(
         return@withObject null
       }
 
-      return@withObject board.toChanBoard()
+      return@withObject board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
     }
 
   }

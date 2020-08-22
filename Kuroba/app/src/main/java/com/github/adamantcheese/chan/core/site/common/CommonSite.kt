@@ -389,13 +389,13 @@ abstract class CommonSite : SiteBase() {
     }
   }
   
-  abstract class CommonActions(protected var site: CommonSite?) : SiteActions {
+  abstract class CommonActions(protected var site: CommonSite) : SiteActions {
     
     override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
       val chanDescriptor = reply.chanDescriptor!!
       
-      reply.password = java.lang.Long.toHexString(site!!.secureRandom.nextLong())
+      reply.password = java.lang.Long.toHexString(site.secureRandom.nextLong())
       replyResponse.password = reply.password
       replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
       replyResponse.boardCode = chanDescriptor.boardCode()
@@ -406,7 +406,7 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site!!.endpoints().reply(chanDescriptor))
+      call.url(site.endpoints().reply(chanDescriptor))
       
       return flow {
         if (requirePrepare()) {
@@ -441,7 +441,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
-      return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.PostResult.PostComplete(replyResponse)
         }
@@ -468,10 +468,10 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site!!.endpoints().delete(deleteRequest.post))
+      call.url(site.endpoints().delete(deleteRequest.post))
       setupDelete(deleteRequest, call)
       
-      return when (val result = site!!.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.DeleteResult.DeleteComplete(deleteResponse)
         }
@@ -491,7 +491,7 @@ abstract class CommonSite : SiteBase() {
     
     override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
       return JsonReaderRequest.JsonReaderResponse.Success(
-        SiteBoards(site!!.siteDescriptor(), site!!.staticBoards)
+        SiteBoards(site.siteDescriptor(), site.staticBoards)
       )
     }
     
@@ -502,7 +502,7 @@ abstract class CommonSite : SiteBase() {
       when (val result = requestProvider().execute()) {
         is JsonReaderRequest.JsonReaderResponse.Success -> {
           return JsonReaderRequest.JsonReaderResponse.Success(
-            SiteBoards(site!!.siteDescriptor(), result.result)
+            SiteBoards(site.siteDescriptor(), result.result)
           )
         }
         is JsonReaderRequest.JsonReaderResponse.ServerError,
@@ -519,10 +519,10 @@ abstract class CommonSite : SiteBase() {
             is JsonReaderRequest.JsonReaderResponse.ParsingError -> result.error
           }
           
-          Logger.e(TAG, "Error while trying to get board for site ${site!!.name}", error)
+          Logger.e(TAG, "Error while trying to get board for site ${site.name}", error)
           
           return JsonReaderRequest.JsonReaderResponse.Success(
-            SiteBoards(site!!.siteDescriptor(), defaultBoardsProvider())
+            SiteBoards(site.siteDescriptor(), defaultBoardsProvider())
           )
         }
       }

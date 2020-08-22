@@ -227,6 +227,7 @@ class Chan4 : SiteBase() {
 
       return Chan4BoardsRequest(
         siteDescriptor(),
+        boardManager,
         request,
         okHttpClient
       ).execute()

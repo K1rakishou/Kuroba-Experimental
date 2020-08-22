@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.repository
 
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.common.myAsync
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
@@ -19,24 +20,40 @@ class SiteRepository(
   private val localSource: SiteLocalSource
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag SiteRepository"
+  private val allSitesLoadedInitializer = SuspendableInitializer<Unit>("allSitesLoadedInitializer")
+
+  suspend fun awaitUntilSitesLoaded() = allSitesLoadedInitializer.awaitUntilInitialized()
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
+  suspend fun initializedSites(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+      val result = tryWithTransaction {
         val (sites, duration) = measureTimedValue {
           localSource.createDefaults(allSiteDescriptors)
 
           return@measureTimedValue localSource.selectAllOrderedDesc()
         }
 
-        logger.log(TAG, "initialize() -> ${sites.size} took $duration")
+        logger.log(TAG, "initializedSites() -> ${sites.size} took $duration")
         return@tryWithTransaction sites
+      }
+
+      allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
+      return@myAsync result
+    }
+  }
+
+  suspend fun loadAllSites(): ModularResult<List<ChanSiteData>> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.selectAllOrderedDesc()
       }
     }
   }
 
   suspend fun persist(chanSiteDataList: Collection<ChanSiteData>): ModularResult<Unit> {
+    logger.log(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction localSource.persist(chanSiteDataList)

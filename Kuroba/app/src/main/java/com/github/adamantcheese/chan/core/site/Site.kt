@@ -16,8 +16,11 @@
  */
 package com.github.adamantcheese.chan.core.site
 
+import com.github.adamantcheese.chan.core.model.SiteBoards
+import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
@@ -118,7 +121,7 @@ interface Site {
 
   fun enabled(): Boolean
   fun initialize(id: Int, userSettings: JsonSettings)
-  fun loadBoardInfo()
+  fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)? = null)
 
   /**
    * Global positive (>0) integer that uniquely identifies this site.<br></br>
@@ -167,6 +170,6 @@ interface Site {
    *
    * @return the created board.
    */
-  suspend fun createBoard(boardName: String, boardCode: String): ChanBoard
+  suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?>
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
 }

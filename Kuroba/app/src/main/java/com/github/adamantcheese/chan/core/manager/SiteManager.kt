@@ -44,35 +44,41 @@ open class SiteManager(
   @GuardedBy("lock")
   private val orders = mutableListWithCap<SiteDescriptor>(128)
 
+  @OptIn(ExperimentalTime::class)
   fun loadSites() {
     appScope.launch {
-      val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)
-      if (result is ModularResult.Error) {
-        Logger.e(TAG, "siteRepository.initialize() error", result.error)
-        suspendableInitializer.initWithError(result.error)
-        return@launch
-      }
+      val time = measureTime { loadSitesInternal() }
+      Logger.d(TAG, "loadSites() took ${time}")
+    }
+  }
 
-      try {
-        result as ModularResult.Value
+  private suspend fun loadSitesInternal() {
+    val result = siteRepository.initializedSites(siteRegistry.SITE_CLASSES_MAP.keys)
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "siteRepository.initializedSites() error", result.error)
+      suspendableInitializer.initWithError(result.error)
+      return
+    }
 
-        lock.write {
-          result.value.forEach { chanSiteData ->
-            siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
-            // TODO(KurobaEx): maybe I don't need to instantiate every singe site, but only the
-            //  active ones
-            siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
+    try {
+      result as ModularResult.Value
 
-            orders.add(0, chanSiteData.siteDescriptor)
-          }
+      lock.write {
+        result.value.forEach { chanSiteData ->
+          siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
+          // TODO(KurobaEx): maybe I don't need to instantiate every singe site, but only the
+          //  active ones
+          siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
+
+          orders.add(0, chanSiteData.siteDescriptor)
         }
-
-        ensureSitesAndOrdersConsistency()
-        suspendableInitializer.initWithValue(Unit)
-      } catch (error: Throwable) {
-        Logger.e(TAG, "SiteManager initialization error", error)
-        suspendableInitializer.initWithError(error)
       }
+
+      ensureSitesAndOrdersConsistency()
+      suspendableInitializer.initWithValue(Unit)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "SiteManager initialization error", error)
+      suspendableInitializer.initWithError(error)
     }
   }
 
@@ -84,14 +90,14 @@ open class SiteManager(
       .hide()
   }
 
-  suspend fun activateOrDeactivateSite(siteDescriptor: SiteDescriptor, activate: Boolean) {
+  suspend fun activateOrDeactivateSite(siteDescriptor: SiteDescriptor, activate: Boolean): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
 
     val chanSiteData = lock.read { siteDataMap[siteDescriptor] }
-      ?: return
+      ?: return false
 
     if (chanSiteData.active == activate) {
-      return
+      return false
     }
 
     ensureSitesAndOrdersConsistency()
@@ -102,6 +108,8 @@ open class SiteManager(
       .ignore()
 
     sitesChanged()
+
+    return true
   }
 
   fun isSiteActive(siteDescriptor: SiteDescriptor): Boolean {
@@ -259,17 +267,31 @@ open class SiteManager(
     }
   }
 
-  fun onSiteMoved(from: Int, to: Int) {
+  fun onSiteMoved(siteDescriptor: SiteDescriptor, from: Int, to: Int): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
 
     require(from >= 0) { "Bad from: $from" }
     require(to >= 0) { "Bad to: $to" }
 
     ensureSitesAndOrdersConsistency()
-    lock.write { orders.add(to, orders.removeAt(from)) }
+
+    val moved = lock.write {
+      if (orders.get(from) != siteDescriptor) {
+        return@write false
+      }
+
+      orders.add(to, orders.removeAt(from))
+      return@write true
+    }
+
+    if (!moved) {
+      return false
+    }
 
     debouncer.post(DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
     sitesChanged()
+
+    return true
   }
 
   fun updateUserSettings(siteDescriptor: SiteDescriptor, userSettings: JsonSettings) {

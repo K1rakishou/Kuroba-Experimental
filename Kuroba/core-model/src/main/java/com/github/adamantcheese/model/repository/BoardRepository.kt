@@ -22,29 +22,35 @@ class BoardRepository(
   private val TAG = "$loggerTag BoardRepository"
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initialize(): ModularResult<Map<SiteDescriptor, List<ChanBoard>>> {
+  suspend fun loadAllBoards(): ModularResult<Map<SiteDescriptor, List<ChanBoard>>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val (boards, duration) = measureTimedValue {
           return@measureTimedValue localSource.selectAllActiveBoards()
         }
 
-        logger.log(TAG, "initialize() -> ${boards.size} took $duration")
+        logger.log(TAG, "loadAllBoards() -> ${boards.size} took $duration")
         return@tryWithTransaction boards
       }
     }
   }
 
-  suspend fun activateBoard(boardDescriptor: BoardDescriptor) {
-    TODO()
+  suspend fun activateDeactivateBoard(boardDescriptor: BoardDescriptor, activate: Boolean): ModularResult<Boolean> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.activateDeactivateBoard(boardDescriptor, activate)
+      }
+    }
   }
 
-  suspend fun deactivateBoard(boardDescriptor: BoardDescriptor) {
-    TODO()
-  }
+  suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>): ModularResult<Unit> {
+    logger.log(TAG, "persist(boardsOrderedCount=${boardsOrdered.values.sumBy { boards -> boards.size }})")
 
-  suspend fun updateBoards(boards: List<ChanBoard>) {
-    // TODO("Not yet implemented")
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.persist(boardsOrdered)
+      }
+    }
   }
 
   companion object {

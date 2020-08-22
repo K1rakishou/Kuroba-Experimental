@@ -32,7 +32,7 @@ class ChanPostLocalSource(
   suspend fun insertEmptyThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
     )
@@ -64,7 +64,7 @@ class ChanPostLocalSource(
 
     val first = chanOriginalPostList.first()
 
-    val chanBoardEntity = chanBoardDao.insert(
+    val chanBoardEntity = chanBoardDao.insertBoardId(
       first.postDescriptor.descriptor.siteName(),
       first.postDescriptor.descriptor.boardCode()
     )
@@ -100,7 +100,7 @@ class ChanPostLocalSource(
 
     val originalPost = chanPostList.firstOrNull { chanPost -> chanPost.isOp }
     if (originalPost != null) {
-      val chanBoardEntity = chanBoardDao.insert(
+      val chanBoardEntity = chanBoardDao.insertBoardId(
         originalPost.postDescriptor.descriptor.siteName(),
         originalPost.postDescriptor.descriptor.boardCode()
       )
@@ -256,7 +256,7 @@ class ChanPostLocalSource(
 
     catalogDescriptors.forEach { (catalogDescriptor, postNoSet) ->
       // Load catalog descriptor's board
-      val chanBoardEntity = chanBoardDao.select(catalogDescriptor.siteName(), catalogDescriptor.boardCode())
+      val chanBoardEntity = chanBoardDao.selectBoardId(catalogDescriptor.siteName(), catalogDescriptor.boardCode())
         ?: return@forEach
 
       // Load catalog descriptor's latest threads
@@ -290,7 +290,7 @@ class ChanPostLocalSource(
     require(count > 0) { "Bad count param: $count" }
 
     // Load catalog descriptor's board
-    val chanBoardEntity = chanBoardDao.select(descriptor.siteName(), descriptor.boardCode())
+    val chanBoardEntity = chanBoardDao.selectBoardId(descriptor.siteName(), descriptor.boardCode())
       ?: return emptyList()
 
     // Load catalog descriptor's latest threads
@@ -318,7 +318,7 @@ class ChanPostLocalSource(
     }
 
     // Load catalog descriptor's board
-    val chanBoardEntity = chanBoardDao.select(descriptor.siteName(), descriptor.boardCode())
+    val chanBoardEntity = chanBoardDao.selectBoardId(descriptor.siteName(), descriptor.boardCode())
       ?: return emptyList()
 
     // Load catalog descriptor's threads
@@ -557,7 +557,7 @@ class ChanPostLocalSource(
   suspend fun getThreadIdByPostDescriptor(postDescriptor: PostDescriptor): Long? {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       postDescriptor.descriptor.siteName(),
       postDescriptor.descriptor.boardCode()
     )
@@ -577,7 +577,7 @@ class ChanPostLocalSource(
   ): ChanThreadEntity? {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
     )
@@ -604,7 +604,7 @@ class ChanPostLocalSource(
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     ensureInTransaction()
 
-    val chanBoardEntity = chanBoardDao.select(
+    val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
     )
