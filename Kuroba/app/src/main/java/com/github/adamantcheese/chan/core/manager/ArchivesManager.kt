@@ -18,6 +18,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -43,8 +44,8 @@ class ArchivesManager(
   private val allArchiveDescriptors = SuspendableInitializer<List<ArchiveDescriptor>>("allArchiveDescriptors")
   private val allArchiveDescriptorsMap = SuspendableInitializer<Map<Long, ArchiveDescriptor>>("allArchiveDescriptorsMap")
 
-  init {
-    applicationScope.launch {
+  fun initialize() {
+    applicationScope.launch(Dispatchers.Default) {
       initArchivesManager()
     }
   }
@@ -333,7 +334,7 @@ class ArchivesManager(
         )
       }
 
-      val archiveInfoMap = thirdPartyArchiveInfoRepository.init(archiveDescriptors)
+      val archiveInfoMap = thirdPartyArchiveInfoRepository.initialize(archiveDescriptors)
 
       archiveDescriptors.forEach { descriptor ->
         descriptor.setArchiveId(archiveInfoMap[descriptor.domain]!!.databaseId)

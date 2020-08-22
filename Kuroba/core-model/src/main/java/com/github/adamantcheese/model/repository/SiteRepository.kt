@@ -8,8 +8,10 @@ import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.data.site.ChanSiteData
 import com.github.adamantcheese.model.source.local.SiteLocalSource
+import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 class SiteRepository(
@@ -28,6 +30,8 @@ class SiteRepository(
   suspend fun initializeSites(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.myAsync {
       val result = tryWithTransaction {
+        ensureBackgroundThread()
+
         val (sites, duration) = measureTimedValue {
           localSource.createDefaults(allSiteDescriptors)
 
@@ -51,12 +55,16 @@ class SiteRepository(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun persist(chanSiteDataList: Collection<ChanSiteData>): ModularResult<Unit> {
     logger.log(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.persist(chanSiteDataList)
+        val time = measureTime { localSource.persist(chanSiteDataList) }
+        logger.log(TAG, "persist(${chanSiteDataList.size}) took $time")
+
+        return@tryWithTransaction
       }
     }
   }

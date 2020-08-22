@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.manager
 
+import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
@@ -24,6 +25,9 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
@@ -34,12 +38,14 @@ class HistoryNavigationManager(
   private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val persistRunning = AtomicBoolean(false)
-
-  private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
 
+  private val lock = ReentrantReadWriteLock()
+  @GuardedBy("lock")
+  private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
+
   fun initialize() {
-    appScope.launch(Dispatchers.Default) {
+    appScope.launch {
       appScope.launch {
         suspendableInitializer.awaitUntilInitialized()
 
@@ -57,16 +63,14 @@ class HistoryNavigationManager(
           }
       }
 
-      appScope.launch {
+      appScope.launch(Dispatchers.Default) {
         @Suppress("MoveVariableDeclarationIntoWhen")
         val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
         when (loadedNavElementsResult) {
           is ModularResult.Value -> {
-            BackgroundUtils.ensureMainThread()
+            lock.write { navigationStack.addAll(loadedNavElementsResult.value) }
 
-            navigationStack.addAll(loadedNavElementsResult.value)
             suspendableInitializer.initWithValue(Unit)
-
             Logger.d(TAG, "HistoryNavigationManager initialized!")
           }
           is ModularResult.Error -> {
@@ -83,20 +87,22 @@ class HistoryNavigationManager(
   fun getAll(): List<NavHistoryElement> {
     BackgroundUtils.ensureMainThread()
 
-    return navigationStack.toList()
+    return lock.read { navigationStack.toList() }
   }
 
   fun getNavElementAtTop(): NavHistoryElement? {
     BackgroundUtils.ensureMainThread()
 
-    return navigationStack.firstOrNull()
+    return lock.read { navigationStack.firstOrNull() }
   }
 
   fun getFirstCatalogNavElement(): NavHistoryElement? {
     BackgroundUtils.ensureMainThread()
 
-    return navigationStack.firstOrNull { navHistoryElement ->
-      navHistoryElement is NavHistoryElement.Catalog
+    return lock.read {
+      return@read navigationStack.firstOrNull { navHistoryElement ->
+        navHistoryElement is NavHistoryElement.Catalog
+      }
     }
   }
 
@@ -141,10 +147,12 @@ class HistoryNavigationManager(
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 
-      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
-        return@indexOfFirst when (navHistoryElement) {
-          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
-          is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+      val indexOfElem = lock.read {
+        return@read navigationStack.indexOfFirst { navHistoryElement ->
+          return@indexOfFirst when (navHistoryElement) {
+            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
+            is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+          }
         }
       }
 
@@ -153,7 +161,7 @@ class HistoryNavigationManager(
       }
 
       // Move the existing navigation element at the top of the list
-      navigationStack.add(0, navigationStack.removeAt(indexOfElem))
+      lock.write { navigationStack.add(0, navigationStack.removeAt(indexOfElem)) }
       navStackChanged()
     }
   }
@@ -164,10 +172,12 @@ class HistoryNavigationManager(
     serializedCoroutineExecutor.post {
       BackgroundUtils.ensureMainThread()
 
-      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
-        return@indexOfFirst when (navHistoryElement) {
-          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
-          is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+      val indexOfElem = lock.read {
+        return@read navigationStack.indexOfFirst { navHistoryElement ->
+          return@indexOfFirst when (navHistoryElement) {
+            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
+            is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+          }
         }
       }
 
@@ -175,7 +185,7 @@ class HistoryNavigationManager(
         return@post
       }
 
-      navigationStack.removeAt(indexOfElem)
+      lock.write { navigationStack.removeAt(indexOfElem) }
       navStackChanged()
     }
   }
@@ -183,7 +193,7 @@ class HistoryNavigationManager(
   fun isAtTop(descriptor: ChanDescriptor): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    val topNavElement = navigationStack.firstOrNull()
+    val topNavElement = lock.read { navigationStack.firstOrNull() }
       ?: return false
 
     val topNavElementDescriptor = when (topNavElement) {
@@ -206,7 +216,9 @@ class HistoryNavigationManager(
         Logger.d(TAG, "persistNavigationStack blocking called")
 
         try {
-          historyNavigationRepository.persist(navigationStack.toList())
+          val navStackCopy = lock.read { navigationStack.toList() }
+
+          historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
               Logger.e(TAG, "Error while trying to persist navigation stack", error)
               return@runBlocking
@@ -221,7 +233,9 @@ class HistoryNavigationManager(
         Logger.d(TAG, "persistNavigationStack async called")
 
         try {
-          historyNavigationRepository.persist(navigationStack.toList())
+          val navStackCopy = lock.read { navigationStack.toList() }
+
+          historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
               Logger.e(TAG, "Error while trying to persist navigation stack", error)
               return@post
@@ -237,12 +251,12 @@ class HistoryNavigationManager(
   private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    val indexOfElem = navigationStack.indexOf(navElement)
+    val indexOfElem = lock.read { navigationStack.indexOf(navElement) }
     if (indexOfElem >= 0) {
       return false
     }
 
-    navigationStack.add(0, navElement)
+    lock.write { navigationStack.add(0, navElement) }
     return true
   }
 

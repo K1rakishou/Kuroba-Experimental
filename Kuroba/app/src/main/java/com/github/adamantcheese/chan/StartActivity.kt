@@ -35,7 +35,6 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -67,14 +66,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class StartActivity : AppCompatActivity(),
   CreateNdefMessageCallback,
   FSAFActivityCallbacks,
   StartActivityCallbacks {
 
-  @Inject
-  lateinit var databaseManager: DatabaseManager
   @Inject
   lateinit var siteResolver: SiteResolver
   @Inject
@@ -97,6 +96,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -118,14 +119,16 @@ class StartActivity : AppCompatActivity(),
   private lateinit var mainNavigationController: NavigationController
   private lateinit var drawerController: DrawerController
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
+    val createUiTime = measureTime { createUi() }
+    Logger.d(TAG, "createUi took $createUiTime")
+
     lifecycleScope.launch {
-      val start = System.currentTimeMillis()
-      onCreateInternal(this, savedInstanceState)
-      val diff = System.currentTimeMillis() - start
-      Logger.d(TAG, "StartActivity initialization took " + diff + "ms")
+      val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
+      Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
   }
 
@@ -146,8 +149,10 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private suspend fun onCreateInternal(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
-    Chan.inject(this)
+  @OptIn(ExperimentalTime::class)
+  private fun createUi() {
+    val injectTime = measureTime { Chan.inject(this) }
+    Logger.d(TAG, "inject took $injectTime")
 
     if (AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
@@ -174,6 +179,63 @@ class StartActivity : AppCompatActivity(),
       ViewCompat.requestApplyInsets(window.decorView)
     }
 
+    listenForWindowInsetsChanges()
+
+    mainNavigationController = StyledToolbarNavigationController(this)
+    setupLayout()
+
+    setContentView(drawerController.view)
+    pushController(drawerController)
+
+    drawerController.attachBottomNavViewToToolbar()
+
+    // Prevent overdraw
+    // Do this after setContentView, or the decor creating will reset the background to a
+    // default non-null drawable
+    window.setBackgroundDrawable(null)
+
+    val adapter = NfcAdapter.getDefaultAdapter(this)
+    adapter?.setNdefPushMessageCallback(this, this)
+
+    if (ChanSettings.fullUserRotationEnable.get()) {
+      requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+    }
+
+    browseController?.showLoading()
+  }
+
+  private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
+    bookmarksManager.initialize()
+    historyNavigationManager.initialize()
+    bookmarkWatcherCoordinator.initialize()
+    archivesManager.initialize()
+
+    updateManager.autoUpdateCheck()
+
+    coroutineScope.launch {
+      setupFromStateOrFreshLaunch(savedInstanceState)
+    }
+
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      compositeDisposable += bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
+        .subscribe {
+          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            return@subscribe
+          }
+
+          updateBottomNavBar()
+        }
+
+      compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
+        .subscribe { change ->
+          updateBottomNavBarIfNeeded(change)
+        }
+    }
+
+    onNewIntentInternal(intent)
+  }
+
+  private fun listenForWindowInsetsChanges() {
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = FullScreenUtils.isKeyboardAppeared(view, insets.systemWindowInsetBottom)
 
@@ -208,56 +270,6 @@ class StartActivity : AppCompatActivity(),
         )
       )
     }
-
-    mainNavigationController = StyledToolbarNavigationController(this)
-    setupLayout()
-
-    setContentView(drawerController.view)
-    pushController(drawerController)
-
-    drawerController.attachBottomNavViewToToolbar()
-
-    // Prevent overdraw
-    // Do this after setContentView, or the decor creating will reset the background to a
-    // default non-null drawable
-    window.setBackgroundDrawable(null)
-
-    val adapter = NfcAdapter.getDefaultAdapter(this)
-    adapter?.setNdefPushMessageCallback(this, this)
-
-    bookmarksManager.initialize()
-    historyNavigationManager.initialize()
-    bookmarkWatcherCoordinator.initialize()
-
-    updateManager.autoUpdateCheck()
-
-    if (ChanSettings.fullUserRotationEnable.get()) {
-      requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-    }
-
-    browseController?.showLoading()
-
-    coroutineScope.launch {
-      setupFromStateOrFreshLaunch(savedInstanceState)
-    }
-
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      compositeDisposable += bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
-        .subscribe {
-          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            return@subscribe
-          }
-
-          updateBottomNavBar()
-        }
-
-      compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
-        .subscribe { change ->
-          updateBottomNavBarIfNeeded(change)
-        }
-    }
-
-    onNewIntentInternal(intent)
   }
 
   override fun onNewIntent(intent: Intent) {

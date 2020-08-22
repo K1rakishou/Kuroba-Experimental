@@ -55,7 +55,7 @@ class BookmarksManager(
   private val orders = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(256)
 
   fun initialize() {
-    appScope.launch(Dispatchers.Default) {
+    appScope.launch {
       appScope.launch {
         suspendableInitializer.awaitUntilInitialized()
 
@@ -84,13 +84,11 @@ class BookmarksManager(
           .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
       }
 
-      appScope.launch {
+      appScope.launch(Dispatchers.Default) {
         @Suppress("MoveVariableDeclarationIntoWhen")
         val bookmarksResult = bookmarksRepository.initialize()
         when (bookmarksResult) {
           is ModularResult.Value -> {
-            BackgroundUtils.ensureMainThread()
-
             lock.write {
               bookmarksResult.value.forEach { threadBookmark ->
                 bookmarks[threadBookmark.threadDescriptor] = threadBookmark

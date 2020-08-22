@@ -6,6 +6,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.source.local.ThreadBookmarkLocalSource
+import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -23,6 +24,8 @@ class BookmarksRepository(
   suspend fun initialize(): ModularResult<List<ThreadBookmark>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
+        ensureBackgroundThread()
+
         val (bookmarks, duration) = measureTimedValue {
           return@measureTimedValue localSource.selectAll()
         }

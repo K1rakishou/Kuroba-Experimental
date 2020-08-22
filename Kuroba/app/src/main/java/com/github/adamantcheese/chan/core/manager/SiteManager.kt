@@ -92,21 +92,25 @@ open class SiteManager(
 
   suspend fun activateOrDeactivateSite(siteDescriptor: SiteDescriptor, activate: Boolean): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
 
-    val chanSiteData = lock.read { siteDataMap[siteDescriptor] }
-      ?: return false
+    val updated = lock.write {
+      val chanSiteData = siteDataMap[siteDescriptor]
+        ?: return@write false
 
-    if (chanSiteData.active == activate) {
+      if (chanSiteData.active == activate) {
+        return@write false
+      }
+
+      chanSiteData.active = activate
+      return@write true
+    }
+
+    if (!updated) {
       return false
     }
 
-    ensureSitesAndOrdersConsistency()
-    lock.write { chanSiteData.active = activate }
-
-    siteRepository.persist(listOf(chanSiteData))
-      .peekError { error -> Logger.e(TAG, "Failed to persist ChanSiteData", error) }
-      .ignore()
-
+    debouncer.post(DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
     sitesChanged()
 
     return true

@@ -12,6 +12,7 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.source.cache.ThirdPartyArchiveInfoCache
 import com.github.adamantcheese.model.source.local.ThirdPartyArchiveInfoLocalSource
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
+import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -29,8 +30,10 @@ class ThirdPartyArchiveInfoRepository(
   private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
   private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
 
-  suspend fun init(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {
+  suspend fun initialize(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {
     return applicationScope.myAsync {
+      ensureBackgroundThread()
+
       val result = tryWithTransaction {
         return@tryWithTransaction initInternal(allArchiveDescriptors)
       }
@@ -231,6 +234,8 @@ class ThirdPartyArchiveInfoRepository(
   private suspend fun initInternal(
     allArchiveDescriptors: List<ArchiveDescriptor>
   ): MutableList<ThirdPartyArchiveInfo> {
+    ensureBackgroundThread()
+
     val resultList = mutableListOf<ThirdPartyArchiveInfo>()
 
     val thirdPartyArchiveInfoList = allArchiveDescriptors.map { archiveDescriptor ->

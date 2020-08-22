@@ -8,8 +8,10 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.source.local.BoardLocalSource
+import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 class BoardRepository(
@@ -25,6 +27,8 @@ class BoardRepository(
   suspend fun loadAllBoards(): ModularResult<Map<SiteDescriptor, List<ChanBoard>>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
+        ensureBackgroundThread()
+
         val (boards, duration) = measureTimedValue {
           return@measureTimedValue localSource.selectAllActiveBoards()
         }
@@ -43,17 +47,17 @@ class BoardRepository(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>): ModularResult<Unit> {
-    logger.log(TAG, "persist(boardsOrderedCount=${boardsOrdered.values.sumBy { boards -> boards.size }})")
-
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.persist(boardsOrdered)
+        val time = measureTime { localSource.persist(boardsOrdered) }
+
+        val boardsCountTotal = boardsOrdered.values.sumBy { boards -> boards.size }
+        logger.log(TAG, "persist($boardsCountTotal) took $time")
+
+        return@tryWithTransaction
       }
     }
-  }
-
-  companion object {
-    private const val TAG = "BoardRepository"
   }
 }

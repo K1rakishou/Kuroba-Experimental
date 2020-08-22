@@ -11,6 +11,7 @@ import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.source.cache.PostsCache
 import com.github.adamantcheese.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
@@ -28,7 +29,7 @@ class ChanPostRepository(
   private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache)
 
   init {
-    applicationScope.launch {
+    applicationScope.launch(Dispatchers.Default) {
       val result = tryWithTransaction { deleteOldPostsIfNeeded() }
       suspendableInitializer.initWithModularResult(result)
     }

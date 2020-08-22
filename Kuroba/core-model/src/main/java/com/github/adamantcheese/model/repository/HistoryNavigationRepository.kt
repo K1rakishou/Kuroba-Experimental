@@ -6,6 +6,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.adamantcheese.model.source.local.NavHistoryLocalSource
+import com.github.adamantcheese.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -23,6 +24,8 @@ class HistoryNavigationRepository(
   suspend fun initialize(maxCount: Int): ModularResult<List<NavHistoryElement>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
+        ensureBackgroundThread()
+
         val (navHistoryStack, duration) = measureTimedValue {
           return@measureTimedValue localSource.selectAll(maxCount)
         }
