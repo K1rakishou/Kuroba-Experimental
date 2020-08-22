@@ -28,6 +28,14 @@ class ChanDescriptorCache(
     mutex.withLock { boardIdCache.put(boardDescriptor, boardId) }
   }
 
+  suspend fun putManyBoardDescriptors(boardIdMap: Map<BoardDescriptor, Long>) {
+    mutex.withLock {
+       boardIdMap.forEach { (boardDescriptor, boardId) ->
+         boardIdCache.put(boardDescriptor, boardId)
+       }
+    }
+  }
+
   suspend fun getBoardIdByBoardDescriptor(boardDescriptor: BoardDescriptor): Long? {
     database.ensureInTransaction()
 

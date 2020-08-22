@@ -53,10 +53,33 @@ class BoardLocalSource(
   suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>) {
     ensureInTransaction()
 
-    boardsOrdered.forEach { (_, boards) ->
-      val boardIdMap = chanDescriptorCache.getBoardIdByBoardDescriptors(
-        boards.map { board -> board.boardDescriptor }
+    val boardMapPerSite = mutableMapOf<SiteDescriptor, Map<BoardDescriptor, Long>>()
+
+    boardsOrdered.forEach { (siteDescriptor, boards) ->
+      val boardCodes = boards.map { board -> board.boardCode() }
+      if (boardCodes.isEmpty()) {
+        return@forEach
+      }
+
+      val boardIdMap = chanBoardDao.createNewBoardIdEntities(
+        siteDescriptor.siteName,
+        boardCodes
       )
+
+      boardMapPerSite[siteDescriptor] = boardIdMap
+    }
+
+    if (boardMapPerSite.isEmpty()) {
+      return
+    }
+
+    boardMapPerSite.forEach { (_, boardIdMap) ->
+      chanDescriptorCache.putManyBoardDescriptors(boardIdMap)
+    }
+
+    boardsOrdered.forEach { (siteDescriptor, boards) ->
+      val boardIdMap = boardMapPerSite[siteDescriptor]
+        ?: return@forEach
 
       var index = 0
 
@@ -69,7 +92,7 @@ class BoardLocalSource(
 
       entities
         .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-        .forEach { chunk -> chanBoardDao.updateBoards(chunk) }
+        .forEach { chunk -> chanBoardDao.createOrUpdateBoards(chunk) }
     }
   }
 

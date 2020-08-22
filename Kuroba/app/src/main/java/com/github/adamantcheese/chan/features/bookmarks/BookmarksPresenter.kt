@@ -93,6 +93,8 @@ class BookmarksPresenter(
 
   private fun reloadBookmarks() {
     scope.launch(Dispatchers.Default) {
+      bookmarksManager.awaitUntilInitialized()
+
       if (bookmarksManager.bookmarksCount() <= 0) {
         setState(BookmarksControllerState.Empty)
         return@launch

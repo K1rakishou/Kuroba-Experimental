@@ -49,6 +49,10 @@ class BoardRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>): ModularResult<Unit> {
+    if (boardsOrdered.isEmpty()) {
+      return ModularResult.value(Unit)
+    }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val time = measureTime { localSource.persist(boardsOrdered) }
