@@ -90,7 +90,7 @@ class GlobalWindowInsetsManager {
 
   fun listenForKeyboardChanges(): Flowable<Boolean> {
     return keyboardStateSubject
-      .onBackpressureBuffer()
+      .onBackpressureLatest()
       .distinctUntilChanged()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "keyboardStateSubject unknown error", error) }
@@ -100,7 +100,7 @@ class GlobalWindowInsetsManager {
   fun listenForInsetsChanges(): Flowable<Unit> {
     return insetsSubject
       .filter { initialized }
-      .onBackpressureBuffer()
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "insetsSubject unknown error", error) }
       .hide()

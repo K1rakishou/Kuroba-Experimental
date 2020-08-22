@@ -82,7 +82,9 @@ class ArchivesManager(
    * */
   fun listenForFetchHistoryChanges(): Flowable<FetchHistoryChange> {
     return archiveFetchHistoryChangeSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "listenForFetchHistoryChanges error", error) }
       .hide()
   }
 

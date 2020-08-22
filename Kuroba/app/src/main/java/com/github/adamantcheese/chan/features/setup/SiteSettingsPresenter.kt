@@ -43,29 +43,29 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
   }
 
   suspend fun showSiteSettings(context: Context, siteDescriptor: SiteDescriptor): List<SettingsGroup> {
-    siteManager.awaitUntilInitialized()
-
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
-    if (site == null) {
-      withView {
-        val message = context.getString(R.string.site_settings_not_site_found, siteDescriptor.siteName)
-        showErrorToast(message)
-      }
-
-      return emptyList()
-    }
-
-    val isSiteActive = siteManager.isSiteActive(siteDescriptor)
-    if (!isSiteActive) {
-      withView {
-        val message = context.getString(R.string.site_settings_site_is_not_active)
-        showErrorToast(message)
-      }
-
-      return emptyList()
-    }
-
     return withContext(Dispatchers.Default) {
+      siteManager.awaitUntilInitialized()
+
+      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      if (site == null) {
+        withView {
+          val message = context.getString(R.string.site_settings_not_site_found, siteDescriptor.siteName)
+          showErrorToast(message)
+        }
+
+        return@withContext emptyList()
+      }
+
+      val isSiteActive = siteManager.isSiteActive(siteDescriptor)
+      if (!isSiteActive) {
+        withView {
+          val message = context.getString(R.string.site_settings_site_is_not_active)
+          showErrorToast(message)
+        }
+
+        return@withContext emptyList()
+      }
+
       val groups = collectGroupBuilders(context, site)
         .map { it.buildFunction.invoke() }
 

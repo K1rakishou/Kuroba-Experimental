@@ -200,9 +200,6 @@ public class Chan
         siteManager.loadSites();
         boardManager.loadBoards();
 
-        // TODO(KurobaEx): remove me!
-        databaseManager.initializeAndTrim();
-
         setupErrorHandlers();
 
         // TODO(KurobaEx): move to background thread!

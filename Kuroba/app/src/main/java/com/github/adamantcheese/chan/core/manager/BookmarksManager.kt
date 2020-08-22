@@ -115,11 +115,7 @@ class BookmarksManager(
     return bookmarksChangedSubject
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
-      .doOnNext { bookmarkChange ->
-        if (verboseLogsEnabled) {
-          Logger.d(TAG, "bookmarksChanged(${bookmarkChange::class.java.simpleName})")
-        }
-      }
+      .doOnError { error -> Logger.e(TAG, "listenForBookmarksChanges error", error) }
       .hide()
   }
 
@@ -127,6 +123,7 @@ class BookmarksManager(
     return threadIsFetchingEventsSubject
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "listenForFetchEventsFromActiveThreads error", error) }
       .hide()
   }
 

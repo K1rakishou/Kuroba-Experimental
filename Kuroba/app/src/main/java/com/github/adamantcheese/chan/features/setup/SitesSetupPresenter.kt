@@ -12,6 +12,7 @@ import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,7 +30,7 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
 
     setState(SitesSetupControllerState.Loading)
 
-    scope.launch {
+    scope.launch(Dispatchers.Default) {
       siteManager.awaitUntilInitialized()
 
       showSites()

@@ -89,6 +89,7 @@ class SettingsNotificationManager {
   fun listenForNotificationUpdates(): Flowable<Unit> = activeNotificationsSubject
     .onBackpressureBuffer()
     .observeOn(AndroidSchedulers.mainThread())
+    .doOnError { error -> Logger.e(TAG, "listenForNotificationUpdates error", error) }
     .hide()
 
   companion object {

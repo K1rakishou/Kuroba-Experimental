@@ -180,9 +180,6 @@ class SettingsCoordinator(
     launch {
       settingsNotificationManager.listenForNotificationUpdates()
         .asFlow()
-        .catch { error ->
-          Logger.e(TAG, "Unknown error received from SettingsNotificationManager", error)
-        }
         .collect {
           rebuildCurrentScreen(BuildOptions.BuildWithNotificationType)
         }

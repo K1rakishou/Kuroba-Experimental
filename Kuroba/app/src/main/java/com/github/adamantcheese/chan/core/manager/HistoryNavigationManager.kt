@@ -102,6 +102,7 @@ class HistoryNavigationManager(
 
     return navigationStackChangesSubject
       .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "listenForNavigationStackChanges error", error) }
       .hide()
   }
 

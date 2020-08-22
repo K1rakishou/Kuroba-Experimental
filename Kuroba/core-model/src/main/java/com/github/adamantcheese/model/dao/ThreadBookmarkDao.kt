@@ -87,7 +87,7 @@ abstract class ThreadBookmarkDao {
     FROM ${ThreadBookmarkEntity.TABLE_NAME} 
     WHERE ${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:threadIdSet)
 """)
-  abstract fun deleteMany(threadIdSet: Set<Long>)
+  abstract suspend fun deleteMany(threadIdSet: Set<Long>)
 
   private suspend fun selectManyIds(ownerThreadIds: Collection<Long>): Map<Long, Long> {
     val pairs = selectManyThreadBookmarkIdPairs(ownerThreadIds)

@@ -22,6 +22,9 @@ abstract class ChanSiteDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun updateManySettings(settings: List<ChanSiteSettingsEntity>)
 
+  @Query("SELECT * FROM ${ChanSiteIdEntity.TABLE_NAME}")
+  abstract suspend fun selectAllSiteIdEntities(): List<ChanSiteIdEntity>
+
   @Query("""
     SELECT * 
     FROM ${ChanSiteIdEntity.TABLE_NAME} csie
@@ -33,9 +36,17 @@ abstract class ChanSiteDao {
   """)
   abstract suspend fun selectAllOrderedDescWithSettings(): List<ChanSiteWithSettings>
 
-  suspend fun createDefaults(allSiteDescriptors: Collection<SiteDescriptor>) {
-    val chanSiteIdEntityList = allSiteDescriptors.map { siteDescriptor ->
-      ChanSiteIdEntity(siteDescriptor.siteName)
+  suspend fun createDefaultsIfNecessary(allSiteDescriptors: Collection<SiteDescriptor>) {
+    val existingSiteDescriptors = selectAllSiteIdEntities()
+      .map { chanSiteIdEntity -> SiteDescriptor(chanSiteIdEntity.siteName) }
+      .toSet()
+
+    val chanSiteIdEntityList = allSiteDescriptors
+      .filter { siteDescriptor -> siteDescriptor !in existingSiteDescriptors }
+      .map { siteDescriptor -> ChanSiteIdEntity(siteDescriptor.siteName) }
+
+    if (chanSiteIdEntityList.isEmpty()) {
+      return
     }
 
     insertDefaultSiteIdsOrIgnore(chanSiteIdEntityList)

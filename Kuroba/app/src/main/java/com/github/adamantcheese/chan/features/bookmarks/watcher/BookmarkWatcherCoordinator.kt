@@ -10,7 +10,6 @@ import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.Flowable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -34,7 +33,6 @@ class BookmarkWatcherCoordinator(
         .debounce(1, TimeUnit.SECONDS)
         .asFlow()
         .filter { bookmarkChange -> isExpectedBookmarkChange(bookmarkChange) }
-        .catch { error -> Logger.e(TAG, "Error while listenForBookmarksChanges()", error) }
         .collect {
           if (verboseLogsEnabled) {
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")

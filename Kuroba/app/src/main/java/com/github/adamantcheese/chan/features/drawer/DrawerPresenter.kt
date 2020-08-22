@@ -48,7 +48,8 @@ class DrawerPresenter(
     scope.launch {
       setState(HistoryControllerState.Loading)
 
-      historyNavigationManager.listenForNavigationStackChanges().asFlow()
+      historyNavigationManager.listenForNavigationStackChanges()
+        .asFlow()
         .collect {
           BackgroundUtils.ensureMainThread()
 

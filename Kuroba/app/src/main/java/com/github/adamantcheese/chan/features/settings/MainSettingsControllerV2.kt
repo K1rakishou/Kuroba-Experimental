@@ -18,11 +18,9 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage
 import com.github.adamantcheese.chan.ui.settings.SettingNotificationType
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.exhaustive
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
 
 class MainSettingsControllerV2(context: Context)
@@ -63,13 +61,8 @@ class MainSettingsControllerV2(context: Context)
     settingsCoordinator.onCreate()
     settingsCoordinator.rebuildScreen(defaultScreen, BuildOptions.Default)
 
-    mainScope.launch {
-      settingsCoordinator.listenForRenderScreenActions()
-        .asFlow()
-        .collect { renderAction ->
-          renderScreen(renderAction)
-        }
-    }
+    compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
+      .subscribe { renderAction -> renderScreen(renderAction) }
   }
 
   private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {

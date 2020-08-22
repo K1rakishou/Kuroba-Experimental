@@ -36,6 +36,6 @@ abstract class NavHistoryDao {
     FROM ${NavHistoryElementIdEntity.TABLE_NAME}
     WHERE ${NavHistoryElementIdEntity.ID_COLUMN_NAME} NOT IN (:excludedIds)
   """)
-  abstract fun deleteAllExcept(excludedIds: List<Long>)
+  abstract suspend fun deleteAllExcept(excludedIds: List<Long>)
 
 }

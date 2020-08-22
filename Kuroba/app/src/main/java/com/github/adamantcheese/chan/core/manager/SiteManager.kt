@@ -17,6 +17,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -46,16 +47,17 @@ open class SiteManager(
 
   @OptIn(ExperimentalTime::class)
   fun loadSites() {
-    appScope.launch {
+    appScope.launch(Dispatchers.Default) {
       val time = measureTime { loadSitesInternal() }
       Logger.d(TAG, "loadSites() took ${time}")
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun loadSitesInternal() {
-    val result = siteRepository.initializedSites(siteRegistry.SITE_CLASSES_MAP.keys)
+    val result = siteRepository.initializeSites(siteRegistry.SITE_CLASSES_MAP.keys)
     if (result is ModularResult.Error) {
-      Logger.e(TAG, "siteRepository.initializedSites() error", result.error)
+      Logger.e(TAG, "siteRepository.initializeSites() error", result.error)
       suspendableInitializer.initWithError(result.error)
       return
     }
@@ -66,10 +68,8 @@ open class SiteManager(
       lock.write {
         result.value.forEach { chanSiteData ->
           siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
-          // TODO(KurobaEx): maybe I don't need to instantiate every singe site, but only the
-          //  active ones
-          siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
 
+          siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
           orders.add(0, chanSiteData.siteDescriptor)
         }
       }

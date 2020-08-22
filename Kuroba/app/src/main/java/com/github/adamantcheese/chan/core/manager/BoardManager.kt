@@ -17,6 +17,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -44,7 +45,7 @@ class BoardManager(
 
   @OptIn(ExperimentalTime::class)
   fun loadBoards() {
-    appScope.launch {
+    appScope.launch(Dispatchers.Default) {
       val time = measureTime { loadBoardsInternal() }
       Logger.d(TAG, "loadBoards() took ${time}")
     }

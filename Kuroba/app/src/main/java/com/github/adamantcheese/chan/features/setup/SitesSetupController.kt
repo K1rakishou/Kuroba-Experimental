@@ -15,9 +15,7 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.utils.AndroidUtils
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
+import com.github.adamantcheese.chan.utils.plusAssign
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
 
@@ -53,11 +51,8 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
         }
       })
 
-    mainScope.launch {
-      sitesPresenter.listenForStateChanges()
-        .asFlow()
-        .collect { state -> onStateChanged(state) }
-    }
+    compositeDisposable += sitesPresenter.listenForStateChanges()
+      .subscribe { state -> onStateChanged(state) }
 
     sitesPresenter.onCreate(this)
   }

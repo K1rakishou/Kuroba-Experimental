@@ -60,11 +60,10 @@ import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
+import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
 
@@ -98,6 +97,7 @@ class StartActivity : AppCompatActivity(),
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
+  private val compositeDisposable = CompositeDisposable()
 
   private var intentMismatchWorkaroundActive = false
   private var exitFlag = false
@@ -129,6 +129,7 @@ class StartActivity : AppCompatActivity(),
   override fun onDestroy() {
     super.onDestroy()
 
+    compositeDisposable.clear()
     job.cancel()
     updateManager.onDestroy()
     imagePickDelegate.onDestroy()
@@ -234,13 +235,19 @@ class StartActivity : AppCompatActivity(),
     }
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      coroutineScope.launch {
-        listenForReplyViewStatesChanges()
-      }
+      compositeDisposable += bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
+        .subscribe {
+          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            return@subscribe
+          }
 
-      coroutineScope.launch {
-        listenForControllerNavigationChanges()
-      }
+          updateBottomNavBar()
+        }
+
+      compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
+        .subscribe { change ->
+          updateBottomNavBarIfNeeded(change)
+        }
     }
 
     onNewIntentInternal(intent)
@@ -277,26 +284,6 @@ class StartActivity : AppCompatActivity(),
         }
       }
     }
-  }
-
-  private suspend fun listenForReplyViewStatesChanges() {
-    bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
-      .asFlow()
-      .collect {
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-          return@collect
-        }
-
-        updateBottomNavBar()
-      }
-  }
-
-  private suspend fun listenForControllerNavigationChanges() {
-    controllerNavigationManager.listenForControllerNavigationChanges()
-      .asFlow()
-      .collect { change ->
-        updateBottomNavBarIfNeeded(change)
-      }
   }
 
   private fun updateBottomNavBarIfNeeded(change: ControllerNavigationManager.ControllerNavigationChange?) {

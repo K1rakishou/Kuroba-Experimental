@@ -19,8 +19,10 @@ import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -35,6 +37,8 @@ class BoardsSetupPresenter(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
+
+  private val boardInfoLoaded = AtomicBoolean(false)
 
   override fun onCreate(view: BoardsSetupView) {
     super.onCreate(view)
@@ -53,15 +57,16 @@ class BoardsSetupPresenter(
   }
 
   fun updateBoardsFromServerAndDisplayActive() {
-    setState(BoardsSetupControllerState.Loading)
+    scope.launch(Dispatchers.Default) {
+      setState(BoardsSetupControllerState.Loading)
 
-    scope.launch {
       boardManager.awaitUntilInitialized()
       siteManager.awaitUntilInitialized()
 
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site == null) {
         setState(BoardsSetupControllerState.Error("No site found by descriptor: ${siteDescriptor}"))
+        boardInfoLoaded.set(true)
         return@launch
       }
 
@@ -69,14 +74,20 @@ class BoardsSetupPresenter(
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
           setState(BoardsSetupControllerState.Error(error.errorMessageOrClassName()))
+          boardInfoLoaded.set(true)
           return@launch
         }
 
       displayActiveBoardsInternal()
+      boardInfoLoaded.set(true)
     }
   }
 
   fun displayActiveBoards() {
+    if (!boardInfoLoaded.get()) {
+      return
+    }
+
     setState(BoardsSetupControllerState.Loading)
 
     suspendDebouncer.post(DEBOUNCE_TIME_MS) {

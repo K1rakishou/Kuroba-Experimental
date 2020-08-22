@@ -15,10 +15,8 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.helper.BoardHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 
 class BoardsSetupController(
   context: Context,
@@ -37,12 +35,6 @@ class BoardsSetupController(
     view = AndroidUtils.inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
-
-    mainScope.launch {
-      presenter.listenForStateChanges()
-        .asFlow()
-        .collect { state -> onStateChanged(state) }
-    }
 
     EpoxyTouchHelper
       .initDragging(controller)
@@ -73,6 +65,9 @@ class BoardsSetupController(
           }
         }
       })
+
+    compositeDisposable += presenter.listenForStateChanges()
+      .subscribe { state -> onStateChanged(state) }
 
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()

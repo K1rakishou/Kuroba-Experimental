@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.manager
 
+import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -12,6 +13,7 @@ class ApplicationVisibilityManager {
     return appVisibilityStateSubject
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "listenForAppVisibilityUpdates error", error) }
       .distinctUntilChanged()
       .hide()
   }
@@ -28,6 +30,10 @@ class ApplicationVisibilityManager {
     ?: ApplicationVisibility.Background
 
   fun isAppInForeground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Foreground
+
+  companion object {
+    private const val TAG = "ApplicationVisibilityManager"
+  }
 }
 
 sealed class ApplicationVisibility {

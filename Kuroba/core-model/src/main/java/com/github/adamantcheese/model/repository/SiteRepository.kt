@@ -25,7 +25,7 @@ class SiteRepository(
   suspend fun awaitUntilSitesLoaded() = allSitesLoadedInitializer.awaitUntilInitialized()
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initializedSites(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
+  suspend fun initializeSites(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.myAsync {
       val result = tryWithTransaction {
         val (sites, duration) = measureTimedValue {
@@ -34,7 +34,7 @@ class SiteRepository(
           return@measureTimedValue localSource.selectAllOrderedDesc()
         }
 
-        logger.log(TAG, "initializedSites() -> ${sites.size} took $duration")
+        logger.log(TAG, "initializeSites() -> ${sites.size} took $duration")
         return@tryWithTransaction sites
       }
 

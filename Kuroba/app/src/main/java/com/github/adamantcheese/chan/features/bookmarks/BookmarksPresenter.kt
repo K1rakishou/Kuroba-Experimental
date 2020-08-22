@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -112,8 +111,8 @@ class BookmarksPresenter(
 
   fun listenForStateChanges(): Flowable<BookmarksControllerState> {
     return bookmarksControllerStateSubject
+      .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
-      .debounce(250, TimeUnit.MILLISECONDS)
       .doOnError { error ->
         Logger.e(TAG, "Unknown error subscribed to bookmarksPresenter.listenForStateChanges()", error)
       }

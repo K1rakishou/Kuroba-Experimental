@@ -21,7 +21,7 @@ class SiteLocalSource(
   suspend fun createDefaults(allSiteDescriptors: Collection<SiteDescriptor>) {
     ensureInTransaction()
 
-    chanSiteDao.createDefaults(allSiteDescriptors)
+    chanSiteDao.createDefaultsIfNecessary(allSiteDescriptors)
   }
 
   suspend fun selectAllOrderedDesc(): List<ChanSiteData> {
