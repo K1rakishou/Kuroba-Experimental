@@ -43,6 +43,8 @@ the thread is deleted)
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
+- [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
+oppurtunity to simplify current navigation code which is quite complex).
 - [ ] New database (more than half of the old database have been ported).
 - [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
 - [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
@@ -53,9 +55,11 @@ Because Github does not allow creating two separate forks of the same repo. So I
  not allow for forks.
  
 ### When will it be available?
-The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
+~The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
 October-November maybe even a little bit later. But there will be beta builds, before release. Expect them some time 
-in the end of the summer, maybe earlier.
+in the end of the summer, maybe earlier.~ 
+
+TBD.
 
 # 
 
