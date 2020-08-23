@@ -273,6 +273,8 @@ internal class ChunkPersister(
       // Handle StreamResetExceptions and such
       if (DownloaderUtils.isCancellationError(error)) {
         activeDownloads.throwCancellationException(url)
+      } else {
+        throw error
       }
     } finally {
       buffer.closeQuietly()
