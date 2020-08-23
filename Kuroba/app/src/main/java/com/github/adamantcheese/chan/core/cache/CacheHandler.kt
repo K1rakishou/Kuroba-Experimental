@@ -639,7 +639,6 @@ class CacheHandler(
     )
   }
 
-  @Synchronized
   private fun createDirectories() {
     if (!directoriesChecked.compareAndSet(false, true)) {
       return
