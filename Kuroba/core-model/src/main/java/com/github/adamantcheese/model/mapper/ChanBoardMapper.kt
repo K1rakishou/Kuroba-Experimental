@@ -20,6 +20,7 @@ object ChanBoardMapper {
 
     return ChanBoard(
       boardDescriptor = boardDescriptor,
+      active = chanBoardFull.chanBoardEntity.active,
       order = chanBoardFull.chanBoardEntity.order,
       name = chanBoardFull.chanBoardEntity.name,
       perPage = chanBoardFull.chanBoardEntity.perPage,
@@ -34,7 +35,6 @@ object ChanBoardMapper {
       cooldownImages = chanBoardFull.chanBoardEntity.cooldownImages,
       customSpoilers = chanBoardFull.chanBoardEntity.customSpoilers,
       description = chanBoardFull.chanBoardEntity.description,
-      saved = chanBoardFull.chanBoardEntity.saved,
       workSafe = chanBoardFull.chanBoardEntity.workSafe,
       spoilers = chanBoardFull.chanBoardEntity.spoilers,
       userIds = chanBoardFull.chanBoardEntity.userIds,
@@ -64,7 +64,6 @@ object ChanBoardMapper {
       cooldownImages = board.cooldownImages,
       customSpoilers = board.customSpoilers,
       description = board.description,
-      saved = board.saved,
       workSafe = board.workSafe,
       spoilers = board.spoilers,
       userIds = board.userIds,
@@ -97,7 +96,6 @@ object ChanBoardMapper {
       cooldownImages = board.cooldownImages,
       customSpoilers = board.customSpoilers,
       description = board.description,
-      saved = board.saved,
       workSafe = board.workSafe,
       spoilers = board.spoilers,
       userIds = board.userIds,

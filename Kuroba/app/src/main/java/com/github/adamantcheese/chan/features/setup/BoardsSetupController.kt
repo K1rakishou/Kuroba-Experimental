@@ -17,6 +17,7 @@ import com.github.adamantcheese.chan.ui.helper.BoardHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class BoardsSetupController(
   context: Context,
@@ -26,6 +27,7 @@ class BoardsSetupController(
   private val controller = BoardsEpoxyController()
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var fabAddBoards: FloatingActionButton
 
   override fun onCreate() {
     super.onCreate()
@@ -34,7 +36,17 @@ class BoardsSetupController(
 
     view = AndroidUtils.inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    fabAddBoards = view.findViewById(R.id.fab_add_boards)
+
     epoxyRecyclerView.setController(controller)
+
+    fabAddBoards.setOnClickListener {
+      val controller = AddBoardsController(context, siteDescriptor) {
+        presenter.displayActiveBoards()
+      }
+
+      navigationController!!.presentController(controller)
+    }
 
     EpoxyTouchHelper
       .initDragging(controller)
@@ -71,12 +83,6 @@ class BoardsSetupController(
 
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()
-  }
-
-  override fun onShow() {
-    super.onShow()
-
-    presenter.displayActiveBoards()
   }
 
   override fun onDestroy() {

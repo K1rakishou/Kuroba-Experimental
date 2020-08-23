@@ -53,6 +53,7 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -381,21 +382,26 @@ class StartActivity : AppCompatActivity(),
 
   private suspend fun restoreFresh() {
     if (!siteManager.areSitesSetup()) {
+      Logger.d(TAG, "restoreFresh() Sites are not setup, showSitesNotSetup()")
       browseController?.showSitesNotSetup()
       return
     }
 
     val topNavElement = historyNavigationManager.getNavElementAtTop()
     if (topNavElement == null) {
+      Logger.d(TAG, "restoreFresh() historyNavigationManager.getNavElementAtTop() == null, loadWithDefaultBoard()")
       browseController?.loadWithDefaultBoard()
       return
     }
 
     when (topNavElement) {
       is NavHistoryElement.Catalog -> {
+        Logger.d(TAG, "restoreFresh() topNavElement is Catalog, showBoard()")
         browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
       }
       is NavHistoryElement.Thread -> {
+        Logger.d(TAG, "restoreFresh() topNavElement is Thread, loadThread()")
+
         val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
         if (catalogNavElement != null) {
           require(catalogNavElement is NavHistoryElement.Catalog) {
@@ -409,7 +415,7 @@ class StartActivity : AppCompatActivity(),
 
         loadThread(topNavElement.descriptor)
       }
-    }
+    }.exhaustive
   }
 
   fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -429,6 +435,8 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun restoreFromUrl(): Boolean {
+    Logger.d(TAG, "restoreFromUrl()")
+
     val data = intent.data
       ?: return false
 
@@ -456,6 +464,7 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
+    Logger.d(TAG, "restoreFromSavedState()")
     var handled = false
 
     // Restore the activity state from the previously saved state.

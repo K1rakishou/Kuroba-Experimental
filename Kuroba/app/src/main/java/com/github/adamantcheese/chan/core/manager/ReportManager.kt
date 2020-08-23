@@ -312,8 +312,8 @@ class ReportManager(
       else -> "Neither of them is active, wtf?!"
     }
 
-    return "Java API location: ${ChanSettings.saveLocation.fileApiBaseDir.get()}, " +
-      "SAF location: ${ChanSettings.saveLocation.safBaseDir.get()}, " +
+    return "Java API location: \"${ChanSettings.saveLocation.fileApiBaseDir.get()}\", " +
+      "SAF location: \"${ChanSettings.saveLocation.safBaseDir.get()}\", " +
       "active: $filesLocationActiveDirType"
   }
 

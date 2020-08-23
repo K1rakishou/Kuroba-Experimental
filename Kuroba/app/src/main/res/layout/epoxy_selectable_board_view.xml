@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clickable_area"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:orientation="horizontal"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/board_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textColor="?attr/text_color_primary"
+            android:textSize="16sp"
+            tools:text="/a/ - Anime and Manga" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/board_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textColor="?attr/text_color_hint"
+            android:textSize="14sp"
+            tools:text="/a/ - Anime and Manga is 4chan's imageboard dedicated to the discussion of Japanese animation and manga." />
+    </LinearLayout>
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/board_selection_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:clickable="false"
+        android:focusable="false" />
+
+</LinearLayout>

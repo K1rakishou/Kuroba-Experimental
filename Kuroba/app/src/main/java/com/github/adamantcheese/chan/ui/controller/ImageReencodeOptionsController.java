@@ -206,7 +206,8 @@ public class ImageReencodeOptionsController
 
     @Override
     public void onCheckedChanged(RadioGroup group, int checkedId) {
-        if (!ignoreSetup) { //this variable is to ignore any side effects of checking during last options load
+        if (!ignoreSetup) {
+            // this variable is to ignore any side effects of checking during last options load
             int index = group.indexOfChild(group.findViewById(group.getCheckedRadioButtonId()));
 
             // 0 - AS IS

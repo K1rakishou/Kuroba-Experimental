@@ -19,7 +19,6 @@ data class ChanBoard(
   val cooldownImages: Int = 0,
   val customSpoilers: Int = -1,
   val description: String = "",
-  val saved: Boolean = false,
   val workSafe: Boolean = false,
   val spoilers: Boolean = false,
   val userIds: Boolean = false,

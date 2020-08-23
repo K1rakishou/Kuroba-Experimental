@@ -5,8 +5,6 @@ import com.github.adamantcheese.chan.core.base.BasePresenter
 import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
-import com.github.adamantcheese.chan.core.model.SiteBoards
-import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.features.setup.data.BoardCellData
 import com.github.adamantcheese.chan.features.setup.data.BoardsSetupControllerState
@@ -70,11 +68,17 @@ class BoardsSetupPresenter(
         return@launch
       }
 
+      val isSiteActive = siteManager.isSiteActive(siteDescriptor)
+      if (!isSiteActive) {
+        setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} is not active!"))
+        boardInfoLoaded.set(true)
+        return@launch
+      }
+
       loadBoardInfoSuspend(site)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
           setState(BoardsSetupControllerState.Error(error.errorMessageOrClassName()))
-          boardInfoLoaded.set(true)
           return@launch
         }
 
@@ -111,6 +115,12 @@ class BoardsSetupPresenter(
   }
 
   private fun displayActiveBoardsInternal() {
+    val isSiteActive = siteManager.isSiteActive(siteDescriptor)
+    if (!isSiteActive) {
+      setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} is not active!"))
+      return
+    }
+
     val boardCellDataList = mutableListWithCap<BoardCellData>(32)
 
     boardManager.viewActiveBoardsOrdered(siteDescriptor) { chanBoard ->
@@ -129,10 +139,14 @@ class BoardsSetupPresenter(
     setState(BoardsSetupControllerState.Data(boardCellDataList))
   }
 
-  private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>> {
+  private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
+    if (boardInfoLoaded.get()) {
+      return ModularResult.value(Unit)
+    }
+
     return suspendCancellableCoroutine { cancellableContinuation ->
       site.loadBoardInfo { result ->
-        cancellableContinuation.resume(result)
+        cancellableContinuation.resume(result.mapValue { Unit })
       }
     }
   }

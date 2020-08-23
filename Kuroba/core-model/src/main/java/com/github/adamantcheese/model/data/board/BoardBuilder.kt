@@ -59,7 +59,6 @@ class BoardBuilder(
       cooldownImages = cooldownImages,
       customSpoilers = customSpoilers,
       description = description,
-      saved = saved,
       workSafe = workSafe,
       spoilers = spoilers,
       userIds = userIds,

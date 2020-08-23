@@ -27,7 +27,7 @@ class ThirdPartyArchiveInfoRepository(
   private val remoteSource: ArchivesRemoteSource
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag ThirdPartyArchiveInfoRepository"
-  private val suspendableInitializer = SuspendableInitializer<Unit>("${TAG}_init", false)
+  private val suspendableInitializer = SuspendableInitializer<Unit>("ThirdPartyArchiveInfoRepository")
   private val thirdPartyArchiveInfoCache = ThirdPartyArchiveInfoCache()
 
   suspend fun initialize(allArchiveDescriptors: List<ArchiveDescriptor>): Map<String, ThirdPartyArchiveInfo> {

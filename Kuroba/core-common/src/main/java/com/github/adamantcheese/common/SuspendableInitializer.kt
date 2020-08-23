@@ -27,7 +27,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
   fun initWithValue(newValue: T) {
     if (logStates) {
-      Log.d(tag, "initWithValue() called")
+      Log.d(tag, "SuspendableInitializer initWithValue() called")
     }
 
     if (value.isCompleted) {
@@ -38,13 +38,13 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     invokeAllCallbacks(null)
 
     if (logStates) {
-      Log.d(tag, "initWithValue() done")
+      Log.d(tag, "SuspendableInitializer initWithValue() done")
     }
   }
 
   fun initWithError(exception: Throwable) {
     if (logStates) {
-      Log.e(tag, "initWithError() called")
+      Log.e(tag, "SuspendableInitializer initWithError() called")
     }
 
     if (value.isCompleted) {
@@ -56,7 +56,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     invokeAllCallbacks(exception)
 
     if (logStates) {
-      Log.e(tag, "initWithError() done")
+      Log.e(tag, "SuspendableInitializer initWithError() done")
     }
   }
 
@@ -71,7 +71,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   suspend fun awaitUntilInitialized() {
     if (value.isCompleted) {
       if (logStates) {
-        Log.d(tag, "awaitUntilInitialized() called when already initialized")
+        Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when already initialized")
       }
 
       // This will throw if it was initialized with an error
@@ -80,7 +80,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "awaitUntilInitialized() called when not initialized, awaiting...")
+      Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, awaiting...")
     }
 
     value.awaitSilently()
@@ -89,7 +89,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
   fun awaitUntilInitializedBlocking() {
     if (logStates) {
-      Log.d(tag, "awaitUntilInitializedBlocking() called, " +
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called, " +
         "currentThread = ${Thread.currentThread().name}")
     }
 
@@ -102,14 +102,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "awaitUntilInitializedBlocking() before blocking await(), " +
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() before blocking await(), " +
         "currentThread = ${Thread.currentThread().name}")
     }
 
     runBlocking { awaitUntilInitialized() }
 
     if (logStates) {
-      Log.d(tag, "awaitUntilInitializedBlocking() after blocking await(), " +
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() after blocking await(), " +
         "currentThread = ${Thread.currentThread().name}")
     }
   }
@@ -120,14 +120,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   suspend fun get(): T {
     if (value.isCompleted) {
       if (logStates) {
-        Log.d(tag, "get() called when already initialized")
+        Log.d(tag, "SuspendableInitializer get() called when already initialized")
       }
 
       return value.getCompleted()
     }
 
     if (logStates) {
-      Log.d(tag, "get() called when not initialized, awaiting...")
+      Log.d(tag, "SuspendableInitializer get() called when not initialized, awaiting...")
     }
 
     return value.await()
@@ -137,14 +137,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   fun getOrNull(): T? {
     if (value.isCompleted) {
       if (logStates) {
-        Log.d(tag, "getOrNull() called when already initialized")
+        Log.d(tag, "SuspendableInitializer getOrNull() called when already initialized")
       }
 
       return value.getCompleted()
     }
 
     if (logStates) {
-      Log.d(tag, "getOrNull() called when not initialized, returning null")
+      Log.d(tag, "SuspendableInitializer getOrNull() called when not initialized, returning null")
     }
 
     return null
@@ -153,7 +153,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   fun invokeAfterInitialized(func: (Throwable?) -> Unit) {
     if (value.isCompleted) {
       if (logStates) {
-        Log.d(tag, "invokeAfterInitialized() called when already initialized")
+        Log.d(tag, "SuspendableInitializer invokeAfterInitialized() called when already initialized")
       }
 
       func(error.get())
@@ -165,19 +165,19 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "invokeAfterInitialized() called, new callback added")
+      Log.d(tag, "SuspendableInitializer invokeAfterInitialized() called, new callback added")
     }
   }
 
   suspend fun <T : Any?> invokeWhenInitialized(func: suspend () -> T): T {
     if (logStates) {
-      Log.d(tag, "afterInitialized() called, before awaitUntilInitialized")
+      Log.d(tag, "SuspendableInitializer afterInitialized() called, before awaitUntilInitialized")
     }
 
     awaitUntilInitialized()
 
     if (logStates) {
-      Log.d(tag, "afterInitialized() called, after awaitUntilInitialized")
+      Log.d(tag, "SuspendableInitializer afterInitialized() called, after awaitUntilInitialized")
     }
 
     return func()
@@ -192,13 +192,13 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "invokeAllCallbacks() called, before copyOfCallbacks.forEach")
+      Log.d(tag, "SuspendableInitializer invokeAllCallbacks() called, before copyOfCallbacks.forEach")
     }
 
     copyOfCallbacks.forEach { func -> func.invoke(error) }
 
     if (logStates) {
-      Log.d(tag, "invokeAllCallbacks() called, after copyOfCallbacks.forEach")
+      Log.d(tag, "SuspendableInitializer invokeAllCallbacks() called, after copyOfCallbacks.forEach")
     }
   }
 }

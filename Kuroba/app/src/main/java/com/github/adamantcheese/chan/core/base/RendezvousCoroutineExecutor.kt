@@ -8,12 +8,12 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 
 /**
- * Executes all callbacks sequentially using an unlimited channel. This means that there won't
- * be two callbacks running at the same time posted on this executor.
+ * Executes all callbacks sequentially using an rendezvous channel. This means that if a callback
+ * is currently running all other callbacks are ignored
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
-  private val channel = Channel<SerializedAction>(Channel.UNLIMITED)
+class RendezvousCoroutineExecutor(private val scope: CoroutineScope) {
+  private val channel = Channel<SerializedAction>(Channel.RENDEZVOUS)
 
   init {
     scope.launch {
@@ -37,6 +37,6 @@ class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
   )
 
   companion object {
-    private const val TAG = "SerializedCoroutineExecutor"
+    private const val TAG = "RendezvousCoroutineExecutor"
   }
 }

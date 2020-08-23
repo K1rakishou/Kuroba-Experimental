@@ -153,6 +153,8 @@ class BoardManager(
     }
 
     persistBoards()
+    boardsChanged()
+
     return true
   }
 
@@ -189,6 +191,8 @@ class BoardManager(
     if (!changed) {
       return false
     }
+
+    boardsChanged()
 
     return true
   }
@@ -256,6 +260,20 @@ class BoardManager(
     }
   }
 
+  fun viewAllBoardsOrdered(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    lock.read {
+      ordersMap[siteDescriptor]?.forEach { boardDescriptor ->
+        val chanBoard = boardsMap[siteDescriptor]?.get(boardDescriptor)
+          ?: return@forEach
+
+        func(chanBoard)
+      }
+    }
+  }
+
   fun byBoardDescriptor(boardDescriptor: BoardDescriptor): ChanBoard? {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
@@ -295,7 +313,7 @@ class BoardManager(
     }
 
     persistBoardsDebouncer.post(DEBOUNCE_TIME_MS) { persistBoards() }
-    sitesChanged()
+    boardsChanged()
 
     return true
   }
@@ -329,7 +347,7 @@ class BoardManager(
     }
 
     persistBoardsDebouncer.post(DEBOUNCE_TIME_MS) { persistBoards() }
-    sitesChanged()
+    boardsChanged()
 
     return true
   }
@@ -396,7 +414,7 @@ class BoardManager(
     return resultMap
   }
 
-  private fun sitesChanged() {
+  private fun boardsChanged() {
     if (isDevFlavor) {
       ensureBoardsAndOrdersConsistency()
     }
@@ -424,7 +442,6 @@ class BoardManager(
       cooldownImages = newBoard.cooldownImages,
       customSpoilers = newBoard.customSpoilers,
       description = newBoard.description,
-      saved = newBoard.saved,
       workSafe = newBoard.workSafe,
       spoilers = newBoard.spoilers,
       userIds = newBoard.userIds,

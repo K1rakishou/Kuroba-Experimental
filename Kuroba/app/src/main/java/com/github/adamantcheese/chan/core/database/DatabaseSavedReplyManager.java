@@ -55,8 +55,7 @@ public class DatabaseSavedReplyManager {
     // map of post number to saved replies
     private final Map<Long, List<SavedReply>> savedRepliesByNo = new HashMap<>();
 
-    private SuspendableInitializer<Unit> suspendableInitializer =
-            new SuspendableInitializer<>("DatabaseSavedReplyManager");
+    private SuspendableInitializer<Unit> suspendableInitializer = new SuspendableInitializer<>("DatabaseSavedReplyManager");
 
     public DatabaseSavedReplyManager(
             DatabaseHelper databaseHelper,

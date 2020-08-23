@@ -51,8 +51,6 @@ data class ChanBoardEntity(
   val customSpoilers: Int = -1,
   @ColumnInfo(name = DESCRIPTION_COLUMN_NAME)
   val description: String = "",
-  @ColumnInfo(name = SAVED_COLUMN_NAME)
-  val saved: Boolean = false,
   @ColumnInfo(name = WORK_SAFE_COLUMN_NAME)
   val workSafe: Boolean = false,
   @ColumnInfo(name = SPOILERS_COLUMN_NAME)
@@ -90,7 +88,6 @@ data class ChanBoardEntity(
     const val COOLDOWN_IMAGES_COLUMN_NAME = "cooldown_images"
     const val CUSTOM_SPOILERS_COLUMN_NAME = "custom_spoilers"
     const val DESCRIPTION_COLUMN_NAME = "description"
-    const val SAVED_COLUMN_NAME = "saved"
     const val WORK_SAFE_COLUMN_NAME = "work_safe"
     const val SPOILERS_COLUMN_NAME = "spoilers"
     const val USER_IDS_COLUMN_NAME = "user_ids"
