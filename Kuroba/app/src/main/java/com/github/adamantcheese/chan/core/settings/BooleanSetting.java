@@ -68,6 +68,7 @@ public class BooleanSetting
 
     public Flowable<Boolean> listenForChanges() {
         return settingState
+                .onBackpressureLatest()
                 .hide()
                 .observeOn(AndroidSchedulers.mainThread());
     }

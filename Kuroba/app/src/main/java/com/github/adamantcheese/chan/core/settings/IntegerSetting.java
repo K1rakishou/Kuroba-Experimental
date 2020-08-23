@@ -66,6 +66,7 @@ public class IntegerSetting
 
     public Flowable<Integer> listenForChanges() {
         return settingState
+                .onBackpressureLatest()
                 .hide()
                 .observeOn(AndroidSchedulers.mainThread());
     }
