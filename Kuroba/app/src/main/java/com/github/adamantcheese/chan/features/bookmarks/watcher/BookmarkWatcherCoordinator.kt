@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.Flowable
+import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.collect
@@ -26,8 +27,23 @@ class BookmarkWatcherCoordinator(
   private val bookmarkForegroundWatcher: BookmarkForegroundWatcher,
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
+  private val bookmarkChangeSubject = PublishProcessor.create<Boolean>()
 
   fun initialize() {
+    appScope.launch {
+      bookmarkChangeSubject
+        .onBackpressureLatest()
+        .buffer(1, TimeUnit.SECONDS)
+        .onBackpressureLatest()
+        .filter { events -> events.isNotEmpty() }
+        .map { events ->
+          // If "events" has at least one event with "true" value return true, otherwise return false
+          return@map events.any { enabled -> enabled }
+        }
+        .asFlow()
+        .collect { replaceCurrent -> onBookmarksChanged(replaceCurrent = replaceCurrent) }
+    }
+
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .debounce(1, TimeUnit.SECONDS)
@@ -38,42 +54,45 @@ class BookmarkWatcherCoordinator(
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
           }
 
-          onBookmarksChanged()
+          bookmarkChangeSubject.onNext(false)
         }
     }
 
     appScope.launch {
       val watchEnabledFlowable = ChanSettings.watchEnabled.listenForChanges()
-        .map { WatchSettingChange.WatcherSettingChanged }
+        .map { enabled -> WatchSettingChange.WatcherSettingChanged(enabled) }
+        .distinctUntilChanged()
       val watchBackgroundFlowable = ChanSettings.watchBackground.listenForChanges()
-        .map { WatchSettingChange.BackgroundWatcherSettingChanged }
+        .map { enabled -> WatchSettingChange.BackgroundWatcherSettingChanged(enabled) }
+        .distinctUntilChanged()
       val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChanges()
-        .map { WatchSettingChange.BackgroundWatcherIntervalSettingChanged }
+        .map { interval -> WatchSettingChange.BackgroundWatcherIntervalSettingChanged(interval) }
+        .distinctUntilChanged()
 
       Flowable.merge(watchEnabledFlowable, watchBackgroundFlowable, watchBackgroundIntervalFlowable)
         .asFlow()
         .collect { watchSettingChange ->
           if (verboseLogsEnabled) {
             when (watchSettingChange) {
-              WatchSettingChange.WatcherSettingChanged -> {
+              is WatchSettingChange.WatcherSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchEnabled setting changed")
               }
-              WatchSettingChange.BackgroundWatcherSettingChanged -> {
+              is WatchSettingChange.BackgroundWatcherSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchBackground setting changed")
               }
-              WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> {
+              is WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchBackgroundInterval setting changed")
               }
             }
           }
 
           val replaceCurrent = when (watchSettingChange) {
-            WatchSettingChange.WatcherSettingChanged,
-            WatchSettingChange.BackgroundWatcherSettingChanged -> false
-            WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> true
+            is WatchSettingChange.WatcherSettingChanged,
+            is WatchSettingChange.BackgroundWatcherSettingChanged -> false
+            is WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> true
           }
 
-          onBookmarksChanged(replaceCurrent = replaceCurrent)
+          bookmarkChangeSubject.onNext(replaceCurrent)
         }
     }
 
@@ -86,7 +105,7 @@ class BookmarkWatcherCoordinator(
               "(applicationVisibility = $applicationVisibility)")
           }
 
-          onBookmarksChanged(replaceCurrent = true)
+          bookmarkChangeSubject.onNext(true)
         }
     }
   }
@@ -95,9 +114,9 @@ class BookmarkWatcherCoordinator(
     applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility(),
     replaceCurrent: Boolean = false
   ) {
-    withContext(NonCancellable) {
-      bookmarksManager.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
 
+    withContext(NonCancellable) {
       if (!bookmarksManager.hasActiveBookmarks()) {
         Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
@@ -203,10 +222,10 @@ class BookmarkWatcherCoordinator(
     }
   }
 
-  sealed class WatchSettingChange {
-    object WatcherSettingChanged : WatchSettingChange()
-    object BackgroundWatcherSettingChanged : WatchSettingChange()
-    object BackgroundWatcherIntervalSettingChanged : WatchSettingChange()
+  sealed class WatchSettingChange() {
+    data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
+    data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
+    data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
   }
 
   companion object {
