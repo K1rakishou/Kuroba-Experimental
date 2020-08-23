@@ -314,6 +314,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:gravity="center"
                     android:textColor="#fff"
                     android:textSize="12sp"
+                    android:visibility="invisible"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     tools:text="99+" />

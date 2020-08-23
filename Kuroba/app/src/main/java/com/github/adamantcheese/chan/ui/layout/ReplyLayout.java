@@ -1088,13 +1088,12 @@ public class ReplyLayout
 
     @Override
     public void onCaptchaCountChanged(int validCaptchaCount) {
-        if (validCaptchaCount == 0) {
+        if (validCaptchaCount <= 0) {
             validCaptchasCount.setVisibility(INVISIBLE);
         } else {
             validCaptchasCount.setVisibility(VISIBLE);
+            validCaptchasCount.setText(String.valueOf(validCaptchaCount));
         }
-
-        validCaptchasCount.setText(String.valueOf(validCaptchaCount));
     }
 
     public interface ReplyLayoutCallback {
