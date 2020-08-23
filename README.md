@@ -44,10 +44,12 @@ per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
 - [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
-oppurtunity to simplify current navigation code which is quite complex).
-- [ ] New database (more than half of the old database have been ported).
+oppurtunity to simplify current navigation code which is quite complex. This one will probably be implemented some time after the initial 
+beta release).
+- [ ] New database (like 3 small tables are left to be ported).
 - [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
-- [ ] Fully customizable themes (you will be able to choose colors in app, import/export a theme).
+- [ ] Fully customizable themes. You will be able to choose colors in app, import/export a theme. (I have an idea on how to do this
+but I'm not 100% sure it will work for every view so this feature may not get implemented).
 
 ### Why does it not say that this is a fork of Kuroba on github page?
 Because Github does not allow creating two separate forks of the same repo. So I decided to create a new, standalone
