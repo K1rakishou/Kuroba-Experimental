@@ -62,6 +62,8 @@ class ReplyNotificationsHelper(
 
   init {
     appScope.launch {
+      bookmarksManager.awaitUntilInitialized()
+
       bookmarksManager.listenForBookmarksChanges()
         .asFlow()
         // We only care about bookmark updates here since we use this listener to close seen
@@ -99,6 +101,9 @@ class ReplyNotificationsHelper(
       Logger.d(TAG, "showOrUpdateNotificationsInternal() ChanSettings.replyNotifications == false")
       return
     }
+
+    chanPostRepository.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
 
     val unreadNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
 

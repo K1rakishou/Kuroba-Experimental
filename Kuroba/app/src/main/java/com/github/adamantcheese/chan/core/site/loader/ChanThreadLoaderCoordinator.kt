@@ -153,6 +153,7 @@ class ChanThreadLoaderCoordinator(
   ): Job {
     return launch {
       BackgroundUtils.ensureBackgroundThread()
+      chanPostRepository.awaitUntilInitialized()
 
       val result = Try {
         val request = Request.Builder()

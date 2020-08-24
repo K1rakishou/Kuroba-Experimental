@@ -25,7 +25,8 @@ class ParsePostRepliesUseCase(
 
   override suspend fun execute(parameter: List<ThreadBookmarkFetchResult.Success>): YousPerThreadMap {
     require(siteManager.isReady()) { "SiteManager is not initialized yet!" }
-    require(savedReplyManager.isReady) { "DatabaseSavedReplyManager is not initialized yet!" }
+    // TODO(KurobaEx):
+//    require(savedReplyManager.isReady) { "DatabaseSavedReplyManager is not initialized yet!" }
 
     return parsePostReplies(parameter)
   }

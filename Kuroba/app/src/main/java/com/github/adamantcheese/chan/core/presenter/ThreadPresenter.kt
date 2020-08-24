@@ -201,6 +201,7 @@ class ThreadPresenter @Inject constructor(
       val threadDescriptor = currentChanDescriptor!!.toThreadDescriptor(threadNo)
       threadPresenterCallback?.showLoading()
 
+      chanPostRepository.awaitUntilInitialized()
       chanPostRepository.deleteThread(threadDescriptor).safeUnwrap { error ->
         Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error)
 

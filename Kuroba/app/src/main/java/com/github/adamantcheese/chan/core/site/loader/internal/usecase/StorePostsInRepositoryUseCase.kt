@@ -22,6 +22,8 @@ class StorePostsInRepositoryUseCase(
     BackgroundUtils.ensureBackgroundThread()
     Logger.d(TAG, "storePosts(postsCount=${posts.size}, isCatalog=$isCatalog)")
 
+    chanPostRepository.awaitUntilInitialized()
+
     if (posts.isEmpty()) {
       return emptyList()
     }

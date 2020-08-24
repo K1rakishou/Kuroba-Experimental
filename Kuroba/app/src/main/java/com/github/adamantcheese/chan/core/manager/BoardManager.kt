@@ -158,11 +158,19 @@ class BoardManager(
     return true
   }
 
-  suspend fun activateDeactivateBoard(boardDescriptor: BoardDescriptor, activate: Boolean): Boolean {
+  suspend fun activateDeactivateBoards(
+    siteDescriptor: SiteDescriptor,
+    boardDescriptors: LinkedHashSet<BoardDescriptor>,
+    activate: Boolean
+  ): Boolean {
+    if (boardDescriptors.isEmpty()) {
+      return false
+    }
+
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    val result = boardRepository.activateDeactivateBoard(boardDescriptor, activate)
+    val result = boardRepository.activateDeactivateBoards(siteDescriptor, boardDescriptors, activate)
     if (result is ModularResult.Error) {
       Logger.e(TAG, "boardRepository.activateDeactivateBoard() error", result.error)
       return false
@@ -174,22 +182,47 @@ class BoardManager(
     }
 
     val changed = lock.write {
-      val innerMap = boardsMap[boardDescriptor.siteDescriptor]
-        ?: return@write false
+      var changed = false
 
-      val board = innerMap.get(boardDescriptor)
-        ?: return@write false
+      boardDescriptors.forEach { boardDescriptor ->
+        val innerMap = boardsMap[boardDescriptor.siteDescriptor]
+          ?: return@forEach
 
-      if (board.active == activate) {
-        return@write false
+        val board = innerMap.get(boardDescriptor)
+          ?: return@forEach
+
+        if (board.active == activate) {
+          return@forEach
+        }
+
+        board.active = activate
+        changed = true
       }
 
-      board.active = activate
-      return@write true
+      return@write changed
     }
 
     if (!changed) {
       return false
+    }
+
+    when (val currentBoard = currentBoardSubject.value) {
+      null,
+      CurrentBoard.Empty -> {
+        if (activate) {
+          currentBoardSubject.onNext(CurrentBoard.create(boardDescriptors.first()))
+        }
+      }
+      is CurrentBoard.Board -> {
+        if (currentBoard.boardDescriptor in boardDescriptors && !activate) {
+          val firstActiveBoard = firstBoardDescriptor(siteDescriptor)
+          if (firstActiveBoard != null) {
+            currentBoardSubject.onNext(CurrentBoard.create(firstActiveBoard))
+          } else {
+            currentBoardSubject.onNext(CurrentBoard.Empty)
+          }
+        }
+      }
     }
 
     boardsChanged()

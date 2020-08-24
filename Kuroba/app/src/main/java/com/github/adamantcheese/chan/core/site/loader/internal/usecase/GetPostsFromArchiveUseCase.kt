@@ -33,6 +33,7 @@ class GetPostsFromArchiveUseCase(
     archiveDescriptor: ArchiveDescriptor?
   ): ModularResult<List<Post.Builder>> {
     BackgroundUtils.ensureBackgroundThread()
+    chanPostRepository.awaitUntilInitialized()
 
     return ModularResult.Try {
       if (descriptor !is ChanDescriptor.ThreadDescriptor) {

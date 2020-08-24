@@ -32,7 +32,7 @@ class AddBoardsController(
 ) : BaseFloatingController(context), AddBoardsView {
   private val presenter = AddBoardsPresenter(siteDescriptor)
 
-  private lateinit var outsideSpace: FrameLayout
+  private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var cancel: MaterialButton
@@ -51,7 +51,7 @@ class AddBoardsController(
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     cancel = view.findViewById(R.id.cancel_adding_boards)
     addBoards = view.findViewById(R.id.add_boards)
-    outsideSpace = view.findViewById(R.id.outside_space)
+    outsideArea = view.findViewById(R.id.outside_area)
 
     mainScope.launch {
       startListeningForSearchQueries()
@@ -62,7 +62,7 @@ class AddBoardsController(
     cancel.setOnClickListener {
       pop()
     }
-    outsideSpace.setOnClickListener {
+    outsideArea.setOnClickListener {
       pop()
     }
 

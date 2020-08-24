@@ -40,6 +40,8 @@ internal class NormalPostLoader(
     requestParams: ChanLoaderRequestParams,
     archiveDescriptor: ArchiveDescriptor?
   ): ThreadLoadResult {
+    chanPostRepository.awaitUntilInitialized()
+
     val (archivePosts, archiveFetchDuration) = measureTimedValue {
       return@measureTimedValue getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
         chanReaderProcessor.getToParse(),

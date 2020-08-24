@@ -1,10 +1,8 @@
 package com.github.adamantcheese.common
 
-import android.os.Looper
 import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -85,33 +83,6 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
     value.awaitSilently()
     return
-  }
-
-  fun awaitUntilInitializedBlocking() {
-    if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called, " +
-        "currentThread = ${Thread.currentThread().name}")
-    }
-
-    if (isInitialized()) {
-      return
-    }
-
-    if (Thread.currentThread() == Looper.getMainLooper().thread) {
-      throw IllegalStateException("Cannot be executed on the main thread. This will deadlock the app!")
-    }
-
-    if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() before blocking await(), " +
-        "currentThread = ${Thread.currentThread().name}")
-    }
-
-    runBlocking { awaitUntilInitialized() }
-
-    if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() after blocking await(), " +
-        "currentThread = ${Thread.currentThread().name}")
-    }
   }
 
   fun isInitialized() = value.isCompleted

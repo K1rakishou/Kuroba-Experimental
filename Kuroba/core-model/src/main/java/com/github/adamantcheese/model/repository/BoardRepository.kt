@@ -39,10 +39,18 @@ class BoardRepository(
     }
   }
 
-  suspend fun activateDeactivateBoard(boardDescriptor: BoardDescriptor, activate: Boolean): ModularResult<Boolean> {
+  suspend fun activateDeactivateBoards(
+    siteDescriptor: SiteDescriptor,
+    boardDescriptors: Collection<BoardDescriptor>,
+    activate: Boolean
+  ): ModularResult<Boolean> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.activateDeactivateBoard(boardDescriptor, activate)
+        return@tryWithTransaction localSource.activateDeactivateBoards(
+          siteDescriptor,
+          boardDescriptors,
+          activate
+        )
       }
     }
   }

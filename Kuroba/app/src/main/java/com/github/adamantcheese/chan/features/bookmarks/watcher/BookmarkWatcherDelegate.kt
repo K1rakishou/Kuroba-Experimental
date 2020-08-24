@@ -18,10 +18,7 @@ import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReply
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.joda.time.DateTime
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -370,11 +367,12 @@ class BookmarkWatcherDelegate(
     bookmarksManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
 
-    if (!savedReplyManager.isReady) {
-      Logger.d(TAG, "savedReplyManager is not ready yet, waiting...")
-      val duration = measureTime { savedReplyManager.awaitUntilInitialized() }
-      Logger.d(TAG, "savedReplyManager initialization completed, took $duration")
-    }
+    // TODO(KurobaEx):
+//    if (!savedReplyManager.isReady) {
+//      Logger.d(TAG, "savedReplyManager is not ready yet, waiting...")
+//      val duration = measureTime { savedReplyManager.awaitUntilInitialized() }
+//      Logger.d(TAG, "savedReplyManager initialization completed, took $duration")
+//    }
   }
 
   private fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {
@@ -446,17 +444,18 @@ class BookmarkWatcherDelegate(
       "successCount=$successCount")
   }
 
-  private suspend fun DatabaseSavedReplyManager.awaitUntilInitialized() {
-    return suspendCancellableCoroutine { continuation ->
-      this.invokeAfterInitialized { error ->
-        if (error != null) {
-          continuation.resumeWithException(error)
-        } else {
-          continuation.resume(Unit)
-        }
-      }
-    }
-  }
+  // TODO(KurobaEx):
+//  private suspend fun DatabaseSavedReplyManager.awaitUntilInitialized() {
+//    return suspendCancellableCoroutine { continuation ->
+//      this.invokeAfterInitialized { error ->
+//        if (error != null) {
+//          continuation.resumeWithException(error)
+//        } else {
+//          continuation.resume(Unit)
+//        }
+//      }
+//    }
+//  }
 
   companion object {
     private const val TAG = "BookmarkWatcherDelegate"

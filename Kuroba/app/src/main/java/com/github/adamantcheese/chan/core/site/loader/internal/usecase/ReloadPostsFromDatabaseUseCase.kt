@@ -26,6 +26,9 @@ class ReloadPostsFromDatabaseUseCase(
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
+    chanPostRepository.awaitUntilInitialized()
+    boardManager.awaitUntilInitialized()
+
     val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
       ?: ArchiveDescriptor.NO_ARCHIVE_ID
 

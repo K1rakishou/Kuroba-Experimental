@@ -35,19 +35,28 @@ class BoardLocalSource(
       .groupBy { it.boardDescriptor.siteDescriptor }
   }
 
-  suspend fun activateDeactivateBoard(boardDescriptor: BoardDescriptor, activate: Boolean): Boolean {
+  suspend fun activateDeactivateBoards(
+    siteDescriptor: SiteDescriptor,
+    boardDescriptors: Collection<BoardDescriptor>,
+    activate: Boolean
+  ): Boolean {
     ensureInTransaction()
 
-    val boardIdEntity = chanBoardDao.selectBoardId(
-      boardDescriptor.siteName(),
-      boardDescriptor.boardCode
+    val boardIdEntities = chanBoardDao.selectManyBoardIdEntities(
+      siteDescriptor.siteName,
+      boardDescriptors.map { boardDescriptor -> boardDescriptor.boardCode }
     )
 
-    if (boardIdEntity == null) {
+    if (boardIdEntities.isEmpty()) {
       return false
     }
 
-    return chanBoardDao.activateDeactivateBoard(boardIdEntity.boardId, activate) > 0
+    chanBoardDao.activateDeactivateBoards(
+      boardIdEntities.map { chanBoardIdEntity -> chanBoardIdEntity.boardId },
+      activate
+    )
+
+    return true
   }
 
   suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>) {

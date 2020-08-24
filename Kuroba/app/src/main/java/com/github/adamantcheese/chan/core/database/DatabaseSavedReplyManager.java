@@ -21,7 +21,6 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.orm.SavedReply;
-import com.github.adamantcheese.common.SuspendableInitializer;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
@@ -35,9 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 
 /**
  * Saved replies are posts-password combinations used to track what posts are posted by the app,
@@ -55,22 +51,12 @@ public class DatabaseSavedReplyManager {
     // map of post number to saved replies
     private final Map<Long, List<SavedReply>> savedRepliesByNo = new HashMap<>();
 
-    private SuspendableInitializer<Unit> suspendableInitializer = new SuspendableInitializer<>("DatabaseSavedReplyManager");
-
     public DatabaseSavedReplyManager(
             DatabaseHelper databaseHelper,
             DatabaseManager databaseManager
     ) {
         this.helper = databaseHelper;
         this.databaseManager = databaseManager;
-    }
-
-    public boolean isReady() {
-        return suspendableInitializer.isInitialized();
-    }
-
-    public void invokeAfterInitialized(Function1<Throwable, Unit> func) {
-        suspendableInitializer.invokeAfterInitialized(func);
     }
 
     /**
@@ -117,9 +103,8 @@ public class DatabaseSavedReplyManager {
                     }
                 }
 
-                suspendableInitializer.initWithValue(Unit.INSTANCE);
             } catch (Throwable error) {
-                suspendableInitializer.initWithError(error);
+                error.printStackTrace();
             }
 
             return null;

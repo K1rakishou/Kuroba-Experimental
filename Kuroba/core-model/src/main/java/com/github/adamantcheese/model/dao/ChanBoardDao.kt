@@ -33,9 +33,9 @@ abstract class ChanBoardDao {
   @Query("""
     UPDATE ${ChanBoardEntity.TABLE_NAME}
     SET ${ChanBoardEntity.BOARD_ACTIVE_COLUMN_NAME} = :activate
-    WHERE ${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME} = :boardId
+    WHERE ${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME} IN (:boardIds)
   """)
-  abstract suspend fun activateDeactivateBoard(boardId: Long, activate: Boolean): Int
+  abstract suspend fun activateDeactivateBoards(boardIds: Collection<Long>, activate: Boolean)
 
   @Query("""
         SELECT * 

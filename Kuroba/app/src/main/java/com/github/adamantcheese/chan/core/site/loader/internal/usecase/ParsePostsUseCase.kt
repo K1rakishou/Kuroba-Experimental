@@ -40,6 +40,9 @@ class ParsePostsUseCase(
   ): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
+    chanPostRepository.awaitUntilInitialized()
+    boardManager.awaitUntilInitialized()
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
         "postsToParseSize=${postBuildersToParse.size}, " +

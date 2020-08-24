@@ -35,20 +35,18 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
+
   suspend fun getCachedValuesCount(): Int {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized postCache.getCachedValuesCount()
-      }
+      return@myAsync postCache.getCachedValuesCount()
     }
   }
 
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          return@tryWithTransaction localSource.insertEmptyThread(descriptor)
-        }
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.insertEmptyThread(descriptor)
       }
     }
   }
@@ -62,13 +60,11 @@ class ChanPostRepository(
     isCatalog: Boolean
   ): ModularResult<List<Long>> {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          if (isCatalog) {
-            return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(posts)
-          } else {
-            return@tryWithTransaction insertOrUpdateThreadPosts(posts)
-          }
+      return@myAsync tryWithTransaction {
+        if (isCatalog) {
+          return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(posts)
+        } else {
+          return@tryWithTransaction insertOrUpdateThreadPosts(posts)
         }
       }
     }
@@ -76,9 +72,7 @@ class ChanPostRepository(
 
   suspend fun getCachedPost(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized postCache.getPostFromCache(postDescriptor, isOP)
-      }
+      return@myAsync postCache.getPostFromCache(postDescriptor, isOP)
     }
   }
 
@@ -93,27 +87,25 @@ class ChanPostRepository(
     logger.log(TAG, "getCatalogOriginalPosts(descriptor=$descriptor, archiveIds=${archiveIds}, count=$count)")
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val originalPostsFromCache = postCache.getLatestOriginalPostsFromCache(descriptor, count)
-          if (originalPostsFromCache.size == count) {
-            return@tryWithTransaction originalPostsFromCache
-          }
-
-          val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
-            descriptor,
-            archiveIds,
-            count
-          )
-
-          if (originalPostsFromDatabase.isNotEmpty()) {
-            originalPostsFromDatabase.forEach { post ->
-              postCache.putIntoCache(post.postDescriptor, post)
-            }
-          }
-
-          return@tryWithTransaction originalPostsFromDatabase
+      return@myAsync tryWithTransaction {
+        val originalPostsFromCache = postCache.getLatestOriginalPostsFromCache(descriptor, count)
+        if (originalPostsFromCache.size == count) {
+          return@tryWithTransaction originalPostsFromCache
         }
+
+        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+          descriptor,
+          archiveIds,
+          count
+        )
+
+        if (originalPostsFromDatabase.isNotEmpty()) {
+          originalPostsFromDatabase.forEach { post ->
+            postCache.putIntoCache(post.postDescriptor, post)
+          }
+        }
+
+        return@tryWithTransaction originalPostsFromDatabase
       }
     }
   }
@@ -126,39 +118,37 @@ class ChanPostRepository(
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
-            postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
-          }
-
-          val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
-            post.postDescriptor.postNo
-          }.toSet()
-
-          val originalPostNoListToGetFromDatabase = threadNoList.filter { threadNo ->
-            threadNo !in originalPostNoFromCacheSet
-          }
-
-          if (originalPostNoListToGetFromDatabase.isEmpty()) {
-            // All posts were found in the cache
-            return@tryWithTransaction originalPostsFromCache
-          }
-
-          val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
-            descriptor,
-            archiveIds,
-            originalPostNoListToGetFromDatabase
-          )
-
-          if (originalPostsFromDatabase.isNotEmpty()) {
-            originalPostsFromDatabase.forEach { post ->
-              postCache.putIntoCache(post.postDescriptor, post)
-            }
-          }
-
-          return@tryWithTransaction originalPostsFromCache + originalPostsFromDatabase
+      return@myAsync tryWithTransaction {
+        val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
+          postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
         }
+
+        val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
+          post.postDescriptor.postNo
+        }.toSet()
+
+        val originalPostNoListToGetFromDatabase = threadNoList.filter { threadNo ->
+          threadNo !in originalPostNoFromCacheSet
+        }
+
+        if (originalPostNoListToGetFromDatabase.isEmpty()) {
+          // All posts were found in the cache
+          return@tryWithTransaction originalPostsFromCache
+        }
+
+        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+          descriptor,
+          archiveIds,
+          originalPostNoListToGetFromDatabase
+        )
+
+        if (originalPostsFromDatabase.isNotEmpty()) {
+          originalPostsFromDatabase.forEach { post ->
+            postCache.putIntoCache(post.postDescriptor, post)
+          }
+        }
+
+        return@tryWithTransaction originalPostsFromCache + originalPostsFromDatabase
       }
     }
   }
@@ -170,45 +160,43 @@ class ChanPostRepository(
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val originalPostsFromCache = postCache.getOriginalPostsFromCache(threadDescriptors)
+      return@myAsync tryWithTransaction {
+        val originalPostsFromCache = postCache.getOriginalPostsFromCache(threadDescriptors)
 
-          val notCachedOriginalPostThreadDescriptors = threadDescriptors.filter { threadDescriptor ->
-            !originalPostsFromCache.containsKey(threadDescriptor)
-          }
-
-          if (notCachedOriginalPostThreadDescriptors.isEmpty()) {
-            // All posts were found in the cache
-            return@tryWithTransaction originalPostsFromCache
-          }
-
-          val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
-            archiveIds,
-            notCachedOriginalPostThreadDescriptors
-          )
-
-          if (originalPostsFromDatabase.isNotEmpty()) {
-            originalPostsFromDatabase.forEach { (_, chanPost) ->
-              postCache.putIntoCache(chanPost.postDescriptor, chanPost)
-            }
-          }
-
-          val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
-            originalPostsFromCache.size + originalPostsFromDatabase.size
-          )
-
-          resultMap.putAll(originalPostsFromCache)
-          resultMap.putAll(originalPostsFromDatabase)
-
-          if (isDevFlavor) {
-            resultMap.values.forEach { chanPost ->
-              check(chanPost.isOp) { "getCatalogOriginalPosts() is returning a non-OP post!" }
-            }
-          }
-
-          return@tryWithTransaction resultMap
+        val notCachedOriginalPostThreadDescriptors = threadDescriptors.filter { threadDescriptor ->
+          !originalPostsFromCache.containsKey(threadDescriptor)
         }
+
+        if (notCachedOriginalPostThreadDescriptors.isEmpty()) {
+          // All posts were found in the cache
+          return@tryWithTransaction originalPostsFromCache
+        }
+
+        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+          archiveIds,
+          notCachedOriginalPostThreadDescriptors
+        )
+
+        if (originalPostsFromDatabase.isNotEmpty()) {
+          originalPostsFromDatabase.forEach { (_, chanPost) ->
+            postCache.putIntoCache(chanPost.postDescriptor, chanPost)
+          }
+        }
+
+        val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
+          originalPostsFromCache.size + originalPostsFromDatabase.size
+        )
+
+        resultMap.putAll(originalPostsFromCache)
+        resultMap.putAll(originalPostsFromDatabase)
+
+        if (isDevFlavor) {
+          resultMap.values.forEach { chanPost ->
+            check(chanPost.isOp) { "getCatalogOriginalPosts() is returning a non-OP post!" }
+          }
+        }
+
+        return@tryWithTransaction resultMap
       }
     }
   }
@@ -221,31 +209,29 @@ class ChanPostRepository(
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val fromCache = postCache.getPostsFromCache(threadDescriptor, postNoSet)
-          if (fromCache.size == postNoSet.size) {
-            return@tryWithTransaction fromCache
-          }
-
-          val getFromDatabasePostList = postNoSet.subtract(
-            fromCache.map { post -> post.postDescriptor.postNo }
-          )
-
-          val postsFromDatabase = localSource.getThreadPosts(
-            threadDescriptor,
-            archiveIds,
-            getFromDatabasePostList
-          )
-
-          if (postsFromDatabase.isNotEmpty()) {
-            postsFromDatabase.forEach { post ->
-              postCache.putIntoCache(post.postDescriptor, post)
-            }
-          }
-
-          return@tryWithTransaction fromCache + postsFromDatabase
+      return@myAsync tryWithTransaction {
+        val fromCache = postCache.getPostsFromCache(threadDescriptor, postNoSet)
+        if (fromCache.size == postNoSet.size) {
+          return@tryWithTransaction fromCache
         }
+
+        val getFromDatabasePostList = postNoSet.subtract(
+          fromCache.map { post -> post.postDescriptor.postNo }
+        )
+
+        val postsFromDatabase = localSource.getThreadPosts(
+          threadDescriptor,
+          archiveIds,
+          getFromDatabasePostList
+        )
+
+        if (postsFromDatabase.isNotEmpty()) {
+          postsFromDatabase.forEach { post ->
+            postCache.putIntoCache(post.postDescriptor, post)
+          }
+        }
+
+        return@tryWithTransaction fromCache + postsFromDatabase
       }
     }
   }
@@ -258,35 +244,33 @@ class ChanPostRepository(
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val fromCache = postCache.getLatest(descriptor, maxCount)
-            .map { it.postDescriptor.postNo }
-            .toSet()
+      return@myAsync tryWithTransaction {
+        val fromCache = postCache.getLatest(descriptor, maxCount)
+          .map { it.postDescriptor.postNo }
+          .toSet()
 
-          if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
-            return@tryWithTransaction fromCache
-          }
-
-          val postsFromDatabase = localSource.getThreadPosts(
-            descriptor,
-            archiveIds,
-            fromCache,
-            maxCount
-          )
-
-          if (postsFromDatabase.isNotEmpty()) {
-            postsFromDatabase.forEach { post ->
-              postCache.putIntoCache(post.postDescriptor, post)
-            }
-          }
-
-          val fromDatabase = postsFromDatabase
-            .map { post -> post.postDescriptor.postNo }
-            .toSet()
-
-          return@tryWithTransaction fromCache + fromDatabase
+        if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
+          return@tryWithTransaction fromCache
         }
+
+        val postsFromDatabase = localSource.getThreadPosts(
+          descriptor,
+          archiveIds,
+          fromCache,
+          maxCount
+        )
+
+        if (postsFromDatabase.isNotEmpty()) {
+          postsFromDatabase.forEach { post ->
+            postCache.putIntoCache(post.postDescriptor, post)
+          }
+        }
+
+        val fromDatabase = postsFromDatabase
+          .map { post -> post.postDescriptor.postNo }
+          .toSet()
+
+        return@tryWithTransaction fromCache + fromDatabase
       }
     }
   }
@@ -300,50 +284,44 @@ class ChanPostRepository(
     logger.log(TAG, "getThreadPosts(descriptor=$descriptor, archiveIds=${archiveIds}, maxCount=$maxCount)")
 
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          val fromCache = postCache.getLatest(descriptor, maxCount)
-          if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
-            return@tryWithTransaction fromCache
-          }
-
-          val postsNoToIgnore = fromCache.map { post -> post.postDescriptor.postNo }.toSet()
-
-          val postsFromDatabase = localSource.getThreadPosts(
-            descriptor,
-            archiveIds,
-            postsNoToIgnore,
-            maxCount
-          )
-
-          if (postsFromDatabase.isNotEmpty()) {
-            postsFromDatabase.forEach { post ->
-              postCache.putIntoCache(post.postDescriptor, post)
-            }
-          }
-
-          return@tryWithTransaction fromCache + postsFromDatabase
+      return@myAsync tryWithTransaction {
+        val fromCache = postCache.getLatest(descriptor, maxCount)
+        if (maxCount != Int.MAX_VALUE && fromCache.size >= maxCount) {
+          return@tryWithTransaction fromCache
         }
+
+        val postsNoToIgnore = fromCache.map { post -> post.postDescriptor.postNo }.toSet()
+
+        val postsFromDatabase = localSource.getThreadPosts(
+          descriptor,
+          archiveIds,
+          postsNoToIgnore,
+          maxCount
+        )
+
+        if (postsFromDatabase.isNotEmpty()) {
+          postsFromDatabase.forEach { post ->
+            postCache.putIntoCache(post.postDescriptor, post)
+          }
+        }
+
+        return@tryWithTransaction fromCache + postsFromDatabase
       }
     }
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          return@tryWithTransaction localSource.deleteAll()
-        }
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.deleteAll()
       }
     }
   }
 
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     return applicationScope.myAsync {
-      return@myAsync suspendableInitializer.invokeWhenInitialized {
-        return@invokeWhenInitialized tryWithTransaction {
-          return@tryWithTransaction localSource.deleteThread(threadDescriptor)
-        }
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.deleteThread(threadDescriptor)
       }
     }
   }

@@ -31,7 +31,7 @@ class AddBoardsPresenter(
   @Inject
   lateinit var boardManager: BoardManager
 
-  private val selectedBoards = mutableSetOf<BoardDescriptor>()
+  private val selectedBoards = LinkedHashSet<BoardDescriptor>()
 
   override fun onCreate(view: AddBoardsView) {
     super.onCreate(view)
@@ -87,9 +87,7 @@ class AddBoardsPresenter(
   }
 
   suspend fun addSelectedBoards() {
-    selectedBoards.forEach { selectedBoard ->
-      boardManager.activateDeactivateBoard(selectedBoard, true)
-    }
+    boardManager.activateDeactivateBoards(siteDescriptor, selectedBoards, true)
 
     selectedBoards.clear()
   }

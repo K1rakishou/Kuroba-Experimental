@@ -78,12 +78,14 @@ abstract class SiteBase : Site, CoroutineScope {
 
   override fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)?) {
     if (!enabled()) {
-      callback?.invoke(ModularResult.value(JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))))
+      val response = JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))
+      callback?.invoke(ModularResult.value(response))
       return
     }
 
     if (!boardsType().canList) {
-      callback?.invoke(ModularResult.value(JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))))
+      val response = JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))
+      callback?.invoke(ModularResult.value(response))
       return
     }
 
