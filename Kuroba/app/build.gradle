@@ -287,7 +287,6 @@ dependencies {
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
-    implementation 'me.xdrop:fuzzywuzzy:1.2.0'
     implementation 'com.vladsch.flexmark:flexmark:0.60.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
@@ -318,7 +317,7 @@ dependencies {
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.3'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
 }
 
 // Download the current archives.json file for the build
