@@ -613,8 +613,8 @@ class BrowseController(context: Context) : ThreadController(context),
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun openThread(descriptor: ThreadDescriptor) {
-    showThread(descriptor)
+  override fun openThread(threadToOpenDescriptor: ThreadDescriptor) {
+    showThread(threadToOpenDescriptor)
   }
 
   override fun showThread(descriptor: ThreadDescriptor) {

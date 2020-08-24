@@ -808,7 +808,7 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar
 
     fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    fun openThread(descriptor: ChanDescriptor.ThreadDescriptor)
+    fun openThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)

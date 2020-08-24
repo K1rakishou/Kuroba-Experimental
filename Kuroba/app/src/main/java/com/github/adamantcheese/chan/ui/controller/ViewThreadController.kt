@@ -72,8 +72,8 @@ open class ViewThreadController(
 
   private var pinItemPinned = false
 
-  // pairs of the current thread loadable and the thread we're going to's hashcode
-  private val threadFollowerpool: Deque<Pair<ThreadDescriptor, Int>> = ArrayDeque()
+  // pairs of the current ThreadDescriptor and the thread we're going to's ThreadDescriptor
+  private val threadFollowerpool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
   private var hintPopup: HintPopup? = null
 
   override fun onCreate() {
@@ -410,15 +410,15 @@ open class ViewThreadController(
     }
   }
 
-  override fun openThread(descriptor: ThreadDescriptor) {
+  override fun openThread(threadToOpenDescriptor: ThreadDescriptor) {
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.ok) { _, _ ->
-        threadFollowerpool.addFirst(Pair(threadDescriptor, threadDescriptor.hashCode()))
-        loadThread(threadDescriptor)
+        threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
+        loadThread(threadToOpenDescriptor)
       }
       .setTitle(R.string.open_thread_confirmation)
-      .setMessage("/" + threadDescriptor.boardCode() + "/" + threadDescriptor.threadNo)
+      .setMessage("/" + threadToOpenDescriptor.boardCode() + "/" + threadToOpenDescriptor.threadNo)
       .show()
   }
 
@@ -629,7 +629,7 @@ open class ViewThreadController(
   override fun threadBackPressed(): Boolean {
     // clear the pool if the current thread isn't a part of this crosspost chain
     // ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
-    if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != threadDescriptor.hashCode()) {
+    if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != threadDescriptor) {
       threadFollowerpool.clear()
     }
 
