@@ -8,6 +8,7 @@ import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.features.setup.data.BoardCellData
 import com.github.adamantcheese.chan.features.setup.data.BoardsSetupControllerState
+import com.github.adamantcheese.chan.ui.helper.BoardHelper
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.errorMessageOrClassName
@@ -123,11 +124,11 @@ class BoardsSetupPresenter(
 
     val boardCellDataList = mutableListWithCap<BoardCellData>(32)
 
-    boardManager.viewActiveBoardsOrdered(siteDescriptor) { chanBoard ->
+    boardManager.viewBoardsOrdered(siteDescriptor, true) { chanBoard ->
       boardCellDataList += BoardCellData(
         chanBoard.boardDescriptor,
         chanBoard.boardName(),
-        chanBoard.description
+        BoardHelper.getDescription(chanBoard)
       )
     }
 

@@ -37,6 +37,7 @@ import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
+import com.github.adamantcheese.chan.features.setup.BoardSelectionController
 import com.github.adamantcheese.chan.features.setup.SiteSettingsController
 import com.github.adamantcheese.chan.features.setup.SitesSetupController
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
@@ -58,6 +59,7 @@ import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -182,14 +184,11 @@ class BrowseController(context: Context) : ThreadController(context),
         return@setMiddleMenu
       }
 
-      val setupController = SitesSetupController(context)
-      if (doubleNavigationController != null) {
-        doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(setupController)
+      if (!siteManager.areSitesSetup()) {
+        openSitesSetupController()
       } else {
-        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(setupController)
+        openBoardSelectionController()
       }
-
-      requireStartActivity().setSettingsMenuItemSelected()
     }
 
     // Toolbar menu
@@ -203,6 +202,50 @@ class BrowseController(context: Context) : ThreadController(context),
 
     // Presenter
     presenter.create(mainScope, this)
+  }
+
+  private fun openBoardSelectionController() {
+    val boardSelectionController = BoardSelectionController(
+      context,
+      object : BoardSelectionController.UserSelectionListener {
+        override fun onSiteSelected(siteDescriptor: SiteDescriptor) {
+          openSiteSettingsController(siteDescriptor)
+        }
+
+        override fun onBoardSelected(boardDescriptor: BoardDescriptor) {
+          if (boardManager.currentBoardDescriptor() == boardDescriptor) {
+            return
+          }
+
+          mainScope.launch { loadBoard(boardDescriptor) }
+        }
+      })
+
+    navigationController!!.presentController(boardSelectionController)
+
+    requireStartActivity().setSettingsMenuItemSelected()
+  }
+
+  private fun openSitesSetupController() {
+    val sitesSetupController = SitesSetupController(context)
+    if (doubleNavigationController != null) {
+      doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(sitesSetupController)
+    } else {
+      requireStartActivity().openControllerWrappedIntoBottomNavAwareController(sitesSetupController)
+    }
+
+    requireStartActivity().setSettingsMenuItemSelected()
+  }
+
+  private fun openSiteSettingsController(siteDescriptor: SiteDescriptor) {
+    val siteSettingsController = SiteSettingsController(context, siteDescriptor)
+    if (doubleNavigationController != null) {
+      doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(siteSettingsController)
+    } else {
+      requireStartActivity().openControllerWrappedIntoBottomNavAwareController(siteSettingsController)
+    }
+
+    requireStartActivity().setSettingsMenuItemSelected()
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -483,14 +526,7 @@ class BrowseController(context: Context) : ThreadController(context),
   fun openSetup() {
     Objects.requireNonNull(navigationController, "navigationController is null")
 
-    val setupController = SitesSetupController(context)
-    if (doubleNavigationController != null) {
-      doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(setupController)
-    } else {
-      requireStartActivity().openControllerWrappedIntoBottomNavAwareController(setupController)
-    }
-
-    requireStartActivity().setSettingsMenuItemSelected()
+    openBoardSelectionController()
   }
 
   private fun handleShareAndOpenInBrowser(share: Boolean) {

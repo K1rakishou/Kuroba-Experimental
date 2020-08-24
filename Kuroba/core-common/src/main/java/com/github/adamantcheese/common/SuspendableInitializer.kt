@@ -28,10 +28,6 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       Log.d(tag, "SuspendableInitializer initWithValue() called")
     }
 
-    if (value.isCompleted) {
-      throw RuntimeException("Double initialization detected!")
-    }
-
     value.complete(newValue)
     invokeAllCallbacks(null)
 
@@ -43,10 +39,6 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   fun initWithError(exception: Throwable) {
     if (logStates) {
       Log.e(tag, "SuspendableInitializer initWithError() called")
-    }
-
-    if (value.isCompleted) {
-      throw RuntimeException("Double initialization detected!")
     }
 
     error.set(exception)

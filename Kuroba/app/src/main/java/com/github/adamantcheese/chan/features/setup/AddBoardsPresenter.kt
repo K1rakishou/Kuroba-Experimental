@@ -118,11 +118,13 @@ class AddBoardsPresenter(
         boardCellData = BoardCellData(
           boardDescriptor = chanBoard.boardDescriptor,
           name = BoardHelper.getName(chanBoard),
-          description = chanBoard.description
+          description = BoardHelper.getDescription(chanBoard)
         ),
         selected = isSelected
       )
     }
+
+    // TODO(KurobaEx): sort found boards
 
     if (matchedBoards.isEmpty()) {
       setState(AddBoardsControllerState.Empty)

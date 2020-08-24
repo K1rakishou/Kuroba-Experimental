@@ -87,7 +87,6 @@ class AddBoardsController(
 
   override fun onBack(): Boolean {
     if (presenting) {
-      presenting = false
       pop()
       return true
     }
@@ -96,6 +95,8 @@ class AddBoardsController(
   }
 
   private fun pop() {
+    presenting = false
+
     callback.onRefreshBoards()
     stopPresenting()
   }

@@ -113,6 +113,8 @@ class BoardManager(
       .hide()
   }
 
+  fun currentBoardDescriptor(): BoardDescriptor? = currentBoardSubject.value?.boardDescriptor
+
   suspend fun createOrUpdateBoards(boards: List<ChanBoard>): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
@@ -277,7 +279,7 @@ class BoardManager(
     }
   }
 
-  fun viewActiveBoardsOrdered(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
+  fun viewBoardsOrdered(siteDescriptor: SiteDescriptor, onlyActive: Boolean, func: (ChanBoard) -> Unit) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
@@ -286,7 +288,7 @@ class BoardManager(
         val chanBoard = boardsMap[siteDescriptor]?.get(boardDescriptor)
           ?: return@forEach
 
-        if (chanBoard.active) {
+        if (!onlyActive || chanBoard.active) {
           func(chanBoard)
         }
       }

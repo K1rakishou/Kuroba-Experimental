@@ -7,9 +7,10 @@
     <com.airbnb.epoxy.EpoxyRecyclerView
         android:id="@+id/epoxy_recycler_view"
         android:scrollbars="vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="match_parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add_boards"
