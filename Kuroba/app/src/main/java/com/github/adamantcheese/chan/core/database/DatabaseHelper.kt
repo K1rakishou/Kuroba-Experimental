@@ -21,7 +21,6 @@ import android.database.sqlite.SQLiteDatabase
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.chan.core.model.orm.SavedReply
-import com.github.adamantcheese.chan.core.model.orm.SiteModel
 import com.github.adamantcheese.chan.utils.Logger
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper
 import com.j256.ormlite.dao.Dao
@@ -38,7 +37,6 @@ class DatabaseHelper @Inject constructor(
   val savedDao by lazy { getDao(SavedReply::class.java)!! as Dao<SavedReply, Int> }
   val postHideDao by lazy { getDao(PostHide::class.java)!! as Dao<PostHide, Int> }
   val filterDao by lazy { getDao(Filter::class.java)!! as Dao<Filter, Int> }
-  val siteDao by lazy { getDao(SiteModel::class.java)!! as Dao<SiteModel, Int> }
 
   override fun onCreate(database: SQLiteDatabase, connectionSource: ConnectionSource) {
     try {
@@ -54,7 +52,6 @@ class DatabaseHelper @Inject constructor(
     TableUtils.createTable(connectionSource, SavedReply::class.java)
     TableUtils.createTable(connectionSource, PostHide::class.java)
     TableUtils.createTable(connectionSource, Filter::class.java)
-    TableUtils.createTable(connectionSource, SiteModel::class.java)
   }
 
   @Throws(SQLException::class)
@@ -62,7 +59,6 @@ class DatabaseHelper @Inject constructor(
     TableUtils.dropTable<SavedReply, Any>(connectionSource, SavedReply::class.java, true)
     TableUtils.dropTable<PostHide, Any>(connectionSource, PostHide::class.java, true)
     TableUtils.dropTable<Filter, Any>(connectionSource, Filter::class.java, true)
-    TableUtils.dropTable<SiteModel, Any>(connectionSource, SiteModel::class.java, true)
   }
 
   /**

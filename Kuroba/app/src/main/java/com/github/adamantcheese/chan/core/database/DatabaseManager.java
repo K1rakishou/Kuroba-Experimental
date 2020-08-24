@@ -60,7 +60,6 @@ public class DatabaseManager {
 
     private final DatabaseSavedReplyManager databaseSavedReplyManager;
     private final DatabaseFilterManager databaseFilterManager;
-    private final DatabaseSiteManager databaseSiteManager;
     private final DatabaseHideManager databaseHideManager;
 
     @Inject
@@ -71,7 +70,6 @@ public class DatabaseManager {
 
         databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
-        databaseSiteManager = new DatabaseSiteManager(helper);
         databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
     }
 
@@ -89,10 +87,6 @@ public class DatabaseManager {
 
     public DatabaseFilterManager getDatabaseFilterManager() {
         return databaseFilterManager;
-    }
-
-    public DatabaseSiteManager getDatabaseSiteManager() {
-        return databaseSiteManager;
     }
 
     public DatabaseHideManager getDatabaseHideManager() {

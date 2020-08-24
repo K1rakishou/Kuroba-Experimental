@@ -9,6 +9,7 @@ import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
 import com.github.adamantcheese.chan.core.manager.ReportManager
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
@@ -63,11 +64,14 @@ class SettingsCoordinator(
   lateinit var fileManager: FileManager
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
       context,
       databaseManager,
+      siteManager,
       (context as StartActivity).updateManager,
       reportManager,
       navigationController

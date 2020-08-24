@@ -90,6 +90,13 @@ open class SiteManager(
       .hide()
   }
 
+  fun activeSiteCount(): Int {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read { siteMap.keys.count { siteDescriptor -> isSiteActive(siteDescriptor) } }
+  }
+
   suspend fun activateOrDeactivateSite(siteDescriptor: SiteDescriptor, activate: Boolean): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()

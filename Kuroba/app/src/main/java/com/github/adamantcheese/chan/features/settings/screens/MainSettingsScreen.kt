@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.ReportManager
+import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.*
@@ -23,6 +24,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.*
 class MainSettingsScreen(
   context: Context,
   private val databaseManager: DatabaseManager,
+  private val siteManager: SiteManager,
   private val updateManager: UpdateManager,
   private val reportManager: ReportManager,
   private val navigationController: NavigationController
@@ -168,7 +170,7 @@ class MainSettingsScreen(
           identifier = MainScreen.MainGroup.SitesSetup,
           topDescriptionIdFunc = { R.string.settings_sites },
           bottomDescriptionStringFunc = {
-            val sitesCount = databaseManager.runTask(databaseManager.databaseSiteManager.count).toInt()
+            val sitesCount = siteManager.activeSiteCount()
             getQuantityString(R.plurals.site, sitesCount, sitesCount)
           },
           callback = { navigationController.pushController(SitesSetupController(context)) }

@@ -266,7 +266,7 @@ android {
 dependencies {
     implementation project(':core-common')
     implementation project(':core-model')
-    implementation project(path: ':core-settings')
+    implementation project(':core-settings')
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation 'androidx.browser:browser:1.2.0'
