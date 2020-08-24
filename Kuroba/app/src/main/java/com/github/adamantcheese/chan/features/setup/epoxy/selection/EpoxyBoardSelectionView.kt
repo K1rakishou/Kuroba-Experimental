@@ -18,7 +18,7 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   private val boardName: MaterialTextView
 
   init {
-    inflate(context, R.layout.epoxy_board_view, this)
+    inflate(context, R.layout.epoxy_board_selection_view, this)
 
     boardName = findViewById(R.id.board_name)
   }

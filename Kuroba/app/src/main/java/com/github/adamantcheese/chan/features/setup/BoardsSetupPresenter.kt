@@ -88,12 +88,14 @@ class BoardsSetupPresenter(
     }
   }
 
-  fun displayActiveBoards() {
+  fun displayActiveBoards(setLoadingState: Boolean = true) {
     if (!boardInfoLoaded.get()) {
       return
     }
 
-    setState(BoardsSetupControllerState.Loading)
+    if (setLoadingState) {
+      setState(BoardsSetupControllerState.Loading)
+    }
 
     suspendDebouncer.post(DEBOUNCE_TIME_MS) {
       boardManager.awaitUntilInitialized()
@@ -105,13 +107,13 @@ class BoardsSetupPresenter(
 
   fun onBoardMoved(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
     if (boardManager.onBoardMoved(boardDescriptor, fromPosition, toPosition)) {
-      displayActiveBoards()
+      displayActiveBoards(setLoadingState = false)
     }
   }
 
   fun onBoardRemoved(boardDescriptor: BoardDescriptor) {
     if (boardManager.onBoardRemoved(boardDescriptor)) {
-      displayActiveBoards()
+      displayActiveBoards(setLoadingState = false)
     }
   }
 

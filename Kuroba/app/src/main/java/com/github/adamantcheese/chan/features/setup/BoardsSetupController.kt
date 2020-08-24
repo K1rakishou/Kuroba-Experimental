@@ -117,6 +117,7 @@ class BoardsSetupController(
               id("boards_setup_board_view_${boardCellData.boardDescriptor}")
               boardName(BoardHelper.getName(boardCellData.boardDescriptor.boardCode, boardCellData.name))
               boardDescription(boardCellData.description)
+              boardDescriptor(boardCellData.boardDescriptor)
             }
           }
         }
