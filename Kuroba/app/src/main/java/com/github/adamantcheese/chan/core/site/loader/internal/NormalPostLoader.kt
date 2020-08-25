@@ -219,15 +219,14 @@ internal class NormalPostLoader(
       "<url hidden>"
     }
 
-    return """
-    ChanReaderRequest.readJson() stats:
-    url = $urlToLog,
-    Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).
-    Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).
-    Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).
-    Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).
-    Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).
-    """
+    return buildString {
+      appendLine("ChanReaderRequest.readJson() stats: url = $urlToLog.")
+      appendLine("Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).")
+      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).")
+      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).")
+      appendLine("Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).")
+      appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
+    }
   }
 
   companion object {

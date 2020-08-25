@@ -282,7 +282,7 @@ abstract class ChanPostDao {
         .map { postId -> postId to postIdCountMap[postId]!! }
 
       // Find postId with the higher count in the countByPostIdList
-      val (bestPostId, postCount) = countByPostIdList.maxBy { (_, count) -> count }!!
+      val (bestPostId, postCount) = countByPostIdList.maxByOrNull { (_, count) -> count }!!
 
       // We may have multiple post ids that have the same count in countByPostIdList. In such
       // case we need to use a postId with the lowest archiveId (because in case when we have
@@ -292,7 +292,7 @@ abstract class ChanPostDao {
 
       var resultPostId = bestPostId
       if (similar.size > 1) {
-        val (postId, _) = similar.minBy { (postId, _) -> archiveIdByPostId[postId]!! }!!
+        val (postId, _) = similar.minByOrNull { (postId, _) -> archiveIdByPostId[postId]!! }!!
         resultPostId = postId
       }
 

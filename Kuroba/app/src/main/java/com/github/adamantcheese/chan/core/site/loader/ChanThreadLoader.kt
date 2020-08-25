@@ -57,7 +57,6 @@ import kotlin.math.min
 class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var gson: Gson
-
   @Inject
   lateinit var okHttpClient: ProxiedOkHttpClient
   @Inject
@@ -341,7 +340,9 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
             is ThreadLoadResult.LoadedNormally -> {
               threadLoadResult.chanLoaderResponse
             }
-            is ThreadLoadResult.LoadedFromDatabaseCopy -> threadLoadResult.chanLoaderResponse
+            is ThreadLoadResult.LoadedFromDatabaseCopy -> {
+              threadLoadResult.chanLoaderResponse
+            }
             is ThreadLoadResult.LoadedFromArchive -> {
               threadLoadResult.chanLoaderResponse.op.archived = true
               threadLoadResult.chanLoaderResponse

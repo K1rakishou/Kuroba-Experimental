@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
-import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -12,18 +11,17 @@ import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepositor
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class ChanThreadViewableInfoManager(
   private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
   private val appScope: CoroutineScope
 ) {
-  private val lock = ReentrantReadWriteLock()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
+  private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val chanThreadViewableMap =
-    mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
-  private val debouncer = SuspendDebouncer(appScope)
+  private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
   suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
@@ -36,7 +34,7 @@ class ChanThreadViewableInfoManager(
         return
       } ?: ChanThreadViewableInfo(chanDescriptor)
 
-    chanThreadViewableMap[chanDescriptor] = chanThreadViewableInfo
+    lock.write { chanThreadViewableMap[chanDescriptor] = chanThreadViewableInfo }
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
@@ -56,7 +54,7 @@ class ChanThreadViewableInfoManager(
       return
     }
 
-    val oldChanThreadViewableInfo = chanThreadViewableMap[chanDescriptor]
+    val oldChanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor] }
       ?: return
 
     val mutatedChanThreadViewableInfo = oldChanThreadViewableInfo.deepCopy()
@@ -66,7 +64,7 @@ class ChanThreadViewableInfoManager(
       return
     }
 
-    chanThreadViewableMap[chanDescriptor] = mutatedChanThreadViewableInfo
+    lock.write { chanThreadViewableMap[chanDescriptor] = mutatedChanThreadViewableInfo }
     persist(chanDescriptor)
   }
 
@@ -75,24 +73,22 @@ class ChanThreadViewableInfoManager(
       return null
     }
 
-    val oldChanThreadViewableInfo = chanThreadViewableMap[chanDescriptor]
+    val oldChanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor] }
       ?: return null
 
     return func(ChanThreadViewableInfoView.fromChanThreadViewableInfo(oldChanThreadViewableInfo))
   }
 
   private fun persist(chanDescriptor: ChanDescriptor) {
-    debouncer.post(DEBOUNCE_TIMEOUT_MS) {
-      serializedCoroutineExecutor.post {
-        chanThreadViewableMap[chanDescriptor]?.let { chanThreadViewableInfo ->
-          chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
-        }
+    serializedCoroutineExecutor.post {
+      val chanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor]?.deepCopy() }
+      if (chanThreadViewableInfo != null) {
+        chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
       }
     }
   }
 
   companion object {
     private const val TAG = "ChanThreadViewableInfoManager"
-    private const val DEBOUNCE_TIMEOUT_MS = 1000L
   }
 }
