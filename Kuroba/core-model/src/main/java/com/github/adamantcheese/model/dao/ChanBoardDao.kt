@@ -5,9 +5,9 @@ import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
-import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
-import com.github.adamantcheese.model.entity.chan.ChanBoardFull
-import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardFull
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
 
 @Dao
 abstract class ChanBoardDao {

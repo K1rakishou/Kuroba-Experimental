@@ -3,8 +3,8 @@ package com.github.adamantcheese.model.mapper
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
-import com.github.adamantcheese.model.entity.chan.ChanBoardEntity
-import com.github.adamantcheese.model.entity.chan.ChanBoardFull
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardFull
 
 object ChanBoardMapper {
 

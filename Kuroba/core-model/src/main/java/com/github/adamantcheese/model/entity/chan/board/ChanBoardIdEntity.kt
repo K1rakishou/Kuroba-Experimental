@@ -1,8 +1,9 @@
-package com.github.adamantcheese.model.entity.chan
+package com.github.adamantcheese.model.entity.chan.board
 
 import androidx.room.*
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteIdEntity
 
 @Entity(
   tableName = ChanBoardIdEntity.TABLE_NAME,

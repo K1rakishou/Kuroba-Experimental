@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity.chan
+package com.github.adamantcheese.model.entity.chan.post
 
 import androidx.room.*
 import com.github.adamantcheese.model.data.post.ChanPostImageType

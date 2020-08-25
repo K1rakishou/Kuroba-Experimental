@@ -15,7 +15,14 @@ import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHisto
 import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkReplyEntity
-import com.github.adamantcheese.model.entity.chan.*
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
+import com.github.adamantcheese.model.entity.chan.post.*
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteIdEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteSettingsEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadViewableInfoEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts

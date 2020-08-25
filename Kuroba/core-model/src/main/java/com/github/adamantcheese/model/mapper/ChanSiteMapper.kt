@@ -2,8 +2,8 @@ package com.github.adamantcheese.model.mapper
 
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.data.site.ChanSiteData
-import com.github.adamantcheese.model.entity.chan.ChanSiteEntity
-import com.github.adamantcheese.model.entity.chan.ChanSiteWithSettings
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteWithSettings
 
 object ChanSiteMapper {
 

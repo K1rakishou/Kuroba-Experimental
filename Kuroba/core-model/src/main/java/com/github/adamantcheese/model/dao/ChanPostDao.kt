@@ -3,7 +3,7 @@ package com.github.adamantcheese.model.dao
 import androidx.room.*
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.KurobaDatabase
-import com.github.adamantcheese.model.entity.chan.*
+import com.github.adamantcheese.model.entity.chan.post.*
 
 @Dao
 abstract class ChanPostDao {

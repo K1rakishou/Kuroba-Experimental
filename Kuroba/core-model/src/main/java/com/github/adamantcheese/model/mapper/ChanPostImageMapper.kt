@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.mapper
 
 import com.github.adamantcheese.model.data.post.ChanPostImage
-import com.github.adamantcheese.model.entity.chan.ChanPostImageEntity
+import com.github.adamantcheese.model.entity.chan.post.ChanPostImageEntity
 
 object ChanPostImageMapper {
 

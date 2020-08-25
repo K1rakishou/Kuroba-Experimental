@@ -3,8 +3,8 @@ package com.github.adamantcheese.model.entity.bookmark
 import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Relation
-import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
-import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 
 data class ThreadBookmarkFull(
   @ColumnInfo(name = ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME)

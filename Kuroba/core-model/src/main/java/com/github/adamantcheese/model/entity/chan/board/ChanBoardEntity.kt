@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity.chan
+package com.github.adamantcheese.model.entity.chan.board
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

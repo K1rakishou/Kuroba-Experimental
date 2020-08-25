@@ -1,7 +1,7 @@
 package com.github.adamantcheese.model.dao
 
 import androidx.room.*
-import com.github.adamantcheese.model.entity.chan.ChanThreadViewableInfoEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadViewableInfoEntity
 
 @Dao
 abstract class ChanThreadViewableInfoDao {

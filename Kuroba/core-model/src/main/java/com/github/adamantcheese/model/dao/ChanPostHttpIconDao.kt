@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.adamantcheese.model.entity.chan.ChanPostHttpIconEntity
+import com.github.adamantcheese.model.entity.chan.post.ChanPostHttpIconEntity
 import okhttp3.HttpUrl
 
 @Dao

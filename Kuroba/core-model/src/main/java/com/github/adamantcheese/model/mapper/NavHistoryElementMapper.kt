@@ -3,7 +3,7 @@ package com.github.adamantcheese.model.mapper
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.adamantcheese.model.data.navigation.NavHistoryElementInfo
-import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryFullDto

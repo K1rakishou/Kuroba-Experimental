@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.entity.chan
+package com.github.adamantcheese.model.entity.chan.board
 
 import androidx.room.Embedded
 import androidx.room.Relation

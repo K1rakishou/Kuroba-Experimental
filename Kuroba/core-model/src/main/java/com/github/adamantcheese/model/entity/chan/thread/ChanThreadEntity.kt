@@ -1,6 +1,7 @@
-package com.github.adamantcheese.model.entity.chan
+package com.github.adamantcheese.model.entity.chan.thread
 
 import androidx.room.*
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
 
 @Entity(
   tableName = ChanThreadEntity.TABLE_NAME,

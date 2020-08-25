@@ -2,10 +2,10 @@ package com.github.adamantcheese.model.dao
 
 import androidx.room.*
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
-import com.github.adamantcheese.model.entity.chan.ChanSiteEntity
-import com.github.adamantcheese.model.entity.chan.ChanSiteIdEntity
-import com.github.adamantcheese.model.entity.chan.ChanSiteSettingsEntity
-import com.github.adamantcheese.model.entity.chan.ChanSiteWithSettings
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteIdEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteSettingsEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteWithSettings
 
 @Dao
 abstract class ChanSiteDao {

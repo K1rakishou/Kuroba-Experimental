@@ -4,8 +4,8 @@ import androidx.room.*
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkFull
-import com.github.adamantcheese.model.entity.chan.ChanBoardIdEntity
-import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 
 @Dao
 abstract class ThreadBookmarkDao {

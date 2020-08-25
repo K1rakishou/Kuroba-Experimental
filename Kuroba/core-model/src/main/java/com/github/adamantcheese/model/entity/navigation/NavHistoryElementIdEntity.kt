@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 
 @Entity(
   tableName = NavHistoryElementIdEntity.TABLE_NAME,

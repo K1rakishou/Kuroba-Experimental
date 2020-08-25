@@ -4,10 +4,10 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.serializable.spans.SerializableSpannableString
-import com.github.adamantcheese.model.entity.chan.ChanPostEntity
-import com.github.adamantcheese.model.entity.chan.ChanPostIdEntity
-import com.github.adamantcheese.model.entity.chan.ChanTextSpanEntity
-import com.github.adamantcheese.model.entity.chan.ChanThreadEntity
+import com.github.adamantcheese.model.entity.chan.post.ChanPostEntity
+import com.github.adamantcheese.model.entity.chan.post.ChanPostIdEntity
+import com.github.adamantcheese.model.entity.chan.post.ChanTextSpanEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 import com.google.gson.Gson
 
 object ChanPostMapper {

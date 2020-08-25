@@ -2,7 +2,7 @@ package com.github.adamantcheese.model.mapper
 
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.thread.ChanThreadViewableInfo
-import com.github.adamantcheese.model.entity.chan.ChanThreadViewableInfoEntity
+import com.github.adamantcheese.model.entity.chan.thread.ChanThreadViewableInfoEntity
 
 object ChanThreadViewableInfoMapper {
 

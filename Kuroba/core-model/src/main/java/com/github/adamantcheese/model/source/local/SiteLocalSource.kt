@@ -4,7 +4,7 @@ import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.data.site.ChanSiteData
-import com.github.adamantcheese.model.entity.chan.ChanSiteSettingsEntity
+import com.github.adamantcheese.model.entity.chan.site.ChanSiteSettingsEntity
 import com.github.adamantcheese.model.mapper.ChanSiteMapper
 import com.github.adamantcheese.model.source.cache.ChanDescriptorCache
 
