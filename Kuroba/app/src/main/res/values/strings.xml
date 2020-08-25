@@ -391,7 +391,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="delete_wait">Deleting post…</string>
     <string name="delete_success">Post deleted</string>
     <string name="delete_image_only">Only delete the image</string>
-    <string name="delete_error">Error deleting post</string>
+    <string name="delete_error">Error deleting post: %1$s</string>
+    <string name="delete_error_post_is_not_saved">Error deleting post: No information found that this post is yours</string>
+    <string name="delete_error_unknown">Unknown error while deleting post</string>
 
     <string name="watch_pause_pins">Stop watching</string>
     <string name="watch_idle">No new posts</string>

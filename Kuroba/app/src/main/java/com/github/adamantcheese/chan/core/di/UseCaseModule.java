@@ -1,8 +1,8 @@
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
@@ -37,13 +37,13 @@ public class UseCaseModule {
     @Singleton
     @Provides
     public ExtractPostMapInfoHolderUseCase provideExtractReplyPostsPositionsFromPostsListUseCase(
-            DatabaseManager databaseManager,
+            SavedReplyManager savedReplyManager,
             SiteManager siteManager
     ) {
         Logger.d(AppModule.DI_TAG, "ExtractPostMapInfoHolderUseCase");
 
         return new ExtractPostMapInfoHolderUseCase(
-                databaseManager.getDatabaseSavedReplyManager(),
+                savedReplyManager,
                 siteManager
         );
     }
@@ -75,7 +75,7 @@ public class UseCaseModule {
             CoroutineScope appScope,
             ReplyParser replyParser,
             SiteManager siteManager,
-            DatabaseManager databaseManager
+            SavedReplyManager savedReplyManager
     ) {
         Logger.d(AppModule.DI_TAG, "ParsePostRepliesUseCase");
 
@@ -83,7 +83,7 @@ public class UseCaseModule {
                 appScope,
                 replyParser,
                 siteManager,
-                databaseManager.getDatabaseSavedReplyManager()
+                savedReplyManager
         );
     }
 

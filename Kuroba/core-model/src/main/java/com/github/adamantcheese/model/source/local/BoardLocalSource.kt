@@ -18,10 +18,10 @@ class BoardLocalSource(
   private val TAG = "$loggerTag BoardLocalSource"
   private val chanBoardDao = database.chanBoardDao()
 
-  suspend fun selectAllActiveBoards(): Map<SiteDescriptor, List<ChanBoard>> {
+  suspend fun selectAllBoards(): Map<SiteDescriptor, List<ChanBoard>> {
     ensureInTransaction()
 
-    val allActiveBoards = chanBoardDao.selectAllActiveBoards()
+    val allActiveBoards = chanBoardDao.selectAllBoards()
 
     allActiveBoards.forEach { chanBoardFull ->
       chanDescriptorCache.putBoardDescriptor(

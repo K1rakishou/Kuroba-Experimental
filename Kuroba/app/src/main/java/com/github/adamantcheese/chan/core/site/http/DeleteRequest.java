@@ -17,14 +17,14 @@
 package com.github.adamantcheese.chan.core.site.http;
 
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.SavedReply;
+import com.github.adamantcheese.model.data.post.ChanSavedReply;
 
 public class DeleteRequest {
     public final Post post;
-    public final SavedReply savedReply;
+    public final ChanSavedReply savedReply;
     public final boolean imageOnly;
 
-    public DeleteRequest(Post post, SavedReply savedReply, boolean imageOnly) {
+    public DeleteRequest(Post post, ChanSavedReply savedReply, boolean imageOnly) {
         this.post = post;
         this.savedReply = savedReply;
         this.imageOnly = imageOnly;

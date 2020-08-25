@@ -97,7 +97,7 @@ abstract class Controller(@JvmField var context: Context) {
     get
     private set
 
-  protected var mainScope = MainScope() + CoroutineName("Controller")
+  protected var mainScope = MainScope() + CoroutineName("Controller_${this::class.java.simpleName}")
 
   var shown = false
     @JvmName("shown") get

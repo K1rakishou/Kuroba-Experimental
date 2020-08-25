@@ -20,7 +20,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.model.orm.PostHide
-import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.utils.Logger
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper
 import com.j256.ormlite.dao.Dao
@@ -34,7 +33,6 @@ class DatabaseHelper @Inject constructor(
   private val context: Context
 ) : OrmLiteSqliteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
-  val savedDao by lazy { getDao(SavedReply::class.java)!! as Dao<SavedReply, Int> }
   val postHideDao by lazy { getDao(PostHide::class.java)!! as Dao<PostHide, Int> }
   val filterDao by lazy { getDao(Filter::class.java)!! as Dao<Filter, Int> }
 
@@ -49,14 +47,12 @@ class DatabaseHelper @Inject constructor(
 
   @Throws(SQLException::class)
   fun createTables(connectionSource: ConnectionSource?) {
-    TableUtils.createTable(connectionSource, SavedReply::class.java)
     TableUtils.createTable(connectionSource, PostHide::class.java)
     TableUtils.createTable(connectionSource, Filter::class.java)
   }
 
   @Throws(SQLException::class)
   fun dropTables(connectionSource: ConnectionSource?) {
-    TableUtils.dropTable<SavedReply, Any>(connectionSource, SavedReply::class.java, true)
     TableUtils.dropTable<PostHide, Any>(connectionSource, PostHide::class.java, true)
     TableUtils.dropTable<Filter, Any>(connectionSource, Filter::class.java, true)
   }

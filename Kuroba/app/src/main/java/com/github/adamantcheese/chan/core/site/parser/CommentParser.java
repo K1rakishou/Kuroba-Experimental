@@ -178,6 +178,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         long postId = Long.parseLong(matcher.group(1));
 
+        // TODO(KurobaEx): archive ghost posts
+        long postSubNo = 0;
+
         PostLinkable.Type type;
         PostLinkable.Value value = new PostLinkable.Value.LongValue(postId);
 
@@ -191,7 +194,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         PostLinkable.Link link = new PostLinkable.Link(type, TextUtils.concat(text, DEAD_REPLY_SUFFIX), value);
-        appendSuffixes(callback, post, link, postId);
+        appendSuffixes(callback, post, link, postId, postSubNo);
 
         SpannableString res = new SpannableString(link.getKey());
         PostLinkable pl = new PostLinkable(
@@ -263,9 +266,13 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE) {
             Long postNo = handlerLink.getLinkValue().extractLongOrNull();
+
+            // TODO(KurobaEx): archive ghost posts
+            Long postSubNo = 0L;
+
             if (postNo != null) {
                 post.addReplyTo(postNo);
-                appendSuffixes(callback, post, handlerLink, postNo);
+                appendSuffixes(callback, post, handlerLink, postNo, postSubNo);
             }
         }
 
@@ -294,7 +301,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             PostParser.Callback callback,
             Post.Builder post,
             PostLinkable.Link handlerLink,
-            Long postNo
+            Long postNo,
+            Long postSubNo
     ) {
         // Append (OP) when it's a reply to OP
         if (postNo == post.opId) {
@@ -302,7 +310,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-        if (callback.isSaved(postNo)) {
+        if (callback.isSaved(postNo, postSubNo)) {
             if (post.isSavedReply) {
                 handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_SELF_SUFFIX));
             } else {

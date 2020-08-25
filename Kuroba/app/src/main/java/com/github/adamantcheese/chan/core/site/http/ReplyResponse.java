@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.core.site.http;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.site.SiteActions;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
 
 import kotlin.coroutines.Continuation;
@@ -49,4 +50,8 @@ public class ReplyResponse {
     public String password = "";
     public boolean probablyBanned = false;
     public boolean requireAuthentication = false;
+
+    public PostDescriptor getPostDescriptorOrNull() {
+        return PostDescriptor.create(siteDescriptor.getSiteName(), boardCode, threadNo, postNo);
+    }
 }

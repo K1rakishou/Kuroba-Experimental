@@ -173,7 +173,7 @@ public class CaptchaNojsLayoutV1
 
     public void reset() {
         if (captchaHolder.hasToken() && isAutoReply) {
-            callback.onAuthenticationComplete(this, null, captchaHolder.getToken(), true);
+            callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
             return;
         }
 
@@ -224,7 +224,7 @@ public class CaptchaNojsLayoutV1
                 token = response;
             }
 
-            callback.onAuthenticationComplete(this, null, token, isAutoReply);
+            callback.onAuthenticationComplete(null, token, isAutoReply);
         }
     }
 

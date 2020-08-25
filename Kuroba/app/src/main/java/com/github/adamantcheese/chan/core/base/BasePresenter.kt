@@ -10,7 +10,7 @@ abstract class BasePresenter<V> {
   private var view: V? = null
   private val initialized = AtomicBoolean(false)
 
-  protected val scope = MainScope() + CoroutineName("BasePresenter")
+  protected val scope = MainScope() + CoroutineName("Presenter_${this::class.java.simpleName}")
   protected val compositeDisposable = CompositeDisposable()
 
   @CallSuper

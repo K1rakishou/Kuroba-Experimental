@@ -198,6 +198,20 @@ class PostsCache(private val maxValueCount: Int) {
 //        }
   }
 
+  suspend fun deletePost(postDescriptor: PostDescriptor) {
+//    mutex.withLock {
+//      val threadDescriptor = postDescriptor.threadDescriptor()
+//
+//      postsCache[threadDescriptor]?.remove(postDescriptor)
+//
+//      if (postDescriptor.isOP()) {
+//        originalPostsCache.remove(threadDescriptor)
+//      }
+//
+//      accessTimes[threadDescriptor] = System.currentTimeMillis()
+//    }
+  }
+
   private fun evictOld(amountToEvictParam: Int) {
     require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
     require(mutex.isLocked) { "mutex must be locked!" }

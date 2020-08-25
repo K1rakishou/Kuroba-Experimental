@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase
@@ -28,7 +27,6 @@ class BookmarkWatcherDelegate(
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
   private val siteManager: SiteManager,
-  private val savedReplyManager: DatabaseSavedReplyManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
   private val parsePostRepliesUseCase: ParsePostRepliesUseCase,
@@ -366,13 +364,6 @@ class BookmarkWatcherDelegate(
   private suspend fun awaitUntilAllDependenciesAreReady() {
     bookmarksManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
-
-    // TODO(KurobaEx):
-//    if (!savedReplyManager.isReady) {
-//      Logger.d(TAG, "savedReplyManager is not ready yet, waiting...")
-//      val duration = measureTime { savedReplyManager.awaitUntilInitialized() }
-//      Logger.d(TAG, "savedReplyManager initialization completed, took $duration")
-//    }
   }
 
   private fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {

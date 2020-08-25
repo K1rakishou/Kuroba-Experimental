@@ -21,14 +21,9 @@ import android.text.TextUtils
 import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.BoardManager
-import com.github.adamantcheese.chan.core.manager.BookmarksManager
-import com.github.adamantcheese.chan.core.manager.ReplyManager
-import com.github.adamantcheese.chan.core.manager.SiteManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.Site
@@ -37,7 +32,6 @@ import com.github.adamantcheese.chan.core.site.SiteAuthentication
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback
-import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate.ImagePickCallback
 import com.github.adamantcheese.chan.ui.helper.PostHelper
@@ -46,6 +40,7 @@ import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.post.ChanSavedReply
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -55,11 +50,12 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class ReplyPresenter @Inject constructor(
   private val context: Context,
   private val replyManager: ReplyManager,
-  private val databaseManager: DatabaseManager,
+  private val savedReplyManager: SavedReplyManager,
   private val lastReplyRepository: LastReplyRepository,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -79,7 +75,7 @@ class ReplyPresenter @Inject constructor(
   private var pickingFile = false
   private var selectedQuote = -1
 
-  private lateinit var job: Job
+  private val job = SupervisorJob()
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var draft: Reply
   private lateinit var chanBoard: ChanBoard
@@ -107,7 +103,6 @@ class ReplyPresenter @Inject constructor(
       unbindChanDescriptor()
     }
 
-    this.job = SupervisorJob()
     this.bound = true
     this.chanDescriptor = chanDescriptor
 
@@ -148,9 +143,7 @@ class ReplyPresenter @Inject constructor(
   fun unbindChanDescriptor() {
     bound = false
 
-    if (::job.isInitialized) {
-      job.cancel()
-    }
+    job.cancelChildren()
 
     draft.file = null
     draft.fileName = ""
@@ -302,10 +295,17 @@ class ReplyPresenter @Inject constructor(
 
   private fun submitOrAuthenticate() {
     if (site.actions().postRequiresAuthentication()) {
-      switchPage(Page.AUTHENTICATION)
-    } else {
-      makeSubmitCall()
+      val token = callback.getTokenOrNull()
+      if (token.isNullOrEmpty()) {
+        switchPage(Page.AUTHENTICATION)
+        return
+      }
+
+      onAuthenticationComplete(null, token, true)
+      return
     }
+
+    makeSubmitCall()
   }
 
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
@@ -323,7 +323,6 @@ class ReplyPresenter @Inject constructor(
   }
 
   override fun onAuthenticationComplete(
-    authenticationLayout: AuthenticationLayoutInterface,
     challenge: String?,
     response: String?,
     autoReply: Boolean
@@ -550,15 +549,15 @@ class ReplyPresenter @Inject constructor(
       bookmarkThread(newThreadDescriptor, threadNo)
     }
 
-    val savedReply = SavedReply.fromBoardNoPassword(
-      localBoard,
-      replyResponse.postNo,
-      replyResponse.password
-    )
+    replyResponse.postDescriptorOrNull?.let { postDescriptor ->
+      val password = if (replyResponse.password.isNotEmpty()) {
+        replyResponse.password
+      } else {
+        null
+      }
 
-    databaseManager.runTaskAsync(
-      databaseManager.databaseSavedReplyManager.saveReply(savedReply)
-    )
+      savedReplyManager.saveReply(ChanSavedReply(postDescriptor, password))
+    }
 
     switchPageSuspend(Page.INPUT)
 
@@ -625,13 +624,13 @@ class ReplyPresenter @Inject constructor(
     callback.openMessage(errorMessage)
   }
 
-  suspend fun switchPageSuspend(
+  private suspend fun switchPageSuspend(
     page: Page,
     useV2NoJsCaptcha: Boolean = true,
     autoReply: Boolean = true
   ) {
-    return suspendCancellableCoroutine { cancellableContinuation ->
-      switchPage(page, { cancellableContinuation.resume(Unit) }, useV2NoJsCaptcha, autoReply)
+    return suspendCoroutine { continuation ->
+      switchPage(page, { continuation.resume(Unit) }, useV2NoJsCaptcha, autoReply)
     }
   }
 
@@ -796,6 +795,7 @@ class ReplyPresenter @Inject constructor(
     fun onFallbackToV1CaptchaView(autoReply: Boolean)
     fun destroyCurrentAuthentication()
     fun showAuthenticationFailedError(error: Throwable?)
+    fun getTokenOrNull(): String?
   }
 
   companion object {

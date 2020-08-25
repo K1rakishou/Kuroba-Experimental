@@ -44,6 +44,7 @@ import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicator
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper;
 import com.github.adamantcheese.chan.core.manager.ReportManager;
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.SeenPostsManager;
 import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
@@ -64,6 +65,7 @@ import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
@@ -360,7 +362,6 @@ public class ManagerModule {
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
             SiteManager siteManager,
-            DatabaseManager databaseManager,
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
             ParsePostRepliesUseCase parsePostRepliesUseCase,
@@ -375,7 +376,6 @@ public class ManagerModule {
                 appScope,
                 bookmarksManager,
                 siteManager,
-                databaseManager.getDatabaseSavedReplyManager(),
                 lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,
                 parsePostRepliesUseCase,
@@ -485,6 +485,18 @@ public class ManagerModule {
         return new ChanThreadViewableInfoManager(
                 chanThreadViewableInfoRepository,
                 appScope
+        );
+    }
+
+    @Provides
+    @Singleton
+    public SavedReplyManager provideSavedReplyManager(
+            ChanSavedReplyRepository chanSavedReplyRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "SavedReplyManager");
+
+        return new SavedReplyManager(
+                chanSavedReplyRepository
         );
     }
 }

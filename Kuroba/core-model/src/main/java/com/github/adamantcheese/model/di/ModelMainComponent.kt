@@ -32,6 +32,7 @@ interface ModelMainComponent {
   fun getChanThreadViewableInfoRepository(): ChanThreadViewableInfoRepository
   fun getSiteRepository(): SiteRepository
   fun getBoardRepository(): BoardRepository
+  fun getChanSavedReplyRepository(): ChanSavedReplyRepository
 
   @Component.Builder
   interface Builder {

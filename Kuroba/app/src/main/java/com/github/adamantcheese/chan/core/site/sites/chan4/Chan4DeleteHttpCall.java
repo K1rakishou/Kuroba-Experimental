@@ -55,7 +55,7 @@ public class Chan4DeleteHttpCall extends HttpCall {
             formBuilder.add("onlyimgdel", "on");
         }
         formBuilder.add("mode", "usrdel");
-        formBuilder.add("pwd", deleteRequest.savedReply.password);
+        formBuilder.add("pwd", deleteRequest.savedReply.passwordOrEmptyString());
 
         requestBuilder.url(getSite().endpoints().delete(deleteRequest.post));
         requestBuilder.post(formBuilder.build());

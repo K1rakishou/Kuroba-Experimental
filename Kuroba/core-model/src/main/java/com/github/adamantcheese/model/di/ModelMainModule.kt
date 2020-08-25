@@ -238,6 +238,22 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideChanSavedReplyLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger
+  ): ChanSavedReplyLocalSource {
+    return ChanSavedReplyLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -468,6 +484,24 @@ class ModelMainModule {
       logger,
       scope,
       boardLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanSavedReplyRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    chanSavedReplyLocalSource: ChanSavedReplyLocalSource
+  ): ChanSavedReplyRepository {
+    return ChanSavedReplyRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      chanSavedReplyLocalSource
     )
   }
 

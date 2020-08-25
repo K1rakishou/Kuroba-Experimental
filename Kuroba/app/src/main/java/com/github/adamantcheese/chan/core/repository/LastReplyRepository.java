@@ -18,7 +18,10 @@ package com.github.adamantcheese.chan.core.repository;
 
 import androidx.annotation.GuardedBy;
 
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
+import com.github.adamantcheese.chan.core.site.Site;
+import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import java.util.HashMap;
@@ -26,14 +29,16 @@ import java.util.Map;
 
 public class LastReplyRepository {
     private final SiteManager siteManager;
+    private final BoardManager boardManager;
 
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastReplyMap = new HashMap<>();
     @GuardedBy("this")
     private Map<BoardDescriptor, Long> lastThreadMap = new HashMap<>();
 
-    public LastReplyRepository(SiteManager siteManager) {
+    public LastReplyRepository(SiteManager siteManager, BoardManager boardManager) {
         this.siteManager = siteManager;
+        this.boardManager = boardManager;
     }
 
     public void putLastReply(BoardDescriptor boardDescriptor) {
@@ -53,27 +58,25 @@ public class LastReplyRepository {
                 ? lastTime
                 : 0L;
 
-//        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
-//        if (board == null) {
-//            return 0L;
-//        }
+        ChanBoard board = boardManager.byBoardDescriptor(boardDescriptor);
+        if (board == null) {
+            return 0L;
+        }
 
-//        long waitTime = hasImage
-//                ? board.cooldownImages
-//                : board.cooldownReplies;
-//
-//        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
-//        if (site == null) {
-//            return 0;
-//        }
-//
-//        if (site.actions().isLoggedIn()) {
-//            waitTime /= 2;
-//        }
-//
-//        return waitTime - ((System.currentTimeMillis() - lastReplyTime) / 1000L);
+        long waitTime = hasImage
+                ? board.getCooldownImages()
+                : board.getCooldownReplies();
 
-        return 0;
+        Site site = siteManager.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
+        if (site == null) {
+            return 0;
+        }
+
+        if (site.actions().isLoggedIn()) {
+            waitTime /= 2;
+        }
+
+        return waitTime - ((System.currentTimeMillis() - lastReplyTime) / 1000L);
     }
 
     public void putLastThread(BoardDescriptor boardDescriptor) {
@@ -85,31 +88,29 @@ public class LastReplyRepository {
     public long getTimeUntilThread(BoardDescriptor boardDescriptor) {
         Long lastTime = 0L;
 
-//        synchronized (this) {
-//            lastTime = lastThreadMap.get(boardDescriptor);
-//        }
-//
-//        long lastThreadTime = lastTime != null
-//                ? lastTime
-//                : 0L;
-//
-//        Board board = boardRepository.getFromBoardDescriptor(boardDescriptor);
-//        if (board == null) {
-//            return 0L;
-//        }
-//
-//        Site site = siteRepository.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
-//        if (site == null) {
-//            return 0;
-//        }
-//
-//        long waitTime = board.cooldownThreads;
-//        if (site.actions().isLoggedIn()) {
-//            waitTime /= 2;
-//        }
-//
-//        return waitTime - ((System.currentTimeMillis() - lastThreadTime) / 1000L);
+        synchronized (this) {
+            lastTime = lastThreadMap.get(boardDescriptor);
+        }
 
-        return 0;
+        long lastThreadTime = lastTime != null
+                ? lastTime
+                : 0L;
+
+        ChanBoard board = boardManager.byBoardDescriptor(boardDescriptor);
+        if (board == null) {
+            return 0L;
+        }
+
+        Site site = siteManager.bySiteDescriptor(boardDescriptor.getSiteDescriptor());
+        if (site == null) {
+            return 0;
+        }
+
+        long waitTime = board.getCooldownThreads();
+        if (site.actions().isLoggedIn()) {
+            waitTime /= 2;
+        }
+
+        return waitTime - ((System.currentTimeMillis() - lastThreadTime) / 1000L);
     }
 }

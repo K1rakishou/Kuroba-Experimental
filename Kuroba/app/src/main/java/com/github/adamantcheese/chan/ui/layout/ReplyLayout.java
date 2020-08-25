@@ -194,12 +194,29 @@ public class ReplyLayout
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
+
         EventBus.getDefault().register(this);
+        captchaHolder.setListener(this);
 
         Disposable disposable = globalWindowInsetsManager.listenForKeyboardChanges()
                 .subscribe((isOpened) -> updateWrappingMode());
 
         compositeDisposable.add(disposable);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        if (hintPopup != null) {
+            hintPopup.dismiss();
+            hintPopup = null;
+        }
+
+        EventBus.getDefault().unregister(this);
+        captchaHolder.removeListener();
+
+        compositeDisposable.clear();
     }
 
     private void updateWrappingMode() {
@@ -217,19 +234,6 @@ public class ReplyLayout
         }
 
         setWrappingMode(matchParent);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        if (hintPopup != null) {
-            hintPopup.dismiss();
-            hintPopup = null;
-        }
-
-        EventBus.getDefault().unregister(this);
-        compositeDisposable.clear();
     }
 
     @Override
@@ -375,12 +379,9 @@ public class ReplyLayout
         } else {
             captcha.setVisibility(GONE);
         }
-
-        captchaHolder.setListener(this);
     }
 
     public void cleanup() {
-        captchaHolder.removeListener();
         presenter.unbindChanDescriptor();
         removeCallbacks(closeMessageRunnable);
     }
@@ -627,6 +628,12 @@ public class ReplyLayout
     public void showAuthenticationFailedError(Throwable error) {
         String message = getString(R.string.could_not_initialized_captcha, getReason(error));
         showToast(getContext(), message, Toast.LENGTH_LONG);
+    }
+
+    @Nullable
+    @Override
+    public String getTokenOrNull() {
+        return captchaHolder.getToken();
     }
 
     private String getReason(Throwable error) {

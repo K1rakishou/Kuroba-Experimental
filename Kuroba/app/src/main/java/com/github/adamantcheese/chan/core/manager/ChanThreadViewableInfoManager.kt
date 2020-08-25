@@ -1,7 +1,7 @@
 package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
+import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -17,24 +17,20 @@ class ChanThreadViewableInfoManager(
   private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
   private val appScope: CoroutineScope
 ) {
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+  private val suspendDebouncer = SuspendDebouncer(appScope)
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
-  suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
-    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
-      return
-    }
-
-    val chanThreadViewableInfo = chanThreadViewableInfoRepository.preloadForThread(chanDescriptor)
+  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val chanThreadViewableInfo = chanThreadViewableInfoRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
-        Logger.e(TAG, "preloadForThread($chanDescriptor) failed", error)
+        Logger.e(TAG, "preloadForThread($threadDescriptor) failed", error)
         return
-      } ?: ChanThreadViewableInfo(chanDescriptor)
+      } ?: ChanThreadViewableInfo(threadDescriptor)
 
-    lock.write { chanThreadViewableMap[chanDescriptor] = chanThreadViewableInfo }
+    lock.write { chanThreadViewableMap[threadDescriptor] = chanThreadViewableInfo }
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
@@ -80,7 +76,8 @@ class ChanThreadViewableInfoManager(
   }
 
   private fun persist(chanDescriptor: ChanDescriptor) {
-    serializedCoroutineExecutor.post {
+    // TODO(KurobaEx): we need a debouncer with keys here
+    suspendDebouncer.post(DEBOUNCE_TIME) {
       val chanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor]?.deepCopy() }
       if (chanThreadViewableInfo != null) {
         chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
@@ -90,5 +87,6 @@ class ChanThreadViewableInfoManager(
 
   companion object {
     private const val TAG = "ChanThreadViewableInfoManager"
+    private const val DEBOUNCE_TIME = 500L
   }
 }

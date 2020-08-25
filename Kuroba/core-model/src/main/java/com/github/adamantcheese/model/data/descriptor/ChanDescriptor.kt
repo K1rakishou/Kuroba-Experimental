@@ -77,6 +77,13 @@ sealed class ChanDescriptor {
         return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadNo)
       }
 
+      @JvmStatic
+      fun create(chanDescriptor: ChanDescriptor, threadNo: Long): ThreadDescriptor {
+        require(threadNo > 0) { "Bad threadId: $threadNo" }
+
+        return ThreadDescriptor(chanDescriptor.boardDescriptor(), threadNo)
+      }
+
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
         require(descriptorParcelable.isThreadDescriptor()) { "Not a thread descriptor type" }
 

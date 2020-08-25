@@ -221,6 +221,18 @@ abstract class ChanPostDao {
   abstract suspend fun deleteAll(): Int
 
   @Query("""
+    DELETE
+    FROM ${ChanPostIdEntity.TABLE_NAME}
+    WHERE
+        ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :threadId
+    AND
+        ${ChanPostIdEntity.POST_NO_COLUMN_NAME} = :postNo
+    AND
+        ${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = :postSubNo
+  """)
+  abstract suspend fun deletePost(threadId: Long, postNo: Long, postSubNo: Long)
+
+  @Query("""
         DELETE FROM ${ChanPostIdEntity.TABLE_NAME} 
         WHERE ${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (
             SELECT ${ChanPostIdEntity.POST_ID_COLUMN_NAME}
@@ -299,4 +311,5 @@ abstract class ChanPostDao {
       return@map resultPostId
     }
   }
+
 }

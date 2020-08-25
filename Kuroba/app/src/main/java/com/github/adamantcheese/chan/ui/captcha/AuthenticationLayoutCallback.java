@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface AuthenticationLayoutCallback {
     void onAuthenticationComplete(
-            AuthenticationLayoutInterface authenticationLayout,
             @Nullable String challenge,
             @Nullable String response,
             boolean autoReply

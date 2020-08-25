@@ -120,7 +120,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   }
 
   private val parserCallback: PostParser.Callback = object : PostParser.Callback {
-    override fun isSaved(postNo: Long): Boolean {
+    override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
       return false
     }
 

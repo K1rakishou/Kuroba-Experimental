@@ -1,10 +1,11 @@
 package com.github.adamantcheese.chan.core.usecase
 
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.hashSetWithCap
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -20,13 +21,11 @@ class ParsePostRepliesUseCase(
   private val appScope: CoroutineScope,
   private val replyParser: ReplyParser,
   private val siteManager: SiteManager,
-  private val savedReplyManager: DatabaseSavedReplyManager
+  private val savedReplyManager: SavedReplyManager
 ) : ISuspendUseCase<List<ThreadBookmarkFetchResult.Success>, YousPerThreadMap> {
 
   override suspend fun execute(parameter: List<ThreadBookmarkFetchResult.Success>): YousPerThreadMap {
     require(siteManager.isReady()) { "SiteManager is not initialized yet!" }
-    // TODO(KurobaEx):
-//    require(savedReplyManager.isReady) { "DatabaseSavedReplyManager is not initialized yet!" }
 
     return parsePostReplies(parameter)
   }
@@ -34,8 +33,8 @@ class ParsePostRepliesUseCase(
   private suspend fun parsePostReplies(
     successThreadBookmarkFetchResults: List<ThreadBookmarkFetchResult.Success>
   ): Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>> {
-    val quotesToMePerThreadMap =
-      mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>(successThreadBookmarkFetchResults.size)
+    val cap = successThreadBookmarkFetchResults.size
+    val quotesToMePerThreadMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>(cap)
 
     successThreadBookmarkFetchResults
       .chunked(BATCH_SIZE)
@@ -58,11 +57,13 @@ class ParsePostRepliesUseCase(
     return quotesToMePerThreadMap
   }
 
-  private fun parsePostRepliesWorker(
+  private suspend fun parsePostRepliesWorker(
     successFetchResult: ThreadBookmarkFetchResult.Success
   ): Map<Long, List<PostDescriptor>> {
     val threadDescriptor = successFetchResult.threadDescriptor
-    val allQuotesInThread = HashSet<Long>(32)
+
+    // Key - postNo of a post that quotes other posts.
+    // Value - set of postNo that the "Key" quotes.
     val quoteOwnerPostsMap = mutableMapWithCap<Long, MutableSet<Long>>(32)
 
     successFetchResult.threadBookmarkInfoObject.simplePostObjects.forEach { simplePostObject ->
@@ -78,40 +79,33 @@ class ParsePostRepliesUseCase(
               && extractedQuote.threadId == threadDescriptor.threadNo
 
             if (isQuotedPostInTheSameThread) {
-              allQuotesInThread += extractedQuote.postId
-
-              quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetOf())
+              quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
               quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
             }
 
-            // TODO(KurobaEx): cross-thread quotes are not supported for now
+            // TODO(KurobaEx): cross-thread quotes are not supported for now (do we even need them?)
           }
           is ReplyParser.ExtractedQuote.Quote -> {
-            allQuotesInThread += extractedQuote.postId
-
-            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetOf())
+            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
             quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
           }
         }
       }
     }
 
-    if (allQuotesInThread.isEmpty() || quoteOwnerPostsMap.isEmpty()) {
+    if (quoteOwnerPostsMap.isEmpty()) {
       return emptyMap()
     }
 
-    val boardDescriptor = threadDescriptor.boardDescriptor
-    val siteDescriptor = threadDescriptor.siteDescriptor()
-
-    if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
+    if (siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor()) == null) {
       return emptyMap()
     }
 
-    val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNos(
-      allQuotesInThread,
+    savedReplyManager.preloadForThread(successFetchResult.threadBookmarkInfoObject.threadDescriptor)
+
+    val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNoMap(
       quoteOwnerPostsMap,
-      boardDescriptor.boardCode,
-      siteDescriptor
+      threadDescriptor
     )
 
     if (quotesToMeInThreadMap.isEmpty()) {

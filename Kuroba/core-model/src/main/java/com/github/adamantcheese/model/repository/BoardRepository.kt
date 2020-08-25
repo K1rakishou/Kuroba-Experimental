@@ -30,7 +30,7 @@ class BoardRepository(
         ensureBackgroundThread()
 
         val (boards, duration) = measureTimedValue {
-          return@measureTimedValue localSource.selectAllActiveBoards()
+          return@measureTimedValue localSource.selectAllBoards()
         }
 
         logger.log(TAG, "loadAllBoards() -> ${boards.size} took $duration")

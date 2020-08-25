@@ -76,6 +76,7 @@ public class ImagePickDelegate {
     @Inject
     FileCacheV2 fileCacheV2;
 
+    private CancellableToast toast = new CancellableToast();
     private Activity activity;
     private ImagePickCallback callback;
     private Uri uri;
@@ -144,7 +145,6 @@ public class ImagePickDelegate {
     }
 
     private void pickRemoteFile(ImagePickCallback callback) {
-        CancellableToast toast = new CancellableToast();
         toast.showToast(getAppContext(), R.string.image_url_get_attempt);
         HttpUrl clipboardURL;
         try {

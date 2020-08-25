@@ -107,7 +107,7 @@ public class GenericWebViewAuthenticationLayout
     @Override
     public void reset() {
         if (captchaHolder.hasToken() && isAutoReply) {
-            callback.onAuthenticationComplete(this, null, captchaHolder.getToken(), true);
+            callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
             return;
         }
 
@@ -145,7 +145,7 @@ public class GenericWebViewAuthenticationLayout
                 token = text;
             }
 
-            callback.onAuthenticationComplete(this, "", token, isAutoReply);
+            callback.onAuthenticationComplete(null, token, isAutoReply);
         }
     }
 

@@ -4,6 +4,7 @@ import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
+import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
@@ -80,5 +81,11 @@ public class RoomDatabaseModule {
     @Singleton
     public BoardRepository provideBoardRepository() {
         return modelMainComponent.getBoardRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ChanSavedReplyRepository provideChanSavedReplyRepository() {
+        return modelMainComponent.getChanSavedReplyRepository();
     }
 }

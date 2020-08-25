@@ -10,6 +10,8 @@ open class PostDescriptor protected constructor(
   open val postSubNo: Long = 0L
 ) {
 
+  fun isOP(): Boolean = postNo == descriptor.threadNoOrNull()
+
   fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
     return when (descriptor) {
       is ChanDescriptor.ThreadDescriptor -> descriptor
@@ -91,23 +93,26 @@ open class PostDescriptor protected constructor(
     }
 
     @JvmStatic
-    fun create(boardDescriptor: BoardDescriptor, threadNo: Long, postNo: Long): PostDescriptor {
-      return create(boardDescriptor.siteName(), boardDescriptor.boardCode, threadNo, postNo)
+    fun create(boardDescriptor: BoardDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
+      return create(boardDescriptor.siteName(), boardDescriptor.boardCode, threadNo, postNo, postSubNo)
     }
 
     @JvmStatic
-    fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long): PostDescriptor {
-      return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo)
+    fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
+      return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo, postSubNo)
     }
 
+    @JvmOverloads
     @JvmStatic
-    fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long): PostDescriptor {
+    fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
       require(threadNo > 0) { "Bad threadNo: $threadNo" }
       require(postNo > 0) { "Bad postNo: $postNo" }
+      require(postSubNo >= 0) { "Bad postSubNo: $postSubNo" }
 
       return PostDescriptor(
         ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo),
-        postNo
+        postNo,
+        postSubNo
       )
     }
   }

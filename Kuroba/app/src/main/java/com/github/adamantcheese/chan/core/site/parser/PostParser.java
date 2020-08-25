@@ -36,7 +36,7 @@ public interface PostParser {
     );
 
     interface Callback {
-        boolean isSaved(long postNo);
+        boolean isSaved(long postNo, long postSubNo);
 
         /**
          * Is the post id from this thread.

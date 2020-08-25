@@ -115,18 +115,12 @@ class SeenPostsManager(
     return cd.awaitSilently(false)
   }
 
-  suspend fun preloadForThread(chanDescriptor: ChanDescriptor) {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      return
-    }
-
+  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (!isEnabled()) {
       return
     }
 
-    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
     val completable = CompletableDeferred<Unit>()
-
     actor.offer(ActorAction.Preload(threadDescriptor, completable))
 
     completable.awaitSilently()

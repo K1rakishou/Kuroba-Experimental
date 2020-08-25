@@ -177,7 +177,7 @@ public class CaptchaLayout
             loadUrl("javascript:grecaptcha.reset()");
         } else {
             if (captchaHolder.hasToken() && isAutoReply) {
-                callback.onAuthenticationComplete(this, null, captchaHolder.getToken(), true);
+                callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
                 return;
             }
 
@@ -238,7 +238,7 @@ public class CaptchaLayout
             token = response;
         }
 
-        callback.onAuthenticationComplete(this, challenge, token, isAutoReply);
+        callback.onAuthenticationComplete(challenge, token, isAutoReply);
     }
 
     @Override

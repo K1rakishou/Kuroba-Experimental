@@ -38,12 +38,16 @@ class ChanPostRepository(
   suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
 
   suspend fun getCachedValuesCount(): Int {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync postCache.getCachedValuesCount()
     }
   }
 
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction localSource.insertEmptyThread(descriptor)
@@ -59,6 +63,8 @@ class ChanPostRepository(
     posts: MutableList<ChanPost>,
     isCatalog: Boolean
   ): ModularResult<List<Long>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (isCatalog) {
@@ -71,6 +77,8 @@ class ChanPostRepository(
   }
 
   suspend fun getCachedPost(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync postCache.getPostFromCache(postDescriptor, isOP)
     }
@@ -81,6 +89,7 @@ class ChanPostRepository(
     archiveId: Long,
     count: Int
   ): ModularResult<List<ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     require(count > 0) { "Bad count param: $count" }
 
     val archiveIds = toArchiveIdsSet(archiveId)
@@ -115,6 +124,7 @@ class ChanPostRepository(
     archiveId: Long,
     threadNoList: Collection<Long>
   ): ModularResult<List<ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
@@ -157,6 +167,7 @@ class ChanPostRepository(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
     archiveId: Long
   ): ModularResult<Map<ChanDescriptor.ThreadDescriptor, ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
@@ -206,6 +217,7 @@ class ChanPostRepository(
     archiveId: Long,
     postNoSet: Set<Long>
   ): ModularResult<List<ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
@@ -241,6 +253,7 @@ class ChanPostRepository(
     archiveId: Long,
     maxCount: Int
   ): ModularResult<Set<Long>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     val archiveIds = toArchiveIdsSet(archiveId)
 
     return applicationScope.myAsync {
@@ -280,7 +293,9 @@ class ChanPostRepository(
     archiveId: Long,
     maxCount: Int
   ): ModularResult<List<ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     val archiveIds = toArchiveIdsSet(archiveId)
+
     logger.log(TAG, "getThreadPosts(descriptor=$descriptor, archiveIds=${archiveIds}, maxCount=$maxCount)")
 
     return applicationScope.myAsync {
@@ -311,6 +326,8 @@ class ChanPostRepository(
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction localSource.deleteAll()
@@ -319,9 +336,24 @@ class ChanPostRepository(
   }
 
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction localSource.deleteThread(threadDescriptor)
+      }
+    }
+  }
+
+  suspend fun deletePost(postDescriptor: PostDescriptor): ModularResult<Unit> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        localSource.deletePost(postDescriptor)
+        postCache.deletePost(postDescriptor)
+
+        return@tryWithTransaction
       }
     }
   }

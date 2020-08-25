@@ -1,10 +1,6 @@
 package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.BoardManager
-import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
@@ -27,7 +23,7 @@ class ParsePostsUseCase(
   private val chanPostRepository: ChanPostRepository,
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
-  private val databaseSavedReplyManager: DatabaseSavedReplyManager,
+  private val savedReplyManager: SavedReplyManager,
   private val themeHelper: ThemeHelper,
   private val boardManager: BoardManager
 ) {
@@ -71,11 +67,15 @@ class ParsePostsUseCase(
 
         internalIds.addAll(cachedInternalIds)
       }
+
+      savedReplyManager.preloadForThread(chanDescriptor)
     }
 
     if (boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor()) == null) {
       return emptyList()
     }
+
+    val filters = loadFilters(chanDescriptor)
 
     return supervisorScope {
       return@supervisorScope postBuildersToParse
@@ -86,9 +86,9 @@ class ParsePostsUseCase(
               return@async PostParseWorker(
                 filterEngine,
                 postFilterManager,
-                databaseSavedReplyManager,
+                savedReplyManager,
                 themeHelper.theme,
-                loadFilters(chanDescriptor),
+                filters,
                 postToParse,
                 chanReader,
                 internalIds

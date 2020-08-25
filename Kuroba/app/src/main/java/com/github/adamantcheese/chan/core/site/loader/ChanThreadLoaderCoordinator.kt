@@ -17,12 +17,8 @@
 package com.github.adamantcheese.chan.core.site.loader
 
 import android.util.JsonReader
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.di.NetModule
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
-import com.github.adamantcheese.chan.core.manager.BoardManager
-import com.github.adamantcheese.chan.core.manager.FilterEngine
-import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
@@ -68,7 +64,7 @@ import kotlin.coroutines.CoroutineContext
 class ChanThreadLoaderCoordinator(
   private val gson: Gson,
   private val okHttpClient: NetModule.ProxiedOkHttpClient,
-  private val databaseSavedReplyManager: DatabaseSavedReplyManager,
+  private val savedReplyManager: SavedReplyManager,
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val appConstants: AppConstants,
@@ -102,7 +98,7 @@ class ChanThreadLoaderCoordinator(
       chanPostRepository,
       filterEngine,
       postFilterManager,
-      databaseSavedReplyManager,
+      savedReplyManager,
       themeHelper,
       boardManager
     )

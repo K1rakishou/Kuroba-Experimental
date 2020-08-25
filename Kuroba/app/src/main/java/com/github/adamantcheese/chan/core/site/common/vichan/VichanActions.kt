@@ -139,7 +139,7 @@ open class VichanActions(
     call.parameter("board", deleteRequest.post.boardDescriptor.boardCode)
     call.parameter("delete", "Delete")
     call.parameter("delete_" + deleteRequest.post.no, "on")
-    call.parameter("password", deleteRequest.savedReply.password)
+    call.parameter("password", deleteRequest.savedReply.passwordOrEmptyString())
 
     if (deleteRequest.imageOnly) {
       call.parameter("file", "on")

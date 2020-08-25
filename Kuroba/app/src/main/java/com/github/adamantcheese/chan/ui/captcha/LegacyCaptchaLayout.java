@@ -178,7 +178,7 @@ public class LegacyCaptchaLayout
 
     private void submitCaptcha() {
         hideKeyboard(this);
-        callback.onAuthenticationComplete(this, challenge, input.getText().toString(), true);
+        callback.onAuthenticationComplete(challenge, input.getText().toString(), true);
     }
 
     private void onCaptchaLoaded(final String imageUrl, final String challenge) {

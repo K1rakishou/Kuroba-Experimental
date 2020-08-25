@@ -16,9 +16,9 @@
  */
 package com.github.adamantcheese.chan.core.site.parser
 
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostFilter
 import com.github.adamantcheese.chan.core.model.orm.Filter
@@ -32,7 +32,7 @@ import java.util.*
 internal class PostParseWorker(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
-  private val savedReplyManager: DatabaseSavedReplyManager,
+  private val savedReplyManager: SavedReplyManager,
   private val currentTheme: Theme,
   private val filters: List<Filter>,
   private val postBuilder: Post.Builder,
@@ -43,9 +43,7 @@ internal class PostParseWorker(
   suspend fun parse(): Post? {
     return Try {
       // needed for "Apply to own posts" to work correctly
-      postBuilder.isSavedReply(
-        savedReplyManager.isSaved(postBuilder.boardDescriptor, postBuilder.id)
-      )
+      postBuilder.isSavedReply(savedReplyManager.isSaved(postBuilder.postDescriptor))
 
       // Process the filters before finish, because parsing the html is dependent on filter matches
       processPostFilter(postBuilder)
@@ -54,8 +52,8 @@ internal class PostParseWorker(
         ?: throw NullPointerException("PostParser cannot be null!")
 
       return@Try parser.parse(currentTheme, postBuilder, object : PostParser.Callback {
-        override fun isSaved(postNo: Long): Boolean {
-          return savedReplyManager.isSaved(postBuilder.boardDescriptor, postNo)
+        override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
+          return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
         }
 
         override fun isInternal(postNo: Long): Boolean {

@@ -3,7 +3,6 @@ package com.github.adamantcheese.model.dao
 import androidx.room.*
 import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.common.mutableMapWithCap
-import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
 import com.github.adamantcheese.model.entity.chan.board.ChanBoardFull
@@ -69,9 +68,8 @@ abstract class ChanBoardDao {
     FROM ${ChanBoardIdEntity.TABLE_NAME} cbie
     INNER JOIN ${ChanBoardEntity.TABLE_NAME} cbe 
         ON cbie.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = cbe.${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME}
-    WHERE cbe.${ChanBoardEntity.BOARD_ACTIVE_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
   """)
-  abstract suspend fun selectAllActiveBoards(): List<ChanBoardFull>
+  abstract suspend fun selectAllBoards(): List<ChanBoardFull>
 
   @Query("""
     SELECT * 

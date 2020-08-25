@@ -17,7 +17,6 @@
 package com.github.adamantcheese.chan.core.site.loader
 
 import com.github.adamantcheese.chan.Chan.inject
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
@@ -60,8 +59,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var okHttpClient: ProxiedOkHttpClient
   @Inject
-  lateinit var databaseManager: DatabaseManager
-  @Inject
   lateinit var appConstants: AppConstants
   @Inject
   lateinit var filterEngine: FilterEngine
@@ -81,9 +78,13 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var savedReplyManager: SavedReplyManager
 
-  @Volatile
   var thread: ChanThread? = null
+    @Synchronized
+    get
+    @Synchronized
     private set
 
   private val job = SupervisorJob()
@@ -95,7 +96,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     return@lazy ChanThreadLoaderCoordinator(
       gson,
       okHttpClient,
-      databaseManager.databaseSavedReplyManager,
+      savedReplyManager,
       filterEngine,
       chanPostRepository,
       appConstants,
@@ -390,27 +391,30 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     return true
   }
 
-  @Synchronized
   private suspend fun onResponseInternalNext(fakeOp: Post.Builder) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val localThread = synchronized(this) { checkNotNull(thread) { "thread is null" } }
-    processResponse(fakeOp)
+    val localThread = synchronized(this) {
+      val localThread = checkNotNull(thread) { "thread is null" }
+      processResponse(fakeOp)
 
-    val title = PostHelper.getTitle(localThread.op, chanDescriptor)
+      val title = PostHelper.getTitle(localThread.op, chanDescriptor)
 
-    for (post in localThread.posts) {
-      post.title = title
-    }
+      for (post in localThread.posts) {
+        post.title = title
+      }
 
-    lastLoadTime = System.currentTimeMillis()
-    val postCount = localThread.postsCount
+      lastLoadTime = System.currentTimeMillis()
+      val postCount = localThread.postsCount
 
-    if (postCount > lastPostCount) {
-      lastPostCount = postCount
-      currentTimeout = 0
-    } else {
-      currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
+      if (postCount > lastPostCount) {
+        lastPostCount = postCount
+        currentTimeout = 0
+      } else {
+        currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
+      }
+
+      return@synchronized localThread
     }
 
     withContext(Dispatchers.Main) {
@@ -421,7 +425,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   /**
    * Final processing of a response that needs to happen on the main thread.
    */
-  @Synchronized
   private fun processResponse(fakeOp: Post.Builder?) {
     BackgroundUtils.ensureBackgroundThread()
 

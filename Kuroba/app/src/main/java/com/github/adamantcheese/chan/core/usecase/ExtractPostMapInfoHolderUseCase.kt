@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.usecase
 
-import com.github.adamantcheese.chan.core.database.DatabaseSavedReplyManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -8,7 +8,7 @@ import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import java.util.*
 
 class ExtractPostMapInfoHolderUseCase(
-  private val databaseSavedReplyManager: DatabaseSavedReplyManager,
+  private val savedReplyManager: SavedReplyManager,
   private val siteManager: SiteManager
 ) : IUseCase<List<Post>, PostMapInfoHolder> {
 
@@ -61,7 +61,9 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    val savedPostNoSet: Set<Long> = HashSet(databaseSavedReplyManager.retainSavedPostNos(posts, siteDescriptor))
+    val threadDescriptor = posts.first().postDescriptor.threadDescriptor()
+    val savedPostNoSet: Set<Long> = HashSet(savedReplyManager.retainSavedPostNoMap(posts, threadDescriptor))
+
     if (savedPostNoSet.isEmpty()) {
       return emptyList()
     }
@@ -96,7 +98,9 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    val savedPostNoSet: Set<Long> = HashSet(databaseSavedReplyManager.retainSavedPostNos(posts, siteDescriptor))
+    val threadDescriptor = posts.first().postDescriptor.threadDescriptor()
+    val savedPostNoSet: Set<Long> = HashSet(savedReplyManager.retainSavedPostNoMap(posts, threadDescriptor))
+
     if (savedPostNoSet.isEmpty()) {
       return emptyList()
     }

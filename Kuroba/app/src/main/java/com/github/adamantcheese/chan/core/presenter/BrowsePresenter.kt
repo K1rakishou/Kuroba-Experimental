@@ -104,9 +104,7 @@ class BrowsePresenter @Inject constructor(
       // Do not bring a board to the top of the navigation list if we are loading the default
       // board that we load on every app start. Because we want to have the last visited
       // thread/board on top not the default board.
-      historyNavigationManager.moveNavElementToTop(
-        CatalogDescriptor(boardDescriptor)
-      )
+      historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
     }
 
     boardManager.updateCurrentBoard(boardDescriptor)

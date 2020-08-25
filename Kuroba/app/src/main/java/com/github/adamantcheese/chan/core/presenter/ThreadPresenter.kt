@@ -23,14 +23,12 @@ import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult.Succeeded
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.SavedReply
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
@@ -56,6 +54,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -69,11 +68,11 @@ import kotlin.coroutines.CoroutineContext
 class ThreadPresenter @Inject constructor(
   private val cacheHandler: CacheHandler,
   private val bookmarksManager: BookmarksManager,
-  private val databaseManager: DatabaseManager,
   private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
+  private val savedReplyManager: SavedReplyManager,
   private val chanPostRepository: ChanPostRepository,
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
@@ -476,8 +475,12 @@ class ThreadPresenter @Inject constructor(
     val localChanDescriptor = currentChanDescriptor
       ?: return
 
-    seenPostsManager.preloadForThread(localChanDescriptor)
-    chanThreadViewableInfoManager.preloadForThread(localChanDescriptor)
+    localChanDescriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
+      // TODO(KurobaEx): maybe I should do this on every thread update? Like do it only once?
+      seenPostsManager.preloadForThread(threadDescriptor)
+      chanThreadViewableInfoManager.preloadForThread(threadDescriptor)
+      savedReplyManager.preloadForThread(threadDescriptor)
+    }
 
     if (isWatching) {
       chanLoader!!.setTimer()
@@ -897,12 +900,8 @@ class ThreadPresenter @Inject constructor(
 
     if (site.siteFeature(Site.SiteFeature.POST_DELETE)) {
       if (containsSite) {
-        val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
-          post.boardDescriptor,
-          post.no
-        )
-
-        if (isSaved) {
+        val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+        if (savedReply?.password != null) {
           menu.add(createMenuItem(POST_OPTION_DELETE, R.string.post_delete))
         }
       }
@@ -918,11 +917,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
     if (containsSite) {
-      val isSaved = databaseManager.databaseSavedReplyManager.isSaved(
-        post.boardDescriptor,
-        post.no
-      )
-
+      val isSaved = savedReplyManager.isSaved(post.postDescriptor)
       val stringId = if (isSaved) {
         R.string.unmark_as_my_post
       } else {
@@ -974,16 +969,14 @@ class ThreadPresenter @Inject constructor(
       POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
       POST_OPTION_DELETE -> requestDeletePost(post)
       POST_OPTION_SAVE -> {
-        val board = boardManager.byBoardDescriptor(post.boardDescriptor)
-        if (board != null) {
-          val savedReply = SavedReply.fromBoardNoPassword(board, post.no, "")
-          if (databaseManager.databaseSavedReplyManager.isSaved(board, post.no)) {
-            databaseManager.runTask(databaseManager.databaseSavedReplyManager.unsaveReply(savedReply))
+        launch {
+          if (savedReplyManager.isSaved(post.postDescriptor)) {
+            savedReplyManager.unsavePost(post.postDescriptor)
           } else {
-            databaseManager.runTask(databaseManager.databaseSavedReplyManager.saveReply(savedReply))
+            savedReplyManager.savePost(post.postDescriptor)
           }
 
-          //force reload for reply highlighting
+          // force reload for reply highlighting
           requestData()
         }
       }
@@ -1266,8 +1259,8 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val reply = databaseManager.databaseSavedReplyManager.getSavedReply(post.boardDescriptor, post.no)
-    if (reply != null) {
+    val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+    if (savedReply?.password != null) {
       threadPresenterCallback?.confirmPostDelete(post)
     }
   }
@@ -1280,16 +1273,15 @@ class ThreadPresenter @Inject constructor(
 
       threadPresenterCallback?.showDeleting()
 
-      val reply = databaseManager.databaseSavedReplyManager.getSavedReply(
-        post.boardDescriptor,
-        post.no
-      )
-
-      if (reply == null) {
+      val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+      if (savedReply?.password == null) {
+        threadPresenterCallback?.hideDeleting(
+          AndroidUtils.getString(R.string.delete_error_post_is_not_saved)
+        )
         return@launch
       }
 
-      val deleteRequest = DeleteRequest(post, reply, onlyImageDelete)
+      val deleteRequest = DeleteRequest(post, savedReply, onlyImageDelete)
       val deleteResult = site.actions().delete(deleteRequest)
 
       when (deleteResult) {
@@ -1302,10 +1294,28 @@ class ThreadPresenter @Inject constructor(
             else -> AndroidUtils.getString(R.string.delete_error)
           }
 
+          if (deleteResponse.deleted) {
+            val isSuccess = chanPostRepository.deletePost(post.postDescriptor)
+              .peekError { error ->
+                Logger.e(TAG, "Error while trying to delete post " +
+                  "${post.postDescriptor} from the database", error)
+              }
+              .valueOrNull() != null
+
+            if (isSuccess) {
+              savedReplyManager.unsavePost(post.postDescriptor)
+            }
+          }
+
           threadPresenterCallback?.hideDeleting(message)
         }
         is SiteActions.DeleteResult.DeleteError -> {
-          threadPresenterCallback?.hideDeleting(AndroidUtils.getString(R.string.delete_error))
+          val message = AndroidUtils.getString(
+            R.string.delete_error,
+            deleteResult.error.errorMessageOrClassName()
+          )
+
+          threadPresenterCallback?.hideDeleting(message)
         }
       }
     }

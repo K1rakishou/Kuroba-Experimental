@@ -58,7 +58,6 @@ public class DatabaseManager {
     @Inject
     PostFilterManager postFilterManager;
 
-    private final DatabaseSavedReplyManager databaseSavedReplyManager;
     private final DatabaseFilterManager databaseFilterManager;
     private final DatabaseHideManager databaseHideManager;
 
@@ -68,21 +67,13 @@ public class DatabaseManager {
 
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
-        databaseSavedReplyManager = new DatabaseSavedReplyManager(helper, this);
         databaseFilterManager = new DatabaseFilterManager(helper);
         databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
     }
 
     public void initializeAndTrim() {
-        // Loads data into fields.
-        runTask(databaseSavedReplyManager.load());
-
         // Only trims.
         runTaskAsync(databaseHideManager.load());
-    }
-
-    public DatabaseSavedReplyManager getDatabaseSavedReplyManager() {
-        return databaseSavedReplyManager;
     }
 
     public DatabaseFilterManager getDatabaseFilterManager() {
@@ -91,14 +82,6 @@ public class DatabaseManager {
 
     public DatabaseHideManager getDatabaseHideManager() {
         return databaseHideManager;
-    }
-
-    /**
-     * Reset all tables in the database. Used for the developer screen.
-     */
-    public void reset() {
-        helper.reset();
-        initializeAndTrim();
     }
 
     /**

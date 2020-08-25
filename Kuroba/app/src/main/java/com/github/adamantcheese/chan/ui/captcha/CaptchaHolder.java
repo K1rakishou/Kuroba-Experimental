@@ -7,6 +7,7 @@ import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
 import java.text.SimpleDateFormat;
@@ -35,17 +36,20 @@ public class CaptchaHolder {
     private final List<CaptchaInfo> captchaQueue = new ArrayList<>();
 
     public void setListener(CaptchaValidationListener listener) {
-        mainThreadHandler.post(() -> {
-            captchaValidationListener = listener;
-            notifyListener();
-        });
+        BackgroundUtils.ensureMainThread();
+
+        captchaValidationListener = listener;
+        notifyListener();
     }
 
     public void removeListener() {
-        mainThreadHandler.post(() -> captchaValidationListener = null);
+        BackgroundUtils.ensureMainThread();
+
+        captchaValidationListener = null;
     }
 
     public void addNewToken(String token, long tokenLifetime) {
+        BackgroundUtils.ensureMainThread();
         removeNotValidTokens();
 
         synchronized (captchaQueue) {
@@ -63,6 +67,7 @@ public class CaptchaHolder {
     }
 
     public boolean hasToken() {
+        BackgroundUtils.ensureMainThread();
         removeNotValidTokens();
 
         synchronized (captchaQueue) {
@@ -77,6 +82,7 @@ public class CaptchaHolder {
 
     @Nullable
     public String getToken() {
+        BackgroundUtils.ensureMainThread();
         removeNotValidTokens();
 
         synchronized (captchaQueue) {

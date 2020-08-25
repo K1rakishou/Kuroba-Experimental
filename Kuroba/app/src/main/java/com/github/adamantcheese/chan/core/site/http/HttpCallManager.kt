@@ -44,13 +44,13 @@ class HttpCallManager @Inject constructor(
   ): Flow<HttpCall.HttpCallWithProgressResult<T>> {
     return channelFlow {
       val requestBuilder = Request.Builder()
-      
-      httpCall.setup(requestBuilder, ProgressRequestBody.ProgressRequestListener { percent ->
+
+      httpCall.setup(requestBuilder) { percent ->
         offer(HttpCall.HttpCallWithProgressResult.Progress(percent))
-      })
-      
+      }
+
       httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
-      
+
       when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
         is HttpCall.HttpCallResult.Success -> {
           send(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))

@@ -476,10 +476,19 @@ public class Post implements Comparable<Post> {
 
             Objects.requireNonNull(boardDescriptor);
 
+            long opId = getOpId();
+            if (opId < 0L) {
+                throw new IllegalArgumentException("Bad opId: " + opId);
+            }
+
+            if (id < 0L) {
+                throw new IllegalArgumentException("Bad post id: " + id);
+            }
+
             postDescriptor = PostDescriptor.create(
                     boardDescriptor.siteName(),
                     boardDescriptor.getBoardCode(),
-                    getOpId(),
+                    opId,
                     id
             );
 
