@@ -336,7 +336,7 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    if (bottomNavBarVisibilityStateManager.anyViewIsVisible()) {
+    if (bottomNavBarVisibilityStateManager.anyOfViewsIsVisible()) {
       drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
       return
     }

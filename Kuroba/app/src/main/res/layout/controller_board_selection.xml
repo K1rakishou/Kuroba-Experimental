@@ -11,13 +11,13 @@
         android:id="@+id/container_with_max_size"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top"
+        android:layout_gravity="bottom"
         android:layout_margin="16dp">
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="top"
+            android:layout_gravity="bottom"
             android:background="?backcolor_secondary">
 
             <LinearLayout

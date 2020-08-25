@@ -85,6 +85,7 @@ class BrowseController(context: Context) : ThreadController(context),
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var hint: HintPopup? = null
   private var initialized = false
+  private var menuBuilt = false
 
   @JvmField
   var searchQuery: String? = null
@@ -158,7 +159,6 @@ class BrowseController(context: Context) : ThreadController(context),
     navigation.subtitle = "Tap for site/board setup"
     buildMenu()
 
-    requireNavController().requireToolbar().setNavigationItem(true, true, navigation, themeHelper.theme)
     initialized = true
   }
 
@@ -276,6 +276,13 @@ class BrowseController(context: Context) : ThreadController(context),
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
       .build()
       .build()
+
+    requireNavController().requireToolbar().setNavigationItem(
+      true,
+      true,
+      navigation,
+      themeHelper.theme
+    )
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -593,13 +600,17 @@ class BrowseController(context: Context) : ThreadController(context),
 
     navigation.title = "/" + boardDescriptor.boardCode + "/"
     navigation.subtitle = board.name
-    buildMenu()
+
+    if (!menuBuilt) {
+      menuBuilt = true
+      buildMenu()
+    }
 
     val presenter = threadLayout.presenter
     presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
     presenter.requestData()
 
-    requireNavController().requireToolbar().setNavigationItem(true, true, navigation, themeHelper.theme)
+    requireNavController().requireToolbar().updateTitle(navigation)
   }
 
   override fun loadSiteSetup(siteDescriptor: SiteDescriptor) {

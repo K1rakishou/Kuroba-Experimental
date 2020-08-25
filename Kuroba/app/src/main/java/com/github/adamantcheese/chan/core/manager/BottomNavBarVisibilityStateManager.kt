@@ -67,7 +67,7 @@ class BottomNavBarVisibilityStateManager {
     replyViewStateSubject.onNext(Unit)
   }
 
-  fun anyViewIsVisible(): Boolean {
+  fun anyOfViewsIsVisible(): Boolean {
     BackgroundUtils.ensureMainThread()
 
     return state.nextSetBit(0) >= 0
