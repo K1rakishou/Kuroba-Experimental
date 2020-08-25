@@ -31,7 +31,7 @@ Yes, if they are related to this particular version (for now the code base is ve
 bugs will most likely be similar too).
 
 ### What are the new features that are currently being worked on or already implemented?
-Things to do before first beta verion:
+Things to do before first beta version:
 - [x] New technological stack (Kotlin, RxJava/Coroutines, Room etc).
 - [x] On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
 etc).
