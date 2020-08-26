@@ -16,8 +16,11 @@
  */
 package com.github.adamantcheese.chan.core.di;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
+import android.os.Environment;
 
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
@@ -75,6 +78,25 @@ public class AppModule {
         this.okHttpDns = dns;
         this.okHttpProtocols = protocols;
         this.appConstants = appConstants;
+    }
+
+    public static File getCacheDir() {
+        File cacheDir;
+
+        File externalStorage = getAppContext().getExternalCacheDir();
+
+        // See also res/xml/filepaths.xml for the fileprovider.
+        if (isExternalStorageOk(externalStorage)) {
+            cacheDir = externalStorage;
+        } else {
+            cacheDir = getAppContext().getCacheDir();
+        }
+
+        long spaceInBytes = AndroidUtils.getAvailableSpaceInBytes(cacheDir);
+        Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
+                " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
+
+        return cacheDir;
     }
 
     @Provides
@@ -175,23 +197,6 @@ public class AppModule {
         return new FileChooser(applicationContext);
     }
 
-    static File getCacheDir() {
-        File cacheDir;
-
-        // See also res/xml/filepaths.xml for the fileprovider.
-        if (getAppContext().getExternalCacheDir() != null) {
-            cacheDir = getAppContext().getExternalCacheDir();
-        } else {
-            cacheDir = getAppContext().getCacheDir();
-        }
-
-        long spaceInBytes = AndroidUtils.getAvailableSpaceInBytes(cacheDir);
-        Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
-                " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
-
-        return cacheDir;
-    }
-
     @Provides
     @Singleton
     public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(Gson gson) {
@@ -200,4 +205,15 @@ public class AppModule {
         return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
     }
 
+    private static boolean isExternalStorageOk(File externalStorage) {
+        return externalStorage != null
+                && !Environment.isExternalStorageRemovable(externalStorage)
+                && Environment.getExternalStorageState(externalStorage).equals(Environment.MEDIA_MOUNTED)
+                && hasExternalStoragePermission();
+    }
+
+    private static boolean hasExternalStoragePermission() {
+        int perm = getAppContext().checkCallingOrSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        return perm == PackageManager.PERMISSION_GRANTED;
+    }
 }

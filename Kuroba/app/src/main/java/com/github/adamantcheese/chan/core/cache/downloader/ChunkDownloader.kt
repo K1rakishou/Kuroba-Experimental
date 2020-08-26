@@ -37,11 +37,12 @@ internal class ChunkDownloader(
       .header("User-Agent", NetModule.USER_AGENT)
 
     if (!chunk.isWholeFile()) {
-      // If chunk.isWholeFile == true that means that either the file size is too small (
-      // and there is no reason to download it in chunks) (it should be less than
-      // [FileCacheV2.MIN_CHUNK_SIZE]) or that the server does not support Partial Content
+      // If chunk.isWholeFile == true that means that either the file size is too small
+      // (and there is no reason to download it in chunks (it should be less than
+      // [FileCacheV2.MIN_CHUNK_SIZE])) or that the server does not support Partial Content
       // or the user turned off chunked file downloading, or we couldn't send HEAD request
       // (it was timed out) so we should download it normally.
+      // In other words, if chunk.isWholeFile == true then we don't use the "Range" header.
       builder.header("Range", "bytes=" + chunk.start + "-" + chunk.end)
     }
 

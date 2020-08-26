@@ -32,7 +32,7 @@ fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
  * [realEnd] is only being used in tests.
  * */
 data class Chunk(val start: Long, val realEnd: Long) {
-  // Must be 1 less than actual _end
+  // end must equal to realEnd - 1
   val end: Long
     get() = realEnd - 1
 
