@@ -12,6 +12,8 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class SavedReplyManager(
   private val verboseLogsEnabled: Boolean,
@@ -21,11 +23,20 @@ class SavedReplyManager(
   @GuardedBy("lock")
   private val savedReplyMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>()
 
+  @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
+    val time = measureTime { preloadForThreadInternal(threadDescriptor) }
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
+    }
+  }
+
+  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val savedReplies = savedReplyRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
         Logger.e(TAG, "Error while trying to preload saved replies for thread ($threadDescriptor)", error)
@@ -33,10 +44,6 @@ class SavedReplyManager(
       }
 
     lock.write { savedReplyMap[threadDescriptor] = savedReplies.toMutableList() }
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) end")
-    }
   }
 
   fun isSaved(chanDescriptor: ChanDescriptor, postNo: Long, postSubNo: Long): Boolean {

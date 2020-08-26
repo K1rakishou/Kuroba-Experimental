@@ -1254,6 +1254,8 @@ class ThreadPresenter @Inject constructor(
     if (chanLoader?.thread?.isArchived == false) {
       chanLoader?.requestMoreDataAndResetTimer()
     }
+
+    threadPresenterCallback?.showToolbar()
   }
 
   override fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -1521,6 +1523,7 @@ class ThreadPresenter @Inject constructor(
     fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>)
     fun onPostUpdated(post: Post)
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
+    fun showToolbar()
   }
 
   companion object {

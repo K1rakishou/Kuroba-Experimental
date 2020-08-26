@@ -125,7 +125,7 @@ class ThreadLayout @JvmOverloads constructor(
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
 
-  override val toolbar: Toolbar
+  override val toolbar: Toolbar?
     get() = callback.toolbar
 
   override val chanDescriptor: ChanDescriptor?
@@ -259,10 +259,6 @@ class ThreadLayout @JvmOverloads constructor(
     filter: PostsFilter,
     refreshAfterHideOrRemovePosts: Boolean
   ) {
-    if (replyButton.visibility != View.VISIBLE) {
-      replyButton.show()
-    }
-
     if (thread == null) {
       return
     }
@@ -610,6 +606,14 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(floatingListMenuController, animate)
   }
 
+  override fun showToolbar() {
+    toolbar?.collapseShow(true)
+
+    if (replyButton.visibility != View.VISIBLE) {
+      replyButton.show()
+    }
+  }
+
   override fun showNewPostsNotification(show: Boolean, more: Int) {
     if (!show) {
       dismissSnackbar()
@@ -804,7 +808,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   interface ThreadLayoutCallback {
-    val toolbar: Toolbar
+    val toolbar: Toolbar?
 
     fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
     fun openThreadCrossThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)

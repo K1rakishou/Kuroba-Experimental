@@ -101,8 +101,6 @@ class ParsePostRepliesUseCase(
       return emptyMap()
     }
 
-    savedReplyManager.preloadForThread(successFetchResult.threadBookmarkInfoObject.threadDescriptor)
-
     val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNoMap(
       quoteOwnerPostsMap,
       threadDescriptor

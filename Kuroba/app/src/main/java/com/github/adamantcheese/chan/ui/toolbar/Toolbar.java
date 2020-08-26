@@ -63,7 +63,7 @@ public class Toolbar
 
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
-    private static final int MIN_SCROLL_SLOP = dp(128);
+    private static final int MIN_SCROLL_SLOP = dp(64);
 
     @Inject
     ThemeHelper themeHelper;

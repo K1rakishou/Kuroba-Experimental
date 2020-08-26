@@ -755,8 +755,8 @@ class BrowseController(context: Context) : ThreadController(context),
     super.onSlideChanged(leftOpen)
 
     if (searchQuery != null) {
-      toolbar.openSearch(searchQuery)
-      toolbar.searchInput(searchQuery)
+      toolbar!!.openSearch(searchQuery)
+      toolbar!!.searchInput(searchQuery)
       searchQuery = null
     }
 

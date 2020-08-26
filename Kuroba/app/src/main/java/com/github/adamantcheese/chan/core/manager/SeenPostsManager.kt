@@ -18,6 +18,8 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import org.joda.time.DateTime
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class SeenPostsManager(
@@ -116,16 +118,21 @@ class SeenPostsManager(
     return cd.awaitSilently(false)
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
-    if (!isEnabled()) {
-      if (verboseLogsEnabled) {
-        Logger.d(TAG, "preloadForThread($threadDescriptor) end 1")
-      }
+    val time = measureTime { preloadForThreadInternal(threadDescriptor) }
 
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
+    }
+  }
+
+  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (!isEnabled()) {
       return
     }
 
@@ -133,10 +140,6 @@ class SeenPostsManager(
     actor.offer(ActorAction.Preload(threadDescriptor, completable))
 
     completable.awaitSilently()
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) end 2")
-    }
   }
 
   fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {

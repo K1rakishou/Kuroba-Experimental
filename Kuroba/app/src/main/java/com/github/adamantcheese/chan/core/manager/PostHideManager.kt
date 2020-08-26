@@ -11,6 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class PostHideManager(
   private val verboseLogsEnabled: Boolean,
@@ -22,11 +24,20 @@ class PostHideManager(
   private val postHideMap = mutableMapOf<PostDescriptor, ChanPostHide>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
+  @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
+    val time = measureTime { preloadForThreadInternal(threadDescriptor) }
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
+    }
+  }
+
+  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val chanPostHides = chanPostHideRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
         Logger.e(TAG, "chanPostHideRepository.preloadForThread() error", error)
@@ -37,10 +48,6 @@ class PostHideManager(
       chanPostHides.forEach { chanPostHide ->
         postHideMap[chanPostHide.postDescriptor] = chanPostHide
       }
-    }
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) end")
     }
   }
 

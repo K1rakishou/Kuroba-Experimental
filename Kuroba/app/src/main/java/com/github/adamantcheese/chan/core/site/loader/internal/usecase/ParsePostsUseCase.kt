@@ -67,8 +67,6 @@ class ParsePostsUseCase(
 
         internalIds.addAll(cachedInternalIds)
       }
-
-      savedReplyManager.preloadForThread(chanDescriptor)
     }
 
     if (boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor()) == null) {

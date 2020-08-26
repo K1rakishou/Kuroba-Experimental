@@ -602,7 +602,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (open) {
       searchStatus.setText(R.string.search_empty)
     } else {
-      threadListLayoutCallback!!.toolbar.closeSearchPhoneMode()
+      threadListLayoutCallback!!.toolbar!!.closeSearchPhoneMode()
     }
 
     attachToolbarScroll(!(open || replyOpen))
@@ -917,8 +917,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun toolbarHeight(): Int {
-    val toolbar = threadListLayoutCallback!!.toolbar
-    return toolbar.toolbarHeight
+    return threadListLayoutCallback!!.toolbar!!.toolbarHeight
   }
 
   private fun party() {
@@ -959,7 +958,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   interface ThreadListLayoutCallback {
-    val toolbar: Toolbar
+    val toolbar: Toolbar?
     val chanDescriptor: ChanDescriptor?
 
     fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean)

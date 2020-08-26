@@ -12,6 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ChanThreadViewableInfoManager(
   private val verboseLogsEnabled: Boolean,
@@ -24,11 +26,20 @@ class ChanThreadViewableInfoManager(
   @GuardedBy("lock")
   private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
+  @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
+    val time = measureTime { preloadForThreadInternal(threadDescriptor) }
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
+    }
+  }
+
+  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val chanThreadViewableInfo = chanThreadViewableInfoRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
         Logger.e(TAG, "preloadForThread($threadDescriptor) failed", error)
@@ -36,10 +47,6 @@ class ChanThreadViewableInfoManager(
       } ?: ChanThreadViewableInfo(threadDescriptor)
 
     lock.write { chanThreadViewableMap[threadDescriptor] = chanThreadViewableInfo }
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) end")
-    }
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
