@@ -31,6 +31,7 @@ Yes, if they are related to this particular version (for now the code base is ve
 bugs will most likely be similar too).
 
 ### What are the new features that are currently being worked on or already implemented?
+Things to do before first beta version:
 - [x] New technological stack (Kotlin, RxJava/Coroutines, Room etc).
 - [x] On demand content loading (includes prefetching, youtube videos titles and durations fetching, inlined files size fetching 
 etc).
@@ -43,10 +44,12 @@ the thread is deleted)
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
+- [ ] New database (like 2 small tables are left to be ported).
+
+Things to do before first release:
 - [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
 oppurtunity to simplify current navigation code which is quite complex. This one will probably be implemented some time after the initial 
 beta release).
-- [ ] New database (like 3 small tables are left to be ported).
 - [ ] Import/export settings (lots of stuff was changed so for now this functionality doesn't work).
 - [ ] Fully customizable themes. You will be able to choose colors in app, import/export a theme. (I have an idea on how to do this
 but I'm not 100% sure it will work for every view so this feature may not get implemented).
