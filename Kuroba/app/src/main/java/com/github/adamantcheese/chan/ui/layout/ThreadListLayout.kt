@@ -116,7 +116,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
   private var callback: ThreadListLayoutPresenterCallback? = null
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
-  private var replyOpen = false
   private var postViewMode: PostViewMode? = null
   private var spanCount = 2
   private var background = 0
@@ -124,6 +123,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var lastPostCount = 0
   private var hat: Bitmap? = null
   private var showingThread: ChanThread? = null
+
+  var replyOpen = false
+    private set
 
   private val mainHandler = Handler(Looper.getMainLooper())
 

@@ -183,7 +183,7 @@ class ThreadLayout @JvmOverloads constructor(
       AndroidUtils.removeFromParentView(replyButton)
     } else {
       replyButton.setOnClickListener(this)
-      replyButton.setToolbar(callback.toolbar)
+      replyButton.setToolbar(callback.toolbar!!)
 
       themeHelper.theme.applyFabColor(replyButton)
     }
@@ -658,6 +658,8 @@ class ThreadLayout @JvmOverloads constructor(
     imageReencodingHelper.showController(chanDescriptor, supportsReencode)
   }
 
+  fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
+
   fun getThumbnail(postImage: PostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {
       postPopupHelper.getThumbnail(postImage)
@@ -673,6 +675,10 @@ class ThreadLayout @JvmOverloads constructor(
   private fun showReplyButton(show: Boolean) {
     if (show != showingReplyButton && replyButtonEnabled) {
       showingReplyButton = show
+
+      if (show && replyButton.visibility != View.VISIBLE) {
+        replyButton.visibility = View.VISIBLE
+      }
 
       replyButton.animate()
         .setInterpolator(DecelerateInterpolator(2f))

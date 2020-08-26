@@ -224,8 +224,6 @@ class BrowseController(context: Context) : ThreadController(context),
       })
 
     navigationController!!.presentController(boardSelectionController)
-
-    requireStartActivity().setSettingsMenuItemSelected()
   }
 
   private fun openSitesSetupController() {

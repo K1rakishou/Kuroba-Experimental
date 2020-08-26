@@ -209,9 +209,13 @@ fun View.updatePaddings(
   setPadding(left, top, right, bottom)
 }
 
-fun ViewGroup.findChild(predicate: (View) -> Boolean): View? {
+fun View.findChild(predicate: (View) -> Boolean): View? {
   if (predicate(this)) {
     return this
+  }
+
+  if (this !is ViewGroup) {
+    return null
   }
 
   return findChildRecursively(this, predicate)
@@ -235,7 +239,7 @@ private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Bool
   return null
 }
 
-fun ViewGroup.findChildren(predicate: (View) -> Boolean): Set<View> {
+fun View.findChildren(predicate: (View) -> Boolean): Set<View> {
   val children = hashSetOf<View>()
 
   if (predicate(this)) {
@@ -246,9 +250,13 @@ fun ViewGroup.findChildren(predicate: (View) -> Boolean): Set<View> {
   return children
 }
 
-fun findChildrenRecursively(children: HashSet<View>, viewGroup: ViewGroup, predicate: (View) -> Boolean) {
-  for (index in 0 until viewGroup.childCount) {
-    val child = viewGroup.getChildAt(index)
+fun findChildrenRecursively(children: HashSet<View>, view: View, predicate: (View) -> Boolean) {
+  if (view !is ViewGroup) {
+    return
+  }
+
+  for (index in 0 until view.childCount) {
+    val child = view.getChildAt(index)
     if (predicate(child)) {
       children += child
     }

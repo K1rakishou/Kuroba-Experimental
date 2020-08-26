@@ -239,7 +239,10 @@ public class ReplyLayout
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        inject(this);
+
+        if (!isInEditMode()) {
+            inject(this);
+        }
 
         // Inflate reply input
         replyInputLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_input, this, false);

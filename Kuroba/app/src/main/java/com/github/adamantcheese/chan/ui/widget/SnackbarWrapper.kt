@@ -1,7 +1,15 @@
 package com.github.adamantcheese.chan.ui.widget
 
 import android.view.View
+import com.github.adamantcheese.chan.ui.layout.DrawerWidthAdjustingLayout
+import com.github.adamantcheese.chan.ui.layout.ThreadLayout
+import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
+import com.github.adamantcheese.chan.ui.view.HidingFloatingActionButton
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.dp
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.findChild
+import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 
 class SnackbarWrapper private constructor(
@@ -22,10 +30,84 @@ class SnackbarWrapper private constructor(
   }
 
   fun show() {
+    snackbar?.addCallback(object : BaseTransientBottomBar.BaseCallback<Snackbar>() {
+      override fun onShown(transientBottomBar: Snackbar) {
+        super.onShown(transientBottomBar)
+
+        val view = transientBottomBar.view
+        updateSnackbarBottomPaddingSuperHacky(view)
+
+        findFab(view)?.let { fab ->
+          fab.visibility = View.INVISIBLE
+          fab.hide()
+        }
+      }
+
+      override fun onDismissed(transientBottomBar: Snackbar, event: Int) {
+        super.onDismissed(transientBottomBar, event)
+
+        val view = transientBottomBar.view
+
+        snackbar?.removeCallback(this)
+        findFab(view)?.show()
+      }
+    })
+
     snackbar?.show()
   }
 
+  private fun findFab(view: View): HidingFloatingActionButton? {
+    var parent = view.parent
+
+    while (parent != null && parent !is ThreadLayout) {
+      parent = parent.parent
+    }
+
+    if (parent !is ThreadLayout) {
+      Logger.e("SnackbarWrapper", "Couldn't find ThreadLayout!!!")
+      return null
+    }
+
+    val threadLayout = parent
+    val fab = threadLayout.findChild { view -> view is HidingFloatingActionButton } as? HidingFloatingActionButton
+
+    if (fab == null) {
+      Logger.e("SnackbarWrapper", "Couldn't find HidingFloatingActionButton!!!")
+      return null
+    }
+
+    return fab
+  }
+
+  private fun updateSnackbarBottomPaddingSuperHacky(snackbarView: View) {
+    var parent = snackbarView.parent
+
+    while (parent != null && parent !is DrawerWidthAdjustingLayout) {
+      parent = parent.parent
+    }
+
+    if (parent !is DrawerWidthAdjustingLayout) {
+      Logger.e("SnackbarWrapper", "Couldn't find DrawerWidthAdjustingLayout!!!")
+      return
+    }
+
+    val drawer = parent
+    val bottomNavView = drawer.findChild { view -> view is HidingBottomNavigationView }
+
+    if (bottomNavView == null) {
+      Logger.e("SnackbarWrapper", "Couldn't find HidingBottomNavigationView!!!")
+      return
+    }
+
+    if (snackbarView.y + snackbarView.height > bottomNavView.y) {
+      val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
+      snackbarView.translationY = -(newTranslationY + MARGIN)
+    }
+  }
+
   companion object {
+    private val MARGIN = dp(8f)
+
     private val allowedDurations = setOf(
       Snackbar.LENGTH_INDEFINITE,
       Snackbar.LENGTH_SHORT,
@@ -38,6 +120,7 @@ class SnackbarWrapper private constructor(
 
       val snackbar = Snackbar.make(view, textId, duration)
       snackbar.isGestureInsetBottomIgnored = false
+      snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       AndroidUtils.fixSnackbarText(view.context, snackbar)
       return SnackbarWrapper(snackbar)
@@ -49,6 +132,7 @@ class SnackbarWrapper private constructor(
 
       val snackbar = Snackbar.make(view, text, duration)
       snackbar.isGestureInsetBottomIgnored = false
+      snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       AndroidUtils.fixSnackbarText(view.context, snackbar)
       return SnackbarWrapper(snackbar)
