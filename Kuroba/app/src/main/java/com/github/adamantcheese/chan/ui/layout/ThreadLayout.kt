@@ -35,14 +35,13 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.FilterType
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.PostHideManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -69,6 +68,8 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.data.post.ChanPostHide
 import com.google.android.material.snackbar.Snackbar
 import java.util.*
 import javax.inject.Inject
@@ -94,8 +95,6 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Inject
-  lateinit var databaseManager: DatabaseManager
-  @Inject
   lateinit var presenter: ThreadPresenter
   @Inject
   lateinit var themeHelper: ThemeHelper
@@ -103,6 +102,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var postHideManager: PostHideManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -346,7 +347,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    callback.openThread(threadDescriptor)
+    callback.openThreadCrossThread(threadDescriptor)
   }
 
   override suspend fun showBoard(boardDescriptor: BoardDescriptor) {
@@ -512,9 +513,14 @@ class ThreadLayout @JvmOverloads constructor(
   override fun hideThread(post: Post, threadNo: Long, hide: Boolean) {
     // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
     // is no point in hiding replies to a thread
-    val postHide = PostHide.hidePost(post, true, hide, false)
+    val postHide = ChanPostHide(
+      postDescriptor = post.postDescriptor,
+      onlyHide = hide,
+      applyToWholeThread = true,
+      applyToReplies = false
+    )
 
-    databaseManager.runTask(databaseManager.databaseHideManager.addThreadHide(postHide))
+    postHideManager.create(postHide)
     presenter.refreshUI()
 
     val snackbarStringId = if (hide) {
@@ -526,8 +532,7 @@ class ThreadLayout @JvmOverloads constructor(
     SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
       setAction(R.string.undo, {
         postFilterManager.remove(post.postDescriptor)
-
-        databaseManager.runTask(databaseManager.databaseHideManager.removePostHide(postHide))
+        postHideManager.remove(postHide.postDescriptor)
         presenter.refreshUI()
       })
       show()
@@ -535,16 +540,23 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long) {
-    val hideList: MutableList<PostHide> = ArrayList()
+    val hideList: MutableList<ChanPostHide> = ArrayList()
     for (post in posts) {
       // Do not add the OP post to the hideList since we don't want to hide an OP post
       // while being in a thread (it just doesn't make any sense)
       if (!post.isOP) {
-        hideList.add(PostHide.hidePost(post, false, hide, wholeChain))
+        hideList.add(
+          ChanPostHide(
+            postDescriptor = post.postDescriptor,
+            onlyHide = hide,
+            applyToWholeThread = false,
+            applyToReplies = wholeChain
+          )
+        )
       }
     }
 
-    databaseManager.runTask(databaseManager.databaseHideManager.addPostsHide(hideList))
+    postHideManager.createMany(hideList)
     presenter.refreshUI()
 
     val formattedString = if (hide) {
@@ -557,7 +569,7 @@ class ThreadLayout @JvmOverloads constructor(
       setAction(R.string.undo) {
         postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
 
-        databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(hideList))
+        postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
         presenter.refreshUI()
       }
 
@@ -568,37 +580,24 @@ class ThreadLayout @JvmOverloads constructor(
   override fun unhideOrUnremovePost(post: Post) {
     postFilterManager.remove(post.postDescriptor)
 
-    databaseManager.runTask(
-      databaseManager.databaseHideManager.removePostHide(PostHide.unhidePost(post))
-    )
+    postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
     presenter.refreshUI()
   }
 
-  override fun viewRemovedPostsForTheThread(threadPosts: List<Post>, threadNo: Long) {
-    removedPostsHelper.showPosts(threadPosts, threadNo)
+  override fun viewRemovedPostsForTheThread(
+    threadPosts: List<Post>,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) {
+    removedPostsHelper.showPosts(threadPosts, threadDescriptor)
   }
 
-  override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<Long>) {
-    val postsToRestore: MutableList<PostHide> = ArrayList()
-    for (postNo in selectedPosts) {
-      val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-        ?: continue
-
-      val postHide = PostHide.unhidePost(
-        site.name(),
-        chanDescriptor.boardCode(),
-        postNo
-      )
-
-      postsToRestore.add(postHide)
-    }
-
-    databaseManager.runTask(databaseManager.databaseHideManager.removePostsHide(postsToRestore))
+  override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>) {
+    postHideManager.removeManyChanPostHides(selectedPosts)
     presenter.refreshUI()
 
     SnackbarWrapper.create(
       this,
-      AndroidUtils.getString(R.string.restored_n_posts, postsToRestore.size),
+      AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
       Snackbar.LENGTH_LONG
     ).apply { show() }
   }
@@ -808,7 +807,7 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar
 
     fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    fun openThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun openThreadCrossThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)

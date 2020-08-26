@@ -254,6 +254,22 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideChanPostHideLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger
+  ): ChanPostHideLocalSource {
+    return ChanPostHideLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -502,6 +518,24 @@ class ModelMainModule {
       logger,
       scope,
       chanSavedReplyLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanPostHideRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    chanPostHideLocalSource: ChanPostHideLocalSource
+  ): ChanPostHideRepository {
+    return ChanPostHideRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      chanPostHideLocalSource
     )
   }
 

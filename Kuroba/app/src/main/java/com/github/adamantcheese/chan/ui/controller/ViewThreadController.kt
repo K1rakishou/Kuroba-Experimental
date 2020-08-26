@@ -53,6 +53,7 @@ import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -96,7 +97,7 @@ open class ViewThreadController(
         { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
       )
 
-    loadThread(threadDescriptor)
+    mainScope.launch { loadThread(threadDescriptor) }
   }
 
   private fun updatePinIconStateIfNeeded(bookmarkChange: BookmarkChange) {
@@ -410,20 +411,24 @@ open class ViewThreadController(
     }
   }
 
-  override fun openThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ ->
-        threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
-        loadThread(threadToOpenDescriptor)
-      }
+      .setPositiveButton(R.string.ok) { _, _ -> openCrossThreadInternal(threadDescriptor) }
       .setTitle(R.string.open_thread_confirmation)
       .setMessage("/" + threadToOpenDescriptor.boardCode() + "/" + threadToOpenDescriptor.threadNo)
       .show()
   }
 
+  private fun openCrossThreadInternal(threadDescriptor: ThreadDescriptor) {
+    mainScope.launch {
+      threadFollowerpool.addFirst(Pair(threadDescriptor, threadDescriptor))
+      loadThread(threadDescriptor)
+    }
+  }
+
   override fun showThread(descriptor: ThreadDescriptor) {
-    loadThread(descriptor)
+    mainScope.launch { loadThread(descriptor) }
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {
@@ -488,7 +493,7 @@ open class ViewThreadController(
     }
   }
 
-  fun loadThread(threadDescriptor: ThreadDescriptor) {
+  suspend fun loadThread(threadDescriptor: ThreadDescriptor) {
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
 
     val presenter = threadLayout.presenter
@@ -497,7 +502,7 @@ open class ViewThreadController(
     }
   }
 
-  private fun loadThreadInternal(threadDescriptor: ThreadDescriptor) {
+  private suspend fun loadThreadInternal(threadDescriptor: ThreadDescriptor) {
     val presenter = threadLayout.presenter
 
     presenter.bindChanDescriptor(threadDescriptor)
@@ -641,7 +646,7 @@ open class ViewThreadController(
     val threadDescriptor = threadFollowerpool.removeFirst().first
       ?: return false
 
-    loadThread(threadDescriptor)
+    mainScope.launch { loadThread(threadDescriptor) }
 
     return true
   }

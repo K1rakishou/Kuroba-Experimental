@@ -547,8 +547,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
     <string name="settings_group_general">General</string>
-    <string name="setting_clear_thread_hides">Clear all thread hides</string>
-    <string name="setting_cleared_thread_hides">Cleared all thread hides</string>
+    <string name="setting_clear_post_hides">Clear all post hides</string>
+    <string name="setting_cleared_post_hides">Cleared all post hides</string>
     <string name="settings_group_reply">Reply</string>
     <string name="setting_post_pin">Bookmark thread on post</string>
     <string name="setting_post_default_name">Default post name</string>

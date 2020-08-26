@@ -40,6 +40,7 @@ import com.github.adamantcheese.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.adamantcheese.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.adamantcheese.chan.core.manager.PageRequestManager;
 import com.github.adamantcheese.chan.core.manager.PostFilterManager;
+import com.github.adamantcheese.chan.core.manager.PostHideManager;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.adamantcheese.chan.core.manager.ReplyManager;
 import com.github.adamantcheese.chan.core.manager.ReplyNotificationsHelper;
@@ -64,6 +65,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
+import com.github.adamantcheese.model.repository.ChanPostHideRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
@@ -101,6 +103,7 @@ public class ManagerModule {
     @Singleton
     public SiteManager provideSiteManager(CoroutineScope appScope, SiteRepository siteRepository) {
         Logger.d(AppModule.DI_TAG, "Site manager");
+
         return new SiteManager(
                 appScope,
                 getFlavorType() == AndroidUtils.FlavorType.Dev,
@@ -237,7 +240,10 @@ public class ManagerModule {
     public SeenPostsManager provideSeenPostsManager(SeenPostRepository seenPostRepository) {
         Logger.d(AppModule.DI_TAG, "SeenPostsManager");
 
-        return new SeenPostsManager(seenPostRepository);
+        return new SeenPostsManager(
+                ChanSettings.verboseLogs.get(),
+                seenPostRepository
+        );
     }
 
     @Provides
@@ -483,8 +489,9 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ChanThreadViewableInfoManager");
 
         return new ChanThreadViewableInfoManager(
-                chanThreadViewableInfoRepository,
-                appScope
+                ChanSettings.verboseLogs.get(),
+                appScope,
+                chanThreadViewableInfoRepository
         );
     }
 
@@ -496,7 +503,23 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "SavedReplyManager");
 
         return new SavedReplyManager(
+                ChanSettings.verboseLogs.get(),
                 chanSavedReplyRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public PostHideManager providePostHideManager(
+        ChanPostHideRepository chanPostHideRepository,
+        CoroutineScope appScope
+    ) {
+        Logger.d(AppModule.DI_TAG, "PostHideManager");
+
+        return new PostHideManager(
+                ChanSettings.verboseLogs.get(),
+                appScope,
+                chanPostHideRepository
         );
     }
 }

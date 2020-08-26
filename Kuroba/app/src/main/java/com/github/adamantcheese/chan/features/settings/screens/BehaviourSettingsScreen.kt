@@ -3,7 +3,7 @@ package com.github.adamantcheese.chan.features.settings.screens
 import android.content.Context
 import android.widget.Toast
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.PostHideManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.settings.BehaviorScreen
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
@@ -20,7 +20,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus
 class BehaviourSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val databaseManager: DatabaseManager
+  private val postHideManager: PostHideManager
 ) : BaseSettingsScreen(
   context,
   BehaviorScreen,
@@ -269,11 +269,11 @@ class BehaviourSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.GeneralGroup.ClearThreadHides,
-          topDescriptionIdFunc = { R.string.setting_clear_thread_hides },
+          identifier = BehaviorScreen.GeneralGroup.ClearPostHides,
+          topDescriptionIdFunc = { R.string.setting_clear_post_hides },
           callback = {
-            databaseManager.runTask(databaseManager.databaseHideManager.clearAllThreadHides())
-            AndroidUtils.showToast(context, R.string.setting_cleared_thread_hides, Toast.LENGTH_LONG)
+            postHideManager.clearAllPostHides()
+            AndroidUtils.showToast(context, R.string.setting_cleared_post_hides, Toast.LENGTH_LONG)
             postToEventBus(RefreshUIMessage("clearhides"))
           }
         )

@@ -123,8 +123,8 @@ sealed class ModularResult<V : Any?> {
       return Error(error)
     }
 
-    @JvmStatic
     @CheckReturnValue
+    @JvmStatic
     @Suppress("FunctionName")
     inline fun <T> Try(func: () -> T): ModularResult<T> {
       return try {

@@ -54,10 +54,12 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
@@ -73,6 +75,7 @@ class ThreadPresenter @Inject constructor(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val savedReplyManager: SavedReplyManager,
+  private val postHideManager: PostHideManager,
   private val chanPostRepository: ChanPostRepository,
   private val mockReplyManager: MockReplyManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
@@ -132,12 +135,12 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showEmpty()
   }
 
-  fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
-    job.cancelChildren()
-
+  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor == this.currentChanDescriptor) {
       return
     }
+
+    job.cancelChildren()
 
     if (isBound) {
       unbindChanDescriptor()
@@ -149,14 +152,31 @@ class ThreadPresenter @Inject constructor(
       bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
     }
 
-    threadPresenterCallback?.showLoading()
-    chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
-
     compositeDisposable += onDemandContentLoaderManager.listenPostContentUpdates()
       .subscribe(
         { batchResult -> onPostUpdatedWithNewContent(batchResult) },
         { error -> Logger.e(TAG, "Post content updates error", error) }
       )
+
+    threadPresenterCallback?.showLoading()
+
+    chanDescriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
+      supervisorScope {
+        val jobs = mutableListOf<Deferred<Unit>>()
+
+        jobs += async(Dispatchers.Default) { seenPostsManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.Default) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.Default) { savedReplyManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.Default) { postHideManager.preloadForThread(threadDescriptor) }
+
+        ModularResult.Try { jobs.awaitAll() }
+          .peekError { error -> Logger.e(TAG, "Error while waiting for managers' initialization", error) }
+          .ignore()
+      }
+    }
+
+    Logger.d(TAG, " chanLoaderManager.obtain()")
+    chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
   }
 
   fun unbindChanDescriptor() {
@@ -307,17 +327,21 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun onForegroundChanged(foreground: Boolean) {
-    if (isBound) {
-      if (foreground && isWatching) {
-        chanLoader!!.requestMoreDataAndResetTimer()
-        if (chanLoader!!.thread != null) {
-          // Show loading indicator in the status cell
-          showPosts()
-        }
-      } else {
-        chanLoader!!.clearTimer()
-      }
+    if (!isBound) {
+      return
     }
+
+    if (foreground && isWatching) {
+      chanLoader!!.requestMoreDataAndResetTimer()
+      if (chanLoader!!.thread != null) {
+        // Show loading indicator in the status cell
+        showPosts()
+      }
+
+      return
+    }
+
+    chanLoader!!.clearTimer()
   }
 
   @Synchronized
@@ -454,10 +478,8 @@ class ThreadPresenter @Inject constructor(
 
   private fun needUpdatePost(batchResult: LoaderBatchResult): Boolean {
     for (loaderResult in batchResult.results) {
-      if (loaderResult is Succeeded) {
-        if (loaderResult.needUpdateView) {
-          return true
-        }
+      if (loaderResult is Succeeded && loaderResult.needUpdateView) {
+        return true
       }
     }
 
@@ -466,6 +488,7 @@ class ThreadPresenter @Inject constructor(
 
   override suspend fun onChanLoaderData(result: ChanThread) {
     BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "onChanLoaderData() called")
 
     if (!isBound) {
       Logger.e(TAG, "onChanLoaderData when not bound!")
@@ -474,13 +497,6 @@ class ThreadPresenter @Inject constructor(
 
     val localChanDescriptor = currentChanDescriptor
       ?: return
-
-    localChanDescriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
-      // TODO(KurobaEx): maybe I should do this on every thread update? Like do it only once?
-      seenPostsManager.preloadForThread(threadDescriptor)
-      chanThreadViewableInfoManager.preloadForThread(threadDescriptor)
-      savedReplyManager.preloadForThread(threadDescriptor)
-    }
 
     if (isWatching) {
       chanLoader!!.setTimer()
@@ -600,6 +616,8 @@ class ThreadPresenter @Inject constructor(
 
   override fun onChanLoaderError(error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "onChanLoaderError() called")
+
     threadPresenterCallback?.showError(error)
   }
 
@@ -1443,13 +1461,13 @@ class ThreadPresenter @Inject constructor(
     val posts = chanLoader?.thread?.posts
       ?: return
 
-    val threadNo = (currentChanDescriptor as? ChanDescriptor.ThreadDescriptor)?.threadNo
+    val threadDescriptor = (currentChanDescriptor as? ChanDescriptor.ThreadDescriptor)
       ?: return
 
-    threadPresenterCallback?.viewRemovedPostsForTheThread(posts, threadNo)
+    threadPresenterCallback?.viewRemovedPostsForTheThread(posts, threadDescriptor)
   }
 
-  fun onRestoreRemovedPostsClicked(selectedPosts: List<Long>) {
+  fun onRestoreRemovedPostsClicked(selectedPosts: List<PostDescriptor>) {
     if (!isBound) {
       return
     }
@@ -1499,8 +1517,8 @@ class ThreadPresenter @Inject constructor(
     fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: Post, threadNo: Long)
     fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long)
     fun unhideOrUnremovePost(post: Post)
-    fun viewRemovedPostsForTheThread(threadPosts: List<Post>, threadNo: Long)
-    fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<Long>)
+    fun viewRemovedPostsForTheThread(threadPosts: List<Post>, threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>)
     fun onPostUpdated(post: Post)
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
   }

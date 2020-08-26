@@ -42,6 +42,7 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     ChanTextSpanEntity::class,
     ChanPostReplyEntity::class,
     ChanSavedReplyEntity::class,
+    ChanPostHideEntity::class,
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
     InlinedFileInfoEntity::class,
@@ -94,6 +95,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao
   abstract fun chanSiteDao(): ChanSiteDao
   abstract fun chanSavedReplyDao(): ChanSavedReplyDao
+  abstract fun chanPostHideDao(): ChanPostHideDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }

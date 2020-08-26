@@ -21,6 +21,7 @@ import kotlin.coroutines.CoroutineContext
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class SeenPostsManager(
+  private val verboseLogsEnabled: Boolean,
   private val seenPostsRepository: SeenPostRepository
 ) : CoroutineScope {
   @GuardedBy("mutex")
@@ -116,7 +117,15 @@ class SeenPostsManager(
   }
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
+    }
+
     if (!isEnabled()) {
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "preloadForThread($threadDescriptor) end 1")
+      }
+
       return
     }
 
@@ -124,6 +133,10 @@ class SeenPostsManager(
     actor.offer(ActorAction.Preload(threadDescriptor, completable))
 
     completable.awaitSilently()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end 2")
+    }
   }
 
   fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {

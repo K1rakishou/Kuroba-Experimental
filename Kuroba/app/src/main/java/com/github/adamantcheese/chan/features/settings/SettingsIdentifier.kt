@@ -364,7 +364,7 @@ sealed class BehaviorScreen(
     object ImageViewerGestures : GeneralGroup("image_viewer_gestures")
     object CaptchaSetup : GeneralGroup("catpcha_setup")
     object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")
-    object ClearThreadHides : GeneralGroup("clear_thread_hides")
+    object ClearPostHides : GeneralGroup("clear_post_hides")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()

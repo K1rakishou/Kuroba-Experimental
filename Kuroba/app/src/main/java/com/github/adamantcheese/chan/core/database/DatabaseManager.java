@@ -21,12 +21,9 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-import com.github.adamantcheese.chan.core.manager.PostFilterManager;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.misc.TransactionManager;
 
-import java.sql.SQLException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -39,14 +36,6 @@ import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 
-/**
- * The central point for database related access.<br>
- * <b>All database queries are run on a single database thread</b>, therefore most functions return a
- * {@link Callable} that needs to be queued on either {@link #runTaskAsync(Callable)},
- * {@link #runTaskAsync(Callable, TaskResult)} or {@link #runTask(Callable)}.<br>
- * You often want the sync flavour for queries that return data, as it waits for the task to be finished on the other thread.<br>
- * Use the async versions when you don't care when the query is done.
- */
 public class DatabaseManager {
     private static final String TAG = "DatabaseManager";
 
@@ -55,11 +44,8 @@ public class DatabaseManager {
 
     @Inject
     DatabaseHelper helper;
-    @Inject
-    PostFilterManager postFilterManager;
 
     private final DatabaseFilterManager databaseFilterManager;
-    private final DatabaseHideManager databaseHideManager;
 
     @Inject
     public DatabaseManager() {
@@ -68,52 +54,12 @@ public class DatabaseManager {
         backgroundExecutor = new ThreadPoolExecutor(1, 1, 1000L, TimeUnit.DAYS, new LinkedBlockingQueue<>());
 
         databaseFilterManager = new DatabaseFilterManager(helper);
-        databaseHideManager = new DatabaseHideManager(helper, this, postFilterManager);
-    }
-
-    public void initializeAndTrim() {
-        // Only trims.
-        runTaskAsync(databaseHideManager.load());
     }
 
     public DatabaseFilterManager getDatabaseFilterManager() {
         return databaseFilterManager;
     }
 
-    public DatabaseHideManager getDatabaseHideManager() {
-        return databaseHideManager;
-    }
-
-    /**
-     * Trim a table with the specified trigger and trim count.
-     *
-     * @param dao     {@link Dao} to use.
-     * @param table   name of the table, used in the query (not escaped).
-     * @param trigger Trim if there are more rows than {@code trigger}.
-     * @param trim    Count of rows to trim.
-     */
-    /*package*/ void trimTable(Dao dao, String table, long trigger, long trim) {
-        try {
-            long count = dao.countOf();
-            if (count > trigger) {
-                dao.executeRaw(
-                        "DELETE FROM " + table + " WHERE id IN (SELECT id FROM " + table + " ORDER BY id ASC LIMIT ?)",
-                        String.valueOf(trim)
-                );
-            }
-        } catch (SQLException e) {
-            Logger.e(TAG, "Error trimming table " + table, e);
-        }
-    }
-
-    public <T> void runTaskAsync(final Callable<T> taskCallable) {
-        runTaskAsync(taskCallable, result -> {
-        });
-    }
-
-    public <T> void runTaskAsync(final Callable<T> taskCallable, final TaskResult<T> taskResult) {
-        executeTask(taskCallable, taskResult);
-    }
 
     public <T> T runTask(final Callable<T> taskCallable) {
         try {

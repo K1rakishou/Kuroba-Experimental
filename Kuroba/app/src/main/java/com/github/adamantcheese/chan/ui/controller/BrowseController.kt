@@ -101,7 +101,9 @@ class BrowseController(context: Context) : ThreadController(context),
     view = container
 
     // Initialization
-    order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
+
+    val boardOrder = ChanSettings.boardOrder.get()
+    order = requireNotNull(PostsFilter.Order.find(boardOrder)) { "Unknown board order: ${boardOrder}" }
     threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
     threadLayout.presenter.setOrder(order)
 
@@ -496,7 +498,7 @@ class BrowseController(context: Context) : ThreadController(context),
             input.toLong()
           )
 
-          openThread(threadDescriptor)
+          openThreadCrossThread(threadDescriptor)
         } catch (e: NumberFormatException) {
           AndroidUtils.showToast(
             context,
@@ -624,12 +626,12 @@ class BrowseController(context: Context) : ThreadController(context),
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun openThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
     showThread(threadToOpenDescriptor)
   }
 
   override fun showThread(descriptor: ThreadDescriptor) {
-    showThread(descriptor, true)
+    mainScope.launch { showThread(descriptor, true) }
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {
@@ -646,7 +648,7 @@ class BrowseController(context: Context) : ThreadController(context),
   // Creates or updates the target ThreadViewController
   // This controller can be in various places depending on the layout
   // We dynamically search for it
-  fun showThread(threadDescriptor: ThreadDescriptor, animated: Boolean) {
+  suspend fun showThread(threadDescriptor: ThreadDescriptor, animated: Boolean) {
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null

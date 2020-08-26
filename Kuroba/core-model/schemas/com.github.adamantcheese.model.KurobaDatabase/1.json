@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a5b67a90f26ead1d12b7979ab8f202db",
+    "identityHash": "6399fc1f731ae26e9169687c138157fe",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -1052,6 +1052,104 @@
         "foreignKeys": []
       },
       {
+        "tableName": "chan_post_hide",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `thread_no` INTEGER NOT NULL, `post_no` INTEGER NOT NULL, `post_sub_no` INTEGER NOT NULL, `only_hide` INTEGER NOT NULL, `apply_to_whole_thread` INTEGER NOT NULL, `apply_to_replies` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "siteName",
+            "columnName": "site_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "boardCode",
+            "columnName": "board_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "threadNo",
+            "columnName": "thread_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postNo",
+            "columnName": "post_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postSubNo",
+            "columnName": "post_sub_no",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "onlyHide",
+            "columnName": "only_hide",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "applyToWholeThread",
+            "columnName": "apply_to_whole_thread",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "applyToReplies",
+            "columnName": "apply_to_replies",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_chan_post_hide_site_name_board_code_thread_no_post_no_post_sub_no",
+            "unique": true,
+            "columnNames": [
+              "site_name",
+              "board_code",
+              "thread_no",
+              "post_no",
+              "post_sub_no"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_chan_post_hide_site_name_board_code_thread_no_post_no_post_sub_no` ON `${TABLE_NAME}` (`site_name`, `board_code`, `thread_no`, `post_no`, `post_sub_no`)"
+          },
+          {
+            "name": "index_chan_post_hide_thread_no",
+            "unique": false,
+            "columnNames": [
+              "thread_no"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chan_post_hide_thread_no` ON `${TABLE_NAME}` (`thread_no`)"
+          },
+          {
+            "name": "index_chan_post_hide_site_name_board_code",
+            "unique": false,
+            "columnNames": [
+              "site_name",
+              "board_code"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_chan_post_hide_site_name_board_code` ON `${TABLE_NAME}` (`site_name`, `board_code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
         "tableName": "media_service_link_extra_content_entity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`video_id` TEXT NOT NULL, `media_service_type` INTEGER NOT NULL, `video_title` TEXT, `video_duration` TEXT, `inserted_at` INTEGER NOT NULL, PRIMARY KEY(`video_id`))",
         "fields": [
@@ -1788,7 +1886,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a5b67a90f26ead1d12b7979ab8f202db')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6399fc1f731ae26e9169687c138157fe')"
     ]
   }
 }

@@ -7,14 +7,14 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
+import com.github.adamantcheese.chan.core.manager.PostHideManager;
 import com.github.adamantcheese.chan.core.model.Post;
-import com.github.adamantcheese.chan.core.model.orm.PostHide;
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter;
 import com.github.adamantcheese.chan.ui.controller.RemovedPostsController;
-import com.github.adamantcheese.chan.utils.BackgroundUtils;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
+import com.github.adamantcheese.model.data.post.ChanPostHide;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,7 +30,7 @@ public class RemovedPostsHelper {
     private final String TAG = "RemovedPostsHelper";
 
     @Inject
-    DatabaseManager databaseManager;
+    PostHideManager postHideManager;
 
     private Context context;
     private ThreadPresenter presenter;
@@ -46,38 +46,33 @@ public class RemovedPostsHelper {
         inject(this);
     }
 
-    public void showPosts(List<Post> threadPosts, long threadNo) {
-        databaseManager.runTask(() -> {
-            List<Post> removedPosts = getRemovedPosts(threadPosts, threadNo);
+    public void showPosts(List<Post> threadPosts, ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        List<Post> removedPosts = getRemovedPosts(threadPosts, threadDescriptor);
 
-            if (removedPosts.isEmpty()) {
-                showToast(context, R.string.no_removed_posts_for_current_thread);
-                return null;
-            }
+        if (removedPosts.isEmpty()) {
+            showToast(context, R.string.no_removed_posts_for_current_thread);
+            return;
+        }
 
-            Collections.sort(removedPosts, (o1, o2) -> Long.compare(o1.no, o2.no));
+        Collections.sort(removedPosts, (o1, o2) -> Long.compare(o1.no, o2.no));
+        present();
 
-            BackgroundUtils.runOnMainThread(() -> {
-                present();
-
-                // controller should not be null here, thus no null check
-                controller.showRemovePosts(removedPosts);
-            });
-
-            return null;
-        });
+        // controller should not be null here, thus no null check
+        controller.showRemovePosts(removedPosts);
     }
 
-    private List<Post> getRemovedPosts(List<Post> threadPosts, long threadNo)
-            throws SQLException {
-        List<PostHide> hiddenPosts = databaseManager.getDatabaseHideManager().getRemovedPostsWithThreadNo(threadNo);
+    private List<Post> getRemovedPosts(
+            List<Post> threadPosts,
+            ChanDescriptor.ThreadDescriptor threadDescriptor
+    ) {
+        List<ChanPostHide> hiddenPosts = postHideManager.getHiddenPostsForThread(threadDescriptor);
         List<Post> removedPosts = new ArrayList<>();
 
         @SuppressLint("UseSparseArrays")
-        Map<Long, PostHide> fastLookupMap = new HashMap<>();
+        Map<Long, ChanPostHide> fastLookupMap = new HashMap<>();
 
-        for (PostHide postHide : hiddenPosts) {
-            fastLookupMap.put((long) postHide.no, postHide);
+        for (ChanPostHide postHide : hiddenPosts) {
+            fastLookupMap.put((long) postHide.getPostDescriptor().getPostNo(), postHide);
         }
 
         for (Post post : threadPosts) {
@@ -107,7 +102,7 @@ public class RemovedPostsHelper {
         }
     }
 
-    public void onRestoreClicked(List<Long> selectedPosts) {
+    public void onRestoreClicked(List<PostDescriptor> selectedPosts) {
         presenter.onRestoreRemovedPostsClicked(selectedPosts);
 
         dismiss();

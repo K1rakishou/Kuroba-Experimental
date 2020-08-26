@@ -14,8 +14,9 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class ChanThreadViewableInfoManager(
-  private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
-  private val appScope: CoroutineScope
+  private val verboseLogsEnabled: Boolean,
+  private val appScope: CoroutineScope,
+  private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository
 ) {
   private val suspendDebouncer = SuspendDebouncer(appScope)
 
@@ -24,6 +25,10 @@ class ChanThreadViewableInfoManager(
   private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
+    }
+
     val chanThreadViewableInfo = chanThreadViewableInfoRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
         Logger.e(TAG, "preloadForThread($threadDescriptor) failed", error)
@@ -31,6 +36,10 @@ class ChanThreadViewableInfoManager(
       } ?: ChanThreadViewableInfo(threadDescriptor)
 
     lock.write { chanThreadViewableMap[threadDescriptor] = chanThreadViewableInfo }
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForThread($threadDescriptor) end")
+    }
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {

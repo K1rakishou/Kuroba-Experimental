@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.features.settings.screens
 
 import android.content.Context
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.features.settings.ImportExportScreen
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.screens.delegate.ImportExportSettingsDelegate
@@ -15,8 +14,7 @@ class ImportExportSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
-  private val fileManager: FileManager,
-  private val databaseManager: DatabaseManager
+  private val fileManager: FileManager
 ) : BaseSettingsScreen(
   context,
   ImportExportScreen,
@@ -27,8 +25,7 @@ class ImportExportSettingsScreen(
       context,
       navigationController,
       fileChooser,
-      fileManager,
-      databaseManager
+      fileManager
     )
   }
 

@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
@@ -69,14 +70,20 @@ import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 /**
  * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
  */
 class ThreadListLayout(context: Context, attrs: AttributeSet?)
-  : FrameLayout(context, attrs), ReplyLayoutCallback, Toolbar.ToolbarHeightUpdatesCallback {
+  : FrameLayout(context, attrs),
+  ReplyLayoutCallback,
+  Toolbar.ToolbarHeightUpdatesCallback,
+  CoroutineScope{
+
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
@@ -98,6 +105,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private lateinit var postAdapter: PostAdapter
 
   private val compositeDisposable = CompositeDisposable()
+  private val job = SupervisorJob()
+  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(this)
+
+  override val coroutineContext: CoroutineContext
+    get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
 
   private var layoutManager: RecyclerView.LayoutManager? = null
   private var fastScroller: FastScroller? = null
@@ -271,6 +283,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onDestroy() {
     compositeDisposable.clear()
+    job.cancelChildren()
+
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
 
     forceRecycleAllPostViews()
@@ -428,17 +442,22 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
       }
+
       party()
     }
 
     setFastScroll(true)
 
-    postAdapter.setThread(
-      thread.chanDescriptor,
-      thread.postPreloadedInfoHolder,
-      filter.apply(thread.posts, thread.chanDescriptor),
-      refreshAfterHideOrRemovePosts
-    )
+    rendezvousCoroutineExecutor.post {
+      val filteredPosts = filter.apply(thread.posts)
+
+      postAdapter.setThread(
+        thread.chanDescriptor,
+        thread.postPreloadedInfoHolder,
+        filteredPosts,
+        refreshAfterHideOrRemovePosts
+      )
+    }
   }
 
   fun onBack(): Boolean {
@@ -927,7 +946,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     reply.onImageOptionsComplete()
   }
 
-  fun onPostUpdated(post: Post?) {
+  fun onPostUpdated(post: Post) {
     BackgroundUtils.ensureMainThread()
 
     postAdapter.updatePost(post)

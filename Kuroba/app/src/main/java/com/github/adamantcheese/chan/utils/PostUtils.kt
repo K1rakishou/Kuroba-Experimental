@@ -5,7 +5,6 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.chan.core.model.orm.PostHide
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
@@ -56,8 +55,8 @@ object PostUtils {
   }
 
   @JvmStatic
-  fun findPostWithReplies(id: Long, posts: List<Post>): Set<Post> {
-    val postsSet: MutableSet<Post> = HashSet()
+  fun findPostWithReplies(id: Long, posts: List<Post>): HashSet<Post> {
+    val postsSet = HashSet<Post>()
     findPostWithRepliesRecursive(id, posts, postsSet)
     return postsSet
   }
@@ -69,79 +68,12 @@ object PostUtils {
     for (post in posts) {
       if (post.no == id && !postsSet.contains(post)) {
         postsSet.add(post)
+
         for (replyId in post.repliesFrom) {
           findPostWithRepliesRecursive(replyId, posts, postsSet)
         }
       }
     }
-  }
-
-  /**
-   * For every already hidden post checks whether there is a post that replies to this hidden post.
-   * Collects all hidden posts with their replies.
-   * This function is slow so it must be executed on the background thread
-   */
-  fun findHiddenPostsWithReplies(
-    hiddenPostsFirstIteration: List<PostHide>,
-    postsFastLookupMap: Map<Long, Post>
-  ): List<PostHide> {
-    @SuppressLint("UseSparseArrays")
-    val hiddenPostsFastLookupMap: MutableMap<Long, PostHide> = HashMap()
-
-    for (postHide in hiddenPostsFirstIteration) {
-      hiddenPostsFastLookupMap[postHide.no.toLong()] = postHide
-    }
-
-    val newHiddenPosts = search(hiddenPostsFastLookupMap, postsFastLookupMap)
-    if (newHiddenPosts.isEmpty()) {
-      return hiddenPostsFirstIteration
-    }
-
-    val resultList: MutableList<PostHide> = ArrayList(hiddenPostsFirstIteration.size)
-    resultList.addAll(hiddenPostsFirstIteration)
-    resultList.addAll(newHiddenPosts)
-    return resultList
-  }
-
-  /**
-   * For every post checks whether it has a reply to already hidden post and adds that post to the
-   * hidden posts list if it has. Checks for some flags to decide whether that post should be hidden or not.
-   */
-  private fun search(
-    hiddenPostsFastLookupMap: MutableMap<Long, PostHide>,
-    postsFastLookupMap: Map<Long, Post>
-  ): List<PostHide> {
-    val newHiddenPosts: MutableSet<PostHide> = HashSet()
-    for (post in postsFastLookupMap.values) {
-      // skip if already hidden
-      if (hiddenPostsFastLookupMap[post.no] != null) {
-        continue
-      }
-
-      // enumerate all replies for every post
-      for (replyTo in post.repliesTo) {
-
-        val repliedToPost = postsFastLookupMap[replyTo]
-        // probably a cross-thread post
-          ?: continue
-
-        val toInheritBaseInfoFrom = hiddenPostsFastLookupMap[replyTo]
-        if (repliedToPost.isOP
-          || toInheritBaseInfoFrom == null
-          || !toInheritBaseInfoFrom.hideRepliesToThisPost) {
-          // skip if OP or if has a flag to not hide replies to this post
-          continue
-        }
-
-        val postHide = PostHide.hidePost(post, false, toInheritBaseInfoFrom.hide, true)
-        hiddenPostsFastLookupMap[post.no] = postHide
-        newHiddenPosts.add(postHide)
-
-        // post is hidden no need to check the remaining replies
-        break
-      }
-    }
-    return ArrayList(newHiddenPosts)
   }
 
   fun postsDiffer(postBuilder: Post.Builder, chanPost: ChanPost): Boolean {

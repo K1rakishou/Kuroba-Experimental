@@ -6,10 +6,7 @@ import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.database.DatabaseManager
-import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
-import com.github.adamantcheese.chan.core.manager.ReportManager
-import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
-import com.github.adamantcheese.chan.core.manager.SiteManager
+import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
@@ -66,6 +63,8 @@ class SettingsCoordinator(
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var postHideManager: PostHideManager
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -97,7 +96,7 @@ class SettingsCoordinator(
     BehaviourSettingsScreen(
       context,
       navigationController,
-      databaseManager
+      postHideManager
     )
   }
 
@@ -132,8 +131,7 @@ class SettingsCoordinator(
       context,
       navigationController,
       fileChooser,
-      fileManager,
-      databaseManager
+      fileManager
     )
   }
 

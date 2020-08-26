@@ -26,6 +26,7 @@ import com.github.adamantcheese.chan.ui.helper.RemovedPostsHelper;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -104,7 +105,13 @@ public class RemovedPostsController
 
         for (int i = 0, removedPostsSize = removedPosts.size(); i < removedPostsSize; i++) {
             Post post = removedPosts.get(i);
-            removedPostsArray[i] = new RemovedPost(post.getPostImages(), post.no, post.getComment().toString(), false);
+
+            removedPostsArray[i] = new RemovedPost(
+                    post.getPostImages(),
+                    post.getPostDescriptor(),
+                    post.getComment().toString(),
+                    false
+            );
         }
 
         if (adapter == null) {
@@ -139,7 +146,7 @@ public class RemovedPostsController
             return;
         }
 
-        List<Long> selectedPosts = adapter.getSelectedPostNoList();
+        List<PostDescriptor> selectedPosts = adapter.getSelectedPostDescriptorList();
         if (selectedPosts.isEmpty()) {
             return;
         }
@@ -149,13 +156,13 @@ public class RemovedPostsController
 
     public static class RemovedPost {
         private List<PostImage> images;
-        private long postNo;
+        private PostDescriptor postDescriptor;
         private String comment;
         private boolean checked;
 
-        public RemovedPost(List<PostImage> images, long postNo, String comment, boolean checked) {
+        public RemovedPost(List<PostImage> images, PostDescriptor postDescriptor, String comment, boolean checked) {
             this.images = images;
-            this.postNo = postNo;
+            this.postDescriptor = postDescriptor;
             this.comment = comment;
             this.checked = checked;
         }
@@ -168,8 +175,8 @@ public class RemovedPostsController
             return images;
         }
 
-        public long getPostNo() {
-            return postNo;
+        public PostDescriptor getPostDescriptor() {
+            return postDescriptor;
         }
 
         public String getComment() {
@@ -218,7 +225,7 @@ public class RemovedPostsController
             AppCompatCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
 
-            postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postNo));
+            postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
             checkbox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
@@ -282,14 +289,14 @@ public class RemovedPostsController
             notifyDataSetChanged();
         }
 
-        public List<Long> getSelectedPostNoList() {
-            List<Long> selectedPosts = new ArrayList<>();
+        public List<PostDescriptor> getSelectedPostDescriptorList() {
+            List<PostDescriptor> selectedPosts = new ArrayList<>();
 
             for (RemovedPost removedPost : removedPostsCopy) {
                 if (removedPost == null) continue;
 
                 if (removedPost.isChecked()) {
-                    selectedPosts.add(removedPost.getPostNo());
+                    selectedPosts.add(removedPost.getPostDescriptor());
                 }
             }
 

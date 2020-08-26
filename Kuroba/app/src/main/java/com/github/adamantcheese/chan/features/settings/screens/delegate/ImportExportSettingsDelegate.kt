@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.presenter.ImportExportSettingsPresenter
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -25,8 +24,7 @@ class ImportExportSettingsDelegate(
   private val context: Context,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
-  private val fileManager: FileManager,
-  private val databaseManager: DatabaseManager
+  private val fileManager: FileManager
 ) : ImportExportSettingsPresenter.ImportExportSettingsCallbacks {
   private val loadingViewController = LoadingViewController(context, true)
   private val presenter: ImportExportSettingsPresenter = ImportExportSettingsPresenter(this)

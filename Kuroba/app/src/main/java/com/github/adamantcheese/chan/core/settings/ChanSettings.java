@@ -368,7 +368,7 @@ public class ChanSettings {
             //Elsewhere
             boardViewMode =
                     new OptionsSetting<>(p, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
-            boardOrder = new StringSetting(p, "preference_board_order", PostsFilter.Order.BUMP.orderName);
+            boardOrder = new StringSetting(p, "preference_board_order", PostsFilter.Order.BUMP.getOrderName());
             //endregion
 
             //region BEHAVIOUR

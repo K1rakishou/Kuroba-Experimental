@@ -33,6 +33,7 @@ interface ModelMainComponent {
   fun getSiteRepository(): SiteRepository
   fun getBoardRepository(): BoardRepository
   fun getChanSavedReplyRepository(): ChanSavedReplyRepository
+  fun getChanPostHideRepository(): ChanPostHideRepository
 
   @Component.Builder
   interface Builder {

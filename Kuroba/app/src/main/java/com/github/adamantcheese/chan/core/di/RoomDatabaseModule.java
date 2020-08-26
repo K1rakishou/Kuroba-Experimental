@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.di;
 import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
+import com.github.adamantcheese.model.repository.ChanPostHideRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
 import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepository;
@@ -87,5 +88,11 @@ public class RoomDatabaseModule {
     @Singleton
     public ChanSavedReplyRepository provideChanSavedReplyRepository() {
         return modelMainComponent.getChanSavedReplyRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ChanPostHideRepository provideChanPostHideRepository() {
+        return modelMainComponent.getChanPostHideRepository();
     }
 }
