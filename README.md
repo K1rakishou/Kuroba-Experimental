@@ -44,7 +44,7 @@ the thread is deleted)
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
-- [ ] New database (like 2 small tables are left to be ported).
+- [ ] New database (1 small table left to be ported).
 
 Things to do before first release:
 - [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
