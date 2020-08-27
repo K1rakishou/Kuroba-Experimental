@@ -44,7 +44,7 @@ the thread is deleted)
 per thread (and notifications can be swiped away).
 - [x] Lots of other tiny improvements.
 - [x] Edge-to-edge theme support.
-- [ ] New database (1 small table left to be ported).
+- [x] New database.
 
 Things to do before first release:
 - [ ] New navigation code. Use Conductor instead of the home-made controllers (the code should become cleaner, also this is a great
@@ -59,12 +59,13 @@ Because Github does not allow creating two separate forks of the same repo. So I
  repository. This, actually, has benifits, like, it's now possible to use repository search function which Github does
  not allow for forks.
  
-### When will it be available?
-~The release (more or less stable, with F-droid version and autoupdates, basically v1.0) version won't be available until 
-October-November maybe even a little bit later. But there will be beta builds, before release. Expect them some time 
-in the end of the summer, maybe earlier.~ 
+### When will it be available? (UPD: 27/8/2020)
+So, all of the database work is done. Now that I don't need to drastically change it anymore (maybe some fixes, but nothing serious)
+the very first beta is pretty much ready to go. All that is left is to fix some known issues and test it a little bit so that it
+won't blow up right after I release it (but still expect bugs since like more than half of the app was rewritten) and also implement 
+new auto-updater and crashlog uploader. 
 
-TBD.
+Now, if nothing serious comes up then the date of the first beta release will be, let's say **in ~two weeks on Friday September 11th**.
 
 # 
 
