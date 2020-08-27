@@ -26,7 +26,6 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.cache.downloader.FileCacheException;
 import com.github.adamantcheese.chan.core.di.AppModule;
-import com.github.adamantcheese.chan.core.di.DatabaseModule;
 import com.github.adamantcheese.chan.core.di.ExecutorsModule;
 import com.github.adamantcheese.chan.core.di.GsonModule;
 import com.github.adamantcheese.chan.core.di.HelperModule;
@@ -172,7 +171,6 @@ public class Chan
                 new AppModule(this, this, okHttpDns, okHttpProtocols, appConstants),
                 new UseCaseModule(),
                 new ExecutorsModule(),
-                new DatabaseModule(),
                 // TODO: change to a normal dagger implementation when we get rid of Feather
                 new RoomDatabaseModule(modelMainComponent),
                 new NetModule(),

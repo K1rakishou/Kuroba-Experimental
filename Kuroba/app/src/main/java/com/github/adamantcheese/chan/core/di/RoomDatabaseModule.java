@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.di;
 import com.github.adamantcheese.model.di.ModelMainComponent;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
+import com.github.adamantcheese.model.repository.ChanFilterRepository;
 import com.github.adamantcheese.model.repository.ChanPostHideRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
@@ -95,4 +96,11 @@ public class RoomDatabaseModule {
     public ChanPostHideRepository provideChanPostHideRepository() {
         return modelMainComponent.getChanPostHideRepository();
     }
+
+    @Provides
+    @Singleton
+    public ChanFilterRepository provideChanFilterRepository() {
+        return modelMainComponent.getChanFilterRepository();
+    }
+
 }

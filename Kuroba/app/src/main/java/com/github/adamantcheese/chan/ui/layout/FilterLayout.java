@@ -43,8 +43,6 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterEngine.FilterAction;
-import com.github.adamantcheese.chan.core.manager.FilterType;
-import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -53,6 +51,8 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenu;
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.model.data.board.ChanBoard;
+import com.github.adamantcheese.model.data.filter.ChanFilterMutable;
+import com.github.adamantcheese.model.data.filter.FilterType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -93,7 +93,7 @@ public class FilterLayout
     ThemeHelper themeHelper;
 
     private FilterLayoutCallback callback;
-    private Filter filter;
+    private ChanFilterMutable chanFilterMutable;
 
     public FilterLayout(Context context) {
         super(context);
@@ -123,7 +123,7 @@ public class FilterLayout
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filter.pattern = s.toString();
+                chanFilterMutable.setPattern(s.toString());
                 updateFilterValidity();
                 updatePatternPreview();
             }
@@ -198,10 +198,9 @@ public class FilterLayout
         applyToSaved.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
     }
 
-    public void setFilter(Filter filter) {
-        this.filter = filter;
-
-        pattern.setText(filter.pattern);
+    public void setFilter(ChanFilterMutable chanFilterMutable) {
+        this.chanFilterMutable = chanFilterMutable;
+        pattern.setText(chanFilterMutable.getPattern());
 
         updateFilterValidity();
         updateFilterType();
@@ -215,162 +214,188 @@ public class FilterLayout
         this.callback = callback;
     }
 
-    public Filter getFilter() {
-        filter.enabled = enabled.isChecked();
-        filter.applyToReplies = applyToReplies.isChecked();
-        filter.onlyOnOP = onlyOnOP.isChecked();
-        filter.applyToSaved = applyToSaved.isChecked();
+    public ChanFilterMutable getFilter() {
+        chanFilterMutable.setEnabled(enabled.isChecked());
+        chanFilterMutable.setApplyToReplies(applyToReplies.isChecked());
+        chanFilterMutable.setOnlyOnOP(onlyOnOP.isChecked());
+        chanFilterMutable.setApplyToSaved(applyToSaved.isChecked());
 
-        return filter;
+        return chanFilterMutable;
     }
 
     @Override
     public void onClick(View v) {
         if (v == typeText) {
-            @SuppressWarnings("unchecked")
-            final SelectLayout<FilterType> selectLayout =
-                    (SelectLayout<FilterType>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
-
-            List<SelectLayout.SelectItem<FilterType>> items = new ArrayList<>();
-            for (FilterType filterType : FilterType.values()) {
-                String name = FilterType.filterTypeName(filterType);
-                boolean checked = filter.hasFilter(filterType);
-
-                items.add(new SelectLayout.SelectItem<>(filterType, filterType.flag, name, null, name, checked));
-            }
-
-            selectLayout.setItems(items);
-
-            new AlertDialog.Builder(getContext()).setView(selectLayout)
-                    .setPositiveButton(R.string.ok, (dialog, which) -> {
-                        List<SelectLayout.SelectItem<FilterType>> items12 = selectLayout.getItems();
-                        int flags = 0;
-                        for (SelectLayout.SelectItem<FilterType> item : items12) {
-                            if (item.checked) {
-                                flags |= item.item.flag;
-                            }
-                        }
-
-                        filter.type = flags;
-                        updateFilterType();
-                        updatePatternPreview();
-                    })
-                    .show();
+            onTypeTextClicked();
         } else if (v == boardsSelector) {
-            @SuppressLint("InflateParams")
-            @SuppressWarnings("unchecked")
-            final SelectLayout<ChanBoard> selectLayout =
-                    (SelectLayout<ChanBoard>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
-
-            List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
-
-            boardManager.viewAllActiveBoards(chanBoard -> {
-                String name = BoardHelper.getName(chanBoard);
-                boolean checked = filterEngine.matchesBoard(filter, chanBoard);
-
-                items.add(
-                        new SelectLayout.SelectItem<>(
-                                chanBoard,
-                                chanBoard.getBoardDescriptor().hashCode(),
-                                name,
-                                "",
-                                name,
-                                checked
-                        )
-                );
-
-                return Unit.INSTANCE;
-            });
-
-            selectLayout.setItems(items);
-
-            new AlertDialog.Builder(getContext()).setView(selectLayout)
-                    .setPositiveButton(R.string.ok, (dialog, which) -> {
-                        List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
-                        boolean all = selectLayout.areAllChecked();
-                        List<ChanBoard> boardList = new ArrayList<>(items1.size());
-                        if (!all) {
-                            for (SelectLayout.SelectItem<ChanBoard> item : items1) {
-                                if (item.checked) {
-                                    boardList.add(item.item);
-                                }
-                            }
-                            if (boardList.isEmpty()) {
-                                all = true;
-                            }
-                        }
-
-                        filterEngine.saveBoardsToFilter(boardList, all, filter);
-
-                        updateBoardsSummary();
-                    })
-                    .show();
+            onBoardsSelectorClicked();
         } else if (v == actionText) {
-            List<FloatingMenuItem> menuItems = new ArrayList<>(6);
-
-            for (FilterAction action : FilterAction.values()) {
-                menuItems.add(new FloatingMenuItem(action, FilterAction.actionName(action)));
-            }
-
-            FloatingMenu menu = new FloatingMenu(v.getContext());
-            menu.setAnchor(v, Gravity.LEFT, -dp(5), -dp(5));
-            menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
-                @Override
-                public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
-                    FilterAction action = (FilterAction) item.getId();
-                    filter.action = action.id;
-                    updateFilterAction();
-                }
-
-                @Override
-                public void onFloatingMenuDismissed(FloatingMenu menu) {
-                }
-            });
-            menu.setItems(menuItems);
-            menu.show();
+            onActionTextClicked(v);
         } else if (v == help) {
-            SpannableStringBuilder message = (SpannableStringBuilder) Html.fromHtml(getString(R.string.filter_help));
-            TypefaceSpan[] typefaceSpans = message.getSpans(0, message.length(), TypefaceSpan.class);
-            for (TypefaceSpan span : typefaceSpans) {
-                if (span.getFamily().equals("monospace")) {
-                    int start = message.getSpanStart(span);
-                    int end = message.getSpanEnd(span);
-                    message.setSpan(new BackgroundColorSpan(0x22000000), start, end, 0);
-                }
-            }
-
-            StyleSpan[] styleSpans = message.getSpans(0, message.length(), StyleSpan.class);
-            for (StyleSpan span : styleSpans) {
-                if (span.getStyle() == Typeface.ITALIC) {
-                    int start = message.getSpanStart(span);
-                    int end = message.getSpanEnd(span);
-                    message.setSpan(new BackgroundColorSpan(0x22000000), start, end, 0);
-                }
-            }
-
-            new AlertDialog.Builder(getContext()).setTitle(R.string.filter_help_title)
-                    .setMessage(message)
-                    .setPositiveButton(R.string.ok, null)
-                    .show();
+            onHelpClicked();
         } else if (v == colorContainer) {
-            final ColorPickerView colorPickerView = new ColorPickerView(getContext());
-            colorPickerView.setColor(filter.color);
-
-            AlertDialog dialog = new AlertDialog.Builder(getContext()).setTitle(R.string.filter_color_pick)
-                    .setView(colorPickerView)
-                    .setNegativeButton(R.string.cancel, null)
-                    .setPositiveButton(R.string.ok, (dialog1, which) -> {
-                        filter.color = colorPickerView.getColor();
-                        updateFilterAction();
-                    })
-                    .show();
-            dialog.getWindow().setLayout(dp(300), dp(300));
+            onColorContainerClicked();
         }
     }
 
+    private void onColorContainerClicked() {
+        final ColorPickerView colorPickerView = new ColorPickerView(getContext());
+        colorPickerView.setColor(chanFilterMutable.getColor());
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setTitle(R.string.filter_color_pick)
+                .setView(colorPickerView)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok, (dialog1, which) -> {
+                    chanFilterMutable.setColor(colorPickerView.getColor());
+                    updateFilterAction();
+                })
+                .show();
+
+        dialog.getWindow().setLayout(dp(300), dp(300));
+    }
+
+    private void onHelpClicked() {
+        SpannableStringBuilder message =
+                (SpannableStringBuilder) Html.fromHtml(getString(R.string.filter_help));
+        TypefaceSpan[] typefaceSpans = message.getSpans(0, message.length(), TypefaceSpan.class);
+
+        for (TypefaceSpan span : typefaceSpans) {
+            if (span.getFamily().equals("monospace")) {
+                int start = message.getSpanStart(span);
+                int end = message.getSpanEnd(span);
+                message.setSpan(new BackgroundColorSpan(0x22000000), start, end, 0);
+            }
+        }
+
+        StyleSpan[] styleSpans = message.getSpans(0, message.length(), StyleSpan.class);
+        for (StyleSpan span : styleSpans) {
+            if (span.getStyle() == Typeface.ITALIC) {
+                int start = message.getSpanStart(span);
+                int end = message.getSpanEnd(span);
+                message.setSpan(new BackgroundColorSpan(0x22000000), start, end, 0);
+            }
+        }
+
+        new AlertDialog.Builder(getContext())
+                .setTitle(R.string.filter_help_title)
+                .setMessage(message)
+                .setPositiveButton(R.string.ok, null)
+                .show();
+    }
+
+    private void onActionTextClicked(View v) {
+        List<FloatingMenuItem> menuItems = new ArrayList<>(6);
+
+        for (FilterAction action : FilterAction.values()) {
+            menuItems.add(new FloatingMenuItem(action, FilterAction.actionName(action)));
+        }
+
+        FloatingMenu menu = new FloatingMenu(v.getContext());
+        menu.setAnchor(v, Gravity.LEFT, -dp(5), -dp(5));
+        menu.setCallback(new FloatingMenu.FloatingMenuCallback() {
+            @Override
+            public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
+                FilterAction action = (FilterAction) item.getId();
+                chanFilterMutable.setAction(action.id);
+                updateFilterAction();
+            }
+
+            @Override
+            public void onFloatingMenuDismissed(FloatingMenu menu) {
+            }
+        });
+
+        menu.setItems(menuItems);
+        menu.show();
+    }
+
+    private void onBoardsSelectorClicked() {
+        @SuppressLint("InflateParams")
+        @SuppressWarnings("unchecked")
+        final SelectLayout<ChanBoard> selectLayout =
+                (SelectLayout<ChanBoard>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+
+        List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
+
+        boardManager.viewAllActiveBoards(chanBoard -> {
+            String name = BoardHelper.getName(chanBoard);
+            boolean checked = filterEngine.matchesBoard(chanFilterMutable, chanBoard);
+
+            items.add(
+                    new SelectLayout.SelectItem<>(
+                            chanBoard,
+                            chanBoard.getBoardDescriptor().hashCode(),
+                            name,
+                            "",
+                            name,
+                            checked
+                    )
+            );
+
+            return Unit.INSTANCE;
+        });
+
+        selectLayout.setItems(items);
+
+        new AlertDialog.Builder(getContext())
+                .setView(selectLayout)
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                    List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
+                    List<ChanBoard> boardList = new ArrayList<>(items1.size());
+
+                    for (SelectLayout.SelectItem<ChanBoard> item : items1) {
+                        if (item.checked) {
+                            boardList.add(item.item);
+                        }
+                    }
+
+                    filterEngine.saveBoardsToFilter(chanFilterMutable, boardList);
+
+                    updateBoardsSummary();
+                })
+                .show();
+    }
+
+    private void onTypeTextClicked() {
+        @SuppressWarnings("unchecked")
+        final SelectLayout<FilterType> selectLayout =
+                (SelectLayout<FilterType>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+
+        List<SelectLayout.SelectItem<FilterType>> items = new ArrayList<>();
+        for (FilterType filterType : FilterType.values()) {
+            String name = FilterType.filterTypeName(filterType);
+            boolean checked = chanFilterMutable.hasFilter(filterType);
+
+            items.add(new SelectLayout.SelectItem<>(filterType, filterType.flag, name, null, name, checked));
+        }
+
+        selectLayout.setItems(items);
+
+        new AlertDialog.Builder(getContext()).setView(selectLayout)
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                    List<SelectLayout.SelectItem<FilterType>> items12 = selectLayout.getItems();
+                    int flags = 0;
+                    for (SelectLayout.SelectItem<FilterType> item : items12) {
+                        if (item.checked) {
+                            flags |= item.item.flag;
+                        }
+                    }
+
+                    chanFilterMutable.setType(flags);
+                    updateFilterType();
+                    updatePatternPreview();
+                })
+                .show();
+    }
+
     private void updateFilterValidity() {
-        int extraFlags = (filter.type & FilterType.COUNTRY_CODE.flag) != 0 ? Pattern.CASE_INSENSITIVE : 0;
-        boolean valid = !TextUtils.isEmpty(filter.pattern) && filterEngine.compile(filter.pattern, extraFlags) != null;
+        int extraFlags = (chanFilterMutable.getType() & FilterType.COUNTRY_CODE.flag) != 0
+                ? Pattern.CASE_INSENSITIVE
+                : 0;
+
+        boolean valid = !TextUtils.isEmpty(chanFilterMutable.getPattern())
+                && filterEngine.compile(chanFilterMutable.getPattern(), extraFlags) != null;
 
         if (valid != patternContainerErrorShowing) {
             patternContainerErrorShowing = valid;
@@ -384,20 +409,22 @@ public class FilterLayout
 
     private void updateBoardsSummary() {
         String text = getString(R.string.filter_boards) + " (";
-        if (filter.allBoards) {
+
+        if (chanFilterMutable.allBoards()) {
             text += getString(R.string.filter_all);
         } else {
-            text += filterEngine.getFilterBoardCount(filter);
+            text += filterEngine.getFilterBoardCount(chanFilterMutable);
         }
+
         text += ")";
         boardsSelector.setText(text);
     }
 
     private void updateCheckboxes() {
-        enabled.setChecked(filter.enabled);
-        applyToReplies.setChecked(filter.applyToReplies);
-        onlyOnOP.setChecked(filter.onlyOnOP);
-        applyToSaved.setChecked(filter.applyToSaved);
+        enabled.setChecked(chanFilterMutable.getEnabled());
+        applyToReplies.setChecked(chanFilterMutable.getApplyToReplies());
+        onlyOnOP.setChecked(chanFilterMutable.getOnlyOnOP());
+        applyToSaved.setChecked(chanFilterMutable.getApplyToSaved());
 
         // TODO(KurobaEx): Filter watching.
 //        if (filter.action == FilterAction.WATCH.id) {
@@ -409,15 +436,15 @@ public class FilterLayout
     }
 
     private void updateFilterAction() {
-        FilterAction action = FilterAction.forId(filter.action);
+        FilterAction action = FilterAction.forId(chanFilterMutable.getAction());
         actionText.setText(FilterAction.actionName(action));
         colorContainer.setVisibility(action == FilterAction.COLOR ? VISIBLE : GONE);
 
-        if (filter.color == 0) {
-            filter.color = 0xffff0000;
+        if (chanFilterMutable.getColor() == 0) {
+            chanFilterMutable.setColor(0xffff0000);
         }
 
-        colorPreview.setBackgroundColor(filter.color);
+        colorPreview.setBackgroundColor(chanFilterMutable.getColor());
 
         // TODO(KurobaEx): Filter watching.
 //        if (filter.action != FilterAction.WATCH.id) {
@@ -431,29 +458,30 @@ public class FilterLayout
         applyToReplies.setEnabled(false);
         onlyOnOP.setEnabled(false);
         applyToSaved.setEnabled(false);
+
         if (applyToReplies.isChecked()) {
             applyToReplies.toggle();
-            filter.applyToReplies = false;
+            chanFilterMutable.setApplyToSaved(false);
         }
         if (!onlyOnOP.isChecked()) {
             onlyOnOP.toggle();
-            filter.onlyOnOP = true;
+            chanFilterMutable.setOnlyOnOP(true);
         }
         if (applyToSaved.isChecked()) {
             applyToSaved.toggle();
-            filter.applyToSaved = false;
+            chanFilterMutable.setApplyToSaved(false);
         }
     }
 
     private void updateFilterType() {
-        int types = FilterType.forFlags(filter.type).size();
+        int types = FilterType.forFlags(chanFilterMutable.getType()).size();
         String text = getString(R.string.filter_types) + " (" + types + ")";
         typeText.setText(text);
     }
 
     private void updatePatternPreview() {
         String text = patternPreview.getText().toString();
-        boolean matches = text.length() > 0 && filterEngine.matches(filter, text, true);
+        boolean matches = text.length() > 0 && filterEngine.matches(chanFilterMutable, text, true);
         patternPreviewStatus.setText(matches ? R.string.filter_matches : R.string.filter_no_matches);
     }
 

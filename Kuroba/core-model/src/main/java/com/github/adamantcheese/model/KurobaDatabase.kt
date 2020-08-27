@@ -17,6 +17,8 @@ import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkReplyEntity
 import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
 import com.github.adamantcheese.model.entity.chan.board.ChanBoardIdEntity
+import com.github.adamantcheese.model.entity.chan.filter.ChanFilterBoardConstraintEntity
+import com.github.adamantcheese.model.entity.chan.filter.ChanFilterEntity
 import com.github.adamantcheese.model.entity.chan.post.*
 import com.github.adamantcheese.model.entity.chan.site.ChanSiteEntity
 import com.github.adamantcheese.model.entity.chan.site.ChanSiteIdEntity
@@ -43,6 +45,9 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     ChanPostReplyEntity::class,
     ChanSavedReplyEntity::class,
     ChanPostHideEntity::class,
+    ChanThreadViewableInfoEntity::class,
+    ChanFilterEntity::class,
+    ChanFilterBoardConstraintEntity::class,
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
     InlinedFileInfoEntity::class,
@@ -52,8 +57,7 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     NavHistoryElementInfoEntity::class,
     LastUsedArchiveForThreadRelationEntity::class,
     ThreadBookmarkEntity::class,
-    ThreadBookmarkReplyEntity::class,
-    ChanThreadViewableInfoEntity::class
+    ThreadBookmarkReplyEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class
@@ -96,6 +100,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanSiteDao(): ChanSiteDao
   abstract fun chanSavedReplyDao(): ChanSavedReplyDao
   abstract fun chanPostHideDao(): ChanPostHideDao
+  abstract fun chanFilterDao(): ChanFilterDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }

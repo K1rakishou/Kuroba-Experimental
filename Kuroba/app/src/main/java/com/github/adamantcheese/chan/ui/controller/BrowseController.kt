@@ -27,7 +27,6 @@ import android.view.animation.RotateAnimation
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
@@ -77,8 +76,6 @@ class BrowseController(context: Context) : ThreadController(context),
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var databaseManager: DatabaseManager
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
 

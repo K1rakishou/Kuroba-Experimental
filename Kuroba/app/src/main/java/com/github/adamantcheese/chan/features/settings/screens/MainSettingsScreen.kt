@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.core.database.DatabaseManager
+import com.github.adamantcheese.chan.core.manager.ChanFilterManager
 import com.github.adamantcheese.chan.core.manager.ReportManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.manager.UpdateManager
@@ -23,7 +23,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.*
 
 class MainSettingsScreen(
   context: Context,
-  private val databaseManager: DatabaseManager,
+  private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val updateManager: UpdateManager,
   private val reportManager: ReportManager,
@@ -215,7 +215,7 @@ class MainSettingsScreen(
           identifier = MainScreen.MainGroup.Filters,
           topDescriptionIdFunc = { R.string.settings_filters },
           bottomDescriptionStringFunc = {
-            val filtersCount = databaseManager.runTask(databaseManager.databaseFilterManager.count).toInt()
+            val filtersCount = chanFilterManager.filtersCount()
             getQuantityString(R.plurals.filter, filtersCount, filtersCount)
           },
           callback = { navigationController.pushController(FiltersController(context)) }

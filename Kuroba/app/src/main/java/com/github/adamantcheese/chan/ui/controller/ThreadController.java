@@ -31,11 +31,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.core.manager.FilterType;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -46,6 +44,8 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor;
+import com.github.adamantcheese.model.data.filter.ChanFilterMutable;
+import com.github.adamantcheese.model.data.filter.FilterType;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -313,9 +313,9 @@ public abstract class ThreadController
 
         requireStartActivity().setSettingsMenuItemSelected();
 
-        Filter filter = new Filter();
-        filter.type = type.flag;
-        filter.pattern = '/' + (filterText == null ? "" : filterText) + '/';
+        ChanFilterMutable filter = new ChanFilterMutable();
+        filter.setType(type.flag);
+        filter.setPattern('/' + (filterText == null ? "" : filterText) + '/');
 
         filtersController.showFilterDialog(filter);
     }

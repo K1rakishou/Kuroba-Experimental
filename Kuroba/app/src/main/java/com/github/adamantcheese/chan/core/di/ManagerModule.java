@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.content.Context;
 
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
@@ -29,6 +28,7 @@ import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.BottomNavBarVisibilityStateManager;
+import com.github.adamantcheese.chan.core.manager.ChanFilterManager;
 import com.github.adamantcheese.chan.core.manager.ChanLoaderManager;
 import com.github.adamantcheese.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
@@ -65,6 +65,7 @@ import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.AppConstants;
 import com.github.adamantcheese.model.repository.BoardRepository;
 import com.github.adamantcheese.model.repository.BookmarksRepository;
+import com.github.adamantcheese.model.repository.ChanFilterRepository;
 import com.github.adamantcheese.model.repository.ChanPostHideRepository;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.adamantcheese.model.repository.ChanSavedReplyRepository;
@@ -131,9 +132,9 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public FilterEngine provideFilterEngine(DatabaseManager databaseManager) {
+    public FilterEngine provideFilterEngine(ChanFilterManager chanFilterManager) {
         Logger.d(AppModule.DI_TAG, "Filter engine");
-        return new FilterEngine(databaseManager);
+        return new FilterEngine(chanFilterManager);
     }
 
     @Provides
@@ -520,6 +521,22 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 chanPostHideRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ChanFilterManager provideChanFilterManager(
+            ChanFilterRepository chanFilterRepository,
+            CoroutineScope appScope,
+            PostFilterManager postFilterManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "ChanFilterManager");
+
+        return new ChanFilterManager(
+                appScope,
+                chanFilterRepository,
+                postFilterManager
         );
     }
 }

@@ -22,18 +22,15 @@ import androidx.annotation.AnyThread;
 import androidx.core.text.HtmlCompat;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.database.DatabaseFilterManager;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostHttpIcon;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.model.orm.Filter;
-import com.github.adamantcheese.chan.ui.helper.BoardHelper;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.board.ChanBoard;
+import com.github.adamantcheese.model.data.filter.ChanFilter;
+import com.github.adamantcheese.model.data.filter.ChanFilterMutable;
+import com.github.adamantcheese.model.data.filter.FilterType;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,103 +40,50 @@ import java.util.regex.PatternSyntaxException;
 
 import javax.inject.Inject;
 
-import static com.github.adamantcheese.chan.core.manager.FilterType.COMMENT;
-import static com.github.adamantcheese.chan.core.manager.FilterType.COUNTRY_CODE;
-import static com.github.adamantcheese.chan.core.manager.FilterType.FILENAME;
-import static com.github.adamantcheese.chan.core.manager.FilterType.ID;
-import static com.github.adamantcheese.chan.core.manager.FilterType.IMAGE;
-import static com.github.adamantcheese.chan.core.manager.FilterType.NAME;
-import static com.github.adamantcheese.chan.core.manager.FilterType.SUBJECT;
-import static com.github.adamantcheese.chan.core.manager.FilterType.TRIPCODE;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public class FilterEngine {
     private static final String TAG = "FilterEngine";
 
-    public enum FilterAction {
-        HIDE(0),
-        COLOR(1),
-        REMOVE(2);
-        // TODO(KurobaEx): Filter watching.
-//        WATCH(3);
+    private static final Pattern isRegexPattern = Pattern.compile("^/(.*)/(i?)$");
+    private static final Pattern filterFilthyPattern = Pattern.compile("([.^$*+?()\\]\\[{}\\\\|-])");
+    // an escaped \ and an escaped *, to replace an escaped * from escapeRegex
+    private static final Pattern wildcardPattern = Pattern.compile("\\\\\\*");
 
-        public final int id;
-
-        FilterAction(int id) {
-            this.id = id;
-        }
-
-        public static FilterAction forId(int id) {
-            return enums[id];
-        }
-
-        private static FilterAction[] enums = new FilterAction[4];
-
-        static {
-            for (FilterAction type : values()) {
-                enums[type.id] = type;
-            }
-        }
-
-        public static String actionName(FilterEngine.FilterAction action) {
-            switch (action) {
-                case HIDE:
-                    return getString(R.string.filter_hide);
-                case COLOR:
-                    return getString(R.string.filter_color);
-                case REMOVE:
-                    return getString(R.string.filter_remove);
-                // TODO(KurobaEx): Filter watching.
-//                case WATCH:
-//                    return getString(R.string.filter_watch);
-            }
-            return null;
-        }
-    }
-
-    private final DatabaseManager databaseManager;
-
-    private final DatabaseFilterManager databaseFilterManager;
+    private final ChanFilterManager chanFilterManager;
 
     private final Map<String, Pattern> patternCache = new HashMap<>();
 
     @Inject
-    public FilterEngine(DatabaseManager databaseManager) {
-        this.databaseManager = databaseManager;
-        databaseFilterManager = databaseManager.getDatabaseFilterManager();
+    public FilterEngine(ChanFilterManager chanFilterManager) {
+        this.chanFilterManager = chanFilterManager;
     }
 
-    public void deleteFilter(Filter filter) {
-        databaseManager.runTask(databaseFilterManager.deleteFilter(filter));
+    public void createOrUpdateFilter(ChanFilterMutable chanFilterMutable, Function0<Unit> onUpdated) {
+        chanFilterManager.createOrUpdateFilter(chanFilterMutable.toChanFilter(), onUpdated);
     }
 
-    public void createOrUpdateFilter(Filter filter) {
-        if (filter.id == 0) {
-            databaseManager.runTask(databaseFilterManager.createFilter(filter));
-        } else {
-            databaseManager.runTask(databaseFilterManager.updateFilter(filter));
-        }
+    public void deleteFilter(ChanFilter filter, Function0<Unit> onUpdated) {
+        chanFilterManager.deleteFilter(filter, onUpdated);
     }
 
-    public List<Filter> getEnabledFilters() {
-        List<Filter> filters = databaseManager.runTask(databaseFilterManager.getFilters());
-        List<Filter> enabled = new ArrayList<>();
-        for (Filter filter : filters) {
-            if (filter.enabled) {
-                enabled.add(filter);
-            }
-        }
-        Collections.sort(enabled, (o1, o2) -> o1.order - o2.order);
-        return enabled;
+    public void onFilterMoved(int from, int to, Function0<Unit> onMoved) {
+        chanFilterManager.onFilterMoved(from, to, onMoved);
     }
 
-    public List<Filter> getAllFilters() {
-        try {
-            return databaseFilterManager.getFilters().call();
-        } catch (Exception e) {
-            Logger.wtf(TAG, "Couldn't get all filters for some reason.");
-            return new ArrayList<>();
-        }
+    public void enableDisableFilters(List<ChanFilter> filters, boolean enable, Function0<Unit> onUpdated) {
+        chanFilterManager.enableDisableFilters(filters, enable, onUpdated);
+    }
+
+    public List<ChanFilter> getEnabledFilters() {
+        return chanFilterManager.getEnabledFiltersSorted();
+    }
+
+    public List<ChanFilter> getAllFilters() {
+        return chanFilterManager.getAllFilters();
     }
 
     // TODO(KurobaEx): Filter watching.
@@ -153,39 +97,24 @@ public class FilterEngine {
 //        return watchFilters;
 //    }
 
-    @AnyThread
-    public boolean matchesBoard(Filter filter, ChanBoard board) {
-        if (filter.allBoards || TextUtils.isEmpty(filter.boards)) {
-            return true;
-        } else {
-            for (String uniqueId : filter.boards.split(",")) {
-                if (BoardHelper.matchesUniqueId(board, uniqueId)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    public boolean matchesBoard(ChanFilter filter, ChanBoard board) {
+        return filter.matchesBoard(board.getBoardDescriptor());
     }
 
-    public int getFilterBoardCount(Filter filter) {
-        if (filter.allBoards) {
-            return -1;
-        } else {
-            return filter.boards.split(",").length;
-        }
+    public boolean matchesBoard(ChanFilterMutable filter, ChanBoard board) {
+        return filter.matchesBoard(board.getBoardDescriptor());
     }
 
-    public void saveBoardsToFilter(List<ChanBoard> appliedBoards, boolean all, Filter filter) {
-        filter.allBoards = all;
-        if (all) {
-            filter.boards = "";
-        } else {
-            List<String> boardsString = new ArrayList<>(appliedBoards.size());
-            for (int i = 0; i < appliedBoards.size(); i++) {
-                boardsString.add(BoardHelper.boardUniqueId(appliedBoards.get(i)));
-            }
-            filter.boards = TextUtils.join(",", boardsString);
-        }
+    public int getFilterBoardCount(ChanFilter filter) {
+        return filter.getFilterBoardCount();
+    }
+
+    public int getFilterBoardCount(ChanFilterMutable filter) {
+        return filter.getFilterBoardCount();
+    }
+
+    public void saveBoardsToFilter(ChanFilterMutable filter, List<ChanBoard> appliedBoards) {
+        filter.applyToBoards(appliedBoards);
     }
 
     /**
@@ -194,35 +123,57 @@ public class FilterEngine {
      * @return true if the filter matches and should be applied to the content, false if not
      */
     @AnyThread
-    public boolean matches(Filter filter, Post.Builder post) {
-        if (!post.moderatorCapcode.equals("") || post.sticky) return false;
-        if (filter.onlyOnOP && !post.op) return false;
-        if (filter.applyToSaved && !post.isSavedReply) return false;
+    public boolean matches(ChanFilter filter, Post.Builder post) {
+        if (!post.moderatorCapcode.equals("") || post.sticky) {
+            return false;
+        }
 
-        if (typeMatches(filter, TRIPCODE) && matches(filter, post.tripcode, false)) return true;
-        if (typeMatches(filter, NAME) && matches(filter, post.name, false)) return true;
-        if (typeMatches(filter, COMMENT) && post.postCommentBuilder.getComment() != null) {
+        if (filter.getOnlyOnOP() && !post.op) {
+            return false;
+        }
+
+        if (filter.getApplyToSaved() && !post.isSavedReply) {
+            return false;
+        }
+
+        if (typeMatches(filter, FilterType.TRIPCODE) && matches(filter, post.tripcode, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.NAME) && matches(filter, post.name, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.COMMENT) && post.postCommentBuilder.getComment() != null) {
             if (matches(filter, post.postCommentBuilder.getComment().toString(), false)) {
                 return true;
             }
         }
-        if (typeMatches(filter, ID) && matches(filter, post.posterId, false)) return true;
-        if (typeMatches(filter, SUBJECT) && matches(filter, post.subject, false)) return true;
+
+        if (typeMatches(filter, FilterType.ID) && matches(filter, post.posterId, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.SUBJECT) && matches(filter, post.subject, false)) {
+            return true;
+        }
+
         for (PostImage image : post.postImages) {
-            if (typeMatches(filter, IMAGE) && matches(filter, image.fileHash, false)) {
-                //for filtering image hashes, we don't want to apply the post-level filter (thus return false)
-                //this takes care of it at an image level, either flagging it to be hidden, which applies a
-                //custom spoiler image, or removes the image from the post entirely since this is a Post.Builder instance
-                if (filter.action == FilterAction.HIDE.id) {
+            if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.fileHash, false)) {
+                // for filtering image hashes, we don't want to apply the post-level filter
+                // (thus return false) this takes care of it at an image level, either flagging it
+                // to be hidden, which applies a custom spoiler image, or removes the image from
+                // the post entirely since this is a Post.Builder instance
+                if (filter.getAction() == FilterAction.HIDE.id) {
                     image.hidden = true;
-                } else if (filter.action == FilterAction.REMOVE.id) {
+                } else if (filter.getAction() == FilterAction.REMOVE.id) {
                     post.postImages.remove(image);
                 }
                 return false;
             }
         }
 
-        //figure out if the post has a country code, if so check the filter
+        // figure out if the post has a country code, if so check the filter
         String countryCode = "";
         if (post.httpIcons != null) {
             for (PostHttpIcon icon : post.httpIcons) {
@@ -232,7 +183,9 @@ public class FilterEngine {
                 }
             }
         }
-        if (!countryCode.isEmpty() && typeMatches(filter, COUNTRY_CODE) && matches(filter, countryCode, false)) {
+
+        if (!countryCode.isEmpty() && typeMatches(filter, FilterType.COUNTRY_CODE)
+                && matches(filter, countryCode, false)) {
             return true;
         }
 
@@ -242,7 +195,7 @@ public class FilterEngine {
         }
 
         String fnames = files.toString();
-        return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
+        return !fnames.isEmpty() && typeMatches(filter, FilterType.FILENAME) && matches(filter, fnames, false);
     }
 
     /**
@@ -254,23 +207,47 @@ public class FilterEngine {
      * @return true if the filter matches and should be applied to the content, false if not
      */
     @AnyThread
-    public boolean matches(Filter filter, Post post) {
-        if (!post.capcode.equals("") || post.isSticky()) return false;
-        if (filter.onlyOnOP && !post.isOP) return false;
-        if (filter.applyToSaved && !post.isSavedReply) return false;
-
-        if (typeMatches(filter, TRIPCODE) && matches(filter, post.tripcode, false)) return true;
-        if (typeMatches(filter, NAME) && matches(filter, post.name, false)) return true;
-        if (typeMatches(filter, COMMENT) && matches(filter, post.getComment().toString(), false))
-            return true;
-        if (typeMatches(filter, ID) && matches(filter, post.posterId, false)) return true;
-        if (typeMatches(filter, SUBJECT) && matches(filter, post.subject, false)) return true;
-        for (PostImage image : post.getPostImages()) {
-            //for this case, we don't do any actions, so just return if it actually does match
-            if (typeMatches(filter, IMAGE) && matches(filter, image.fileHash, false)) return true;
+    public boolean matches(ChanFilter filter, Post post) {
+        if (!post.capcode.equals("") || post.isSticky()) {
+            return false;
         }
 
-        //figure out if the post has a country code, if so check the filter
+        if (filter.getOnlyOnOP() && !post.isOP) {
+            return false;
+        }
+
+        if (filter.getApplyToSaved() && !post.isSavedReply) {
+            return false;
+        }
+
+        if (typeMatches(filter, FilterType.TRIPCODE) && matches(filter, post.tripcode, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.NAME) && matches(filter, post.name, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.COMMENT) && matches(filter, post.getComment().toString(), false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.ID) && matches(filter, post.posterId, false)) {
+            return true;
+        }
+
+        if (typeMatches(filter, FilterType.SUBJECT) && matches(filter, post.subject, false)) {
+            return true;
+        }
+
+        for (PostImage image : post.getPostImages()) {
+            // for this case, we don't do any actions, so just return if it actually does match
+            if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.fileHash, false)) {
+                return true;
+            }
+        }
+
+        // figure out if the post has a country code, if so check the filter
         String countryCode = "";
         if (post.httpIcons != null) {
             for (PostHttpIcon icon : post.httpIcons) {
@@ -280,7 +257,8 @@ public class FilterEngine {
                 }
             }
         }
-        if (!countryCode.isEmpty() && typeMatches(filter, COUNTRY_CODE) && matches(filter, countryCode, false)) {
+
+        if (!countryCode.isEmpty() && typeMatches(filter, FilterType.COUNTRY_CODE) && matches(filter, countryCode, false)) {
             return true;
         }
 
@@ -290,16 +268,21 @@ public class FilterEngine {
         }
 
         String fnames = files.toString();
-        return !fnames.isEmpty() && typeMatches(filter, FILENAME) && matches(filter, fnames, false);
+        return !fnames.isEmpty() && typeMatches(filter, FilterType.FILENAME) && matches(filter, fnames, false);
     }
 
     @AnyThread
-    public boolean typeMatches(Filter filter, FilterType type) {
-        return (filter.type & type.flag) != 0;
+    public boolean typeMatches(ChanFilter filter, FilterType type) {
+        return (filter.getType() & type.flag) != 0;
     }
 
     @AnyThread
-    public boolean matches(Filter filter, CharSequence text, boolean forceCompile) {
+    public boolean typeMatches(ChanFilterMutable filter, FilterType type) {
+        return (filter.getType() & type.flag) != 0;
+    }
+
+    @AnyThread
+    public boolean matches(ChanFilter filter, CharSequence text, boolean forceCompile) {
         if (TextUtils.isEmpty(text)) {
             return false;
         }
@@ -307,17 +290,21 @@ public class FilterEngine {
         Pattern pattern = null;
         if (!forceCompile) {
             synchronized (patternCache) {
-                pattern = patternCache.get(filter.pattern);
+                pattern = patternCache.get(filter.getPattern());
             }
         }
 
         if (pattern == null) {
-            int extraFlags = typeMatches(filter, COUNTRY_CODE) ? Pattern.CASE_INSENSITIVE : 0;
-            pattern = compile(filter.pattern, extraFlags);
+            int extraFlags = typeMatches(filter, FilterType.COUNTRY_CODE)
+                    ? Pattern.CASE_INSENSITIVE
+                    : 0;
+
+            pattern = compile(filter.getPattern(), extraFlags);
             if (pattern != null) {
                 synchronized (patternCache) {
-                    patternCache.put(filter.pattern, pattern);
+                    patternCache.put(filter.getPattern(), pattern);
                 }
+
                 Logger.d(TAG, "Resulting pattern: " + pattern.pattern());
             }
         }
@@ -336,10 +323,47 @@ public class FilterEngine {
         }
     }
 
-    private static final Pattern isRegexPattern = Pattern.compile("^/(.*)/(i?)$");
-    private static final Pattern filterFilthyPattern = Pattern.compile("([.^$*+?()\\]\\[{}\\\\|-])");
-    // an escaped \ and an escaped *, to replace an escaped * from escapeRegex
-    private static final Pattern wildcardPattern = Pattern.compile("\\\\\\*");
+    @AnyThread
+    public boolean matches(ChanFilterMutable filter, CharSequence text, boolean forceCompile) {
+        if (TextUtils.isEmpty(text)) {
+            return false;
+        }
+
+        Pattern pattern = null;
+        if (!forceCompile) {
+            synchronized (patternCache) {
+                pattern = patternCache.get(filter.getPattern());
+            }
+        }
+
+        if (pattern == null) {
+            int extraFlags = typeMatches(filter, FilterType.COUNTRY_CODE)
+                    ? Pattern.CASE_INSENSITIVE
+                    : 0;
+
+            pattern = compile(filter.getPattern(), extraFlags);
+            if (pattern != null) {
+                synchronized (patternCache) {
+                    patternCache.put(filter.getPattern(), pattern);
+                }
+
+                Logger.d(TAG, "Resulting pattern: " + pattern.pattern());
+            }
+        }
+
+        if (pattern != null) {
+            Matcher matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
+            try {
+                return matcher.find();
+            } catch (IllegalArgumentException e) {
+                Logger.w(TAG, "matcher.find() exception", e);
+                return false;
+            }
+        } else {
+            Logger.e(TAG, "Invalid pattern");
+            return false;
+        }
+    }
 
     @AnyThread
     public Pattern compile(String rawPattern, int extraPatternFlags) {
@@ -393,6 +417,48 @@ public class FilterEngine {
     }
 
     private String escapeRegex(String filthy) {
-        return filterFilthyPattern.matcher(filthy).replaceAll("\\\\$1"); // Escape regex special characters with a \
+        // Escape regex special characters with a \
+        return filterFilthyPattern.matcher(filthy).replaceAll("\\\\$1");
+    }
+
+    public enum FilterAction {
+        HIDE(0),
+        COLOR(1),
+        REMOVE(2);
+        // TODO(KurobaEx): Filter watching.
+//        WATCH(3);
+
+        public final int id;
+
+        FilterAction(int id) {
+            this.id = id;
+        }
+
+        public static FilterAction forId(int id) {
+            return enums[id];
+        }
+
+        private static FilterAction[] enums = new FilterAction[4];
+
+        static {
+            for (FilterAction type : values()) {
+                enums[type.id] = type;
+            }
+        }
+
+        public static String actionName(FilterEngine.FilterAction action) {
+            switch (action) {
+                case HIDE:
+                    return getString(R.string.filter_hide);
+                case COLOR:
+                    return getString(R.string.filter_color);
+                case REMOVE:
+                    return getString(R.string.filter_remove);
+                // TODO(KurobaEx): Filter watching.
+//                case WATCH:
+//                    return getString(R.string.filter_watch);
+            }
+            return null;
+        }
     }
 }

@@ -43,11 +43,14 @@ class SiteRepository(
       }
 
       allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
+      logger.log(TAG, "allSitesLoadedInitializer initialized")
       return@myAsync result
     }
   }
 
   suspend fun loadAllSites(): ModularResult<List<ChanSiteData>> {
+    check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction localSource.selectAllOrderedDesc()
@@ -57,6 +60,7 @@ class SiteRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(chanSiteDataList: Collection<ChanSiteData>): ModularResult<Unit> {
+    check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
     logger.log(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
 
     return applicationScope.myAsync {

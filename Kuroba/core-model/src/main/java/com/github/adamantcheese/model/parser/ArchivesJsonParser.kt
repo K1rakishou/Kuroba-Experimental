@@ -213,7 +213,8 @@ class ArchivesJsonParser(
     // with both forward slashes, e.g. "//arch.b4k.co/..."  instead of "https://arch.b4k.co/...".
     // We gotta fix this by ourselves for now.
     // https://arch.b4k.co/meta/thread/357/
-
+    //
+    // UPD: it was fixed, but let's still leave this hack change in case it happens again
     if (imageUrl.startsWith("https://") || imageUrl.startsWith("http://")) {
       return imageUrl
     }
@@ -222,8 +223,7 @@ class ArchivesJsonParser(
       return "https:$imageUrl"
     }
 
-    logger.logError(TAG, "Unknown kind of broken image url: \"$imageUrl\". " +
-      "If you see this report it to devs!")
+    logger.logError(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")
     return null
   }
 

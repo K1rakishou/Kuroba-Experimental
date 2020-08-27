@@ -146,8 +146,7 @@ class PostHideHelper(
       val filterStub: Boolean = postFilterManager.getFilterStub(post.postDescriptor)
 
       if (filterRemove && filterStub) {
-        // wtf?
-        Logger.w(TAG, "Post has both filterRemove and filterStub flags")
+        Logger.e(TAG, "Post has both filterRemove and filterStub flags")
         continue
       }
 

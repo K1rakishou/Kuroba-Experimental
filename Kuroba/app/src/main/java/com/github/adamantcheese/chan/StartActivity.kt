@@ -99,6 +99,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var chanFilterManager: ChanFilterManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -210,6 +212,7 @@ class StartActivity : AppCompatActivity(),
     historyNavigationManager.initialize()
     bookmarkWatcherCoordinator.initialize()
     archivesManager.initialize()
+    chanFilterManager.initialize()
 
     updateManager.autoUpdateCheck()
 
@@ -366,6 +369,7 @@ class StartActivity : AppCompatActivity(),
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
+    chanFilterManager.awaitUntilInitialized()
 
     val handled = if (savedInstanceState != null) {
       restoreFromSavedState(savedInstanceState)

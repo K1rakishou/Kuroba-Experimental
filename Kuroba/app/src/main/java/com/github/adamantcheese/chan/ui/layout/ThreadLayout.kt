@@ -35,7 +35,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.manager.FilterType
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.PostHideManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
@@ -69,6 +68,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
+import com.github.adamantcheese.model.data.filter.FilterType
 import com.github.adamantcheese.model.data.post.ChanPostHide
 import com.google.android.material.snackbar.Snackbar
 import java.util.*

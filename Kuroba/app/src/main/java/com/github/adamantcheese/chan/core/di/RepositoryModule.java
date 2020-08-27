@@ -16,8 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.chan.core.database.DatabaseHelper;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
@@ -36,10 +34,10 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public ImportExportRepository provideImportExportRepository(
-            DatabaseManager databaseManager, DatabaseHelper databaseHelper, Gson gson, FileManager fileManager
+            Gson gson, FileManager fileManager
     ) {
         Logger.d(AppModule.DI_TAG, "Import export repository");
-        return new ImportExportRepository(databaseManager, databaseHelper, gson, fileManager);
+        return new ImportExportRepository(gson, fileManager);
     }
 
     @Provides

@@ -9,10 +9,14 @@ import kotlin.concurrent.write
 
 class PostFilterManager {
   private val lock = ReentrantReadWriteLock()
-  private val filterStorage = mutableMapWithCap<PostDescriptor, PostFilter>(32)
+  private val filterStorage = mutableMapWithCap<PostDescriptor, PostFilter>(512)
 
   fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
     lock.write { filterStorage[postDescriptor] = postFilter }
+  }
+
+  fun contains(postDescriptor: PostDescriptor): Boolean {
+    return lock.read { filterStorage.containsKey(postDescriptor) }
   }
 
   fun remove(postDescriptor: PostDescriptor) {
@@ -25,6 +29,18 @@ class PostFilterManager {
         filterStorage.remove(postDescriptor)
       }
     }
+  }
+
+  fun update(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
+    lock.write {
+      val postFilter = filterStorage[postDescriptor] ?: PostFilter()
+      updateFunc(postFilter)
+      filterStorage[postDescriptor] = postFilter
+    }
+  }
+
+  fun clear() {
+    lock.write { filterStorage.clear() }
   }
 
   fun getFilterHighlightedColor(postDescriptor: PostDescriptor): Int {
@@ -61,14 +77,6 @@ class PostFilterManager {
         || filterStorage[postDescriptor]?.filterHighlightedColor != 0
         || filterStorage[postDescriptor]?.filterReplies ?: false
         || filterStorage[postDescriptor]?.filterStub ?: false
-    }
-  }
-
-  fun update(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
-    lock.write {
-      val postFilter = filterStorage[postDescriptor] ?: PostFilter()
-      updateFunc(postFilter)
-      filterStorage[postDescriptor] = postFilter
     }
   }
 

@@ -35,26 +35,26 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.core.database.DatabaseManager;
 import com.github.adamantcheese.chan.core.manager.FilterEngine;
 import com.github.adamantcheese.chan.core.manager.FilterEngine.FilterAction;
-import com.github.adamantcheese.chan.core.manager.FilterType;
-import com.github.adamantcheese.chan.core.model.orm.Filter;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.adamantcheese.chan.ui.helper.RefreshUIMessage;
 import com.github.adamantcheese.chan.ui.layout.FilterLayout;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper;
+import com.github.adamantcheese.chan.utils.BackgroundUtils;
+import com.github.adamantcheese.model.data.filter.ChanFilter;
+import com.github.adamantcheese.model.data.filter.ChanFilterMutable;
+import com.github.adamantcheese.model.data.filter.FilterType;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -71,8 +71,6 @@ public class FiltersController
         implements ToolbarNavigationController.ToolbarSearchCallback,
         View.OnClickListener {
 
-    @Inject
-    DatabaseManager databaseManager;
     @Inject
     FilterEngine filterEngine;
     @Inject
@@ -159,16 +157,13 @@ public class FiltersController
     @Override
     public void onDestroy() {
         super.onDestroy();
-        databaseManager.getDatabaseFilterManager().updateFilters(adapter.sourceList);
     }
 
     @Override
     public void onClick(View v) {
         if (v == add) {
-            Filter f = new Filter();
-            //add to the end of the filter list
-            f.order = adapter.getItemCount();
-            showFilterDialog(f);
+            ChanFilterMutable chanFilterMutable = new ChanFilterMutable();
+            showFilterDialog(chanFilterMutable);
         } else if (v == enable && !locked) {
             FloatingActionButton enableButton = (FloatingActionButton) v;
             locked = true;
@@ -176,8 +171,8 @@ public class FiltersController
             // if every filter is disabled, enable all of them and set the drawable to be an x
             // if every filter is enabled, disable all of them and set the drawable to be a checkmark
             // if some filters are enabled, disable them and set the drawable to be a checkmark
-            List<Filter> enabledFilters = filterEngine.getEnabledFilters();
-            List<Filter> allFilters = filterEngine.getAllFilters();
+            List<ChanFilter> enabledFilters = filterEngine.getEnabledFilters();
+            List<ChanFilter> allFilters = filterEngine.getAllFilters();
 
             if (enabledFilters.isEmpty()) {
                 setFilters(allFilters, true);
@@ -194,12 +189,13 @@ public class FiltersController
         }
     }
 
-    private void setFilters(List<Filter> filters, boolean enabled) {
-        for (Filter filter : filters) {
-            filter.enabled = enabled;
-            filterEngine.createOrUpdateFilter(filter);
-        }
-        adapter.reload();
+    private void setFilters(List<ChanFilter> filters, boolean enabled) {
+        filterEngine.enableDisableFilters(filters, enabled, () -> {
+            BackgroundUtils.ensureMainThread();
+
+            adapter.reload();
+            return Unit.INSTANCE;
+        });
     }
 
     private void searchClicked(ToolbarMenuItem item) {
@@ -216,47 +212,45 @@ public class FiltersController
         dialog.setCanceledOnTouchOutside(true);
     }
 
-    public void showFilterDialog(final Filter filter) {
+    public void showFilterDialog(final ChanFilterMutable chanFilterMutable) {
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
         final AlertDialog alertDialog = new AlertDialog.Builder(context)
                 .setView(filterLayout)
                 .setPositiveButton("Save", (dialog, which) -> {
-                    filterEngine.createOrUpdateFilter(filterLayout.getFilter());
-                    if (filterEngine.getEnabledFilters().isEmpty()) {
-                        enable.setImageResource(R.drawable.ic_done_white_24dp);
-                    } else {
-                        enable.setImageResource(R.drawable.ic_clear_white_24dp);
-                    }
+                    filterEngine.createOrUpdateFilter(filterLayout.getFilter(), () -> {
+                        BackgroundUtils.ensureMainThread();
 
-                    themeHelper.getTheme().applyFabColor(enable);
-                    postToEventBus(new RefreshUIMessage("filters"));
-                    adapter.reload();
+                        if (filterEngine.getEnabledFilters().isEmpty()) {
+                            enable.setImageResource(R.drawable.ic_done_white_24dp);
+                        } else {
+                            enable.setImageResource(R.drawable.ic_clear_white_24dp);
+                        }
+
+                        themeHelper.getTheme().applyFabColor(enable);
+                        postToEventBus(new RefreshUIMessage("filters"));
+                        adapter.reload();
+
+                        return Unit.INSTANCE;
+                    });
                 }).show();
 
         filterLayout
                 .setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setEnabled(enabled));
-        filterLayout.setFilter(filter);
+
+        filterLayout.setFilter(chanFilterMutable);
     }
 
-    private void deleteFilter(Filter filter) {
-        Filter clone = filter.clone();
-        filterEngine.deleteFilter(filter);
-        postToEventBus(new RefreshUIMessage("filters"));
-        adapter.reload();
+    private void deleteFilter(ChanFilter filter) {
+        filterEngine.deleteFilter(filter, () -> {
+            BackgroundUtils.ensureMainThread();
 
-        SnackbarWrapper snackbarWrapper = SnackbarWrapper.create(
-                view,
-                getString(R.string.filter_removed_undo, clone.pattern),
-                Snackbar.LENGTH_LONG
-        );
-
-        snackbarWrapper.setAction(R.string.undo, v -> {
-            filterEngine.createOrUpdateFilter(clone);
+            postToEventBus(new RefreshUIMessage("filters"));
             adapter.reload();
+
+            return Unit.INSTANCE;
         });
-        snackbarWrapper.show();
     }
 
     @SuppressLint("RestrictedApi")
@@ -287,8 +281,8 @@ public class FiltersController
 
     private class FilterAdapter
             extends RecyclerView.Adapter<FilterCell> {
-        private List<Filter> sourceList = new ArrayList<>();
-        private List<Filter> displayList = new ArrayList<>();
+        private List<ChanFilter> sourceList = new ArrayList<>();
+        private List<ChanFilter> displayList = new ArrayList<>();
         private String searchQuery;
 
         public FilterAdapter() {
@@ -304,26 +298,27 @@ public class FiltersController
 
         @Override
         public void onBindViewHolder(FilterCell holder, int position) {
-            Filter filter = displayList.get(position);
-            holder.text.setText(filter.pattern);
+            ChanFilter filter = displayList.get(position);
+            holder.text.setText(filter.getPattern());
             holder.text.setTextColor(getAttrColor(context,
-                    filter.enabled ? R.attr.text_color_primary : R.attr.text_color_hint
+                    filter.getEnabled() ? R.attr.text_color_primary : R.attr.text_color_hint
             ));
             holder.subtext.setTextColor(getAttrColor(context,
-                    filter.enabled ? R.attr.text_color_secondary : R.attr.text_color_hint
+                    filter.getEnabled() ? R.attr.text_color_secondary : R.attr.text_color_hint
             ));
-            int types = FilterType.forFlags(filter.type).size();
+
+            int types = FilterType.forFlags(filter.getType()).size();
             String subText = getQuantityString(R.plurals.type, types, types);
 
             subText += " \u2013 ";
-            if (filter.allBoards) {
+            if (filter.allBoards()) {
                 subText += getString(R.string.filter_summary_all_boards);
             } else {
                 int size = filterEngine.getFilterBoardCount(filter);
                 subText += getQuantityString(R.plurals.board, size, size);
             }
 
-            subText += " \u2013 " + FilterAction.actionName(FilterAction.forId(filter.action));
+            subText += " \u2013 " + FilterAction.actionName(FilterAction.forId(filter.getAction()));
 
             holder.subtext.setText(subText);
         }
@@ -335,46 +330,37 @@ public class FiltersController
 
         @Override
         public long getItemId(int position) {
-            return displayList.get(position).id;
+            return displayList.get(position).getDatabaseId();
         }
 
         public void reload() {
             sourceList.clear();
-            sourceList.addAll(databaseManager.runTask(databaseManager.getDatabaseFilterManager().getFilters()));
-            Collections.sort(sourceList, (o1, o2) -> o1.order - o2.order);
+            sourceList.addAll(filterEngine.getAllFilters());
             filter();
         }
 
         public void move(int from, int to) {
-            Filter filter = sourceList.remove(from);
-            sourceList.add(to, filter);
-            sourceList = setOrders(sourceList);
-            databaseManager.runTask(databaseManager.getDatabaseFilterManager().updateFilters(sourceList));
-            displayList.clear();
-            displayList.addAll(sourceList);
-            notifyDataSetChanged();
-        }
+            filterEngine.onFilterMoved(from, to, () -> {
+                BackgroundUtils.ensureMainThread();
 
-        private List<Filter> setOrders(List<Filter> input) {
-            for (int i = 0; i < input.size(); i++) {
-                input.get(i).order = i;
-            }
-            return input;
+                reload();
+                return Unit.INSTANCE;
+            });
         }
 
         public void filter() {
             displayList.clear();
+
             if (!TextUtils.isEmpty(searchQuery)) {
                 String query = searchQuery.toLowerCase(Locale.ENGLISH);
-                for (Filter filter : sourceList) {
-                    if (filter.pattern.toLowerCase().contains(query)) {
+                for (ChanFilter filter : sourceList) {
+                    if (filter.getPattern().toLowerCase().contains(query)) {
                         displayList.add(filter);
                     }
                 }
             } else {
                 displayList.addAll(sourceList);
             }
-            Collections.sort(displayList, (o1, o2) -> o1.order - o2.order);
 
             notifyDataSetChanged();
             locked = false;
@@ -415,7 +401,8 @@ public class FiltersController
         public void onClick(View v) {
             int position = getAdapterPosition();
             if (!locked && position >= 0 && position < adapter.getItemCount() && v == itemView) {
-                showFilterDialog(adapter.displayList.get(position));
+                ChanFilterMutable chanFilterMutable = ChanFilterMutable.from(adapter.displayList.get(position));
+                showFilterDialog(chanFilterMutable);
             }
         }
     }

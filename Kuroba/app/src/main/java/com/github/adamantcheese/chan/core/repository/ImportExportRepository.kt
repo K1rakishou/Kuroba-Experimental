@@ -16,8 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.repository
 
-import com.github.adamantcheese.chan.core.database.DatabaseHelper
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.model.export.ExportedAppSettings
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Export
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Import
@@ -37,98 +35,92 @@ import javax.inject.Inject
 
 class ImportExportRepository @Inject
 constructor(
-  private val databaseManager: DatabaseManager,
-  private val databaseHelper: DatabaseHelper,
   private val gson: Gson,
   private val fileManager: FileManager
 ) {
 
   fun exportTo(settingsFile: ExternalFile, isNewFile: Boolean, callbacks: ImportExportCallbacks) {
-    databaseManager.runTask {
-      try {
-        val appSettings = readSettingsFromDatabase()
-        if (appSettings.isEmpty) {
-          callbacks.onNothingToImportExport(Export)
-          return@runTask
-        }
-
-        val json = gson.toJson(appSettings)
-
-        if (!fileManager.exists(settingsFile) || !fileManager.canWrite(settingsFile)) {
-          throw IOException(
-            "Something wrong with export file (Can't write or it doesn't exist) "
-              + settingsFile.getFullPath()
-          )
-        }
-
-        // If the user has opened an old settings file we need to use WriteTruncate mode
-        // so that there no leftovers of the old file after writing the settings.
-        // Otherwise use Write mode
-        var fdm = FileDescriptorMode.WriteTruncate
-        if (isNewFile) {
-          fdm = FileDescriptorMode.Write
-        }
-
-        fileManager.withFileDescriptor(settingsFile, fdm) { fileDescriptor ->
-          FileWriter(fileDescriptor).use { writer ->
-            writer.write(json)
-            writer.flush()
-          }
-
-          Logger.d(TAG, "Exporting done!")
-          callbacks.onSuccess(Export)
-        }
-
-      } catch (error: Throwable) {
-        Logger.e(TAG, "Error while trying to export settings", error)
-
-        deleteExportFile(settingsFile)
-        callbacks.onError(error, Export)
+    try {
+      val appSettings = readSettingsFromDatabase()
+      if (appSettings.isEmpty) {
+        callbacks.onNothingToImportExport(Export)
+        return
       }
+
+      val json = gson.toJson(appSettings)
+
+      if (!fileManager.exists(settingsFile) || !fileManager.canWrite(settingsFile)) {
+        throw IOException(
+          "Something wrong with export file (Can't write or it doesn't exist) "
+            + settingsFile.getFullPath()
+        )
+      }
+
+      // If the user has opened an old settings file we need to use WriteTruncate mode
+      // so that there no leftovers of the old file after writing the settings.
+      // Otherwise use Write mode
+      var fdm = FileDescriptorMode.WriteTruncate
+      if (isNewFile) {
+        fdm = FileDescriptorMode.Write
+      }
+
+      fileManager.withFileDescriptor(settingsFile, fdm) { fileDescriptor ->
+        FileWriter(fileDescriptor).use { writer ->
+          writer.write(json)
+          writer.flush()
+        }
+
+        Logger.d(TAG, "Exporting done!")
+        callbacks.onSuccess(Export)
+      }
+
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Error while trying to export settings", error)
+
+      deleteExportFile(settingsFile)
+      callbacks.onError(error, Export)
     }
   }
 
   fun importFrom(settingsFile: ExternalFile, callbacks: ImportExportCallbacks) {
-    databaseManager.runTask {
-      try {
-        if (!fileManager.exists(settingsFile)) {
-          Logger.i(TAG, "There is nothing to import, importFile does not exist "
-            + settingsFile.getFullPath())
-          callbacks.onNothingToImportExport(Import)
-          return@runTask
-        }
-
-        if (!fileManager.canRead(settingsFile)) {
-          throw IOException(
-            "Something wrong with import file (Can't read or it doesn't exist) "
-              + settingsFile.getFullPath()
-          )
-        }
-
-        fileManager.withFileDescriptor(
-          settingsFile,
-          FileDescriptorMode.Read
-        ) { fileDescriptor ->
-          FileReader(fileDescriptor).use { reader ->
-            val appSettings = gson.fromJson(reader, ExportedAppSettings::class.java)
-
-            if (appSettings.isEmpty) {
-              Logger.i(TAG, "There is nothing to import, appSettings is empty")
-              callbacks.onNothingToImportExport(Import)
-              return@use
-            }
-
-            writeSettingsToDatabase(appSettings)
-
-            Logger.d(TAG, "Importing done!")
-            callbacks.onSuccess(Import)
-          }
-        }
-
-      } catch (error: Throwable) {
-        Logger.e(TAG, "Error while trying to import settings", error)
-        callbacks.onError(error, Import)
+    try {
+      if (!fileManager.exists(settingsFile)) {
+        Logger.i(TAG, "There is nothing to import, importFile does not exist "
+          + settingsFile.getFullPath())
+        callbacks.onNothingToImportExport(Import)
+        return
       }
+
+      if (!fileManager.canRead(settingsFile)) {
+        throw IOException(
+          "Something wrong with import file (Can't read or it doesn't exist) "
+            + settingsFile.getFullPath()
+        )
+      }
+
+      fileManager.withFileDescriptor(
+        settingsFile,
+        FileDescriptorMode.Read
+      ) { fileDescriptor ->
+        FileReader(fileDescriptor).use { reader ->
+          val appSettings = gson.fromJson(reader, ExportedAppSettings::class.java)
+
+          if (appSettings.isEmpty) {
+            Logger.i(TAG, "There is nothing to import, appSettings is empty")
+            callbacks.onNothingToImportExport(Import)
+            return@use
+          }
+
+          writeSettingsToDatabase(appSettings)
+
+          Logger.d(TAG, "Importing done!")
+          callbacks.onSuccess(Import)
+        }
+      }
+
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Error while trying to import settings", error)
+      callbacks.onError(error, Import)
     }
   }
 

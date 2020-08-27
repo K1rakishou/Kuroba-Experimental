@@ -5,7 +5,6 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
-import com.github.adamantcheese.chan.core.database.DatabaseManager
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.adamantcheese.chan.features.settings.screens.*
@@ -36,8 +35,6 @@ class SettingsCoordinator(
 ) : CoroutineScope, SettingsCoordinatorCallbacks {
 
   @Inject
-  lateinit var databaseManager: DatabaseManager
-  @Inject
   lateinit var fileCacheV2: FileCacheV2
   @Inject
   lateinit var cacheHandler: CacheHandler
@@ -65,11 +62,13 @@ class SettingsCoordinator(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var postHideManager: PostHideManager
+  @Inject
+  lateinit var chanFilterManager: ChanFilterManager
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
       context,
-      databaseManager,
+      chanFilterManager,
       siteManager,
       (context as StartActivity).updateManager,
       reportManager,

@@ -270,6 +270,22 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideChanFilterLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger
+  ): ChanFilterLocalSource {
+    return ChanFilterLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -536,6 +552,24 @@ class ModelMainModule {
       logger,
       scope,
       chanPostHideLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanFilterRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    chanFilterLocalSource: ChanFilterLocalSource
+  ): ChanFilterRepository {
+    return ChanFilterRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      chanFilterLocalSource
     )
   }
 

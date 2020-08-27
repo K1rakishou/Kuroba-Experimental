@@ -21,10 +21,10 @@ import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostFilter
-import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.model.data.filter.ChanFilter
 import java.util.*
 
 // Called concurrently to parse the post html and the filters on it
@@ -34,7 +34,7 @@ internal class PostParseWorker(
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
   private val currentTheme: Theme,
-  private val filters: List<Filter>,
+  private val filters: List<ChanFilter>,
   private val postBuilder: Post.Builder,
   private val reader: ChanReader,
   private val internalIds: Set<Long>
@@ -68,11 +68,22 @@ internal class PostParseWorker(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun processPostFilter(post: Post.Builder) {
-    for (filter in filters) {
-      val postDescriptor = post.postDescriptor
+    val postDescriptor = post.postDescriptor
 
-      // TODO(KurobaEx): do not match filters against posts that we already have in postFilterManager.
-      //  Clear that map when the user adds/updates/removes a filter.
+    if (postFilterManager.contains(postDescriptor)) {
+      // Fast path. We have already processed this post so we don't want to do that again. This
+      // should make filter processing way faster after the initial processing but it's kinda
+      // dangerous in case a post is updated on the server which "shouldn't" happen normally. It
+      // can happen when a poster is getting banned with a message and we can't handle that for now,
+      // because 4chan as well as other sites do not provide "last_modified" parameter for posts.
+      // There is a workaround for that - to compare post that we got from the server with the one
+      // in the database and if they differ update the "last_modified" but it will make everything
+      // slower. Maybe it's doable by calculating a post hash and store it in the memory cache and
+      // in the database too.
+      return
+    }
+
+    for (filter in filters) {
       if (filterEngine.matches(filter, post)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
         return
@@ -83,7 +94,7 @@ internal class PostParseWorker(
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun createPostFilter(filter: Filter): PostFilter {
+  private fun createPostFilter(filter: ChanFilter): PostFilter {
     return when (FilterEngine.FilterAction.forId(filter.action)) {
       FilterEngine.FilterAction.COLOR -> {
         PostFilter(

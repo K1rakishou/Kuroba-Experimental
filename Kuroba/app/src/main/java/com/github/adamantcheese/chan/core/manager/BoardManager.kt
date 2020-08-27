@@ -46,6 +46,7 @@ class BoardManager(
   @OptIn(ExperimentalTime::class)
   fun initialize() {
     appScope.launch(Dispatchers.Default) {
+      Logger.d(TAG, "loadBoards() start")
       val time = measureTime { loadBoardsInternal() }
       Logger.d(TAG, "loadBoards() took ${time}")
     }

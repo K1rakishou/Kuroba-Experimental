@@ -14,14 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.manager;
-
-import com.github.adamantcheese.chan.R;
+package com.github.adamantcheese.model.data.filter;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
 public enum FilterType {
     TRIPCODE(0x1),
@@ -52,21 +48,21 @@ public enum FilterType {
     public static String filterTypeName(FilterType type) {
         switch (type) {
             case TRIPCODE:
-                return getString(R.string.filter_tripcode);
+                return "Tripcode";
             case NAME:
-                return getString(R.string.filter_name);
+                return "Name";
             case COMMENT:
-                return getString(R.string.filter_comment);
+                return "Comment";
             case ID:
-                return getString(R.string.filter_id);
+                return "ID";
             case SUBJECT:
-                return getString(R.string.filter_subject);
+                return "Subject";
             case FILENAME:
-                return getString(R.string.filter_filename);
+                return "Filename";
             case COUNTRY_CODE:
-                return getString(R.string.filter_country_code);
+                return "Country code";
             case IMAGE:
-                return getString(R.string.filter_image_hash);
+                return "Image hash";
         }
         return null;
     }

@@ -2,7 +2,6 @@ package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.Post
-import com.github.adamantcheese.chan.core.model.orm.Filter
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -10,6 +9,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.filter.ChanFilter
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -99,7 +99,7 @@ class ParsePostsUseCase(
     }
   }
 
-  private fun loadFilters(chanDescriptor: ChanDescriptor): List<Filter> {
+  private fun loadFilters(chanDescriptor: ChanDescriptor): List<ChanFilter> {
     BackgroundUtils.ensureBackgroundThread()
 
     val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
@@ -107,8 +107,6 @@ class ParsePostsUseCase(
 
     return filterEngine.enabledFilters
       .filter { filter -> filterEngine.matchesBoard(filter, board) }
-      // copy the filter because it will get used on other threads
-      .map { filter -> filter.clone() }
   }
 
   companion object {
