@@ -5,6 +5,7 @@ import android.view.View
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
+import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.features.setup.data.BoardsSetupControllerState
@@ -14,10 +15,12 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.helper.BoardHelper
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import javax.inject.Inject
 
 class BoardsSetupController(
   context: Context,
@@ -26,19 +29,24 @@ class BoardsSetupController(
   private val presenter = BoardsSetupPresenter(siteDescriptor)
   private val controller = BoardsEpoxyController()
 
+  @Inject
+  lateinit var themeHelper: ThemeHelper
+
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var fabAddBoards: FloatingActionButton
 
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
 
     navigation.title = "Configure boards of ${siteDescriptor.siteName}"
 
     view = AndroidUtils.inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
-    fabAddBoards = view.findViewById(R.id.fab_add_boards)
-
     epoxyRecyclerView.setController(controller)
+
+    fabAddBoards = view.findViewById(R.id.fab_add_boards)
+    themeHelper.theme.applyFabColor(fabAddBoards)
 
     fabAddBoards.setOnClickListener {
       val controller = AddBoardsController(context, siteDescriptor) {

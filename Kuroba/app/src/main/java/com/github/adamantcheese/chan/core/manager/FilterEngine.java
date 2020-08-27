@@ -59,8 +59,9 @@ public class FilterEngine {
     public enum FilterAction {
         HIDE(0),
         COLOR(1),
-        REMOVE(2),
-        WATCH(3);
+        REMOVE(2);
+        // TODO(KurobaEx): Filter watching.
+//        WATCH(3);
 
         public final int id;
 
@@ -88,8 +89,9 @@ public class FilterEngine {
                     return getString(R.string.filter_color);
                 case REMOVE:
                     return getString(R.string.filter_remove);
-                case WATCH:
-                    return getString(R.string.filter_watch);
+                // TODO(KurobaEx): Filter watching.
+//                case WATCH:
+//                    return getString(R.string.filter_watch);
             }
             return null;
         }
@@ -140,15 +142,16 @@ public class FilterEngine {
         }
     }
 
-    public List<Filter> getEnabledWatchFilters() {
-        List<Filter> watchFilters = new ArrayList<>();
-        for (Filter f : getEnabledFilters()) {
-            if (f.action == FilterAction.WATCH.id) {
-                watchFilters.add(f);
-            }
-        }
-        return watchFilters;
-    }
+    // TODO(KurobaEx): Filter watching.
+//    public List<Filter> getEnabledWatchFilters() {
+//        List<Filter> watchFilters = new ArrayList<>();
+//        for (Filter f : getEnabledFilters()) {
+//            if (f.action == FilterAction.WATCH.id) {
+//                watchFilters.add(f);
+//            }
+//        }
+//        return watchFilters;
+//    }
 
     @AnyThread
     public boolean matchesBoard(Filter filter, ChanBoard board) {

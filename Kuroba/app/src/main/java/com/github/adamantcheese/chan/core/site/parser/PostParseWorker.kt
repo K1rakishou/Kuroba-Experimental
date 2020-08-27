@@ -95,7 +95,6 @@ internal class PostParseWorker(
       }
       FilterEngine.FilterAction.HIDE -> {
         PostFilter(
-          filterHighlightedColor = 0,
           filterStub = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP
@@ -103,19 +102,18 @@ internal class PostParseWorker(
       }
       FilterEngine.FilterAction.REMOVE -> {
         PostFilter(
-          filterHighlightedColor = 0,
           filterRemove = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP
         )
       }
-      FilterEngine.FilterAction.WATCH -> {
-        PostFilter(
-          filterHighlightedColor = 0,
-          filterWatch = true,
-          filterOnlyOP = true
-        )
-      }
+      // TODO(KurobaEx): Filter watching.
+//      FilterEngine.FilterAction.WATCH -> {
+//        PostFilter(
+//          filterWatch = true,
+//          filterOnlyOP = true
+//        )
+//      }
     }
   }
 

@@ -398,43 +398,50 @@ public class FilterLayout
         applyToReplies.setChecked(filter.applyToReplies);
         onlyOnOP.setChecked(filter.onlyOnOP);
         applyToSaved.setChecked(filter.applyToSaved);
-        if (filter.action == FilterAction.WATCH.id) {
-            applyToReplies.setEnabled(false);
-            onlyOnOP.setChecked(true);
-            onlyOnOP.setEnabled(false);
-            applyToSaved.setEnabled(false);
-        }
+
+        // TODO(KurobaEx): Filter watching.
+//        if (filter.action == FilterAction.WATCH.id) {
+//            applyToReplies.setEnabled(false);
+//            onlyOnOP.setChecked(true);
+//            onlyOnOP.setEnabled(false);
+//            applyToSaved.setEnabled(false);
+//        }
     }
 
     private void updateFilterAction() {
         FilterAction action = FilterAction.forId(filter.action);
         actionText.setText(FilterAction.actionName(action));
         colorContainer.setVisibility(action == FilterAction.COLOR ? VISIBLE : GONE);
+
         if (filter.color == 0) {
             filter.color = 0xffff0000;
         }
+
         colorPreview.setBackgroundColor(filter.color);
-        if (filter.action != FilterAction.WATCH.id) {
-            applyToReplies.setEnabled(true);
-            onlyOnOP.setEnabled(true);
-            onlyOnOP.setChecked(false);
-            applyToSaved.setEnabled(true);
-        } else {
-            applyToReplies.setEnabled(false);
-            onlyOnOP.setEnabled(false);
-            applyToSaved.setEnabled(false);
-            if (applyToReplies.isChecked()) {
-                applyToReplies.toggle();
-                filter.applyToReplies = false;
-            }
-            if (!onlyOnOP.isChecked()) {
-                onlyOnOP.toggle();
-                filter.onlyOnOP = true;
-            }
-            if (applyToSaved.isChecked()) {
-                applyToSaved.toggle();
-                filter.applyToSaved = false;
-            }
+
+        // TODO(KurobaEx): Filter watching.
+//        if (filter.action != FilterAction.WATCH.id) {
+//            applyToReplies.setEnabled(true);
+//            onlyOnOP.setEnabled(true);
+//            onlyOnOP.setChecked(false);
+//            applyToSaved.setEnabled(true);
+//            return;
+//        }
+
+        applyToReplies.setEnabled(false);
+        onlyOnOP.setEnabled(false);
+        applyToSaved.setEnabled(false);
+        if (applyToReplies.isChecked()) {
+            applyToReplies.toggle();
+            filter.applyToReplies = false;
+        }
+        if (!onlyOnOP.isChecked()) {
+            onlyOnOP.toggle();
+            filter.onlyOnOP = true;
+        }
+        if (applyToSaved.isChecked()) {
+            applyToSaved.toggle();
+            filter.applyToSaved = false;
         }
     }
 
