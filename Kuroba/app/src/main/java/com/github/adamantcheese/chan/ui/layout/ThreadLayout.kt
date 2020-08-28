@@ -403,7 +403,7 @@ class ThreadLayout @JvmOverloads constructor(
     if (postPopupHelper.isOpen) {
       postPopupHelper.scrollTo(displayPosition, smooth)
     } else if (visible == Visible.THREAD) {
-      threadListLayout.scrollTo(displayPosition, smooth)
+      threadListLayout.scrollTo(displayPosition)
     }
   }
 

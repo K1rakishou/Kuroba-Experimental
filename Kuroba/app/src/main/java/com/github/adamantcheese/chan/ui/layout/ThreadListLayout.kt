@@ -725,52 +725,21 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return null
   }
 
-  fun scrollTo(displayPosition: Int, isSmooth: Boolean) {
-    if (displayPosition < 0) {
-      scrollToBottom(isSmooth)
+  fun scrollTo(displayPosition: Int) {
+    val scrollPosition = if (displayPosition < 0) {
+      postAdapter.itemCount - 1
     } else {
-      scrollToPosition(displayPosition, isSmooth)
-    }
-  }
-
-  private fun scrollToPosition(displayPosition: Int, isSmooth: Boolean) {
-    var smooth = isSmooth
-    val scrollPosition = postAdapter.getScrollPosition(displayPosition)
-    val difference = Math.abs(scrollPosition - topAdapterPosition)
-
-    if (difference > MAX_SMOOTH_SCROLL_DISTANCE) {
-      smooth = false
+      postAdapter.getScrollPosition(displayPosition)
     }
 
     recyclerView.doOnPreDraw {
-      if (smooth) {
-        recyclerView.smoothScrollToPosition(scrollPosition)
-      } else {
-        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+      if (recyclerView.layoutManager is LinearLayoutManager) {
+        (recyclerView.layoutManager as LinearLayoutManager)!!.scrollToPositionWithOffset(
           scrollPosition,
           SCROLL_OFFSET
         )
-      }
-    }
-  }
-
-  private fun scrollToBottom(isSmooth: Boolean) {
-    var smooth = isSmooth
-    val scrollPosition = postAdapter.itemCount - 1
-    val difference = Math.abs(bottom - topAdapterPosition)
-
-    if (difference > MAX_SMOOTH_SCROLL_DISTANCE) {
-      smooth = false
-    }
-
-    recyclerView.doOnPreDraw {
-      if (smooth) {
-        recyclerView.smoothScrollToPosition(scrollPosition)
       } else {
-        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-          scrollPosition,
-          SCROLL_OFFSET
-        )
+        recyclerView.scrollToPosition(scrollPosition)
       }
     }
   }
@@ -976,7 +945,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   companion object {
     private const val TAG = "ThreadListLayout"
-    private const val MAX_SMOOTH_SCROLL_DISTANCE = 20
     private val SCROLL_OFFSET = dp(128f)
   }
 }
