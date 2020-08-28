@@ -23,7 +23,7 @@ class ChanFilterManager(
   private val postFilterManager: PostFilterManager
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanFilterManager")
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -31,6 +31,8 @@ class ChanFilterManager(
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+
     appScope.launch(Dispatchers.Default) {
       val time = measureTime { loadFiltersInternal() }
       Logger.d(TAG, "loadFilters() took ${time}")
@@ -49,9 +51,7 @@ class ChanFilterManager(
       loadFiltersResult as ModularResult.Value
 
       lock.write {
-        loadFiltersResult.value.forEach { chanFilter ->
-          require(chanFilter.hasDatabaseId())
-        }
+        loadFiltersResult.value.forEach { chanFilter -> require(chanFilter.hasDatabaseId()) }
 
         filters.clear()
         filters.addAll(loadFiltersResult.value)

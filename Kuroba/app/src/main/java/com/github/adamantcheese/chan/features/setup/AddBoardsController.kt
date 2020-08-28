@@ -37,8 +37,8 @@ class AddBoardsController(
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var cancel: MaterialButton
   private lateinit var addBoards: MaterialButton
+  private lateinit var addBoardsExecutor: RendezvousCoroutineExecutor
 
-  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(mainScope)
   private var presenting = true
 
   override fun getLayoutId(): Int = R.layout.controller_add_boards
@@ -67,11 +67,13 @@ class AddBoardsController(
     }
 
     addBoards.setOnClickListener {
-      rendezvousCoroutineExecutor.post {
+      addBoardsExecutor.post {
         presenter.addSelectedBoards()
         pop()
       }
     }
+
+    addBoardsExecutor = RendezvousCoroutineExecutor(mainScope)
 
     compositeDisposable += presenter.listenForStateChanges()
       .subscribe { state -> onStateChanged(state) }

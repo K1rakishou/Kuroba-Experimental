@@ -40,7 +40,6 @@ import coil.request.RequestDisposable
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
-import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.*
@@ -122,7 +121,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
-  private val serializedCoroutineExecutor by lazy { SerializedCoroutineExecutor(this) }
 
   private val job = SupervisorJob()
 
@@ -399,17 +397,17 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   }
 
   private fun startAttentionLabelFadeOutAnimation() {
-    serializedCoroutineExecutor.post {
+    launch {
       if (callback == null || post == null) {
-        return@post
+        return@launch
       }
 
       if (hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
-        return@post
+        return@launch
       }
 
       if (!ChanSettings.markUnseenPosts.get()) {
-        return@post
+        return@launch
       }
 
       if (!callback!!.hasAlreadySeenPost(post!!)) {
@@ -422,9 +420,9 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   }
 
   private fun bindPostAttentionLabel(theme: Theme, post: Post) {
-    serializedCoroutineExecutor.post {
+    launch {
       if (callback == null) {
-        return@post
+        return@launch
       }
 
       // Filter label is more important than unseen post label
@@ -433,14 +431,14 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
         postAttentionLabel.setBackgroundColor(
           postFilterManager.getFilterHighlightedColor(post.postDescriptor)
         )
-        return@post
+        return@launch
       }
 
       if (ChanSettings.markUnseenPosts.get()) {
         if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
           postAttentionLabel.visibility = View.VISIBLE
           postAttentionLabel.setBackgroundColor(theme.subjectColor)
-          return@post
+          return@launch
         }
       }
 

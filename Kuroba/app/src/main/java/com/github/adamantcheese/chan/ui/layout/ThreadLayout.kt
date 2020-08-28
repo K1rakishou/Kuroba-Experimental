@@ -130,7 +130,7 @@ class ThreadLayout @JvmOverloads constructor(
   private var visible: Visible? = null
 
   private val job = SupervisorJob()
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadLayout")
@@ -161,6 +161,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun create(callback: ThreadLayoutCallback) {
     this.callback = callback
+    this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
     // View binding
     loadView = findViewById(R.id.loadview)
@@ -179,7 +180,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     // View setup
     presenter.create(context, this)
-    threadListLayout.setCallbacks(presenter, presenter, presenter, presenter, this)
+    threadListLayout.onCreate(presenter, presenter, presenter, presenter, this)
     postPopupHelper = PostPopupHelper(context, presenter, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
@@ -353,7 +354,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openReportController(post)
   }
 
-  override fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  override suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     callback.openThreadCrossThread(threadDescriptor)
   }
 
@@ -839,8 +840,8 @@ class ThreadLayout @JvmOverloads constructor(
   interface ThreadLayoutCallback {
     val toolbar: Toolbar?
 
-    fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    fun openThreadCrossThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun openThreadCrossThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)

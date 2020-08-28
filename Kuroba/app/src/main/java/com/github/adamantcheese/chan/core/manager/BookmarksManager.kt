@@ -90,6 +90,9 @@ class BookmarksManager(
         when (bookmarksResult) {
           is ModularResult.Value -> {
             lock.write {
+              bookmarks.clear()
+              orders.clear()
+
               bookmarksResult.value.forEach { threadBookmark ->
                 bookmarks[threadBookmark.threadDescriptor] = threadBookmark
                 orders.add(threadBookmark.threadDescriptor)

@@ -14,17 +14,17 @@ object NavHistoryElementMapper {
     return when (navHistoryElement) {
       is NavHistoryElement.Catalog -> {
         NavHistoryElementIdEntity(
-          0L,
-          navHistoryElement.descriptor.siteName(),
-          navHistoryElement.descriptor.boardCode()
+          id = 0L,
+          siteName = navHistoryElement.descriptor.siteName(),
+          boardCode = navHistoryElement.descriptor.boardCode()
         )
       }
       is NavHistoryElement.Thread -> {
         NavHistoryElementIdEntity(
-          0L,
-          navHistoryElement.descriptor.siteName(),
-          navHistoryElement.descriptor.boardCode(),
-          navHistoryElement.descriptor.threadNo
+          id = 0L,
+          siteName = navHistoryElement.descriptor.siteName(),
+          boardCode = navHistoryElement.descriptor.boardCode(),
+          threadNo = navHistoryElement.descriptor.threadNo
         )
       }
     }
@@ -36,10 +36,10 @@ object NavHistoryElementMapper {
     order: Int
   ): NavHistoryElementInfoEntity {
     return NavHistoryElementInfoEntity(
-      navHistoryId,
-      navHistoryElement.navHistoryElementInfo.thumbnailUrl,
-      navHistoryElement.navHistoryElementInfo.title,
-      order
+      ownerNavHistoryId = navHistoryId,
+      thumbnailUrl = navHistoryElement.navHistoryElementInfo.thumbnailUrl,
+      title = navHistoryElement.navHistoryElementInfo.title,
+      order = order
     )
   }
 

@@ -253,10 +253,8 @@ abstract class CommonSite : SiteBase() {
     
     @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
-      val boardPattern = boardPattern().matcher(url.encodedPath)
-      val threadPattern = threadPattern().matcher(url.encodedPath)
-      
       try {
+        val threadPattern = threadPattern().matcher(url.encodedPath)
         if (threadPattern.find()) {
           val board = site.board(threadPattern.group(1))
             ?: return null
@@ -269,7 +267,7 @@ abstract class CommonSite : SiteBase() {
             threadNo
           )
           
-          val markedNo = if (TextUtils.isEmpty(url.fragment)) {
+          val markedNo = if (!TextUtils.isEmpty(url.fragment)) {
             url.fragment?.toLong()
           } else {
             null
@@ -280,7 +278,8 @@ abstract class CommonSite : SiteBase() {
             markedNo
           )
         }
-        
+
+        val boardPattern = boardPattern().matcher(url.encodedPath)
         val board = site.board(boardPattern.group(1))
           ?: return null
 
@@ -290,19 +289,19 @@ abstract class CommonSite : SiteBase() {
         )
 
         return ResolvedChanDescriptor(catalogDescriptor)
-      } catch (error: NumberFormatException) {
-        Logger.e(TAG, "Error while trying to resolve loadable", error)
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to resolve chan descriptor", error)
       }
       
       return null
     }
     
     private fun boardPattern(): Pattern {
-      return Pattern.compile("/(\\w+)")
+      return BOARD_PATTERN
     }
     
     private fun threadPattern(): Pattern {
-      return Pattern.compile("/(\\w+)/\\w+/(\\d+).*")
+      return THREAD_PATTERN
     }
   }
   
@@ -517,9 +516,9 @@ abstract class CommonSite : SiteBase() {
             is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> result.error
             is JsonReaderRequest.JsonReaderResponse.ParsingError -> result.error
           }
-          
+
           Logger.e(TAG, "Error while trying to get board for site ${site.name}", error)
-          
+
           return JsonReaderRequest.JsonReaderResponse.Success(
             SiteBoards(site.siteDescriptor(), defaultBoardsProvider())
           )
@@ -567,5 +566,8 @@ abstract class CommonSite : SiteBase() {
   
   companion object {
     private const val TAG = "CommonSite"
+
+    private val BOARD_PATTERN = Pattern.compile("/(\\w+)")
+    private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")
   }
 }

@@ -50,6 +50,8 @@ import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -123,7 +125,20 @@ public class ToolbarContainer extends FrameLayout {
         this.arrowMenu = arrowMenu;
     }
 
-    public void set(NavigationItem item, Theme theme, ToolbarPresenter.AnimationStyle animation) {
+    public void set(
+            NavigationItem item,
+            Theme theme,
+            ToolbarPresenter.AnimationStyle animation
+    ) {
+        set(item, theme, animation, null);
+    }
+
+    public void set(
+            NavigationItem item,
+            Theme theme,
+            ToolbarPresenter.AnimationStyle animation,
+            @Nullable ToolbarTransitionAnimationListener listener
+    ) {
         if (transitionView != null) {
             // Happens when you are in Phone layout, moving the thread fragment and at the same time
             // thread update occurs. We probably should just skip it. But maybe there is a better
@@ -147,7 +162,7 @@ public class ToolbarContainer extends FrameLayout {
         // Can't run the animation if there is no previous view
         // Otherwise just show it without an animation.
         if (animation != ToolbarPresenter.AnimationStyle.NONE && previousView != null) {
-            setAnimation(itemView, previousView, animation);
+            setAnimation(itemView, previousView, animation, listener);
         } else {
             if (previousView != null) {
                 removeItem(previousView);
@@ -265,104 +280,223 @@ public class ToolbarContainer extends FrameLayout {
         }
     }
 
-    private void setAnimation(ItemView newView, ItemView previousView, ToolbarPresenter.AnimationStyle animationStyle) {
+    private void setAnimation(
+            ItemView newView,
+            ItemView previousView,
+            ToolbarPresenter.AnimationStyle animationStyle,
+            @Nullable ToolbarTransitionAnimationListener listener
+    ) {
         if (animationStyle == ToolbarPresenter.AnimationStyle.PUSH
                 || animationStyle == ToolbarPresenter.AnimationStyle.POP) {
-            final boolean pushing = animationStyle == ToolbarPresenter.AnimationStyle.PUSH;
-
-            // Previous animation
-            ValueAnimator previousAnimation = getShortAnimator();
-            previousAnimation.addUpdateListener(a -> {
-                float value = (float) a.getAnimatedValue();
-                setPreviousAnimationProgress(previousView.view, pushing, value);
-            });
-            previousAnimation.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(previousView.view);
-                    removeItem(previousView);
-                    ToolbarContainer.this.previousView = null;
-                }
-            });
-            if (!pushing) previousAnimation.setStartDelay(100);
-            animatorSet.put(previousView.view, previousAnimation);
-
-            post(previousAnimation::start);
-
-            // Current animation + arrow
-            newView.view.setAlpha(0f);
-            ValueAnimator animation = getShortAnimator();
-            animation.addUpdateListener(a -> {
-                float value = (float) a.getAnimatedValue();
-                setAnimationProgress(newView.view, pushing, value);
-
-                if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
-                    setArrowProgress(value, !currentView.item.hasArrow());
-                }
-            });
-            animation.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(newView.view);
-                }
-            });
-            if (!pushing) animation.setStartDelay(100);
-            animatorSet.put(newView.view, animation);
-
-            post(animation::start);
-        } else if (animationStyle == ToolbarPresenter.AnimationStyle.FADE) {
-            // Previous animation
-            ValueAnimator previousAnimation = ObjectAnimator.ofFloat(previousView.view, View.ALPHA, 1f, 0f);
-            previousAnimation.setDuration(300);
-            previousAnimation.setInterpolator(new LinearInterpolator());
-            previousAnimation.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(previousView.view);
-                    removeItem(previousView);
-                    ToolbarContainer.this.previousView = null;
-                }
-            });
-            animatorSet.put(previousView.view, previousAnimation);
-
-            post(previousAnimation::start);
-
-            // Current animation + arrow
-            newView.view.setAlpha(0f);
-            ValueAnimator animation = ObjectAnimator.ofFloat(newView.view, View.ALPHA, 0f, 1f);
-            animation.setDuration(300);
-            animation.setInterpolator(new LinearInterpolator());
-            animation.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(newView.view);
-                }
-            });
-            // A different animator for the arrow because that one needs the deceleration
-            // interpolator.
-            ValueAnimator arrow = ValueAnimator.ofFloat(0f, 1f);
-            arrow.setDuration(300);
-            arrow.setInterpolator(new DecelerateInterpolator(2f));
-            arrow.addUpdateListener(a -> {
-                float value = (float) a.getAnimatedValue();
-                if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
-                    setArrowProgress(value, !currentView.item.hasArrow());
-                }
-            });
-
-            AnimatorSet animationAndArrow = new AnimatorSet();
-            animationAndArrow.playTogether(animation, arrow);
-            animationAndArrow.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatorSet.remove(newView.view);
-                }
-            });
-
-            animatorSet.put(newView.view, animationAndArrow);
-
-            post(animationAndArrow::start);
+            setPushPopAnimation(newView, previousView, animationStyle, listener);
+            return;
         }
+
+        if (animationStyle == ToolbarPresenter.AnimationStyle.FADE) {
+            setFadeAnimation(newView, previousView, listener);
+            return;
+        }
+
+        if (animationStyle == ToolbarPresenter.AnimationStyle.NONE) {
+            if (listener != null) {
+                listener.onAnimationEnded();
+            }
+            return;
+        }
+
+        throw new RuntimeException("Not implemented for animationStyle: " + animationStyle);
+    }
+
+    private void setFadeAnimation(
+            ItemView newView,
+            ItemView previousView,
+            @Nullable ToolbarTransitionAnimationListener listener
+    ) {
+        AtomicInteger animationsCount = new AtomicInteger(2);
+        AtomicBoolean listenerCalled = new AtomicBoolean(false);
+
+        // Previous animation
+        ValueAnimator previousAnimation = ObjectAnimator.ofFloat(previousView.view, View.ALPHA, 1f, 0f);
+        previousAnimation.setDuration(300);
+        previousAnimation.setInterpolator(new LinearInterpolator());
+        previousAnimation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal() {
+                animatorSet.remove(previousView.view);
+                removeItem(previousView);
+                ToolbarContainer.this.previousView = null;
+
+                if (animationsCount.decrementAndGet() <= 0
+                        && listenerCalled.compareAndSet(false, true)) {
+                    if (listener != null) {
+                        listener.onAnimationEnded();
+                    }
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEndInternal();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onAnimationEndInternal();
+            }
+        });
+        animatorSet.put(previousView.view, previousAnimation);
+
+        post(previousAnimation::start);
+
+        // Current animation + arrow
+        newView.view.setAlpha(0f);
+        ValueAnimator animation = ObjectAnimator.ofFloat(newView.view, View.ALPHA, 0f, 1f);
+        animation.setDuration(300);
+        animation.setInterpolator(new LinearInterpolator());
+        animation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal() {
+                animatorSet.remove(newView.view);
+
+                if (animationsCount.decrementAndGet() <= 0
+                        && listenerCalled.compareAndSet(false, true)) {
+                    if (listener != null) {
+                        listener.onAnimationEnded();
+                    }
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEndInternal();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onAnimationEndInternal();
+            }
+        });
+        // A different animator for the arrow because that one needs the deceleration
+        // interpolator.
+        ValueAnimator arrow = ValueAnimator.ofFloat(0f, 1f);
+        arrow.setDuration(300);
+        arrow.setInterpolator(new DecelerateInterpolator(2f));
+        arrow.addUpdateListener(a -> {
+            float value = (float) a.getAnimatedValue();
+            if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
+                setArrowProgress(value, !currentView.item.hasArrow());
+            }
+        });
+
+        AnimatorSet animationAndArrow = new AnimatorSet();
+        animationAndArrow.playTogether(animation, arrow);
+        animationAndArrow.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal() {
+                animatorSet.remove(newView.view);
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEndInternal();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onAnimationEndInternal();
+            }
+        });
+
+        animatorSet.put(newView.view, animationAndArrow);
+
+        post(animationAndArrow::start);
+    }
+
+    private void setPushPopAnimation(
+            ItemView newView,
+            ItemView previousView,
+            ToolbarPresenter.AnimationStyle animationStyle,
+            @Nullable ToolbarTransitionAnimationListener listener
+    ) {
+        final boolean pushing = animationStyle == ToolbarPresenter.AnimationStyle.PUSH;
+        AtomicInteger animationsCount = new AtomicInteger(2);
+        AtomicBoolean listenerCalled = new AtomicBoolean(false);
+
+        // Previous animation
+        ValueAnimator previousAnimation = getShortAnimator();
+        previousAnimation.addUpdateListener(a -> {
+            float value = (float) a.getAnimatedValue();
+            setPreviousAnimationProgress(previousView.view, pushing, value);
+        });
+        previousAnimation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal() {
+                animatorSet.remove(previousView.view);
+                removeItem(previousView);
+                ToolbarContainer.this.previousView = null;
+
+                if (animationsCount.decrementAndGet() <= 0
+                        && listenerCalled.compareAndSet(false, true)) {
+                    if (listener != null) {
+                        listener.onAnimationEnded();
+                    }
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEndInternal();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onAnimationEndInternal();
+            }
+        });
+
+        if (!pushing) {
+            previousAnimation.setStartDelay(100);
+        }
+
+        animatorSet.put(previousView.view, previousAnimation);
+        post(previousAnimation::start);
+
+        // Current animation + arrow
+        newView.view.setAlpha(0f);
+        ValueAnimator animation = getShortAnimator();
+        animation.addUpdateListener(a -> {
+            float value = (float) a.getAnimatedValue();
+            setAnimationProgress(newView.view, pushing, value);
+
+            if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
+                setArrowProgress(value, !currentView.item.hasArrow());
+            }
+        });
+        animation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal() {
+                animatorSet.remove(newView.view);
+
+                if (animationsCount.decrementAndGet() <= 0
+                        && listenerCalled.compareAndSet(false, true)) {
+                    if (listener != null) {
+                        listener.onAnimationEnded();
+                    }
+                }
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                onAnimationEndInternal();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                onAnimationEndInternal();
+            }
+        });
+
+        if (!pushing) {
+            animation.setStartDelay(100);
+        }
+
+        animatorSet.put(newView.view, animation);
+        post(animation::start);
     }
 
     private void setPreviousAnimationProgress(View view, boolean pushing, float progress) {
@@ -533,6 +667,10 @@ public class ToolbarContainer extends FrameLayout {
 
             return searchLayout;
         }
+    }
+
+    public interface ToolbarTransitionAnimationListener {
+        void onAnimationEnded();
     }
 
     public interface Callback {

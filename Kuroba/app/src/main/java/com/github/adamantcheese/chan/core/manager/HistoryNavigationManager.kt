@@ -36,15 +36,18 @@ class HistoryNavigationManager(
 ) {
   private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val persistRunning = AtomicBoolean(false)
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
+
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
 
   fun initialize() {
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+
     appScope.launch {
       appScope.launch {
         suspendableInitializer.awaitUntilInitialized()
@@ -68,7 +71,10 @@ class HistoryNavigationManager(
         val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
         when (loadedNavElementsResult) {
           is ModularResult.Value -> {
-            lock.write { navigationStack.addAll(loadedNavElementsResult.value) }
+            lock.write {
+              navigationStack.clear()
+              navigationStack.addAll(loadedNavElementsResult.value)
+            }
 
             suspendableInitializer.initWithValue(Unit)
             Logger.d(TAG, "HistoryNavigationManager initialized!")
@@ -206,6 +212,10 @@ class HistoryNavigationManager(
 
   private fun persisNavigationStack(blocking: Boolean = false) {
     BackgroundUtils.ensureMainThread()
+
+    if (!suspendableInitializer.isInitialized()) {
+      return
+    }
 
     if (!persistRunning.compareAndSet(false, true)) {
       return

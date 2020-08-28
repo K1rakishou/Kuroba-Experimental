@@ -411,7 +411,7 @@ open class ViewThreadController(
     }
   }
 
-  override fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.ok) { _, _ -> openCrossThreadInternal(threadDescriptor) }
@@ -427,16 +427,16 @@ open class ViewThreadController(
     }
   }
 
-  override fun showThread(descriptor: ThreadDescriptor) {
-    mainScope.launch { loadThread(descriptor) }
+  override suspend fun showThread(descriptor: ThreadDescriptor) {
+    loadThread(descriptor)
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {
     showBoardInternal(descriptor, null)
   }
 
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, search: String?) {
-    showBoardInternal(descriptor, search)
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
+    showBoardInternal(descriptor, searchQuery)
   }
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {

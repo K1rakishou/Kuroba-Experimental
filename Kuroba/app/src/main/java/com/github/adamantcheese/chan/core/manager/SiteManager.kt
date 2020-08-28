@@ -67,6 +67,10 @@ open class SiteManager(
       result as ModularResult.Value
 
       lock.write {
+        siteDataMap.clear()
+        siteMap.clear()
+        orders.clear()
+
         result.value.forEach { chanSiteData ->
           siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
 

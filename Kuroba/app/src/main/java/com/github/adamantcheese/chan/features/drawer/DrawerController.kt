@@ -312,7 +312,7 @@ class DrawerController(
     bottomNavView.menu.findItem(R.id.action_bookmarks)?.isChecked = true
   }
 
-  fun loadThread(
+  suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false
   ) {
@@ -516,22 +516,24 @@ class DrawerController(
   }
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {
-    topThreadController?.let { threadController ->
-      val isCurrentlyVisible = drawerPresenter.isCurrentlyVisible(navHistoryEntry.descriptor)
-      if (!isCurrentlyVisible) {
-        when (val descriptor = navHistoryEntry.descriptor) {
-          is ChanDescriptor.ThreadDescriptor -> {
-            threadController.showThread(descriptor)
-          }
-          is ChanDescriptor.CatalogDescriptor -> {
-            mainScope.launch { threadController.showBoard(descriptor.boardDescriptor) }
+    mainScope.launch {
+      topThreadController?.let { threadController ->
+        val isCurrentlyVisible = drawerPresenter.isCurrentlyVisible(navHistoryEntry.descriptor)
+        if (!isCurrentlyVisible) {
+          when (val descriptor = navHistoryEntry.descriptor) {
+            is ChanDescriptor.ThreadDescriptor -> {
+              threadController.showThread(descriptor)
+            }
+            is ChanDescriptor.CatalogDescriptor -> {
+              threadController.showBoard(descriptor.boardDescriptor)
+            }
           }
         }
       }
-    }
 
-    if (drawerLayout.isDrawerOpen(drawer)) {
-      drawerLayout.closeDrawer(drawer)
+      if (drawerLayout.isDrawerOpen(drawer)) {
+        drawerLayout.closeDrawer(drawer)
+      }
     }
   }
 
