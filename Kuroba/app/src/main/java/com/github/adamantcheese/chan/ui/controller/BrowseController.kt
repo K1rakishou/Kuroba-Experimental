@@ -207,6 +207,10 @@ class BrowseController(context: Context) : ThreadController(context),
     val boardSelectionController = BoardSelectionController(
       context,
       object : BoardSelectionController.UserSelectionListener {
+        override fun onOpenSitesSettingsClicked() {
+          openSitesSetupController()
+        }
+
         override fun onSiteSelected(siteDescriptor: SiteDescriptor) {
           openSiteSettingsController(siteDescriptor)
         }
