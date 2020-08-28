@@ -41,6 +41,7 @@ public class SearchLayout
         extends LinearLayout {
     private EditText searchView;
     private ImageView clearButton;
+    private boolean autoRequestFocus = true;
 
     public SearchLayout(Context context) {
         super(context);
@@ -52,6 +53,10 @@ public class SearchLayout
 
     public SearchLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setAutoRequestFocus(boolean request) {
+        this.autoRequestFocus = request;
     }
 
     public void setCallback(final SearchLayoutCallback callback) {
@@ -91,7 +96,7 @@ public class SearchLayout
         searchView.setOnFocusChangeListener((view, focused) -> {
             if (!focused) {
                 view.postDelayed(() -> hideKeyboard(view), 100);
-            } else {
+            } else if (autoRequestFocus) {
                 view.postDelayed(() -> requestKeyboardFocus(view), 100);
             }
         });
@@ -99,7 +104,10 @@ public class SearchLayout
         searchViewParams.gravity = Gravity.CENTER_VERTICAL;
         addView(searchView, searchViewParams);
         searchView.setFocusable(true);
-        searchView.requestFocus();
+
+        if (autoRequestFocus) {
+            searchView.requestFocus();
+        }
 
         clearButton.setAlpha(0f);
         clearButton.setImageResource(R.drawable.ic_clear_white_24dp);

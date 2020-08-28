@@ -21,7 +21,7 @@ object ChanBoardMapper {
     return ChanBoard(
       boardDescriptor = boardDescriptor,
       active = chanBoardFull.chanBoardEntity.active,
-      order = chanBoardFull.chanBoardEntity.order,
+      order = chanBoardFull.chanBoardEntity.boardOrder,
       name = chanBoardFull.chanBoardEntity.name,
       perPage = chanBoardFull.chanBoardEntity.perPage,
       pages = chanBoardFull.chanBoardEntity.pages,
@@ -50,7 +50,7 @@ object ChanBoardMapper {
     return ChanBoardEntity(
       ownerChanBoardId = boardDatabaseId,
       active = board.active,
-      order = order ?: board.order,
+      boardOrder = order ?: board.order,
       name = board.name,
       perPage = board.perPage,
       pages = board.pages,
@@ -82,7 +82,7 @@ object ChanBoardMapper {
       // likely always be false here. We want to use one from the DB when updating a board.
       active = prevBoard.active,
       // Same with orders, prefer the database order.
-      order = prevBoard.order,
+      boardOrder = prevBoard.boardOrder,
       name = board.name,
       perPage = board.perPage,
       pages = board.pages,

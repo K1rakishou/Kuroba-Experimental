@@ -662,7 +662,7 @@ class PostCell : LinearLayout, PostCellInterface {
 
     // Sets focusable to auto, clickable and longclickable to false.
     comment.movementMethod = null
-    title.setMovementMethod(null)
+    title.movementMethod = null
   }
 
   @SuppressLint("ClickableViewAccessibility")

@@ -316,11 +316,13 @@ class DrawerController(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false
   ) {
-    if (closeAllNonMainControllers) {
-      closeAllNonMainControllers()
-    }
+    mainScope.launch {
+      if (closeAllNonMainControllers) {
+        closeAllNonMainControllers()
+      }
 
-    topThreadController?.showThread(descriptor)
+      topThreadController?.showThread(descriptor)
+    }
   }
 
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {

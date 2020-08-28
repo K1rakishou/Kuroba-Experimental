@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +41,7 @@ class BoardSelectionController(
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var searchView: SearchLayout
   private lateinit var outsideArea: FrameLayout
+  private lateinit var openSitesButton: MaterialButton
 
   private var presenting = true
 
@@ -54,13 +56,22 @@ class BoardSelectionController(
 
     outsideArea = view.findViewById(R.id.outside_area)
     searchView = view.findViewById(R.id.search_view)
+    searchView.setAutoRequestFocus(false)
+    openSitesButton = view.findViewById(R.id.open_all_sites_settings)
 
     val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
     val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
     container.maxWidth = displayWidth
     container.maxHeight = displayHeight
 
-    outsideArea.setOnClickListener { pop() }
+    openSitesButton.setOnClickListener {
+      callback.onOpenSitesSettingsClicked()
+      pop()
+    }
+
+    outsideArea.setOnClickListener {
+      pop()
+    }
 
     mainScope.launch {
       startListeningForSearchQueries()
@@ -155,6 +166,7 @@ class BoardSelectionController(
   }
 
   interface UserSelectionListener {
+    fun onOpenSitesSettingsClicked()
     fun onSiteSelected(siteDescriptor: SiteDescriptor)
     fun onBoardSelected(boardDescriptor: BoardDescriptor)
   }

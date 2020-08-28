@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
@@ -12,6 +13,7 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyErrorView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.ui.layout.SearchLayout
+import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.google.android.material.button.MaterialButton
@@ -105,6 +107,16 @@ class AddBoardsController(
 
   private fun onStateChanged(state: AddBoardsControllerState) {
     epoxyRecyclerView.withModels {
+      addOneshotModelBuildListener {
+        val llm = (epoxyRecyclerView.layoutManager as LinearLayoutManager)
+
+        if (llm.findFirstCompletelyVisibleItemPosition() <= 1) {
+          // Scroll to the top of the nav history list if the previous fully visible item's position
+          // was either 0 or 1
+          llm.scrollToPosition(0)
+        }
+      }
+
       when (state) {
         AddBoardsControllerState.Loading -> {
           epoxyLoadingView {
@@ -133,7 +145,8 @@ class AddBoardsController(
               onClickedCallback { isChecked ->
                 presenter.onBoardSelectionChanged(
                   selectableBoardCellData.boardCellData.boardDescriptor,
-                  isChecked
+                  isChecked,
+                  searchView.text
                 )
               }
             }
