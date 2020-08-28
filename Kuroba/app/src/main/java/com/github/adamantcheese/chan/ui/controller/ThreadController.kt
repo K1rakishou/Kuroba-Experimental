@@ -17,10 +17,6 @@
 package com.github.adamantcheese.chan.ui.controller
 
 import android.content.Context
-import android.nfc.NdefMessage
-import android.nfc.NdefRecord
-import android.nfc.NfcAdapter.CreateNdefMessageCallback
-import android.nfc.NfcEvent
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -43,7 +39,6 @@ import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.filter.ChanFilterMutable
 import com.github.adamantcheese.model.data.filter.FilterType
@@ -58,7 +53,6 @@ abstract class ThreadController(
   ImageViewerCallback,
   OnRefreshListener,
   ToolbarSearchCallback,
-  CreateNdefMessageCallback,
   SlideChangeListener {
 
   @Inject
@@ -161,35 +155,6 @@ abstract class ThreadController(
 
   override fun onRefresh() {
     threadLayout.refreshFromSwipe()
-  }
-
-  override fun createNdefMessage(event: NfcEvent): NdefMessage? {
-    if (threadLayout.presenter.chanThread == null) {
-      showToast(R.string.cannot_send_thread_via_nfc_already_deleted)
-      return null
-    }
-
-    var url: String? = null
-    var message: NdefMessage? = null
-    val chanDescriptor = chanDescriptor
-    val siteDescriptor = chanDescriptor!!.siteDescriptor()
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
-
-    if (site != null) {
-      url = site.resolvable().desktopUrl(chanDescriptor, null)
-    }
-
-    if (url != null) {
-      try {
-        Logger.d(TAG, "Pushing url $url to android beam")
-        val record = NdefRecord.createUri(url)
-        message = NdefMessage(arrayOf(record))
-      } catch (e: IllegalArgumentException) {
-        Logger.e(TAG, "NdefMessage create error", e)
-      }
-    }
-
-    return message!!
   }
 
   override fun openReportController(post: Post) {

@@ -855,7 +855,6 @@ Don't have a 4chan Pass?<br>
     <string name="drawer_controller_delete_all_pins">Delete all pins</string>
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
-    <string name="cannot_send_thread_via_nfc_already_deleted">Can\'t send thread via NFC</string>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
 
