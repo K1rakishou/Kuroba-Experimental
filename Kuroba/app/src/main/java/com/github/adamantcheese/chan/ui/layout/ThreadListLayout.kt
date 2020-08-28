@@ -156,8 +156,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
           c.drawBitmap(
             hat!!,
-            left - parent.paddingLeft - AndroidUtils.dp(25f).toFloat(),
-            top - AndroidUtils.dp(80f) - parent.paddingTop + toolbarHeight().toFloat(),
+            left - parent.paddingLeft - dp(25f).toFloat(),
+            top - dp(80f) - parent.paddingTop + toolbarHeight().toFloat(),
             null
           )
         }
@@ -351,7 +351,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (gridCountSetting > 0) {
       spanCount = gridCountSetting
-      compactMode = measuredWidth / spanCount < AndroidUtils.dp(120f)
+      compactMode = measuredWidth / spanCount < dp(120f)
     } else {
       spanCount = Math.max(1, Math.round(measuredWidth.toFloat() / cardWidth))
       compactMode = false
@@ -650,9 +650,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       } else {
         return if (top is PostStubCell) {
           // PostStubCell does not have grid_card_margin
-          top.getTop() != searchExtraHeight + AndroidUtils.dp(1f)
+          top.getTop() != searchExtraHeight + dp(1f)
         } else {
-          top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + AndroidUtils.dp(1f) + searchExtraHeight
+          top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
         }
       }
     }
@@ -661,9 +661,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       PostViewMode.LIST -> return top.top != toolbarHeight()
       PostViewMode.CARD -> return if (top is PostStubCell) {
         // PostStubCell does not have grid_card_margin
-        top.getTop() != toolbarHeight() + AndroidUtils.dp(1f)
+        top.getTop() != toolbarHeight() + dp(1f)
       } else {
-        top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + AndroidUtils.dp(1f) + toolbarHeight()
+        top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
       }
     }
     return true
@@ -680,9 +680,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-      //position + 1 for last seen view, dp(4) for it's height
+      // position + 1 for last seen view
       displayPosition + 1,
-      recyclerView.height - recyclerView.paddingTop - AndroidUtils.dp(4f)
+      SCROLL_OFFSET
     )
   }
 
@@ -893,7 +893,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (postViewMode == PostViewMode.CARD) AndroidUtils.dp(1f) else 0
+    val defaultPadding = if (postViewMode == PostViewMode.CARD) dp(1f) else 0
     var recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
 

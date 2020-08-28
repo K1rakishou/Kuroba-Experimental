@@ -1181,7 +1181,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, animate)
   }
 
-  override suspend fun hasAlreadySeenPost(post: Post): Boolean {
+  override fun hasAlreadySeenPost(post: Post): Boolean {
     if (currentChanDescriptor == null) {
       // Invalid loadable, hide the label
       return true

@@ -238,10 +238,14 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public SeenPostsManager provideSeenPostsManager(SeenPostRepository seenPostRepository) {
+    public SeenPostsManager provideSeenPostsManager(
+            CoroutineScope appScope,
+            SeenPostRepository seenPostRepository
+    ) {
         Logger.d(AppModule.DI_TAG, "SeenPostsManager");
 
         return new SeenPostsManager(
+                appScope,
                 ChanSettings.verboseLogs.get(),
                 seenPostRepository
         );

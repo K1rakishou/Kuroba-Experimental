@@ -75,7 +75,7 @@ interface PostCellInterface {
     fun onPostNoClicked(post: Post)
     fun onPostSelectionQuoted(post: Post, quoted: CharSequence)
     fun getPage(op: Post): BoardPage?
-    suspend fun hasAlreadySeenPost(post: Post): Boolean
+    fun hasAlreadySeenPost(post: Post): Boolean
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
   }
 }

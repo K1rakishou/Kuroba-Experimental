@@ -65,15 +65,13 @@ import com.github.adamantcheese.chan.utils.BitmapUtils
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor.Companion.isActualArchive
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import java.io.IOException
 import java.text.BreakIterator
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
-class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
+class PostCell : LinearLayout, PostCellInterface {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -122,11 +120,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
 
-  private val job = SupervisorJob()
-
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("PostCell")
-
   constructor(context: Context?)
     : super(context) {
   }
@@ -156,7 +149,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     postAttentionLabel = findViewById(R.id.post_attention_label)
     paddingPx = AndroidUtils.dp(textSizeSp - 6.toFloat())
     detailsSizePx = AndroidUtils.sp(textSizeSp - 4.toFloat())
-    title.setTextSize(textSizeSp.toFloat())
+    title.textSize = textSizeSp.toFloat()
     title.setPadding(paddingPx, paddingPx, AndroidUtils.dp(16f), 0)
     iconSizePx = AndroidUtils.sp(textSizeSp - 3.toFloat())
     icons.height = AndroidUtils.sp(textSizeSp.toFloat())
@@ -164,7 +157,7 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
     icons.setPadding(paddingPx, AndroidUtils.dp(4f), paddingPx, 0)
     comment.textSize = textSizeSp.toFloat()
     comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
-    replies.setTextSize(textSizeSp.toFloat())
+    replies.textSize = textSizeSp.toFloat()
     replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
 
     val dividerParams = divider.layoutParams as RelativeLayout.LayoutParams
@@ -325,7 +318,6 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
       threadBookmarkViewPost(post)
     }
 
-    job.cancelChildren()
     callback = null
   }
 
@@ -397,54 +389,50 @@ class PostCell : LinearLayout, PostCellInterface, CoroutineScope {
   }
 
   private fun startAttentionLabelFadeOutAnimation() {
-    launch {
-      if (callback == null || post == null) {
-        return@launch
-      }
+    if (callback == null || post == null) {
+      return
+    }
 
-      if (hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
-        return@launch
-      }
+    if (hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
+      return
+    }
 
-      if (!ChanSettings.markUnseenPosts.get()) {
-        return@launch
-      }
+    if (!ChanSettings.markUnseenPosts.get()) {
+      return
+    }
 
-      if (!callback!!.hasAlreadySeenPost(post!!)) {
-        unseenPostIndicatorFadeOutAnimation.start(
-          { alpha -> postAttentionLabel.alpha = alpha },
-          { postAttentionLabel.visibility = View.INVISIBLE }
-        )
-      }
+    if (!callback!!.hasAlreadySeenPost(post!!)) {
+      unseenPostIndicatorFadeOutAnimation.start(
+        { alpha -> postAttentionLabel.alpha = alpha },
+        { postAttentionLabel.visibility = View.INVISIBLE }
+      )
     }
   }
 
   private fun bindPostAttentionLabel(theme: Theme, post: Post) {
-    launch {
-      if (callback == null) {
-        return@launch
-      }
-
-      // Filter label is more important than unseen post label
-      if (hasColoredFilter) {
-        postAttentionLabel.visibility = View.VISIBLE
-        postAttentionLabel.setBackgroundColor(
-          postFilterManager.getFilterHighlightedColor(post.postDescriptor)
-        )
-        return@launch
-      }
-
-      if (ChanSettings.markUnseenPosts.get()) {
-        if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
-          postAttentionLabel.visibility = View.VISIBLE
-          postAttentionLabel.setBackgroundColor(theme.subjectColor)
-          return@launch
-        }
-      }
-
-      // No filters for this post and the user has already seen it
-      postAttentionLabel.visibility = View.GONE
+    if (callback == null) {
+      return
     }
+
+    // Filter label is more important than unseen post label
+    if (hasColoredFilter) {
+      postAttentionLabel.visibility = View.VISIBLE
+      postAttentionLabel.setBackgroundColor(
+        postFilterManager.getFilterHighlightedColor(post.postDescriptor)
+      )
+      return
+    }
+
+    if (ChanSettings.markUnseenPosts.get()) {
+      if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
+        postAttentionLabel.visibility = View.VISIBLE
+        postAttentionLabel.setBackgroundColor(theme.subjectColor)
+        return
+      }
+    }
+
+    // No filters for this post and the user has already seen it
+    postAttentionLabel.visibility = View.GONE
   }
 
   private fun bindBackgroundColor(theme: Theme, post: Post) {
