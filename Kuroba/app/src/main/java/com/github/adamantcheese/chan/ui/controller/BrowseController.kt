@@ -58,8 +58,10 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDesc
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 class BrowseController(context: Context) : ThreadController(context),
   ThreadLayoutCallback,
@@ -76,7 +78,7 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
 
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var hint: HintPopup? = null
@@ -96,16 +98,17 @@ class BrowseController(context: Context) : ThreadController(context),
     container.addView(view)
     view = container
 
+    // Navigation
+    initNavigation()
+
     // Initialization
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
       order = requireNotNull(PostsFilter.Order.find(boardOrder)) { "Unknown board order: ${boardOrder}" }
       threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
       threadLayout.presenter.setOrder(order)
-
-      // Navigation
-      initNavigation()
     }
   }
 
@@ -138,7 +141,7 @@ class BrowseController(context: Context) : ThreadController(context),
     presenter.destroy()
   }
 
-  override fun showSitesNotSetup() {
+  override suspend fun showSitesNotSetup() {
     super.showSitesNotSetup()
 
     if (hint != null) {
@@ -163,7 +166,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   suspend fun setBoard(descriptor: BoardDescriptor) {
-    presenter.setBoard(descriptor)
+    presenter.loadBoard(descriptor)
     initialized = true
   }
 
@@ -243,7 +246,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  private fun buildMenu() {
+  private suspend fun buildMenu() {
     val menuBuilder = navigation.buildMenu()
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
@@ -271,12 +274,14 @@ class BrowseController(context: Context) : ThreadController(context),
       .build()
       .build()
 
-    requireNavController().requireToolbar().setNavigationItem(
-      true,
-      true,
-      navigation,
-      themeHelper.theme
-    )
+    suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+      requireNavController().requireToolbar().setNavigationItem(
+        true,
+        true,
+        navigation,
+        themeHelper.theme
+      ) { cancellableContinuation.resume(Unit) }
+    }
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -484,24 +489,28 @@ class BrowseController(context: Context) : ThreadController(context),
       context,
       R.string.browse_controller_enter_thread_id,
       R.string.browse_controller_enter_thread_id_msg,
-      { input: String ->
-        try {
-          val threadDescriptor = ThreadDescriptor.create(
-            chanDescriptor!!.siteName(),
-            chanDescriptor!!.boardCode(),
-            input.toLong()
-          )
-
-          openThreadCrossThread(threadDescriptor)
-        } catch (e: NumberFormatException) {
-          AndroidUtils.showToast(
-            context,
-            context.getString(R.string.browse_controller_error_parsing_thread_id)
-          )
-        }
-      },
+      { input: String -> openThreadByIdInternal(input) },
       InputType.TYPE_CLASS_NUMBER
     ).show()
+  }
+
+  private fun openThreadByIdInternal(input: String) {
+    mainScope.launch {
+      try {
+        val threadDescriptor = ThreadDescriptor.create(
+          chanDescriptor!!.siteName(),
+          chanDescriptor!!.boardCode(),
+          input.toLong()
+        )
+
+        openThreadCrossThread(threadDescriptor)
+      } catch (e: NumberFormatException) {
+        AndroidUtils.showToast(
+          context,
+          context.getString(R.string.browse_controller_error_parsing_thread_id)
+        )
+      }
+    }
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {
@@ -620,12 +629,12 @@ class BrowseController(context: Context) : ThreadController(context),
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
     showThread(threadToOpenDescriptor)
   }
 
-  override fun showThread(descriptor: ThreadDescriptor) {
-    mainScope.launch { showThread(descriptor, true) }
+  override suspend fun showThread(descriptor: ThreadDescriptor) {
+    showThread(descriptor, true)
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {

@@ -23,6 +23,7 @@ class ChanThreadViewableInfoManager(
   private val suspendDebouncer = SuspendDebouncer(appScope)
 
   private val lock = ReentrantReadWriteLock()
+
   @GuardedBy("lock")
   private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
 
@@ -46,7 +47,12 @@ class ChanThreadViewableInfoManager(
         return
       } ?: ChanThreadViewableInfo(threadDescriptor)
 
-    lock.write { chanThreadViewableMap[threadDescriptor] = chanThreadViewableInfo }
+    lock.write {
+      chanThreadViewableMap[threadDescriptor] = mergeOldAndNewChanThreadViewableInfos(
+        chanThreadViewableMap[threadDescriptor],
+        chanThreadViewableInfo
+      )
+    }
   }
 
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
@@ -57,17 +63,34 @@ class ChanThreadViewableInfoManager(
     val markedPostNo = lock.read { chanThreadViewableMap[chanDescriptor]?.getAndConsumeMarkedPostNo() }
       ?: return
 
+    if (markedPostNo < 0L) {
+      return
+    }
+
     func(markedPostNo)
     persist(chanDescriptor)
   }
 
   fun update(chanDescriptor: ChanDescriptor, mutator: (ChanThreadViewableInfo) -> Unit) {
+    update(chanDescriptor, false, mutator)
+  }
+
+  fun update(chanDescriptor: ChanDescriptor, createEmptyWhenNull: Boolean, mutator: (ChanThreadViewableInfo) -> Unit) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
     }
 
-    val oldChanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor] }
-      ?: return
+    var oldChanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor] }
+    if (oldChanThreadViewableInfo == null) {
+      if (!createEmptyWhenNull) {
+        return
+      }
+
+      oldChanThreadViewableInfo = lock.write {
+        chanThreadViewableMap[chanDescriptor] = ChanThreadViewableInfo(chanDescriptor)
+        chanThreadViewableMap[chanDescriptor]!!
+      }
+    }
 
     val mutatedChanThreadViewableInfo = oldChanThreadViewableInfo.deepCopy()
     mutator(mutatedChanThreadViewableInfo)
@@ -89,6 +112,24 @@ class ChanThreadViewableInfoManager(
       ?: return null
 
     return func(ChanThreadViewableInfoView.fromChanThreadViewableInfo(oldChanThreadViewableInfo))
+  }
+
+  private fun mergeOldAndNewChanThreadViewableInfos(
+    prev: ChanThreadViewableInfo?,
+    current: ChanThreadViewableInfo
+  ): ChanThreadViewableInfo {
+    if (prev == null) {
+      return current
+    }
+
+    return ChanThreadViewableInfo(
+      threadDescriptor = current.threadDescriptor,
+      listViewIndex = current.listViewIndex,
+      listViewTop = current.listViewTop,
+      lastViewedPostNo = current.lastViewedPostNo,
+      lastLoadedPostNo = current.lastLoadedPostNo,
+      markedPostNo = prev.markedPostNo,
+    )
   }
 
   private fun persist(chanDescriptor: ChanDescriptor) {

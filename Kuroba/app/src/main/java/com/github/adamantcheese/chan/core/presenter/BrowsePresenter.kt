@@ -42,6 +42,7 @@ class BrowsePresenter @Inject constructor(
 ) {
   private var callback: Callback? = null
   private val compositeDisposable = CompositeDisposable()
+  private var currentOpenedBoard: BoardDescriptor? = null
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback
@@ -52,6 +53,10 @@ class BrowsePresenter @Inject constructor(
         .collect { currentBoard ->
           val boardDescriptor = currentBoard.boardDescriptor
 
+          if (currentOpenedBoard == boardDescriptor) {
+            return@collect
+          }
+
           if (boardDescriptor == null) {
             callback?.showSitesNotSetup()
           } else {
@@ -59,16 +64,11 @@ class BrowsePresenter @Inject constructor(
           }
         }
     }
-
   }
 
   fun destroy() {
     callback = null
     compositeDisposable.clear()
-  }
-
-  suspend fun setBoard(boardDescriptor: BoardDescriptor) {
-    loadBoard(boardDescriptor)
   }
 
   suspend fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
@@ -91,11 +91,7 @@ class BrowsePresenter @Inject constructor(
     }
   }
 
-  fun onBoardsFloatingMenuSiteClicked(siteDescriptor: SiteDescriptor) {
-    callback?.loadSiteSetup(siteDescriptor)
-  }
-
-  private fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
+  suspend fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
     if (callback == null) {
       return
     }
@@ -107,7 +103,14 @@ class BrowsePresenter @Inject constructor(
       historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
     }
 
+    currentOpenedBoard = boardDescriptor
     boardManager.updateCurrentBoard(boardDescriptor)
+
+    callback?.loadBoard(boardDescriptor)
+  }
+
+  fun onBoardsFloatingMenuSiteClicked(siteDescriptor: SiteDescriptor) {
+    callback?.loadSiteSetup(siteDescriptor)
   }
 
   fun bookmarkEveryThread(chanThread: ChanThread?) {
@@ -153,7 +156,7 @@ class BrowsePresenter @Inject constructor(
   interface Callback {
     suspend fun loadBoard(boardDescriptor: BoardDescriptor)
     fun loadSiteSetup(siteDescriptor: SiteDescriptor)
-    fun showSitesNotSetup()
+    suspend fun showSitesNotSetup()
   }
 
   companion object {

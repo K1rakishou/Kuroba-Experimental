@@ -74,6 +74,9 @@ class BoardManager(
       loadSitesResult as ModularResult.Value
 
       lock.write {
+        boardsMap.clear()
+        ordersMap.clear()
+
         loadSitesResult.value.forEach { chanSiteData ->
           ordersMap[chanSiteData.siteDescriptor] = mutableListWithCap(64)
           boardsMap[chanSiteData.siteDescriptor] = mutableMapWithCap(64)
@@ -400,6 +403,10 @@ class BoardManager(
   }
 
   private suspend fun persistBoards() {
+    if (!suspendableInitializer.isInitialized()) {
+      return
+    }
+
     val result = boardRepository.persist(getBoardsOrdered())
     if (result is ModularResult.Error) {
       Logger.e(TAG, "boardRepository.persist() error", result.error)

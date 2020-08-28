@@ -22,6 +22,7 @@ class PostHideManager(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val postHideMap = mutableMapOf<PostDescriptor, ChanPostHide>()
+
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   @OptIn(ExperimentalTime::class)

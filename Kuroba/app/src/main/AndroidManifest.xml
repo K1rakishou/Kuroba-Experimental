@@ -70,18 +70,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
                 <data android:scheme="http" />
                 <data android:scheme="https" />
+
+                <!-- 4chan -->
                 <data android:host="4chan.org" />
                 <data android:host="www.4chan.org" />
                 <data android:host="boards.4chan.org" />
                 <data android:host="4channel.org" />
                 <data android:host="www.4channel.org" />
                 <data android:host="boards.4channel.org" />
+
+                <!-- 2ch.hk -->
+                <data android:host="2ch.hk" />
+                <data android:host="www.2ch.hk" />
             </intent-filter>
 
         </activity>

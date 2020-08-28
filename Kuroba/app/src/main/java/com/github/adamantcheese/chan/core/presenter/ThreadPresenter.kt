@@ -21,7 +21,6 @@ import android.text.TextUtils
 import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.R
-import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.cache.CacheHandler
@@ -103,8 +102,9 @@ class ThreadPresenter @Inject constructor(
   private var order = PostsFilter.Order.BUMP
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
-  private val postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+
+  private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private lateinit var context: Context
 
@@ -150,6 +150,8 @@ class ThreadPresenter @Inject constructor(
       unbindChanDescriptor()
     }
 
+    this.postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
+    this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
     this.currentChanDescriptor = chanDescriptor
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
@@ -528,9 +530,10 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun handleNewPosts(threadDescriptor: ChanDescriptor.ThreadDescriptor, result: ChanThread) {
+    var more = 0
+
     chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
       val lastLoadedPostNo = chanThreadViewableInfo.lastLoadedPostNo
-      var more = 0
 
       if (lastLoadedPostNo > 0) {
         for (post in result.posts) {
@@ -546,15 +549,16 @@ class ThreadPresenter @Inject constructor(
       if (chanThreadViewableInfo.lastViewedPostNo < 0L) {
         chanThreadViewableInfo.lastViewedPostNo = chanThreadViewableInfo.lastLoadedPostNo
       }
+    }
 
-      if (more > 0 && threadDescriptor.threadNo == result.chanDescriptor.threadNoOrNull()) {
-        threadPresenterCallback?.showNewPostsNotification(true, more)
+    if (more > 0 && threadDescriptor.threadNo == result.chanDescriptor.threadNoOrNull()) {
+      threadPresenterCallback?.showNewPostsNotification(true, more)
+    }
 
-        // deal with any "requests" for a page update
-        if (forcePageUpdate) {
-          pageRequestManager.forceUpdateForBoard(threadDescriptor.boardDescriptor)
-          forcePageUpdate = false
-        }
+    if (threadDescriptor.threadNo == result.chanDescriptor.threadNoOrNull()) {
+      if (forcePageUpdate) {
+        pageRequestManager.forceUpdateForBoard(threadDescriptor.boardDescriptor)
+        forcePageUpdate = false
       }
     }
   }
@@ -569,12 +573,7 @@ class ThreadPresenter @Inject constructor(
     highlightPost(markedPost)
 
     if (BackgroundUtils.isInForeground()) {
-      scrollToPost(markedPost, false)
-    }
-
-    if (StartActivity.loadedFromURL) {
       BackgroundUtils.runOnMainThread({ scrollToPost(markedPost, false) }, 1000)
-      StartActivity.loadedFromURL = false
     }
   }
 
@@ -773,10 +772,12 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(post.no)
-    highlightPost(post)
+    serializedCoroutineExecutor.post {
+      val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(post.no)
+      highlightPost(post)
 
-    threadPresenterCallback?.showThread(newThreadDescriptor)
+      threadPresenterCallback?.showThread(newThreadDescriptor)
+    }
   }
 
   override fun onPostDoubleClicked(post: Post) {
@@ -1070,102 +1071,99 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onPostLinkableClicked(post: Post, linkable: PostLinkable) {
-    val thread = chanLoader?.thread
-      ?: return
-    val siteName = currentChanDescriptor?.siteName()
-      ?: return
+    serializedCoroutineExecutor.post {
+      val thread = chanLoader?.thread
+        ?: return@post
+      val siteName = currentChanDescriptor?.siteName()
+        ?: return@post
 
-    if (linkable.type == PostLinkable.Type.QUOTE && isBound) {
-      val postId = linkable.linkableValue.extractLongOrNull()
-      if (postId == null) {
-        Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
-        return
-      }
-
-      val linked = findPostById(postId, thread)
-      if (linked != null) {
-        threadPresenterCallback?.showPostsPopup(post, listOf(linked))
-      }
-
-      return
-    }
-
-    if (linkable.type == PostLinkable.Type.LINK) {
-      val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
-      if (link == null) {
-        Logger.e(TAG, "Bad link linkable: linkableValue = ${linkable.linkableValue}")
-        return
-      }
-
-      threadPresenterCallback?.openLink(link.toString())
-      return
-    }
-
-    if (linkable.type == PostLinkable.Type.THREAD && isBound) {
-      val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
-      if (threadLink == null) {
-        Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
-        return
-      }
-
-      val boardDescriptor = BoardDescriptor.create(siteName, threadLink.board)
-      val board = boardManager.byBoardDescriptor(boardDescriptor)
-
-      if (board != null) {
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          siteName,
-          threadLink.board,
-          threadLink.threadId
-        )
-
-        chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
-          chanThreadViewableInfo.markedPostNo = threadLink.postId
+      if (linkable.type == PostLinkable.Type.QUOTE && isBound) {
+        val postId = linkable.linkableValue.extractLongOrNull()
+        if (postId == null) {
+          Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
+          return@post
         }
 
-        threadPresenterCallback?.showThread(threadDescriptor)
+        val linked = findPostById(postId, thread)
+        if (linked != null) {
+          threadPresenterCallback?.showPostsPopup(post, listOf(linked))
+        }
+
+        return@post
       }
 
-      return
-    }
+      if (linkable.type == PostLinkable.Type.LINK) {
+        val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
+        if (link == null) {
+          Logger.e(TAG, "Bad link linkable: linkableValue = ${linkable.linkableValue}")
+          return@post
+        }
 
-    if (linkable.type == PostLinkable.Type.BOARD && isBound) {
-      val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
-      if (link == null) {
-        Logger.e(TAG, "Bad board linkable: linkableValue = ${linkable.linkableValue}")
-        return
+        threadPresenterCallback?.openLink(link.toString())
+        return@post
       }
 
-      val boardDescriptor = BoardDescriptor.create(siteName, link.toString())
-      val board = boardManager.byBoardDescriptor(boardDescriptor)
+      if (linkable.type == PostLinkable.Type.THREAD && isBound) {
+        val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
+        if (threadLink == null) {
+          Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
+          return@post
+        }
 
-      if (board == null) {
-        showToast(context, R.string.site_uses_dynamic_boards)
-        return
+        val boardDescriptor = BoardDescriptor.create(siteName, threadLink.board)
+        val board = boardManager.byBoardDescriptor(boardDescriptor)
+
+        if (board != null) {
+          val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+            siteName,
+            threadLink.board,
+            threadLink.threadId
+          )
+
+          chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
+            chanThreadViewableInfo.markedPostNo = threadLink.postId
+          }
+
+          threadPresenterCallback?.showThread(threadDescriptor)
+        }
+
+        return@post
       }
 
-      launch {
+      if (linkable.type == PostLinkable.Type.BOARD && isBound) {
+        val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
+        if (link == null) {
+          Logger.e(TAG, "Bad board linkable: linkableValue = ${linkable.linkableValue}")
+          return@post
+        }
+
+        val boardDescriptor = BoardDescriptor.create(siteName, link.toString())
+        val board = boardManager.byBoardDescriptor(boardDescriptor)
+
+        if (board == null) {
+          showToast(context, R.string.site_uses_dynamic_boards)
+          return@post
+        }
+
         threadPresenterCallback?.showBoard(boardDescriptor)
+        return@post
       }
 
-      return
-    }
+      if (linkable.type == PostLinkable.Type.SEARCH && isBound) {
+        val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
+        if (searchLink == null) {
+          Logger.e(TAG, "Bad search linkable: linkableValue = ${linkable.linkableValue}")
+          return@post
+        }
 
-    if (linkable.type == PostLinkable.Type.SEARCH && isBound) {
-      val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
-      if (searchLink == null) {
-        Logger.e(TAG, "Bad search linkable: linkableValue = ${linkable.linkableValue}")
-        return
-      }
+        val boardDescriptor = BoardDescriptor.create(siteName, searchLink.toString())
+        val board = boardManager.byBoardDescriptor(boardDescriptor)
 
-      val boardDescriptor = BoardDescriptor.create(siteName, searchLink.toString())
-      val board = boardManager.byBoardDescriptor(boardDescriptor)
+        if (board == null) {
+          showToast(context, R.string.site_uses_dynamic_boards)
+          return@post
+        }
 
-      if (board == null) {
-        showToast(context, R.string.site_uses_dynamic_boards)
-        return
-      }
-
-      launch {
         threadPresenterCallback?.showBoardAndSearch(boardDescriptor, searchLink.search)
       }
     }
@@ -1266,7 +1264,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showToolbar()
   }
 
-  override fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  override suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     threadPresenterCallback?.showThread(threadDescriptor)
   }
 
@@ -1497,7 +1495,7 @@ class ThreadPresenter @Inject constructor(
     fun showPostInfo(info: String)
     fun showPostLinkables(post: Post)
     fun clipboardPost(post: Post)
-    fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?)
     fun openLink(link: String)

@@ -371,6 +371,16 @@ public class Toolbar
             final boolean pushing,
             final NavigationItem item,
             Theme theme
+    )  {
+        setNavigationItem(animate, pushing, item, theme, null);
+    }
+
+    public void setNavigationItem(
+            final boolean animate,
+            final boolean pushing,
+            final NavigationItem item,
+            Theme theme,
+            ToolbarContainer.ToolbarTransitionAnimationListener listener
     ) {
         ToolbarPresenter.AnimationStyle animationStyle;
         if (!animate) {
@@ -381,7 +391,7 @@ public class Toolbar
             animationStyle = ToolbarPresenter.AnimationStyle.POP;
         }
 
-        presenter.set(item, theme, animationStyle);
+        presenter.set(item, theme, animationStyle, listener);
     }
 
     public void beginTransition(NavigationItem newItem) {
@@ -417,7 +427,17 @@ public class Toolbar
 
     @Override
     public void showForNavigationItem(NavigationItem item, Theme theme, ToolbarPresenter.AnimationStyle animation) {
-        navigationItemContainer.set(item, theme, animation);
+        showForNavigationItem(item, theme, animation, null);
+    }
+
+    @Override
+    public void showForNavigationItem(
+            NavigationItem item,
+            Theme theme,
+            ToolbarPresenter.AnimationStyle animation,
+            ToolbarContainer.ToolbarTransitionAnimationListener listener
+    ) {
+        navigationItemContainer.set(item, theme, animation, listener);
     }
 
     @Override

@@ -53,7 +53,20 @@ public class ToolbarPresenter {
         // no-op
     }
 
-    void set(NavigationItem newItem, Theme theme, AnimationStyle animation) {
+    void set(
+            NavigationItem newItem,
+            Theme theme,
+            AnimationStyle animation
+    ) {
+        set(newItem, theme, animation, null);
+    }
+
+    void set(
+            NavigationItem newItem,
+            Theme theme,
+            AnimationStyle animation,
+            @Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener
+    ) {
         cancelTransitionIfNeeded();
         if (closeSearchIfNeeded()) {
             animation = AnimationStyle.FADE;
@@ -61,7 +74,7 @@ public class ToolbarPresenter {
 
         item = newItem;
 
-        callback.showForNavigationItem(item, theme, animation);
+        callback.showForNavigationItem(item, theme, animation, listener);
     }
 
     void update(NavigationItem updatedItem) {
@@ -188,6 +201,12 @@ public class ToolbarPresenter {
 
     interface Callback {
         void showForNavigationItem(NavigationItem item, Theme theme, AnimationStyle animation);
+        void showForNavigationItem(
+                NavigationItem item,
+                Theme theme,
+                AnimationStyle animation,
+                ToolbarContainer.ToolbarTransitionAnimationListener listener
+        );
         void containerStartTransition(NavigationItem item, TransitionAnimationStyle animation);
         void containerStopTransition(boolean didComplete);
         void containerSetTransitionProgress(float progress);

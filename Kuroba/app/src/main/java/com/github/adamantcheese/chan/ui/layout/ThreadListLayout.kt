@@ -31,6 +31,7 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -38,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
@@ -62,6 +64,7 @@ import com.github.adamantcheese.chan.ui.view.FastScrollerHelper
 import com.github.adamantcheese.chan.ui.view.PostInfoMapItemDecoration
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.updatePaddings
@@ -105,7 +108,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
 
-  private val listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
+  private lateinit var listScrollToBottomExecutor: RendezvousCoroutineExecutor
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
@@ -242,7 +246,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     searchStatus.typeface = themeHelper.theme.mainFont
   }
 
-  fun setCallbacks(
+  fun onCreate(
     postAdapterCallback: PostAdapterCallback?,
     postCellCallback: PostCellCallback?,
     statusCellCallback: ThreadStatusCell.Callback?,
@@ -251,6 +255,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   ) {
     this.callback = callback
     this.threadListLayoutCallback = threadListLayoutCallback
+
+    listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
     postAdapter = PostAdapter(
       postFilterManager,
@@ -719,49 +726,51 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun scrollTo(displayPosition: Int, isSmooth: Boolean) {
-    var smooth = isSmooth
-
     if (displayPosition < 0) {
-      val bottom = postAdapter.itemCount - 1
-      val difference = Math.abs(bottom - topAdapterPosition)
-
-      if (difference > MAX_SMOOTH_SCROLL_DISTANCE) {
-        smooth = false
-      }
-
-      if (smooth) {
-        recyclerView.smoothScrollToPosition(bottom)
-      } else {
-        recyclerView.scrollToPosition(bottom)
-        // No animation means no animation, wait for the layout to finish and skip all animations
-        val itemAnimator = recyclerView.itemAnimator
-
-        AndroidUtils.waitForLayout(recyclerView) { view: View? ->
-          itemAnimator!!.endAnimations()
-          true
-        }
-      }
-
-      return
+      scrollToBottom(isSmooth)
+    } else {
+      scrollToPosition(displayPosition, isSmooth)
     }
+  }
 
+  private fun scrollToPosition(displayPosition: Int, isSmooth: Boolean) {
+    var smooth = isSmooth
     val scrollPosition = postAdapter.getScrollPosition(displayPosition)
-
     val difference = Math.abs(scrollPosition - topAdapterPosition)
+
     if (difference > MAX_SMOOTH_SCROLL_DISTANCE) {
       smooth = false
     }
 
-    if (smooth) {
-      recyclerView.smoothScrollToPosition(scrollPosition)
-    } else {
-      recyclerView.scrollToPosition(scrollPosition)
-      // No animation means no animation, wait for the layout to finish and skip all animations
-      val itemAnimator = recyclerView.itemAnimator
+    recyclerView.doOnPreDraw {
+      if (smooth) {
+        recyclerView.smoothScrollToPosition(scrollPosition)
+      } else {
+        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+          scrollPosition,
+          SCROLL_OFFSET
+        )
+      }
+    }
+  }
 
-      AndroidUtils.waitForLayout(recyclerView) {
-        itemAnimator!!.endAnimations()
-        true
+  private fun scrollToBottom(isSmooth: Boolean) {
+    var smooth = isSmooth
+    val scrollPosition = postAdapter.itemCount - 1
+    val difference = Math.abs(bottom - topAdapterPosition)
+
+    if (difference > MAX_SMOOTH_SCROLL_DISTANCE) {
+      smooth = false
+    }
+
+    recyclerView.doOnPreDraw {
+      if (smooth) {
+        recyclerView.smoothScrollToPosition(scrollPosition)
+      } else {
+        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+          scrollPosition,
+          SCROLL_OFFSET
+        )
       }
     }
   }
@@ -787,7 +796,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {
-    callback?.showThread(threadDescriptor)
+    serializedCoroutineExecutor.post {
+      callback?.showThread(threadDescriptor)
+    }
   }
 
   override fun requestNewPostLoad() {
@@ -947,7 +958,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   interface ThreadListLayoutPresenterCallback {
-    fun showThread(threadDescriptor: ThreadDescriptor)
+    suspend fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
     suspend fun onListScrolledToBottom()
   }
@@ -965,6 +976,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   companion object {
     private const val TAG = "ThreadListLayout"
-    const val MAX_SMOOTH_SCROLL_DISTANCE = 20
+    private const val MAX_SMOOTH_SCROLL_DISTANCE = 20
+    private val SCROLL_OFFSET = dp(128f)
   }
 }

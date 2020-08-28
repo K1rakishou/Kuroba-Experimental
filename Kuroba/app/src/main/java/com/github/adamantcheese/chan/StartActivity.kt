@@ -95,6 +95,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
+  @Inject
+  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -119,6 +121,10 @@ class StartActivity : AppCompatActivity(),
   @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    if (intentMismatchWorkaround()) {
+      return
+    }
 
     val createUiTime = measureTime { createUi() }
     Logger.d(TAG, "createUi took $createUiTime")
@@ -376,6 +382,8 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun restoreFresh() {
+    Logger.d(TAG, "restoreFresh()")
+
     if (!siteManager.areSitesSetup()) {
       Logger.d(TAG, "restoreFresh() Sites are not setup, showSitesNotSetup()")
       browseController?.showSitesNotSetup()
@@ -408,12 +416,15 @@ class StartActivity : AppCompatActivity(),
           browseController?.loadWithDefaultBoard()
         }
 
+        // Wait a little bit so that the BrowseController's toolbar transition animation has enough
+        // time to complete so that we don't cancel it accidentally (which will cause catalog toolbar
+        // to be shown in the thread).
         loadThread(topNavElement.descriptor)
       }
     }.exhaustive
   }
 
-  fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     drawerController.loadThread(threadDescriptor, true)
   }
 
@@ -430,56 +441,65 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun restoreFromUrl(): Boolean {
-    Logger.d(TAG, "restoreFromUrl()")
-
     val data = intent.data
       ?: return false
 
+    Logger.d(TAG, "restoreFromUrl(), url = $data")
+
     val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(data.toString())
-    if (chanDescriptorResult != null) {
-      loadedFromURL = true
+    if (chanDescriptorResult == null) {
+      Toast.makeText(
+        this,
+        getString(R.string.open_link_not_matched, AndroidUtils.getApplicationLabel()),
+        Toast.LENGTH_LONG
+      ).show()
 
-      val chanDescriptor = chanDescriptorResult.chanDescriptor
-      browseController?.setBoard(chanDescriptor.boardDescriptor())
-
-      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        browseController?.showThread(chanDescriptor, false)
-      }
-
-      return true
+      Logger.d(TAG, "restoreFromUrl() failure")
+      return false
     }
 
-    Toast.makeText(
-      this,
-      getString(R.string.open_link_not_matched, AndroidUtils.getApplicationLabel()),
-      Toast.LENGTH_LONG
-    ).show()
+    Logger.d(TAG, "chanDescriptorResult.descriptor = ${chanDescriptorResult.chanDescriptor}, " +
+      "markedPostNo = ${chanDescriptorResult.markedPostNo}")
 
-    return false
+    val chanDescriptor = chanDescriptorResult.chanDescriptor
+    browseController?.setBoard(chanDescriptor.boardDescriptor())
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      if (chanDescriptorResult.markedPostNo > 0L) {
+        chanThreadViewableInfoManager.update(chanDescriptor, true) { chanThreadViewableInfo ->
+          chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
+        }
+      }
+
+      browseController?.showThread(chanDescriptor, false)
+    }
+
+    Logger.d(TAG, "restoreFromUrl() success")
+    return true
   }
 
   private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
     Logger.d(TAG, "restoreFromSavedState()")
-    var handled = false
 
     // Restore the activity state from the previously saved state.
     val chanState = savedInstanceState.getParcelable<ChanState>(STATE_KEY)
     if (chanState == null) {
       Logger.w(TAG, "savedInstanceState was not null, but no ChanState was found!")
-      return handled
+      return false
     }
 
     val boardThreadPair = resolveChanState(chanState)
-    if (boardThreadPair.first != null) {
-      handled = true
-      browseController?.setBoard(boardThreadPair.first!!)
-
-      if (boardThreadPair.second != null) {
-        browseController?.showThread(boardThreadPair.second!!, false)
-      }
+    if (boardThreadPair.first == null) {
+      return false
     }
 
-    return handled
+    browseController?.setBoard(boardThreadPair.first!!)
+
+    if (boardThreadPair.second != null) {
+      browseController?.showThread(boardThreadPair.second!!, false)
+    }
+
+    return true
   }
 
   private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
@@ -551,7 +571,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private fun lastPageNotificationClicked(extras: Bundle) {
+  private suspend fun lastPageNotificationClicked(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
@@ -569,7 +589,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private fun replyNotificationSwipedAway(extras: Bundle) {
+  private suspend fun replyNotificationSwipedAway(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
@@ -587,7 +607,7 @@ class StartActivity : AppCompatActivity(),
     ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
   }
 
-  private fun replyNotificationClicked(extras: Bundle) {
+  private suspend fun replyNotificationClicked(extras: Bundle) {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
@@ -781,6 +801,5 @@ class StartActivity : AppCompatActivity(),
   companion object {
     private const val TAG = "StartActivity"
     private const val STATE_KEY = "chan_state"
-    var loadedFromURL = false
   }
 }

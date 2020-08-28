@@ -12,6 +12,7 @@ import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.ApplicationVisibilityManager
 import com.github.adamantcheese.chan.core.settings.state.PersistableChanState
 import com.github.adamantcheese.chan.features.bookmarks.data.BookmarksControllerState
@@ -46,6 +47,7 @@ class BookmarksController(
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
   private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet())
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
@@ -57,6 +59,8 @@ class BookmarksController(
 
     navigation.title = getString(R.string.controller_bookmarks)
     navigation.swipeable = false
+
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     navigation.buildMenu()
       .withItem(R.drawable.ic_search_white_24dp) {
@@ -307,7 +311,9 @@ class BookmarksController(
   }
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    (context as? StartActivity)?.loadThread(threadDescriptor)
+    serializedCoroutineExecutor.post {
+      (context as? StartActivity)?.loadThread(threadDescriptor)
+    }
   }
 
   private fun onViewBookmarksModeChanged() {

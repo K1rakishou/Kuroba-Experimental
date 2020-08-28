@@ -24,7 +24,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import com.github.adamantcheese.chan.Chan.ForegroundChangedMessage
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
-import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
@@ -60,7 +60,7 @@ abstract class ThreadController(
 
   protected lateinit var threadLayout: ThreadLayout
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(mainScope)
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   var drawerCallbacks: DrawerCallbacks? = null
     set(value) {
@@ -74,9 +74,9 @@ abstract class ThreadController(
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
 
-
   override fun onCreate() {
     super.onCreate()
+
     EventBus.getDefault().register(this)
     navigation.handlesToolbarInset = true
 
@@ -92,6 +92,8 @@ abstract class ThreadController(
     swipeRefreshLayout.addView(threadLayout)
     swipeRefreshLayout.setOnRefreshListener(this)
     view = swipeRefreshLayout
+
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     val toolbar = toolbar
 
@@ -125,7 +127,7 @@ abstract class ThreadController(
     threadLayout.showLoading()
   }
 
-  open fun showSitesNotSetup() {
+  open suspend fun showSitesNotSetup() {
     threadLayout.presenter.showNoContent()
   }
 
@@ -143,7 +145,7 @@ abstract class ThreadController(
 
   @Subscribe
   fun onEvent(message: ForegroundChangedMessage) {
-    rendezvousCoroutineExecutor.post {
+    serializedCoroutineExecutor.post {
       threadLayout.presenter.onForegroundChanged(message.inForeground)
     }
   }
@@ -218,13 +220,13 @@ abstract class ThreadController(
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
-    rendezvousCoroutineExecutor.post {
+    serializedCoroutineExecutor.post {
       threadLayout.presenter.onSearchVisibilityChanged(visible)
     }
   }
 
   override fun onSearchEntered(entered: String) {
-    rendezvousCoroutineExecutor.post {
+    serializedCoroutineExecutor.post {
       threadLayout.presenter.onSearchEntered(entered)
     }
   }
