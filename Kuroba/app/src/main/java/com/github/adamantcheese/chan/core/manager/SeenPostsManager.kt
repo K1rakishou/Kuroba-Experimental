@@ -1,122 +1,35 @@
 package com.github.adamantcheese.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.*
+import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.common.mutableMapWithCap
+import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.SeenPost
 import com.github.adamantcheese.model.repository.SeenPostRepository
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.channels.consumeEach
 import org.joda.time.DateTime
-import kotlin.coroutines.CoroutineContext
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class SeenPostsManager(
+  private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
   private val seenPostsRepository: SeenPostRepository
-) : CoroutineScope {
-  @GuardedBy("mutex")
+) {
+  private val lock = ReentrantReadWriteLock()
+  @GuardedBy("lock")
   private val seenPostsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(32)
 
-  override val coroutineContext: CoroutineContext
-    get() = Dispatchers.Default + SupervisorJob()
-
-  private val actor = actor<ActorAction>(capacity = Channel.UNLIMITED) {
-    consumeEach { action ->
-      when (action) {
-        is ActorAction.CheckSeenPost -> {
-          val threadDescriptor = action.threadDescriptor
-          val postNo = action.postNo
-
-          val seenPost = seenPostsMap[threadDescriptor]
-            ?.firstOrNull { seenPost -> seenPost.postNo == postNo }
-
-          var hasSeenPost = false
-
-          if (seenPost != null) {
-            // We need this time check so that we don't remove the unseen post label right after
-            // all loaders have completed loading and updated the post.
-            val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-            hasSeenPost = deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
-          }
-
-          action.cd.complete(hasSeenPost)
-          Unit
-        }
-        is ActorAction.Preload -> {
-          val threadDescriptor = action.threadDescriptor
-
-          when (val result = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)) {
-            is ModularResult.Value -> {
-              seenPostsMap[threadDescriptor] = result.value.toMutableSet()
-            }
-            is ModularResult.Error -> {
-              Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
-                "($threadDescriptor), error = ${result.error.errorMessageOrClassName()}")
-            }
-          }
-
-          action.completable.complete(Unit)
-          Unit
-        }
-        is ActorAction.MarkPostAsSeen -> {
-          val threadDescriptor = action.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
-
-          val seenPost = SeenPost(
-            threadDescriptor,
-            action.postDescriptor.postNo,
-            DateTime.now()
-          )
-
-          when (val result = seenPostsRepository.insert(seenPost)) {
-            is ModularResult.Value -> {
-              seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
-              seenPostsMap[threadDescriptor]!!.add(seenPost)
-            }
-            is ModularResult.Error -> {
-              Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
-                "($threadDescriptor), error = ${result.error.errorMessageOrClassName()}")
-            }
-          }
-
-          Unit
-        }
-        ActorAction.Clear -> {
-          seenPostsMap.clear()
-
-          Unit
-        }
-      }.exhaustive
-    }
-  }
-
-  suspend fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: Post): Boolean {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      return true
-    }
-
-    if (!isEnabled()) {
-      return true
-    }
-
-    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-    val postNo = post.no
-    val cd = CompletableDeferred<Boolean>()
-
-    actor.send(ActorAction.CheckSeenPost(threadDescriptor, postNo, cd))
-    return cd.awaitSilently(false)
-  }
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -136,10 +49,15 @@ class SeenPostsManager(
       return
     }
 
-    val completable = CompletableDeferred<Unit>()
-    actor.offer(ActorAction.Preload(threadDescriptor, completable))
+    val seenPosts = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
+          "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
 
-    completable.awaitSilently()
+        return
+      }
+
+    lock.write { seenPostsMap[threadDescriptor] = seenPosts.toMutableSet() }
   }
 
   fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
@@ -151,31 +69,60 @@ class SeenPostsManager(
       return
     }
 
-    val postDescriptor = PostDescriptor.create(chanDescriptor as ChanDescriptor.ThreadDescriptor, post.no)
-    actor.offer(ActorAction.MarkPostAsSeen(postDescriptor))
+    serializedCoroutineExecutor.post {
+      val threadDescriptor = post.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
+
+      val seenPost = SeenPost(
+        threadDescriptor,
+        post.postDescriptor.postNo,
+        DateTime.now()
+      )
+
+      seenPostsRepository.insert(seenPost)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
+            "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
+          return@post
+        }
+
+      seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
+      seenPostsMap[threadDescriptor]!!.add(seenPost)
+    }
   }
 
   fun onPostUnbind(chanDescriptor: ChanDescriptor, post: Post) {
     // No-op (maybe something will be added here in the future)
   }
 
-  private fun isEnabled() = ChanSettings.markUnseenPosts.get()
+  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: Post): Boolean {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      return true
+    }
 
-  private sealed class ActorAction {
-    class Preload(
-      val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-      val completable: CompletableDeferred<Unit>
-    ) : ActorAction()
-    class MarkPostAsSeen(val postDescriptor: PostDescriptor) : ActorAction()
+    if (!isEnabled()) {
+      return true
+    }
 
-    class CheckSeenPost(
-      val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-      val postNo: Long,
-      val cd: CompletableDeferred<Boolean>
-    ) : ActorAction()
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
+    val postNo = post.no
 
-    object Clear : ActorAction()
+    val seenPost = lock.read {
+      seenPostsMap[threadDescriptor]?.firstOrNull { seenPost -> seenPost.postNo == postNo }
+    }
+
+    var hasSeenPost = false
+
+    if (seenPost != null) {
+      // We need this time check so that we don't remove the unseen post label right after
+      // all loaders have completed loading and updated the post.
+      val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
+      hasSeenPost = deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
+    }
+
+    return hasSeenPost
   }
+
+  private fun isEnabled() = ChanSettings.markUnseenPosts.get()
 
   companion object {
     private const val TAG = "SeenPostsManager"

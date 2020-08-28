@@ -114,7 +114,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       return null
     }
 
-    override suspend fun hasAlreadySeenPost(post: Post): Boolean {
+    override fun hasAlreadySeenPost(post: Post): Boolean {
       return false
     }
   }
