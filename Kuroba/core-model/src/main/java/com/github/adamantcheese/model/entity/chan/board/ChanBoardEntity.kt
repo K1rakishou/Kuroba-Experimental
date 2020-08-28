@@ -23,8 +23,8 @@ data class ChanBoardEntity(
   var ownerChanBoardId: Long,
   @ColumnInfo(name = BOARD_ACTIVE_COLUMN_NAME)
   val active: Boolean = false,
-  @ColumnInfo(name = ORDER_COLUMN_NAME)
-  val order: Int = 0,
+  @ColumnInfo(name = BOARD_ORDER_COLUMN_NAME)
+  val boardOrder: Int = 0,
   @ColumnInfo(name = NAME_COLUMN_NAME)
   val name: String? = null,
   @ColumnInfo(name = PER_PAGE_COLUMN_NAME)
@@ -73,7 +73,7 @@ data class ChanBoardEntity(
     const val TABLE_NAME = "chan_board"
 
     const val OWNER_CHAN_BOARD_ID_COLUMN_NAME = "owner_chan_board_id"
-    const val ORDER_COLUMN_NAME = "order"
+    const val BOARD_ORDER_COLUMN_NAME = "board_order"
     const val BOARD_ACTIVE_COLUMN_NAME = "board_active"
     const val NAME_COLUMN_NAME = "name"
     const val PER_PAGE_COLUMN_NAME = "per_page"

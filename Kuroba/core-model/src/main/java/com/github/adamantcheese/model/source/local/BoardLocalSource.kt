@@ -96,7 +96,13 @@ class BoardLocalSource(
         val boardId = boardIdMap[board.boardDescriptor]
           ?: return@mapNotNull null
 
-        return@mapNotNull ChanBoardMapper.toChanBoardEntity(boardId, index++, board)
+        val boardOrder = if (board.active) {
+          index++
+        } else {
+          -1
+        }
+
+        return@mapNotNull ChanBoardMapper.toChanBoardEntity(boardId, boardOrder, board)
       }
 
       entities

@@ -88,12 +88,32 @@ class BoardsSetupPresenter(
     }
   }
 
-  fun displayActiveBoards(setLoadingState: Boolean = true) {
+  fun onBoardMoved(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
+    if (boardManager.onBoardMoved(boardDescriptor, fromPosition, toPosition)) {
+      displayActiveBoards(withLoadingState = false)
+    }
+  }
+
+  fun onBoardRemoved(boardDescriptor: BoardDescriptor) {
+    scope.launch {
+      val deactivated = boardManager.activateDeactivateBoards(
+        boardDescriptor.siteDescriptor,
+        linkedSetOf(boardDescriptor),
+        false
+      )
+
+      if (deactivated) {
+        displayActiveBoards(withLoadingState = false)
+      }
+    }
+  }
+
+  fun displayActiveBoards(withLoadingState: Boolean = true) {
     if (!boardInfoLoaded.get()) {
       return
     }
 
-    if (setLoadingState) {
+    if (withLoadingState) {
       setState(BoardsSetupControllerState.Loading)
     }
 
@@ -102,18 +122,6 @@ class BoardsSetupPresenter(
       siteManager.awaitUntilInitialized()
 
       displayActiveBoardsInternal()
-    }
-  }
-
-  fun onBoardMoved(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
-    if (boardManager.onBoardMoved(boardDescriptor, fromPosition, toPosition)) {
-      displayActiveBoards(setLoadingState = false)
-    }
-  }
-
-  fun onBoardRemoved(boardDescriptor: BoardDescriptor) {
-    if (boardManager.onBoardRemoved(boardDescriptor)) {
-      displayActiveBoards(setLoadingState = false)
     }
   }
 

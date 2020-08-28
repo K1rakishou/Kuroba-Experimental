@@ -76,14 +76,14 @@ class AddBoardsPresenter(
     }
   }
 
-  fun onBoardSelectionChanged(boardDescriptor: BoardDescriptor, checked: Boolean) {
+  fun onBoardSelectionChanged(boardDescriptor: BoardDescriptor, checked: Boolean, query: String) {
     if (checked) {
       selectedBoards += boardDescriptor
     } else {
       selectedBoards -= boardDescriptor
     }
 
-    showBoardsWithSearchQuery()
+    showBoardsWithSearchQuery(query)
   }
 
   suspend fun addSelectedBoards() {
@@ -101,16 +101,16 @@ class AddBoardsPresenter(
   private fun showBoardsWithSearchQuery(query: String = "") {
     val matchedBoards = mutableListWithCap<SelectableBoardCellData>(32)
 
-    boardManager.viewAllBoardsOrdered(siteDescriptor) { chanBoard ->
+    boardManager.viewAllBoards(siteDescriptor) { chanBoard ->
       if (chanBoard.active) {
-        return@viewAllBoardsOrdered
+        return@viewAllBoards
       }
 
       val isSelected = chanBoard.boardDescriptor in selectedBoards
 
       if (query.isNotEmpty()) {
         if (!chanBoard.boardCode().contains(query, ignoreCase = true)) {
-          return@viewAllBoardsOrdered
+          return@viewAllBoards
         }
       }
 

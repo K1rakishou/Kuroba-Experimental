@@ -145,7 +145,8 @@ class AddBoardsController(
               onClickedCallback { isChecked ->
                 presenter.onBoardSelectionChanged(
                   selectableBoardCellData.boardCellData.boardDescriptor,
-                  isChecked
+                  isChecked,
+                  searchView.text
                 )
               }
             }

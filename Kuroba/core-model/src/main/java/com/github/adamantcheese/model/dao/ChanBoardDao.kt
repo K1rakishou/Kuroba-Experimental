@@ -37,6 +37,20 @@ abstract class ChanBoardDao {
   abstract suspend fun activateDeactivateBoards(boardIds: Collection<Long>, activate: Boolean)
 
   @Query("""
+    UPDATE ${ChanBoardEntity.TABLE_NAME}
+    SET ${ChanBoardEntity.BOARD_ORDER_COLUMN_NAME} = :order
+    WHERE ${ChanBoardEntity.OWNER_CHAN_BOARD_ID_COLUMN_NAME} = (
+        SELECT ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} 
+        FROM ${ChanBoardIdEntity.TABLE_NAME}
+        WHERE 
+            ${ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME} = :siteName
+        AND 
+            ${ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
+    ) 
+  """)
+  abstract suspend fun updateOrder(siteName: String, boardCode: String, order: Int)
+
+  @Query("""
         SELECT * 
         FROM ${ChanBoardIdEntity.TABLE_NAME}
         WHERE 

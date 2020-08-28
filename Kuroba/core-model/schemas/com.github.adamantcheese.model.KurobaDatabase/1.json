@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "38f5a48c2a2f381bfb74e14c0ade3c70",
+    "identityHash": "1b450877c29f5fb11d47afc6535f8553",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -178,7 +178,7 @@
       },
       {
         "tableName": "chan_board",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_board_id` INTEGER NOT NULL, `board_active` INTEGER NOT NULL, `order` INTEGER NOT NULL, `name` TEXT, `per_page` INTEGER NOT NULL, `pages` INTEGER NOT NULL, `max_file_size` INTEGER NOT NULL, `max_webm_size` INTEGER NOT NULL, `max_comment_chars` INTEGER NOT NULL, `bump_limit` INTEGER NOT NULL, `image_limit` INTEGER NOT NULL, `cooldown_threads` INTEGER NOT NULL, `cooldown_replies` INTEGER NOT NULL, `cooldown_images` INTEGER NOT NULL, `custom_spoilers` INTEGER NOT NULL, `description` TEXT NOT NULL, `work_safe` INTEGER NOT NULL, `spoilers` INTEGER NOT NULL, `user_ids` INTEGER NOT NULL, `code_tags` INTEGER NOT NULL, `preupload_captcha` INTEGER NOT NULL, `country_flags` INTEGER NOT NULL, `math_tags` INTEGER NOT NULL, `archive` INTEGER NOT NULL, PRIMARY KEY(`owner_chan_board_id`), FOREIGN KEY(`owner_chan_board_id`) REFERENCES `chan_board_id`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_chan_board_id` INTEGER NOT NULL, `board_active` INTEGER NOT NULL, `board_order` INTEGER NOT NULL, `name` TEXT, `per_page` INTEGER NOT NULL, `pages` INTEGER NOT NULL, `max_file_size` INTEGER NOT NULL, `max_webm_size` INTEGER NOT NULL, `max_comment_chars` INTEGER NOT NULL, `bump_limit` INTEGER NOT NULL, `image_limit` INTEGER NOT NULL, `cooldown_threads` INTEGER NOT NULL, `cooldown_replies` INTEGER NOT NULL, `cooldown_images` INTEGER NOT NULL, `custom_spoilers` INTEGER NOT NULL, `description` TEXT NOT NULL, `work_safe` INTEGER NOT NULL, `spoilers` INTEGER NOT NULL, `user_ids` INTEGER NOT NULL, `code_tags` INTEGER NOT NULL, `preupload_captcha` INTEGER NOT NULL, `country_flags` INTEGER NOT NULL, `math_tags` INTEGER NOT NULL, `archive` INTEGER NOT NULL, PRIMARY KEY(`owner_chan_board_id`), FOREIGN KEY(`owner_chan_board_id`) REFERENCES `chan_board_id`(`board_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "ownerChanBoardId",
@@ -193,8 +193,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "order",
-            "columnName": "order",
+            "fieldPath": "boardOrder",
+            "columnName": "board_order",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2029,7 +2029,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '38f5a48c2a2f381bfb74e14c0ade3c70')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1b450877c29f5fb11d47afc6535f8553')"
     ]
   }
 }

@@ -144,15 +144,17 @@ class BrowseController(context: Context) : ThreadController(context),
   override suspend fun showSitesNotSetup() {
     super.showSitesNotSetup()
 
-    if (hint != null) {
-      hint!!.dismiss()
-      hint = null
-    }
+    if (shown) {
+      if (hint != null) {
+        hint!!.dismiss()
+        hint = null
+      }
 
-    val hintView: View = requireToolbar().findViewById(R.id.title_container)
-    hint = HintPopup.show(context, hintView, R.string.thread_empty_setup_hint).apply {
-      alignCenter()
-      wiggle()
+      val hintView: View = requireToolbar().findViewById(R.id.title_container)
+      hint = HintPopup.show(context, hintView, R.string.thread_empty_setup_hint).apply {
+        alignCenter()
+        wiggle()
+      }
     }
 
     // this controller is used for catalog views; displaying things on two rows for them middle

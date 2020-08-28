@@ -56,6 +56,7 @@ class BoardSelectionController(
 
     outsideArea = view.findViewById(R.id.outside_area)
     searchView = view.findViewById(R.id.search_view)
+    searchView.setAutoRequestFocus(false)
     openSitesButton = view.findViewById(R.id.open_all_sites_settings)
 
     val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
