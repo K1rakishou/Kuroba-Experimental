@@ -62,6 +62,9 @@ interface ModelMainComponent {
     @BindsInstance
     fun appCoroutineScope(@AppCoroutineScope scope: CoroutineScope): Builder
 
+    @BindsInstance
+    fun betaOrDevBuild(@BetaOrDevBuild betaOrDev: Boolean): Builder
+
     fun build(): ModelMainComponent
   }
 

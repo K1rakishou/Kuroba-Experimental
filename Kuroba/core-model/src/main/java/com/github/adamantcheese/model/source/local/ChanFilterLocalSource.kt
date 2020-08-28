@@ -18,7 +18,6 @@ class ChanFilterLocalSource(
     ensureInTransaction()
 
     return chanFilterDao.selectAll()
-      .sortedBy { chanFilterFull -> chanFilterFull.chanFilterEntity.order }
       .map { chanFilterFull -> ChanFilterMapper.fromEntity(chanFilterFull) }
   }
 

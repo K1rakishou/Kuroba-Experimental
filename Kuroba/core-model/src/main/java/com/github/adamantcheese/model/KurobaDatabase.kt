@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.InlinedFileInfoEntity
@@ -117,14 +118,41 @@ abstract class KurobaDatabase : RoomDatabase() {
     const val SQLITE_TRUE = 1
     const val SQLITE_FALSE = 0
 
-    fun buildDatabase(application: Application): KurobaDatabase {
+    fun buildDatabase(
+      application: Application,
+      betaOrDev: Boolean,
+      loggerTag: String,
+      logger: Logger
+    ): KurobaDatabase {
       return Room.databaseBuilder(
         application.applicationContext,
         KurobaDatabase::class.java,
         DATABASE_NAME
       )
-        .fallbackToDestructiveMigration()
+        .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
+        .fallbackToDestructiveMigrationOnDowngrade()
         .build()
+    }
+
+    private fun <T : RoomDatabase> Builder<T>.fallbackToDestructiveMigrationIfBetaOrDev(
+      betaOrDev: Boolean,
+      loggerTag: String,
+      logger: Logger
+    ): Builder<T> {
+      val migrationType = if (betaOrDev) {
+        "destructive"
+      } else {
+        "non-destructive"
+      }
+
+      logger.log(loggerTag, "Using \"$migrationType\" migration")
+
+      if (!betaOrDev) {
+        return this
+      }
+
+      fallbackToDestructiveMigration()
+      return this
     }
   }
 }

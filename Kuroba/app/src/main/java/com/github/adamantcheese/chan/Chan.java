@@ -156,12 +156,16 @@ public class Chan
         Dns okHttpDns = getOkHttpDns();
         OkHttpProtocols okHttpProtocols = getOkHttpProtocols();
 
+        boolean isDev = getFlavorType() == AndroidUtils.FlavorType.Dev;
+        boolean isBeta = getFlavorType() == AndroidUtils.FlavorType.Beta;
+
         ModelMainComponent modelMainComponent = DatabaseModuleInjector.build(
                 this,
                 okHttpDns,
                 okHttpProtocols.protocols,
                 Logger.TAG_PREFIX,
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                isDev,
+                isDev || isBeta,
                 ChanSettings.verboseLogs.get(),
                 appConstants,
                 this

@@ -35,7 +35,7 @@ object ChanFilterMapper {
       chanFilterEntity = ChanFilterEntity(
         filterId = chanFilter.getDatabaseId(),
         enabled = chanFilter.enabled,
-        order = order,
+        filterOrder = order,
         type = chanFilter.type,
         pattern = chanFilter.pattern,
         action = chanFilter.action,

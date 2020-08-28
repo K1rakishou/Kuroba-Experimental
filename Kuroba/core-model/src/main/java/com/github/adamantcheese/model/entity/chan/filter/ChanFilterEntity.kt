@@ -20,8 +20,8 @@ data class ChanFilterEntity(
   val action: Int = 0,
   @ColumnInfo(name = COLOR_COLUMN_NAME)
   val color: Int = 0,
-  @ColumnInfo(name = ORDER_COLUMN_NAME)
-  val order: Int = -1,
+  @ColumnInfo(name = FILTER_ORDER_COLUMN_NAME)
+  val filterOrder: Int = -1,
   @ColumnInfo(name = APPLY_TO_REPLIES_COLUMN_NAME)
   val applyToReplies: Boolean = false,
   @ColumnInfo(name = ONLY_ON_OP_COLUMN_NAME)
@@ -39,7 +39,7 @@ data class ChanFilterEntity(
     const val PATTERN_COLUMN_NAME = "pattern"
     const val ACTION_COLUMN_NAME = "action"
     const val COLOR_COLUMN_NAME = "color"
-    const val ORDER_COLUMN_NAME = "order"
+    const val FILTER_ORDER_COLUMN_NAME = "filter_order"
     const val APPLY_TO_REPLIES_COLUMN_NAME = "apply_to_replies"
     const val ONLY_ON_OP_COLUMN_NAME = "only_on_op"
     const val APPLY_TO_SAVED_COLUMN_NAME = "apply_to_saved"

@@ -5,10 +5,7 @@ import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.json.*
 import com.github.adamantcheese.model.KurobaDatabase
 import com.github.adamantcheese.model.common.Logger
-import com.github.adamantcheese.model.di.annotation.AppCoroutineScope
-import com.github.adamantcheese.model.di.annotation.IsDevFlavor
-import com.github.adamantcheese.model.di.annotation.LoggerTagPrefix
-import com.github.adamantcheese.model.di.annotation.VerboseLogs
+import com.github.adamantcheese.model.di.annotation.*
 import com.github.adamantcheese.model.parser.ArchivesJsonParser
 import com.github.adamantcheese.model.repository.*
 import com.github.adamantcheese.model.source.cache.ChanDescriptorCache
@@ -29,8 +26,18 @@ class ModelMainModule {
 
   @Singleton
   @Provides
-  fun provideDatabase(application: Application): KurobaDatabase {
-    return KurobaDatabase.buildDatabase(application)
+  fun provideDatabase(
+    application: Application,
+    @BetaOrDevBuild betaOrDev: Boolean,
+    @LoggerTagPrefix loggerTag: String,
+    logger: Logger
+  ): KurobaDatabase {
+    return KurobaDatabase.buildDatabase(
+      application,
+      betaOrDev,
+      loggerTag,
+      logger
+    )
   }
 
   @Singleton

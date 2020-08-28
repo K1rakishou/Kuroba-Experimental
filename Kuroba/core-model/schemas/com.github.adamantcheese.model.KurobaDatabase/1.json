@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1b450877c29f5fb11d47afc6535f8553",
+    "identityHash": "c851a63f78477bbeb99fc30327209e99",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -1228,7 +1228,7 @@
       },
       {
         "tableName": "chan_filter",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`filter_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `enabled` INTEGER NOT NULL, `type` INTEGER NOT NULL, `pattern` TEXT, `action` INTEGER NOT NULL, `color` INTEGER NOT NULL, `order` INTEGER NOT NULL, `apply_to_replies` INTEGER NOT NULL, `only_on_op` INTEGER NOT NULL, `apply_to_saved` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`filter_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `enabled` INTEGER NOT NULL, `type` INTEGER NOT NULL, `pattern` TEXT, `action` INTEGER NOT NULL, `color` INTEGER NOT NULL, `filter_order` INTEGER NOT NULL, `apply_to_replies` INTEGER NOT NULL, `only_on_op` INTEGER NOT NULL, `apply_to_saved` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "filterId",
@@ -1267,8 +1267,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "order",
-            "columnName": "order",
+            "fieldPath": "filterOrder",
+            "columnName": "filter_order",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -2029,7 +2029,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1b450877c29f5fb11d47afc6535f8553')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c851a63f78477bbeb99fc30327209e99')"
     ]
   }
 }

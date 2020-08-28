@@ -20,6 +20,7 @@ object DatabaseModuleInjector {
     loggerTagPrefix: String,
     verboseLogs: Boolean,
     isDevFlavor: Boolean,
+    betaOrDevBuild: Boolean,
     appConstants: AppConstants,
     scope: CoroutineScope
   ): ModelMainComponent {
@@ -30,6 +31,7 @@ object DatabaseModuleInjector {
       .loggerTagPrefix(loggerTagPrefix)
       .verboseLogs(verboseLogs)
       .isDevFlavor(isDevFlavor)
+      .betaOrDevBuild(betaOrDevBuild)
       .appConstants(appConstants)
       .appCoroutineScope(scope)
       .build()
