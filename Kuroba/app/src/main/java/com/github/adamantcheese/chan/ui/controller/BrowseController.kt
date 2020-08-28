@@ -27,15 +27,14 @@ import android.view.animation.RotateAnimation
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.HistoryNavigationManager
-import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.presenter.BrowsePresenter
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
-import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
 import com.github.adamantcheese.chan.features.setup.BoardSelectionController
 import com.github.adamantcheese.chan.features.setup.SiteSettingsController
 import com.github.adamantcheese.chan.features.setup.SitesSetupController
@@ -73,11 +72,11 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
+
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var hint: HintPopup? = null
@@ -99,13 +98,15 @@ class BrowseController(context: Context) : ThreadController(context),
 
     // Initialization
 
-    val boardOrder = ChanSettings.boardOrder.get()
-    order = requireNotNull(PostsFilter.Order.find(boardOrder)) { "Unknown board order: ${boardOrder}" }
-    threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
-    threadLayout.presenter.setOrder(order)
+    serializedCoroutineExecutor.post {
+      val boardOrder = ChanSettings.boardOrder.get()
+      order = requireNotNull(PostsFilter.Order.find(boardOrder)) { "Unknown board order: ${boardOrder}" }
+      threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
+      threadLayout.presenter.setOrder(order)
 
-    // Navigation
-    initNavigation()
+      // Navigation
+      initNavigation()
+    }
   }
 
   override fun onShow() {
@@ -159,10 +160,6 @@ class BrowseController(context: Context) : ThreadController(context),
     buildMenu()
 
     initialized = true
-  }
-
-  public override fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
-    super.setDrawerCallbacks(drawerCallbacks)
   }
 
   suspend fun setBoard(descriptor: BoardDescriptor) {
@@ -383,18 +380,20 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   private fun onSortItemClicked(subItem: ToolbarMenuSubItem) {
-    val order = subItem.value as? PostsFilter.Order
-      ?: return
+    serializedCoroutineExecutor.post {
+      val order = subItem.value as? PostsFilter.Order
+        ?: return@post
 
-    ChanSettings.boardOrder.set(order.orderName)
-    this@BrowseController.order = order
+      ChanSettings.boardOrder.set(order.orderName)
+      this@BrowseController.order = order
 
-    val sortSubItem = navigation.findSubItem(ACTION_SORT)
-    resetSelectedSortOrderItem(sortSubItem)
-    subItem.isCurrentlySelected = true
+      val sortSubItem = navigation.findSubItem(ACTION_SORT)
+      resetSelectedSortOrderItem(sortSubItem)
+      subItem.isCurrentlySelected = true
 
-    val presenter = threadLayout.presenter
-    presenter.setOrder(order)
+      val presenter = threadLayout.presenter
+      presenter.setOrder(order)
+    }
   }
 
   private fun resetSelectedSortOrderItem(item: ToolbarMenuSubItem) {
@@ -666,7 +665,7 @@ class BrowseController(context: Context) : ThreadController(context),
           val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
           if (navigationController.top is ViewThreadController) {
             val viewThreadController = navigationController.top as ViewThreadController?
-            viewThreadController!!.setDrawerCallbacks(drawerCallbacks)
+            viewThreadController!!.drawerCallbacks = drawerCallbacks
 
             viewThreadController.loadThread(threadDescriptor)
           }
@@ -675,7 +674,7 @@ class BrowseController(context: Context) : ThreadController(context),
           splitNav.setRightController(navigationController)
           val viewThreadController = ViewThreadController(context, threadDescriptor)
           navigationController.pushController(viewThreadController, false)
-          viewThreadController.setDrawerCallbacks(drawerCallbacks)
+          viewThreadController.drawerCallbacks = drawerCallbacks
         }
         splitNav.switchToController(false)
       }
@@ -690,7 +689,7 @@ class BrowseController(context: Context) : ThreadController(context),
           )
 
           slideNav.setRightController(viewThreadController)
-          viewThreadController.setDrawerCallbacks(drawerCallbacks)
+          viewThreadController.drawerCallbacks = drawerCallbacks
         }
         slideNav.switchToController(false)
       }
@@ -705,7 +704,7 @@ class BrowseController(context: Context) : ThreadController(context),
         Objects.requireNonNull(navigationController, "navigationController is null")
         navigationController!!.pushController(viewThreadController, animated)
 
-        viewThreadController.setDrawerCallbacks(drawerCallbacks)
+        viewThreadController.drawerCallbacks = drawerCallbacks
       }
     }
 

@@ -227,7 +227,7 @@ abstract class Controller(@JvmField var context: Context) {
     }
   }
 
-  open fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+  open fun dispatchKeyEvent(event: KeyEvent): Boolean {
     for (i in childControllers.indices.reversed()) {
       val controller = childControllers[i]
       if (controller.dispatchKeyEvent(event)) {

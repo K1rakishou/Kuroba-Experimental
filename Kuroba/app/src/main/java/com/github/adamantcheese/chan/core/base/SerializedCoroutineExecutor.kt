@@ -28,6 +28,10 @@ class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
   }
 
   fun post(func: suspend () -> Unit) {
+    if (channel.isClosedForSend) {
+      return
+    }
+
     val serializedAction = SerializedAction(func)
     channel.offer(serializedAction)
   }

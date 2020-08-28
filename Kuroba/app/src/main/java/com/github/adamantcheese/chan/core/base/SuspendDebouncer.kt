@@ -51,6 +51,10 @@ class SuspendDebouncer(
   fun post(timeout: Long, func: suspend () -> Unit) {
     require(timeout > 0L) { "Bad timeout!" }
 
+    if (channel.isClosedForSend) {
+      return
+    }
+
     channel.offer(Payload(counter.incrementAndGet(), timeout, func))
   }
 

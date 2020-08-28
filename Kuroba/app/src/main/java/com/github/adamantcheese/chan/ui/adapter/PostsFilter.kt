@@ -171,13 +171,13 @@ class PostsFilter(
       // we can't divide by zero, but we can divide by the smallest thing that's closest to 0 instead
       val eps = 0.0001f
 
-      val lhsDivider = if (lhs.totalRepliesCount != 0) {
+      val lhsDivider = if (lhs.totalRepliesCount > 0) {
         lhs.totalRepliesCount.toFloat()
       } else {
         eps
       }
 
-      val rhsDivider = if (rhs.totalRepliesCount != 0) {
+      val rhsDivider = if (rhs.totalRepliesCount > 0) {
         rhs.totalRepliesCount.toFloat()
       } else {
         eps

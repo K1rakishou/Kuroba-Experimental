@@ -22,6 +22,8 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
+import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.loader.LoaderBatchResult
 import com.github.adamantcheese.chan.core.loader.LoaderResult.Succeeded
@@ -101,6 +103,8 @@ class ThreadPresenter @Inject constructor(
   private var order = PostsFilter.Order.BUMP
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
+  private val postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
   private lateinit var context: Context
 
@@ -326,13 +330,14 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun onForegroundChanged(foreground: Boolean) {
+  suspend fun onForegroundChanged(foreground: Boolean) {
     if (!isBound) {
       return
     }
 
     if (foreground && isWatching) {
       chanLoader!!.requestMoreDataAndResetTimer()
+
       if (chanLoader!!.thread != null) {
         // Show loading indicator in the status cell
         showPosts()
@@ -376,7 +381,7 @@ class ThreadPresenter @Inject constructor(
     return true
   }
 
-  fun onSearchVisibilityChanged(visible: Boolean) {
+  suspend fun onSearchVisibilityChanged(visible: Boolean) {
     searchOpen = visible
 
     threadPresenterCallback?.showSearch(visible)
@@ -389,7 +394,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun onSearchEntered(entered: String?) {
+  suspend fun onSearchEntered(entered: String?) {
     searchQuery = entered
 
     if (chanLoader != null && chanLoader!!.thread != null) {
@@ -411,9 +416,10 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun setOrder(order: PostsFilter.Order) {
+  suspend fun setOrder(order: PostsFilter.Order) {
     if (this.order != order) {
       this.order = order
+
       if (chanLoader != null && chanLoader!!.thread != null) {
         scrollTo(0, false)
         showPosts()
@@ -421,7 +427,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun refreshUI() {
+  suspend fun refreshUI() {
     showPosts(true)
   }
 
@@ -621,7 +627,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showError(error)
   }
 
-  override fun onListScrolledToBottom() {
+  override suspend fun onListScrolledToBottom() {
     if (!isBound) {
       return
     }
@@ -778,17 +784,19 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (searchOpen) {
-      searchQuery = null
+    serializedCoroutineExecutor.post {
+      if (searchOpen) {
+        searchQuery = null
 
-      showPosts()
-      threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
-      threadPresenterCallback?.showSearch(false)
+        showPosts()
+        threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
+        threadPresenterCallback?.showSearch(false)
 
-      highlightPost(post)
-      scrollToPost(post, false)
-    } else {
-      threadPresenterCallback?.postClicked(post)
+        highlightPost(post)
+        scrollToPost(post, false)
+      } else {
+        threadPresenterCallback?.postClicked(post)
+      }
     }
   }
 
@@ -961,33 +969,33 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean) {
-    when (id as Int) {
-      POST_OPTION_QUOTE -> {
-        threadPresenterCallback?.hidePostsPopup()
-        threadPresenterCallback?.quote(post, false)
-      }
-      POST_OPTION_QUOTE_TEXT -> {
-        threadPresenterCallback?.hidePostsPopup()
-        threadPresenterCallback?.quote(post, true)
-      }
-      POST_OPTION_INFO -> showPostInfo(post)
-      POST_OPTION_LINKS -> if (post.linkables.size > 0) {
-        threadPresenterCallback?.showPostLinkables(post)
-      }
-      POST_OPTION_COPY_TEXT -> threadPresenterCallback?.clipboardPost(post)
-      POST_OPTION_REPORT -> {
-        if (inPopup) {
+    postOptionsClickExecutor.post {
+      when (id as Int) {
+        POST_OPTION_QUOTE -> {
           threadPresenterCallback?.hidePostsPopup()
+          threadPresenterCallback?.quote(post, false)
         }
-        threadPresenterCallback?.openReportView(post)
-      }
-      POST_OPTION_HIGHLIGHT_ID -> threadPresenterCallback?.highlightPostId(post.posterId)
-      POST_OPTION_HIGHLIGHT_TRIPCODE -> threadPresenterCallback?.highlightPostTripcode(post.tripcode)
-      POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
-      POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
-      POST_OPTION_DELETE -> requestDeletePost(post)
-      POST_OPTION_SAVE -> {
-        launch {
+        POST_OPTION_QUOTE_TEXT -> {
+          threadPresenterCallback?.hidePostsPopup()
+          threadPresenterCallback?.quote(post, true)
+        }
+        POST_OPTION_INFO -> showPostInfo(post)
+        POST_OPTION_LINKS -> if (post.linkables.size > 0) {
+          threadPresenterCallback?.showPostLinkables(post)
+        }
+        POST_OPTION_COPY_TEXT -> threadPresenterCallback?.clipboardPost(post)
+        POST_OPTION_REPORT -> {
+          if (inPopup) {
+            threadPresenterCallback?.hidePostsPopup()
+          }
+          threadPresenterCallback?.openReportView(post)
+        }
+        POST_OPTION_HIGHLIGHT_ID -> threadPresenterCallback?.highlightPostId(post.posterId)
+        POST_OPTION_HIGHLIGHT_TRIPCODE -> threadPresenterCallback?.highlightPostTripcode(post.tripcode)
+        POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
+        POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
+        POST_OPTION_DELETE -> requestDeletePost(post)
+        POST_OPTION_SAVE -> {
           if (savedReplyManager.isSaved(post.postDescriptor)) {
             savedReplyManager.unsavePost(post.postDescriptor)
           } else {
@@ -997,66 +1005,66 @@ class ThreadPresenter @Inject constructor(
           // force reload for reply highlighting
           requestData()
         }
-      }
-      POST_OPTION_PIN -> {
-        val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
-          ?: return
+        POST_OPTION_PIN -> {
+          val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+            ?: return@post
 
-        bookmarksManager.createBookmark(
-          threadDescriptor,
-          PostHelper.getTitle(post, chanDescriptor),
-          post.firstImage()?.thumbnailUrl
-        )
-      }
-      POST_OPTION_OPEN_BROWSER -> if (isBound) {
-        val site = currentChanDescriptor?.let { chanDescriptor ->
-          siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-        } ?: return
-
-        val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
-        AndroidUtils.openLink(url)
-      }
-      POST_OPTION_SHARE -> if (isBound) {
-        val site = currentChanDescriptor?.let { chanDescriptor ->
-          siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-        } ?: return
-
-        val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
-        AndroidUtils.shareLink(url)
-      }
-      POST_OPTION_REMOVE,
-      POST_OPTION_HIDE -> {
-        if (chanLoader == null || chanLoader!!.thread == null) {
-          return
+          bookmarksManager.createBookmark(
+            threadDescriptor,
+            PostHelper.getTitle(post, chanDescriptor),
+            post.firstImage()?.thumbnailUrl
+          )
         }
+        POST_OPTION_OPEN_BROWSER -> if (isBound) {
+          val site = currentChanDescriptor?.let { chanDescriptor ->
+            siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          } ?: return@post
 
-        val hide = id == POST_OPTION_HIDE
-        if (chanLoader!!.thread!!.chanDescriptor.isCatalogDescriptor()) {
-          threadPresenterCallback?.hideThread(post, post.no, hide)
-        } else {
-          val isEmpty = post.repliesFromCount == 0
-          if (isEmpty) {
-            // no replies to this post so no point in showing the dialog
-            hideOrRemovePosts(hide, false, post, chanLoader!!.thread!!.op.no)
+          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
+          AndroidUtils.openLink(url)
+        }
+        POST_OPTION_SHARE -> if (isBound) {
+          val site = currentChanDescriptor?.let { chanDescriptor ->
+            siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          } ?: return@post
+
+          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
+          AndroidUtils.shareLink(url)
+        }
+        POST_OPTION_REMOVE,
+        POST_OPTION_HIDE -> {
+          if (chanLoader == null || chanLoader!!.thread == null) {
+            return@post
+          }
+
+          val hide = id == POST_OPTION_HIDE
+          if (chanLoader!!.thread!!.chanDescriptor.isCatalogDescriptor()) {
+            threadPresenterCallback?.hideThread(post, post.no, hide)
           } else {
-            // show a dialog to the user with options to hide/remove the whole chain of posts
-            threadPresenterCallback?.showHideOrRemoveWholeChainDialog(hide,
-              post,
-              chanLoader!!.thread!!.op.no
-            )
+            val isEmpty = post.repliesFromCount == 0
+            if (isEmpty) {
+              // no replies to this post so no point in showing the dialog
+              hideOrRemovePosts(hide, false, post, chanLoader!!.thread!!.op.no)
+            } else {
+              // show a dialog to the user with options to hide/remove the whole chain of posts
+              threadPresenterCallback?.showHideOrRemoveWholeChainDialog(hide,
+                post,
+                chanLoader!!.thread!!.op.no
+              )
+            }
           }
         }
-      }
-      POST_OPTION_MOCK_REPLY -> if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        val threadDescriptor = currentChanDescriptor!! as ChanDescriptor.ThreadDescriptor
+        POST_OPTION_MOCK_REPLY -> if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          val threadDescriptor = currentChanDescriptor!! as ChanDescriptor.ThreadDescriptor
 
-        mockReplyManager.addMockReply(
-          post.boardDescriptor.siteName(),
-          threadDescriptor.boardCode(),
-          threadDescriptor.threadNo,
-          post.no
-        )
-        showToast(context, "Refresh to add mock replies")
+          mockReplyManager.addMockReply(
+            post.boardDescriptor.siteName(),
+            threadDescriptor.boardCode(),
+            threadDescriptor.threadNo,
+            post.no
+          )
+          showToast(context, "Refresh to add mock replies")
+        }
       }
     }
   }
@@ -1422,7 +1430,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showPostInfo(text.toString())
   }
 
-  private fun showPosts(refreshAfterHideOrRemovePosts: Boolean = false) {
+  private suspend fun showPosts(refreshAfterHideOrRemovePosts: Boolean = false) {
     if (chanLoader != null && chanLoader!!.thread != null) {
       threadPresenterCallback?.showPosts(
         chanLoader!!.thread,
@@ -1481,7 +1489,7 @@ class ThreadPresenter @Inject constructor(
     val displayingPosts: List<Post>
     val currentPosition: IntArray
 
-    fun showPosts(thread: ChanThread?, filter: PostsFilter, refreshAfterHideOrRemovePosts: Boolean)
+    suspend fun showPosts(thread: ChanThread?, filter: PostsFilter, refreshAfterHideOrRemovePosts: Boolean)
     fun postClicked(post: Post)
     fun showError(error: ChanLoaderException)
     fun showLoading()

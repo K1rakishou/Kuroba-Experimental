@@ -35,6 +35,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.PostHideManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
@@ -71,8 +72,10 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.filter.FilterType
 import com.github.adamantcheese.model.data.post.ChanPostHide
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Wrapper around ThreadListLayout, so that it cleanly manages between a loading state
@@ -88,7 +91,8 @@ class ThreadLayout @JvmOverloads constructor(
   ImageReencodingHelperCallback,
   RemovedPostsCallbacks,
   View.OnClickListener,
-  ThreadListLayoutCallback {
+  ThreadListLayoutCallback,
+  CoroutineScope {
 
   private enum class Visible {
     EMPTY, LOADING, THREAD, ERROR
@@ -124,6 +128,12 @@ class ThreadLayout @JvmOverloads constructor(
   private var refreshedFromSwipe = false
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
+
+  private val job = SupervisorJob()
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+
+  override val coroutineContext: CoroutineContext
+    get() = job + Dispatchers.Main + CoroutineName("ThreadLayout")
 
   override val toolbar: Toolbar?
     get() = callback.toolbar
@@ -193,6 +203,7 @@ class ThreadLayout @JvmOverloads constructor(
     drawerCallbacks = null
     presenter.unbindChanDescriptor()
     threadListLayout.onDestroy()
+    job.cancelChildren()
   }
 
   override fun onClick(v: View) {
@@ -254,7 +265,7 @@ class ThreadLayout @JvmOverloads constructor(
     return callback.threadBackPressed()
   }
 
-  override fun showPosts(
+  override suspend fun showPosts(
     thread: ChanThread?,
     filter: PostsFilter,
     refreshAfterHideOrRemovePosts: Boolean
@@ -421,7 +432,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (post.postImages.size == 1) {
-      callback.openFilterForType(FilterType.IMAGE, post.firstImage()!!.fileHash)
+      callback.openFilterForType(FilterType.IMAGE, post.firstImage()?.fileHash)
       return
     }
 
@@ -507,77 +518,87 @@ class ThreadLayout @JvmOverloads constructor(
 
   @Suppress("MoveLambdaOutsideParentheses")
   override fun hideThread(post: Post, threadNo: Long, hide: Boolean) {
-    // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
-    // is no point in hiding replies to a thread
-    val postHide = ChanPostHide(
-      postDescriptor = post.postDescriptor,
-      onlyHide = hide,
-      applyToWholeThread = true,
-      applyToReplies = false
-    )
+    serializedCoroutineExecutor.post {
+      // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
+      // is no point in hiding replies to a thread
+      val postHide = ChanPostHide(
+        postDescriptor = post.postDescriptor,
+        onlyHide = hide,
+        applyToWholeThread = true,
+        applyToReplies = false
+      )
 
-    postHideManager.create(postHide)
-    presenter.refreshUI()
+      postHideManager.create(postHide)
+      presenter.refreshUI()
 
-    val snackbarStringId = if (hide) {
-      R.string.thread_hidden
-    } else {
-      R.string.thread_removed
-    }
+      val snackbarStringId = if (hide) {
+        R.string.thread_hidden
+      } else {
+        R.string.thread_removed
+      }
 
-    SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
-      setAction(R.string.undo, {
-        postFilterManager.remove(post.postDescriptor)
-        postHideManager.remove(postHide.postDescriptor)
-        presenter.refreshUI()
-      })
-      show()
+      SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
+        setAction(R.string.undo, {
+          serializedCoroutineExecutor.post {
+            postFilterManager.remove(post.postDescriptor)
+            postHideManager.remove(postHide.postDescriptor)
+            presenter.refreshUI()
+          }
+        })
+        show()
+      }
     }
   }
 
   override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long) {
-    val hideList: MutableList<ChanPostHide> = ArrayList()
-    for (post in posts) {
-      // Do not add the OP post to the hideList since we don't want to hide an OP post
-      // while being in a thread (it just doesn't make any sense)
-      if (!post.isOP) {
-        hideList.add(
-          ChanPostHide(
-            postDescriptor = post.postDescriptor,
-            onlyHide = hide,
-            applyToWholeThread = false,
-            applyToReplies = wholeChain
+    serializedCoroutineExecutor.post {
+      val hideList: MutableList<ChanPostHide> = ArrayList()
+      for (post in posts) {
+        // Do not add the OP post to the hideList since we don't want to hide an OP post
+        // while being in a thread (it just doesn't make any sense)
+        if (!post.isOP) {
+          hideList.add(
+            ChanPostHide(
+              postDescriptor = post.postDescriptor,
+              onlyHide = hide,
+              applyToWholeThread = false,
+              applyToReplies = wholeChain
+            )
           )
-        )
-      }
-    }
-
-    postHideManager.createMany(hideList)
-    presenter.refreshUI()
-
-    val formattedString = if (hide) {
-      AndroidUtils.getQuantityString(R.plurals.post_hidden, posts.size, posts.size)
-    } else {
-      AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
-    }
-
-    SnackbarWrapper.create(this, formattedString, Snackbar.LENGTH_LONG).apply {
-      setAction(R.string.undo) {
-        postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
-
-        postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
-        presenter.refreshUI()
+        }
       }
 
-      show()
+      postHideManager.createMany(hideList)
+      presenter.refreshUI()
+
+      val formattedString = if (hide) {
+        AndroidUtils.getQuantityString(R.plurals.post_hidden, posts.size, posts.size)
+      } else {
+        AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
+      }
+
+      SnackbarWrapper.create(this, formattedString, Snackbar.LENGTH_LONG).apply {
+        setAction(R.string.undo) {
+          serializedCoroutineExecutor.post {
+            postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
+
+            postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
+            presenter.refreshUI()
+          }
+        }
+
+        show()
+      }
     }
   }
 
   override fun unhideOrUnremovePost(post: Post) {
-    postFilterManager.remove(post.postDescriptor)
+    serializedCoroutineExecutor.post {
+      postFilterManager.remove(post.postDescriptor)
 
-    postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
-    presenter.refreshUI()
+      postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
+      presenter.refreshUI()
+    }
   }
 
   override fun viewRemovedPostsForTheThread(
@@ -588,14 +609,16 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>) {
-    postHideManager.removeManyChanPostHides(selectedPosts)
-    presenter.refreshUI()
+    serializedCoroutineExecutor.post {
+      postHideManager.removeManyChanPostHides(selectedPosts)
+      presenter.refreshUI()
 
-    SnackbarWrapper.create(
-      this,
-      AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
-      Snackbar.LENGTH_LONG
-    ).apply { show() }
+      SnackbarWrapper.create(
+        this,
+        AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
+        Snackbar.LENGTH_LONG
+      ).apply { show() }
+    }
   }
 
   override fun onPostUpdated(post: Post) {
@@ -766,11 +789,11 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentRepliesController(controller: Controller) {
-    callback.presentController(controller)
+    callback.presentController(controller, true)
   }
 
   override fun presentReencodeOptionsController(controller: Controller) {
-    callback.presentController(controller)
+    callback.presentController(controller, true)
   }
 
   override fun onImageOptionsApplied(reply: Reply, filenameRemoved: Boolean) {
@@ -782,7 +805,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentRemovedPostsController(controller: Controller) {
-    callback.presentController(controller)
+    callback.presentController(controller, true)
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -823,10 +846,10 @@ class ThreadLayout @JvmOverloads constructor(
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
     fun onShowPosts()
-    fun presentController(controller: Controller, animated: Boolean = true)
+    fun presentController(controller: Controller, animated: Boolean)
     fun openReportController(post: Post)
     fun hideSwipeRefreshLayout()
-    fun openFilterForType(type: FilterType?, filterText: String?)
+    fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
   }
 }

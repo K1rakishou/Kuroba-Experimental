@@ -24,8 +24,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
-import android.os.Handler
-import android.os.Looper
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.KeyEvent
@@ -106,7 +104,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
-  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(this)
+
+  private val listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
@@ -126,8 +125,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   var replyOpen = false
     private set
-
-  private val mainHandler = Handler(Looper.getMainLooper())
 
   private val PARTY: ItemDecoration = object : ItemDecoration() {
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -320,7 +317,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       // As requested by the RecyclerView, make sure that the adapter isn't changed
       // while in a layout pass. Postpone to the next frame.
-      mainHandler.post { callback?.onListScrolledToBottom() }
+      listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
     }
   }
 
@@ -420,7 +417,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.setPostViewMode(postViewMode)
   }
 
-  fun showPosts(
+  suspend fun showPosts(
     thread: ChanThread,
     filter: PostsFilter,
     initial: Boolean,
@@ -450,16 +447,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     setFastScroll(true)
 
-    rendezvousCoroutineExecutor.post {
-      val filteredPosts = filter.apply(thread.posts)
-
-      postAdapter.setThread(
-        thread.chanDescriptor,
-        thread.postPreloadedInfoHolder,
-        filteredPosts,
-        refreshAfterHideOrRemovePosts
-      )
-    }
+    postAdapter.setThread(
+      thread.chanDescriptor,
+      thread.postPreloadedInfoHolder,
+      filter.apply(thread.posts),
+      refreshAfterHideOrRemovePosts
+    )
   }
 
   fun onBack(): Boolean {
@@ -956,7 +949,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   interface ThreadListLayoutPresenterCallback {
     fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
-    fun onListScrolledToBottom()
+    suspend fun onListScrolledToBottom()
   }
 
   interface ThreadListLayoutCallback {

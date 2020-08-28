@@ -549,7 +549,7 @@ class StartActivity : AppCompatActivity(),
       mainNavigationController.pushController(browseController, false)
     }
 
-    browseController!!.setDrawerCallbacks(drawerController)
+    browseController!!.drawerCallbacks = drawerController
   }
 
   private fun isKnownAction(action: String): Boolean {
