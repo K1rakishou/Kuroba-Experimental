@@ -19,10 +19,6 @@ package com.github.adamantcheese.chan
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.nfc.NdefMessage
-import android.nfc.NfcAdapter
-import android.nfc.NfcAdapter.CreateNdefMessageCallback
-import android.nfc.NfcEvent
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.ViewGroup
@@ -45,7 +41,6 @@ import com.github.adamantcheese.chan.ui.controller.AlbumViewController
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController
 import com.github.adamantcheese.chan.ui.controller.ViewThreadController
-import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.SplitNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
@@ -71,7 +66,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class StartActivity : AppCompatActivity(),
-  CreateNdefMessageCallback,
   FSAFActivityCallbacks,
   StartActivityCallbacks {
 
@@ -196,9 +190,6 @@ class StartActivity : AppCompatActivity(),
     // Do this after setContentView, or the decor creating will reset the background to a
     // default non-null drawable
     window.setBackgroundDrawable(null)
-
-    val adapter = NfcAdapter.getDefaultAdapter(this)
-    adapter?.setNdefPushMessageCallback(this, this)
 
     if (ChanSettings.fullUserRotationEnable.get()) {
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
@@ -679,35 +670,6 @@ class StartActivity : AppCompatActivity(),
     )
 
     outState.putParcelable(STATE_KEY, chanState)
-  }
-
-  override fun createNdefMessage(event: NfcEvent): NdefMessage? {
-    var threadController: Controller? = null
-
-    if (drawerController.childControllers[0] is DoubleNavigationController) {
-      val splitNavigationController = drawerController.childControllers[0] as SplitNavigationController
-
-      if (splitNavigationController.rightController is NavigationController) {
-        val rightNavigationController = splitNavigationController.rightController as NavigationController
-
-        for (controller in rightNavigationController.childControllers) {
-          if (controller is CreateNdefMessageCallback) {
-            threadController = controller
-            break
-          }
-        }
-      }
-    }
-
-    if (threadController == null) {
-      threadController = mainNavigationController.top
-    }
-
-    return if (threadController is CreateNdefMessageCallback) {
-      (threadController as CreateNdefMessageCallback).createNdefMessage(event)
-    } else {
-      null
-    }
   }
 
   fun pushController(controller: Controller) {
