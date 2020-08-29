@@ -34,7 +34,6 @@ import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import org.jsoup.nodes.Element;
@@ -56,11 +55,11 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
 
-    private static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
-    private static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
-    private static final String OP_REPLY_SUFFIX = " (OP)";
-    private static final String DEAD_REPLY_SUFFIX = " (DEAD)";
-    private static final String EXTERN_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
+    protected static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
+    protected static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
+    protected static final String OP_REPLY_SUFFIX = " (OP)";
+    protected static final String DEAD_REPLY_SUFFIX = " (DEAD)";
+    protected static final String EXTERN_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
 
     private MockReplyManager mockReplyManager;
     private Map<String, List<StyleRule>> rules = new HashMap<>();
@@ -265,7 +264,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERN_THREAD_LINK_SUFFIX));
         }
 
-        if (handlerLink.getType() == PostLinkable.Type.QUOTE) {
+        if (handlerLink.getType() == PostLinkable.Type.QUOTE
+                || handlerLink.getType() == PostLinkable.Type.DEAD) {
             Long postNo = handlerLink.getLinkValue().extractLongOrNull();
 
             // TODO(KurobaEx): archive ghost posts
@@ -298,9 +298,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         spannableStringBuilder.append(res);
     }
 
-    private void appendSuffixes(
+    protected void appendSuffixes(
             PostParser.Callback callback,
-            Post.Builder post,
+            @NonNull Post.Builder post,
             PostLinkable.Link handlerLink,
             Long postNo,
             Long postSubNo
@@ -472,7 +472,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         if (externalMatcher.matches()) {
             String board = externalMatcher.group(1);
             long threadId = Long.parseLong(externalMatcher.group(2));
-            long postId = extractPostIdOrReplaceWithThreadId(externalMatcher, threadId, 3);
+            long postId = Long.parseLong(externalMatcher.group(3));
 
             if (board.equals(post.boardDescriptor.getBoardCode()) && callback.isInternal(postId)) {
                 // link to post in same thread with post number (>>post)
@@ -523,15 +523,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 text,
                 value
         );
-    }
-
-    private long extractPostIdOrReplaceWithThreadId(Matcher externalMatcher, long threadId, int group) {
-        String postIdGroup = KotlinExtensionsKt.groupOrNull(externalMatcher, group);
-        if (TextUtils.isEmpty(postIdGroup)) {
-            return threadId;
-        }
-
-        return Long.parseLong(postIdGroup);
     }
 
     protected Matcher matchBoardSearch(String href, Post.Builder post) {

@@ -7,7 +7,9 @@ import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.hashSetWithCap
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.filter.ChanFilter
 import com.github.adamantcheese.model.repository.ChanPostRepository
@@ -53,6 +55,8 @@ class ParsePostsUseCase(
       .map { postBuilder -> postBuilder.id }
       .toMutableSet()
 
+    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
+
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
         ?: ArchiveDescriptor.NO_ARCHIVE_ID
@@ -67,6 +71,10 @@ class ParsePostsUseCase(
 
         internalIds.addAll(cachedInternalIds)
       }
+
+      boardDescriptors.addAll(
+        boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor())
+      )
     }
 
     if (boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor()) == null) {
@@ -89,7 +97,8 @@ class ParsePostsUseCase(
                 filters,
                 postToParse,
                 chanReader,
-                internalIds
+                internalIds,
+                boardDescriptors
               ).parse()
             }
           }

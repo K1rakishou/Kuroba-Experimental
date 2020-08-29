@@ -382,6 +382,14 @@ class BoardManager(
     return true
   }
 
+  fun getAllBoardDescriptorsForSite(siteDescriptor: SiteDescriptor): Set<BoardDescriptor> {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read { boardsMap[siteDescriptor]?.keys ?: emptySet() }
+  }
+
+
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (isReady()) {

@@ -127,6 +127,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     override fun isInternal(postNo: Long): Boolean {
       return true
     }
+
+    override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
+      return true
+    }
   }
 
   private val selectedPrimaryColors = ArrayList<PrimaryColor>()
