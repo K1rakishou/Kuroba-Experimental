@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.http;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.site.SiteActions;
@@ -51,7 +52,28 @@ public class ReplyResponse {
     public boolean probablyBanned = false;
     public boolean requireAuthentication = false;
 
+    @Nullable
     public PostDescriptor getPostDescriptorOrNull() {
+        if (probablyBanned || requireAuthentication || postNo <= 0L || threadNo <= 0) {
+            return null;
+        }
+
         return PostDescriptor.create(siteDescriptor.getSiteName(), boardCode, threadNo, postNo);
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "ReplyResponse{" +
+                "posted=" + posted +
+                ", errorMessage='" + errorMessage + '\'' +
+                ", siteDescriptor=" + siteDescriptor +
+                ", boardCode='" + boardCode + '\'' +
+                ", threadNo=" + threadNo +
+                ", postNo=" + postNo +
+                ", password='" + password + '\'' +
+                ", probablyBanned=" + probablyBanned +
+                ", requireAuthentication=" + requireAuthentication +
+                '}';
     }
 }
