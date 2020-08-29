@@ -91,7 +91,11 @@ class DvachCommentParser(mockReplyManager: MockReplyManager) : VichanCommentPars
   ) {
     // Append (OP) when it's a reply to OP
     if (postNo == post.opId) {
-      handlerLink.key = TextUtils.concat(handlerLink.key, OP_REPLY_SUFFIX)
+      // 2ch.hk automatically appends (OP) at the end of quotes that quote OPs so we don't really
+      // need to do it by ourselves, but we still do just in case.
+      if (!handlerLink.key.endsWith(OP_REPLY_SUFFIX)) {
+        handlerLink.key = TextUtils.concat(handlerLink.key, OP_REPLY_SUFFIX)
+      }
     }
 
     if (handlerLink.type == PostLinkable.Type.DEAD) {
