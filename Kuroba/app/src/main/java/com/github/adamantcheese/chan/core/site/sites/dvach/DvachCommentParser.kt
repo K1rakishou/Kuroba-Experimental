@@ -24,40 +24,45 @@ class DvachCommentParser(mockReplyManager: MockReplyManager) : VichanCommentPars
     return this
   }
 
-  override fun getFullQuotePattern(): Pattern {
-    return EXTERNAL_QUOTE_PATTERN
-  }
-
   override fun matchAnchor(
     post: Post.Builder,
     text: CharSequence,
     anchor: Element,
     callback: PostParser.Callback
   ): PostLinkable.Link {
-    val siteDescriptor = post.boardDescriptor!!.siteDescriptor
     val href = extractQuote(anchor.attr("href"), post)
+    val currentThreadNo = post.opId
 
-    val quoteMatcher = INTERNAL_QUOTE_PATTERN.matcher(href)
-    if (quoteMatcher.matches()) {
-      val internalPostLinkable = handleInternalLink(href, callback, text)
-      if (internalPostLinkable != null) {
-        return internalPostLinkable
-      }
-
-      return PostLinkable.Link(PostLinkable.Type.LINK, text, StringValue(href))
+    val quoteMatcher = QUOTE_PATTERN.matcher(href)
+    if (!quoteMatcher.find()) {
+      return handleNotQuote(post, href, text, callback)
     }
 
-    val externalMatcher = EXTERNAL_QUOTE_PATTERN.matcher(href)
-    if (externalMatcher.matches()) {
-      val externalPostLinkable = handleExternalLink(externalMatcher, post, callback, text)
-      if (externalPostLinkable != null) {
-        return externalPostLinkable
-      }
+    val boardCode = quoteMatcher.groupOrNull(1)
+    val threadNo = quoteMatcher.groupOrNull(2)?.toLong()
 
-      return PostLinkable.Link(PostLinkable.Type.LINK, text, StringValue(href))
+    if (boardCode == null || threadNo == null) {
+      return handleNotQuote(post, href, text, callback)
     }
 
+    val postNo = extractPostIdOrReplaceWithThreadId(quoteMatcher, threadNo, 3)
+    if (currentThreadNo != threadNo) {
+      // handle external quote
+      return handleExternalLink(post, callback, text, boardCode, threadNo, postNo)
+    }
+
+    return handleInternalLink(callback, text, postNo)
+  }
+
+  private fun handleNotQuote(
+    post: Post.Builder,
+    href: String,
+    text: CharSequence,
+    callback: PostParser.Callback
+  ): PostLinkable.Link {
+    val siteDescriptor = post.boardDescriptor!!.siteDescriptor
     val boardLinkMatcher = BOARD_LINK_PATTERN.matcher(href)
+
     if (boardLinkMatcher.find()) {
       val boardCode = boardLinkMatcher.groupOrNull(1)
       if (!boardCode.isNullOrEmpty()) {
@@ -104,48 +109,32 @@ class DvachCommentParser(mockReplyManager: MockReplyManager) : VichanCommentPars
   }
 
   private fun handleExternalLink(
-    externalMatcher: Matcher,
     post: Post.Builder,
     callback: PostParser.Callback,
-    text: CharSequence
-  ): PostLinkable.Link? {
-    val board = externalMatcher.groupOrNull(1)
-      ?: return null
-
-    val threadId = externalMatcher.groupOrNull(2)?.toLong()
-      ?: return null
-
-    val postId = extractPostIdOrReplaceWithThreadId(externalMatcher, threadId, 3)
-
-    if (board == post.boardDescriptor!!.boardCode && callback.isInternal(postId)) {
+    text: CharSequence,
+    boardCode: String,
+    threadNo: Long,
+    postNo: Long
+  ): PostLinkable.Link {
+    if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(postNo)) {
       // link to post in same thread with post number (>>post)
-      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postId))
+      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postNo))
     }
 
     // link to post not in same thread with post number (>>post or >>>/board/post)
-    return PostLinkable.Link(PostLinkable.Type.THREAD, text, ThreadLink(board, threadId, postId))
+    return PostLinkable.Link(PostLinkable.Type.THREAD, text, ThreadLink(boardCode, threadNo, postNo))
   }
 
   private fun handleInternalLink(
-    href: String,
     callback: PostParser.Callback,
-    text: CharSequence
-  ): PostLinkable.Link? {
-    val postIdMatcher = POST_ID_PATTERN.matcher(href)
-    if (!postIdMatcher.find()) {
-      return null
+    text: CharSequence,
+    postNo: Long
+  ): PostLinkable.Link {
+    if (callback.isInternal(postNo)) {
+      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postNo))
     }
 
-    val postId = postIdMatcher.groupOrNull(1)?.toLong()
-    if (postId == null) {
-      return null
-    }
-
-    if (callback.isInternal(postId)) {
-      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postId))
-    }
-
-    return PostLinkable.Link(PostLinkable.Type.DEAD, text, LongValue(postId))
+    return PostLinkable.Link(PostLinkable.Type.DEAD, text, LongValue(postNo))
   }
 
   @Suppress("SameParameterValue")
@@ -165,7 +154,6 @@ class DvachCommentParser(mockReplyManager: MockReplyManager) : VichanCommentPars
     // full quote - https://2ch.hk/po/res/39420150.html#39420150
     private val POST_ID_PATTERN = Pattern.compile("#(\\d+)$")
     private val BOARD_LINK_PATTERN = Pattern.compile("/(\\w+)/?\$")
-    private val INTERNAL_QUOTE_PATTERN = Pattern.compile("^/(\\w+)/\\w+/(\\d+).html(?:#(\\d+))?")
-    private val EXTERNAL_QUOTE_PATTERN = Pattern.compile(".+/(\\w+)/\\w+/(\\d+).html(?:#(\\d+))?")
+    private val QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+).html(?:#(\\d+))?")
   }
 }
