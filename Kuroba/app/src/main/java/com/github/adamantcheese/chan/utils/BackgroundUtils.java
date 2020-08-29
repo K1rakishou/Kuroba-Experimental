@@ -60,7 +60,7 @@ public class BackgroundUtils {
         Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but " +
                 "got " + Thread.currentThread().getName());
 
-        if (getFlavorType() != AndroidUtils.FlavorType.Release
+        if (getFlavorType() != AndroidUtils.FlavorType.Stable
                 && ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on a background thread!");
         }
@@ -71,7 +71,7 @@ public class BackgroundUtils {
             return;
         }
 
-        if (getFlavorType() != AndroidUtils.FlavorType.Release
+        if (getFlavorType() != AndroidUtils.FlavorType.Stable
                 && ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on the main thread!");
         } else {

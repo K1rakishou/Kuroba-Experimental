@@ -268,7 +268,7 @@ public class ManagerModule {
         SavedFilesBaseDirectory savedFilesBaseDirectory = new SavedFilesBaseDirectory();
 
         BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
-        if (getFlavorType() != AndroidUtils.FlavorType.Release) {
+        if (getFlavorType() != AndroidUtils.FlavorType.Stable) {
             resolutionStrategy = ThrowAnException;
         }
 

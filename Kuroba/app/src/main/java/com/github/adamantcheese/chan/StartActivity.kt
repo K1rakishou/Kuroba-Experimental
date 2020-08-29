@@ -223,7 +223,6 @@ class StartActivity : AppCompatActivity(),
       "Auto-updater doesn't work yet, so you will have to download new versions manually.\n" +
       "You can find them here: https://github.com/K1rakishou/Kuroba-Experimental/releases\n" +
       "Expect lots of crashes and other bugs.\n" +
-      "Crash reporting doesn't work too, btw.\n" +
       "Don't forget to report all the bugs on github: https://github.com/K1rakishou/Kuroba-Experimental/issues\n\n"
 
     val messageText = SpannableString(message)

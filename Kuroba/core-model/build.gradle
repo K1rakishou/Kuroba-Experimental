@@ -24,6 +24,8 @@ android {
         debug {
             minifyEnabled false
         }
+        android {
+        }
     }
 }
 

@@ -102,8 +102,10 @@ class UpdateManager(
   fun autoUpdateCheck() {
     BackgroundUtils.ensureMainThread()
 
-    if (getFlavorType() == FlavorType.Dev) {
-      Logger.d(TAG, "Updater is disabled for dev builds!")
+    // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
+    //  to make beta builds
+    if (!isStableBuild()) {
+      Logger.d(TAG, "Updater is disabled for beta/dev builds!")
       return
     }
 
@@ -125,7 +127,9 @@ class UpdateManager(
   }
 
   fun manualUpdateCheck() {
-    if (getFlavorType() == FlavorType.Dev) {
+    // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
+    //  to make beta builds
+    if (!isStableBuild()) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
       return
     }
@@ -157,7 +161,7 @@ class UpdateManager(
     }
 
     when (getFlavorType()) {
-      FlavorType.Release -> {
+      FlavorType.Stable -> {
         Logger.d(TAG, "Calling update API for release")
         updateRelease(manual)
       }
@@ -238,9 +242,7 @@ class UpdateManager(
           commitHash
         )
 
-        fauxResponse.apkURL = (
-          BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk"
-          ).toHttpUrl()
+        fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
         fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
 
         processUpdateApiResponse(fauxResponse, manual)

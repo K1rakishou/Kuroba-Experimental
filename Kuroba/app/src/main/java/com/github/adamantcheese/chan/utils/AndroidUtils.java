@@ -179,10 +179,14 @@ public class AndroidUtils {
         }
     }
 
+    public static boolean isStableBuild() {
+        return getFlavorType() == FlavorType.Stable;
+    }
+
     public static FlavorType getFlavorType() {
         switch (BuildConfig.FLAVOR_TYPE) {
             case 0:
-                return FlavorType.Release;
+                return FlavorType.Stable;
             case 1:
                 return FlavorType.Beta;
             case 2:
@@ -717,7 +721,7 @@ public class AndroidUtils {
     }
 
     public enum FlavorType {
-        Release,
+        Stable,
         Beta,
         Dev
     }

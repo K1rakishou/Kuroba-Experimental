@@ -57,14 +57,18 @@ class MainSettingsScreen(
           identifier = MainScreen.AboutAppGroup.AppVersion,
           topDescriptionStringFunc = { createAppVersionString() },
           bottomDescriptionStringFunc = {
-            if (getFlavorType() != FlavorType.Dev) {
+            // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
+            //  to make beta builds
+            if (isStableBuild()) {
               context.getString(R.string.settings_update_check)
             } else {
               context.getString(R.string.settings_updates_are_disabled)
             }
           },
           callbackWithClickAction = {
-            if (getFlavorType() != FlavorType.Dev) {
+            // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
+            //  to make beta builds
+            if (isStableBuild()) {
               updateManager.manualUpdateCheck()
               SettingClickAction.NoAction
             } else {

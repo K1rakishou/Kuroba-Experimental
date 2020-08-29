@@ -98,29 +98,6 @@ android {
         vectorDrawables.useSupportLibrary = true
     }
 
-    compileOptions {
-        encoding = 'UTF-8'
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
-        freeCompilerArgs = ["-XXLanguage:+InlineClasses", "-Xopt-in=kotlin.RequiresOptIn"]
-    }
-
-    lintOptions {
-        abortOnError false
-    }
-
-    packagingOptions {
-        exclude 'META-INF/*'
-    }
-
-    kapt {
-        correctErrorTypes = true
-    }
-
     flavorDimensions "default"
 
     productFlavors {
@@ -260,6 +237,30 @@ android {
             minifyEnabled false
             debuggable = true
         }
+    }
+
+    compileOptions {
+        encoding = 'UTF-8'
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses", "-Xopt-in=kotlin.RequiresOptIn"]
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    packagingOptions {
+        exclude 'META-INF/*'
+    }
+
+    kapt {
+        correctErrorTypes = true
     }
 }
 
