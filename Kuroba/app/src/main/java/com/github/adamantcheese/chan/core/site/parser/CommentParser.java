@@ -34,6 +34,7 @@ import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 import org.jsoup.nodes.Element;
@@ -471,7 +472,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         if (externalMatcher.matches()) {
             String board = externalMatcher.group(1);
             long threadId = Long.parseLong(externalMatcher.group(2));
-            long postId = Long.parseLong(externalMatcher.group(3));
+            long postId = extractPostIdOrReplaceWithThreadId(externalMatcher, threadId, 3);
 
             if (board.equals(post.boardDescriptor.getBoardCode()) && callback.isInternal(postId)) {
                 // link to post in same thread with post number (>>post)
@@ -522,6 +523,15 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 text,
                 value
         );
+    }
+
+    private long extractPostIdOrReplaceWithThreadId(Matcher externalMatcher, long threadId, int group) {
+        String postIdGroup = KotlinExtensionsKt.groupOrNull(externalMatcher, group);
+        if (TextUtils.isEmpty(postIdGroup)) {
+            return threadId;
+        }
+
+        return Long.parseLong(postIdGroup);
     }
 
     protected Matcher matchBoardSearch(String href, Post.Builder post) {
