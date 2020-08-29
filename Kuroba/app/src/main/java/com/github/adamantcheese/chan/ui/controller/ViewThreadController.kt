@@ -414,16 +414,16 @@ open class ViewThreadController(
   override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ -> openCrossThreadInternal(threadDescriptor) }
+      .setPositiveButton(R.string.ok) { _, _ -> openCrossThreadInternal(threadToOpenDescriptor) }
       .setTitle(R.string.open_thread_confirmation)
       .setMessage("/" + threadToOpenDescriptor.boardCode() + "/" + threadToOpenDescriptor.threadNo)
       .show()
   }
 
-  private fun openCrossThreadInternal(threadDescriptor: ThreadDescriptor) {
+  private fun openCrossThreadInternal(threadToOpenDescriptor: ThreadDescriptor) {
     mainScope.launch {
-      threadFollowerpool.addFirst(Pair(threadDescriptor, threadDescriptor))
-      loadThread(threadDescriptor)
+      threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
+      loadThread(threadToOpenDescriptor)
     }
   }
 
