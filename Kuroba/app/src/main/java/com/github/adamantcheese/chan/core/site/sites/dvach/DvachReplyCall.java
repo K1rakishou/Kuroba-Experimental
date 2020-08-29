@@ -24,6 +24,7 @@ import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.common.CommonReplyHttpCall;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
 import com.github.adamantcheese.chan.core.site.http.Reply;
+import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
@@ -37,8 +38,9 @@ import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class DvachReplyCall
-        extends CommonReplyHttpCall {
+public class DvachReplyCall extends CommonReplyHttpCall {
+    private static final String TAG = "DvachReplyCall";
+
     private static final Pattern ERROR_MESSAGE =
             Pattern.compile("^\\{\"Error\":-\\d+,\"Reason\":\"(.*)\"");
     private static final Pattern POST_MESSAGE =
@@ -118,18 +120,20 @@ public class DvachReplyCall
     @Override
     public void process(Response response, String result) {
         Matcher errorMessageMatcher = ERROR_MESSAGE.matcher(result);
-
         if (errorMessageMatcher.find()) {
             replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text();
             replyResponse.probablyBanned = replyResponse.errorMessage.contains(PROBABLY_BANNED_TEXT);
-
             return;
         }
 
         replyResponse.posted = true;
-        Matcher postMessageMatcher = POST_MESSAGE.matcher(result);
 
+        Matcher postMessageMatcher = POST_MESSAGE.matcher(result);
         if (postMessageMatcher.find()) {
+            if (reply.chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+                replyResponse.threadNo = ((ChanDescriptor.ThreadDescriptor) reply.chanDescriptor).getThreadNo();
+            }
+
             replyResponse.postNo = Integer.parseInt(postMessageMatcher.group(1));
             return;
         }
@@ -139,6 +143,9 @@ public class DvachReplyCall
             int threadNo = Integer.parseInt(threadMessageMatcher.group(1));
             replyResponse.threadNo = threadNo;
             replyResponse.postNo = threadNo;
+            return;
         }
+
+        Logger.e(TAG, "Couldn't handle server response! response = \"" + result + "\"");
     }
 }

@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.site.http.HttpCall;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
+import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
@@ -88,21 +89,29 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         }
 
         Matcher threadNoMatcher = THREAD_NO_PATTERN.matcher(result);
-        if (threadNoMatcher.find()) {
-            try {
-                replyResponse.threadNo = Integer.parseInt(threadNoMatcher.group(1));
-                replyResponse.postNo = Integer.parseInt(threadNoMatcher.group(2));
-            } catch (NumberFormatException ignored) {
-            }
-
-            //threadNo can be 0 iff this is a new thread
-            if (replyResponse.threadNo >= 0 && replyResponse.postNo > 0) {
-                replyResponse.posted = true;
-            }
+        if (!threadNoMatcher.find()) {
+            Logger.e(TAG, "Couldn't handle server response! response = \"" + result + "\"");
+            return;
         }
+
+        try {
+            replyResponse.threadNo = Integer.parseInt(threadNoMatcher.group(1));
+            replyResponse.postNo = Integer.parseInt(threadNoMatcher.group(2));
+        } catch (NumberFormatException error) {
+            Logger.e(TAG, "ReplyResponse parsing error", error);
+        }
+
+        // threadNo can be 0 if this is a new thread
+        if (replyResponse.threadNo >= 0 && replyResponse.postNo > 0) {
+            replyResponse.posted = true;
+            return;
+        }
+
+        Logger.e(TAG, "Couldn't handle server response! response = \"" + result + "\"");
     }
 
     public abstract void addParameters(
-            MultipartBody.Builder builder, @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+            MultipartBody.Builder builder,
+            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     );
 }

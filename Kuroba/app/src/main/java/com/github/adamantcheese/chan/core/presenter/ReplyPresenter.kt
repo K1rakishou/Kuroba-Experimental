@@ -549,14 +549,17 @@ class ReplyPresenter @Inject constructor(
       bookmarkThread(newThreadDescriptor, threadNo)
     }
 
-    replyResponse.postDescriptorOrNull?.let { postDescriptor ->
+    val responsePostDescriptor = replyResponse.postDescriptorOrNull
+    if (responsePostDescriptor != null) {
       val password = if (replyResponse.password.isNotEmpty()) {
         replyResponse.password
       } else {
         null
       }
 
-      savedReplyManager.saveReply(ChanSavedReply(postDescriptor, password))
+      savedReplyManager.saveReply(ChanSavedReply(responsePostDescriptor, password))
+    } else {
+      Logger.e(TAG, "Couldn't create responsePostDescriptor, replyResponse=${replyResponse}")
     }
 
     switchPageSuspend(Page.INPUT)
