@@ -24,6 +24,7 @@ import com.github.adamantcheese.chan.core.model.PostFilter
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.filter.ChanFilter
 import java.util.*
 
@@ -37,7 +38,8 @@ internal class PostParseWorker(
   private val filters: List<ChanFilter>,
   private val postBuilder: Post.Builder,
   private val reader: ChanReader,
-  private val internalIds: Set<Long>
+  private val internalIds: Set<Long>,
+  private val boardDescriptors: Set<BoardDescriptor>
 ) {
 
   suspend fun parse(): Post? {
@@ -58,6 +60,10 @@ internal class PostParseWorker(
 
         override fun isInternal(postNo: Long): Boolean {
           return internalIds.contains(postNo)
+        }
+
+        override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
+          return boardDescriptors.contains(boardDescriptor)
         }
       })
     }.mapErrorToValue { error ->

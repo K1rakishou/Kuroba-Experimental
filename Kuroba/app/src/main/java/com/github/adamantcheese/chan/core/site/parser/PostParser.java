@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.ui.theme.Theme;
+import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 
 public interface PostParser {
     Post parse(
@@ -45,5 +46,7 @@ public interface PostParser {
          * @return {@code true} if referring to a post in the thread, {@code false} otherwise.
          */
         boolean isInternal(long postNo);
+
+        boolean isValidBoard(@NonNull BoardDescriptor boardDescriptor);
     }
 }
