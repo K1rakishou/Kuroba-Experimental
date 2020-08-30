@@ -47,26 +47,6 @@ class BottomNavBarVisibilityStateManager {
     replyViewStateSubject.onNext(Unit)
   }
 
-  fun searchViewStateChanged(isVisible: Boolean) {
-    BackgroundUtils.ensureMainThread()
-
-    if (isVisible) {
-      if (state[SearchViewBut]) {
-        return
-      }
-
-      state.set(SearchViewBut)
-    } else {
-      if (!state[SearchViewBut]) {
-        return
-      }
-
-      state.clear(SearchViewBut)
-    }
-
-    replyViewStateSubject.onNext(Unit)
-  }
-
   fun anyOfViewsIsVisible(): Boolean {
     BackgroundUtils.ensureMainThread()
 
@@ -78,6 +58,5 @@ class BottomNavBarVisibilityStateManager {
 
     private const val CatalogReplyViewBit = 1 shl 0
     private const val ThreadReplyViewBit = 1 shl 1
-    private const val SearchViewBut = 1 shl 2
   }
 }

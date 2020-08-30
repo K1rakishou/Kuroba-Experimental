@@ -245,13 +245,15 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onAuthenticateCalled() {
-    if (site.actions().postRequiresAuthentication()) {
-      if (!onPrepareToSubmit(true)) {
-        return
-      }
-
-      switchPage(Page.AUTHENTICATION, useV2NoJsCaptcha = true, autoReply = false)
+    if (!site.actions().postRequiresAuthentication()) {
+      return
     }
+
+    if (!onPrepareToSubmit(true)) {
+      return
+    }
+
+    switchPage(Page.AUTHENTICATION, useV2NoJsCaptcha = true, autoReply = false)
   }
 
   fun onSubmitClicked(longClicked: Boolean) {

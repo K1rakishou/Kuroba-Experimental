@@ -253,18 +253,10 @@ class StartActivity : AppCompatActivity(),
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
       compositeDisposable += bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
-        .subscribe {
-          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            return@subscribe
-          }
-
-          updateBottomNavBar()
-        }
+        .subscribe { updateBottomNavBar() }
 
       compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
-        .subscribe { change ->
-          updateBottomNavBarIfNeeded(change)
-        }
+        .subscribe { change -> updateBottomNavBarIfNeeded(change) }
     }
 
     onNewIntentInternal(intent)
@@ -323,6 +315,8 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
+    Logger.d(TAG, "onNewIntentInternal called")
+
     lifecycleScope.launch {
       bookmarksManager.awaitUntilInitialized()
 
@@ -341,10 +335,6 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun updateBottomNavBarIfNeeded(change: ControllerNavigationManager.ControllerNavigationChange?) {
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      return
-    }
-
     when (change) {
       is ControllerNavigationManager.ControllerNavigationChange.Presented,
       is ControllerNavigationManager.ControllerNavigationChange.Unpresented,
@@ -364,6 +354,10 @@ class StartActivity : AppCompatActivity(),
   }
 
   private fun updateBottomNavBar() {
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      return
+    }
+
     val hasRequiresNoBottomNavBarControllers = isControllerAdded { controller -> controller is RequiresNoBottomNavBar }
     if (hasRequiresNoBottomNavBarControllers) {
       drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
