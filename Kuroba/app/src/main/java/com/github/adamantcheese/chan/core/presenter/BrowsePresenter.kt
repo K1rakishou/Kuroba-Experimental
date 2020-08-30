@@ -25,7 +25,6 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -71,7 +70,7 @@ class BrowsePresenter @Inject constructor(
     compositeDisposable.clear()
   }
 
-  suspend fun loadWithDefaultBoard(boardSetViaBoardSetup: Boolean) {
+  suspend fun loadWithDefaultBoard() {
     var firstActiveBoardDescriptor: BoardDescriptor? = null
 
     siteManager.viewActiveSitesOrdered { chanSiteData, _ ->
@@ -85,27 +84,18 @@ class BrowsePresenter @Inject constructor(
     }
 
     if (firstActiveBoardDescriptor != null) {
-      loadBoard(firstActiveBoardDescriptor!!, !boardSetViaBoardSetup)
+      loadBoard(firstActiveBoardDescriptor!!)
     } else {
       callback?.showSitesNotSetup()
     }
   }
 
-  suspend fun loadBoard(boardDescriptor: BoardDescriptor, isDefaultBoard: Boolean = false) {
+  suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
     if (callback == null) {
       return
     }
 
-    if (!isDefaultBoard) {
-      // Do not bring a board to the top of the navigation list if we are loading the default
-      // board that we load on every app start. Because we want to have the last visited
-      // thread/board on top not the default board.
-      historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
-    }
-
     currentOpenedBoard = boardDescriptor
-    boardManager.updateCurrentBoard(boardDescriptor)
-
     callback?.loadBoard(boardDescriptor)
   }
 

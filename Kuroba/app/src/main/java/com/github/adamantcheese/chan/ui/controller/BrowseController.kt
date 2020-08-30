@@ -173,7 +173,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   suspend fun loadWithDefaultBoard() {
-    presenter.loadWithDefaultBoard(false)
+    presenter.loadWithDefaultBoard()
     initialized = true
   }
 
@@ -608,6 +608,9 @@ class BrowseController(context: Context) : ThreadController(context),
 
     val board = boardManager.byBoardDescriptor(boardDescriptor)
       ?: return
+
+    historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
+    boardManager.updateCurrentBoard(boardDescriptor)
 
     navigation.title = "/" + boardDescriptor.boardCode + "/"
     navigation.subtitle = board.name
