@@ -21,6 +21,11 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var lastCollapseTranslationOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
+  private var maxViewHeight: Int = 0
+
+  fun updateMaxViewHeight(height: Int) {
+    maxViewHeight = Math.max(height, maxViewHeight)
+  }
 
   fun setToolbar(toolbar: Toolbar) {
     this.toolbar = toolbar
@@ -97,7 +102,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = (getTotalHeight() * offset)
+    val translation = (maxViewHeight * offset)
     if (translation.toInt() == translationY.toInt()) {
       return
     }
@@ -133,7 +138,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     }
 
     val translation = if (collapse) {
-      getTotalHeight().toFloat()
+      maxViewHeight.toFloat()
     } else {
       0f
     }
@@ -155,7 +160,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = lastCollapseTranslationOffset * getTotalHeight().toFloat()
+    val translation = lastCollapseTranslationOffset * maxViewHeight.toFloat()
     if (translation.toInt() == translationY.toInt()) {
       return
     }
@@ -166,10 +171,6 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       .setStartDelay(0)
       .setInterpolator(SLOWDOWN)
       .start()
-  }
-
-  private fun getTotalHeight(): Int {
-    return height + (layoutParams as MarginLayoutParams).bottomMargin
   }
 
   companion object {

@@ -45,7 +45,7 @@ android {
         // bump the PATCH (ZZ) version otherwise, for anything small
         int major = 0
         int minor = 1
-        int patch = 0
+        int patch = 1
 
         /**
          * ------------------------------------------------------------
@@ -211,7 +211,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard.cfg'
 
-            // TODO(KurobaEx): remove this some time in the future before first release
+            // TODO(KurobaEx-release-1): remove this some time in the future before first release
             debuggable = true
         }
         debug {

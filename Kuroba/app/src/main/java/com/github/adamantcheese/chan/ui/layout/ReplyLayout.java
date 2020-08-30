@@ -372,7 +372,7 @@ public class ReplyLayout
             return;
         }
 
-        if (presenter.bindChanDescriptor(chanDescriptor)) {
+        if (!presenter.bindChanDescriptor(chanDescriptor)) {
             cleanup();
             return;
         }

@@ -131,8 +131,6 @@ public class ToolbarPresenter {
 
         callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
         callback.onSearchVisibilityChanged(item, true);
-
-        bottomNavBarVisibilityStateManager.searchViewStateChanged(true);
     }
 
     boolean closeSearch() {
@@ -145,8 +143,6 @@ public class ToolbarPresenter {
         set(item, null, AnimationStyle.FADE);
 
         callback.onSearchVisibilityChanged(item, false);
-        bottomNavBarVisibilityStateManager.searchViewStateChanged(false);
-
         return true;
     }
 

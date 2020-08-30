@@ -506,10 +506,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ?: return
     val chanDescriptor = thread.chanDescriptor
 
-    if (chanDescriptor != null) {
-      bottomNavBarVisibilityStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open)
-    }
-
     replyOpen = open
 
     reply.measure(
@@ -517,31 +513,42 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     )
 
+    fun notifyBottomNavBarVisibilityStateManager() {
+      if (chanDescriptor != null) {
+        bottomNavBarVisibilityStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open)
+      }
+    }
+
     val height = reply.measuredHeight
     val viewPropertyAnimator = reply.animate()
 
     viewPropertyAnimator.setListener(null)
     viewPropertyAnimator.interpolator = DecelerateInterpolator(2f)
-    viewPropertyAnimator.duration = 600
+    viewPropertyAnimator.duration = 350
 
-    val isSplitMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
     if (open) {
       reply.visibility = VISIBLE
       reply.translationY = height.toFloat()
+
       viewPropertyAnimator.translationY(0f)
+      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationStart(animation: Animator?) {
+          notifyBottomNavBarVisibilityStateManager()
+        }
 
-      if (!isSplitMode) {
-        threadListLayoutCallback?.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
-      }
+        override fun onAnimationEnd(animation: Animator) {
+          viewPropertyAnimator.setListener(null)
+        }
+      })
     } else {
-      if (!isSplitMode) {
-        threadListLayoutCallback?.showBottomNavBar(unlockTranslation = true, unlockCollapse = true)
-      }
-
       reply.translationY = 0f
 
       viewPropertyAnimator.translationY(height.toFloat())
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationStart(animation: Animator?) {
+          notifyBottomNavBarVisibilityStateManager()
+        }
+
         override fun onAnimationEnd(animation: Animator) {
           viewPropertyAnimator.setListener(null)
           reply.visibility = GONE

@@ -58,10 +58,10 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDesc
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class BrowseController(context: Context) : ThreadController(context),
   ThreadLayoutCallback,
@@ -280,13 +280,13 @@ class BrowseController(context: Context) : ThreadController(context),
       .build()
       .build()
 
-    suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+    suspendCoroutine<Unit> { continuation ->
       requireNavController().requireToolbar().setNavigationItem(
         true,
         true,
         navigation,
         themeHelper.theme
-      ) { cancellableContinuation.resume(Unit) }
+      ) { continuation.resume(Unit) }
     }
   }
 

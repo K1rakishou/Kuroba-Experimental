@@ -46,6 +46,7 @@ import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
+import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
@@ -82,6 +83,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.updatePaddings;
  * drawable.
  */
 public class ToolbarContainer extends FrameLayout {
+    private static final String TAG = "ToolbarContainer";
+    private static final int ANIMATION_DURATION = 250;
 
     @Inject
     ThemeHelper themeHelper;
@@ -312,35 +315,48 @@ public class ToolbarContainer extends FrameLayout {
             ItemView previousView,
             @Nullable ToolbarTransitionAnimationListener listener
     ) {
-        AtomicInteger animationsCount = new AtomicInteger(2);
+        AtomicInteger animationsCount = new AtomicInteger(3);
         AtomicBoolean listenerCalled = new AtomicBoolean(false);
+
+        Logger.d(TAG, "setFadeAnimation() called, " +
+                "newView==null: " + (newView == null) + ", " +
+                "previousView==null: " + (previousView == null) + ", " +
+                "listener==null: " + (listener == null));
 
         // Previous animation
         ValueAnimator previousAnimation = ObjectAnimator.ofFloat(previousView.view, View.ALPHA, 1f, 0f);
-        previousAnimation.setDuration(300);
+        previousAnimation.setDuration(ANIMATION_DURATION);
         previousAnimation.setInterpolator(new LinearInterpolator());
         previousAnimation.addListener(new AnimatorListenerAdapter() {
-            private void onAnimationEndInternal() {
+            private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(previousView.view);
                 removeItem(previousView);
                 ToolbarContainer.this.previousView = null;
 
+                Logger.d(TAG, "setFadeAnimation() previousAnimation " +
+                        "onAnimationEndInternal(end==true: " + end + "), " +
+                        "animationsCount=" + animationsCount.get() + ", " +
+                        "listenerCalled=" + listenerCalled.get());
+
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
+                        Logger.d(TAG, "setFadeAnimation() previousAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
+                    } else {
+                        Logger.d(TAG, "setFadeAnimation() previousAnimation onAnimationEnded is null");
                     }
                 }
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(false);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(true);
             }
         });
         animatorSet.put(previousView.view, previousAnimation);
@@ -349,37 +365,46 @@ public class ToolbarContainer extends FrameLayout {
 
         // Current animation + arrow
         newView.view.setAlpha(0f);
-        ValueAnimator animation = ObjectAnimator.ofFloat(newView.view, View.ALPHA, 0f, 1f);
-        animation.setDuration(300);
-        animation.setInterpolator(new LinearInterpolator());
-        animation.addListener(new AnimatorListenerAdapter() {
-            private void onAnimationEndInternal() {
+        ValueAnimator newAnimation = ObjectAnimator.ofFloat(newView.view, View.ALPHA, 0f, 1f);
+        newAnimation.setDuration(ANIMATION_DURATION);
+        newAnimation.setInterpolator(new LinearInterpolator());
+        newAnimation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
+
+                Logger.d(TAG, "setFadeAnimation() newAnimation " +
+                        "onAnimationEndInternal(end==true: " + end + "), " +
+                        "animationsCount=" + animationsCount.get() + ", " +
+                        "listenerCalled=" + listenerCalled.get());
 
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
+                        Logger.d(TAG, "setFadeAnimation() newAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
+                    } else {
+                        Logger.d(TAG, "setFadeAnimation() newAnimation onAnimationEnded is null");
                     }
                 }
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(false);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(true);
             }
         });
+
         // A different animator for the arrow because that one needs the deceleration
         // interpolator.
-        ValueAnimator arrow = ValueAnimator.ofFloat(0f, 1f);
-        arrow.setDuration(300);
-        arrow.setInterpolator(new DecelerateInterpolator(2f));
-        arrow.addUpdateListener(a -> {
+        ValueAnimator arrowAnimation = ValueAnimator.ofFloat(0f, 1f);
+        arrowAnimation.setDuration(ANIMATION_DURATION);
+        arrowAnimation.setInterpolator(new DecelerateInterpolator(2f));
+        arrowAnimation.addUpdateListener(a -> {
             float value = (float) a.getAnimatedValue();
             if (previousView.item.hasArrow() != currentView.item.hasArrow()) {
                 setArrowProgress(value, !currentView.item.hasArrow());
@@ -387,20 +412,35 @@ public class ToolbarContainer extends FrameLayout {
         });
 
         AnimatorSet animationAndArrow = new AnimatorSet();
-        animationAndArrow.playTogether(animation, arrow);
+        animationAndArrow.playTogether(newAnimation, arrowAnimation);
         animationAndArrow.addListener(new AnimatorListenerAdapter() {
-            private void onAnimationEndInternal() {
+            private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
+
+                Logger.d(TAG, "setFadeAnimation() arrowAnimation " +
+                        "onAnimationEndInternal(end==true: " + end + "), " +
+                        "animationsCount=" + animationsCount.get() + ", " +
+                        "listenerCalled=" + listenerCalled.get());
+
+                if (animationsCount.decrementAndGet() <= 0
+                        && listenerCalled.compareAndSet(false, true)) {
+                    if (listener != null) {
+                        Logger.d(TAG, "setFadeAnimation() arrowAnimation calling onAnimationEnded");
+                        listener.onAnimationEnded();
+                    } else {
+                        Logger.d(TAG, "setFadeAnimation() arrowAnimation onAnimationEnded is null");
+                    }
+                }
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(false);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(true);
             }
         });
 
@@ -419,6 +459,12 @@ public class ToolbarContainer extends FrameLayout {
         AtomicInteger animationsCount = new AtomicInteger(2);
         AtomicBoolean listenerCalled = new AtomicBoolean(false);
 
+        Logger.d(TAG, "setPushPopAnimation() called, " +
+                "newView==null: " + (newView == null) + ", " +
+                "previousView==null: " + (previousView == null) + ", " +
+                "listener==null: " + (listener == null) + ", " +
+                "animationStyle=" + animationStyle.name());
+
         // Previous animation
         ValueAnimator previousAnimation = getShortAnimator();
         previousAnimation.addUpdateListener(a -> {
@@ -426,27 +472,35 @@ public class ToolbarContainer extends FrameLayout {
             setPreviousAnimationProgress(previousView.view, pushing, value);
         });
         previousAnimation.addListener(new AnimatorListenerAdapter() {
-            private void onAnimationEndInternal() {
+            private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(previousView.view);
                 removeItem(previousView);
                 ToolbarContainer.this.previousView = null;
 
+                Logger.d(TAG, "setPushPopAnimation() previousAnimation " +
+                        "onAnimationEndInternal(end==true: " + end + "), " +
+                        "animationsCount=" + animationsCount.get() + ", " +
+                        "listenerCalled=" + listenerCalled.get());
+
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
+                        Logger.d(TAG, "setPushPopAnimation() previousAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
+                    } else {
+                        Logger.d(TAG, "setPushPopAnimation() previousAnimation onAnimationEnded is null");
                     }
                 }
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(false);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(true);
             }
         });
 
@@ -459,8 +513,8 @@ public class ToolbarContainer extends FrameLayout {
 
         // Current animation + arrow
         newView.view.setAlpha(0f);
-        ValueAnimator animation = getShortAnimator();
-        animation.addUpdateListener(a -> {
+        ValueAnimator newAnimation = getShortAnimator();
+        newAnimation.addUpdateListener(a -> {
             float value = (float) a.getAnimatedValue();
             setAnimationProgress(newView.view, pushing, value);
 
@@ -468,35 +522,43 @@ public class ToolbarContainer extends FrameLayout {
                 setArrowProgress(value, !currentView.item.hasArrow());
             }
         });
-        animation.addListener(new AnimatorListenerAdapter() {
-            private void onAnimationEndInternal() {
+        newAnimation.addListener(new AnimatorListenerAdapter() {
+            private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
+
+                Logger.d(TAG, "setPushPopAnimation() newAnimation " +
+                        "onAnimationEndInternal(end==true: " + end + "), " +
+                        "animationsCount=" + animationsCount.get() + ", " +
+                        "listenerCalled=" + listenerCalled.get());
 
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
+                        Logger.d(TAG, "setPushPopAnimation() newAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
+                    } else {
+                        Logger.d(TAG, "setPushPopAnimation() newAnimation onAnimationEnded is null");
                     }
                 }
             }
 
             @Override
             public void onAnimationCancel(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(false);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                onAnimationEndInternal();
+                onAnimationEndInternal(true);
             }
         });
 
         if (!pushing) {
-            animation.setStartDelay(100);
+            newAnimation.setStartDelay(100);
         }
 
-        animatorSet.put(newView.view, animation);
-        post(animation::start);
+        animatorSet.put(newView.view, newAnimation);
+        post(newAnimation::start);
     }
 
     private void setPreviousAnimationProgress(View view, boolean pushing, float progress) {
@@ -540,7 +602,7 @@ public class ToolbarContainer extends FrameLayout {
 
     private ValueAnimator getShortAnimator() {
         final ValueAnimator animator = ObjectAnimator.ofFloat(0f, 1f);
-        animator.setDuration(300);
+        animator.setDuration(ANIMATION_DURATION);
         animator.setInterpolator(new DecelerateInterpolator(2f));
         return animator;
     }

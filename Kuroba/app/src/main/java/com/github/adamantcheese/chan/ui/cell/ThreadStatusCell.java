@@ -328,9 +328,11 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     @Override
     public void onClick(View v) {
         error = null;
-        if (callback.getChanThread() != null && !callback.getChanThread().isArchived()) {
+
+        if (callback.getChanThread() != null) {
             callback.onListStatusClicked();
         }
+
         update();
     }
 
