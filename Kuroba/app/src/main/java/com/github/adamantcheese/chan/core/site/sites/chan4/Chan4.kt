@@ -16,11 +16,14 @@ import com.github.adamantcheese.chan.core.site.SiteSetting.SiteStringSetting
 import com.github.adamantcheese.chan.core.site.common.FutabaChanReader
 import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.HttpCall
-import com.github.adamantcheese.chan.core.site.http.LoginRequest
 import com.github.adamantcheese.chan.core.site.http.Reply
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginResponse
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -286,29 +289,33 @@ class Chan4 : SiteBase() {
       }
     }
 
-    override suspend fun login(loginRequest: LoginRequest): SiteActions.LoginResult {
-      passUser.set(loginRequest.user)
-      passPass.set(loginRequest.pass)
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
+      val chan4LoginRequest = loginRequest as Chan4LoginRequest
+
+      passUser.set(chan4LoginRequest.user)
+      passPass.set(chan4LoginRequest.pass)
 
       val loginResult = httpCallManager.makeHttpCall(
-        Chan4PassHttpCall(this@Chan4, loginRequest)
+        Chan4PassHttpCall(this@Chan4, chan4LoginRequest)
       )
 
       when (loginResult) {
         is HttpCall.HttpCallResult.Success -> {
-          val loginResponse = loginResult.httpCall.loginResponse
-          if (loginResponse.success) {
-            passToken.set(loginResponse.token)
-          }
+          val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
 
-          return SiteActions.LoginResult.LoginComplete(
-            loginResult.httpCall.loginResponse
-          )
+          when (loginResponse) {
+            is Chan4LoginResponse.Success -> {
+              passToken.set(loginResponse.authCookie)
+              return SiteActions.LoginResult.LoginComplete(loginResponse)
+            }
+            is Chan4LoginResponse.Failure -> {
+              return SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
+            }
+          }
         }
         is HttpCall.HttpCallResult.Fail -> {
-          return SiteActions.LoginResult.LoginError(
-            loginResult.error
-          )
+          return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
         }
       }
     }
@@ -339,8 +346,11 @@ class Chan4 : SiteBase() {
       return passToken.get().isNotEmpty()
     }
 
-    override fun loginDetails(): LoginRequest {
-      return LoginRequest(passUser.get(), passPass.get())
+    override fun loginDetails(): Chan4LoginRequest {
+      return Chan4LoginRequest(
+        passUser.get(),
+        passPass.get()
+      )
     }
   }
 

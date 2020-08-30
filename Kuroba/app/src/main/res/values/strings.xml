@@ -681,11 +681,13 @@ Tap the toolbar menu to change its color."
     <string name="settings_screen_pass">4chan pass</string>
     <string name="setting_pass_token">Token</string>
     <string name="setting_pass_pin">PIN</string>
+    <string name="setting_passcode">Passcode</string>
     <string name="setting_pass_authenticated">Device authorized!</string>
     <string name="setting_pass_login">Submit</string>
     <string name="setting_pass_logout">Logout</string>
     <string name="setting_pass_logging_in">Loading…</string>
     <string name="setting_pass_error">Connection error</string>
+
     <string name="setting_pass_bottom_description">"
 <![CDATA[
 Forgot your 4chan Pass login details?<br>
@@ -695,6 +697,7 @@ Don't have a 4chan Pass?<br>
 <a href=\"https://www.4chan.org/pass\">Tap here to learn more.</a>
 ]]>
     "</string>
+
     <string name="settings_screen_theme">Themes</string>
     <string name="apply_options">Apply</string>
     <string name="image_quality">Image quality: %1$d</string>

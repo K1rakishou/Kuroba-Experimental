@@ -1,9 +1,12 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
+import android.webkit.WebView
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
+import com.github.adamantcheese.chan.core.settings.SharedPreferencesSettingProvider
+import com.github.adamantcheese.chan.core.settings.StringSetting
 import com.github.adamantcheese.chan.core.site.*
 import com.github.adamantcheese.chan.core.site.Site.BoardsType
 import com.github.adamantcheese.chan.core.site.Site.SiteFeature
@@ -15,10 +18,15 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints
 import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.HttpCall
 import com.github.adamantcheese.chan.core.site.http.Reply
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.DvachLoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.DvachLoginResponse
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
+import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -30,17 +38,32 @@ import okhttp3.Request
 import java.util.*
 
 class Dvach : CommonSite() {
-  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-    // 2ch.hk sends file size in KB
-    false,
-    // 2ch.hk sometimes sends an incorrect file hash
-    false
-  )
+  private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 
   private var captchaType: OptionsSetting<Chan4.CaptchaType>? = null
 
+  // What you send to the server to get the cookie
+  private var passCode: StringSetting
+  // What you use to post without captcha
+  private var passCookie: StringSetting
+
+  init {
+    val prefs = SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
+
+    passCode = StringSetting(prefs, "preference_pass_code", "")
+    passCookie = StringSetting(prefs, "preference_pass_cookie", "")
+
+    chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
+      // 2ch.hk sends file size in KB
+      siteSendsCorrectFileSizeInBytes = false,
+      // 2ch.hk sometimes sends an incorrect file hash
+      canFileHashBeTrusted = false
+    )
+  }
+
   override fun initializeSettings() {
     super.initializeSettings()
+
     captchaType = OptionsSetting(
       settingsProvider,
       "preference_captcha_type_dvach",
@@ -72,7 +95,9 @@ class Dvach : CommonSite() {
 
     setConfig(object : CommonConfig() {
       override fun siteFeature(siteFeature: SiteFeature): Boolean {
-        return super.siteFeature(siteFeature) || siteFeature === SiteFeature.POSTING
+        return super.siteFeature(siteFeature)
+          || siteFeature == SiteFeature.POSTING
+          || siteFeature == SiteFeature.LOGIN
       }
     })
     setEndpoints(object : VichanEndpoints(this, "https://2ch.hk", "https://2ch.hk") {
@@ -89,11 +114,21 @@ class Dvach : CommonSite() {
       }
 
       override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-        return HttpUrl.Builder().scheme("https")
+        return HttpUrl.Builder()
+          .scheme("https")
           .host("2ch.hk")
           .addPathSegment("makaba")
           .addPathSegment("posting.fcgi")
           .addQueryParameter("json", "1")
+          .build()
+      }
+
+      override fun login(): HttpUrl {
+        return HttpUrl.Builder()
+          .scheme("https")
+          .host("2ch.hk")
+          .addPathSegment("makaba")
+          .addPathSegment("makaba.fcgi")
           .build()
       }
     })
@@ -139,26 +174,6 @@ class Dvach : CommonSite() {
           }
       }
 
-      override fun postRequiresAuthentication(): Boolean {
-        return !isLoggedIn()
-      }
-
-      override fun postAuthenticate(): SiteAuthentication {
-        return if (isLoggedIn()) {
-          SiteAuthentication.fromNone()
-        } else {
-          when (captchaType!!.get()) {
-            Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY,
-              "https://2ch.hk/api/captcha/recaptcha/mobile"
-            )
-            Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY,
-              "https://2ch.hk/api/captcha/recaptcha/mobile"
-            )
-            else -> throw IllegalArgumentException()
-          }
-        }
-      }
-
       override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
         return super.delete(deleteRequest)
       }
@@ -188,8 +203,71 @@ class Dvach : CommonSite() {
           }
         )
       }
+
+      @Suppress("MoveVariableDeclarationIntoWhen")
+      override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
+        val dvachLoginRequest = loginRequest as DvachLoginRequest
+        passCode.set(dvachLoginRequest.passcode)
+
+        val loginResult = httpCallManager.makeHttpCall(
+          DvachGetPassCookieHttpCall(this@Dvach, loginRequest)
+        )
+
+        when (loginResult) {
+          is HttpCall.HttpCallResult.Success -> {
+            val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
+
+            when (loginResponse) {
+              is DvachLoginResponse.Success -> {
+                passCookie.set(loginResponse.authCookie)
+                return SiteActions.LoginResult.LoginComplete(loginResponse)
+              }
+              is DvachLoginResponse.Failure -> {
+                return SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
+              }
+            }
+          }
+          is HttpCall.HttpCallResult.Fail -> {
+            return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
+          }
+        }
+      }
+
+      override fun postRequiresAuthentication(): Boolean {
+        return !isLoggedIn()
+      }
+
+      override fun postAuthenticate(): SiteAuthentication {
+        return if (isLoggedIn()) {
+          SiteAuthentication.fromNone()
+        } else {
+          when (captchaType!!.get()) {
+            Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY,
+              "https://2ch.hk/api/captcha/recaptcha/mobile"
+            )
+            Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY,
+              "https://2ch.hk/api/captcha/recaptcha/mobile"
+            )
+            else -> throw IllegalArgumentException()
+          }
+        }
+      }
+
+      override fun logout() {
+        passCookie.set("")
+      }
+
+      override fun isLoggedIn(): Boolean {
+        return passCookie.get().isNotEmpty()
+      }
+
+      override fun loginDetails(): DvachLoginRequest {
+        return DvachLoginRequest(passCode.get())
+      }
+
     })
 
+    setRequestModifier(siteRequestModifier)
     setApi(DvachApi(siteManager, boardManager, this))
     setParser(DvachCommentParser(mockReplyManager))
   }
@@ -200,6 +278,19 @@ class Dvach : CommonSite() {
 
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
     return chunkDownloaderSiteProperties
+  }
+
+  private val siteRequestModifier = object : SiteRequestModifier {
+
+    override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
+      if (actions().isLoggedIn()) {
+        requestBuilder.addHeader("Cookie", "passcode_auth=" + passCookie.get())
+      }
+    }
+
+    override fun modifyWebView(webView: WebView?) {
+    }
+
   }
 
   companion object {

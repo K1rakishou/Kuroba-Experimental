@@ -498,7 +498,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   companion object {
     private const val TAG = "ChanThreadLoader"
     private val executor = Executors.newSingleThreadScheduledExecutor()
-    private val WATCH_TIMEOUTS = intArrayOf(20, 30, 60, 90, 120, 180, 240, 300, 600, 1800, 3600)
+    private val WATCH_TIMEOUTS = intArrayOf(15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 450, 600, 750, 1000)
     private val backgroundScheduler = Schedulers.from(executor)
   }
 

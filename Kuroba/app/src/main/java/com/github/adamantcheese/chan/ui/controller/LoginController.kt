@@ -20,6 +20,7 @@ import android.content.Context
 import android.text.Html
 import android.text.method.LinkMovementMethod
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -27,8 +28,12 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteActions
-import com.github.adamantcheese.chan.core.site.http.LoginRequest
-import com.github.adamantcheese.chan.core.site.http.LoginResponse
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginResponse
+import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.DvachLoginRequest
+import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
+import com.github.adamantcheese.chan.core.site.sites.dvach.Dvach
 import com.github.adamantcheese.chan.ui.view.CrossfadeView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import kotlinx.coroutines.launch
@@ -56,13 +61,9 @@ class LoginController(
       inputToken = view.findViewById(R.id.input_token)
       inputPin = view.findViewById(R.id.input_pin)
       authenticated = view.findViewById(R.id.authenticated)
-      
       errors.visibility = View.GONE
-      
-      val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
-      bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))
-      bottomDescription.movementMethod = LinkMovementMethod.getInstance()
-      
+
+      showBottomDescription(view)
 
       val loggedIn = loggedIn()
       val loggedInText = if (loggedIn) {
@@ -70,7 +71,9 @@ class LoginController(
       } else {
         R.string.setting_pass_login
       }
-      
+
+      applyLoginDetails()
+
       button.setText(loggedInText)
       button.setOnClickListener(this)
   
@@ -84,12 +87,43 @@ class LoginController(
         false
       }
     }
-    
-    val loginDetails = site.actions().loginDetails()!!
-    inputToken.setText(loginDetails.user)
-    inputPin.setText(loginDetails.pass)
   }
-  
+
+  private fun applyLoginDetails() {
+    val loginDetails = requireNotNull(site.actions().loginDetails()) { "loginDetails is null" }
+    if (loginDetails.type != SiteActions.LoginType.TokenAndPass) {
+      inputPin.visibility = View.GONE
+    } else {
+      inputPin.visibility = View.VISIBLE
+    }
+
+    when (loginDetails) {
+      is Chan4LoginRequest -> {
+        inputToken.setText(loginDetails.user)
+        inputToken.setHint(R.string.setting_pass_token)
+
+        inputPin.setText(loginDetails.pass)
+        inputPin.setHint(R.string.setting_pass_pin)
+      }
+      is DvachLoginRequest -> {
+        inputToken.setText(loginDetails.passcode)
+        inputToken.setHint(R.string.setting_passcode)
+      }
+    }
+  }
+
+  private fun showBottomDescription(view: ViewGroup) {
+    val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
+
+    if (site is Chan4) {
+      bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))
+      bottomDescription.movementMethod = LinkMovementMethod.getInstance()
+      return
+    }
+
+    bottomDescription.visibility = View.GONE
+  }
+
   override fun onClick(v: View) {
     if (v === button) {
       if (loggedIn()) {
@@ -112,46 +146,57 @@ class LoginController(
     button.setText(R.string.setting_pass_logging_in)
     
     hideError()
-    val user = inputToken.text.toString()
-    val pass = inputPin.text.toString()
-    
-    when (val loginResult = site.actions().login(LoginRequest(user, pass))) {
+
+    when (val loginResult = site.actions().login(createLoginRequest())) {
       is SiteActions.LoginResult.LoginComplete -> {
         onLoginComplete(loginResult.loginResponse)
       }
       is SiteActions.LoginResult.LoginError -> {
-        onLoginError()
+        onLoginError(loginResult.errorMessage)
       }
     }
   }
-  
-  private fun onLoginComplete(loginResponse: LoginResponse) {
-    if (loginResponse.success) {
+
+  private fun createLoginRequest(): AbstractLoginRequest {
+    when (site) {
+      is Chan4 -> {
+        val user = inputToken.text.toString()
+        val pass = inputPin.text.toString()
+
+        return Chan4LoginRequest(user, pass)
+      }
+      is Dvach -> {
+        val passcode = inputToken.text.toString()
+
+        return DvachLoginRequest(passcode)
+      }
+      else -> throw NotImplementedError("Not supported")
+    }
+  }
+
+  private fun onLoginComplete(loginResponse: AbstractLoginResponse) {
+    if (loginResponse.isSuccess()) {
       authSuccess(loginResponse)
     } else {
-      authFail(loginResponse)
+      authFail(loginResponse.errorMessage())
     }
     
     authAfter()
   }
   
-  private fun onLoginError() {
+  private fun onLoginError(errorMessage: String) {
     authFail(null)
     authAfter()
   }
   
-  private fun authSuccess(response: LoginResponse) {
+  private fun authSuccess(response: AbstractLoginResponse) {
     crossfadeView.toggle(false, true)
     button.setText(R.string.setting_pass_logout)
-    authenticated.text = response.message
+    authenticated.text = response.successMessage() ?: ""
   }
   
-  private fun authFail(response: LoginResponse?) {
-    var message = AndroidUtils.getString(R.string.setting_pass_error)
-    
-    if (response?.message != null) {
-      message = response.message
-    }
+  private fun authFail(errorMessage: String?) {
+    val message = errorMessage ?: AndroidUtils.getString(R.string.setting_pass_error)
     
     showError(message)
     button.setText(R.string.setting_pass_login)

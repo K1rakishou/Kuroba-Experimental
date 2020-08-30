@@ -14,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 class ChanPostRepository(
   database: KurobaDatabase,
@@ -446,6 +448,7 @@ class ChanPostRepository(
     return postsThatDifferWithCache.map { it.postDescriptor.postNo }
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun deleteOldPostsIfNeeded() {
     require(isInTransaction()) { "Not in transaction" }
 
@@ -466,7 +469,7 @@ class ChanPostRepository(
       "(totalAmountOfPostsInDatabase = $totalAmountOfPostsInDatabase, " +
       "maxPostsAmount = $maxPostsAmount)")
 
-    val deleteResult = Try { localSource.deleteOldPosts(toDeleteCount) }
+    val (deleteResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
     val deletedPostsCount = if (deleteResult is ModularResult.Error) {
       logger.logError(TAG, "Error while trying to delete old posts", deleteResult.error)
       throw deleteResult.error
@@ -475,7 +478,7 @@ class ChanPostRepository(
     }
 
     val newAmount = localSource.countTotalAmountOfPosts()
-    logger.log(TAG, "Deleted $deletedPostsCount posts, $newAmount posts left")
+    logger.log(TAG, "Deleted $deletedPostsCount posts, $newAmount posts left, took $time")
   }
 
   private suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {
