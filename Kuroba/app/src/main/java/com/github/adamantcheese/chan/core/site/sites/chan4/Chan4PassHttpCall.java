@@ -20,9 +20,10 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.http.HttpCall;
-import com.github.adamantcheese.chan.core.site.http.LoginRequest;
-import com.github.adamantcheese.chan.core.site.http.LoginResponse;
 import com.github.adamantcheese.chan.core.site.http.ProgressRequestBody;
+import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginRequest;
+import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginResponse;
+import com.github.adamantcheese.chan.utils.Logger;
 
 import java.net.HttpCookie;
 import java.util.List;
@@ -32,12 +33,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class Chan4PassHttpCall extends HttpCall {
-    private final LoginRequest loginRequest;
-    public final LoginResponse loginResponse = new LoginResponse();
+    private static final String TAG = "Chan4PassHttpCall";
 
-    public Chan4PassHttpCall(Site site, LoginRequest loginRequest) {
+    private final Chan4LoginRequest chan4LoginRequest;
+    @Nullable
+    public Chan4LoginResponse loginResponse = null;
+
+    public Chan4PassHttpCall(Site site, Chan4LoginRequest chan4LoginRequest) {
         super(site);
-        this.loginRequest = loginRequest;
+        this.chan4LoginRequest = chan4LoginRequest;
     }
 
     @Override
@@ -48,9 +52,8 @@ public class Chan4PassHttpCall extends HttpCall {
         FormBody.Builder formBuilder = new FormBody.Builder();
 
         formBuilder.add("act", "do_login");
-
-        formBuilder.add("id", loginRequest.user);
-        formBuilder.add("pin", loginRequest.pass);
+        formBuilder.add("id", chan4LoginRequest.getUser());
+        formBuilder.add("pin", chan4LoginRequest.getPass());
 
         requestBuilder.url(getSite().endpoints().login());
         requestBuilder.post(formBuilder.build());
@@ -58,26 +61,10 @@ public class Chan4PassHttpCall extends HttpCall {
 
     @Override
     public void process(Response response, String result) {
-        boolean authSuccess = false;
         if (result.contains("Success! Your device is now authorized")) {
-            authSuccess = true;
-        } else {
-            String message;
-            if (result.contains("Your Token must be exactly 10 characters")) {
-                message = "Incorrect token";
-            } else if (result.contains("You have left one or more fields blank")) {
-                message = "You have left one or more fields blank";
-            } else if (result.contains("Incorrect Token or PIN")) {
-                message = "Incorrect Token or PIN";
-            } else {
-                message = "Unknown error";
-            }
-            loginResponse.message = message;
-        }
-
-        if (authSuccess) {
             List<String> cookies = response.headers("Set-Cookie");
             String passId = null;
+
             for (String cookie : cookies) {
                 try {
                     List<HttpCookie> parsedList = HttpCookie.parse(cookie);
@@ -86,17 +73,34 @@ public class Chan4PassHttpCall extends HttpCall {
                             passId = parsed.getValue();
                         }
                     }
-                } catch (IllegalArgumentException ignored) {
+                } catch (IllegalArgumentException error) {
+                    Logger.e(TAG, "Error while processing cookies", error);
                 }
             }
 
             if (passId != null) {
-                loginResponse.token = passId;
-                loginResponse.message = "Success! Your device is now authorized.";
-                loginResponse.success = true;
+                loginResponse = new Chan4LoginResponse.Success(
+                        "Success! Your device is now authorized.",
+                        passId
+                );
             } else {
-                loginResponse.message = "Could not get pass id";
+                loginResponse = new Chan4LoginResponse.Failure("Could not get pass id");
             }
+
+            return;
         }
+
+        String message;
+        if (result.contains("Your Token must be exactly 10 characters")) {
+            message = "Incorrect token";
+        } else if (result.contains("You have left one or more fields blank")) {
+            message = "You have left one or more fields blank";
+        } else if (result.contains("Incorrect Token or PIN")) {
+            message = "Incorrect Token or PIN";
+        } else {
+            message = "Unknown error";
+        }
+
+        loginResponse = new Chan4LoginResponse.Failure(message);
     }
 }

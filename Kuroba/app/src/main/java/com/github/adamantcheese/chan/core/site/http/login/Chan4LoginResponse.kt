@@ -14,14 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.http;
+package com.github.adamantcheese.chan.core.site.http.login
 
-public class LoginRequest {
-    public final String user;
-    public final String pass;
 
-    public LoginRequest(String user, String pass) {
-        this.user = user;
-        this.pass = pass;
-    }
+sealed class Chan4LoginResponse(authCookie: String?) : AbstractLoginResponse(authCookie) {
+  override fun isSuccess(): Boolean = this is Chan4LoginResponse.Success
+  override fun successMessage(): String? = (this as? Chan4LoginResponse.Success)?.successMessage
+  override fun errorMessage(): String? = (this as? Chan4LoginResponse.Failure)?.errorMessage
+
+  class Success(val successMessage: String, authCookie: String) : Chan4LoginResponse(authCookie)
+  class Failure(val errorMessage: String) : Chan4LoginResponse(null)
 }

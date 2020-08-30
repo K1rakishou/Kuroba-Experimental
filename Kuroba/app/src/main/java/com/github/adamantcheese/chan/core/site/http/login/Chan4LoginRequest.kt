@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.http;
+package com.github.adamantcheese.chan.core.site.http.login
 
-public class LoginResponse {
-    public boolean success;
-    public String message;
+import com.github.adamantcheese.chan.core.site.SiteActions
 
-    // TODO(multi-site) make this a cookie abstraction
-    public String token;
-}
+class Chan4LoginRequest(
+  val user: String,
+  val pass: String
+) : AbstractLoginRequest(SiteActions.LoginType.TokenAndPass)

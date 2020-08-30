@@ -56,7 +56,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:id="@+id/input_token"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/setting_pass_token"
                     android:imeOptions="actionNext"
                     android:inputType="text" />
 
@@ -81,7 +80,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </com.github.adamantcheese.chan.ui.view.CrossfadeView>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button"
             android:layout_width="130dp"
             android:layout_height="wrap_content" />

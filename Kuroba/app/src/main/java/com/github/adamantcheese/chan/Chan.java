@@ -313,7 +313,7 @@ public class Chan
         Logger.e("UNCAUGHT", "END OF CURRENT RUNTIME MESSAGES");
         Logger.e("UNCAUGHT", "------------------------------");
         Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT);
-        Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME);
+        Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER);
         Logger.e("UNCAUGHT", "Development Build: " + getVerifiedBuildType().name());
         Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL);
 

@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.*
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.adamantcheese.chan.core.site.http.*
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.PostParser
@@ -57,7 +58,7 @@ abstract class CommonSite : SiteBase() {
   private var endpoints: CommonEndpoints? = null
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
-  private var requestModifier: CommonRequestModifier? = null
+  private var requestModifier: SiteRequestModifier? = null
   
   @JvmField
   var postParser: PostParser? = null
@@ -143,6 +144,10 @@ abstract class CommonSite : SiteBase() {
   
   fun setApi(api: CommonApi?) {
     this.api = api
+  }
+
+  fun setRequestModifier(requestModifier: SiteRequestModifier?) {
+    this.requestModifier = requestModifier
   }
   
   open fun setParser(commentParser: CommentParser) {
@@ -356,7 +361,7 @@ abstract class CommonSite : SiteBase() {
     override fun login(): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
-    
+
   }
   
   class SimpleHttpUrl {
@@ -531,16 +536,17 @@ abstract class CommonSite : SiteBase() {
         Chan4PagesRequest.BoardPages(board.boardDescriptor, listOf())
       )
     }
-    
-    override suspend fun login(loginRequest: LoginRequest): SiteActions.LoginResult {
-      throw IllegalStateException("Should this even get called?")
+
+
+    override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
+      throw NotImplementedError("Should this even get called?")
     }
-    
+
     override fun logout() {
       // no-op
     }
     
-    override fun loginDetails(): LoginRequest? {
+    override fun loginDetails(): AbstractLoginRequest? {
       return null
     }
     

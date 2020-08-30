@@ -21,9 +21,11 @@ import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
@@ -78,26 +80,29 @@ class HttpCallManager @Inject constructor(
     requestBuilder: Request.Builder,
     httpCall: T
   ): HttpCall.HttpCallResult<T> {
-    requestBuilder.header("User-Agent", NetModule.USER_AGENT)
-    val request = requestBuilder.build()
-    
-    val response = Try { okHttpClient.proxiedClient.suspendCall(request) }
-      .safeUnwrap { error ->
-        Logger.e(TAG, "Error while trying to execute request", error)
-        return HttpCall.HttpCallResult.Fail(httpCall, error)
+    return withContext(Dispatchers.IO) {
+      val request = requestBuilder
+        .header("User-Agent", NetModule.USER_AGENT)
+        .build()
+
+      val response = Try { okHttpClient.proxiedClient.suspendCall(request) }
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Error while trying to execute request", error)
+          return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)
+        }
+
+      val body = response.body
+        ?: return@withContext HttpCall.HttpCallResult.Fail(
+          httpCall,
+          IOException("Response body is null, status = ${response.code}")
+        )
+
+      return@withContext body.use {
+        val responseString = it.string()
+        httpCall.process(response, responseString)
+
+        return@use HttpCall.HttpCallResult.Success(httpCall)
       }
-    
-    val body = response.body
-      ?: return HttpCall.HttpCallResult.Fail(
-        httpCall,
-        IOException("Response body is null, status = ${response.code}")
-      )
-    
-    return body.use {
-      val responseString = it.string()
-      httpCall.process(response, responseString)
-      
-      return@use HttpCall.HttpCallResult.Success(httpCall)
     }
   }
   

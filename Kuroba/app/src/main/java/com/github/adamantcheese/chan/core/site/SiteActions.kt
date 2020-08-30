@@ -18,7 +18,12 @@ package com.github.adamantcheese.chan.core.site
 
 import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import com.github.adamantcheese.chan.core.site.http.*
+import com.github.adamantcheese.chan.core.site.http.DeleteRequest
+import com.github.adamantcheese.chan.core.site.http.DeleteResponse
+import com.github.adamantcheese.chan.core.site.http.Reply
+import com.github.adamantcheese.chan.core.site.http.ReplyResponse
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
+import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginResponse
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.adamantcheese.model.data.board.ChanBoard
 import kotlinx.coroutines.flow.Flow
@@ -28,12 +33,17 @@ interface SiteActions {
   suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
   suspend fun post(reply: Reply): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
-  suspend fun login(loginRequest: LoginRequest): LoginResult
+  suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
   fun postRequiresAuthentication(): Boolean
   fun postAuthenticate(): SiteAuthentication
   fun logout()
   fun isLoggedIn(): Boolean
-  fun loginDetails(): LoginRequest?
+  fun loginDetails(): AbstractLoginRequest?
+
+  enum class LoginType {
+    Passcode,
+    TokenAndPass
+  }
 
   sealed class PostResult {
     class PostComplete(val replyResponse: ReplyResponse) : PostResult()
@@ -47,7 +57,7 @@ interface SiteActions {
   }
 
   sealed class LoginResult {
-    class LoginComplete(val loginResponse: LoginResponse) : LoginResult()
-    class LoginError(val error: Throwable) : LoginResult()
+    class LoginComplete(val loginResponse: AbstractLoginResponse) : LoginResult()
+    class LoginError(val errorMessage: String) : LoginResult()
   }
 }
