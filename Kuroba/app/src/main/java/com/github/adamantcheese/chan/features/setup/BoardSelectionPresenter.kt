@@ -73,7 +73,11 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
         resultMap[siteCellData] = mutableListOf()
       }
 
-      boardManager.viewBoardsOrdered(chanSiteData.siteDescriptor, viewActiveBoards) { chanBoard ->
+      boardManager.viewAllBoards(chanSiteData.siteDescriptor) { chanBoard ->
+        if (viewActiveBoards && !chanBoard.active) {
+          return@viewAllBoards
+        }
+
         val boardName = BoardHelper.getName(chanBoard)
 
         if (query.isEmpty() || boardName.contains(query, ignoreCase = true)) {
