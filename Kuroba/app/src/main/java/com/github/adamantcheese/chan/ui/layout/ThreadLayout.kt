@@ -697,34 +697,35 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun showReplyButton(show: Boolean) {
-    if (show != showingReplyButton && replyButtonEnabled) {
-      showingReplyButton = show
-
-      if (show && replyButton.visibility != View.VISIBLE) {
-        replyButton.visibility = View.VISIBLE
-      }
-
-      replyButton.animate()
-        .setInterpolator(DecelerateInterpolator(2f))
-        .setStartDelay(if (show) 100 else 0.toLong())
-        .setDuration(200)
-        .alpha(if (show) 1f else 0f)
-        .scaleX(if (show) 1f else 0f)
-        .scaleY(if (show) 1f else 0f)
-        .setListener(object : AnimatorListenerAdapter() {
-          override fun onAnimationCancel(animation: Animator) {
-            replyButton.alpha = if (show) 1f else 0f
-            replyButton.scaleX = if (show) 1f else 0f
-            replyButton.scaleY = if (show) 1f else 0f
-            replyButton.isClickable = show
-          }
-
-          override fun onAnimationEnd(animation: Animator) {
-            replyButton.isClickable = show
-          }
-        })
-        .start()
+    if (show == showingReplyButton || !replyButtonEnabled) {
+      return
     }
+    showingReplyButton = show
+
+    if (show && replyButton.visibility != View.VISIBLE) {
+      replyButton.visibility = View.VISIBLE
+    }
+
+    replyButton.animate()
+      .setInterpolator(DecelerateInterpolator(2f))
+      .setStartDelay(if (show) 100 else 0.toLong())
+      .setDuration(200)
+      .alpha(if (show) 1f else 0f)
+      .scaleX(if (show) 1f else 0f)
+      .scaleY(if (show) 1f else 0f)
+      .setListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationCancel(animation: Animator) {
+          replyButton.alpha = if (show) 1f else 0f
+          replyButton.scaleX = if (show) 1f else 0f
+          replyButton.scaleY = if (show) 1f else 0f
+          replyButton.isClickable = show
+        }
+
+        override fun onAnimationEnd(animation: Animator) {
+          replyButton.isClickable = show
+        }
+      })
+      .start()
   }
 
   private fun switchVisible(visible: Visible) {

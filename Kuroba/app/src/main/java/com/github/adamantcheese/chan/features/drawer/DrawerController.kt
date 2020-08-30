@@ -190,6 +190,7 @@ class DrawerController(
         )
 
         bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+        bottomNavView.updateMaxViewHeight(bottomNavBarHeight + globalWindowInsetsManager.bottom())
         bottomNavView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
       }
 
@@ -271,7 +272,6 @@ class DrawerController(
 
     if (topController is ToolbarNavigationController) {
       val toolbar = topController.toolbar
-
       if (toolbar != null) {
         bottomNavView.setToolbar(toolbar)
       }
