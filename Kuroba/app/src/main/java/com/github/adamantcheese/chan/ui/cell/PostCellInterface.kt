@@ -21,7 +21,6 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
@@ -76,6 +75,6 @@ interface PostCellInterface {
     fun onPostSelectionQuoted(post: Post, quoted: CharSequence)
     fun getPage(op: Post): BoardPage?
     fun hasAlreadySeenPost(post: Post): Boolean
-    fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
+    fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>)
   }
 }

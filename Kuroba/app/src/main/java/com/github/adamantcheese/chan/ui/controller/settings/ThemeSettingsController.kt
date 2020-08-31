@@ -55,7 +55,6 @@ import com.github.adamantcheese.chan.ui.adapter.PostAdapter
 import com.github.adamantcheese.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor
@@ -100,11 +99,11 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     override fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView) {}
     override fun onShowPostReplies(post: Post) {}
     override fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>) {}
-    override fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean) {}
     override fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean) {}
     override fun onPostLinkableClicked(post: Post, linkable: PostLinkable) {}
     override fun onPostNoClicked(post: Post) {}
     override fun onPostSelectionQuoted(post: Post, quoted: CharSequence) {}
+    override fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
 
     override fun getChanDescriptor(): ChanDescriptor? {
       return dummyThreadDescriptor

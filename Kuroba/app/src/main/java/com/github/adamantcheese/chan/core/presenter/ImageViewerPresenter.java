@@ -33,7 +33,7 @@ import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.ImageSearch;
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;

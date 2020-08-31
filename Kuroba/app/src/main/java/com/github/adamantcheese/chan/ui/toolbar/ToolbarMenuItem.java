@@ -26,7 +26,9 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
+import com.github.adamantcheese.chan.ui.controller.floating_menu.CatalogFloatingListMenuController;
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController;
+import com.github.adamantcheese.chan.ui.controller.floating_menu.ThreadFloatingListMenuController;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -37,6 +39,8 @@ import java.util.List;
 import java.util.Set;
 
 import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -53,6 +57,7 @@ public class ToolbarMenuItem {
     public int id;
     public boolean visible = true;
     public boolean enabled = true;
+    public ToolbarMenuType toolbarMenuType = ToolbarMenuType.Default;
     public Drawable drawable;
     public final List<ToolbarMenuSubItem> subItems = new ArrayList<>();
     private ClickCallback clickCallback;
@@ -95,6 +100,23 @@ public class ToolbarMenuItem {
         this.clickCallback = clickCallback;
         this.navigationController = navigationController;
         this.threedotMenuCallback = threedotMenuCallback;
+        this.toolbarMenuType = ToolbarMenuType.Default;
+    }
+
+    public ToolbarMenuItem(
+            int id,
+            int drawable,
+            ToolbarMenuType toolbarMenuType,
+            ClickCallback clickCallback,
+            @NonNull NavigationController navigationController,
+            @Nullable ToobarThreedotMenuCallback threedotMenuCallback
+    ) {
+        this.id = id;
+        this.drawable = ResourcesCompat.getDrawable(getRes(), drawable, null);
+        this.clickCallback = clickCallback;
+        this.navigationController = navigationController;
+        this.threedotMenuCallback = threedotMenuCallback;
+        this.toolbarMenuType = toolbarMenuType;
     }
 
     public void attach(ImageView view) {
@@ -207,24 +229,8 @@ public class ToolbarMenuItem {
             }
         }
 
-        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
-                view.getContext(),
-                floatingListMenuItems,
-                item -> {
-                    ToolbarMenuSubItem subItem = findMenuSubItem(subItems, (Integer) item.getKey());
-                    if (subItem != null) {
-                        subItem.performClick();
-                    }
-
-                    return Unit.INSTANCE;
-                },
-                () -> {
-                    if (threedotMenuCallback != null) {
-                        threedotMenuCallback.onMenuHidden();
-                    }
-
-                    return Unit.INSTANCE;
-                }
+        FloatingListMenuController floatingListMenuController = createFloatingListMenuController(
+                floatingListMenuItems
         );
 
         boolean isAlreadyPresenting = navigationController.isAlreadyPresenting(
@@ -238,6 +244,54 @@ public class ToolbarMenuItem {
                 threedotMenuCallback.onMenuShown();
             }
         }
+    }
+
+    private FloatingListMenuController createFloatingListMenuController(
+            List<FloatingListMenu.FloatingListMenuItem> floatingListMenuItems
+    ) {
+        Function1<? super FloatingListMenu.FloatingListMenuItem, Unit> itemClickListener = (item) -> {
+            ToolbarMenuSubItem subItem = findMenuSubItem(subItems, (Integer) item.getKey());
+            if (subItem != null) {
+                subItem.performClick();
+            }
+
+            return Unit.INSTANCE;
+        };
+
+        Function0<Unit> menuDismissListener = () -> {
+            if (threedotMenuCallback != null) {
+                threedotMenuCallback.onMenuHidden();
+            }
+
+            return Unit.INSTANCE;
+        };
+
+        FloatingListMenuController floatingListMenuController;
+
+        if (toolbarMenuType == ToolbarMenuType.CatalogListMenu) {
+            floatingListMenuController = new CatalogFloatingListMenuController(
+                    view.getContext(),
+                    floatingListMenuItems,
+                    itemClickListener,
+                    menuDismissListener
+            );
+        } else if (toolbarMenuType == ToolbarMenuType.ThreadListMenu) {
+            floatingListMenuController = new ThreadFloatingListMenuController(
+                    view.getContext(),
+                    floatingListMenuItems,
+                    itemClickListener,
+                    menuDismissListener
+            );
+        } else {
+            floatingListMenuController = new FloatingListMenuController(
+                    view.getContext(),
+                    floatingListMenuItems,
+                    itemClickListener,
+                    menuDismissListener
+            );
+        }
+
+        return floatingListMenuController;
     }
 
     private int checkDuplicateMenuIds(

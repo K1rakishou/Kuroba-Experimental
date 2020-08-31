@@ -10,9 +10,9 @@
         android:background="?android:selectableItemBackground"
         android:orientation="vertical"
         android:paddingLeft="16dp"
-        android:paddingTop="18dp"
+        android:paddingTop="12dp"
         android:paddingRight="16dp"
-        android:paddingBottom="18dp">
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/title"
@@ -22,7 +22,7 @@
             android:maxLines="2"
             android:ellipsize="end"
             android:textColor="?setting_description_top"
-            android:textSize="20sp"
+            android:textSize="18sp"
             tools:text="@string/lorem_ipsum"/>
 
     </LinearLayout>

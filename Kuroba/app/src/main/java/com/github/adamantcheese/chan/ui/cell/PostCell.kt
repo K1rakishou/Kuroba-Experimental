@@ -51,7 +51,6 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface.PostCellCallback
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.ClearableSpan
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
@@ -183,10 +182,10 @@ class PostCell : LinearLayout, PostCellInterface {
       if (callback != null) {
         post?.let { post ->
           callback?.onPopulatePostOptions(post, items)
-        }
 
-        if (items.size > 0) {
-          showOptions(items)
+          if (items.size > 0) {
+            callback?.showPostOptions(post, inPopup, items)
+          }
         }
       }
     }
@@ -202,18 +201,6 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
-  }
-
-  private fun showOptions(items: List<FloatingListMenuItem>) {
-    val floatingListMenuController = FloatingListMenuController(
-      context,
-      items, { (key) ->
-      if (callback != null && post != null) {
-        callback?.onPostOptionClicked(post!!, (key as Int), inPopup)
-      }
-    })
-
-    callback?.presentController(floatingListMenuController, true)
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {

@@ -50,6 +50,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuType
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.adamantcheese.chan.utils.Logger
@@ -253,7 +254,7 @@ class BrowseController(context: Context) : ThreadController(context),
 
   @Suppress("MoveLambdaOutsideParentheses")
   private suspend fun buildMenu() {
-    val menuBuilder = navigation.buildMenu()
+    val menuBuilder = navigation.buildMenu(ToolbarMenuType.CatalogListMenu)
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
 

@@ -32,7 +32,6 @@ import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -46,8 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
-
-import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
@@ -120,35 +117,14 @@ public class CardPostCell
         options.setOnClickListener(v -> {
             List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
 
-            if (callback != null) {
+            if (callback != null && post != null) {
                 callback.onPopulatePostOptions(post, items);
 
                 if (items.size() > 0) {
-                    showOptions(items);
+                    callback.showPostOptions(post, inPopup, items);
                 }
             }
         });
-    }
-
-    private void showOptions(List<FloatingListMenu.FloatingListMenuItem> items) {
-        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
-                getContext(),
-                items,
-                item -> {
-                    if (callback != null) {
-                        callback.onPostOptionClicked(post, (Integer) item.getKey(), inPopup);
-                    }
-
-                    return Unit.INSTANCE;
-                }
-        );
-
-        if (callback != null) {
-            callback.presentController(
-                    floatingListMenuController,
-                    true
-            );
-        }
     }
 
     @Override

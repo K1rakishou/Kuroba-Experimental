@@ -13,7 +13,7 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.exhaustive
