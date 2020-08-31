@@ -43,7 +43,7 @@ import com.github.adamantcheese.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
@@ -854,7 +854,7 @@ class ThreadPresenter @Inject constructor(
       { (key) -> onThumbnailOptionClicked(key as Int, postImage, thumbnail) }
     )
 
-    presentController(floatingListMenuController, true)
+    threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
   private fun onThumbnailOptionClicked(id: Int, postImage: PostImage, thumbnail: ThumbnailView) {
@@ -1177,8 +1177,17 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.quote(post, quoted)
   }
 
-  override fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean) {
-    threadPresenterCallback?.presentController(floatingListMenuController, animate)
+  override fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>) {
+    val isThreadMode = currentChanDescriptor?.isThreadDescriptor()
+      ?: return
+
+    val floatingListMenuController = FloatingListMenuController.create(
+      context,
+      isThreadMode,
+      items
+    ) { (key) -> onPostOptionClicked(post, (key as Int), inPopup) }
+
+    threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
   override fun hasAlreadySeenPost(post: Post): Boolean {

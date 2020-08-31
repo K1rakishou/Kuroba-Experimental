@@ -66,7 +66,11 @@ public class NavigationItem {
     }
 
     public MenuBuilder buildMenu() {
-        return new MenuBuilder(this);
+        return new MenuBuilder(ToolbarMenuType.Default, this);
+    }
+
+    public MenuBuilder buildMenu(ToolbarMenuType toolbarMenuType) {
+        return new MenuBuilder(toolbarMenuType, this);
     }
 
     public void setMiddleMenu(ToolbarMiddleMenu middleMenu) {
@@ -88,9 +92,11 @@ public class NavigationItem {
     public static class MenuBuilder {
         private final NavigationItem navigationItem;
         private final ToolbarMenu menu;
+        private ToolbarMenuType toolbarMenuType;
 
-        public MenuBuilder(NavigationItem navigationItem) {
+        public MenuBuilder(ToolbarMenuType toolbarMenuType, NavigationItem navigationItem) {
             this.navigationItem = navigationItem;
+            this.toolbarMenuType = toolbarMenuType;
             menu = new ToolbarMenu();
         }
 
@@ -107,6 +113,7 @@ public class NavigationItem {
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
+            menuItem.toolbarMenuType = toolbarMenuType;
             menu.addItem(menuItem);
             return this;
         }
@@ -116,6 +123,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
+                            toolbarMenuType,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             null
@@ -131,6 +139,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
+                            toolbarMenuType,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             threedotMenuCallback

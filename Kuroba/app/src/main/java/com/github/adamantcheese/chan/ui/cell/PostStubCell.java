@@ -31,7 +31,6 @@ import com.github.adamantcheese.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
@@ -40,8 +39,6 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import kotlin.Unit;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 
@@ -98,35 +95,14 @@ public class PostStubCell
         options.setOnClickListener(v -> {
             List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
 
-            if (callback != null) {
+            if (callback != null && post != null) {
                 callback.onPopulatePostOptions(post, items);
 
                 if (items.size() > 0) {
-                    showOptions(items);
+                    callback.showPostOptions(post, inPopup, items);
                 }
             }
         });
-    }
-
-    private void showOptions(List<FloatingListMenu.FloatingListMenuItem> items) {
-        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
-                getContext(),
-                items,
-                item -> {
-                    if (callback != null) {
-                        callback.onPostOptionClicked(post, item.getKey(), inPopup);
-                    }
-
-                    return Unit.INSTANCE;
-                }
-        );
-
-        if (callback != null) {
-            callback.presentController(
-                    floatingListMenuController,
-                    true
-            );
-        }
     }
 
     @Override

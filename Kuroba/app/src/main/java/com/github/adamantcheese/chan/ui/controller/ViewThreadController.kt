@@ -39,11 +39,8 @@ import com.github.adamantcheese.chan.ui.helper.HintPopup
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenu
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem
+import com.github.adamantcheese.chan.ui.toolbar.*
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.adamantcheese.chan.utils.Logger
@@ -142,7 +139,7 @@ open class ViewThreadController(
   }
 
   protected fun buildMenu() {
-    val menuBuilder = navigation.buildMenu()
+    val menuBuilder = navigation.buildMenu(ToolbarMenuType.ThreadListMenu)
 
     if (!ChanSettings.textOnly.get()) {
       menuBuilder

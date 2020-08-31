@@ -50,7 +50,7 @@ import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
 import com.github.adamantcheese.chan.ui.adapter.PostsFilter
-import com.github.adamantcheese.chan.ui.controller.FloatingListMenuController
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper
 import com.github.adamantcheese.chan.ui.helper.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.adamantcheese.chan.ui.helper.PostPopupHelper
