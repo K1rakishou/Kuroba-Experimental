@@ -121,9 +121,8 @@ class DrawerController(
         navigationController = topController.leftController as StyledToolbarNavigationController
       }
 
-      checkNotNull(navigationController) {
-        "The child controller of a DrawerController must either be StyledToolbarNavigationController " +
-          "or an DoubleNavigationController that has a ToolbarNavigationController."
+      if (navigationController == null) {
+        Logger.e(TAG, "topController is an expected controller type: ${topController::class.java.simpleName}")
       }
 
       return navigationController
@@ -519,16 +518,17 @@ class DrawerController(
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {
     mainScope.launch {
-      topThreadController?.let { threadController ->
-        val isCurrentlyVisible = drawerPresenter.isCurrentlyVisible(navHistoryEntry.descriptor)
-        if (!isCurrentlyVisible) {
-          when (val descriptor = navHistoryEntry.descriptor) {
-            is ChanDescriptor.ThreadDescriptor -> {
-              threadController.showThread(descriptor)
-            }
-            is ChanDescriptor.CatalogDescriptor -> {
-              threadController.showBoard(descriptor.boardDescriptor)
-            }
+      val currentTopThreadController = topThreadController
+        ?: return@launch
+
+      val isCurrentlyVisible = drawerPresenter.isCurrentlyVisible(navHistoryEntry.descriptor)
+      if (!isCurrentlyVisible) {
+        when (val descriptor = navHistoryEntry.descriptor) {
+          is ChanDescriptor.ThreadDescriptor -> {
+            currentTopThreadController.showThread(descriptor)
+          }
+          is ChanDescriptor.CatalogDescriptor -> {
+            currentTopThreadController.showBoard(descriptor.boardDescriptor)
           }
         }
       }
