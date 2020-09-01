@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.features.setup.data.AddBoardsControllerState
 import com.github.adamantcheese.chan.features.setup.data.BoardCellData
 import com.github.adamantcheese.chan.features.setup.data.SelectableBoardCellData
+import com.github.adamantcheese.chan.ui.helper.BoardDescriptorsComparator
 import com.github.adamantcheese.chan.ui.helper.BoardHelper
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.errorMessageOrClassName
@@ -129,73 +130,16 @@ class AddBoardsPresenter(
       return
     }
 
-    val sortedBoards = matchedBoards.sortedWith(BoardsComparator(query))
+    val comparator = BoardDescriptorsComparator<SelectableBoardCellData>(query) { selectableBoardCellData ->
+      selectableBoardCellData.boardCellData.boardDescriptor
+    }
+
+    val sortedBoards = matchedBoards.sortedWith(comparator)
     setState(AddBoardsControllerState.Data(sortedBoards))
   }
 
   private fun setState(state: AddBoardsControllerState) {
     stateSubject.onNext(state)
-  }
-
-  private class BoardsComparator(
-    private val query: String
-  ) : Comparator<SelectableBoardCellData> {
-
-    override fun compare(o1: SelectableBoardCellData, o2: SelectableBoardCellData): Int {
-      val boardCode1 = o1.boardCellData.boardDescriptor.boardCode
-      val boardCode2 = o2.boardCellData.boardDescriptor.boardCode
-
-      if (query.isEmpty()) {
-        return boardCode1.compareTo(boardCode2)
-      }
-
-      if (query.length > boardCode1.length && query.length <= boardCode2.length) {
-        return -1
-      }
-
-      if (query.length > boardCode2.length && query.length <= boardCode1.length) {
-        return 1
-      }
-
-      val (maxOccurrenceLen1, position1) = queryOccurrenceLengthAndPosition(query, boardCode1)
-      val (maxOccurrenceLen2, position2) = queryOccurrenceLengthAndPosition(query, boardCode2)
-
-      val occurrencesResult = maxOccurrenceLen1.compareTo(maxOccurrenceLen2)
-      val positionsResult = position1.compareTo(position2)
-      val boardCodeLengthsResult = boardCode1.length.compareTo(boardCode2.length)
-
-      return occurrencesResult + positionsResult + boardCodeLengthsResult
-    }
-
-    private fun queryOccurrenceLengthAndPosition(query: String, boardCode: String): Pair<Int, Int> {
-      require(query.length <= boardCode.length)
-
-      var maxLen = 0
-      var index = 0
-      var position = 0
-
-      while (index < boardCode.length) {
-        var occurrenceLen = 0
-
-        for (j in query.indices) {
-          if (boardCode[index] != query[j]) {
-            break
-          }
-
-          ++occurrenceLen
-        }
-
-        val newMaxLen = Math.max(maxLen, occurrenceLen)
-        if (newMaxLen > maxLen) {
-          position = index
-        }
-
-        maxLen = newMaxLen
-        ++index
-      }
-
-      return maxLen to position
-    }
   }
 
   companion object {
