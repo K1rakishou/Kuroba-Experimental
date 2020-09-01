@@ -121,6 +121,10 @@ class DrawerController(
         navigationController = topController.leftController as StyledToolbarNavigationController
       }
 
+      if (navigationController == null) {
+        Logger.e(TAG, "topController is an expected controller type: ${topController::class.java.simpleName}")
+      }
+
       return navigationController
     }
 
