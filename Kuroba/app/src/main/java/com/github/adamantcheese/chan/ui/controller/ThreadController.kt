@@ -186,8 +186,8 @@ abstract class ThreadController(
     }
   }
 
-  override fun getPreviewImageTransitionView(postImage: PostImage): ThumbnailView {
-    return threadLayout.getThumbnail(postImage)!!
+  override fun getPreviewImageTransitionView(postImage: PostImage): ThumbnailView? {
+    return threadLayout.getThumbnail(postImage)
   }
 
   override fun scrollToImage(postImage: PostImage) {

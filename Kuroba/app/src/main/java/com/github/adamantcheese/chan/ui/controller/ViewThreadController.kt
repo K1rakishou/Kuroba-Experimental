@@ -648,8 +648,8 @@ open class ViewThreadController(
     return true
   }
 
-  override fun getPostForPostImage(postImage: PostImage): Post {
-    return threadLayout.presenter.getPostFromPostImage(postImage)!!
+  override fun getPostForPostImage(postImage: PostImage): Post? {
+    return threadLayout.presenter.getPostFromPostImage(postImage)
   }
 
   override fun onMenuShown() {

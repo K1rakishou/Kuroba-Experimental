@@ -778,8 +778,8 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  override fun getPostForPostImage(postImage: PostImage): Post {
-    return threadLayout.presenter.getPostFromPostImage(postImage)!!
+  override fun getPostForPostImage(postImage: PostImage): Post? {
+    return threadLayout.presenter.getPostFromPostImage(postImage)
   }
 
   companion object {
