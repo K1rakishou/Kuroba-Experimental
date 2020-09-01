@@ -97,8 +97,10 @@ internal class PostExtraContentLoader(
 
             return@flatMap updateSpans(spanUpdateBatchList, postLoaderData)
           }
+          .doOnError { error -> Logger.e(TAG, "Internal unhandled error", error) }
+          .onErrorResumeNext { failed() }
       }
-      .doOnError { error -> Logger.e(TAG, "Unhandled error", error) }
+      .doOnError { error -> Logger.e(TAG, "External unhandled error", error) }
       .onErrorResumeNext { failed() }
   }
 
