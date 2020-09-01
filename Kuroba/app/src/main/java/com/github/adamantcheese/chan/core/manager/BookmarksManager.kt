@@ -168,12 +168,12 @@ class BookmarksManager(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     title: String? = null,
     thumbnailUrl: HttpUrl? = null
-  ) {
+  ): Boolean {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    lock.write {
-      require(!bookmarks.containsKey(threadDescriptor)) {
-        "Bookmark already exists ($threadDescriptor)"
+    return lock.write {
+      if (bookmarks.containsKey(threadDescriptor)) {
+        return@write false
       }
 
       val threadBookmark = ThreadBookmark.create(threadDescriptor).apply {
@@ -187,25 +187,32 @@ class BookmarksManager(
 
       orders.add(0, threadDescriptor)
       bookmarks[threadDescriptor] = threadBookmark
+      ensureBookmarksAndOrdersConsistency()
 
       bookmarksChanged(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
       Logger.d(TAG, "Bookmark created ($threadDescriptor)")
+
+      return@write true
     }
   }
 
-  fun deleteBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  fun deleteBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    lock.write {
-      require(bookmarks.containsKey(threadDescriptor)) {
-        "Bookmark does not exist ($threadDescriptor)"
+    return lock.write {
+      if (!bookmarks.containsKey(threadDescriptor)) {
+        ensureBookmarksAndOrdersConsistency()
+        return@write false
       }
 
       bookmarks.remove(threadDescriptor)
       orders.remove(threadDescriptor)
+      ensureBookmarksAndOrdersConsistency()
 
       bookmarksChanged(BookmarkChange.BookmarksDeleted(listOf(threadDescriptor)))
       Logger.d(TAG, "Bookmark deleted ($threadDescriptor)")
+
+      return@write true
     }
   }
 
@@ -271,6 +278,7 @@ class BookmarksManager(
           toDelete += threadDescriptor
         }
       }
+
       ensureBookmarksAndOrdersConsistency()
 
       if (toDelete.size > 0) {
