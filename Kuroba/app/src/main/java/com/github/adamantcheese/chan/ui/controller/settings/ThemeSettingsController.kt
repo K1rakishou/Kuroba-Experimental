@@ -424,7 +424,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   private inner class ColorsAdapter(private val items: List<FloatingMenuItem>) : BaseAdapter() {
 
     @SuppressLint("ViewHolder")
-    override fun getView(position: Int, convertView: View, parent: ViewGroup): View {
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
       val textView = AndroidUtils.inflate(
         parent.context,
         R.layout.toolbar_menu_item,
