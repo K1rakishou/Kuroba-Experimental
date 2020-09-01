@@ -6,6 +6,8 @@ import android.widget.FrameLayout
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
+import com.github.adamantcheese.chan.ui.view.floating_menu.epoxy.epoxyCheckableFloatingListMenuRow
+import com.github.adamantcheese.chan.ui.view.floating_menu.epoxy.epoxyFloatingListMenuRow
 
 class FloatingListMenu @JvmOverloads constructor(
   context: Context,
@@ -44,23 +46,37 @@ class FloatingListMenu @JvmOverloads constructor(
   private fun rebuild(items: List<FloatingListMenuItem>) {
     recycler.withModels {
       items.forEachIndexed { index, item ->
-        val itemName = if (item.isCurrentlySelected) {
-          item.name + "  " + CHECKMARK_SYMBOL
-        } else {
-          item.name
-        }
-
         if (item.visible) {
-          epoxyFloatingListMenuRow {
-            id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
-            title(itemName)
-            settingEnabled(true)
+          when (item) {
+            is CheckableFloatingListMenuItem -> {
+              epoxyCheckableFloatingListMenuRow {
+                id("epoxy_checkable_floating_list_menu_row_${item.key.hashCode()}")
+                title(item.name)
+                settingEnabled(true)
+                checked(item.isCurrentlySelected)
 
-            callback {
-              if (item.more.isNotEmpty()) {
-                stackCallback?.invoke(item.more)
-              } else {
-                itemClickListener?.invoke(item)
+                callback {
+                  if (item.more.isNotEmpty()) {
+                    stackCallback?.invoke(item.more)
+                  } else {
+                    itemClickListener?.invoke(item)
+                  }
+                }
+              }
+            }
+            is FloatingListMenuItem -> {
+              epoxyFloatingListMenuRow {
+                id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
+                title(item.name)
+                settingEnabled(true)
+
+                callback {
+                  if (item.more.isNotEmpty()) {
+                    stackCallback?.invoke(item.more)
+                  } else {
+                    itemClickListener?.invoke(item)
+                  }
+                }
               }
             }
           }
@@ -73,18 +89,5 @@ class FloatingListMenu @JvmOverloads constructor(
         }
       }
     }
-  }
-
-  data class FloatingListMenuItem @JvmOverloads constructor(
-    val key: Any,
-    val name: String,
-    val value: Any? = null,
-    val visible: Boolean = true,
-    val isCurrentlySelected: Boolean = false,
-    val more: MutableList<FloatingListMenuItem> = mutableListOf()
-  )
-
-  companion object {
-    private const val CHECKMARK_SYMBOL = "✓"
   }
 }

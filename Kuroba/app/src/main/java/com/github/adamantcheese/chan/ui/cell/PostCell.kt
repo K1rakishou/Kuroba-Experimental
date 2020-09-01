@@ -58,7 +58,7 @@ import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BitmapUtils
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize

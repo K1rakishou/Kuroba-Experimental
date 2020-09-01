@@ -66,7 +66,7 @@ import com.github.adamantcheese.chan.ui.view.FloatingMenu.FloatingMenuCallback
 import com.github.adamantcheese.chan.ui.view.FloatingMenuItem
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.ViewPagerAdapter
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor

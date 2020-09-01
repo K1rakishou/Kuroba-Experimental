@@ -37,7 +37,7 @@ import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -115,7 +115,7 @@ public class CardPostCell
         setCompact(compact);
 
         options.setOnClickListener(v -> {
-            List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
+            List<FloatingListMenuItem> items = new ArrayList<>();
 
             if (callback != null && post != null) {
                 callback.onPopulatePostOptions(post, items);

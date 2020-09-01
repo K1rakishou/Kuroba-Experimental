@@ -22,7 +22,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.Setting;
 import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.controller.settings.SettingsController;
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,9 +107,9 @@ public class ListSettingView<T>
     @SuppressWarnings("unchecked")
     @Override
     public void onClick(View v) {
-        List<FloatingListMenu.FloatingListMenuItem> menuItems = new ArrayList<>(items.size());
+        List<FloatingListMenuItem> menuItems = new ArrayList<>(items.size());
         for (Item item : items) {
-            FloatingListMenu.FloatingListMenuItem menuItem = new FloatingListMenu.FloatingListMenuItem(
+            FloatingListMenuItem menuItem = new FloatingListMenuItem(
                     item.key,
                     item.name,
                     item.enabled

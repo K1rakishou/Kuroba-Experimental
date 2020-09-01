@@ -36,7 +36,7 @@ import com.github.adamantcheese.chan.core.site.ImageSearch;
 import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.ui.view.MultiImageView;
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.data.board.ChanBoard;
@@ -715,9 +715,9 @@ public class ImageViewerPresenter
     }
 
     public void showImageSearchOptions() {
-        List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
+        List<FloatingListMenuItem> items = new ArrayList<>();
         for (ImageSearch imageSearch : ImageSearch.engines) {
-            FloatingListMenu.FloatingListMenuItem item = new FloatingListMenu.FloatingListMenuItem(
+            FloatingListMenuItem item = new FloatingListMenuItem(
                     imageSearch.getId(),
                     imageSearch.getName()
             );

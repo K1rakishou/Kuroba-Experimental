@@ -22,10 +22,19 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:maxLines="2"
+            android:gravity="center_vertical"
             android:ellipsize="end"
             android:textColor="?setting_description_top"
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum"/>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkbox"
+            android:clickable="false"
+            android:focusable="false"
+            android:layout_width="32dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
 
     </LinearLayout>
 

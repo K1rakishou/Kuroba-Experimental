@@ -33,7 +33,7 @@ import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.view.ThumbnailView;
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
@@ -93,7 +93,7 @@ public class PostStubCell
         setOnClickListener(this);
 
         options.setOnClickListener(v -> {
-            List<FloatingListMenu.FloatingListMenuItem> items = new ArrayList<>();
+            List<FloatingListMenuItem> items = new ArrayList<>();
 
             if (callback != null && post != null) {
                 callback.onPopulatePostOptions(post, items);

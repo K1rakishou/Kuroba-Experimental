@@ -24,7 +24,7 @@ import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Boa
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 
 interface PostCellInterface {

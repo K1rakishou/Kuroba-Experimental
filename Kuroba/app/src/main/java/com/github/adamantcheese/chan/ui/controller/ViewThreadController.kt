@@ -214,7 +214,7 @@ open class ViewThreadController(
       R.string.action_thread_view_options,
       true
     )
-      .addNestedItem(
+      .addNestedCheckableItem(
         ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE,
         R.string.action_use_scrolling_text_for_thread_title,
         true,
@@ -230,28 +230,28 @@ open class ViewThreadController(
       R.string.action_scrollbar_post_highlights,
       true
     )
-      .addNestedItem(
+      .addNestedCheckableItem(
         ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
         R.string.action_mark_replies_your_posts_on_scrollbar,
         true,
         ChanSettings.markYourPostsOnScrollbar.get(),
         ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
-      .addNestedItem(
+      .addNestedCheckableItem(
         ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR,
         R.string.action_mark_replies_to_your_posts_on_scrollbar,
         true,
         ChanSettings.markRepliesToYourPostOnScrollbar.get(),
         ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
-      .addNestedItem(
+      .addNestedCheckableItem(
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR,
         R.string.action_mark_cross_thread_quotes_on_scrollbar,
         true,
         ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
-      .addNestedItem(
+      .addNestedCheckableItem(
         ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR,
         R.string.action_mark_archived_posts_on_scrollbar,
         true,
@@ -356,7 +356,10 @@ open class ViewThreadController(
     if (clickedItemId == ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE) {
       val useScrollingTextForThreadView = !ChanSettings.scrollingTextForThreadTitles.get()
       ChanSettings.scrollingTextForThreadTitles.set(useScrollingTextForThreadView)
+
+      item as CheckableToolbarMenuSubItem
       item.isCurrentlySelected = useScrollingTextForThreadView
+
       AndroidUtils.showToast(context, R.string.restart_the_app)
     } else {
       throw IllegalStateException("Unknown clickedItemId $clickedItemId")
@@ -371,21 +374,29 @@ open class ViewThreadController(
       ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR -> {
         val markReplies = !ChanSettings.markRepliesToYourPostOnScrollbar.get()
         ChanSettings.markRepliesToYourPostOnScrollbar.set(markReplies)
+
+        item as CheckableToolbarMenuSubItem
         item.isCurrentlySelected = markReplies
       }
       ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR -> {
         val markCrossThreadQuotes = !ChanSettings.markCrossThreadQuotesOnScrollbar.get()
         ChanSettings.markCrossThreadQuotesOnScrollbar.set(markCrossThreadQuotes)
+
+        item as CheckableToolbarMenuSubItem
         item.isCurrentlySelected = markCrossThreadQuotes
       }
       ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR -> {
         val markYourPostsOnScrollbar = !ChanSettings.markYourPostsOnScrollbar.get()
         ChanSettings.markYourPostsOnScrollbar.set(markYourPostsOnScrollbar)
+
+        item as CheckableToolbarMenuSubItem
         item.isCurrentlySelected = markYourPostsOnScrollbar
       }
       ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR -> {
         val markArchivedPostsOnScrollbar = !ChanSettings.markArchivedPostsOnScrollbar.get()
         ChanSettings.markArchivedPostsOnScrollbar.set(markArchivedPostsOnScrollbar)
+
+        item as CheckableToolbarMenuSubItem
         item.isCurrentlySelected = markArchivedPostsOnScrollbar
       }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")

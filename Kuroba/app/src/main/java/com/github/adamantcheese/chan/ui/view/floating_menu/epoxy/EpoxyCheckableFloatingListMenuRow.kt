@@ -1,4 +1,4 @@
-package com.github.adamantcheese.chan.ui.view.floating_menu
+package com.github.adamantcheese.chan.ui.view.floating_menu.epoxy
 
 import android.content.Context
 import android.util.AttributeSet
@@ -10,21 +10,24 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.R
+import com.google.android.material.checkbox.MaterialCheckBox
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyFloatingListMenuRow @JvmOverloads constructor(
+class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
   private val holder: LinearLayout
   private val title: TextView
+  private val checkbox: MaterialCheckBox
 
   init {
-    View.inflate(context, R.layout.epoxy_floating_list_menu_row, this)
+    View.inflate(context, R.layout.epoxy_checkable_floating_list_menu_row, this)
 
     holder = findViewById(R.id.holder)
     title = findViewById(R.id.title)
+    checkbox = findViewById(R.id.checkbox)
   }
 
   @ModelProp
@@ -49,14 +52,22 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
     }
   }
 
+  @ModelProp
+  fun setChecked(isChecked: Boolean) {
+    checkbox.isChecked = isChecked
+  }
+
   @CallbackProp
-  fun setCallback(callback: (() -> Unit)?) {
+  fun setCallback(callback: ((checked: Boolean) -> Unit)?) {
     if (callback == null) {
       holder.setOnClickListener(null)
       return
     }
 
-    holder.setOnClickListener { callback.invoke() }
+    holder.setOnClickListener {
+      checkbox.isChecked = !checkbox.isChecked
+      callback.invoke(checkbox.isChecked)
+    }
   }
 
 }

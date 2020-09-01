@@ -48,7 +48,7 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu.FloatingListMenuItem
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
@@ -851,7 +851,7 @@ class ThreadPresenter @Inject constructor(
     val floatingListMenuController = FloatingListMenuController(
       context,
       items,
-      { (key) -> onThumbnailOptionClicked(key as Int, postImage, thumbnail) }
+      { item -> onThumbnailOptionClicked(item.key as Int, postImage, thumbnail) }
     )
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)
@@ -1185,7 +1185,7 @@ class ThreadPresenter @Inject constructor(
       context,
       isThreadMode,
       items
-    ) { (key) -> onPostOptionClicked(post, (key as Int), inPopup) }
+    ) { item -> onPostOptionClicked(post, (item.key as Int), inPopup) }
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
