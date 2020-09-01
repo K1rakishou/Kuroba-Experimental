@@ -22,6 +22,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -98,6 +99,7 @@ public class AlbumViewController
         navigationController.pushController(albumDownloadController);
     }
 
+    @Nullable
     @Override
     public ThumbnailView getPreviewImageTransitionView(PostImage postImage) {
         ThumbnailView thumbnail = null;
@@ -111,6 +113,7 @@ public class AlbumViewController
                 }
             }
         }
+
         return thumbnail;
     }
 

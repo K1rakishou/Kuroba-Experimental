@@ -640,7 +640,6 @@ public class ImageViewerController
     @Override
     public void startPreviewInTransition(ChanDescriptor chanDescriptor, PostImage postImage) {
         ThumbnailView startImageView = getTransitionImageView(postImage);
-
         if (!setTransitionViewData(startImageView)) {
             presenter.onInTransitionEnd();
             return;
@@ -761,7 +760,7 @@ public class ImageViewerController
         navigationController.stopPresenting(false);
     }
 
-    private boolean setTransitionViewData(ThumbnailView startView) {
+    private boolean setTransitionViewData(@Nullable ThumbnailView startView) {
         if (startView == null || startView.getWindowToken() == null) {
             return false;
         }
@@ -796,6 +795,7 @@ public class ImageViewerController
         loadingBar.setAlpha(alpha);
     }
 
+    @Nullable
     private ThumbnailView getTransitionImageView(PostImage postImage) {
         return imageViewerCallback.getPreviewImageTransitionView(postImage);
     }
@@ -871,8 +871,10 @@ public class ImageViewerController
     }
 
     public interface ImageViewerCallback {
+        @Nullable
         ThumbnailView getPreviewImageTransitionView(PostImage postImage);
         void scrollToImage(PostImage postImage);
+        @Nullable
         Post getPostForPostImage(PostImage postImage);
     }
 
