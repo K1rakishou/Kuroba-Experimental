@@ -104,7 +104,7 @@ class OnDemandContentLoaderManager(
     return Flowable.merge(allCachedStream, notAllCachedStream)
   }
 
-  private fun processLoaders(postLoaderData: PostLoaderData): Flowable<Unit>? {
+  private fun processLoaders(postLoaderData: PostLoaderData): Flowable<Unit> {
     return Flowable.fromIterable(loaders)
       .subscribeOn(workerScheduler)
       .flatMapSingle { loader ->
