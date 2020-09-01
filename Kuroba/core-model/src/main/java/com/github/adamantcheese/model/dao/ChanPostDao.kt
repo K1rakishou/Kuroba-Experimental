@@ -74,11 +74,10 @@ abstract class ChanPostDao {
     ownerArchiveIds: Collection<Long>,
     postNos: Collection<Long>
   ): List<ChanPostFull> {
-    val groupedPostIdPostNoDto = selectManyGrouped(
-      ownerThreadId,
-      ownerArchiveIds,
-      postNos
-    )
+    val groupedPostIdPostNoDto = postNos
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { chunk -> selectManyGrouped(ownerThreadId, ownerArchiveIds, chunk)
+    }
 
     return retainMostValuablePosts(groupedPostIdPostNoDto)
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
