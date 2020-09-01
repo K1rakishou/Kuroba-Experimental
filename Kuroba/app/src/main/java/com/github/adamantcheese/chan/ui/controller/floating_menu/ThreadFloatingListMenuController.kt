@@ -3,16 +3,17 @@ package com.github.adamantcheese.chan.ui.controller.floating_menu
 import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 
 class ThreadFloatingListMenuController(
   context: Context,
-  items: List<FloatingListMenu.FloatingListMenuItem>,
-  itemClickListener: (item: FloatingListMenu.FloatingListMenuItem) -> Unit,
+  items: List<FloatingListMenuItem>,
+  itemClickListener: (item: FloatingListMenuItem) -> Unit,
   menuDismissListener: (() -> Unit)? = null
 ) : FloatingListMenuController(context, items, itemClickListener, menuDismissListener) {
 
-  override fun stack(moreItems: List<FloatingListMenu.FloatingListMenuItem>) {
+  override fun stack(moreItems: List<FloatingListMenuItem>) {
     if (!AndroidUtils.isTablet()) {
       super.stack(moreItems)
       return

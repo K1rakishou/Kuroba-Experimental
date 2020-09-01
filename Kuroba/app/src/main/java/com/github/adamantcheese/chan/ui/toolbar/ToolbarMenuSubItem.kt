@@ -23,15 +23,13 @@ import java.util.*
  * An item for a submenu of a ToolbarMenuItem. Most common as subitem for the overflow button.
  * Add with NavigationItem MenuBuilder.
  */
-class ToolbarMenuSubItem {
+open class ToolbarMenuSubItem {
   @JvmField
   var id = 0
   @JvmField
   var text: String? = null
   @JvmField
   var visible = true
-  @JvmField
-  var isCurrentlySelected = false
   @JvmField
   var value: Any? = null
   @JvmField
@@ -45,13 +43,11 @@ class ToolbarMenuSubItem {
     textId: Int,
     clicked: ClickCallback? = null,
     visible: Boolean = true,
-    isCurrentlySelected: Boolean = false,
     value: Any? = null
   ) {
     this.id = id
     this.text = AndroidUtils.getString(textId)
     this.visible = visible
-    this.isCurrentlySelected = isCurrentlySelected
     this.value = value
     this.clickCallback = clicked
   }
@@ -62,13 +58,11 @@ class ToolbarMenuSubItem {
     text: String,
     clicked: ClickCallback? = null,
     visible: Boolean = true,
-    isCurrentlySelected: Boolean = false,
     value: Any? = null
   ) {
     this.id = id
     this.text = text
     this.visible = visible
-    this.isCurrentlySelected = isCurrentlySelected
     this.value = value
     this.clickCallback = clicked
   }

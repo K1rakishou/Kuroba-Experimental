@@ -5,11 +5,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.controller.BaseFloatingController
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
-  protected val items: List<FloatingListMenu.FloatingListMenuItem>,
-  protected val itemClickListener: (item: FloatingListMenu.FloatingListMenuItem) -> Unit,
+  protected val items: List<FloatingListMenuItem>,
+  protected val itemClickListener: (item: FloatingListMenuItem) -> Unit,
   protected val menuDismissListener: (() -> Unit)? = null
 ) : BaseFloatingController(context) {
   private lateinit var floatingListMenu: FloatingListMenu
@@ -56,7 +57,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
     return true
   }
 
-  open fun stack(moreItems: List<FloatingListMenu.FloatingListMenuItem>) {
+  open fun stack(moreItems: List<FloatingListMenuItem>) {
     presentController(
       FloatingListMenuController(context, moreItems, itemClickListener, menuDismissListener)
     )
@@ -74,8 +75,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
     fun create(
       context: Context,
       isThreadMode: Boolean,
-      items: List<FloatingListMenu.FloatingListMenuItem>,
-      itemClickListener: (item: FloatingListMenu.FloatingListMenuItem) -> Unit
+      items: List<FloatingListMenuItem>,
+      itemClickListener: (item: FloatingListMenuItem) -> Unit
     ): FloatingListMenuController {
       return if (isThreadMode) {
         ThreadFloatingListMenuController(

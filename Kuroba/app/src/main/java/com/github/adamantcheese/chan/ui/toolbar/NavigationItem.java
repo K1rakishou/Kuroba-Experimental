@@ -261,7 +261,6 @@ public class NavigationItem {
                 int itemId,
                 int text,
                 boolean visible,
-                boolean isCurrentlySelected,
                 Object value,
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
@@ -277,8 +276,35 @@ public class NavigationItem {
                             text,
                             clickCallback,
                             visible,
-                            isCurrentlySelected,
                             value
+                    )
+            );
+
+            return this;
+        }
+
+        public MenuNestedOverflowBuilder addNestedCheckableItem(
+                int itemId,
+                int text,
+                boolean visible,
+                boolean isCurrentlySelected,
+                Object value,
+                ToolbarMenuSubItem.ClickCallback clickCallback
+        ) {
+            for (ToolbarMenuSubItem subItem : menuSubItem.moreItems) {
+                if (subItem.id == itemId) {
+                    throw new IllegalArgumentException("Menu item with id " + itemId + " was already added");
+                }
+            }
+
+            nestedMenuItems.add(
+                    new CheckableToolbarMenuSubItem(
+                            itemId,
+                            text,
+                            clickCallback,
+                            visible,
+                            value,
+                            isCurrentlySelected
                     )
             );
 
@@ -289,11 +315,27 @@ public class NavigationItem {
                 int itemId,
                 int text,
                 boolean visible,
-                boolean isCurrentlySelected,
                 Object value,
                 Function1<ToolbarMenuSubItem, Unit> clickCallback
         ) {
             return addNestedItem(
+                    itemId,
+                    text,
+                    visible,
+                    value,
+                    (ToolbarMenuSubItem.ClickCallback) clickCallback::invoke
+            );
+        }
+
+        public MenuNestedOverflowBuilder addNestedCheckableItem(
+                int itemId,
+                int text,
+                boolean visible,
+                boolean isCurrentlySelected,
+                Object value,
+                Function1<ToolbarMenuSubItem, Unit> clickCallback
+        ) {
+            return addNestedCheckableItem(
                     itemId,
                     text,
                     visible,

@@ -30,7 +30,7 @@ import com.github.adamantcheese.chan.ui.controller.floating_menu.CatalogFloating
 import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.adamantcheese.chan.ui.controller.floating_menu.ThreadFloatingListMenuController;
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController;
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu;
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.adamantcheese.chan.utils.Logger;
 
 import java.util.ArrayList;
@@ -211,7 +211,7 @@ public class ToolbarMenuItem {
             return;
         }
 
-        List<FloatingListMenu.FloatingListMenuItem> floatingListMenuItems = new ArrayList<>();
+        List<FloatingListMenuItem> floatingListMenuItems = new ArrayList<>();
         List<ToolbarMenuSubItem> subItems = new ArrayList<>(this.subItems);
 
         Set<Integer> duplicateIdCheckerSet = new HashSet<>();
@@ -247,9 +247,9 @@ public class ToolbarMenuItem {
     }
 
     private FloatingListMenuController createFloatingListMenuController(
-            List<FloatingListMenu.FloatingListMenuItem> floatingListMenuItems
+            List<FloatingListMenuItem> floatingListMenuItems
     ) {
-        Function1<? super FloatingListMenu.FloatingListMenuItem, Unit> itemClickListener = (item) -> {
+        Function1<? super FloatingListMenuItem, Unit> itemClickListener = (item) -> {
             ToolbarMenuSubItem subItem = findMenuSubItem(subItems, (Integer) item.getKey());
             if (subItem != null) {
                 subItem.performClick();
@@ -336,14 +336,8 @@ public class ToolbarMenuItem {
         return null;
     }
 
-    private FloatingListMenu.FloatingListMenuItem mapToolbarSubItemToFloatingMenuItem(ToolbarMenuSubItem subItem) {
-        FloatingListMenu.FloatingListMenuItem floatingListMenuItem = new FloatingListMenu.FloatingListMenuItem(
-                subItem.id,
-                subItem.text,
-                null,
-                subItem.visible,
-                subItem.isCurrentlySelected
-        );
+    private FloatingListMenuItem mapToolbarSubItemToFloatingMenuItem(ToolbarMenuSubItem subItem) {
+        FloatingListMenuItem floatingListMenuItem = FloatingListMenuItem.createFromToolbarMenuSubItem(subItem, false);
 
         if (subItem.moreItems.size() > 0) {
             for (ToolbarMenuSubItem nestedItem : subItem.moreItems) {

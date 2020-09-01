@@ -14,7 +14,7 @@ import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
 import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController
-import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenu
+import com.github.adamantcheese.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.exhaustive
 
@@ -22,7 +22,7 @@ abstract class BaseSettingsController(context: Context) : Controller(context) {
 
   protected fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
-      return@mapIndexed FloatingListMenu.FloatingListMenuItem(
+      return@mapIndexed CheckableFloatingListMenuItem(
         key = index,
         name = settingV2.itemNameMapper(item),
         value = item,

@@ -47,10 +47,7 @@ import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationC
 import com.github.adamantcheese.chan.ui.helper.HintPopup
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.chan.ui.toolbar.NavigationItem
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuSubItem
-import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuType
+import com.github.adamantcheese.chan.ui.toolbar.*
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.adamantcheese.chan.utils.Logger
@@ -298,7 +295,7 @@ class BrowseController(context: Context) : ThreadController(context),
       R.string.action_browse_dev_menu,
       AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
     )
-      .addNestedItem(
+      .addNestedCheckableItem(
         DEV_BOOKMARK_EVERY_THREAD,
         R.string.dev_bookmark_every_thread,
         true,
@@ -319,7 +316,7 @@ class BrowseController(context: Context) : ThreadController(context),
     }
 
     withNestedOverflow(ACTION_SORT, R.string.action_sort, true)
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_BUMP,
         R.string.order_bump,
         true,
@@ -327,7 +324,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.BUMP,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_REPLY,
         R.string.order_reply,
         true,
@@ -335,7 +332,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.REPLY,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_IMAGE,
         R.string.order_image,
         true,
@@ -343,7 +340,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.IMAGE,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_NEWEST,
         R.string.order_newest,
         true,
@@ -351,7 +348,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.NEWEST,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_OLDEST,
         R.string.order_oldest,
         true,
@@ -359,7 +356,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.OLDEST,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_MODIFIED,
         R.string.order_modified,
         true,
@@ -367,7 +364,7 @@ class BrowseController(context: Context) : ThreadController(context),
         PostsFilter.Order.MODIFIED,
         { subItem -> onSortItemClicked(subItem) }
       )
-      .addNestedItem(
+      .addNestedCheckableItem(
         SORT_MODE_ACTIVITY,
         R.string.order_activity,
         true,
@@ -399,8 +396,10 @@ class BrowseController(context: Context) : ThreadController(context),
       ChanSettings.boardOrder.set(order.orderName)
       this@BrowseController.order = order
 
-      val sortSubItem = navigation.findSubItem(ACTION_SORT)
+      val sortSubItem = navigation.findSubItem(ACTION_SORT) as CheckableToolbarMenuSubItem
       resetSelectedSortOrderItem(sortSubItem)
+
+      subItem as CheckableToolbarMenuSubItem
       subItem.isCurrentlySelected = true
 
       val presenter = threadLayout.presenter
@@ -408,11 +407,11 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  private fun resetSelectedSortOrderItem(item: ToolbarMenuSubItem) {
+  private fun resetSelectedSortOrderItem(item: CheckableToolbarMenuSubItem) {
     item.isCurrentlySelected = false
 
     for (nestedItem in item.moreItems) {
-      resetSelectedSortOrderItem(nestedItem)
+      resetSelectedSortOrderItem(nestedItem as CheckableToolbarMenuSubItem)
     }
   }
 
