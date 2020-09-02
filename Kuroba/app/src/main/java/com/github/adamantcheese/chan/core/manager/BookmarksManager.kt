@@ -16,10 +16,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.collect
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
@@ -56,13 +53,16 @@ class BookmarksManager(
 
   fun initialize() {
     appScope.launch {
-      appScope.launch {
-        suspendableInitializer.awaitUntilInitialized()
+      applicationVisibilityManager.addListener { visibility ->
+        if (!suspendableInitializer.isInitialized()) {
+          return@addListener
+        }
 
-        applicationVisibilityManager.listenForAppVisibilityUpdates()
-          .asFlow()
-          .filter { visibility -> visibility == ApplicationVisibility.Background }
-          .collect { persistBookmarks(true) }
+        if (visibility != ApplicationVisibility.Background) {
+          return@addListener
+        }
+
+        persistBookmarks(true)
       }
 
       appScope.launch {

@@ -295,11 +295,10 @@ class BrowseController(context: Context) : ThreadController(context),
       R.string.action_browse_dev_menu,
       AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
     )
-      .addNestedCheckableItem(
+      .addNestedItem(
         DEV_BOOKMARK_EVERY_THREAD,
         R.string.dev_bookmark_every_thread,
         true,
-        false,
         DEV_BOOKMARK_EVERY_THREAD,
         { subItem -> onBookmarkEveryThreadClicked(subItem) }
       )

@@ -1,34 +1,55 @@
 package com.github.adamantcheese.chan.core.manager
 
+import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ApplicationVisibilityManager {
-  private val appVisibilityStateSubject =
-    BehaviorProcessor.createDefault<ApplicationVisibility>(ApplicationVisibility.Background)
+  private var currentApplicationVisibility: ApplicationVisibility = ApplicationVisibility.Background
+  private val listeners = mutableSetOf<ApplicationVisibilityListener>()
 
-  fun listenForAppVisibilityUpdates(): Flowable<ApplicationVisibility> {
-    return appVisibilityStateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "listenForAppVisibilityUpdates error", error) }
-      .distinctUntilChanged()
-      .hide()
+  fun addListener(listener: ApplicationVisibilityListener) {
+    BackgroundUtils.ensureMainThread()
+    listeners += listener
   }
 
+  fun removeListener(listener: ApplicationVisibilityListener) {
+    BackgroundUtils.ensureMainThread()
+    listeners -= listener
+  }
+
+  @OptIn(ExperimentalTime::class)
   fun onEnteredForeground() {
-    appVisibilityStateSubject.onNext(ApplicationVisibility.Foreground)
+    BackgroundUtils.ensureMainThread()
+
+    currentApplicationVisibility = ApplicationVisibility.Foreground
+
+    val time = measureTime {
+      listeners.forEach { listener ->
+        listener.onApplicationVisibilityChanged(currentApplicationVisibility)
+      }
+    }
+
+    Logger.d(TAG, "onEnteredForeground() callback execution took ${time}, callbacks count: ${listeners.size}")
   }
 
+  @OptIn(ExperimentalTime::class)
   fun onEnteredBackground() {
-    appVisibilityStateSubject.onNext(ApplicationVisibility.Background)
+    BackgroundUtils.ensureMainThread()
+
+    currentApplicationVisibility = ApplicationVisibility.Background
+
+    val time = measureTime {
+      listeners.forEach { listener ->
+        listener.onApplicationVisibilityChanged(currentApplicationVisibility)
+      }
+    }
+
+    Logger.d(TAG, "onEnteredBackground() callback execution took ${time}, callbacks count: ${listeners.size}")
   }
 
-  fun getCurrentAppVisibility(): ApplicationVisibility = appVisibilityStateSubject.value
-    ?: ApplicationVisibility.Background
-
+  fun getCurrentAppVisibility(): ApplicationVisibility = currentApplicationVisibility
   fun isAppInForeground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Foreground
 
   companion object {
@@ -36,14 +57,18 @@ class ApplicationVisibilityManager {
   }
 }
 
+fun interface ApplicationVisibilityListener {
+  fun onApplicationVisibilityChanged(applicationVisibility: ApplicationVisibility)
+}
+
 sealed class ApplicationVisibility {
-  object Foreground: ApplicationVisibility() {
+  object Foreground : ApplicationVisibility() {
     override fun toString(): String {
       return "Foreground"
     }
   }
 
-  object Background: ApplicationVisibility() {
+  object Background : ApplicationVisibility() {
     override fun toString(): String {
       return "Background"
     }

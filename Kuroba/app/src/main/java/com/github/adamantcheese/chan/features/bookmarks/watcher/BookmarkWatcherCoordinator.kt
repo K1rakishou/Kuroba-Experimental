@@ -30,6 +30,15 @@ class BookmarkWatcherCoordinator(
   private val bookmarkChangeSubject = PublishProcessor.create<Boolean>()
 
   fun initialize() {
+    applicationVisibilityManager.addListener { applicationVisibility ->
+      if (isDevFlavor) {
+        Logger.d(TAG, "Calling onBookmarksChanged() app visibility changed " +
+          "(applicationVisibility = $applicationVisibility)")
+      }
+
+      bookmarkChangeSubject.onNext(true)
+    }
+
     appScope.launch {
       bookmarkChangeSubject
         .onBackpressureLatest()
@@ -93,19 +102,6 @@ class BookmarkWatcherCoordinator(
           }
 
           bookmarkChangeSubject.onNext(replaceCurrent)
-        }
-    }
-
-    appScope.launch {
-      applicationVisibilityManager.listenForAppVisibilityUpdates()
-        .asFlow()
-        .collect { applicationVisibility ->
-          if (isDevFlavor) {
-            Logger.d(TAG, "Calling onBookmarksChanged() app visibility changed " +
-              "(applicationVisibility = $applicationVisibility)")
-          }
-
-          bookmarkChangeSubject.onNext(true)
         }
     }
   }
