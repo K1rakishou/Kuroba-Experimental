@@ -122,9 +122,10 @@ class VichanApi(
     reader.endObject()
 
     // The file from between the other values.
-    if (fileId != null && fileName != null && fileExt != null) {
+    if (!fileId.isNullOrEmpty() && !fileExt.isNullOrEmpty()) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-      val image = PostImage.Builder().serverFilename(fileId)
+      val image = PostImage.Builder()
+        .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
@@ -136,6 +137,7 @@ class VichanApi(
         .size(fileSize)
         .fileHash(fileHash, true)
         .build()
+
       // Insert it at the beginning.
       files.add(0, image)
     }

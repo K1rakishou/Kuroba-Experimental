@@ -23,6 +23,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
@@ -31,10 +32,9 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.updateMargins
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar.SnackbarLayout
-import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
-class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback {
+class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
@@ -42,7 +42,6 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   private var currentCollapseScale = 0f
   private var bottomNavViewHeight = 0
   private var listeningForInsetsChanges = false
-  private val compositeDisposable = CompositeDisposable()
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -130,6 +129,15 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     startListeningForInsetsChangesIfNeeded()
   }
 
+  private fun startListeningForInsetsChangesIfNeeded() {
+    if (listeningForInsetsChanges) {
+      return
+    }
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    listeningForInsetsChanges = true
+  }
+
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
 
@@ -144,20 +152,12 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   }
 
   private fun stopListeningForInsetsChanges() {
-    compositeDisposable.clear()
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     listeningForInsetsChanges = false
   }
 
-  private fun startListeningForInsetsChangesIfNeeded() {
-    if (listeningForInsetsChanges) {
-      return
-    }
-
-    val disposable = globalWindowInsetsManager.listenForInsetsChanges()
-      .subscribe { updatePaddings() }
-
-    compositeDisposable.add(disposable)
-    listeningForInsetsChanges = true
+  override fun onInsetsChanged() {
+    updatePaddings()
   }
 
   private fun updatePaddings() {

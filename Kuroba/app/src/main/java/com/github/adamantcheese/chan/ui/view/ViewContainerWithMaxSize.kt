@@ -9,18 +9,16 @@ import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
-import io.reactivex.disposables.Disposable
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import javax.inject.Inject
 
 class ViewContainerWithMaxSize @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), WindowInsetsListener {
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-
-  private var disposable: Disposable? = null
 
   var maxWidth: Int = 0
   var maxHeight: Int = 0
@@ -32,21 +30,18 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
-    disposable?.dispose()
-    disposable = null
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+  }
 
-    disposable = globalWindowInsetsManager.listenForInsetsChanges()
-      .subscribe {
-        requestLayout()
-        invalidate()
-      }
+  override fun onInsetsChanged() {
+    requestLayout()
+    invalidate()
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
 
-    disposable?.dispose()
-    disposable = null
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

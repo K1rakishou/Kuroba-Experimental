@@ -6,10 +6,10 @@ import android.view.View
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.AndroidUtils.*
-import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.updateMargins
 import com.github.adamantcheese.common.updatePaddings
 import javax.inject.Inject
@@ -17,12 +17,14 @@ import javax.inject.Inject
 class BottomNavBarAwareNavigationController(
   context: Context,
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
-) : ToolbarNavigationController(context), OnMeasuredCallback {
+) : ToolbarNavigationController(context), OnMeasuredCallback, WindowInsetsListener {
 
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+
+  private var bottomNavBarHeight: Int = 0
 
   override fun onCreate() {
     super.onCreate()
@@ -30,7 +32,7 @@ class BottomNavBarAwareNavigationController(
     view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
 
-    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
+    bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
 
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setBackgroundColor(themeHelper.theme.primaryColor.color)
@@ -43,11 +45,7 @@ class BottomNavBarAwareNavigationController(
         bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
       )
 
-      compositeDisposable += globalWindowInsetsManager.listenForInsetsChanges().subscribe {
-        container.updatePaddings(
-          bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
-        )
-      }
+      globalWindowInsetsManager.addInsetsUpdatesListener(this)
     }
   }
 
@@ -55,6 +53,18 @@ class BottomNavBarAwareNavigationController(
     super.onShow()
 
     waitForLayout(container, this)
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+  }
+
+  override fun onInsetsChanged() {
+    container.updatePaddings(
+      bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+    )
   }
 
   override fun onMeasured(view: View?): Boolean {

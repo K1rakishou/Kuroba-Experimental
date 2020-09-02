@@ -58,6 +58,7 @@ import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.ImageViewerController
@@ -84,8 +85,6 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.reactive.asFlow
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.File
@@ -103,7 +102,8 @@ class MultiImageView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyle),
   MultiImageViewGestureDetectorCallbacks,
   AudioListener,
-  LifecycleObserver {
+  LifecycleObserver,
+  WindowInsetsListener {
 
   enum class Mode {
     UNLOADED, LOWRES, BIGIMAGE, GIFIMAGE, VIDEO, OTHER
@@ -197,16 +197,7 @@ class MultiImageView @JvmOverloads constructor(
 
     mainScope = MainScope()
 
-    mainScope.launch {
-      globalWindowInsetsManager.listenForInsetsChanges()
-        .asFlow()
-        .collect {
-          val activeView = getActiveView()
-          if (activeView is PlayerView) {
-            updatePlayerControlsInsets(activeView)
-          }
-        }
-    }
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   fun unbindPostImage() {
@@ -216,7 +207,15 @@ class MultiImageView @JvmOverloads constructor(
       (context as StartActivity).lifecycle.removeObserver(this)
     }
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     callback = null
+  }
+
+  override fun onInsetsChanged() {
+    val activeView = getActiveView()
+    if (activeView is PlayerView) {
+      updatePlayerControlsInsets(activeView)
+    }
   }
 
   private fun cancelLoad() {

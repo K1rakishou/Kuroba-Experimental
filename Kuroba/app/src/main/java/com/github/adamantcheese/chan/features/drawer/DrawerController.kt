@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.features.bookmarks.BookmarksController
@@ -68,7 +69,8 @@ class DrawerController(
 ) : Controller(context),
   DrawerView,
   DrawerCallbacks,
-  View.OnClickListener {
+  View.OnClickListener,
+  WindowInsetsListener {
 
   @Inject
   lateinit var themeHelper: ThemeHelper
@@ -140,7 +142,6 @@ class DrawerController(
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
 
-    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
@@ -181,18 +182,6 @@ class DrawerController(
         }
       })
 
-    compositeDisposable += globalWindowInsetsManager.listenForInsetsChanges()
-      .subscribe {
-        epoxyRecyclerView.updatePaddings(
-          top = globalWindowInsetsManager.top(),
-          bottom = globalWindowInsetsManager.bottom()
-        )
-
-        bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
-        bottomNavView.updateMaxViewHeight(bottomNavBarHeight + globalWindowInsetsManager.bottom())
-        bottomNavView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
-      }
-
     compositeDisposable += drawerPresenter.listenForStateChanges()
       .subscribe(
         { state -> onDrawerStateChanged(state) },
@@ -212,13 +201,28 @@ class DrawerController(
     // Must be called after drawerPresenter.listenForStateChanges() so it receives the "Loading"
     // state as well as other states
     drawerPresenter.onCreate(this)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()
     compositeDisposable.clear()
+  }
+
+  override fun onInsetsChanged() {
+    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
+
+    epoxyRecyclerView.updatePaddings(
+      top = globalWindowInsetsManager.top(),
+      bottom = globalWindowInsetsManager.bottom()
+    )
+
+    bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+    bottomNavView.updateMaxViewHeight(bottomNavBarHeight + globalWindowInsetsManager.bottom())
+    bottomNavView.updateBottomPadding(globalWindowInsetsManager.bottom())
   }
 
   fun pushChildController(childController: Controller) {

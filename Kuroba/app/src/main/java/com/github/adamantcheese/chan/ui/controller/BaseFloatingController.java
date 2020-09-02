@@ -4,22 +4,18 @@ import android.content.Context;
 
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
-
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.inflate;
 
-public abstract class BaseFloatingController extends Controller {
+public abstract class BaseFloatingController extends Controller implements WindowInsetsListener {
     private static final int HPADDING = dp(8);
     private static final int VPADDING = dp(16);
-
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
@@ -37,10 +33,19 @@ public abstract class BaseFloatingController extends Controller {
         view = inflate(context, getLayoutId());
         updatePaddings();
 
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> updatePaddings());
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
+    }
 
-        compositeDisposable.add(disposable);
+    @Override
+    public void onInsetsChanged() {
+        updatePaddings();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
     }
 
     private void updatePaddings() {
@@ -51,13 +56,6 @@ public abstract class BaseFloatingController extends Controller {
                 VPADDING + globalWindowInsetsManager.top(),
                 VPADDING + globalWindowInsetsManager.bottom()
         );
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        compositeDisposable.clear();
     }
 
     protected abstract int getLayoutId();

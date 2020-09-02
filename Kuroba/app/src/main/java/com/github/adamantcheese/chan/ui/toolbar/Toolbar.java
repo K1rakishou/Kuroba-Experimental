@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener;
 import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
@@ -46,9 +47,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -58,7 +56,10 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.hideKeyboard;
 
 public class Toolbar
         extends LinearLayout
-        implements View.OnClickListener, ToolbarPresenter.Callback, ToolbarContainer.Callback {
+        implements View.OnClickListener,
+        ToolbarPresenter.Callback,
+        ToolbarContainer.Callback,
+        WindowInsetsListener {
     private final static String TAG = "Toolbar";
 
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
@@ -74,8 +75,6 @@ public class Toolbar
 
     private int prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
     private int pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
-
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private final RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
@@ -183,26 +182,25 @@ public class Toolbar
 
         presenter.onAttached();
 
-        int toolbarSize = getDimen(R.dimen.toolbar_height);
-        updateToolbarTopPaddingAndHeight(toolbarSize);
-
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe(unit -> {
-                    if (isInImmersiveMode) {
-                        return;
-                    }
-
-                    boolean heightChanged = updateToolbarTopPaddingAndHeight(toolbarSize);
-
-                    for (ToolbarHeightUpdatesCallback heightUpdatesCallback : heightUpdatesCallbacks) {
-                        heightUpdatesCallback.onToolbarHeightKnown(heightChanged);
-                    }
-                });
-
-        compositeDisposable.add(disposable);
+        updateToolbarTopPaddingAndHeight();
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
     }
 
-    private boolean updateToolbarTopPaddingAndHeight(int toolbarSize) {
+    @Override
+    public void onInsetsChanged() {
+        if (isInImmersiveMode) {
+            return;
+        }
+
+        boolean heightChanged = updateToolbarTopPaddingAndHeight();
+
+        for (ToolbarHeightUpdatesCallback heightUpdatesCallback : heightUpdatesCallbacks) {
+            heightUpdatesCallback.onToolbarHeightKnown(heightChanged);
+        }
+    }
+
+    private boolean updateToolbarTopPaddingAndHeight() {
+        int toolbarSize = getDimen(R.dimen.toolbar_height);
         int newHeight = toolbarSize + globalWindowInsetsManager.top();
         int oldHeight = getLayoutParams().height;
 
@@ -228,7 +226,7 @@ public class Toolbar
         super.onDetachedFromWindow();
 
         presenter.onDetached();
-        compositeDisposable.clear();
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
     }
 
     public void setInImmersiveMode(boolean inImmersiveMode) {

@@ -48,6 +48,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.WindowInsetsListener;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.presenter.ImageViewerPresenter;
@@ -80,8 +81,6 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
-import io.reactivex.disposables.Disposable;
-
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
@@ -99,7 +98,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.waitForLayout;
 public class ImageViewerController
         extends Controller
         implements ImageViewerPresenter.Callback,
-        ToolbarMenuItem.ToobarThreedotMenuCallback {
+        ToolbarMenuItem.ToobarThreedotMenuCallback,
+        WindowInsetsListener {
     private static final String TAG = "ImageViewerController";
     private static final int TRANSITION_DURATION = 300;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;
@@ -173,27 +173,7 @@ public class ImageViewerController
         loadingBar = view.findViewById(R.id.loading_bar);
 
         showVolumeMenuItem(false, true);
-
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> {
-                    if (navigationController == null) {
-                        return;
-                    }
-
-                    Toolbar toolbar = navigationController.getToolbar();
-                    if (toolbar == null) {
-                        return;
-                    }
-
-                    if (isInImmersiveMode) {
-                        hideToolbar();
-                    } else {
-                        toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
-                        toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
-                    }
-                });
-
-        compositeDisposable().add(disposable);
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
 
         // Sanity check
         if (parentController.view.getWindowToken() == null) {
@@ -209,6 +189,44 @@ public class ImageViewerController
             presenter.onViewMeasured();
             return true;
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        showSystemUI();
+        mainHandler.removeCallbacks(uiHideCall);
+        getWindow(context).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
+
+        unbindAdapter();
+    }
+
+    private void unbindAdapter() {
+        ImageViewerAdapter adapter = getImageViewerAdapter();
+        if (adapter == null) return;
+
+        adapter.onDestroy();
+    }
+
+    @Override
+    public void onInsetsChanged() {
+        if (navigationController == null) {
+            return;
+        }
+
+        Toolbar toolbar = navigationController.getToolbar();
+        if (toolbar == null) {
+            return;
+        }
+
+        if (isInImmersiveMode) {
+            hideToolbar();
+        } else {
+            toolbar.updateToolbarMenuStartPadding(globalWindowInsetsManager.left());
+            toolbar.updateToolbarMenuEndPadding(globalWindowInsetsManager.right());
+        }
     }
 
     private void buildMenu() {
@@ -368,15 +386,6 @@ public class ImageViewerController
         if (menuItem != null && presenter.forceReload()) {
             menuItem.setEnabled(false);
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        showSystemUI();
-        mainHandler.removeCallbacks(uiHideCall);
-        getWindow(context).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void saveShare(boolean share, PostImage postImage) {

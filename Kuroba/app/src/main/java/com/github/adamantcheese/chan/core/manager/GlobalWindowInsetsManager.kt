@@ -2,11 +2,6 @@ package com.github.adamantcheese.chan.core.manager
 
 import android.graphics.Rect
 import androidx.core.view.WindowInsetsCompat
-import com.github.adamantcheese.chan.utils.Logger
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
-import io.reactivex.processors.PublishProcessor
 
 class GlobalWindowInsetsManager {
   private var initialized = false
@@ -23,9 +18,24 @@ class GlobalWindowInsetsManager {
   private val callbacksAwaitingInsetsDispatch = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardHidden = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardVisible = ArrayList<Runnable>()
+  private val insetsUpdatesListeners = HashSet<WindowInsetsListener>()
+  private val keyboardUpdatesListeners = HashSet<KeyboardStateListener>()
 
-  private val insetsSubject = PublishProcessor.create<Unit>()
-  private val keyboardStateSubject = BehaviorProcessor.createDefault(false)
+  fun addInsetsUpdatesListener(listener: WindowInsetsListener) {
+    insetsUpdatesListeners += listener
+  }
+
+  fun removeInsetsUpdatesListener(listener: WindowInsetsListener) {
+    insetsUpdatesListeners -= listener
+  }
+
+  fun addKeyboardUpdatesListener(listener: KeyboardStateListener) {
+    keyboardUpdatesListeners += listener
+  }
+
+  fun removeKeyboardUpdatesListener(listener: KeyboardStateListener) {
+    keyboardUpdatesListeners -= listener
+  }
 
   fun updateIsKeyboardOpened(opened: Boolean) {
     if (isKeyboardOpened == opened) {
@@ -33,7 +43,7 @@ class GlobalWindowInsetsManager {
     }
 
     isKeyboardOpened = opened
-    keyboardStateSubject.onNext(opened)
+    keyboardUpdatesListeners.forEach { listener -> listener.onKeyboardStateChanged() }
 
     if (opened) {
       callbacksAwaitingKeyboardVisible.forEach { it.run() }
@@ -57,7 +67,7 @@ class GlobalWindowInsetsManager {
     )
 
     initialized = true
-    insetsSubject.onNext(Unit)
+    insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
   }
 
   fun fireCallbacks() {
@@ -88,24 +98,6 @@ class GlobalWindowInsetsManager {
     callbacksAwaitingKeyboardVisible += func
   }
 
-  fun listenForKeyboardChanges(): Flowable<Boolean> {
-    return keyboardStateSubject
-      .onBackpressureLatest()
-      .distinctUntilChanged()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "keyboardStateSubject unknown error", error) }
-      .hide()
-  }
-
-  fun listenForInsetsChanges(): Flowable<Unit> {
-    return insetsSubject
-      .filter { initialized }
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "insetsSubject unknown error", error) }
-      .hide()
-  }
-
   fun left() = currentInsets.left
   fun right() = currentInsets.right
   fun top() = currentInsets.top
@@ -114,4 +106,12 @@ class GlobalWindowInsetsManager {
   companion object {
     private const val TAG = "GlobalWindowInsetsManager"
   }
+}
+
+fun interface WindowInsetsListener {
+  fun onInsetsChanged()
+}
+
+fun interface KeyboardStateListener {
+  fun onKeyboardStateChanged()
 }

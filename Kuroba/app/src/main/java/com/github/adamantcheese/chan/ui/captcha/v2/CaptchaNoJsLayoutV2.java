@@ -38,7 +38,6 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.di.NetModule;
-import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -52,9 +51,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
@@ -65,8 +61,6 @@ public class CaptchaNoJsLayoutV2
         implements AuthenticationLayoutInterface, CaptchaNoJsPresenterV2.AuthenticationCallbacks {
     private static final String TAG = "CaptchaNoJsLayoutV2";
     private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
-
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private AppCompatTextView captchaChallengeTitle;
     private GridView captchaImagesGrid;
@@ -82,8 +76,6 @@ public class CaptchaNoJsLayoutV2
     CaptchaHolder captchaHolder;
     @Inject
     NetModule.ProxiedOkHttpClient okHttpClient;
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
         this(context, null, 0);
@@ -135,15 +127,6 @@ public class CaptchaNoJsLayoutV2
         }
 
         presenter.init(authentication.siteKey, authentication.baseUrl);
-
-        updatePaddings();
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> updatePaddings());
-        compositeDisposable.add(disposable);
-    }
-
-    private void updatePaddings() {
-        // no-op for now
     }
 
     @Override
@@ -310,6 +293,5 @@ public class CaptchaNoJsLayoutV2
     public void onDestroy() {
         adapter.onDestroy();
         presenter.onDestroy();
-        compositeDisposable.clear();
     }
 }

@@ -45,6 +45,14 @@ public class ImageViewerAdapter
         this.multiImageViewCallback = multiImageViewCallback;
     }
 
+    public void onDestroy() {
+        for (MultiImageView loadedView : loadedViews) {
+            loadedView.unbindPostImage();
+        }
+
+        loadedViews.clear();
+    }
+
     @Override
     public View getView(int position, ViewGroup parent) {
         PostImage postImage = images.get(position);

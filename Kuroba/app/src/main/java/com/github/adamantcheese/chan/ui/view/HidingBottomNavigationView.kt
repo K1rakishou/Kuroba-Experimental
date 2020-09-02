@@ -6,6 +6,7 @@ import android.view.animation.DecelerateInterpolator
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
+import com.github.adamantcheese.common.updatePaddings
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.math.abs
 
@@ -23,8 +24,16 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var isCollapseLocked = false
   private var maxViewHeight: Int = 0
 
+  init {
+    setOnApplyWindowInsetsListener(null)
+  }
+
   fun updateMaxViewHeight(height: Int) {
     maxViewHeight = Math.max(height, maxViewHeight)
+  }
+
+  fun updateBottomPadding(padding: Int) {
+    updatePaddings(bottom = padding)
   }
 
   fun setToolbar(toolbar: Toolbar) {

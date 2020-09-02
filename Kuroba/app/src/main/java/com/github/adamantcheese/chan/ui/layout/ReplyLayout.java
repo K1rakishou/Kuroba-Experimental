@@ -52,6 +52,7 @@ import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.StartActivity;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.adamantcheese.chan.core.manager.KeyboardStateListener;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.presenter.ReplyPresenter;
@@ -88,8 +89,6 @@ import java.io.File;
 
 import javax.inject.Inject;
 
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 
@@ -112,7 +111,8 @@ public class ReplyLayout
         TextWatcher,
         ImageDecoder.ImageDecoderCallback,
         SelectionListeningEditText.SelectionChangedListener,
-        CaptchaHolder.CaptchaValidationListener {
+        CaptchaHolder.CaptchaValidationListener,
+        KeyboardStateListener {
     private static final String TAG = "ReplyLayout";
 
     @Inject
@@ -170,7 +170,6 @@ public class ReplyLayout
     // Captcha views:
     private FrameLayout captchaContainer;
     private ImageView captchaHardReset;
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private Runnable closeMessageRunnable = new Runnable() {
         @Override
@@ -198,10 +197,12 @@ public class ReplyLayout
         EventBus.getDefault().register(this);
         captchaHolder.setListener(this);
 
-        Disposable disposable = globalWindowInsetsManager.listenForKeyboardChanges()
-                .subscribe((isOpened) -> updateWrappingMode());
+        globalWindowInsetsManager.addKeyboardUpdatesListener(this);
+    }
 
-        compositeDisposable.add(disposable);
+    @Override
+    public void onKeyboardStateChanged() {
+        updateWrappingMode();
     }
 
     @Override
@@ -216,7 +217,7 @@ public class ReplyLayout
         EventBus.getDefault().unregister(this);
         captchaHolder.removeListener();
 
-        compositeDisposable.clear();
+        globalWindowInsetsManager.removeKeyboardUpdatesListener(this);
     }
 
     private void updateWrappingMode() {

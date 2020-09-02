@@ -31,7 +31,6 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 
 import com.github.adamantcheese.chan.core.di.NetModule;
-import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -45,8 +44,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Request;
@@ -70,10 +67,7 @@ public class CaptchaNojsLayoutV1
     CaptchaHolder captchaHolder;
     @Inject
     NetModule.ProxiedOkHttpClient okHttpClient;
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     private AuthenticationLayoutCallback callback;
     private String baseUrl;
     private String siteKey;
@@ -153,22 +147,11 @@ public class CaptchaNojsLayoutV1
             }
         });
         setBackgroundColor(0x00000000);
-
         addJavascriptInterface(new CaptchaInterface(this), "CaptchaCallback");
-
-        updatePaddings();
-        Disposable disposable = globalWindowInsetsManager.listenForInsetsChanges()
-                .subscribe((unit) -> updatePaddings());
-        compositeDisposable.add(disposable);
-    }
-
-    private void updatePaddings() {
-        // no-op for now
     }
 
     @Override
     public void onDestroy() {
-        compositeDisposable.clear();
     }
 
     public void reset() {
