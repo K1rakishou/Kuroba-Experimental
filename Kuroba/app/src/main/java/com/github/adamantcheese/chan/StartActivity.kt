@@ -146,10 +146,22 @@ class StartActivity : AppCompatActivity(),
 
     compositeDisposable.clear()
     job.cancel()
-    updateManager.onDestroy()
-    imagePickDelegate.onDestroy()
-    fileChooser.removeCallbacks()
-    globalWindowInsetsManager.requestInsetsApplyFunc = null
+
+    if (::updateManager.isInitialized) {
+      updateManager.onDestroy()
+    }
+
+    if (::imagePickDelegate.isInitialized) {
+      imagePickDelegate.onDestroy()
+    }
+
+    if (::fileChooser.isInitialized) {
+      fileChooser.removeCallbacks()
+    }
+
+    if (::globalWindowInsetsManager.isInitialized) {
+      globalWindowInsetsManager.requestInsetsApplyFunc = null
+    }
 
     while (!stack.isEmpty()) {
       val controller = stack.pop()
