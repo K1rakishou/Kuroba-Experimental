@@ -1,7 +1,10 @@
 package com.github.adamantcheese.chan.features.drawer.epoxy
 
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.util.AttributeSet
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -12,6 +15,8 @@ import com.airbnb.epoxy.*
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
+import com.github.adamantcheese.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -26,6 +31,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var themeHelper: ThemeHelper
 
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
   private var requestDisposable: RequestDisposable? = null
@@ -34,6 +41,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   private val viewHolder: LinearLayout
   private val thumbnailImage: AppCompatImageView
   private val title: AppCompatTextView
+  private val bookmarkStats: AppCompatTextView
   private val imageSize: Int
 
   init {
@@ -43,6 +51,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     viewHolder = findViewById(R.id.history_entry_view_holder)
     thumbnailImage = findViewById(R.id.history_entry_image)
     title = findViewById(R.id.history_entry_title)
+    bookmarkStats = findViewById(R.id.history_entry_bookmark_stats)
+
     imageSize = context.resources.getDimension(R.dimen.history_entry_image_size).toInt()
   }
 
@@ -59,6 +69,39 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @ModelProp(options = [ModelProp.Option.DoNotHash])
   fun setDescriptor(descriptor: ChanDescriptor) {
     this.descriptor = descriptor
+  }
+
+  @ModelProp
+  fun bindNavHistoryBookmarkAdditionalInfo(additionalInfo: NavHistoryBookmarkAdditionalInfo?) {
+    if (additionalInfo == null) {
+      bookmarkStats.visibility = View.GONE
+      return
+    }
+
+    bookmarkStats.text = additionalInfo.newPosts.toString()
+
+    if (additionalInfo.newQuotes > 0) {
+      bookmarkStats.setTextColor(themeHelper.theme.pinPostsHasRepliesColor)
+    } else if (!additionalInfo.watching) {
+      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+    } else {
+      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+    }
+
+    bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
+    bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
+
+    if (additionalInfo.isBumpLimit && additionalInfo.isImageLimit) {
+      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD_ITALIC)
+    } else if (additionalInfo.isBumpLimit) {
+      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.ITALIC)
+    } else if (additionalInfo.isImageLimit) {
+      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD)
+    }
+
+    if (additionalInfo.isLastPage) {
+      bookmarkStats.paintFlags = bookmarkStats.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+    }
   }
 
   @CallbackProp

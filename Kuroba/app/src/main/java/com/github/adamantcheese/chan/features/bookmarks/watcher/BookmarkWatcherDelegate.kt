@@ -35,7 +35,10 @@ class BookmarkWatcherDelegate(
 ) {
 
   @OptIn(ExperimentalTime::class)
-  suspend fun doWork(isCalledFromForeground: Boolean, isUpdatingCurrentlyOpenedThread: Boolean) {
+  suspend fun doWork(
+    isCalledFromForeground: Boolean,
+    currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
+  ) {
     BackgroundUtils.ensureBackgroundThread()
 
     if (isDevFlavor) {
@@ -48,11 +51,11 @@ class BookmarkWatcherDelegate(
 
     Logger.d(TAG, "BookmarkWatcherDelegate.doWork() called, " +
       "isCalledFromForeground=$isCalledFromForeground, " +
-      "isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread")
+      "currentThreadDescriptor=$currentThreadDescriptor")
 
     val duration = measureTime {
       Try {
-        doWorkInternal(isUpdatingCurrentlyOpenedThread)
+        doWorkInternal(currentThreadDescriptor)
 
         val activeBookmarksCount = bookmarksManager.activeBookmarksCount()
         Logger.d(TAG, "BookmarkWatcherDelegate.doWork() success, " +
@@ -68,51 +71,18 @@ class BookmarkWatcherDelegate(
     }
 
     Logger.d(TAG, "BookmarkWatcherDelegate.doWork() took $duration")
-    return
   }
 
-  private suspend fun doWorkInternal(isUpdatingCurrentlyOpenedThread: Boolean) {
+  private suspend fun doWorkInternal(currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?) {
     BackgroundUtils.ensureBackgroundThread()
     awaitUntilAllDependenciesAreReady()
 
-    val watchingBookmarkDescriptors = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
-      if (isUpdatingCurrentlyOpenedThread) {
-        if (threadBookmarkView.threadDescriptor != bookmarksManager.currentlyOpenedThread()) {
-          // Skip all threads that are not the currently opened thread
-          if (verboseLogsEnabled) {
-            Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread) " +
-              "Skipping ${threadBookmarkView.threadDescriptor} because it is not a currently opened thread")
-          }
-          return@mapNotNullBookmarksOrdered null
-        }
-      } else {
-        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == bookmarksManager.currentlyOpenedThread()
-          // Always update bookmark at least once! If we don't do this then the bookmark will never
-          // receive any information from the server if the user bookmarks already archived/deleted/etc.
-          // thread.
-          && !threadBookmarkView.isFirstFetch()
+    val isUpdatingCurrentlyOpenedThread = currentThreadDescriptor != null
 
-        if (shouldSkipThisBookmark) {
-          // Skip the currently opened thread because we will update it differently
-          if (verboseLogsEnabled) {
-            Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread, " +
-              "isFirstFetch=${threadBookmarkView.isFirstFetch()}) " +
-              "Skipping ${threadBookmarkView.threadDescriptor} because it is a currently opened thread")
-          }
-          return@mapNotNullBookmarksOrdered null
-        }
-      }
-
-      if (!threadBookmarkView.isActive()) {
-        if (verboseLogsEnabled) {
-          Logger.d(TAG, "(isUpdatingCurrentlyOpenedThread=$isUpdatingCurrentlyOpenedThread), " +
-            "Skipping ${threadBookmarkView.threadDescriptor} because it is not an active bookmark")
-        }
-        return@mapNotNullBookmarksOrdered null
-      }
-
-      return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
-    }
+    val watchingBookmarkDescriptors = getWatchingBookmarkDescriptors(
+      isUpdatingCurrentlyOpenedThread,
+      currentThreadDescriptor
+    )
 
     try {
       lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)
@@ -166,6 +136,37 @@ class BookmarkWatcherDelegate(
       replyNotificationsHelper.showOrUpdateNotifications()
     } catch (error: Throwable) {
       Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
+    }
+  }
+
+  private fun getWatchingBookmarkDescriptors(
+    isUpdatingCurrentlyOpenedThread: Boolean,
+    currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
+  ): List<ChanDescriptor.ThreadDescriptor> {
+    return bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
+      if (isUpdatingCurrentlyOpenedThread) {
+        if (threadBookmarkView.threadDescriptor != currentThreadDescriptor) {
+          // Skip all threads that are not the currently opened thread
+          return@mapNotNullBookmarksOrdered null
+        }
+      } else {
+        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == currentThreadDescriptor
+          // Always update bookmark at least once! If we don't do this then the bookmark will never
+          // receive any information from the server if the user bookmarks already archived/deleted/etc.
+          // thread.
+          && !threadBookmarkView.isFirstFetch()
+
+        if (shouldSkipThisBookmark) {
+          // Skip the currently opened thread because we will update it differently
+          return@mapNotNullBookmarksOrdered null
+        }
+      }
+
+      if (!threadBookmarkView.isActive()) {
+        return@mapNotNullBookmarksOrdered null
+      }
+
+      return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
     }
   }
 
@@ -419,9 +420,10 @@ class BookmarkWatcherDelegate(
             } as? ThreadBookmarkInfoPostObject.OriginalPost
 
             requireNotNull(originalPost) { "No OP!" }
+            val postsCount = fetchResult.threadBookmarkInfoObject.simplePostObjects.size
 
             Logger.d(TAG, "FetchResult.Success: descriptor=${fetchResult.threadDescriptor}, " +
-              "originalPost=${originalPost}")
+              "postsCount=$postsCount, originalPost=${originalPost}")
           }
 
           ++successCount
