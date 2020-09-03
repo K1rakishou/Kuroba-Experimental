@@ -89,18 +89,6 @@ class CacheHandler(
     clearChunksCacheDir()
   }
 
-  private fun clearChunksCacheDir() {
-    if (trimChunksRunning.compareAndSet(false, true)) {
-      executor.execute {
-        try {
-          fileManager.deleteContent(chunksCacheDirFile)
-        } finally {
-          trimChunksRunning.set(false)
-        }
-      }
-    }
-  }
-
   /**
    * Either returns already downloaded file or creates an empty new one on the disk (also creates
    * cache file meta with default parameters)
@@ -686,14 +674,36 @@ class CacheHandler(
       "internalCacheDir = ${internalCacheDir})"
   }
 
+  private fun clearChunksCacheDir() {
+    if (trimChunksRunning.compareAndSet(false, true)) {
+      executor.execute { clearChunksCacheDirInternal() }
+    }
+  }
+
+  @Synchronized
+  private fun clearChunksCacheDirInternal() {
+    if (trimChunksRunning.get()) {
+      return
+    }
+
+    try {
+      if (fileManager.exists(chunksCacheDirFile)) {
+        fileManager.deleteContent(chunksCacheDirFile)
+      }
+    } finally {
+      trimChunksRunning.set(false)
+    }
+  }
+
   private fun backgroundRecalculateSize() {
     if (recalculationRunning.get()) {
       return
     }
 
-    executor.submit { recalculateSize() }
+    executor.execute { recalculateSize() }
   }
 
+  @Synchronized
   private fun recalculateSize() {
     var calculatedSize: Long = 0
 
@@ -731,6 +741,7 @@ class CacheHandler(
       return
     }
 
+    val start = System.currentTimeMillis()
     Logger.d(TAG, "trim() started")
 
     // LastModified doesn't work on some platforms/phones
@@ -780,7 +791,9 @@ class CacheHandler(
     }
 
     recalculateSize()
-    Logger.d(TAG, "trim() ended, filesDeleted = $filesDeleted, space freed = $totalDeleted")
+
+    val timeDiff = System.currentTimeMillis() - start
+    Logger.d(TAG, "trim() ended (took ${timeDiff} ms), filesDeleted = $filesDeleted, space freed = $totalDeleted")
   }
 
   private fun groupFilterAndSortFiles(directoryFiles: List<AbstractFile>): List<CacheFile> {
