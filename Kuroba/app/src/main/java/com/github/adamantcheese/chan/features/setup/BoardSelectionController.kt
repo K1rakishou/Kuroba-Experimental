@@ -161,6 +161,10 @@ class BoardSelectionController(
 
 
   private fun pop() {
+    if (!presenting) {
+      return
+    }
+
     presenting = false
     stopPresenting()
   }
