@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.setup
 
 import android.content.Context
+import android.view.HapticFeedbackConstants
 import android.view.View
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
@@ -28,7 +29,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     super.onCreate()
 
     view = AndroidUtils.inflate(context, R.layout.controller_sites_setup)
-    navigation.title = "Sites"
+    navigation.title = context.getString(R.string.controller_sites_title)
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
@@ -39,6 +40,10 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
       .forVerticalList()
       .withTarget(EpoxySiteViewModel_::class.java)
       .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxySiteViewModel_>() {
+        override fun onDragStarted(model: EpoxySiteViewModel_?, itemView: View?, adapterPosition: Int) {
+          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        }
+
         override fun onModelMoved(
           fromPosition: Int,
           toPosition: Int,

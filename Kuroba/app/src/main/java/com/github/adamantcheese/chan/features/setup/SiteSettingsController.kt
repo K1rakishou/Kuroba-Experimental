@@ -32,7 +32,7 @@ class SiteSettingsController(
   override fun onCreate() {
     super.onCreate()
 
-    navigation.title = "Configure ${siteDescriptor.siteName}"
+    navigation.title = context.getString(R.string.controller_site_settings_title, siteDescriptor.siteName)
 
     view = AndroidUtils.inflate(context, R.layout.controller_site_settings)
     recyclerView = view.findViewById(R.id.epoxy_recycler_view)
