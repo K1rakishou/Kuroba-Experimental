@@ -99,6 +99,10 @@ class AddBoardsController(
   }
 
   private fun pop() {
+    if (!presenting) {
+      return
+    }
+
     presenting = false
 
     callback.onRefreshBoards()
