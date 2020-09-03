@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.features.bookmarks
 
 import android.content.Context
 import android.content.res.Configuration
+import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -357,6 +358,10 @@ class BookmarksController(
       .forVerticalList()
       .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
       .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
+        override fun onDragStarted(model: EpoxyListThreadBookmarkViewHolder_?, itemView: View?, adapterPosition: Int) {
+          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        }
+
         override fun onModelMoved(
           fromPosition: Int,
           toPosition: Int,
@@ -395,6 +400,10 @@ class BookmarksController(
       .forGrid()
       .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
       .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
+        override fun onDragStarted(model: EpoxyGridThreadBookmarkViewHolder_?, itemView: View?, adapterPosition: Int) {
+          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        }
+
         override fun onModelMoved(
           fromPosition: Int,
           toPosition: Int,
