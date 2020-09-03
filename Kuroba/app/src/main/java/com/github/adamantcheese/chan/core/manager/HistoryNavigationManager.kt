@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.SuspendableInitializer
+import com.github.adamantcheese.common.hashSetWithCap
 import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
@@ -208,6 +209,23 @@ class HistoryNavigationManager(
     }
 
     return topNavElementDescriptor == descriptor
+  }
+
+  fun retainExistingThreadDescriptors(
+    bookmarkThreadDescriptors: Set<ChanDescriptor.ThreadDescriptor>
+  ): Set<ChanDescriptor.ThreadDescriptor> {
+    val retained = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
+
+    lock.read {
+      navigationStack.forEach { navHistoryElement ->
+        if (navHistoryElement is NavHistoryElement.Thread
+          && navHistoryElement.descriptor in bookmarkThreadDescriptors) {
+          retained += navHistoryElement.descriptor
+        }
+      }
+    }
+
+    return retained
   }
 
   private fun persisNavigationStack(blocking: Boolean = false) {

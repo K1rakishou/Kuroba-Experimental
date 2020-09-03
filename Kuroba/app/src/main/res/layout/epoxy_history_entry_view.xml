@@ -26,14 +26,29 @@
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/history_entry_title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="@dimen/history_entry_image_size"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:ellipsize="end"
             android:gravity="center_vertical"
             android:maxLines="1"
             android:textSize="16sp"
-            tools:text="@string/lorem_ipsum"/>
+            tools:text="@string/lorem_ipsum" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/history_entry_bookmark_stats"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="16sp"
+            tools:text="123" />
 
     </LinearLayout>
 

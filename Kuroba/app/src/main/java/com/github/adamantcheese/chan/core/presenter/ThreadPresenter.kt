@@ -889,7 +889,7 @@ class ThreadPresenter @Inject constructor(
       )
 
       if (!bookmarksManager.exists(threadDescriptor)) {
-        menu.add(createMenuItem(POST_OPTION_PIN, R.string.action_pin))
+        menu.add(createMenuItem(POST_OPTION_BOOKMARK, R.string.action_pin))
       }
     } else {
       menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote))
@@ -1006,12 +1006,16 @@ class ThreadPresenter @Inject constructor(
           // force reload for reply highlighting
           requestData()
         }
-        POST_OPTION_PIN -> {
-          val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+        POST_OPTION_BOOKMARK -> {
+          val descriptor = currentChanDescriptor
             ?: return@post
 
+          if (!post.isOP) {
+            return@post
+          }
+
           bookmarksManager.createBookmark(
-            threadDescriptor,
+            descriptor.toThreadDescriptor(post.no),
             PostHelper.getTitle(post, chanDescriptor),
             post.firstImage()?.thumbnailUrl
           )
@@ -1552,7 +1556,7 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_HIGHLIGHT_ID = 6
     private const val POST_OPTION_DELETE = 7
     private const val POST_OPTION_SAVE = 8
-    private const val POST_OPTION_PIN = 9
+    private const val POST_OPTION_BOOKMARK = 9
     private const val POST_OPTION_SHARE = 10
     private const val POST_OPTION_HIGHLIGHT_TRIPCODE = 11
     private const val POST_OPTION_HIDE = 12

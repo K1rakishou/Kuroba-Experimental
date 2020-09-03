@@ -44,7 +44,7 @@ class BookmarkBackgroundWatcherWorker(
 
     bookmarkWatcherDelegate.doWork(
       isCalledFromForeground = false,
-      isUpdatingCurrentlyOpenedThread = false
+      currentThreadDescriptor = null
     )
 
     return Result.success()

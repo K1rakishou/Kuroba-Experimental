@@ -510,6 +510,7 @@ class DrawerController(
               descriptor(navHistoryEntry.descriptor)
               imageLoaderRequestData(requestData)
               title(navHistoryEntry.title)
+              bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
               clickListener {
                 onHistoryEntryViewClicked(navHistoryEntry)
               }
