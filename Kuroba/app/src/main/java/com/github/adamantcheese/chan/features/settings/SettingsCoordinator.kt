@@ -11,6 +11,8 @@ import com.github.adamantcheese.chan.features.settings.screens.*
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
@@ -34,6 +36,8 @@ class SettingsCoordinator(
   private val navigationController: NavigationController
 ) : CoroutineScope, SettingsCoordinatorCallbacks {
 
+  @Inject
+  lateinit var appConstants: AppConstants
   @Inject
   lateinit var fileCacheV2: FileCacheV2
   @Inject
@@ -64,6 +68,8 @@ class SettingsCoordinator(
   lateinit var postHideManager: PostHideManager
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
+  @Inject
+  lateinit var chanPostRepository: ChanPostRepository
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -119,9 +125,11 @@ class SettingsCoordinator(
   private val databaseSummaryScreen by lazy {
     DatabaseSettingsSummaryScreen(
       context,
+      appConstants,
       inlinedFileInfoRepository,
       mediaServiceLinkExtraContentRepository,
-      seenPostRepository
+      seenPostRepository,
+      chanPostRepository
     )
   }
 

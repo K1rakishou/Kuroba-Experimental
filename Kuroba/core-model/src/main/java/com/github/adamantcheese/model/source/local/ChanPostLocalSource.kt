@@ -592,7 +592,13 @@ class ChanPostLocalSource(
   suspend fun countTotalAmountOfPosts(): Int {
     ensureInTransaction()
 
-    return chanPostDao.count()
+    return chanPostDao.totalPostsCount()
+  }
+
+  suspend fun countTotalAmountOfThreads(): Int {
+    ensureInTransaction()
+
+    return chanThreadDao.totalThreadsCount()
   }
 
   suspend fun deleteAll(): Int {
@@ -648,24 +654,53 @@ class ChanPostLocalSource(
     do {
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
-        logger.log(TAG, "selectThreadsWithPostsOtherThanOp returned empty list")
+        logger.log(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
         return deletedTotal
       }
 
       for (thread in threadBatch) {
         if (deletedTotal >= toDeleteCount) {
-          logger.log(TAG, "Deleted enough posts (deletedTotal = $deletedTotal, " +
-            "toDeleteCount = $toDeleteCount), exiting early")
+          logger.log(TAG, "deleteOldPosts() Deleted enough posts (deletedTotal = $deletedTotal, " +
+            "toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount}), exiting early")
           break
         }
 
         val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
-        deletedTotal += thread.postsCount
+        deletedTotal += deletedPosts
 
-        logger.log(TAG, "Deleting posts in " +
-          "(threadId=${thread.threadId}, threadNo=${thread.threadNo}, " +
-          "lastModified=${thread.lastModified}) thread, deleted $deletedPosts posts," +
-          "deletedTotal = $deletedTotal")
+        logger.log(TAG, "deleteOldPosts() Deleting posts in \"${thread}\" thread, " +
+          "deleted $deletedPosts posts, deletedTotal = $deletedTotal")
+      }
+
+      offset += threadBatch.size
+    } while (deletedTotal < toDeleteCount)
+
+    return deletedTotal
+  }
+
+  suspend fun deleteOldThreads(toDeleteCount: Int): Int {
+    ensureInTransaction()
+    require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }
+
+    var deletedTotal = 0
+    var offset = 0
+
+    do {
+      val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
+      if (threadBatch.isEmpty()) {
+        logger.log(TAG, "deleteOldThreads() selectOldThreads returned empty list")
+        return deletedTotal
+      }
+
+      for (thread in threadBatch) {
+        if (deletedTotal >= toDeleteCount) {
+          logger.log(TAG, "deleteOldThreads() Deleted enough threads (deletedTotal = $deletedTotal, " +
+            "toDeleteCount = $toDeleteCount), exiting early")
+          break
+        }
+
+        deletedTotal += chanThreadDao.deleteThread(thread.threadId)
+        logger.log(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
       }
 
       offset += threadBatch.size

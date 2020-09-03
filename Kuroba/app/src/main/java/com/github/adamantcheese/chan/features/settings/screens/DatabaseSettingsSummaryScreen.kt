@@ -6,6 +6,8 @@ import com.github.adamantcheese.chan.features.settings.DatabaseSummaryScreen
 import com.github.adamantcheese.chan.features.settings.SettingsGroup
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.github.adamantcheese.model.repository.InlinedFileInfoRepository
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.adamantcheese.model.repository.SeenPostRepository
@@ -14,9 +16,11 @@ import java.util.*
 
 class DatabaseSettingsSummaryScreen(
   context: Context,
+  private val appConstants: AppConstants,
   private val inlinedFileInfoRepository: InlinedFileInfoRepository,
   private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository,
-  private val seenPostRepository: SeenPostRepository
+  private val seenPostRepository: SeenPostRepository,
+  private val chanPostRepository: ChanPostRepository
 ) : BaseSettingsScreen(
   context,
   DatabaseSummaryScreen,
@@ -81,6 +85,50 @@ class DatabaseSettingsSummaryScreen(
           callback = {
             val deleted = runBlocking { seenPostRepository.deleteAll().unwrap() }
             AndroidUtils.showToast(context, "Done, deleted $deleted seen posts rows")
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DatabaseSummaryScreen.MainGroup.ThreadsTable,
+          topDescriptionIdFunc = { R.string.settings_trigger_thread_cleanup },
+          bottomDescriptionStringFunc = {
+            val count = runBlocking { chanPostRepository.totalThreadsCount().unwrap() }
+            val maxCount = appConstants.maxAmountOfThreadsInDatabase
+
+            return@createBuilder String.format(
+              Locale.ENGLISH,
+              "Total threads count: ${count} out of ${maxCount} maximum allowed threads"
+            )
+          },
+          callback = {
+            val deleted = runBlocking {
+              chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
+            }
+
+            AndroidUtils.showToast(context, "Done, deleted $deleted thread rows")
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DatabaseSummaryScreen.MainGroup.PostsTable,
+          topDescriptionIdFunc = { R.string.settings_trigger_post_cleanup },
+          bottomDescriptionStringFunc = {
+            val count = runBlocking { chanPostRepository.totalPostsCount().unwrap() }
+            val maxCount = appConstants.maxAmountOfPostsInDatabase
+
+            return@createBuilder String.format(
+              Locale.ENGLISH,
+              "Total posts count: ${count} out of ${maxCount} maximum allowed posts"
+            )
+          },
+          callback = {
+            val deleted = runBlocking {
+              chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
+            }
+
+            AndroidUtils.showToast(context, "Done, deleted $deleted post rows")
           }
         )
 

@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
+import com.github.adamantcheese.model.entity.view.OldChanPostThread
 
 @Dao
 abstract class ChanThreadDao {
@@ -138,6 +139,15 @@ abstract class ChanThreadDao {
     """)
   abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
 
+  @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
+  abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
+
+  @Query("SELECT * FROM ${OldChanPostThread.VIEW_NAME} LIMIT :count OFFSET :offset")
+  abstract suspend fun selectOldThreads(offset: Int, count: Int): List<OldChanPostThread>
+
+  @Query("SELECT COUNT(*) FROM ${ChanThreadEntity.TABLE_NAME}")
+  abstract fun totalThreadsCount(): Int
+
   @Query("""
         DELETE FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE 
@@ -147,7 +157,11 @@ abstract class ChanThreadDao {
     """)
   abstract suspend fun deleteThread(ownerBoardId: Long, threadNo: Long)
 
-  @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
-  abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
+  @Query("""
+    DELETE 
+    FROM ${ChanThreadEntity.TABLE_NAME} 
+    WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+    """)
+  abstract suspend fun deleteThread(threadId: Long): Int
 
 }

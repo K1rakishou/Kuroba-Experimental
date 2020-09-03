@@ -213,8 +213,8 @@ abstract class ChanPostDao {
       .flatMap { chunk -> selectMany(chunk) }
   }
 
-  @Query("SELECT COUNT(*) FROM ${ChanPostEntity.TABLE_NAME}")
-  abstract suspend fun count(): Int
+  @Query("SELECT COUNT(*) FROM ${ChanPostIdEntity.TABLE_NAME}")
+  abstract suspend fun totalPostsCount(): Int
 
   @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
   abstract suspend fun deleteAll(): Int

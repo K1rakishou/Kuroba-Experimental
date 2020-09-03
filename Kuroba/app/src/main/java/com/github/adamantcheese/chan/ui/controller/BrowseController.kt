@@ -395,7 +395,7 @@ class BrowseController(context: Context) : ThreadController(context),
       ChanSettings.boardOrder.set(order.orderName)
       this@BrowseController.order = order
 
-      val sortSubItem = navigation.findSubItem(ACTION_SORT) as CheckableToolbarMenuSubItem
+      val sortSubItem = navigation.findSubItem(ACTION_SORT)
       resetSelectedSortOrderItem(sortSubItem)
 
       subItem as CheckableToolbarMenuSubItem
@@ -406,8 +406,10 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  private fun resetSelectedSortOrderItem(item: CheckableToolbarMenuSubItem) {
-    item.isCurrentlySelected = false
+  private fun resetSelectedSortOrderItem(item: ToolbarMenuSubItem) {
+    if (item is CheckableToolbarMenuSubItem) {
+      item.isCurrentlySelected = false
+    }
 
     for (nestedItem in item.moreItems) {
       resetSelectedSortOrderItem(nestedItem as CheckableToolbarMenuSubItem)

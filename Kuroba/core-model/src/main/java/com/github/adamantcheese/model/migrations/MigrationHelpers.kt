@@ -1,4 +1,4 @@
-package com.github.adamantcheese.model.migration
+package com.github.adamantcheese.model.migrations
 
 import androidx.sqlite.db.SupportSQLiteDatabase
 

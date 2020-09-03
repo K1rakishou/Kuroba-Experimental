@@ -32,8 +32,16 @@ class ChanPostRepository(
 
   init {
     applicationScope.launch(Dispatchers.Default) {
-      val result = tryWithTransaction { deleteOldPostsIfNeeded() }
-      suspendableInitializer.initWithModularResult(result)
+      // We need to first delete the posts, so that the threads are only left with the OP
+      val postDeleteResult = deleteOldPostsIfNeeded().mapValue { Unit }
+      if (postDeleteResult is ModularResult.Error) {
+        suspendableInitializer.initWithModularResult(postDeleteResult)
+        return@launch
+      }
+
+      // Then we can delete the threads themselves
+      val threadDeleteResult = deleteOldThreadsIfNeeded().mapValue { Unit }
+      suspendableInitializer.initWithModularResult(threadDeleteResult)
     }
   }
 
@@ -360,6 +368,26 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun totalPostsCount(): ModularResult<Int> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.countTotalAmountOfPosts()
+      }
+    }
+  }
+
+  suspend fun totalThreadsCount(): ModularResult<Int> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.countTotalAmountOfThreads()
+      }
+    }
+  }
+
   /**
    * Every post has it's own archiveId. If a post was not fetched from any archive it's archiveId
    * will be [ArchiveDescriptor.NO_ARCHIVE_ID]. Otherwise a real archive id will be used. When
@@ -449,36 +477,95 @@ class ChanPostRepository(
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun deleteOldPostsIfNeeded() {
-    require(isInTransaction()) { "Not in transaction" }
+  suspend fun deleteOldPostsIfNeeded(forced: Boolean = false): ModularResult<Int> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        val totalAmountOfPostsInDatabase = localSource.countTotalAmountOfPosts()
+        if (totalAmountOfPostsInDatabase <= 0) {
+          logger.log(TAG, "deleteOldPostsIfNeeded database is empty")
+          return@tryWithTransaction 0
+        }
 
-    val totalAmountOfPostsInDatabase = localSource.countTotalAmountOfPosts()
-    val maxPostsAmount = appConstants.maxAmountOfPostsInDatabase
+        val maxPostsAmount = appConstants.maxAmountOfPostsInDatabase
 
-    if (totalAmountOfPostsInDatabase < maxPostsAmount) {
-      logger.log(TAG, "Not enough posts to start deleting, " +
-        "posts in database amount: $totalAmountOfPostsInDatabase, " +
-        "max allowed posts amount: $maxPostsAmount")
-      return
+        if (!forced && totalAmountOfPostsInDatabase < maxPostsAmount) {
+          logger.log(TAG, "Not enough posts to start deleting, " +
+            "posts in database amount: $totalAmountOfPostsInDatabase, " +
+            "max allowed posts amount: $maxPostsAmount")
+          return@tryWithTransaction 0
+        }
+
+        val toDeleteCount = if (forced) {
+          totalAmountOfPostsInDatabase / 2
+        } else {
+          // Delete half of the posts in the database
+          max(totalAmountOfPostsInDatabase, maxPostsAmount) / 2
+        }
+
+        logger.log(TAG, "Starting deleting $toDeleteCount posts " +
+          "(totalAmountOfPostsInDatabase = $totalAmountOfPostsInDatabase, " +
+          "maxPostsAmount = $maxPostsAmount)")
+
+        val (deleteResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
+        val deletedPostsCount = if (deleteResult is ModularResult.Error) {
+          logger.logError(TAG, "Error while trying to delete old posts", deleteResult.error)
+          throw deleteResult.error
+        } else {
+          (deleteResult as ModularResult.Value).value
+        }
+
+        val newAmount = localSource.countTotalAmountOfPosts()
+        logger.log(TAG, "Deleted $deletedPostsCount posts, $newAmount posts left, took $time")
+
+        return@tryWithTransaction deletedPostsCount
+      }
     }
+  }
 
-    // Delete half of the posts in the database
-    val toDeleteCount = (max(totalAmountOfPostsInDatabase, maxPostsAmount) / 2)
+  @OptIn(ExperimentalTime::class)
+  suspend fun deleteOldThreadsIfNeeded(forced: Boolean = false): ModularResult<Int> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        val totalAmountOfThreadsInDatabase = localSource.countTotalAmountOfThreads()
+        if (totalAmountOfThreadsInDatabase <= 0) {
+          logger.log(TAG, "deleteOldThreadsIfNeeded database is empty")
+          return@tryWithTransaction 0
+        }
 
-    logger.log(TAG, "Starting deleting $toDeleteCount posts " +
-      "(totalAmountOfPostsInDatabase = $totalAmountOfPostsInDatabase, " +
-      "maxPostsAmount = $maxPostsAmount)")
+        val maxThreadsAmount = appConstants.maxAmountOfThreadsInDatabase
 
-    val (deleteResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
-    val deletedPostsCount = if (deleteResult is ModularResult.Error) {
-      logger.logError(TAG, "Error while trying to delete old posts", deleteResult.error)
-      throw deleteResult.error
-    } else {
-      (deleteResult as ModularResult.Value).value
+        if (!forced && totalAmountOfThreadsInDatabase < maxThreadsAmount) {
+          logger.log(TAG, "Not enough threads to start deleting, " +
+            "threads in database amount: $totalAmountOfThreadsInDatabase, " +
+            "max allowed threads amount: $maxThreadsAmount")
+          return@tryWithTransaction 0
+        }
+
+        val toDeleteCount = if (forced) {
+          totalAmountOfThreadsInDatabase / 2
+        } else {
+          // Delete half of the posts in the database
+          max(totalAmountOfThreadsInDatabase, maxThreadsAmount) / 2
+        }
+
+        logger.log(TAG, "Starting deleting $toDeleteCount threads " +
+          "(totalAmountOfThreadsInDatabase = $totalAmountOfThreadsInDatabase, " +
+          "maxThreadsAmount = $maxThreadsAmount)")
+
+        val (deleteResult, time) = measureTimedValue { Try { localSource.deleteOldThreads(toDeleteCount) } }
+        val deletedThreadsCount = if (deleteResult is ModularResult.Error) {
+          logger.logError(TAG, "Error while trying to delete old threads", deleteResult.error)
+          throw deleteResult.error
+        } else {
+          (deleteResult as ModularResult.Value).value
+        }
+
+        val newAmount = localSource.countTotalAmountOfThreads()
+        logger.log(TAG, "Deleted $deletedThreadsCount threads, $newAmount threads left, took $time")
+
+        return@tryWithTransaction deletedThreadsCount
+      }
     }
-
-    val newAmount = localSource.countTotalAmountOfPosts()
-    logger.log(TAG, "Deleted $deletedPostsCount posts, $newAmount posts left, took $time")
   }
 
   private suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {

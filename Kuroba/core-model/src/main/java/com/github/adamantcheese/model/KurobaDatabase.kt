@@ -29,6 +29,8 @@ import com.github.adamantcheese.model.entity.chan.thread.ChanThreadViewableInfoE
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
+import com.github.adamantcheese.model.entity.view.OldChanPostThread
+import com.github.adamantcheese.model.migrations.Migration_v1_to_v2
 
 @Database(
   entities = [
@@ -61,9 +63,10 @@ import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
     ThreadBookmarkReplyEntity::class
   ],
   views = [
-    ChanThreadsWithPosts::class
+    ChanThreadsWithPosts::class,
+    OldChanPostThread::class
   ],
-  version = 1,
+  version = 2,
   exportSchema = true
 )
 @TypeConverters(
@@ -129,6 +132,9 @@ abstract class KurobaDatabase : RoomDatabase() {
         KurobaDatabase::class.java,
         DATABASE_NAME
       )
+        .addMigrations(
+          Migration_v1_to_v2()
+        )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

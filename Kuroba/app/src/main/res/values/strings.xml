@@ -632,6 +632,8 @@ Tap the toolbar menu to change its color."
     <string name="settings_clear_inlined_files_table">Clear inlined files info table</string>
     <string name="settings_clear_link_info_table">Clear external link extra info table</string>
     <string name="settings_clear_seen_posts_table">Clear seen posts table</string>
+    <string name="settings_trigger_thread_cleanup">Trigger thread cleanup</string>
+    <string name="settings_trigger_post_cleanup">Trigger post cleanup</string>
 
     <!-- Theme settings -->
     <string name="settings_logs_screen">Logs</string>

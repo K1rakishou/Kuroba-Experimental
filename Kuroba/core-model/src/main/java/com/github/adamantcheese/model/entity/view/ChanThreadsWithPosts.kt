@@ -8,8 +8,8 @@ import com.github.adamantcheese.model.entity.chan.post.ChanPostIdEntity
 import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 
 /**
- * Represents a thread with more than one post that is not an original post and which lastModified
- * is greater than zero.
+ * Represents a thread with more than one post (that is not an original post) and which lastModified
+ * is greater than zero sorted by lastModified in ascending order.
  * */
 @DatabaseView(
   viewName = ChanThreadsWithPosts.VIEW_NAME,
@@ -19,9 +19,10 @@ import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
         threads.${ChanThreadsWithPosts.THREAD_NO_COLUMN_NAME},
         threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME},
         COUNT(postIds.${ChanPostIdEntity.POST_ID_COLUMN_NAME}) as ${ChanThreadsWithPosts.POSTS_COUNT_COLUMN_NAME}
-    FROM
-        ${ChanPostEntity.TABLE_NAME} posts,
+    FROM 
         ${ChanPostIdEntity.TABLE_NAME} postIds
+    LEFT JOIN ${ChanPostEntity.TABLE_NAME} posts
+        ON posts.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = postIds.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
     LEFT JOIN ${ChanThreadEntity.TABLE_NAME} threads 
         ON postIds.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
     WHERE 
@@ -29,7 +30,7 @@ import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
     AND 
         threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME} > 0
     GROUP BY threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
-    HAVING posts_count >= 0
+    HAVING ${ChanThreadsWithPosts.POSTS_COUNT_COLUMN_NAME} >= 0
     ORDER BY threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME} ASC
         """
 )
