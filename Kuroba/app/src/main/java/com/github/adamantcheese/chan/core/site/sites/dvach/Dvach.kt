@@ -133,7 +133,7 @@ class Dvach : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this, okHttpClient, siteManager) {
+    setActions(object : VichanActions(this@Dvach, okHttpClient, siteManager) {
       override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
         return super.setupPost(reply, call)
           .mapValue {
@@ -166,9 +166,7 @@ class Dvach : CommonSite() {
                 return@map SiteActions.PostResult.UploadingProgress(replyCallResult.percent)
               }
               is HttpCall.HttpCallWithProgressResult.Fail -> {
-                return@map SiteActions.PostResult.PostError(
-                  replyCallResult.error
-                )
+                return@map SiteActions.PostResult.PostError(replyCallResult.error)
               }
             }
           }

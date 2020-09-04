@@ -37,8 +37,10 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
@@ -424,7 +426,7 @@ abstract class CommonSite : SiteBase() {
           setupPost(reply, call)
           emit(makePostCall(call, replyResponse))
         }
-      }
+      }.flowOn(Dispatchers.IO)
     }
     
     open fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
