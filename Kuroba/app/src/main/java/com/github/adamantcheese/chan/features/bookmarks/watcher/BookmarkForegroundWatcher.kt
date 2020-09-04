@@ -98,7 +98,7 @@ class BookmarkForegroundWatcher(
     try {
       bookmarkWatcherDelegate.doWork(
         isCalledFromForeground = true,
-        currentThreadDescriptor = threadDescriptor
+        updateCurrentlyOpenedThread = true
       )
     } catch (error: Throwable) {
       Logger.e(TAG, "Unhandled exception in " +
@@ -122,7 +122,7 @@ class BookmarkForegroundWatcher(
       try {
         bookmarkWatcherDelegate.doWork(
           isCalledFromForeground = true,
-          currentThreadDescriptor = null
+          updateCurrentlyOpenedThread = false
         )
       } catch (error: Throwable) {
         Logger.e(TAG, "Unhandled exception in " +

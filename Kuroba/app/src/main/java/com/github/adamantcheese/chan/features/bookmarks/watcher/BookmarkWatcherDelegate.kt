@@ -7,6 +7,7 @@ import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase
 import com.github.adamantcheese.chan.core.usecase.ThreadBookmarkFetchResult
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.common.isExceptionImportant
@@ -34,12 +35,12 @@ class BookmarkWatcherDelegate(
   private val lastPageNotificationsHelper: LastPageNotificationsHelper
 ) {
 
-  @OptIn(ExperimentalTime::class)
   suspend fun doWork(
     isCalledFromForeground: Boolean,
-    currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
+    updateCurrentlyOpenedThread: Boolean,
   ) {
     BackgroundUtils.ensureBackgroundThread()
+    val currentThreadDescriptor = bookmarksManager.currentlyOpenedThread()
 
     if (isDevFlavor) {
       if (isCalledFromForeground) {
@@ -49,38 +50,33 @@ class BookmarkWatcherDelegate(
       }
     }
 
-    Logger.d(TAG, "BookmarkWatcherDelegate.doWork() called, " +
-      "isCalledFromForeground=$isCalledFromForeground, " +
-      "currentThreadDescriptor=$currentThreadDescriptor")
-
-    val duration = measureTime {
-      Try {
-        doWorkInternal(currentThreadDescriptor)
-
-        val activeBookmarksCount = bookmarksManager.activeBookmarksCount()
-        Logger.d(TAG, "BookmarkWatcherDelegate.doWork() success, " +
-          "activeBookmarksCount=$activeBookmarksCount")
-
-      }.peekError { error ->
-        if (error.isExceptionImportant()) {
-          Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", error)
-        } else {
-          Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure, error: ${error.errorMessageOrClassName()}")
-        }
+    val result = Try {
+      return@Try doWorkInternal(
+        isCalledFromForeground,
+        updateCurrentlyOpenedThread,
+        currentThreadDescriptor
+      )
+    }
+    if (result is ModularResult.Error) {
+      if (result.error.isExceptionImportant()) {
+        Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", result.error)
+      } else {
+        Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure, error: ${result.error.errorMessageOrClassName()}")
       }
     }
-
-    Logger.d(TAG, "BookmarkWatcherDelegate.doWork() took $duration")
   }
 
-  private suspend fun doWorkInternal(currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?) {
+  @OptIn(ExperimentalTime::class)
+  private suspend fun doWorkInternal(
+    isCalledFromForeground: Boolean,
+    updateCurrentlyOpenedThread: Boolean,
+    currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
+  ) {
     BackgroundUtils.ensureBackgroundThread()
     awaitUntilAllDependenciesAreReady()
 
-    val isUpdatingCurrentlyOpenedThread = currentThreadDescriptor != null
-
     val watchingBookmarkDescriptors = getWatchingBookmarkDescriptors(
-      isUpdatingCurrentlyOpenedThread,
+      updateCurrentlyOpenedThread,
       currentThreadDescriptor
     )
 
@@ -92,78 +88,94 @@ class BookmarkWatcherDelegate(
 
     if (watchingBookmarkDescriptors.isEmpty()
       && bookmarksManager.activeBookmarksCount() == 0
-      && !isUpdatingCurrentlyOpenedThread) {
-      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering")
+      && currentThreadDescriptor == null) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, updating notifications")
       replyNotificationsHelper.showOrUpdateNotifications()
       return
     }
 
-    val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
-      .safeUnwrap { error ->
-        if (error.isExceptionImportant()) {
-          Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
-        } else {
-          Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error: ${error.errorMessageOrClassName()}")
+    if (watchingBookmarkDescriptors.isEmpty()) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering")
+      return
+    }
+
+    Logger.d(TAG, "BookmarkWatcherDelegate.doWork() called, " +
+      "isCalledFromForeground=$isCalledFromForeground, " +
+      "currentThreadDescriptor=$currentThreadDescriptor")
+
+    val duration = measureTime {
+      val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
+        .safeUnwrap { error ->
+          if (error.isExceptionImportant()) {
+            Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
+          } else {
+            Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error: ${error.errorMessageOrClassName()}")
+          }
+
+          return
         }
 
+      printDebugLogs(fetchResults)
+
+      if (fetchResults.isEmpty()) {
+        Logger.d(TAG, "fetchThreadBookmarkInfoUseCase.execute() returned no fetch results")
+        replyNotificationsHelper.showOrUpdateNotifications()
         return
       }
 
-    printDebugLogs(fetchResults)
+      val successFetchResults = fetchResults.filterIsInstance<ThreadBookmarkFetchResult.Success>()
+      if (successFetchResults.isNotEmpty()) {
+        processSuccessFetchResults(successFetchResults)
+      }
 
-    if (fetchResults.isEmpty()) {
-      Logger.d(TAG, "fetchThreadBookmarkInfoUseCase.execute() returned no fetch results")
-      replyNotificationsHelper.showOrUpdateNotifications()
-      return
+      val unsuccessFetchResults = fetchResults.filter { result -> result !is ThreadBookmarkFetchResult.Success }
+      if (unsuccessFetchResults.isNotEmpty()) {
+        processUnsuccessFetchResults(unsuccessFetchResults)
+      }
+
+      val activeBookmarksCount = bookmarksManager.activeBookmarksCount()
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWork() success, " +
+        "activeBookmarksCount=$activeBookmarksCount")
+
+      // Do not show notifications for the thread we are currently watching
+      if (currentThreadDescriptor != null) {
+        return
+      }
+
+      try {
+        replyNotificationsHelper.showOrUpdateNotifications()
+      } catch (error: Throwable) {
+        Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
+      }
     }
 
-    val successFetchResults = fetchResults.filterIsInstance<ThreadBookmarkFetchResult.Success>()
-    if (successFetchResults.isNotEmpty()) {
-      processSuccessFetchResults(successFetchResults)
-    }
-
-    val unsuccessFetchResults = fetchResults.filter { result -> result !is ThreadBookmarkFetchResult.Success }
-    if (unsuccessFetchResults.isNotEmpty()) {
-      processUnsuccessFetchResults(unsuccessFetchResults)
-    }
-
-    // Do not show notifications for the thread we are currently watching
-    if (isUpdatingCurrentlyOpenedThread) {
-      return
-    }
-
-    try {
-      replyNotificationsHelper.showOrUpdateNotifications()
-    } catch (error: Throwable) {
-      Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
-    }
+    Logger.d(TAG, "BookmarkWatcherDelegate.doWork() took $duration")
   }
 
   private fun getWatchingBookmarkDescriptors(
-    isUpdatingCurrentlyOpenedThread: Boolean,
+    updateCurrentlyOpenedThread: Boolean,
     currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
   ): List<ChanDescriptor.ThreadDescriptor> {
     return bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
-      if (isUpdatingCurrentlyOpenedThread) {
+      if (!threadBookmarkView.isActive()) {
+        return@mapNotNullBookmarksOrdered null
+      }
+
+      if (updateCurrentlyOpenedThread) {
         if (threadBookmarkView.threadDescriptor != currentThreadDescriptor) {
           // Skip all threads that are not the currently opened thread
           return@mapNotNullBookmarksOrdered null
         }
-      } else {
-        val shouldSkipThisBookmark = threadBookmarkView.threadDescriptor == currentThreadDescriptor
-          // Always update bookmark at least once! If we don't do this then the bookmark will never
-          // receive any information from the server if the user bookmarks already archived/deleted/etc.
-          // thread.
-          && !threadBookmarkView.isFirstFetch()
 
-        if (shouldSkipThisBookmark) {
-          // Skip the currently opened thread because we will update it differently
-          return@mapNotNullBookmarksOrdered null
-        }
+        return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
       }
 
-      if (!threadBookmarkView.isActive()) {
-        return@mapNotNullBookmarksOrdered null
+      if (threadBookmarkView.threadDescriptor == currentThreadDescriptor) {
+        // Skip current thread but only if this is the very first fetch (otherwise if we bookmark
+        // an archived/dead thread it will stay in "Loading..." state forever.
+        if (!threadBookmarkView.isFirstFetch()) {
+          return@mapNotNullBookmarksOrdered null
+        }
       }
 
       return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
@@ -288,6 +300,7 @@ class BookmarkWatcherDelegate(
         // calculate the amount of new posts (by counting every post which postNo is greater than
         // lastViewedPostNo) and then subtracting it from seenPostsCount
         if (originalPost.stickyThread is StickyThread.StickyWithCap) {
+          val totalPostsCount = threadBookmarkInfoObject.getPostsCountWithoutOP()
           val newPostsCount = threadBookmarkInfoObject.simplePostObjects
             .filter { threadBookmarkInfoPostObject ->
               val postNo = threadBookmarkInfoPostObject.postNo()
@@ -296,7 +309,7 @@ class BookmarkWatcherDelegate(
             }
             .count()
 
-          threadBookmark.updateSeenPostCountInRollingSticky(newPostsCount)
+          threadBookmark.updateSeenPostCountInRollingSticky(totalPostsCount, newPostsCount)
         }
 
         threadBookmark.setBumpLimit(originalPost.isBumpLimit)
@@ -436,19 +449,6 @@ class BookmarkWatcherDelegate(
       "notFoundOnServerCount=$notFoundOnServerCount, badStatusCount=$badStatusCount, " +
       "successCount=$successCount")
   }
-
-  // TODO(KurobaEx):
-//  private suspend fun DatabaseSavedReplyManager.awaitUntilInitialized() {
-//    return suspendCancellableCoroutine { continuation ->
-//      this.invokeAfterInitialized { error ->
-//        if (error != null) {
-//          continuation.resumeWithException(error)
-//        } else {
-//          continuation.resume(Unit)
-//        }
-//      }
-//    }
-//  }
 
   companion object {
     private const val TAG = "BookmarkWatcherDelegate"

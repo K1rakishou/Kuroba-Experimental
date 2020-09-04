@@ -78,6 +78,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
       return
     }
 
+    bookmarkStats.visibility = View.VISIBLE
     bookmarkStats.text = additionalInfo.newPosts.toString()
 
     if (additionalInfo.newQuotes > 0) {

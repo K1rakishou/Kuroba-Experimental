@@ -70,11 +70,11 @@ class ThreadBookmark private constructor(
   }
 
   fun updateTotalPostsCount(newPostsCount: Int) {
-    totalPostsCount = Math.max(totalPostsCount, newPostsCount)
+    totalPostsCount = newPostsCount
   }
 
-  fun updateSeenPostCountInRollingSticky(newPostsInRollingStickyThreadCount: Int) {
-    seenPostsCount = Math.max(0, seenPostsCount - newPostsInRollingStickyThreadCount)
+  fun updateSeenPostCountInRollingSticky(totalPostsCount: Int, newPostsCount: Int) {
+    seenPostsCount = Math.max(0, totalPostsCount - newPostsCount)
   }
 
   fun setBumpLimit(bumpLimit: Boolean) {
@@ -214,8 +214,8 @@ class ThreadBookmark private constructor(
     if (threadBookmarkReplies != other.threadBookmarkReplies) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
-    if (stickyThread != other.stickyThread) return false
     if (state != other.state) return false
+    if (stickyThread != other.stickyThread) return false
 
     return true
   }

@@ -1,10 +1,10 @@
 package com.github.adamantcheese.model.data.bookmark
 
+import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.math.max
 
 class ThreadBookmarkView private constructor(
@@ -97,7 +97,7 @@ class ThreadBookmarkView private constructor(
         return mutableMapOf()
       }
 
-      val resultMap = HashMap<PostDescriptor, ThreadBookmarkReplyView>(threadBookmarkReplies.size)
+      val resultMap = mutableMapWithCap<PostDescriptor, ThreadBookmarkReplyView>(threadBookmarkReplies.size)
 
       threadBookmarkReplies.forEach { (postDescriptor, threadBookmarkReply) ->
         resultMap[postDescriptor] = threadBookmarkReply.toThreadBookmarkReplyView()
