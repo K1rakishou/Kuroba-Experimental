@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.site.common.vichan;
 
 import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.ModularResult;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -73,41 +74,47 @@ public class VichanAntispam {
         ));
     }
 
-    public Map<String, String> get() {
+    public ModularResult<Map<String, String>> get() {
         Map<String, String> res = new HashMap<>();
 
-        Request request = new Request.Builder().url(url).build();
         try {
+            Request request = new Request.Builder().url(url).build();
             Response response = okHttpClient.getProxiedClient().newCall(request).execute();
+            if (!response.isSuccessful()) {
+                return ModularResult.error(new IOException("(Antispam) Bad response status code: " + response.code()));
+            }
+
             ResponseBody body = response.body();
-            if (body != null) {
-                Document document = Jsoup.parse(body.string());
-                Elements form = document.body().getElementsByTag("form");
-                for (Element element : form) {
-                    if (element.attr("name").equals("post")) {
-                        // Add all <input> and <textarea> elements.
-                        Elements inputs = element.getElementsByTag("input");
-                        inputs.addAll(element.getElementsByTag("textarea"));
+            if (body == null) {
+                Logger.d(TAG, "(Antispam) Response body is null");
+                return ModularResult.value(res);
+            }
 
-                        for (Element input : inputs) {
-                            String name = input.attr("name");
-                            String value = input.val();
+            Document document = Jsoup.parse(body.string());
+            Elements form = document.body().getElementsByTag("form");
 
-                            if (!fieldsToIgnore.contains(name)) {
-                                res.put(name, value);
-                            }
+            for (Element element : form) {
+                if (element.attr("name").equals("post")) {
+                    // Add all <input> and <textarea> elements.
+                    Elements inputs = element.getElementsByTag("input");
+                    inputs.addAll(element.getElementsByTag("textarea"));
+
+                    for (Element input : inputs) {
+                        String name = input.attr("name");
+                        String value = input.val();
+
+                        if (!fieldsToIgnore.contains(name)) {
+                            res.put(name, value);
                         }
-
-                        break;
                     }
+
+                    break;
                 }
             }
-        } catch (IOException e) {
-            Logger.e(TAG, "IOException parsing vichan bot fields", e);
-        } catch (NullPointerException e) {
-            Logger.e(TAG, "NullPointerException parsing vichan bot fields", e);
+        } catch (Throwable error) {
+            return ModularResult.error(error);
         }
 
-        return res;
+        return ModularResult.value(res);
     }
 }

@@ -28,6 +28,7 @@ import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.DeleteResponse
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -94,7 +95,15 @@ open class VichanActions(
 
     antispam.addDefaultIgnoreFields()
 
-    for ((key, value) in antispam.get()) {
+    val antiSpamFieldsResult = antispam.get()
+    if (antiSpamFieldsResult is ModularResult.Error) {
+      Logger.e(TAG, "Antispam failure", antiSpamFieldsResult.error)
+      return ModularResult.error(antiSpamFieldsResult.error)
+    }
+
+    antiSpamFieldsResult as ModularResult.Value
+
+    for ((key, value) in antiSpamFieldsResult.value) {
       call.parameter(key, value)
     }
 
@@ -163,4 +172,7 @@ open class VichanActions(
     return SiteAuthentication.fromNone()
   }
 
+  companion object {
+    private const val TAG = "VichanActions"
+  }
 }
