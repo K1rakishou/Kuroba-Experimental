@@ -184,7 +184,7 @@ class UpdateManager(
       .get()
       .build()
 
-    val response = BetaUpdateApiRequest(request, okHttpClient.proxiedClient).execute()
+    val response = BetaUpdateApiRequest(request, okHttpClient).execute()
 
     coroutineScope {
       withContext(Dispatchers.Main) {
@@ -272,7 +272,7 @@ class UpdateManager(
 
     val response = ReleaseUpdateApiRequest(
       request,
-      okHttpClient.proxiedClient
+      okHttpClient
     ).execute()
 
     coroutineScope {

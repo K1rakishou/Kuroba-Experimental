@@ -17,10 +17,10 @@
 package com.github.adamantcheese.chan.core.net
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 import java.io.InputStreamReader
@@ -31,14 +31,14 @@ import kotlin.time.measureTimedValue
 abstract class JsonReaderRequest<T>(
   protected val requestType: RequestType,
   protected val request: Request,
-  private val okHttpClient: OkHttpClient
+  private val proxiedOkHttpClient: NetModule.ProxiedOkHttpClient
 ) {
 
   @OptIn(ExperimentalTime::class)
   open suspend fun execute(): JsonReaderResponse<T> {
     val response = Try {
       val timedValue = measureTimedValue {
-        okHttpClient.suspendCall(request)
+        proxiedOkHttpClient.proxiedClient.suspendCall(request)
       }
 
       Logger.d(TAG, "Request \"${requestType.requestTag}\" to \"${request.url}\" " +

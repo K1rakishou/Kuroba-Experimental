@@ -20,6 +20,7 @@ import android.os.Build
 import android.text.Html
 import android.text.Spanned
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -27,14 +28,13 @@ import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.ast.Node
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class ReleaseUpdateApiRequest(
   request: Request,
-  okHttpClient: OkHttpClient
+  okHttpClient: NetModule.ProxiedOkHttpClient
 ) : JsonReaderRequest<ReleaseUpdateApiResponse>(RequestType.ReleaseUpdateApiRequest, request, okHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {

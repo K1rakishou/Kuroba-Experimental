@@ -17,10 +17,10 @@
 package com.github.adamantcheese.chan.core.site.sites.chan4
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.*
 
@@ -28,7 +28,7 @@ class Chan4PagesRequest(
   private val boardDescriptor: BoardDescriptor,
   private val boardTotalPagesCount: Int,
   request: Request,
-  okHttpClient: OkHttpClient
+  okHttpClient: NetModule.ProxiedOkHttpClient
 ) : JsonReaderRequest<Chan4PagesRequest.BoardPages>(
   RequestType.Chan4PagesRequest, request, okHttpClient
 ) {

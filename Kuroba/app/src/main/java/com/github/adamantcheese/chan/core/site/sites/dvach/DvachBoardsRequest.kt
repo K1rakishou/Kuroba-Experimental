@@ -17,12 +17,12 @@
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.model.data.board.BoardBuilder
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.*
 
@@ -30,7 +30,7 @@ class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: OkHttpClient
+  okHttpClient: NetModule.ProxiedOkHttpClient
 ) : JsonReaderRequest<List<ChanBoard>>(RequestType.DvachBoardsRequest, request, okHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): List<ChanBoard> {

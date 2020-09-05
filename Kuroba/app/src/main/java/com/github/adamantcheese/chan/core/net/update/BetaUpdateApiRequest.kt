@@ -17,13 +17,13 @@
 package com.github.adamantcheese.chan.core.net.update
 
 import android.util.JsonReader
+import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
-import okhttp3.OkHttpClient
 import okhttp3.Request
 
 class BetaUpdateApiRequest(
   request: Request,
-  okHttpClient: OkHttpClient
+  okHttpClient: NetModule.ProxiedOkHttpClient
 ) : JsonReaderRequest<BetaUpdateApiRequest.DevUpdateApiResponse>(
   RequestType.BetaUpdateApiRequest,
   request,
