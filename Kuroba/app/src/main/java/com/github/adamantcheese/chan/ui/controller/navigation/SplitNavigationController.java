@@ -26,7 +26,7 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.controller.transition.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
@@ -164,7 +164,7 @@ public class SplitNavigationController
 
     @Override
     public boolean pushController(final Controller to, boolean animated) {
-        return pushController(to, animated ? new PushControllerTransition() : null);
+        return pushController(to, animated ? new PushControllerTransition(controllerTransitionAnimatorSet) : null);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class SplitNavigationController
 
     @Override
     public boolean popController(boolean animated) {
-        return popController(animated ? new PopControllerTransition() : null);
+        return popController(animated ? new PopControllerTransition(controllerTransitionAnimatorSet) : null);
     }
 
     @Override

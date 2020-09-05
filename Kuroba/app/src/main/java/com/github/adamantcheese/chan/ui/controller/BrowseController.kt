@@ -92,7 +92,7 @@ class BrowseController(context: Context) : ThreadController(context),
 
     val navControllerContainerLayout = AndroidUtils.inflate(context, R.layout.controller_browse)
     val container = navControllerContainerLayout.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
-    container.initBrowseControllerTracker(this, navigationController)
+    container.initBrowseControllerTracker(this, navigationController!!)
     container.addView(view)
     view = container
 

@@ -22,11 +22,12 @@ import android.view.ViewGroup;
 
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.controller.transition.ControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PopControllerTransition;
 import com.github.adamantcheese.chan.controller.transition.PushControllerTransition;
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.navigation.HasNavigation;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -49,15 +50,21 @@ public abstract class NavigationController extends Controller implements HasNavi
     }
 
     public boolean pushController(final Controller to, boolean animated) {
-        return pushController(to, animated ? new PushControllerTransition() : null);
+        return pushController(to, animated ? new PushControllerTransition(controllerTransitionAnimatorSet) : null);
     }
 
     public boolean pushController(final Controller to, ControllerTransition controllerTransition) {
+        final Controller from = getTop();
+
         if (blockingInput) {
+            // Crash on beta and dev builds 
+            if (!AndroidUtils.isStableBuild()) {
+                throwDebugInfo("pushController", to, from, controllerTransition);
+                return false;
+            }
+
             return false;
         }
-
-        final Controller from = getTop();
 
         if (from == null && controllerTransition != null) {
             // can't animate push if from is null, just disable the animation
@@ -73,22 +80,40 @@ public abstract class NavigationController extends Controller implements HasNavi
     }
 
     public boolean popController(boolean animated) {
-        return popController(animated ? new PopControllerTransition() : null);
+        return popController(animated ? new PopControllerTransition(controllerTransitionAnimatorSet) : null);
     }
 
     public boolean popController(ControllerTransition controllerTransition) {
-        if (blockingInput) {
-            return false;
-        }
-
         final Controller from = getTop();
         final Controller to = childControllers.size() > 1
                 ? childControllers.get(childControllers.size() - 2)
                 : null;
 
-        transition(from, to, false, controllerTransition);
+        if (blockingInput) {
+            // Crash on beta and dev builds
+            if (!AndroidUtils.isStableBuild()) {
+                throwDebugInfo("popController", to, from, controllerTransition);
+                return false;
+            }
 
+            return false;
+        }
+
+        transition(from, to, false, controllerTransition);
         return true;
+    }
+
+    private void throwDebugInfo(
+            String tag,
+            Controller to,
+            Controller from,
+            ControllerTransition controllerTransition
+    ) {
+        String debugInfo = tag + ": to=" + to.getClass().getSimpleName() + ", " +
+                "from=" + from.getClass().getSimpleName() + ", " +
+                "transition=" + controllerTransition.debugInfo();
+
+        throw new IllegalStateException(debugInfo);
     }
 
     public boolean isBlockingInput() {

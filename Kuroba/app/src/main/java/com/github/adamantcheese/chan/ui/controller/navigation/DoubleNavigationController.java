@@ -19,7 +19,7 @@ package com.github.adamantcheese.chan.ui.controller.navigation;
 import android.view.ViewGroup;
 
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.controller.transition.ControllerTransition;
 import com.github.adamantcheese.chan.core.navigation.HasNavigation;
 
 public interface DoubleNavigationController extends HasNavigation {

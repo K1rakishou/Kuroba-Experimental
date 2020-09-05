@@ -20,7 +20,7 @@ import android.content.Context;
 import android.widget.FrameLayout;
 
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.controller.transition.ControllerTransition;
 import com.github.adamantcheese.chan.ui.toolbar.NavigationItem;
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar;
 

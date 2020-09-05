@@ -146,11 +146,14 @@ public class ToolbarContainer extends FrameLayout {
             // Happens when you are in Phone layout, moving the thread fragment and at the same time
             // thread update occurs. We probably should just skip it. But maybe there is a better
             // solution.
+            if (listener != null) {
+                listener.onAnimationEnded();
+            }
+
             return;
         }
 
         endAnimations();
-
         ItemView itemView = new ItemView(item, theme);
 
         previousView = currentView;

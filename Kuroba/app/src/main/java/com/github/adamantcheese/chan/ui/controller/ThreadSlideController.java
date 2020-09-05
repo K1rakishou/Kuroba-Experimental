@@ -24,7 +24,7 @@ import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.controller.Controller;
-import com.github.adamantcheese.chan.controller.ControllerTransition;
+import com.github.adamantcheese.chan.controller.transition.ControllerTransition;
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks;
 import com.github.adamantcheese.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController;
