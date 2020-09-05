@@ -166,16 +166,23 @@ public class ToolbarContainer extends FrameLayout {
         // Otherwise just show it without an animation.
         if (animation != ToolbarPresenter.AnimationStyle.NONE && previousView != null) {
             setAnimation(itemView, previousView, animation, listener);
-        } else {
-            if (previousView != null) {
-                removeItem(previousView);
-                previousView = null;
-            }
+
+            setArrowProgress(1f, !currentView.item.hasArrow());
+            itemView.attach();
+            return;
+        }
+
+        if (previousView != null) {
+            removeItem(previousView);
+            previousView = null;
         }
 
         setArrowProgress(1f, !currentView.item.hasArrow());
-
         itemView.attach();
+
+        if (listener != null) {
+            listener.onAnimationEnded();
+        }
     }
 
     public void update(NavigationItem item) {
@@ -241,14 +248,16 @@ public class ToolbarContainer extends FrameLayout {
             throw new IllegalStateException("Not in transition mode");
         }
 
+        endAnimations();
+
         if (didComplete) {
             removeItem(currentView);
             currentView = transitionView;
-            transitionView = null;
         } else {
             removeItem(transitionView);
-            transitionView = null;
         }
+
+        transitionView = null;
 
         if (getChildCount() != 1) {
             throw new IllegalStateException("Not 1 view attached");
@@ -297,13 +306,6 @@ public class ToolbarContainer extends FrameLayout {
 
         if (animationStyle == ToolbarPresenter.AnimationStyle.FADE) {
             setFadeAnimation(newView, previousView, listener);
-            return;
-        }
-
-        if (animationStyle == ToolbarPresenter.AnimationStyle.NONE) {
-            if (listener != null) {
-                listener.onAnimationEnded();
-            }
             return;
         }
 
