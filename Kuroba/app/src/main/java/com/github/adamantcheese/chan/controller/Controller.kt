@@ -122,7 +122,7 @@ abstract class Controller(@JvmField var context: Context) {
     alive = true
 
     if (LOG_STATES) {
-      Logger.d(TAG, javaClass.simpleName + " onCreate")
+      Logger.test(javaClass.simpleName + " onCreate")
     }
   }
 
@@ -131,7 +131,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = true
 
     if (LOG_STATES) {
-      Logger.d(TAG, javaClass.simpleName + " onShow")
+      Logger.test(javaClass.simpleName + " onShow")
     }
 
     view.visibility = View.VISIBLE
@@ -148,7 +148,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = false
 
     if (LOG_STATES) {
-      Logger.d(TAG, javaClass.simpleName + " onHide")
+      Logger.test(javaClass.simpleName + " onHide")
     }
 
     view.visibility = View.GONE
@@ -167,7 +167,7 @@ abstract class Controller(@JvmField var context: Context) {
     job.cancelChildren()
 
     if (LOG_STATES) {
-      Logger.d(TAG, javaClass.simpleName + " onDestroy")
+      Logger.test(javaClass.simpleName + " onDestroy")
     }
 
     while (childControllers.size > 0) {
@@ -176,7 +176,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (AndroidUtils.removeFromParentView(view)) {
       if (LOG_STATES) {
-        Logger.d(TAG, javaClass.simpleName + " view removed onDestroy")
+        Logger.test(javaClass.simpleName + " view removed onDestroy")
       }
     }
   }
@@ -204,7 +204,7 @@ abstract class Controller(@JvmField var context: Context) {
   fun attachToParentView(parentView: ViewGroup?) {
     if (view.parent != null) {
       if (LOG_STATES) {
-        Logger.d(TAG, javaClass.simpleName + " view removed")
+        Logger.test(javaClass.simpleName + " view removed")
       }
 
       AndroidUtils.removeFromParentView(view)
@@ -212,7 +212,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (parentView != null) {
       if (LOG_STATES) {
-        Logger.d(TAG, javaClass.simpleName + " view attached")
+        Logger.test(javaClass.simpleName + " view attached")
       }
 
       attachToView(parentView)
@@ -243,7 +243,6 @@ abstract class Controller(@JvmField var context: Context) {
         return true
       }
     }
-
     return false
   }
 
@@ -328,8 +327,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   companion object {
-    private const val TAG = "Controller"
-    private const val LOG_STATES = true
+    private const val LOG_STATES = false
   }
 
 }

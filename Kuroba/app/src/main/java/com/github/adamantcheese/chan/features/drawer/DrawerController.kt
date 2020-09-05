@@ -60,7 +60,6 @@ import com.github.adamantcheese.chan.utils.addOneshotModelBuildListener
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -320,14 +319,7 @@ class DrawerController(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false
   ) {
-    if (!mainScope.isActive) {
-      Logger.d(TAG, "loadThread() mainScope is not active!")
-    }
-
     mainScope.launch {
-      Logger.d(TAG, "loadThread() inside coroutine, " +
-        "topThreadController: ${topThreadController?.javaClass?.simpleName}")
-
       if (closeAllNonMainControllers) {
         closeAllNonMainControllers()
       }
@@ -339,8 +331,12 @@ class DrawerController(
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> openBookmarksController(emptyList())
-      R.id.action_settings -> openSettingsController()
+      R.id.action_bookmarks -> {
+        openBookmarksController(emptyList())
+      }
+      R.id.action_settings -> {
+        openSettingsController()
+      }
     }
   }
 
@@ -356,13 +352,8 @@ class DrawerController(
   }
 
   private fun closeAllNonMainControllers() {
-    Logger.d(TAG, "closeAllNonMainControllers")
-
     var currentNavController = top
       ?: return
-
-    Logger.d(TAG, "currentNavController=${currentNavController.javaClass.simpleName}")
-
     val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE
 
     while (true) {
@@ -531,13 +522,7 @@ class DrawerController(
   }
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {
-    if (!mainScope.isActive) {
-      Logger.d(TAG, "onHistoryEntryViewClicked() mainScope is not active!")
-    }
-
     mainScope.launch {
-      Logger.d(TAG, "onHistoryEntryViewClicked() inside coroutine, topThreadController: ${topThreadController?.javaClass?.simpleName}")
-
       val currentTopThreadController = topThreadController
         ?: return@launch
 

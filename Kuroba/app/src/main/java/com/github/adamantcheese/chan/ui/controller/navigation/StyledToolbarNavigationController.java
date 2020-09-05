@@ -135,7 +135,6 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
                 return (DrawerController) doubleNav.parentController;
             }
         }
-
         return null;
     }
 }

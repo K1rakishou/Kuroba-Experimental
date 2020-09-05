@@ -211,12 +211,6 @@ class ThreadLayout @JvmOverloads constructor(
     if (v === errorRetryButton) {
       presenter.requestData()
     } else if (v === replyButton) {
-      // TODO(KurobaEx): Remove me!!!!!!!!!!!!
-
-      if (true) {
-        throw RuntimeException("Test exception")
-      }
-
       threadListLayout.openReply(true)
     }
   }
