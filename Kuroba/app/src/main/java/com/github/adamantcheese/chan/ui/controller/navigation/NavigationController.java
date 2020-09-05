@@ -28,10 +28,12 @@ import com.github.adamantcheese.chan.controller.transition.PushControllerTransit
 import com.github.adamantcheese.chan.core.manager.ControllerNavigationManager;
 import com.github.adamantcheese.chan.core.navigation.HasNavigation;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
+import com.github.adamantcheese.chan.utils.Logger;
 
 import javax.inject.Inject;
 
 public abstract class NavigationController extends Controller implements HasNavigation {
+    private static final String TAG = "NavigationController";
 
     @Inject
     ControllerNavigationManager controllerNavigationManager;
@@ -59,7 +61,7 @@ public abstract class NavigationController extends Controller implements HasNavi
         if (blockingInput) {
             // Crash on beta and dev builds 
             if (!AndroidUtils.isStableBuild()) {
-                throwDebugInfo("pushController", to, from, controllerTransition);
+                throwDebugInfo("pushController", to, from, true, controllerTransition);
                 return false;
             }
 
@@ -92,7 +94,7 @@ public abstract class NavigationController extends Controller implements HasNavi
         if (blockingInput) {
             // Crash on beta and dev builds
             if (!AndroidUtils.isStableBuild()) {
-                throwDebugInfo("popController", to, from, controllerTransition);
+                throwDebugInfo("popController", to, from, false, controllerTransition);
                 return false;
             }
 
@@ -101,19 +103,6 @@ public abstract class NavigationController extends Controller implements HasNavi
 
         transition(from, to, false, controllerTransition);
         return true;
-    }
-
-    private void throwDebugInfo(
-            String tag,
-            Controller to,
-            Controller from,
-            ControllerTransition controllerTransition
-    ) {
-        String debugInfo = tag + ": to=" + to.getClass().getSimpleName() + ", " +
-                "from=" + from.getClass().getSimpleName() + ", " +
-                "transition=" + controllerTransition.debugInfo();
-
-        throw new IllegalStateException(debugInfo);
     }
 
     public boolean isBlockingInput() {
@@ -181,6 +170,8 @@ public abstract class NavigationController extends Controller implements HasNavi
             to.onShow();
         }
 
+        printTransitionDebugInfo(from, to, pushing, controllerTransition);
+
         if (controllerTransition != null) {
             controllerTransition.from = from;
             controllerTransition.to = to;
@@ -195,6 +186,41 @@ public abstract class NavigationController extends Controller implements HasNavi
         }
 
         finishTransition(from, to, pushing);
+    }
+
+    private void throwDebugInfo(
+            String methodName,
+            Controller to,
+            Controller from,
+            boolean pushing,
+            ControllerTransition controllerTransition
+    ) {
+        String log = NavigationControllerDebugHelper.getTransitionDebugInfo(
+                methodName,
+                from,
+                to,
+                pushing,
+                controllerTransition
+        );
+
+        throw new IllegalStateException(log);
+    }
+
+    private void printTransitionDebugInfo(
+            Controller from,
+            Controller to,
+            boolean pushing,
+            ControllerTransition controllerTransition
+    ) {
+        String log = NavigationControllerDebugHelper.getTransitionDebugInfo(
+                "transition",
+                from,
+                to,
+                pushing,
+                controllerTransition
+        );
+
+        Logger.d(TAG, log);
     }
 
     private void finishTransition(Controller from, Controller to, boolean pushing) {

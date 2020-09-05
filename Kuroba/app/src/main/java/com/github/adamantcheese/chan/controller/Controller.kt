@@ -38,10 +38,7 @@ import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 
@@ -97,7 +94,8 @@ abstract class Controller(@JvmField var context: Context) {
     get
     private set
 
-  protected var mainScope = MainScope() + CoroutineName("Controller_${this::class.java.simpleName}")
+  private val job = SupervisorJob()
+  protected var mainScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Controller_${this::class.java.simpleName}"))
 
   var shown = false
     @JvmName("shown") get
@@ -124,7 +122,7 @@ abstract class Controller(@JvmField var context: Context) {
     alive = true
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onCreate")
+      Logger.d(TAG, javaClass.simpleName + " onCreate")
     }
   }
 
@@ -133,7 +131,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = true
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onShow")
+      Logger.d(TAG, javaClass.simpleName + " onShow")
     }
 
     view.visibility = View.VISIBLE
@@ -150,7 +148,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = false
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onHide")
+      Logger.d(TAG, javaClass.simpleName + " onHide")
     }
 
     view.visibility = View.GONE
@@ -166,10 +164,10 @@ abstract class Controller(@JvmField var context: Context) {
   open fun onDestroy() {
     alive = false
     compositeDisposable.clear()
-    mainScope.cancel()
+    job.cancelChildren()
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onDestroy")
+      Logger.d(TAG, javaClass.simpleName + " onDestroy")
     }
 
     while (childControllers.size > 0) {
@@ -178,7 +176,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (AndroidUtils.removeFromParentView(view)) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view removed onDestroy")
+        Logger.d(TAG, javaClass.simpleName + " view removed onDestroy")
       }
     }
   }
@@ -206,7 +204,7 @@ abstract class Controller(@JvmField var context: Context) {
   fun attachToParentView(parentView: ViewGroup?) {
     if (view.parent != null) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view removed")
+        Logger.d(TAG, javaClass.simpleName + " view removed")
       }
 
       AndroidUtils.removeFromParentView(view)
@@ -214,7 +212,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (parentView != null) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view attached")
+        Logger.d(TAG, javaClass.simpleName + " view attached")
       }
 
       attachToView(parentView)
@@ -245,6 +243,7 @@ abstract class Controller(@JvmField var context: Context) {
         return true
       }
     }
+
     return false
   }
 
@@ -329,7 +328,8 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   companion object {
-    private const val LOG_STATES = false
+    private const val TAG = "Controller"
+    private const val LOG_STATES = true
   }
 
 }

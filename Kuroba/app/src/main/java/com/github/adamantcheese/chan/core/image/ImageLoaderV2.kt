@@ -14,7 +14,6 @@ import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.getLifecycleFromContext
 import java.util.concurrent.atomic.AtomicReference
 
@@ -50,7 +49,7 @@ class ImageLoaderV2(
     val lifecycle = context.getLifecycleFromContext()
 
     if (verboseLogsEnabled) {
-      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
+//      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
     }
 
     val request = with(LoadRequest.Builder(context)) {
@@ -131,7 +130,7 @@ class ImageLoaderV2(
     val lifecycle = context.getLifecycleFromContext()
 
     if (verboseLogsEnabled) {
-      Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
+//      Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
     }
 
     val request = with(LoadRequest.Builder(context)) {
@@ -185,7 +184,7 @@ class ImageLoaderV2(
     val lifecycle = context.getLifecycleFromContext()
 
     if (verboseLogsEnabled) {
-      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
+//      Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
     }
 
     val request = with(LoadRequest.Builder(context)) {
