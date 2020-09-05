@@ -112,9 +112,9 @@ public class NetModule {
     public OkHttpClient provideOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
         Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
 
-        return new OkHttpClient.Builder().connectTimeout(30, SECONDS)
-                .readTimeout(30, SECONDS)
-                .writeTimeout(30, SECONDS)
+        return new OkHttpClient.Builder()
+                .readTimeout(5, SECONDS)
+                .writeTimeout(5, SECONDS)
                 .protocols(okHttpProtocols.protocols)
                 .dns(okHttpDns)
                 .build();
