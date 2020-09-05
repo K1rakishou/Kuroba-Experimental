@@ -50,7 +50,7 @@ public abstract class NavigationController extends Controller implements HasNavi
     }
 
     public boolean pushController(final Controller to, boolean animated) {
-        return pushController(to, animated ? new PushControllerTransition(controllerTransitionAnimatorSet) : null);
+        return pushController(to, animated ? new PushControllerTransition() : null);
     }
 
     public boolean pushController(final Controller to, ControllerTransition controllerTransition) {
@@ -80,7 +80,7 @@ public abstract class NavigationController extends Controller implements HasNavi
     }
 
     public boolean popController(boolean animated) {
-        return popController(animated ? new PopControllerTransition(controllerTransitionAnimatorSet) : null);
+        return popController(animated ? new PopControllerTransition() : null);
     }
 
     public boolean popController(ControllerTransition controllerTransition) {

@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.controller
 
-import android.animation.AnimatorSet
 import android.content.Context
 import android.content.res.Configuration
 import android.view.KeyEvent
@@ -52,9 +51,6 @@ abstract class Controller(@JvmField var context: Context) {
 
   @Inject
   lateinit var controllerNavigationManager: ControllerNavigationManager
-
-  @JvmField
-  protected val controllerTransitionAnimatorSet = AnimatorSet()
 
   @JvmField
   var navigation = NavigationItem()
@@ -263,7 +259,7 @@ abstract class Controller(@JvmField var context: Context) {
     controller.onShow()
 
     if (animated) {
-      val transition = FadeInTransition(controllerTransitionAnimatorSet)
+      val transition = FadeInTransition()
       transition.to = controller
       transition.setCallback {
         (context as StartActivity).pushController(controller)
@@ -288,7 +284,7 @@ abstract class Controller(@JvmField var context: Context) {
 
   open fun stopPresenting(animated: Boolean) {
     if (animated) {
-      val transition = FadeOutTransition(controllerTransitionAnimatorSet)
+      val transition = FadeOutTransition()
       transition.from = this
       transition.setCallback { finishPresenting() }
       transition.perform()

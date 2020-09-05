@@ -164,7 +164,7 @@ public class SplitNavigationController
 
     @Override
     public boolean pushController(final Controller to, boolean animated) {
-        return pushController(to, animated ? new PushControllerTransition(controllerTransitionAnimatorSet) : null);
+        return pushController(to, animated ? new PushControllerTransition() : null);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class SplitNavigationController
 
     @Override
     public boolean popController(boolean animated) {
-        return popController(animated ? new PopControllerTransition(controllerTransitionAnimatorSet) : null);
+        return popController(animated ? new PopControllerTransition() : null);
     }
 
     @Override

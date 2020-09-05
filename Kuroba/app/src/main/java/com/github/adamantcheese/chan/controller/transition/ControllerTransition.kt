@@ -20,10 +20,10 @@ import android.animation.AnimatorSet
 import com.github.adamantcheese.chan.controller.Controller
 import java.util.*
 
-abstract class ControllerTransition(
-  protected val animatorSet: AnimatorSet
-) {
+abstract class ControllerTransition  {
+  protected val animatorSet = AnimatorSet()
   private var callback: Callback? = null
+
   @JvmField
   var from: Controller? = null
   @JvmField

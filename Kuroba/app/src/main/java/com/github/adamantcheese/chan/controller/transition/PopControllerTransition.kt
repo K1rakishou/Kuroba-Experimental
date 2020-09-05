@@ -18,12 +18,11 @@ package com.github.adamantcheese.chan.controller.transition
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 
-class PopControllerTransition(animatorSet: AnimatorSet) : ControllerTransition(animatorSet) {
+class PopControllerTransition : ControllerTransition() {
 
   override fun perform() {
     animatorSet.end()
