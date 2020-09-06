@@ -25,7 +25,6 @@ import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
-import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
@@ -99,10 +98,6 @@ class BrowsePresenter @Inject constructor(
     callback?.loadBoard(boardDescriptor)
   }
 
-  fun onBoardsFloatingMenuSiteClicked(siteDescriptor: SiteDescriptor) {
-    callback?.loadSiteSetup(siteDescriptor)
-  }
-
   fun bookmarkEveryThread(chanThread: ChanThread?) {
     if (chanThread == null) {
       Logger.e(TAG, "bookmarkEveryThread() chanThread == null")
@@ -145,7 +140,6 @@ class BrowsePresenter @Inject constructor(
 
   interface Callback {
     suspend fun loadBoard(boardDescriptor: BoardDescriptor)
-    fun loadSiteSetup(siteDescriptor: SiteDescriptor)
     suspend fun showSitesNotSetup()
   }
 

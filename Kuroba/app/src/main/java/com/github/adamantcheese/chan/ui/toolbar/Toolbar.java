@@ -117,11 +117,13 @@ public class Toolbar
         }
     };
 
+    @Nullable
+    private ToolbarCallback callback;
+
     private ToolbarPresenter presenter;
     private ImageView arrowMenuView;
     private ArrowMenuDrawable arrowMenuDrawable;
     private ToolbarContainer navigationItemContainer;
-    private ToolbarCallback callback;
     private int lastScrollDeltaOffset;
     private int scrollOffset;
     private List<ToolbarCollapseCallback> collapseCallbacks = new ArrayList<>();
@@ -230,7 +232,7 @@ public class Toolbar
     }
 
     public void setInImmersiveMode(boolean inImmersiveMode) {
-        isInImmersiveMode = inImmersiveMode;
+        this.isInImmersiveMode = inImmersiveMode;
     }
 
     public void updateToolbarMenuStartPadding(int newPadding) {
@@ -408,10 +410,16 @@ public class Toolbar
         this.callback = callback;
     }
 
+    public void removeCallback() {
+        this.callback = null;
+    }
+
     @Override
     public void onClick(View v) {
         if (v == arrowMenuView) {
-            callback.onMenuOrBackClicked(arrowMenuDrawable.getProgress() == 1f);
+            if (callback != null) {
+                callback.onMenuOrBackClicked(arrowMenuDrawable.getProgress() == 1f);
+            }
         }
     }
 
@@ -465,7 +473,9 @@ public class Toolbar
 
     @Override
     public void onSearchVisibilityChanged(NavigationItem item, boolean visible) {
-        callback.onSearchVisibilityChanged(item, visible);
+        if (callback != null) {
+            callback.onSearchVisibilityChanged(item, visible);
+        }
 
         if (!visible) {
             hideKeyboard(navigationItemContainer);
@@ -474,7 +484,9 @@ public class Toolbar
 
     @Override
     public void onSearchInput(NavigationItem item, String input) {
-        callback.onSearchEntered(item, input);
+        if (callback != null) {
+            callback.onSearchEntered(item, input);
+        }
     }
 
     @Override

@@ -46,6 +46,13 @@ public class ImageViewerNavigationController
         requireToolbar().setCallback(this);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        requireToolbar().removeCallback();
+    }
+
     public void showImages(
             final List<PostImage> images,
             final int index,

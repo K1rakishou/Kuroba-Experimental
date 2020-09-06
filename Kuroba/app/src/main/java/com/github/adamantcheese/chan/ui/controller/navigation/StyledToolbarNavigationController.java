@@ -61,6 +61,13 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        requireToolbar().removeCallback();
+    }
+
+    @Override
     public boolean popController(ControllerTransition controllerTransition) {
         return !requireToolbar().isTransitioning() && super.popController(controllerTransition);
     }

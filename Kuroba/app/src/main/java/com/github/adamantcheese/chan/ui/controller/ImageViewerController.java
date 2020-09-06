@@ -865,18 +865,22 @@ public class ImageViewerController
     }
 
     private void hideToolbar() {
-        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
+        Toolbar toolbar = requireNavController().requireToolbar();
+
+        ViewGroup.LayoutParams params = toolbar.getLayoutParams();
         // setting this to 0 because GONE doesn't seem to work?
         params.height = 0;
-        navigationController.getToolbar().setInImmersiveMode(true);
-        navigationController.getToolbar().setLayoutParams(params);
+        toolbar.setInImmersiveMode(true);
+        toolbar.setLayoutParams(params);
     }
 
     private void showToolbar() {
-        ViewGroup.LayoutParams params = navigationController.getToolbar().getLayoutParams();
+        Toolbar toolbar = requireNavController().requireToolbar();
+
+        ViewGroup.LayoutParams params = toolbar.getLayoutParams();
         params.height = getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top();
-        navigationController.getToolbar().setInImmersiveMode(false);
-        navigationController.getToolbar().setLayoutParams(params);
+        toolbar.setInImmersiveMode(false);
+        toolbar.setLayoutParams(params);
     }
 
     public interface ImageViewerCallback {

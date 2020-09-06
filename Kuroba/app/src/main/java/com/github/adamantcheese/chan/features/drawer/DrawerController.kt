@@ -124,7 +124,7 @@ class DrawerController(
       }
 
       if (navigationController == null) {
-        Logger.e(TAG, "topController is an expected controller type: ${topController::class.java.simpleName}")
+        Logger.e(TAG, "topController is an unexpected controller type: ${topController::class.java.simpleName}")
       }
 
       return navigationController
@@ -285,12 +285,16 @@ class DrawerController(
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
     setBookmarksMenuItemSelected()
+
+    setDrawerEnabled(false)
   }
 
   fun openSettingsController() {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context))
     setSettingsMenuItemSelected()
+
+    setDrawerEnabled(false)
   }
 
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
@@ -330,13 +334,12 @@ class DrawerController(
 
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
-      R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> {
-        openBookmarksController(emptyList())
+      R.id.action_browse -> {
+        closeAllNonMainControllers()
+        setDrawerEnabled(true)
       }
-      R.id.action_settings -> {
-        openSettingsController()
-      }
+      R.id.action_bookmarks -> openBookmarksController(emptyList())
+      R.id.action_settings -> openSettingsController()
     }
   }
 

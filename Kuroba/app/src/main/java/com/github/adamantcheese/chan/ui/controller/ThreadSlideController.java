@@ -158,11 +158,8 @@ public class ThreadSlideController
                     true
             );
 
-            if (slidingPaneLayout.getWidth() == 0) {
-                // It won't tell us it switched when it's not laid out yet.
-                leftOpen = leftController;
-                slideStateChanged();
-            }
+            leftOpen = leftController;
+            slideStateChanged();
         }
     }
 

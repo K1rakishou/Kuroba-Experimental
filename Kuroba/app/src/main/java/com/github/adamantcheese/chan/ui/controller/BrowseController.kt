@@ -536,18 +536,6 @@ class BrowseController(context: Context) : ThreadController(context),
     threadLayout.openReply(false)
   }
 
-  // TODO(KurobaEx):
-  fun onSiteClicked(siteDescriptor: SiteDescriptor) {
-    presenter.onBoardsFloatingMenuSiteClicked(siteDescriptor)
-  }
-
-  // TODO(KurobaEx):
-  fun openSetup() {
-    Objects.requireNonNull(navigationController, "navigationController is null")
-
-    openBoardSelectionController()
-  }
-
   private fun handleShareAndOpenInBrowser(share: Boolean) {
     val presenter = threadLayout.presenter
     if (!presenter.isBound) {
@@ -626,17 +614,6 @@ class BrowseController(context: Context) : ThreadController(context),
     presenter.requestData()
 
     requireNavController().requireToolbar().updateTitle(navigation)
-  }
-
-  override fun loadSiteSetup(siteDescriptor: SiteDescriptor) {
-    val siteSetupController = SiteSettingsController(context, siteDescriptor)
-    if (doubleNavigationController != null) {
-      doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(siteSetupController)
-    } else {
-      requireStartActivity().openControllerWrappedIntoBottomNavAwareController(siteSetupController)
-    }
-
-    requireStartActivity().setSettingsMenuItemSelected()
   }
 
   override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {

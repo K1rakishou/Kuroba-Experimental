@@ -58,6 +58,7 @@ class BottomNavBarAwareNavigationController(
   override fun onDestroy() {
     super.onDestroy()
 
+    requireToolbar().removeCallback()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 

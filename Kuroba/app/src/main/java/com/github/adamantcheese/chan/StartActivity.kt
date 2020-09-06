@@ -187,8 +187,9 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    FullScreenUtils.setupDefaultFlags(window)
+    FullScreenUtils.setupDefaultFlags(this)
     FullScreenUtils.setupFullscreen(this)
+    FullScreenUtils.setupStatusAndNavBarColors(this)
 
     // Setup base controllers, and decide if to use the split layout for tablets
     drawerController = DrawerController(this).apply {
@@ -276,7 +277,7 @@ class StartActivity : AppCompatActivity(),
 
   private fun listenForWindowInsetsChanges() {
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-      val isKeyboardOpen = FullScreenUtils.isKeyboardAppeared(view, insets.systemWindowInsetBottom)
+      val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
 
       globalWindowInsetsManager.updateInsets(
         insets.replaceSystemWindowInsets(
