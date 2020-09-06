@@ -42,12 +42,20 @@ object FullScreenUtils {
   }
 
   fun Window.hideSystemUI() {
-    decorView.systemUiVisibility = (
-      View.SYSTEM_UI_FLAG_IMMERSIVE
+    // View.SYSTEM_UI_FLAG_LAYOUT_STABLE for some unknown reason causes views to not receive onLayout
+    // callback calls on Android 9 and below. Probably there is a conflict with some other flag.
+    decorView.systemUiVisibility = if (AndroidUtils.isAndroid10()) {
+      (View.SYSTEM_UI_FLAG_IMMERSIVE
+        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
         or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        or View.SYSTEM_UI_FLAG_FULLSCREEN
-      )
+        or View.SYSTEM_UI_FLAG_FULLSCREEN)
+    } else {
+      (View.SYSTEM_UI_FLAG_IMMERSIVE
+          or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+          or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+          or View.SYSTEM_UI_FLAG_FULLSCREEN)
+    }
   }
 
   fun showSystemUI(window: Window) {
