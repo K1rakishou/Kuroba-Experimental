@@ -85,7 +85,6 @@ class ThreadPresenter @Inject constructor(
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
   private val historyNavigationManager: HistoryNavigationManager,
-  private val archivesManager: ArchivesManager,
   private val postFilterManager: PostFilterManager,
   private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
@@ -580,6 +579,8 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "onChanLoaderError() called")
 
+    // TODO(KurobaEx): handle 404 by showing a button with suggestion to open this thread in an
+    //  archive (if there are any supported archives)
     threadPresenterCallback?.showError(error)
   }
 

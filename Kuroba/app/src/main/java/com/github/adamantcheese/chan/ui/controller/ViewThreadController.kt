@@ -297,19 +297,31 @@ open class ViewThreadController(
   private fun showAvailableArchives(item: ToolbarMenuSubItem?) {
     Logger.d(TAG, "showAvailableArchives($threadDescriptor)")
     
-    val supportedThreadDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
-    if (supportedThreadDescriptors.isEmpty()) {
+    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
+    if (supportedArchiveDescriptors.isEmpty()) {
       Logger.d(TAG, "showAvailableArchives($threadDescriptor) supportedThreadDescriptors is empty")
       return
     }
 
     val items = mutableListOf<FloatingListMenuItem>()
 
-    supportedThreadDescriptors.forEach { archiveDescriptor ->
+    supportedArchiveDescriptors.forEach { archiveDescriptor ->
+      val siteEnabled = siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
+        ?: false
+
+      if (!siteEnabled) {
+        return@forEach
+      }
+
       items += FloatingListMenuItem(
         archiveDescriptor,
         archiveDescriptor.name
       )
+    }
+
+    if (items.isEmpty()) {
+      Logger.d(TAG, "showAvailableArchives($threadDescriptor) items is empty")
+      return
     }
 
     val floatingListMenuController = FloatingListMenuController(
