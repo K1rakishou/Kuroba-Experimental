@@ -5,7 +5,8 @@ import okhttp3.HttpUrl
 
 data class NavigationHistoryEntry(
   val descriptor: ChanDescriptor,
-  val thumbnailUrl: HttpUrl,
+  val threadThumbnailUrl: HttpUrl,
+  val siteThumbnailUrl: HttpUrl?,
   val title: String,
   val additionalInfo: NavHistoryBookmarkAdditionalInfo?
 )

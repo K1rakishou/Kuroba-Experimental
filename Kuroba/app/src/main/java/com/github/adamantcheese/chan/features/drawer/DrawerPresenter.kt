@@ -38,6 +38,8 @@ class DrawerPresenter(
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var pageRequestManager: PageRequestManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
     .toSerialized()
@@ -133,16 +135,8 @@ class DrawerPresenter(
         is NavHistoryElement.Thread -> navigationElement.descriptor.siteDescriptor()
       }
 
-      val boardDescriptor = when (navigationElement) {
-        is NavHistoryElement.Catalog -> navigationElement.descriptor.boardDescriptor
-        is NavHistoryElement.Thread -> navigationElement.descriptor.boardDescriptor
-      }
-
-      if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
-        return@mapNotNull null
-      }
-
-      if (boardManager.byBoardDescriptor(boardDescriptor) == null) {
+      val siteEnabled = siteManager.bySiteDescriptor(siteDescriptor)?.enabled() ?: false
+      if (!siteEnabled) {
         return@mapNotNull null
       }
 
@@ -151,9 +145,9 @@ class DrawerPresenter(
         is NavHistoryElement.Thread -> navigationElement.descriptor
       }
 
-      val additionalInfo = if (!isWatcherEnabled || descriptor !is ChanDescriptor.ThreadDescriptor) {
-        null
-      } else {
+      val isSiteArchive = archivesManager.isSiteArchive(descriptor.siteDescriptor())
+
+      val additionalInfo = if (isWatcherEnabled && descriptor is ChanDescriptor.ThreadDescriptor && !isSiteArchive) {
         bookmarksManager.mapBookmark(descriptor) { threadBookmarkView ->
           val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
 
@@ -166,11 +160,20 @@ class DrawerPresenter(
             isLastPage = boardPage?.isLastPage() ?: false,
           )
         }
+      } else {
+        null
+      }
+
+      val siteThumbnailUrl = if (descriptor is ChanDescriptor.ThreadDescriptor) {
+        siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url
+      } else {
+        null
       }
 
       return@mapNotNull NavigationHistoryEntry(
         descriptor,
         navigationElement.navHistoryElementInfo.thumbnailUrl,
+        siteThumbnailUrl,
         navigationElement.navHistoryElementInfo.title,
         additionalInfo
       )

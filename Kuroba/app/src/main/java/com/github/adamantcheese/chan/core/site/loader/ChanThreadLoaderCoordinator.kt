@@ -48,6 +48,8 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 /**
  * This class is kinda over complicated right now. It does way too much stuff. It tries to load the
@@ -118,6 +120,7 @@ class ChanThreadLoaderCoordinator(
 
   private val databasePostLoader by lazy { DatabasePostLoader(reloadPostsFromDatabaseUseCase) }
 
+  @OptIn(ExperimentalTime::class)
   fun loadThread(
     url: String,
     requestParams: ChanLoaderRequestParams,
@@ -136,11 +139,13 @@ class ChanThreadLoaderCoordinator(
           .header("User-Agent", AppConstants.USER_AGENT)
           .build()
 
-        val response = try {
-          okHttpClient.proxiedClient.suspendCall(request)
+        val (response, time) = try {
+          measureTimedValue { okHttpClient.proxiedClient.suspendCall(request) }
         } catch (error: IOException) {
           return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }
+
+        Logger.d(TAG, "loadThread from network took $time")
 
         if (!response.isSuccessful) {
           throw ServerException(response.code)

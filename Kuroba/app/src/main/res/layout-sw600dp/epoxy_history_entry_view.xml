@@ -12,22 +12,37 @@
     <LinearLayout
         android:id="@+id/history_entry_view_holder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/history_entry_thread_image_size"
         android:background="?android:selectableItemBackground"
         android:orientation="horizontal">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/history_entry_image"
-            android:layout_width="@dimen/history_entry_image_size"
-            android:layout_height="@dimen/history_entry_image_size"
-            android:padding="8dp"
-            android:scaleType="centerCrop"
-            tools:src="@drawable/ic_baseline_settings" />
+        <RelativeLayout
+            android:layout_width="@dimen/history_entry_thread_image_size"
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/history_entry_thread_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_baseline_settings" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/history_entry_site_image"
+                android:layout_width="@dimen/history_entry_site_image_size"
+                android:layout_height="@dimen/history_entry_site_image_size"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_baseline_settings" />
+
+        </RelativeLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/history_entry_title"
             android:layout_width="0dp"
-            android:layout_height="@dimen/history_entry_image_size"
+            android:layout_height="match_parent"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:ellipsize="end"

@@ -506,7 +506,10 @@ class DrawerController(
         }
         is HistoryControllerState.Data -> {
           state.navHistoryEntryList.forEach { navHistoryEntry ->
-            val requestData = EpoxyHistoryEntryView.ImageLoaderRequestData(navHistoryEntry.thumbnailUrl)
+            val requestData = EpoxyHistoryEntryView.ImagesLoaderRequestData(
+              navHistoryEntry.threadThumbnailUrl,
+              navHistoryEntry.siteThumbnailUrl
+            )
 
             epoxyHistoryEntryView {
               id("navigation_history_entry_${navHistoryEntry.hashCode()}")
