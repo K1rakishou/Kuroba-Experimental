@@ -579,8 +579,6 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "onChanLoaderError() called")
 
-    // TODO(KurobaEx): handle 404 by showing a button with suggestion to open this thread in an
-    //  archive (if there are any supported archives)
     threadPresenterCallback?.showError(error)
   }
 
