@@ -6,10 +6,14 @@ sealed class NavHistoryElement(
   open val navHistoryElementInfo: NavHistoryElementInfo
 ) {
 
+  abstract fun descriptor(): ChanDescriptor
+
   class Catalog(
     val descriptor: ChanDescriptor.CatalogDescriptor,
     override val navHistoryElementInfo: NavHistoryElementInfo
   ) : NavHistoryElement(navHistoryElementInfo) {
+
+    override fun descriptor(): ChanDescriptor = descriptor
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
@@ -36,6 +40,8 @@ sealed class NavHistoryElement(
     val descriptor: ChanDescriptor.ThreadDescriptor,
     override val navHistoryElementInfo: NavHistoryElementInfo
   ) : NavHistoryElement(navHistoryElementInfo) {
+
+    override fun descriptor(): ChanDescriptor = descriptor
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true

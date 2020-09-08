@@ -241,6 +241,9 @@ class ThreadBookmark private constructor(
   }
 
   companion object {
+    // Do not delete, nor move around any of these flags! If any of the flags is not used anymore
+    // then just deprecate it. Do not reuse bit indexes!
+
     /**
      * A flag for threads that are being watched (not paused). Default flag when bookmarking any
      * thread.

@@ -147,20 +147,6 @@ class ModelMainModule {
 
   @Singleton
   @Provides
-  fun provideThirdPartyArchiveInfoLocalSource(
-    database: KurobaDatabase,
-    @LoggerTagPrefix loggerTag: String,
-    logger: Logger
-  ): ThirdPartyArchiveInfoLocalSource {
-    return ThirdPartyArchiveInfoLocalSource(
-      database,
-      loggerTag,
-      logger
-    )
-  }
-
-  @Singleton
-  @Provides
   fun provideNavHistoryLocalSource(
     database: KurobaDatabase,
     @LoggerTagPrefix loggerTag: String,
@@ -411,28 +397,6 @@ class ModelMainModule {
       scope,
       chanPostLocalSource,
       appConstants
-    )
-  }
-
-  @Singleton
-  @Provides
-  fun provideThirdPartyArchiveInfoRepository(
-    logger: Logger,
-    database: KurobaDatabase,
-    thirdPartyArchiveInfoLocalSource: ThirdPartyArchiveInfoLocalSource,
-    archivesRemoteSource: ArchivesRemoteSource,
-    appConstants: AppConstants,
-    @AppCoroutineScope scope: CoroutineScope,
-    @LoggerTagPrefix loggerTag: String
-  ): ThirdPartyArchiveInfoRepository {
-    return ThirdPartyArchiveInfoRepository(
-      database,
-      loggerTag,
-      logger,
-      appConstants,
-      scope,
-      thirdPartyArchiveInfoLocalSource,
-      archivesRemoteSource
     )
   }
 

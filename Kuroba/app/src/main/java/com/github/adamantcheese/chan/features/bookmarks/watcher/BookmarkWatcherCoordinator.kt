@@ -113,7 +113,8 @@ class BookmarkWatcherCoordinator(
     bookmarksManager.awaitUntilInitialized()
 
     withContext(NonCancellable) {
-      if (!bookmarksManager.hasActiveBookmarks()) {
+      val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
+      if (!hasActiveBookmarks) {
         Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
         cancelForegroundBookmarkWatching()

@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.site.sites.Wired7
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.chan420.Chan420
 import com.github.adamantcheese.chan.core.site.sites.dvach.Dvach
+import com.github.adamantcheese.chan.core.site.sites.foolfuuka.ArchivedMoe
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import java.util.*
 
@@ -46,6 +47,7 @@ object SiteRegistry {
     //chan55 was here but was removed
     URL_HANDLERS.add(Kun8.URL_HANDLER)
     URL_HANDLERS.add(Chan420.URL_HANDLER)
+    URL_HANDLERS.add(ArchivedMoe.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -54,6 +56,7 @@ object SiteRegistry {
     addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
     addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
     addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
+    addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {

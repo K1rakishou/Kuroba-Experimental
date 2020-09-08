@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.cache.downloader
 
 import com.github.adamantcheese.chan.core.cache.downloader.DownloaderUtils.isCancellationError
-import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.StringUtils.maskImageUrl
+import com.github.adamantcheese.common.AppConstants
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import okhttp3.*
@@ -34,7 +34,7 @@ internal class ChunkDownloader(
 
     val builder = Request.Builder()
       .url(url)
-      .header("User-Agent", NetModule.USER_AGENT)
+      .header("User-Agent", AppConstants.USER_AGENT)
 
     if (!chunk.isWholeFile()) {
       // If chunk.isWholeFile == true that means that either the file size is too small

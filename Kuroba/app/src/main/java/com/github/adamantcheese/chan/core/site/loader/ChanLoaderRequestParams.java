@@ -26,17 +26,23 @@ public class ChanLoaderRequestParams {
     public final ChanDescriptor chanDescriptor;
     public final ChanReader chanReader;
     public final List<Post> cached;
-    public final boolean retrieveDeletedPostsFromArchives;
 
     public ChanLoaderRequestParams(
             ChanDescriptor chanDescriptor,
             ChanReader chanReader,
-            List<Post> cached,
-            boolean retrieveDeletedPostsFromArchives
+            List<Post> cached
     ) {
         this.chanDescriptor = chanDescriptor;
         this.chanReader = chanReader;
         this.cached = cached;
-        this.retrieveDeletedPostsFromArchives = retrieveDeletedPostsFromArchives;
+    }
+
+    @Override
+    public String toString() {
+        return "ChanLoaderRequestParams{" +
+                "chanDescriptor=" + chanDescriptor +
+                ", chanReader=" + chanReader.getClass().getSimpleName() +
+                ", cached.size=" + cached.size() +
+                '}';
     }
 }

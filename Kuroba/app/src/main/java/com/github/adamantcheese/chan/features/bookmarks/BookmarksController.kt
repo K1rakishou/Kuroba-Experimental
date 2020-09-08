@@ -134,10 +134,6 @@ class BookmarksController(
   }
 
   private fun onPruneNonActiveBookmarksClicked(subItem: ToolbarMenuSubItem) {
-    if (!bookmarksPresenter.hasNonActiveBookmarks()) {
-      return
-    }
-
     DialogUtils.createSimpleConfirmationDialog(
       context,
       applicationVisibilityManager.isAppInForeground(),
@@ -256,7 +252,7 @@ class BookmarksController(
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
-                highlightBookmark(bookmark.hightlight)
+                highlightBookmark(bookmark.highlight)
                 bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                 bookmarkStatsClickListener {
                   bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
@@ -270,7 +266,7 @@ class BookmarksController(
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
-                highlightBookmark(bookmark.hightlight)
+                highlightBookmark(bookmark.highlight)
                 bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                 bookmarkStatsClickListener {
                   bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)

@@ -54,7 +54,6 @@ import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload
 import com.github.adamantcheese.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingDataSource
 import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingSource
-import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
@@ -68,10 +67,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
-import com.github.adamantcheese.common.exhaustive
-import com.github.adamantcheese.common.findChild
-import com.github.adamantcheese.common.findChildren
-import com.github.adamantcheese.common.updateHeight
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -690,7 +686,7 @@ class MultiImageView @JvmOverloads constructor(
       AndroidUtils.openIntent(intent)
       onModeLoaded(Mode.VIDEO, null)
     } else {
-      val userAgent = Util.getUserAgent(AndroidUtils.getAppContext(), NetModule.USER_AGENT)
+      val userAgent = Util.getUserAgent(AndroidUtils.getAppContext(), AppConstants.USER_AGENT)
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
       val videoSource = progressiveFactory.createMediaSource(Uri.fromFile(file))

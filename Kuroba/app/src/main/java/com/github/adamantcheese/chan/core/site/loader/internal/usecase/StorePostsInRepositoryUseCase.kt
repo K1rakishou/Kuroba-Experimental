@@ -37,8 +37,7 @@ class StorePostsInRepositoryUseCase(
         post.no
       )
 
-      val archiveId = post.archiveDescriptor?.getArchiveId() ?: ArchiveDescriptor.NO_ARCHIVE_ID
-      chanPosts.add(ChanPostMapper.fromPost(gson, postDescriptor, post, archiveId))
+      chanPosts.add(ChanPostMapper.fromPost(gson, postDescriptor, post, ArchiveDescriptor.NO_ARCHIVE_ID))
     }
 
     return chanPostRepository.insertOrUpdateMany(

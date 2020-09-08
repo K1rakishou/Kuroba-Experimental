@@ -24,6 +24,7 @@ import androidx.core.util.Pair
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.R.string.action_reload
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.adamantcheese.chan.core.manager.BookmarksManager.BookmarkChange.*
@@ -32,6 +33,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
+import com.github.adamantcheese.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.adamantcheese.chan.ui.controller.navigation.ToolbarNavigationController
@@ -41,11 +43,13 @@ import com.github.adamantcheese.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.toolbar.*
 import com.github.adamantcheese.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
+import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.SharingUtils.getUrlForSharing
 import com.github.adamantcheese.chan.utils.plusAssign
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -61,12 +65,12 @@ open class ViewThreadController(
 ) : ThreadController(context), ThreadLayoutCallback, ToobarThreedotMenuCallback, ReplyAutoCloseListener {
   @Inject
   lateinit var themeHelper: ThemeHelper
-
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
-
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private var pinItemPinned = false
 
@@ -154,10 +158,6 @@ open class ViewThreadController(
         .withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
     }
 
-    val descriptor = threadDescriptor
-    val isThread = descriptor is ThreadDescriptor
-    val is4chan = descriptor.siteDescriptor().is4chan()
-
     menuOverflowBuilder
       .withSubItem(
         ACTION_SEARCH,
@@ -175,10 +175,10 @@ open class ViewThreadController(
         R.string.action_view_removed_posts
       ) { item -> showRemovedPostsDialog(item) }
       .withSubItem(
-        ACTION_RETRIEVE_DELETED_POSTS,
-        R.string.action_retrieve_deleted_posts,
-        is4chan && isThread
-      ) { item -> retrieveDeletedPosts(item) }
+        ACTION_OPEN_THREAD_IN_ARCHIVE,
+        R.string.action_open_thread_in_archive,
+        archivesManager.supports(threadDescriptor)
+      ) { showAvailableArchives(threadDescriptor) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
@@ -294,8 +294,48 @@ open class ViewThreadController(
     threadLayout.presenter.forceRequestData()
   }
 
-  private fun retrieveDeletedPosts(item: ToolbarMenuSubItem?) {
-    threadLayout.presenter.retrieveDeletedPosts()
+  private fun showAvailableArchives(descriptor: ThreadDescriptor) {
+    Logger.d(TAG, "showAvailableArchives($descriptor)")
+    
+    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
+    if (supportedArchiveDescriptors.isEmpty()) {
+      Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
+      return
+    }
+
+    val items = mutableListOf<FloatingListMenuItem>()
+
+    supportedArchiveDescriptors.forEach { archiveDescriptor ->
+      val siteEnabled = siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
+        ?: false
+
+      if (!siteEnabled) {
+        return@forEach
+      }
+
+      items += FloatingListMenuItem(
+        archiveDescriptor,
+        archiveDescriptor.name
+      )
+    }
+
+    if (items.isEmpty()) {
+      Logger.d(TAG, "showAvailableArchives($descriptor) items is empty")
+      return
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context,
+      items,
+      itemClickListener = { clickedItem ->
+        val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
+          ?: return@FloatingListMenuController
+
+        threadLayout.presenter.openThreadInArchive(descriptor, archiveDescriptor)
+      }
+    )
+
+    presentController(floatingListMenuController)
   }
 
   private fun showRemovedPostsDialog(item: ToolbarMenuSubItem?) {
@@ -419,35 +459,49 @@ open class ViewThreadController(
     }
   }
 
-  override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun showThread(descriptor: ThreadDescriptor) {
+    mainScope.launch {
+      Logger.d(TAG, "showThread($descriptor)")
+      loadThread(descriptor)
+    }
+  }
+
+  override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
+    Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
+
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ -> openCrossThreadInternal(threadToOpenDescriptor) }
+      .setPositiveButton(R.string.ok) { _, _ -> showExternalThreadInternal(threadToOpenDescriptor) }
       .setTitle(R.string.open_thread_confirmation)
       .setMessage("/" + threadToOpenDescriptor.boardCode() + "/" + threadToOpenDescriptor.threadNo)
       .show()
   }
 
-  private fun openCrossThreadInternal(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun showBoard(descriptor: BoardDescriptor) {
     mainScope.launch {
+      Logger.d(TAG, "showBoard($descriptor)")
+      showBoardInternal(descriptor, null)
+    }
+  }
+
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
+    mainScope.launch {
+      Logger.d(TAG, "showBoardAndSearch($descriptor, $searchQuery)")
+      showBoardInternal(descriptor, searchQuery)
+    }
+  }
+
+  private fun showExternalThreadInternal(threadToOpenDescriptor: ThreadDescriptor) {
+    mainScope.launch {
+      Logger.d(TAG, "showExternalThreadInternal($threadToOpenDescriptor)")
+
       threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
       loadThread(threadToOpenDescriptor)
     }
   }
 
-  override suspend fun showThread(descriptor: ThreadDescriptor) {
-    loadThread(descriptor)
-  }
-
-  override suspend fun showBoard(descriptor: BoardDescriptor) {
-    showBoardInternal(descriptor, null)
-  }
-
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
-    showBoardInternal(descriptor, searchQuery)
-  }
-
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {
+    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $searchQuery)")
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
@@ -502,6 +556,7 @@ open class ViewThreadController(
   }
 
   suspend fun loadThread(threadDescriptor: ThreadDescriptor) {
+    Logger.d(TAG, "loadThread($threadDescriptor)")
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
 
     val presenter = threadLayout.presenter
@@ -542,7 +597,7 @@ open class ViewThreadController(
   }
 
   private fun updateRetrievePostsFromArchivesMenuItem() {
-    val retrieveDeletedPostsItem = navigation.findSubItem(ACTION_RETRIEVE_DELETED_POSTS)
+    val retrieveDeletedPostsItem = navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)
       ?: return
     retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
   }
@@ -659,6 +714,10 @@ open class ViewThreadController(
     return true
   }
 
+  override fun showAvailableArchivesList(descriptor: ThreadDescriptor) {
+    showAvailableArchives(descriptor)
+  }
+
   override fun getPostForPostImage(postImage: PostImage): Post? {
     return threadLayout.presenter.getPostFromPostImage(postImage)
   }
@@ -686,7 +745,7 @@ open class ViewThreadController(
     private const val ACTION_RELOAD = 9002
     private const val ACTION_FORCE_RELOAD = 9003
     private const val ACTION_VIEW_REMOVED_POSTS = 9004
-    private const val ACTION_RETRIEVE_DELETED_POSTS = 9005
+    private const val ACTION_OPEN_THREAD_IN_ARCHIVE = 9005
     private const val ACTION_OPEN_BROWSER = 9006
     private const val ACTION_SHARE = 9007
     private const val ACTION_GO_TO_POST = 9008

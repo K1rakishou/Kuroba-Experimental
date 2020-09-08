@@ -255,6 +255,10 @@ abstract class ThreadController(
     return false
   }
 
+  override fun showAvailableArchivesList(descriptor: ChanDescriptor.ThreadDescriptor) {
+    // no-op
+  }
+
   companion object {
     private const val TAG = "ThreadController"
   }

@@ -16,9 +16,9 @@
  */
 package com.github.adamantcheese.chan.core.site.http
 
-import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +82,7 @@ class HttpCallManager @Inject constructor(
   ): HttpCall.HttpCallResult<T> {
     return withContext(Dispatchers.IO) {
       val request = requestBuilder
-        .header("User-Agent", NetModule.USER_AGENT)
+        .header("User-Agent", AppConstants.USER_AGENT)
         .build()
 
       val response = Try { okHttpClient.proxiedClient.suspendCall(request) }

@@ -61,13 +61,7 @@ interface Site {
     /**
      * This site reports image hashes.
      */
-    IMAGE_FILE_HASH,
-
-
-    /**
-     * This site can retrieve deleted posts from third-party archives (for now it's only 4chan)
-     */
-    THIRD_PARTY_ARCHIVES
+    IMAGE_FILE_HASH
   }
 
   /**
@@ -84,12 +78,7 @@ interface Site {
      * This board supports posting with a checkbox to mark the posted image as a spoiler.
      */
     // TODO(multisite) use this
-    POSTING_SPOILER,
-
-    /**
-     * This board support loading the archive, a list of threads that are locked after expiring.
-     */
-    ARCHIVE
+    POSTING_SPOILER
   }
 
   /**

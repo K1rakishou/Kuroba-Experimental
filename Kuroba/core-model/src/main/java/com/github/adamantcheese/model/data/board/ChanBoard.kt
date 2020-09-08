@@ -26,6 +26,7 @@ data class ChanBoard(
   val preuploadCaptcha: Boolean = false,
   val countryFlags: Boolean = false,
   val mathTags: Boolean = false,
+  @Deprecated("delete me")
   val archive: Boolean = false
 ) {
 

@@ -27,7 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <dimen name="cell_post_thumbnail_size">72dp</dimen>
     <dimen name="post_attention_label_width">5dp</dimen>
-    <dimen name="history_entry_image_size">48dp</dimen>
+    <dimen name="history_entry_thread_image_size">48dp</dimen>
+    <dimen name="history_entry_site_image_size">20dp</dimen>
     <dimen name="thread_list_bookmark_view_image_size">48dp</dimen>
     <dimen name="thread_grid_bookmark_view_image_size">72dp</dimen>
     <dimen name="thread_grid_bookmark_view_size">128dp</dimen>

@@ -39,11 +39,11 @@ open class SiteManager(
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val siteDataMap = mutableMapWithCap<SiteDescriptor, ChanSiteData>(128)
+  private val siteDataMap = mutableMapWithCap<SiteDescriptor, ChanSiteData>(32)
   @GuardedBy("lock")
-  private val siteMap = mutableMapWithCap<SiteDescriptor, Site>(128)
+  private val siteMap = mutableMapWithCap<SiteDescriptor, Site>(32)
   @GuardedBy("lock")
-  private val orders = mutableListWithCap<SiteDescriptor>(128)
+  private val orders = mutableListWithCap<SiteDescriptor>(32)
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {

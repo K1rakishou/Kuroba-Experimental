@@ -27,6 +27,7 @@ class BookmarkWatcherDelegate(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
+  private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
@@ -158,6 +159,11 @@ class BookmarkWatcherDelegate(
   ): List<ChanDescriptor.ThreadDescriptor> {
     return bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
       if (!threadBookmarkView.isActive()) {
+        return@mapNotNullBookmarksOrdered null
+      }
+
+      if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
+        // We don't support fetching bookmark info from archives (For now at least)
         return@mapNotNullBookmarksOrdered null
       }
 

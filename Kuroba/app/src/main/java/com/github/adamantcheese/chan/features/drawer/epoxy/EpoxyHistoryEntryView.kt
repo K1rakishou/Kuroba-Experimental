@@ -34,31 +34,36 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @Inject
   lateinit var themeHelper: ThemeHelper
 
-  private var imageLoaderRequestData: ImageLoaderRequestData? = null
-  private var requestDisposable: RequestDisposable? = null
+  private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
+  private var threadImageRequestDisposable: RequestDisposable? = null
+  private var siteImageRequestDisposable: RequestDisposable? = null
   private var descriptor: ChanDescriptor? = null
 
   private val viewHolder: LinearLayout
-  private val thumbnailImage: AppCompatImageView
+  private val threadThumbnailImage: AppCompatImageView
+  private val siteThumbnailImage: AppCompatImageView
   private val title: AppCompatTextView
   private val bookmarkStats: AppCompatTextView
-  private val imageSize: Int
+  private val threadThumbnailImageSize: Int
+  private val siteThumbnailImageSize: Int
 
   init {
     inflate(context, R.layout.epoxy_history_entry_view, this)
     inject(this)
 
     viewHolder = findViewById(R.id.history_entry_view_holder)
-    thumbnailImage = findViewById(R.id.history_entry_image)
+    threadThumbnailImage = findViewById(R.id.history_entry_thread_image)
+    siteThumbnailImage = findViewById(R.id.history_entry_site_image)
     title = findViewById(R.id.history_entry_title)
     bookmarkStats = findViewById(R.id.history_entry_bookmark_stats)
 
-    imageSize = context.resources.getDimension(R.dimen.history_entry_image_size).toInt()
+    threadThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
+    siteThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_site_image_size).toInt()
   }
 
   @ModelProp(ModelProp.Option.DoNotHash)
-  fun setImageLoaderRequestData(imageLoaderRequestData: ImageLoaderRequestData?) {
-    this.imageLoaderRequestData = imageLoaderRequestData
+  fun setImageLoaderRequestData(imagesLoaderRequestData: ImagesLoaderRequestData?) {
+    this.imagesLoaderRequestData = imagesLoaderRequestData
   }
 
   @ModelProp
@@ -117,30 +122,56 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @OnViewRecycled
   fun onRecycled() {
     disposeRequest()
-    imageLoaderRequestData = null
+    imagesLoaderRequestData = null
   }
 
   @AfterPropsSet
   fun afterPropsSet() {
-    val url = imageLoaderRequestData?.url
-    val thumbnailImageRef = WeakReference(thumbnailImage)
+    if (imagesLoaderRequestData == null) {
+      return
+    }
 
-    requestDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      url.toString(),
-      imageSize,
-      imageSize,
-      listOf(CIRCLE_CROP),
-      { drawable -> thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
-    )
+    val threadThumbnailUrl = imagesLoaderRequestData?.threadThumbnailUrl
+    if (threadThumbnailUrl != null) {
+      val threadThumbnailImageRef = WeakReference(threadThumbnailImage)
+
+      threadImageRequestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        threadThumbnailUrl.toString(),
+        threadThumbnailImageSize,
+        threadThumbnailImageSize,
+        listOf(CIRCLE_CROP),
+        { drawable -> threadThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+      )
+    }
+
+    val siteThumbnailUrl = imagesLoaderRequestData?.siteThumbnailUrl
+    if (siteThumbnailUrl != null) {
+      val siteThumbnailImageRef = WeakReference(siteThumbnailImage)
+
+      siteImageRequestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        siteThumbnailUrl.toString(),
+        siteThumbnailImageSize,
+        siteThumbnailImageSize,
+        listOf(CIRCLE_CROP),
+        { drawable -> siteThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+      )
+    }
   }
 
   private fun disposeRequest() {
-    requestDisposable?.dispose()
-    requestDisposable = null
+    threadImageRequestDisposable?.dispose()
+    threadImageRequestDisposable = null
+
+    siteImageRequestDisposable?.dispose()
+    siteImageRequestDisposable = null
   }
 
-  data class ImageLoaderRequestData(val url: HttpUrl)
+  data class ImagesLoaderRequestData(
+    val threadThumbnailUrl: HttpUrl,
+    val siteThumbnailUrl: HttpUrl?
+  )
 
   companion object {
     private val CIRCLE_CROP = CircleCropTransformation()

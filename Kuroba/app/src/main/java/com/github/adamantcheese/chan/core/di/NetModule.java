@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.net.ConnectivityManager;
 
-import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.Chan;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
@@ -40,11 +39,9 @@ import okhttp3.Dns;
 import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.core.di.AppModule.getCacheDir;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getApplicationLabel;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class NetModule {
-    public static final String USER_AGENT = getApplicationLabel() + "/" + BuildConfig.VERSION_NAME;
     public static final String DOWNLOADER_OKHTTP_CLIENT_NAME = "downloader_okhttp_client";
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";

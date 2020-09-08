@@ -5,9 +5,9 @@ import android.util.Range;
 
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.AppConstants;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.android.exoplayer2.C;
@@ -246,7 +246,8 @@ public class WebmStreamingDataSource extends BaseDataSource {
         super(/* isNetwork= */ true);
         Logger.d(TAG, "WebmStreamingDataSource");
 
-        this.dataSource = new DefaultHttpDataSourceFactory(NetModule.USER_AGENT).createDataSource();
+        this.dataSource = new DefaultHttpDataSourceFactory(AppConstants.USER_AGENT)
+                .createDataSource();
 
         this.verboseLogs = verboseLogs;
         this.fileManager = fileManager;

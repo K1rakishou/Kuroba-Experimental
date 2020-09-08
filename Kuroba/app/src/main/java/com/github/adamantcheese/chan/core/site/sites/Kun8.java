@@ -74,7 +74,7 @@ public class Kun8
     };
 
     public Kun8() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
+        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true, true);
     }
 
     @Override

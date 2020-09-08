@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.di;
 
-import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.SavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
@@ -8,11 +7,9 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
-import com.github.adamantcheese.chan.core.usecase.LoadArchiveInfoListUseCase;
 import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.common.AppConstants;
 import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
@@ -22,17 +19,6 @@ import kotlinx.coroutines.CoroutineScope;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 
 public class UseCaseModule {
-
-    @Singleton
-    @Provides
-    public LoadArchiveInfoListUseCase provideLoadArchiveInfoListUseCase(
-            AppConstants appConstants,
-            ArchivesManager archivesManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "LoadArchiveInfoListUseCase");
-
-        return new LoadArchiveInfoListUseCase(appConstants, archivesManager);
-    }
 
     @Singleton
     @Provides

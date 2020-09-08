@@ -46,6 +46,7 @@ import com.github.adamantcheese.chan.core.presenter.ThreadPresenter
 import com.github.adamantcheese.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.core.settings.ChanSettings.PostViewMode
+import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderException
 import com.github.adamantcheese.chan.features.drawer.DrawerCallbacks
@@ -66,6 +67,7 @@ import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.widget.SnackbarWrapper
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
@@ -117,6 +119,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var errorLayout: LinearLayout
   private lateinit var errorText: TextView
   private lateinit var errorRetryButton: Button
+  private lateinit var openThreadInArchiveButton: Button
   private lateinit var postPopupHelper: PostPopupHelper
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
@@ -174,6 +177,7 @@ class ThreadLayout @JvmOverloads constructor(
     errorLayout = AndroidUtils.inflate(context, R.layout.layout_thread_error, this, false) as LinearLayout
     errorText = errorLayout.findViewById(R.id.text)
     errorRetryButton = errorLayout.findViewById(R.id.button)
+    openThreadInArchiveButton = errorLayout.findViewById(R.id.open_in_archive_button)
 
     // Inflate thread loading layout
     progressLayout = AndroidUtils.inflate(context, R.layout.layout_thread_progress, this, false)
@@ -186,6 +190,7 @@ class ThreadLayout @JvmOverloads constructor(
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeHelper.theme.mainFont
     errorRetryButton.setOnClickListener(this)
+    openThreadInArchiveButton.setOnClickListener(this)
 
     // Setup
     replyButtonEnabled = ChanSettings.enableReplyFab.get()
@@ -202,7 +207,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun destroy() {
     drawerCallbacks = null
-    presenter.unbindChanDescriptor()
+    presenter.unbindChanDescriptor(true)
     threadListLayout.onDestroy()
     job.cancelChildren()
   }
@@ -210,9 +215,31 @@ class ThreadLayout @JvmOverloads constructor(
   override fun onClick(v: View) {
     if (v === errorRetryButton) {
       presenter.requestData()
-    } else if (v === replyButton) {
-      threadListLayout.openReply(true)
+    } else if (v === openThreadInArchiveButton) {
+      val descriptor = presenter.chanDescriptor
+      if (descriptor is ChanDescriptor.ThreadDescriptor) {
+        callback.showAvailableArchivesList(descriptor)
+      }
     }
+    else if (v === replyButton) {
+      openReplyInternal(true)
+    }
+  }
+
+  private fun openReplyInternal(openReplyLayout: Boolean): Boolean {
+    if (openReplyLayout) {
+      val supportsPosting = presenter.chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
+        return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
+      } ?: false
+
+      if (!supportsPosting) {
+        AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
+        return false
+      }
+    }
+
+    threadListLayout.openReply(openReplyLayout)
+    return true
   }
 
   fun canChildScrollUp(): Boolean {
@@ -355,14 +382,26 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    callback.openThreadCrossThread(threadDescriptor)
+    Logger.d(TAG, "showThread($threadDescriptor)")
+
+    callback.showThread(threadDescriptor)
+  }
+
+  override suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    Logger.d(TAG, "showExternalThread($threadDescriptor)")
+
+    callback.showExternalThread(threadDescriptor)
   }
 
   override suspend fun showBoard(boardDescriptor: BoardDescriptor) {
+    Logger.d(TAG, "showBoard($boardDescriptor)")
+
     callback.showBoard(boardDescriptor)
   }
 
   override suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?) {
+    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $searchQuery)")
+
     callback.showBoardAndSearch(boardDescriptor, searchQuery)
   }
 
@@ -473,12 +512,18 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun quote(post: Post, withText: Boolean) {
-    threadListLayout.openReply(true)
+    if (!openReplyInternal(true)) {
+      return
+    }
+
     threadListLayout.replyPresenter.quote(post, withText)
   }
 
   override fun quote(post: Post, text: CharSequence) {
-    threadListLayout.openReply(true)
+    if (!openReplyInternal(true)) {
+      return
+    }
+
     threadListLayout.replyPresenter.quote(post, text)
   }
 
@@ -693,7 +738,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun openReply(open: Boolean) {
-    threadListLayout.openReply(open)
+    openReplyInternal(open)
   }
 
   private fun showReplyButton(show: Boolean) {
@@ -842,9 +887,10 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar?
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
-    suspend fun openThreadCrossThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
+
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
     fun onShowPosts()
@@ -853,5 +899,10 @@ class ThreadLayout @JvmOverloads constructor(
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
+    fun showAvailableArchivesList(descriptor: ChanDescriptor.ThreadDescriptor)
+  }
+
+  companion object {
+    const val TAG = "ThreadLayout"
   }
 }

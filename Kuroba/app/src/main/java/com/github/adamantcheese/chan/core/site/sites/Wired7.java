@@ -100,6 +100,7 @@ public class Wired7
     public Wired7() {
         chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(
                 true,
+                true,
                 // Wired-7 sends incorrect file md5 hash sometimes
                 false
         );

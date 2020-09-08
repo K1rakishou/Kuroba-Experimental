@@ -22,6 +22,7 @@ import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.core.site.common.CommonClientException
 import com.github.adamantcheese.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.adamantcheese.chan.ui.helper.PostHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
@@ -36,7 +37,6 @@ import com.github.adamantcheese.common.ModularResult.Companion.error
 import com.github.adamantcheese.common.ModularResult.Companion.value
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
-import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -66,8 +66,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   lateinit var chanPostRepository: ChanPostRepository
   @Inject
   lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository
   @Inject
   lateinit var themeHelper: ThemeHelper
   @Inject
@@ -101,7 +99,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       chanPostRepository,
       appConstants,
       archivesManager,
-      thirdPartyArchiveInfoRepository,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
       themeHelper,
@@ -116,7 +113,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   private var pendingFuture: ScheduledFuture<*>? = null
 
   private val listeners: MutableList<ChanLoaderCallback> = CopyOnWriteArrayList()
-  private var currentTimeout = 0
+  private var currentTimeoutIndex = 0
   private var lastPostCount = 0
   private var lastLoadTime: Long = 0
 
@@ -129,7 +126,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       return if (requestJob != null) {
         0L
       } else {
-        val waitTime = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+        val waitTime = nextWaitTime()
         lastLoadTime + (waitTime * 1000L) - System.currentTimeMillis()
       }
     }
@@ -179,25 +176,20 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     }
   }
 
-  fun requestDataWithDeletedPosts() {
-    requestData(true)
-  }
-
   /**
    * Request data for the first time.
    */
-  @JvmOverloads
-  fun requestData(retrieveDeletedPostsFromArchives: Boolean = false) {
+  fun requestData() {
     BackgroundUtils.ensureMainThread()
     clearTimer()
 
     requestJob?.cancel()
     requestJob = null
 
-    currentTimeout = -1
+    currentTimeoutIndex = -1
 
     synchronized(this) { thread = null }
-    compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
+    compositeDisposable += requestMoreDataInternal()
   }
 
   /**
@@ -206,21 +198,21 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
    *
    * @return `true` if a new request was started, `false` otherwise.
    */
-  private fun requestMoreData(retrieveDeletedPostsFromArchives: Boolean): Boolean {
+  private fun requestMoreData(): Boolean {
     BackgroundUtils.ensureMainThread()
     clearPendingRunnable()
 
     return if (chanDescriptor.isThreadDescriptor() && requestJob == null) {
-      compositeDisposable += requestMoreDataInternal(retrieveDeletedPostsFromArchives)
+      compositeDisposable += requestMoreDataInternal()
       true
     } else {
       false
     }
   }
 
-  private fun requestMoreDataInternal(retrieveDeletedPostsFromArchives: Boolean): Disposable {
+  private fun requestMoreDataInternal(): Disposable {
     val getDataResult = Single.fromCallable {
-      val requestJob = getData(retrieveDeletedPostsFromArchives)
+      val requestJob = getData()
         ?: return@fromCallable error<Job>(ThreadAlreadyArchivedException())
 
       return@fromCallable value(requestJob)
@@ -252,7 +244,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
    */
   fun loadMoreIfTime(): Boolean {
     BackgroundUtils.ensureMainThread()
-    return timeUntilLoadMore < 0L && requestMoreData(false)
+    return timeUntilLoadMore < 0L && requestMoreData()
   }
 
   fun quickLoad() {
@@ -266,7 +258,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       BackgroundUtils.ensureMainThread()
 
       listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
-      requestMoreData(false)
+      requestMoreData()
     }
   }
 
@@ -278,7 +270,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
 
     if (requestJob == null) {
       clearTimer()
-      requestMoreData(true)
+      requestMoreData()
     }
   }
 
@@ -286,25 +278,53 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     BackgroundUtils.ensureMainThread()
 
     clearPendingRunnable()
-    val watchTimeout = WATCH_TIMEOUTS.getOrElse(currentTimeout) { WATCH_TIMEOUTS.first() }
+    val watchTimeout = nextWaitTime()
 
     Logger.d(TAG, "Scheduled reload in " + watchTimeout + "s")
 
     pendingFuture = executor.schedule({
       runOnMainThread {
         pendingFuture = null
-        requestMoreData(false)
+        requestMoreData()
       }
     }, watchTimeout.toLong(), TimeUnit.SECONDS)
   }
 
+  @Synchronized
+  private fun increaseCurrentTimeoutIndex(): Int {
+    val isArchive = archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())
+    val maxIndex = if (isArchive) {
+      ARCHIVE_WATCH_TIMEOUTS.lastIndex
+    } else {
+      NORMAL_WATCH_TIMEOUTS.lastIndex
+    }
+
+    return min(currentTimeoutIndex + 1, maxIndex)
+  }
+
+  @Synchronized
+  private fun nextWaitTime(): Int {
+    val isArchive = archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())
+    if (isArchive) {
+      return ARCHIVE_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
+        currentTimeoutIndex = 0
+        return@getOrElse ARCHIVE_WATCH_TIMEOUTS[currentTimeoutIndex]
+      }
+    } else {
+      return NORMAL_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
+        currentTimeoutIndex = 0
+        return@getOrElse NORMAL_WATCH_TIMEOUTS[currentTimeoutIndex]
+      }
+    }
+  }
+
   fun clearTimer() {
     BackgroundUtils.ensureMainThread()
-    currentTimeout = -1
+    currentTimeoutIndex = -1
     clearPendingRunnable()
   }
 
-  private fun getData(retrieveDeletedPostsFromArchives: Boolean): Job? {
+  private fun getData(): Job? {
     BackgroundUtils.ensureBackgroundThread()
 
     when (chanDescriptor) {
@@ -317,14 +337,19 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     }
 
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?: return null
+    if (site == null) {
+      val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
+
+      onErrorResponse(ChanLoaderException(error))
+      return null
+    }
+
     val chanReader = site.chanReader()
 
     val requestParams = ChanLoaderRequestParams(
       chanDescriptor,
       chanReader,
-      synchronized(this) { thread?.posts ?: ArrayList() },
-      retrieveDeletedPostsFromArchives
+      synchronized(this) { thread?.posts ?: ArrayList() }
     )
 
     val url = getChanUrl(site, chanDescriptor).toString()
@@ -409,9 +434,9 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
 
       if (postCount > lastPostCount) {
         lastPostCount = postCount
-        currentTimeout = 0
+        currentTimeoutIndex = 0
       } else {
-        currentTimeout = min(currentTimeout + 1, WATCH_TIMEOUTS.size - 1)
+        currentTimeoutIndex = increaseCurrentTimeoutIndex()
       }
 
       return@synchronized localThread
@@ -498,7 +523,8 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   companion object {
     private const val TAG = "ChanThreadLoader"
     private val executor = Executors.newSingleThreadScheduledExecutor()
-    private val WATCH_TIMEOUTS = intArrayOf(15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 450, 600, 750, 1000)
+    private val NORMAL_WATCH_TIMEOUTS = intArrayOf(15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 450, 600, 750, 1000)
+    private val ARCHIVE_WATCH_TIMEOUTS = intArrayOf(300, 600, 1200, 1800, 2400, 3600)
     private val backgroundScheduler = Schedulers.from(executor)
   }
 

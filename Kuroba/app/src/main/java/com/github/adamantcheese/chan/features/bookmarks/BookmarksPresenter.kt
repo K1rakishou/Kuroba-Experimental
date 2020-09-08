@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.features.bookmarks
 
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.core.base.BasePresenter
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.PageRequestManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -12,6 +13,7 @@ import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkView
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -35,6 +37,8 @@ class BookmarksPresenter(
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var pageRequestManager: PageRequestManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private val isSearchMode = AtomicBoolean(false)
 
@@ -134,10 +138,6 @@ class BookmarksPresenter(
     return bookmarksManager.bookmarksCount() > 0
   }
 
-  fun hasNonActiveBookmarks(): Boolean {
-    return bookmarksManager.hasNonActiveBookmarks()
-  }
-
   fun pruneNonActive() {
     bookmarksManager.pruneNonActive()
   }
@@ -185,28 +185,14 @@ class BookmarksPresenter(
         ?: "No title"
 
       if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
-        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
-        val currentPage = boardPage?.currentPage ?: 0
-        val totalPages = boardPage?.totalPages ?: 0
+        val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
 
         return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
           title = title,
-          hightlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
+          highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
           thumbnailUrl = threadBookmarkView.thumbnailUrl,
-          threadBookmarkStats = ThreadBookmarkStats(
-            showBookmarkStats = isWatcherEnabled,
-            watching = threadBookmarkView.isWatching(),
-            newPosts = threadBookmarkView.newPostsCount(),
-            newQuotes = threadBookmarkView.newQuotesCount(),
-            totalPosts = threadBookmarkView.totalPostsCount,
-            currentPage = currentPage,
-            totalPages = totalPages,
-            isBumpLimit = threadBookmarkView.isBumpLimit(),
-            isImageLimit = threadBookmarkView.isImageLimit(),
-            isFirstFetch = threadBookmarkView.isFirstFetch(),
-            isError = threadBookmarkView.isError()
-          )
+          threadBookmarkStats = threadBookmarkStats
         )
       }
 
@@ -224,6 +210,36 @@ class BookmarksPresenter(
     }
 
     setState(BookmarksControllerState.Data(bookmarks))
+  }
+
+  private fun getThreadBookmarkStatsOrNull(
+    isWatcherEnabled: Boolean,
+    threadBookmarkView: ThreadBookmarkView
+  ): ThreadBookmarkStats {
+    if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
+      return ThreadBookmarkStats(
+        watching = threadBookmarkView.isWatching(),
+        showBookmarkStats = false
+      )
+    }
+
+    val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+    val currentPage = boardPage?.currentPage ?: 0
+    val totalPages = boardPage?.totalPages ?: 0
+
+    return ThreadBookmarkStats(
+      watching = threadBookmarkView.isWatching(),
+      showBookmarkStats = isWatcherEnabled,
+      newPosts = threadBookmarkView.newPostsCount(),
+      newQuotes = threadBookmarkView.newQuotesCount(),
+      totalPosts = threadBookmarkView.totalPostsCount,
+      currentPage = currentPage,
+      totalPages = totalPages,
+      isBumpLimit = threadBookmarkView.isBumpLimit(),
+      isImageLimit = threadBookmarkView.isImageLimit(),
+      isFirstFetch = threadBookmarkView.isFirstFetch(),
+      isError = threadBookmarkView.isError()
+    )
   }
 
   private fun setState(state: BookmarksControllerState) {

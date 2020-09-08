@@ -26,7 +26,6 @@ interface ModelMainComponent {
   fun getSeenPostRepository(): SeenPostRepository
   fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
   fun getChanPostRepository(): ChanPostRepository
-  fun getThirdPartyArchiveInfoRepository(): ThirdPartyArchiveInfoRepository
   fun getHistoryNavigationRepository(): HistoryNavigationRepository
   fun getBookmarksRepository(): BookmarksRepository
   fun getChanThreadViewableInfoRepository(): ChanThreadViewableInfoRepository

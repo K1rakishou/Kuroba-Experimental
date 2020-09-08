@@ -4,7 +4,6 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.adamantcheese.chan.core.site.loader.ChanLoaderResponse
 import com.github.adamantcheese.chan.core.site.loader.ThreadLoadResult
-import com.github.adamantcheese.chan.core.site.loader.internal.usecase.GetPostsFromArchiveUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
@@ -14,8 +13,6 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
-import com.github.adamantcheese.common.mutableListWithCap
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import java.util.*
 import kotlin.collections.ArrayList
@@ -26,7 +23,6 @@ import kotlin.time.measureTimedValue
 
 internal class NormalPostLoader(
   private val appConstants: AppConstants,
-  private val getPostsFromArchiveUseCase: GetPostsFromArchiveUseCase,
   private val parsePostsUseCase: ParsePostsUseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase,
@@ -37,28 +33,15 @@ internal class NormalPostLoader(
   suspend fun loadPosts(
     url: String,
     chanReaderProcessor: ChanReaderProcessor,
-    requestParams: ChanLoaderRequestParams,
-    archiveDescriptor: ArchiveDescriptor?
+    requestParams: ChanLoaderRequestParams
   ): ThreadLoadResult {
     chanPostRepository.awaitUntilInitialized()
 
-    val (archivePosts, archiveFetchDuration) = measureTimedValue {
-      return@measureTimedValue getPostsFromArchiveUseCase.getPostsFromArchiveIfNecessary(
-        chanReaderProcessor.getToParse(),
-        requestParams.chanDescriptor,
-        archiveDescriptor
-      ).safeUnwrap { error ->
-        Logger.e(TAG, "Error while trying to get posts from archive", error)
-        return@measureTimedValue emptyList<Post.Builder>()
-      }
-    }
-
     val (parsedPosts, parsingDuration) = measureTimedValue {
-      val posts = mergePosts(chanReaderProcessor.getToParse(), archivePosts)
       return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
         requestParams.chanDescriptor,
         requestParams.chanReader,
-        posts,
+        chanReaderProcessor.getToParse(),
         chanReaderProcessor.getThreadCap()
       )
     }
@@ -89,8 +72,6 @@ internal class NormalPostLoader(
       postsFromCache,
       parsingDuration,
       parsedPosts,
-      archiveFetchDuration,
-      archivePosts,
       cachedPostsCount
     )
 
@@ -98,41 +79,6 @@ internal class NormalPostLoader(
 
     val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
     return ThreadLoadResult.LoadedNormally(processPosts(op, reloadedPosts, requestParams))
-  }
-
-  /**
-   * [postsFromServer] and [postsFromArchive] may contain posts with the same postNo so we need to
-   * filter out [postsFromServer] in case there are already posts with the same postNos in
-   * [postsFromArchive].
-   * */
-  private fun mergePosts(
-    postsFromServer: List<Post.Builder>,
-    postsFromArchive: List<Post.Builder>
-  ): List<Post.Builder> {
-    BackgroundUtils.ensureBackgroundThread()
-
-    val resultList = mutableListWithCap<Post.Builder>(postsFromServer.size / 2)
-    val archivePostsMap = postsFromArchive
-      .associateBy { archivePost -> archivePost.id }
-      .toMutableMap()
-
-    postsFromServer.forEach { freshPost ->
-      // If we have two posts with the same postNo in both fresh posts and posts from archives
-      // then prefer the post from archives because it should contain more useful information
-      // (like deleted images etc)
-      if (!archivePostsMap.containsKey(freshPost.id)) {
-        resultList += freshPost
-      } else {
-        resultList += requireNotNull(archivePostsMap[freshPost.id])
-        archivePostsMap.remove(freshPost.id)
-      }
-    }
-
-    archivePostsMap.values.forEach { actuallyDeletedPost ->
-      resultList += actuallyDeletedPost
-    }
-
-    return resultList
   }
 
   private fun processPosts(
@@ -209,8 +155,6 @@ internal class NormalPostLoader(
     postsFromCache: Int,
     parsingDuration: Duration,
     parsedPosts: List<Post>,
-    archiveFetchDuration: Duration,
-    archivePosts: List<Post.Builder>,
     cachedPostsCount: Int
   ): String {
     val urlToLog = if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
@@ -224,7 +168,6 @@ internal class NormalPostLoader(
       appendLine("Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).")
       appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).")
       appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).")
-      appendLine("Archive fetch took $archiveFetchDuration, (fetched ${archivePosts.size} deleted posts).")
       appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
     }
   }

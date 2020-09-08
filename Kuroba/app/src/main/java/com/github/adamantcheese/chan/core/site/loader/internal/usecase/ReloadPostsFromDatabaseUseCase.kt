@@ -29,9 +29,6 @@ class ReloadPostsFromDatabaseUseCase(
     chanPostRepository.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
 
-    val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
-      ?: ArchiveDescriptor.NO_ARCHIVE_ID
-
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         val maxCount = chanReaderProcessor.getThreadCap()
@@ -39,7 +36,7 @@ class ReloadPostsFromDatabaseUseCase(
         // When in the mode, we can just select every post we have for this thread
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
-        chanPostRepository.getThreadPosts(chanDescriptor, archiveId, maxCount)
+        chanPostRepository.getThreadPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, maxCount)
           .unwrap()
           .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
@@ -52,7 +49,7 @@ class ReloadPostsFromDatabaseUseCase(
         // is to get every post by it's postNo that we receive from the server. It's
         // already in correct order (the server order) so we don't even need to sort
         // them.
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToGet)
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, postsToGet)
           .unwrap()
       }
     }.map { post ->
@@ -60,7 +57,7 @@ class ReloadPostsFromDatabaseUseCase(
         gson,
         post,
         themeHelper.theme,
-        archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)
+        null
       )
     }
 
@@ -73,12 +70,9 @@ class ReloadPostsFromDatabaseUseCase(
   suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
-      ?: ArchiveDescriptor.NO_ARCHIVE_ID
-
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        chanPostRepository.getThreadPosts(chanDescriptor, archiveId, Int.MAX_VALUE)
+        chanPostRepository.getThreadPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, Int.MAX_VALUE)
           .unwrap()
           .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
@@ -88,7 +82,7 @@ class ReloadPostsFromDatabaseUseCase(
 
         val postsToLoadCount = board.pages * board.perPage
 
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, archiveId, postsToLoadCount)
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, postsToLoadCount)
           .unwrap()
           // Sort in descending order by threads' lastModified value because that's the BUMP ordering
           .sortedByDescending { chanPost -> chanPost.lastModified }
@@ -98,7 +92,7 @@ class ReloadPostsFromDatabaseUseCase(
         gson,
         post,
         themeHelper.theme,
-        archivesManager.getArchiveDescriptorByDatabaseId(post.archiveId)
+        null
       )
     }
   }

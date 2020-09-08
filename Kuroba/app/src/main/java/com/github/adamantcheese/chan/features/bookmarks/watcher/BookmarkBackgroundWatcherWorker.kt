@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.github.adamantcheese.chan.Chan
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
@@ -17,6 +18,8 @@ class BookmarkBackgroundWatcherWorker(
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
 
@@ -37,7 +40,8 @@ class BookmarkBackgroundWatcherWorker(
 
     bookmarksManager.awaitUntilInitialized()
 
-    if (!bookmarksManager.hasActiveBookmarks()) {
+    val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
+    if (!hasActiveBookmarks) {
       Logger.d(TAG, "Cannot start BookmarkWatcherWorker, no active bookmarks requiring service")
       return Result.success()
     }
