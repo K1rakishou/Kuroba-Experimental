@@ -4,10 +4,10 @@ import android.util.LruCache
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.cache.downloader.DownloaderUtils.isCancellationError
-import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.StringUtils.maskImageUrl
+import com.github.adamantcheese.common.AppConstants
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import okhttp3.*
@@ -40,13 +40,20 @@ internal class PartialContentSupportChecker(
       return Single.just(PartialContentCheckResult(false))
     }
 
+    val host = url.toHttpUrlOrNull()?.host
+    if (host == null) {
+      logError(TAG, "Bad url, can't extract host: ${maskImageUrl(url)}")
+      return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
+    }
+
+    val site = siteResolver.findSiteForUrl(host)
+
+    val enabled = site?.getChunkDownloaderSiteProperties()
+      ?.enabled
+      ?: false
+
     val fileSize = activeDownloads.get(url)?.extraInfo?.fileSize ?: -1L
     if (fileSize > 0) {
-      val host = url.toHttpUrlOrNull()?.host
-      if (host == null) {
-        logError(TAG, "Bad url, can't extract host: ${maskImageUrl(url)}")
-      }
-
       val hostAlreadyChecked = synchronized(checkedChanHosts) {
         checkedChanHosts.containsKey(host)
       }
@@ -54,8 +61,12 @@ internal class PartialContentSupportChecker(
       // If a host is already check (we sent HEAD request to it at least 1 time during the app
       // lifetime) we can go a fast route and  just check the cached value (whether the site)
       // supports partial content or not
-      if (host != null && hostAlreadyChecked) {
-        val siteSendsFileSizeInBytes = siteResolver.findSiteForUrl(host)
+      if (hostAlreadyChecked) {
+        if (!enabled) {
+          return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
+        }
+
+        val siteSendsFileSizeInBytes = site
           ?.getChunkDownloaderSiteProperties()
           ?.siteSendsCorrectFileSizeInBytes
           ?: false
@@ -81,11 +92,7 @@ internal class PartialContentSupportChecker(
               )
             )
           } else {
-            return Single.just(
-              PartialContentCheckResult(
-                supportsPartialContentDownload = false
-              )
-            )
+            return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
           }
         }
       }
@@ -100,7 +107,7 @@ internal class PartialContentSupportChecker(
 
     val headRequest = Request.Builder()
       .head()
-      .header("User-Agent", NetModule.USER_AGENT)
+      .header("User-Agent", AppConstants.USER_AGENT)
       .url(url)
       .build()
 
@@ -221,7 +228,7 @@ internal class PartialContentSupportChecker(
 
     val acceptsRangesValue = response.header(ACCEPT_RANGES_HEADER)
     if (acceptsRangesValue == null) {
-      log(TAG, "(${maskImageUrl(url)}) does not support partial content (ACCEPT_RANGES_HEADER is null")
+      log(TAG, "(${maskImageUrl(url)}) does not support partial content (ACCEPT_RANGES_HEADER is null)")
       emitter.onSuccess(cache(url, PartialContentCheckResult(false)))
       return
     }
@@ -239,7 +246,7 @@ internal class PartialContentSupportChecker(
       // in thread.json. So we can try using that.
 
       if (!canWeUseFileSizeFromJson(url)) {
-        log(TAG, "(${maskImageUrl(url)}) does not support partial content (CONTENT_LENGTH_HEADER is null")
+        log(TAG, "(${maskImageUrl(url)}) does not support partial content (CONTENT_LENGTH_HEADER is null)")
         emitter.onSuccess(cache(url, PartialContentCheckResult(false)))
         return
       }

@@ -1,8 +1,5 @@
 package com.github.adamantcheese.model.util
 
-import android.util.JsonReader
-import android.util.JsonToken
-
 internal fun Throwable.errorMessageOrClassName(): String {
   if (message != null) {
     return message!!
@@ -26,29 +23,5 @@ fun extractFileNameExtension(filename: String): String? {
     null
   } else {
     filename.substring(index + 1)
-  }
-}
-
-fun JsonReader.nextStringOrNull(): String? {
-  if (peek() == JsonToken.NULL) {
-    skipValue()
-    return null
-  }
-
-  val value = nextString()
-  if (value.isNullOrEmpty()) {
-    return null
-  }
-
-  return value
-}
-
-fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
-  beginObject()
-
-  try {
-    return func(this)
-  } finally {
-    endObject()
   }
 }

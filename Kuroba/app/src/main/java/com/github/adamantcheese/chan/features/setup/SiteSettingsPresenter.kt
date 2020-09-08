@@ -10,20 +10,13 @@ import com.github.adamantcheese.chan.core.settings.OptionSettingItem
 import com.github.adamantcheese.chan.core.settings.Setting
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteSetting
-import com.github.adamantcheese.chan.core.usecase.LoadArchiveInfoListUseCase
-import com.github.adamantcheese.chan.features.archives.ArchivesSettingsController
-import com.github.adamantcheese.chan.features.archives.data.ArchiveState
-import com.github.adamantcheese.chan.features.archives.data.ArchiveStatus
 import com.github.adamantcheese.chan.features.settings.*
 import com.github.adamantcheese.chan.features.settings.setting.InputSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.LinkSettingV2
 import com.github.adamantcheese.chan.features.settings.setting.ListSettingV2
 import com.github.adamantcheese.chan.ui.controller.LoginController
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -33,8 +26,6 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var loadArchiveInfoListUseCase: LoadArchiveInfoListUseCase
 
   override fun onCreate(view: SiteSettingsView) {
     super.onCreate(view)
@@ -45,6 +36,7 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
   suspend fun showSiteSettings(context: Context, siteDescriptor: SiteDescriptor): List<SettingsGroup> {
     return withContext(Dispatchers.Default) {
       siteManager.awaitUntilInitialized()
+      boardManager.awaitUntilInitialized()
 
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site == null) {
@@ -81,10 +73,6 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
 
     if (site.siteFeature(Site.SiteFeature.LOGIN)) {
       groups += buildAuthenticationGroup(context, site)
-    }
-
-    if (site.siteFeature(Site.SiteFeature.THIRD_PARTY_ARCHIVES)) {
-      groups += buildThirdPartyArchivesGroup(context, site.siteDescriptor())
     }
 
     if (site.settings().isNotEmpty()) {
@@ -134,33 +122,6 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
             }
           }
         }
-
-        return group
-      }
-    )
-  }
-
-  private fun buildThirdPartyArchivesGroup(
-    context: Context,
-    siteDescriptor: SiteDescriptor
-  ): SettingsGroup.SettingsGroupBuilder {
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = SiteSettingsScreen.ThirdPartyArchivesGroup,
-      buildFunction = fun(): SettingsGroup {
-        val group = SettingsGroup(
-          groupTitle = "Third party archives",
-          groupIdentifier = SiteSettingsScreen.ThirdPartyArchivesGroup
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = SiteSettingsScreen.ThirdPartyArchivesGroup.SetupArchives,
-          topDescriptionStringFunc = { "Setup third party archives" },
-          bottomDescriptionStringFunc = { formatArchivesDescription() ?: "Error" },
-          callback = {
-            withViewNormal { pushController(ArchivesSettingsController(context)) }
-          }
-        )
 
         return group
       }
@@ -229,36 +190,6 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
     )
   }
 
-  private fun formatArchivesDescription(): String? {
-    // TODO: Get rid of runBlocking!!!!
-    val archiveInfoList = runBlocking {
-      loadArchiveInfoListUseCase.execute(Unit)
-        .safeUnwrap { error ->
-          Logger.e(TAG, "Error executing LoadArchiveInfoListUseCase", error)
-          return@runBlocking null
-        }
-    } ?: return null
-
-    val enabledArchives = archiveInfoList.count { archiveInfo ->
-      return@count archiveInfo.state == ArchiveState.Enabled
-    }
-    val permanentlyDisabled = archiveInfoList.count { archiveInfo ->
-      return@count archiveInfo.state == ArchiveState.PermanentlyDisabled
-    }
-    val workingArchives = archiveInfoList.count { archiveInfo ->
-      return@count archiveInfo.status == ArchiveStatus.Working
-        || archiveInfo.status == ArchiveStatus.ExperiencingProblems
-    }
-
-    return AndroidUtils.getString(
-      R.string.setup_site_setup_archives_description,
-      archiveInfoList.size,
-      permanentlyDisabled,
-      enabledArchives,
-      workingArchives
-    )
-  }
-
   sealed class SiteSettingsScreen(
     groupIdentifier: GroupIdentifier,
     settingsIdentifier: SettingIdentifier,
@@ -291,20 +222,6 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
       companion object : IGroupIdentifier() {
         override fun getScreenIdentifier(): ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
         override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("authentication_group")
-      }
-    }
-
-    sealed class ThirdPartyArchivesGroup(
-      settingsId: String,
-      groupIdentifier: GroupIdentifier = AuthenticationGroup.getGroupIdentifier()
-    ) : IGroup,
-      SiteSettingsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-      object SetupArchives : ThirdPartyArchivesGroup("setup_archives")
-
-      companion object : IGroupIdentifier() {
-        override fun getScreenIdentifier(): ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
-        override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("third_party_archives_group")
       }
     }
 

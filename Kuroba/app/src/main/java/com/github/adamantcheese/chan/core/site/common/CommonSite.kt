@@ -313,7 +313,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonEndpoints(
-    protected var site: CommonSite?
+    protected var site: CommonSite
   ) : SiteEndpoints {
     
     fun from(url: String): SimpleHttpUrl {
@@ -343,7 +343,11 @@ abstract class CommonSite : SiteBase() {
     override fun boards(): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
-    
+
+    override fun pages(board: ChanBoard?): HttpUrl {
+      throw IllegalStateException("Attempt to call abstract method")
+    }
+
     override fun archive(board: ChanBoard): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }

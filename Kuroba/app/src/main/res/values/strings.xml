@@ -143,7 +143,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_force_reload">Force reload</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
-    <string name="action_retrieve_deleted_posts">Retrieve deleted posts from archive</string>
+    <string name="action_open_thread_in_archive">Open thread in archive</string>
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_open_thread_by_id">Open a thread by it\'s ID</string>
     <string name="action_share">Share</string>
@@ -344,6 +344,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_hide">Hide</string>
     <string name="post_remove">Remove</string>
     <string name="post_web_search">Web search</string>
+    <string name="post_posting_is_not_supported">Posting is not supported for this site</string>
 
     <string name="thread_hidden">Thread hidden</string>
     <string name="thread_removed">Thread removed</string>

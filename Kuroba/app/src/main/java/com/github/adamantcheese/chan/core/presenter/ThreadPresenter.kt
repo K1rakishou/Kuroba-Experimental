@@ -49,12 +49,15 @@ import com.github.adamantcheese.chan.ui.layout.ThreadListLayout.ThreadListLayout
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType
 import com.github.adamantcheese.chan.utils.AndroidUtils.showToast
+import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.chan.utils.PostUtils.findPostById
 import com.github.adamantcheese.chan.utils.PostUtils.findPostWithReplies
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
+import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
@@ -144,10 +147,8 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    job.cancelChildren()
-
     if (isBound) {
-      unbindChanDescriptor()
+      unbindChanDescriptor(false)
     }
 
     this.postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
@@ -181,12 +182,14 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    Logger.d(TAG, " chanLoaderManager.obtain()")
+    Logger.d(TAG, "chanLoaderManager.obtain($chanDescriptor)")
     chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
   }
 
-  fun unbindChanDescriptor() {
+  fun unbindChanDescriptor(isDestroying: Boolean) {
     if (isBound) {
+      Logger.d(TAG, "chanLoaderManager.release($chanDescriptor)")
+
       if (currentChanDescriptor != null) {
         onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor!!)
       }
@@ -198,7 +201,10 @@ class ThreadPresenter @Inject constructor(
       threadPresenterCallback?.showLoading()
     }
 
-    job.cancelChildren()
+    if (isDestroying) {
+      job.cancelChildren()
+    }
+
     compositeDisposable.clear()
   }
 
@@ -262,74 +268,25 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun retrieveDeletedPosts() {
-    BackgroundUtils.ensureMainThread()
-    val descriptor = currentChanDescriptor
-
-    if (!isBound || descriptor !is ChanDescriptor.ThreadDescriptor) {
+  fun openThreadInArchive(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    archiveDescriptor: ArchiveDescriptor
+  ) {
+    if (!isBound) {
       return
     }
 
-    launch {
-      if (!archivesManager.hasEnabledArchives(descriptor)) {
-        showToast(
-          context,
-          context.getString(R.string.thread_presenter_no_archives_enabled),
-          Toast.LENGTH_LONG
-        )
-        return@launch
-      }
+    Logger.d(TAG, "openThreadInArchive($threadDescriptor, $archiveDescriptor)")
 
-      var archiveDescriptor = archivesManager.getArchiveDescriptor(descriptor, false)
-        .safeUnwrap { error ->
-          Logger.e(
-            TAG,
-            "Error while trying to get archive descriptor for a thread: $descriptor",
-            error
-          )
+    val archiveThreadDescriptor = ChanDescriptor.ThreadDescriptor(
+      boardDescriptor = BoardDescriptor(
+        siteDescriptor = archiveDescriptor.siteDescriptor,
+        boardCode = threadDescriptor.boardDescriptor.boardCode
+      ),
+      threadNo = threadDescriptor.threadNo,
+    )
 
-          showToast(
-            context,
-            context.getString(R.string.thread_presenter_error_while_trying_to_get_archive_descriptor),
-            Toast.LENGTH_LONG
-          )
-          return@launch
-        }
-
-      if (archiveDescriptor == null) {
-        archiveDescriptor = archivesManager.getLastUsedArchiveForThread(descriptor)
-
-        if (archiveDescriptor == null) {
-          showToast(
-            context,
-            context.getString(R.string.thread_presenter_no_archives_for_thread),
-            Toast.LENGTH_LONG
-          )
-          return@launch
-        }
-      }
-
-      val timeUntilArchiveAvailablePeriod = archivesManager.getTimeLeftUntilArchiveAvailable(
-        archiveDescriptor,
-        descriptor
-      )
-
-      if (timeUntilArchiveAvailablePeriod != null) {
-        showToast(
-          context,
-          context.getString(
-            R.string.thread_presenter_no_available_archives,
-            ArchivesManager.ARCHIVE_UPDATE_INTERVAL.standardMinutes,
-            TimeUtils.getArchiveAvailabilityFormatted(timeUntilArchiveAvailablePeriod)
-          ),
-          Toast.LENGTH_LONG
-        )
-        return@launch
-      }
-
-      threadPresenterCallback?.showLoading()
-      chanLoader?.requestDataWithDeletedPosts()
-    }
+    launch { threadPresenterCallback?.showThread(archiveThreadDescriptor) }
   }
 
   suspend fun onForegroundChanged(foreground: Boolean) {
@@ -1128,7 +1085,7 @@ class ThreadPresenter @Inject constructor(
             chanThreadViewableInfo.markedPostNo = threadLink.postId
           }
 
-          threadPresenterCallback?.showThread(threadDescriptor)
+          threadPresenterCallback?.showExternalThread(threadDescriptor)
         }
 
         return@post
@@ -1509,6 +1466,7 @@ class ThreadPresenter @Inject constructor(
     fun showPostLinkables(post: Post)
     fun clipboardPost(post: Post)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?)
     fun openLink(link: String)

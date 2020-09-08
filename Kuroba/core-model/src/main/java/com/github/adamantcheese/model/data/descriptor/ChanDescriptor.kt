@@ -135,7 +135,7 @@ sealed class ChanDescriptor {
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
         require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
 
-        return CatalogDescriptor.create(
+        return create(
           descriptorParcelable.siteName,
           descriptorParcelable.boardCode
         )

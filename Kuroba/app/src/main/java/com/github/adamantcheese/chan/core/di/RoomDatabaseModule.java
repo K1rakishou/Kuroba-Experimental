@@ -13,7 +13,6 @@ import com.github.adamantcheese.model.repository.InlinedFileInfoRepository;
 import com.github.adamantcheese.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.SiteRepository;
-import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
@@ -47,12 +46,6 @@ public class RoomDatabaseModule {
     @Singleton
     public ChanPostRepository provideChanPostRepository() {
         return modelMainComponent.getChanPostRepository();
-    }
-
-    @Provides
-    @Singleton
-    public ThirdPartyArchiveInfoRepository provideThirdPartyArchiveInfoRepository() {
-        return modelMainComponent.getThirdPartyArchiveInfoRepository();
     }
 
     @Provides

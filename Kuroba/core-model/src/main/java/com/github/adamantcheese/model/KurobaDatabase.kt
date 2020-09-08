@@ -11,9 +11,6 @@ import com.github.adamantcheese.model.dao.*
 import com.github.adamantcheese.model.entity.InlinedFileInfoEntity
 import com.github.adamantcheese.model.entity.MediaServiceLinkExtraContentEntity
 import com.github.adamantcheese.model.entity.SeenPostEntity
-import com.github.adamantcheese.model.entity.archive.LastUsedArchiveForThreadRelationEntity
-import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveFetchHistoryEntity
-import com.github.adamantcheese.model.entity.archive.ThirdPartyArchiveInfoEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkReplyEntity
 import com.github.adamantcheese.model.entity.chan.board.ChanBoardEntity
@@ -54,11 +51,8 @@ import com.github.adamantcheese.model.migrations.Migration_v1_to_v2
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
     InlinedFileInfoEntity::class,
-    ThirdPartyArchiveFetchHistoryEntity::class,
-    ThirdPartyArchiveInfoEntity::class,
     NavHistoryElementIdEntity::class,
     NavHistoryElementInfoEntity::class,
-    LastUsedArchiveForThreadRelationEntity::class,
     ThreadBookmarkEntity::class,
     ThreadBookmarkReplyEntity::class
   ],
@@ -94,10 +88,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanPostHttpIconDao(): ChanPostHttpIconDao
   abstract fun chanTextSpanDao(): ChanTextSpanDao
   abstract fun chanPostReplyDao(): ChanPostReplyDao
-  abstract fun thirdPartyArchiveInfoDao(): ThirdPartyArchiveInfoDao
-  abstract fun thirdPartyArchiveFetchHistoryDao(): ThirdPartyArchiveFetchHistoryDao
   abstract fun navHistoryDao(): NavHistoryDao
-  abstract fun lastUsedArchiveForThreadDao(): LastUsedArchiveForThreadDao
   abstract fun threadBookmarkDao(): ThreadBookmarkDao
   abstract fun threadBookmarkReplyDao(): ThreadBookmarkReplyDao
   abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao

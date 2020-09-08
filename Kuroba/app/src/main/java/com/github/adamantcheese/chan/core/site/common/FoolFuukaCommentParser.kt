@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.site.common
 
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.ICommentParser
@@ -7,12 +8,14 @@ import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.core.site.parser.PostParser
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
+import com.github.adamantcheese.model.data.archive.ArchiveType
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
-  mockReplyManager: MockReplyManager
+  mockReplyManager: MockReplyManager,
+  private val archivesManager: ArchivesManager
 ) : CommentParser(mockReplyManager), ICommentParser {
 
   init {
@@ -48,9 +51,9 @@ class FoolFuukaCommentParser(
   }
 
   override fun extractQuote(href: String, post: Post.Builder): String {
-    val matcher = getDefaultQuotePattern(post.archiveDescriptor)?.matcher(href)
+    val matcher = getDefaultQuotePattern(post.postDescriptor)?.matcher(href)
     if (matcher == null) {
-      Logger.d(TAG, "getDefaultQuotePattern returned null for ${post.archiveDescriptor}")
+      Logger.d(TAG, "getDefaultQuotePattern returned null for postDescriptor=${post.postDescriptor}")
       return href
     }
 
@@ -62,25 +65,28 @@ class FoolFuukaCommentParser(
     return hrefWithoutScheme.substring(hrefWithoutScheme.indexOf('/'))
   }
 
-  private fun getDefaultQuotePattern(archiveDescriptor: ArchiveDescriptor?): Pattern? {
-    if (archiveDescriptor == null) {
+  private fun getDefaultQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
+    if (postDescriptor == null) {
       return null
     }
 
+    val archiveDescriptor = archivesManager.byBoardDescriptor(postDescriptor.boardDescriptor())
+      ?: return null
+
     return when (archiveDescriptor.archiveType) {
-      ArchiveDescriptor.ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.RebeccaBlackTech -> REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.DesuArchive -> DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.Fireden -> FIREDEN_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
-      ArchiveDescriptor.ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
+      ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
+      ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
+      ArchiveType.RebeccaBlackTech -> REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN
+      ArchiveType.DesuArchive -> DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN
+      ArchiveType.Fireden -> FIREDEN_DEFAULT_QUOTE_PATTERN
+      ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
+      ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
+      ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
 
       // See ArchivesManager.disabledArchives
-      ArchiveDescriptor.ArchiveType.TheBarchive,
-      ArchiveDescriptor.ArchiveType.Warosu,
-      ArchiveDescriptor.ArchiveType.Bstats -> null
+      ArchiveType.TheBarchive,
+      ArchiveType.Warosu,
+      ArchiveType.Bstats -> null
     }
   }
 

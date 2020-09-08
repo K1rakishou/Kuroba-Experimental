@@ -62,7 +62,6 @@ import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.BitmapUtils
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor.Companion.isActualArchive
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.io.IOException
@@ -496,20 +495,6 @@ class PostCell : LinearLayout, PostCellInterface {
             " " + image.imageWidth + "x" + image.imageHeight
           }
         )
-      }
-
-      if (isActualArchive(image.archiveId)) {
-        val archiveDescriptor = archivesManager.getArchiveDescriptorByDatabaseIdOrNull(image.archiveId)
-        if (archiveDescriptor == null) {
-          fileInfo
-            .append(" ")
-            .append(AndroidUtils.getString(R.string.image_from_archive))
-        } else {
-          val msg = AndroidUtils.getString(R.string.image_from_archive_with_name, archiveDescriptor.name)
-          fileInfo
-            .append(" ")
-            .append(msg)
-        }
       }
 
       titleParts.add(fileInfo)

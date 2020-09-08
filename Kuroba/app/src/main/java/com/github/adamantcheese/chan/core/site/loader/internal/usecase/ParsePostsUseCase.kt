@@ -8,7 +8,6 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.hashSetWithCap
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.filter.ChanFilter
@@ -58,27 +57,9 @@ class ParsePostsUseCase(
     val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      val archiveId = archivesManager.getLastUsedArchiveForThread(chanDescriptor)?.getArchiveId()
-        ?: ArchiveDescriptor.NO_ARCHIVE_ID
-
-      if (archiveId != ArchiveDescriptor.NO_ARCHIVE_ID) {
-        val cachedInternalIds = chanPostRepository.getThreadPostIds(chanDescriptor, archiveId, maxCount)
-          .mapErrorToValue { error ->
-            Logger.e(TAG, "Error while trying to get post ids for a thread" +
-              " (chanDescriptor=$chanDescriptor, archiveId=$archiveId, maxCount=$maxCount)", error)
-            return@mapErrorToValue emptySet<Long>()
-          }
-
-        internalIds.addAll(cachedInternalIds)
-      }
-
       boardDescriptors.addAll(
         boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor())
       )
-    }
-
-    if (boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor()) == null) {
-      return emptyList()
     }
 
     val filters = loadFilters(chanDescriptor)

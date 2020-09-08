@@ -510,7 +510,7 @@ class BrowseController(context: Context) : ThreadController(context),
           input.toLong()
         )
 
-        openThreadCrossThread(threadDescriptor)
+        showExternalThread(threadDescriptor)
       } catch (e: NumberFormatException) {
         AndroidUtils.showToast(
           context,
@@ -593,52 +593,73 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
-    boardManager.awaitUntilInitialized()
+    mainScope.launch {
+      Logger.d(TAG, "loadBoard($boardDescriptor)")
+      boardManager.awaitUntilInitialized()
 
-    val board = boardManager.byBoardDescriptor(boardDescriptor)
-      ?: return
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
+        ?: return@launch
 
-    historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
-    boardManager.updateCurrentBoard(boardDescriptor)
+      historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
+      boardManager.updateCurrentBoard(boardDescriptor)
 
-    navigation.title = "/" + boardDescriptor.boardCode + "/"
-    navigation.subtitle = board.name
+      navigation.title = "/" + boardDescriptor.boardCode + "/"
+      navigation.subtitle = board.name
 
-    if (!menuBuilt) {
-      menuBuilt = true
-      buildMenu()
+      if (!menuBuilt) {
+        menuBuilt = true
+        buildMenu()
+      }
+
+      val presenter = threadLayout.presenter
+      presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
+      presenter.requestData()
+
+      requireNavController().requireToolbar().updateTitle(navigation)
     }
-
-    val presenter = threadLayout.presenter
-    presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
-    presenter.requestData()
-
-    requireNavController().requireToolbar().updateTitle(navigation)
-  }
-
-  override suspend fun openThreadCrossThread(threadToOpenDescriptor: ThreadDescriptor) {
-    showThread(threadToOpenDescriptor)
   }
 
   override suspend fun showThread(descriptor: ThreadDescriptor) {
-    showThread(descriptor, true)
+    mainScope.launch {
+      Logger.d(TAG, "showThread($descriptor)")
+
+      showThread(descriptor, true)
+    }
+  }
+
+  override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
+    mainScope.launch {
+      Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
+
+      showThread(threadToOpenDescriptor)
+    }
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor) {
-    showBoardInternal(descriptor)
-    initialized = true
+    mainScope.launch {
+      Logger.d(TAG, "showBoard($descriptor)")
+
+      showBoardInternal(descriptor)
+      initialized = true
+    }
   }
 
   override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
-    // we don't actually need to do anything here because you can't tap board links in the browse
-    // controller set the board just in case?
-    setBoard(descriptor)
+    mainScope.launch {
+      Logger.d(TAG, "showBoardAndSearch($descriptor, $searchQuery)")
+
+      // we don't actually need to do anything here because you can't tap board links in the browse
+      // controller set the board just in case?
+      setBoard(descriptor)
+    }
   }
 
   // Creates or updates the target ThreadViewController
   // This controller can be in various places depending on the layout
   // We dynamically search for it
   suspend fun showThread(threadDescriptor: ThreadDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showThread($threadDescriptor, $animated)")
+
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null

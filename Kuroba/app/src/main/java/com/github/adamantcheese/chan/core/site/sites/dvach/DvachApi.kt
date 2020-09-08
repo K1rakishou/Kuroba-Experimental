@@ -41,7 +41,7 @@ class DvachApi internal constructor(
   }
 
   @Throws(Exception::class)
-  override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

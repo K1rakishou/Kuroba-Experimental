@@ -1,27 +1,34 @@
-package com.github.adamantcheese.model.parser
+package com.github.adamantcheese.chan.core.site.sites.foolfuuka
 
 import android.util.JsonReader
 import android.util.JsonToken
+import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
+import com.github.adamantcheese.chan.core.site.common.CommonClientException
+import com.github.adamantcheese.chan.core.site.common.CommonSite
+import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
+import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.jsonObject
-import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.common.nextStringOrNull
-import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchivePost
 import com.github.adamantcheese.model.data.archive.ArchivePostMedia
+import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.util.extractFileNameExtension
 import com.github.adamantcheese.model.util.removeExtensionIfPresent
 
-class ArchivesJsonParser(
-  loggerTag: String,
-  private val logger: Logger
-) {
-  private val TAG = "$loggerTag ArchivesJsonParser"
+class FoolFuukaApi(
+  site: CommonSite
+) : CommonSite.CommonApi(site) {
 
-  fun parsePosts(jsonReader: JsonReader, threadNo: Long): List<ArchivePost> {
-    val archivedPosts = mutableListWithCap<ArchivePost>(64)
+  override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+    val chanDescriptor = chanReaderProcessor.chanDescriptor
 
-    jsonReader.jsonObject {
+    val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
+      ?: throw CommonClientException("chanDescriptor is not thread descriptor: ${chanDescriptor}")
+
+    reader.jsonObject {
       if (!hasNext()) {
         return@jsonObject
       }
@@ -34,78 +41,78 @@ class ArchivesJsonParser(
       }
 
       val parsedThreadNo = jsonKey.toLongOrNull()
-      if (parsedThreadNo == null || parsedThreadNo != threadNo) {
-        logger.logError(TAG, "Bad parsedThreadNo: ${parsedThreadNo}, expected ${threadNo}")
+      if (parsedThreadNo == null || parsedThreadNo != threadDescriptor.threadNo) {
+        Logger.e(TAG, "Bad parsedThreadNo: ${parsedThreadNo}, expected ${threadDescriptor.threadNo}")
         return@jsonObject
       }
 
       jsonObject {
         while (hasNext()) {
           when (nextName()) {
-            "op" -> {
-              val originalPost = readOriginalPost()
-
-              if (originalPost != null) {
-                archivedPosts += originalPost
-              }
-            }
-            "posts" -> {
-              if (archivedPosts.isEmpty() || !archivedPosts.first().isOP) {
-                // Original Post must be the first post of the list of posts
-                // we got from an archive. If it's not present then something is
-                // wrong and we should abort everything.
-                skipValue()
-              } else {
-                archivedPosts.addAll(readRegularPosts())
-              }
-            }
+            "op" -> readOriginalPost(this, chanReaderProcessor)
+            "posts" -> readRegularPosts(this, chanReaderProcessor)
             else -> skipValue()
           }
         }
       }
     }
 
-    if (archivedPosts.size > 0 && !archivedPosts.first().isOP) {
-      logger.logError(TAG, "Parsed posts has no OP!")
-      return emptyList()
-    }
-
-    return archivedPosts
+    println()
   }
 
-  private fun JsonReader.readRegularPosts(): List<ArchivePost> {
-    if (!hasNext()) {
-      return emptyList()
+  private suspend fun readOriginalPost(
+    reader: JsonReader,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    reader.jsonObject { readPostObject(reader, chanReaderProcessor, true) }
+  }
+
+  private suspend fun readRegularPosts(
+    reader: JsonReader,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    if (!reader.hasNext()) {
+      return
     }
 
-    return jsonObject {
-      val archivedPosts = mutableListWithCap<ArchivePost>(64)
-
+    reader.jsonObject {
       while (hasNext()) {
         // skip the json key
         nextName()
 
-        val post = jsonObject { readPost() }
-        if (!post.isValid()) {
-          continue
-        }
-
-        archivedPosts += post
+        reader.jsonObject { readPostObject(reader, chanReaderProcessor, false) }
       }
-
-      return@jsonObject archivedPosts
     }
   }
 
-  private fun JsonReader.readOriginalPost(): ArchivePost? {
-    return jsonObject {
-      val archivePost = readPost()
-      if (!archivePost.isValid()) {
-        logger.logError(TAG, "Invalid archive post: ${archivePost}")
-        return@jsonObject null
-      }
+  private suspend fun readPostObject(
+    reader: JsonReader,
+    chanReaderProcessor: ChanReaderProcessor,
+    expectedOp: Boolean
+  ) {
+    val chanDescriptor = chanReaderProcessor.chanDescriptor
+    val boardDescriptor = chanDescriptor.boardDescriptor()
 
-      return@jsonObject archivePost
+    val archivePost = reader.readPost()
+    if (expectedOp != archivePost.isOP) {
+      Logger.e(TAG, "Invalid archive post OP flag (expected: ${expectedOp}, actual: ${archivePost.isOP})")
+      return
+    }
+
+    if (!archivePost.isValid()) {
+      Logger.e(TAG, "Invalid archive post: ${archivePost}")
+      return
+    }
+
+    val postBuilder = ArchiveThreadMapper.fromPost(
+      boardDescriptor,
+      archivePost
+    )
+
+    chanReaderProcessor.addPost(postBuilder)
+
+    if (postBuilder.op) {
+      chanReaderProcessor.op = postBuilder
     }
   }
 
@@ -136,7 +143,7 @@ class ArchivesJsonParser(
                 val archivePostMedia = readPostMedia()
 
                 if (!archivePostMedia.isValid()) {
-                  logger.logError(TAG, "Invalid archive post media: ${archivePostMedia}")
+                  Logger.e(TAG, "Invalid archive post media: ${archivePostMedia}")
                   return@jsonObject
                 }
 
@@ -214,7 +221,7 @@ class ArchivesJsonParser(
     // We gotta fix this by ourselves for now.
     // https://arch.b4k.co/meta/thread/357/
     //
-    // UPD: it was fixed, but let's still leave this hack change in case it happens again
+    // UPD: it was fixed, but let's still leave this hack in case it happens again
     if (imageUrl.startsWith("https://") || imageUrl.startsWith("http://")) {
       return imageUrl
     }
@@ -223,8 +230,26 @@ class ArchivesJsonParser(
       return "https:$imageUrl"
     }
 
-    logger.logError(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")
+    Logger.e(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")
     return null
+  }
+
+  override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+    throw CommonClientException("Catalog is not supported for site ${site.name()}")
+  }
+
+  override suspend fun readThreadBookmarkInfoObject(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    expectedCapacity: Int,
+    reader: JsonReader
+  ): ModularResult<ThreadBookmarkInfoObject> {
+    val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
+
+    return ModularResult.error(error)
+  }
+
+  companion object {
+    private const val TAG = "FoolFuukaApi"
   }
 
 }

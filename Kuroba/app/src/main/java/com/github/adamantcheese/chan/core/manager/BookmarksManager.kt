@@ -34,6 +34,7 @@ class BookmarksManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
+  private val archivesManager: ArchivesManager,
   private val bookmarksRepository: BookmarksRepository
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -459,7 +460,12 @@ class BookmarksManager(
     return lock.read {
       ensureBookmarksAndOrdersConsistency()
 
-      return@read bookmarks.values.count { threadBookmark -> threadBookmark.isActive() }
+      return@read bookmarks.values.count { threadBookmark ->
+        val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
+        val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
+
+        return@count !isArchiveBookmark && threadBookmark.isActive()
+      }
     }
   }
 
@@ -467,18 +473,11 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read bookmarks.any { (_, bookmark) ->
-        return@any bookmark.isActive()
-      }
-    }
-  }
+      return@read bookmarks.any { (_, threadBookmark) ->
+        val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
+        val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
 
-  fun hasNonActiveBookmarks(): Boolean {
-    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
-
-    return lock.read {
-      return@read bookmarks.any { (_, bookmark) ->
-        return@any !bookmark.isActive()
+        return@any !isArchiveBookmark && threadBookmark.isActive()
       }
     }
   }

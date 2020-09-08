@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.core.site
 
 data class ChunkDownloaderSiteProperties(
+  val enabled: Boolean = true,
+
   /**
    * Whether the site send file size info  in bytes or not. Some sites may send it in KB which
    * breaks ChunkedFileDownloader. To figure out whether a site sends us bytes or kilobytes

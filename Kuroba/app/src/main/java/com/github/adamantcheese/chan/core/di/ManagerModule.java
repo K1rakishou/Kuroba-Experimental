@@ -73,7 +73,6 @@ import com.github.adamantcheese.model.repository.ChanThreadViewableInfoRepositor
 import com.github.adamantcheese.model.repository.HistoryNavigationRepository;
 import com.github.adamantcheese.model.repository.SeenPostRepository;
 import com.github.adamantcheese.model.repository.SiteRepository;
-import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -168,7 +167,6 @@ public class ManagerModule {
     @Singleton
     public ArchivesManager provideArchivesManager(
             Context appContext,
-            ThirdPartyArchiveInfoRepository thirdPartyArchiveInfoRepository,
             Gson gson,
             AppConstants appConstants,
             CoroutineScope appScope
@@ -177,7 +175,6 @@ public class ManagerModule {
         return new ArchivesManager(
                 appContext,
                 appScope,
-                thirdPartyArchiveInfoRepository,
                 gson,
                 appConstants,
                 ChanSettings.verboseLogs.get()
@@ -340,6 +337,7 @@ public class ManagerModule {
     public BookmarksManager provideBookmarksManager(
             CoroutineScope appScope,
             ApplicationVisibilityManager applicationVisibilityManager,
+            ArchivesManager archivesManager,
             BookmarksRepository bookmarksRepository
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarksManager");
@@ -349,6 +347,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 applicationVisibilityManager,
+                archivesManager,
                 bookmarksRepository
         );
     }
@@ -372,6 +371,7 @@ public class ManagerModule {
     public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
+            ArchivesManager archivesManager,
             SiteManager siteManager,
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
@@ -386,6 +386,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
+                archivesManager,
                 siteManager,
                 lastViewedPostNoInfoHolder,
                 fetchThreadBookmarkInfoUseCase,
@@ -400,6 +401,7 @@ public class ManagerModule {
     public BookmarkForegroundWatcher provideBookmarkForegroundWatcher(
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
+            ArchivesManager archivesManager,
             BookmarkWatcherDelegate bookmarkWatcherDelegate
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
@@ -409,6 +411,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
+                archivesManager,
                 bookmarkWatcherDelegate
         );
     }

@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.source.remote
 
 import android.util.JsonReader
+import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchiveThread
@@ -13,8 +14,6 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
-// TODO(KurobaEx): For some unknown reason we request posts from archives every time the app goes
-//  into OnStart state
 class ArchivesRemoteSource(
   okHttpClient: OkHttpClient,
   loggerTag: String,
@@ -36,7 +35,7 @@ class ArchivesRemoteSource(
       // We need to have a user agent for archived.moe
       // If we won't send a valid user agent then all the "remote_media_link"s will be
       // redirect links instead of real links.
-      .header("User-Agent", USER_AGENT)
+      .header("User-Agent", AppConstants.USER_AGENT)
       .build()
 
     val response = withTimeout(MAX_ARCHIVE_FETCH_WAIT_TIME_MS) { okHttpClient.suspendCall(httpRequest) }
@@ -60,7 +59,5 @@ class ArchivesRemoteSource(
 
   companion object {
     private const val MAX_ARCHIVE_FETCH_WAIT_TIME_MS = 20_000L
-    private const val USER_AGENT =
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
   }
 }

@@ -7,6 +7,6 @@ data class ThreadBookmarkItemView(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
   val title: String,
   val thumbnailUrl: HttpUrl?,
-  val hightlight: Boolean,
+  val highlight: Boolean,
   val threadBookmarkStats: ThreadBookmarkStats
 )

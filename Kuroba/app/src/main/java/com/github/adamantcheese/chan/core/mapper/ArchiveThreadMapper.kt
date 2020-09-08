@@ -32,7 +32,43 @@ object ArchiveThreadMapper {
     }
   }
 
-  private fun fromPost(
+  fun fromPost(
+    boardDescriptor: BoardDescriptor,
+    archivePost: ArchivePost
+  ): Post.Builder {
+    val images = archivePost.archivePostMediaList.mapNotNull { archivePostMedia ->
+      return@mapNotNull Try {
+        return@Try fromPostMedia(archivePostMedia, null)
+      }.safeUnwrap { error ->
+        Logger.e(TAG, "Error mapping archive post media ${archivePostMedia.imageUrl}", error)
+        return@mapNotNull null
+      }
+    }
+
+    val postBuilder = Post.Builder()
+      .boardDescriptor(boardDescriptor)
+      .id(archivePost.postNo)
+      .opId(archivePost.threadNo)
+      .op(archivePost.isOP)
+      .sticky(archivePost.sticky)
+      .closed(archivePost.closed)
+      .archived(archivePost.archived)
+      .lastModified(-1)
+      .name(archivePost.name)
+      .subject(archivePost.subject)
+      .tripcode(archivePost.tripcode)
+      .setUnixTimestampSeconds(archivePost.unixTimestampSeconds)
+      .postImages(images)
+      .moderatorCapcode(archivePost.moderatorCapcode)
+      .isSavedReply(false)
+      .deleted(false)
+
+    postBuilder.postCommentBuilder.setComment(archivePost.comment)
+
+    return postBuilder
+  }
+
+  fun fromPost(
     boardDescriptor: BoardDescriptor,
     repliesCount: Int,
     imagesCount: Int,
@@ -66,8 +102,7 @@ object ArchiveThreadMapper {
       .postImages(images)
       .moderatorCapcode(archivePost.moderatorCapcode)
       .isSavedReply(false)
-      // Always archived == true because this post is from third-party archive
-      .deleted(true)
+      .deleted(false)
 
     postBuilder.postCommentBuilder.setComment(archivePost.comment)
     postBuilder.setArchiveDescriptor(archiveDescriptor)
@@ -77,7 +112,7 @@ object ArchiveThreadMapper {
 
   private fun fromPostMedia(
     archivePostMedia: ArchivePostMedia,
-    archiveDescriptor: ArchiveDescriptor
+    archiveDescriptor: ArchiveDescriptor?
   ): PostImage? {
     val imageUrl = archivePostMedia.imageUrl?.toHttpUrl()
 
@@ -88,7 +123,7 @@ object ArchiveThreadMapper {
       .extension(archivePostMedia.extension)
       .imageWidth(archivePostMedia.imageWidth)
       .imageHeight(archivePostMedia.imageHeight)
-      .archiveId(archiveDescriptor.getArchiveId())
+      .archiveId(archiveDescriptor?.archiveId ?: 0)
       .size(archivePostMedia.size)
       .fileHash(archivePostMedia.fileHashBase64, true)
       .imageUrl(imageUrl)

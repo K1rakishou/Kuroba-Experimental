@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.di;
 
+import com.github.adamantcheese.chan.core.manager.ArchivesManager;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
@@ -42,9 +43,12 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public ParserRepository provideParserRepository(MockReplyManager mockReplyManager) {
+    public ParserRepository provideParserRepository(
+            MockReplyManager mockReplyManager,
+            ArchivesManager archivesManager
+    ) {
         Logger.d(AppModule.DI_TAG, "ParserRepository");
-        return new ParserRepository(mockReplyManager);
+        return new ParserRepository(mockReplyManager, archivesManager);
     }
 
     @Provides

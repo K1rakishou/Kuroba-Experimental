@@ -1,5 +1,7 @@
 package com.github.adamantcheese.common
 
+import android.util.JsonReader
+import android.util.JsonToken
 import android.view.View
 import android.view.ViewGroup
 import com.github.adamantcheese.common.ModularResult.Companion.Try
@@ -30,6 +32,31 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
         continuation.resume(response)
       }
     })
+  }
+}
+
+
+fun JsonReader.nextStringOrNull(): String? {
+  if (peek() == JsonToken.NULL) {
+    skipValue()
+    return null
+  }
+
+  val value = nextString()
+  if (value.isNullOrEmpty()) {
+    return null
+  }
+
+  return value
+}
+
+inline fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
+  beginObject()
+
+  try {
+    return func(this)
+  } finally {
+    endObject()
   }
 }
 

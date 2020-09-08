@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.features.bookmarks.watcher
 
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.utils.Logger
@@ -19,6 +20,7 @@ class BookmarkForegroundWatcher(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
+  private val archivesManager: ArchivesManager,
   private val bookmarkWatcherDelegate: BookmarkWatcherDelegate
 ) {
   private val channel = Channel<Unit>(Channel.RENDEZVOUS)
@@ -85,6 +87,11 @@ class BookmarkForegroundWatcher(
       return
     }
 
+    val isArchiveBookmark = archivesManager.isSiteArchive(threadDescriptor.siteDescriptor())
+    if (isArchiveBookmark) {
+      return
+    }
+
     val isBookmarkActive = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
       threadBookmarkView.isActive()
     } ?: false
@@ -115,7 +122,8 @@ class BookmarkForegroundWatcher(
         return
       }
 
-      if (!bookmarksManager.hasActiveBookmarks()) {
+      val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
+      if (!hasActiveBookmarks) {
         return
       }
 

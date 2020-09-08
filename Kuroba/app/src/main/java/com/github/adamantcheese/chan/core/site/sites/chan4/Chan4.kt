@@ -406,7 +406,6 @@ class Chan4 : SiteBase() {
       Site.BoardFeature.POSTING_IMAGE -> true
       // depends if the board supports it.
       Site.BoardFeature.POSTING_SPOILER -> board.spoilers
-      Site.BoardFeature.ARCHIVE -> board.archive
       else -> false
     }
   }

@@ -20,11 +20,8 @@ import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.site.Site
-import com.github.adamantcheese.chan.core.site.loader.internal.ArchivePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.NormalPostLoader
-import com.github.adamantcheese.chan.core.site.loader.internal.Utils
-import com.github.adamantcheese.chan.core.site.loader.internal.usecase.GetPostsFromArchiveUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.adamantcheese.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
@@ -39,7 +36,6 @@ import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
-import com.github.adamantcheese.model.repository.ThirdPartyArchiveInfoRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
@@ -69,7 +65,6 @@ class ChanThreadLoaderCoordinator(
   private val chanPostRepository: ChanPostRepository,
   private val appConstants: AppConstants,
   private val archivesManager: ArchivesManager,
-  private val thirdPartyArchiveInfoRepository: ThirdPartyArchiveInfoRepository,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
   private val themeHelper: ThemeHelper,
@@ -104,15 +99,6 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val getPostsFromArchiveUseCase by lazy {
-    GetPostsFromArchiveUseCase(
-      verboseLogsEnabled,
-      archivesManager,
-      thirdPartyArchiveInfoRepository,
-      chanPostRepository
-    )
-  }
-
   private val storePostsInRepositoryUseCase by lazy {
     StorePostsInRepositoryUseCase(
       gson,
@@ -120,19 +106,9 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val archivePostLoader by lazy {
-    ArchivePostLoader(
-      parsePostsUseCase,
-      getPostsFromArchiveUseCase,
-      storePostsInRepositoryUseCase,
-      archivesManager
-    )
-  }
-
   private val normalPostLoader by lazy {
     NormalPostLoader(
       appConstants,
-      getPostsFromArchiveUseCase,
       parsePostsUseCase,
       storePostsInRepositoryUseCase,
       reloadPostsFromDatabaseUseCase,
@@ -147,6 +123,8 @@ class ChanThreadLoaderCoordinator(
     requestParams: ChanLoaderRequestParams,
     resultCallback: suspend (ModularResult<ThreadLoadResult>) -> Unit
   ): Job {
+    Logger.d(TAG, "loadThread($url, $requestParams)")
+
     return launch {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
@@ -155,6 +133,7 @@ class ChanThreadLoaderCoordinator(
         val request = Request.Builder()
           .url(url)
           .get()
+          .header("User-Agent", AppConstants.USER_AGENT)
           .build()
 
         val response = try {
@@ -163,20 +142,7 @@ class ChanThreadLoaderCoordinator(
           return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }
 
-        val archiveDescriptor = Utils.getArchiveDescriptor(
-          archivesManager,
-          requestParams,
-          false
-        )
-
         if (!response.isSuccessful) {
-          if (response.code == NOT_FOUND) {
-            return@Try fallbackPostLoadWhenThreadIsDead(
-              requestParams,
-              response.code
-            )
-          }
-
           throw ServerException(response.code)
         }
 
@@ -186,29 +152,12 @@ class ChanThreadLoaderCoordinator(
         return@Try normalPostLoader.loadPosts(
           url,
           chanReaderProcessor,
-          requestParams,
-          archiveDescriptor
+          requestParams
         )
       }.mapError { error -> ChanLoaderException(error) }
 
       resultCallback.invoke(result)
     }
-  }
-
-  private suspend fun fallbackPostLoadWhenThreadIsDead(
-    requestParams: ChanLoaderRequestParams,
-    responseCode: Int
-  ): ThreadLoadResult {
-    archivePostLoader.updateThreadPostsFromArchiveIfNeeded(requestParams)
-      .mapErrorToValue { error ->
-        Logger.e(TAG, "Error updating thread posts from archive", error)
-      }
-
-    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams)
-      ?: throw ServerException(responseCode)
-
-    Logger.d(TAG, "Successfully recovered from 404 error")
-    return ThreadLoadResult.LoadedFromArchive(chanLoaderResponse)
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(

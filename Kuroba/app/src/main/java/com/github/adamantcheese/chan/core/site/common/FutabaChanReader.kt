@@ -39,7 +39,7 @@ class FutabaChanReader(
     return mutex.withLock {
       if (parser == null) {
         val commentParser = CommentParser(mockReplyManager).addDefaultRules()
-        val foolFuukaCommentParser = FoolFuukaCommentParser(mockReplyManager)
+        val foolFuukaCommentParser = FoolFuukaCommentParser(mockReplyManager, archivesManager)
         val defaultPostParser = DefaultPostParser(commentParser, postFilterManager)
 
         for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
@@ -68,7 +68,7 @@ class FutabaChanReader(
   }
 
   @Throws(Exception::class)
-  override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

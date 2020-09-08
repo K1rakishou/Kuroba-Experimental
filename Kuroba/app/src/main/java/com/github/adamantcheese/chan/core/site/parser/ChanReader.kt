@@ -30,9 +30,6 @@ interface ChanReader {
   @Throws(Exception::class)
   suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
 
-  @Throws(Exception::class)
-  suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
-
   suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,

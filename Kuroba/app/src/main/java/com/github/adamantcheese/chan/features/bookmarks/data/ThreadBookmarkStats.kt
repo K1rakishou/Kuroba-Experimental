@@ -1,8 +1,8 @@
 package com.github.adamantcheese.chan.features.bookmarks.data
 
 data class ThreadBookmarkStats(
-  val showBookmarkStats: Boolean,
   val watching: Boolean,
+  val showBookmarkStats: Boolean = true,
   val newPosts: Int = 0,
   val newQuotes: Int = 0,
   val totalPosts: Int = 0,

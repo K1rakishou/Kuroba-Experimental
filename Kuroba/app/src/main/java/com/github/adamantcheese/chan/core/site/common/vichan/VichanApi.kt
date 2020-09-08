@@ -30,16 +30,20 @@ class VichanApi(
 
   @Throws(Exception::class)
   override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    vichanReaderExtensions.iteratePostsInThread(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
+    vichanReaderExtensions.iteratePostsInThread(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
+    }
   }
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
+    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
+    }
   }
 
   @Throws(Exception::class)
-  override suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = Post.Builder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

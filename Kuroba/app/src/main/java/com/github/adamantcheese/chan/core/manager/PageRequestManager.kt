@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest.Boa
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -61,11 +62,19 @@ class PageRequestManager(
       return null
     }
 
+    if (!pagesRequestsSupported(op.postDescriptor.boardDescriptor().siteDescriptor)) {
+      return null
+    }
+
     return findPage(op.boardDescriptor, op.no)
   }
 
   fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {
     if (threadDescriptor == null || threadDescriptor.threadNo < 0) {
+      return null
+    }
+
+    if (!pagesRequestsSupported(threadDescriptor.boardDescriptor().siteDescriptor)) {
       return null
     }
 
@@ -122,8 +131,11 @@ class PageRequestManager(
   }
 
   fun forceUpdateForBoard(boardDescriptor: BoardDescriptor) {
-    Logger.d(TAG, "Requesting existing board pages for /${boardDescriptor.boardCode}/, forced")
+    if (!pagesRequestsSupported(boardDescriptor.siteDescriptor)) {
+      return
+    }
 
+    Logger.d(TAG, "Requesting existing board pages for /${boardDescriptor.boardCode}/, forced")
     launch { requestBoard(boardDescriptor) }
   }
 
@@ -250,6 +262,10 @@ class PageRequestManager(
     boardPagesMap[boardDescriptor.boardCode] = pages
 
     boardPagesUpdateSubject.onNext(Unit)
+  }
+
+  private fun pagesRequestsSupported(siteDescriptor: SiteDescriptor): Boolean {
+    return siteDescriptor.is4chan()
   }
 
   companion object {

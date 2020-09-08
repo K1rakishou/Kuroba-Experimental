@@ -42,5 +42,8 @@ class AppConstants(context: Context) {
     private const val ONE_MEGABYTE = 1 * 1024 * 1024
     private const val AVERAGE_POST_MEMORY_SIZE = 2048
     private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 16 * 1024
+
+    const val USER_AGENT =
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
   }
 }
