@@ -178,7 +178,7 @@ open class ViewThreadController(
         ACTION_OPEN_THREAD_IN_ARCHIVE,
         R.string.action_open_thread_in_archive,
         archivesManager.supports(threadDescriptor)
-      ) { item -> showAvailableArchives(item) }
+      ) { showAvailableArchives(threadDescriptor) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
@@ -294,12 +294,12 @@ open class ViewThreadController(
     threadLayout.presenter.forceRequestData()
   }
 
-  private fun showAvailableArchives(item: ToolbarMenuSubItem?) {
-    Logger.d(TAG, "showAvailableArchives($threadDescriptor)")
+  private fun showAvailableArchives(descriptor: ThreadDescriptor) {
+    Logger.d(TAG, "showAvailableArchives($descriptor)")
     
-    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
+    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
     if (supportedArchiveDescriptors.isEmpty()) {
-      Logger.d(TAG, "showAvailableArchives($threadDescriptor) supportedThreadDescriptors is empty")
+      Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
       return
     }
 
@@ -320,7 +320,7 @@ open class ViewThreadController(
     }
 
     if (items.isEmpty()) {
-      Logger.d(TAG, "showAvailableArchives($threadDescriptor) items is empty")
+      Logger.d(TAG, "showAvailableArchives($descriptor) items is empty")
       return
     }
 
@@ -331,7 +331,7 @@ open class ViewThreadController(
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
           ?: return@FloatingListMenuController
 
-        threadLayout.presenter.openThreadInArchive(threadDescriptor, archiveDescriptor)
+        threadLayout.presenter.openThreadInArchive(descriptor, archiveDescriptor)
       }
     )
 
@@ -712,6 +712,10 @@ open class ViewThreadController(
     mainScope.launch { loadThread(threadDescriptor) }
 
     return true
+  }
+
+  override fun showAvailableArchivesList(descriptor: ThreadDescriptor) {
+    showAvailableArchives(descriptor)
   }
 
   override fun getPostForPostImage(postImage: PostImage): Post? {

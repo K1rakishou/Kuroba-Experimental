@@ -119,6 +119,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var errorLayout: LinearLayout
   private lateinit var errorText: TextView
   private lateinit var errorRetryButton: Button
+  private lateinit var openThreadInArchiveButton: Button
   private lateinit var postPopupHelper: PostPopupHelper
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
@@ -176,6 +177,7 @@ class ThreadLayout @JvmOverloads constructor(
     errorLayout = AndroidUtils.inflate(context, R.layout.layout_thread_error, this, false) as LinearLayout
     errorText = errorLayout.findViewById(R.id.text)
     errorRetryButton = errorLayout.findViewById(R.id.button)
+    openThreadInArchiveButton = errorLayout.findViewById(R.id.open_in_archive_button)
 
     // Inflate thread loading layout
     progressLayout = AndroidUtils.inflate(context, R.layout.layout_thread_progress, this, false)
@@ -188,6 +190,7 @@ class ThreadLayout @JvmOverloads constructor(
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeHelper.theme.mainFont
     errorRetryButton.setOnClickListener(this)
+    openThreadInArchiveButton.setOnClickListener(this)
 
     // Setup
     replyButtonEnabled = ChanSettings.enableReplyFab.get()
@@ -212,7 +215,13 @@ class ThreadLayout @JvmOverloads constructor(
   override fun onClick(v: View) {
     if (v === errorRetryButton) {
       presenter.requestData()
-    } else if (v === replyButton) {
+    } else if (v === openThreadInArchiveButton) {
+      val descriptor = presenter.chanDescriptor
+      if (descriptor is ChanDescriptor.ThreadDescriptor) {
+        callback.showAvailableArchivesList(descriptor)
+      }
+    }
+    else if (v === replyButton) {
       openReplyInternal(true)
     }
   }
@@ -881,6 +890,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
+
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
     fun onShowPosts()
@@ -889,6 +899,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
+    fun showAvailableArchivesList(descriptor: ChanDescriptor.ThreadDescriptor)
   }
 
   companion object {
