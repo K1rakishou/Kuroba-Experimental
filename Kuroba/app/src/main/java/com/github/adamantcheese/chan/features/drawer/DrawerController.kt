@@ -450,6 +450,7 @@ class DrawerController(
     // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
     // of the bottomNavView's child controllers (Bookmarks or Settings)
     bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
+    setDrawerEnabled(true)
   }
 
   private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
