@@ -1,5 +1,8 @@
 sudo: false
 
+branches:
+  only: 
+    - beta
 language: 
   - android
   - python

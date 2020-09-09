@@ -230,22 +230,25 @@ class UpdateManager(
 
       //new version or commit, update
       val versionCodeStringMatcher = VERSION_CODE_PATTERN.matcher(versionCode.toString())
-      if (versionCodeStringMatcher.matches()) {
-        val fauxResponse = ReleaseUpdateApiResponse()
-        fauxResponse.versionCode = versionCode
-        fauxResponse.versionCodeString = calculateVersionCodeString(
-          versionCodeStringMatcher,
-          commitHash
-        )
-
-        fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
-        fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
-
-        processUpdateApiResponse(fauxResponse, manual)
-      } else {
-        throw Exception() // to reuse the failed code below
+      if (!versionCodeStringMatcher.matches()) {
+        // to reuse the failed code below
+        throw Exception("Failed to find version code string in \"${versionCode}\"")
       }
-    } catch (e: Exception) { // any exceptions just fail out
+
+      val fauxResponse = ReleaseUpdateApiResponse()
+      fauxResponse.versionCode = versionCode
+      fauxResponse.versionCodeString = calculateVersionCodeString(
+        versionCodeStringMatcher,
+        commitHash
+      )
+
+      fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
+      fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
+
+      processUpdateApiResponse(fauxResponse, manual)
+    } catch (e: Exception) {
+      // any exceptions just fail out
+      Logger.e(TAG, "onSuccessfullyGotLatestApkUuid unknown error", e)
       failedUpdate(manual)
     }
   }
