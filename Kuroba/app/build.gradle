@@ -334,15 +334,20 @@ task downloadArchives {
 preBuild.dependsOn downloadArchives
 
 // Increase the build number task
-task myTask {
-    File f = file('buildnumber.property')
-    def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8").get(0))
-    def newBuildNumber = prevBuildNumber + 1
-    println("Increasing the build number: " + prevBuildNumber + " -> " + newBuildNumber)
+task increaseBuildNumber {
+    def travisFlag = System.getenv("TRAVIS_CI_FLAG")
+    println("travisFlag: " + travisFlag)
 
-    f.write(String.valueOf(newBuildNumber))
+    if (travisFlag == null) {
+        File f = file('buildnumber.property')
+        def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8").get(0))
+        def newBuildNumber = prevBuildNumber + 1
+        println("Increasing the build number: " + prevBuildNumber + " -> " + newBuildNumber)
+
+        f.write(String.valueOf(newBuildNumber))
+    }
 }
-preBuild.dependsOn myTask
+preBuild.dependsOn increaseBuildNumber
 
 def getCurrentBuildNumber() {
     File f = file('buildnumber.property')
