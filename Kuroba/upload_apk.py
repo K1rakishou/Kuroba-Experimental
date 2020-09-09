@@ -125,10 +125,7 @@ if __name__ == '__main__':
     secretKey = os.environ.get('SECRETKEY')
     if (secretKey is None):
         print("Secret key is not provided via travis secure environment variable")
-
-        # Do not fail the build in case of having no key, just don't upload anything. Probably
-        # should do this normally some time in the future
-        exit(0)
+        exit(-1)
 
     branchName = sys.argv[2]
     if not checkBranchExists(branchName):
