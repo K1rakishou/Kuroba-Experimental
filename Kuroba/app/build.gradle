@@ -336,8 +336,6 @@ preBuild.dependsOn downloadArchives
 // Increase the build number task
 task increaseBuildNumber {
     def travisFlag = System.getenv("TRAVIS_CI_FLAG")
-    println("travisFlag: " + travisFlag)
-
     if (travisFlag == null) {
         File f = file('buildnumber.property')
         def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8").get(0))
