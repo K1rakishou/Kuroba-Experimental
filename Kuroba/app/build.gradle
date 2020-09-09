@@ -211,8 +211,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard.cfg'
 
-            // TODO(KurobaEx-release-1): remove this some time in the future before first release
-            debuggable = true
+            debuggable = false
         }
         debug {
             File f = file('debug.properties')
