@@ -126,7 +126,10 @@ public class DvachReplyCall extends CommonReplyHttpCall {
             return;
         }
 
-        replyResponse.posted = true;
+        if (!response.isSuccessful()) {
+            replyResponse.errorMessage = "Failed to post, bad response status code" + response.code();
+            return;
+        }
 
         Matcher postMessageMatcher = POST_MESSAGE.matcher(result);
         if (postMessageMatcher.find()) {
@@ -135,17 +138,21 @@ public class DvachReplyCall extends CommonReplyHttpCall {
             }
 
             replyResponse.postNo = Integer.parseInt(postMessageMatcher.group(1));
+            replyResponse.posted = true;
             return;
         }
 
         Matcher threadMessageMatcher = THREAD_MESSAGE.matcher(result);
         if (threadMessageMatcher.find()) {
             int threadNo = Integer.parseInt(threadMessageMatcher.group(1));
+
             replyResponse.threadNo = threadNo;
             replyResponse.postNo = threadNo;
+            replyResponse.posted = true;
             return;
         }
 
         Logger.e(TAG, "Couldn't handle server response! response = \"" + result + "\"");
+        replyResponse.errorMessage = "Failed to post, see the logs for more info";
     }
 }
