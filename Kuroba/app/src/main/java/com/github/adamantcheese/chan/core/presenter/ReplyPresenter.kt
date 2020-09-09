@@ -21,6 +21,7 @@ import android.text.TextUtils
 import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.core.base.Debouncer
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
@@ -73,13 +74,14 @@ class ReplyPresenter @Inject constructor(
   private var chanDescriptor: ChanDescriptor? = null
   private var previewOpen = false
   private var pickingFile = false
-  private var selectedQuote = -1
 
   private val job = SupervisorJob()
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var draft: Reply
   private lateinit var chanBoard: ChanBoard
   private lateinit var site: Site
+
+  private val highlightQuotesDebouncer = Debouncer(false)
 
   var isExpanded = false
     private set
@@ -452,8 +454,8 @@ class ReplyPresenter @Inject constructor(
   private fun closeAll() {
     isExpanded = false
     previewOpen = false
-    selectedQuote = -1
 
+    callback.highlightPostNos(emptySet())
     callback.openMessage(null)
     callback.setExpanded(false)
     callback.openSubject(false)
@@ -685,25 +687,19 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun highlightQuotes() {
-    val matcher = QUOTE_PATTERN.matcher(draft.comment)
+    highlightQuotesDebouncer.post({
+      val matcher = QUOTE_PATTERN.matcher(draft.comment)
 
-    // Find all occurrences of >>\d+ with start and end between selectionStart
-    var no = -1
+      // Find all occurrences of >>\d+ with start and end between selectionStart
+      val selectedQuotes = mutableSetOf<Long>()
 
-    while (matcher.find()) {
-      val selectStart = callback.selectionStart
-
-      if (matcher.start() <= selectStart && matcher.end() >= selectStart - 1) {
+      while (matcher.find()) {
         val quote = matcher.group().substring(2)
-        no = quote.toIntOrNull() ?: -1
+        selectedQuotes += quote.toLongOrNull() ?: continue
       }
-    }
 
-    // Allow no = -1 removing the highlight
-    if (no != selectedQuote) {
-      selectedQuote = no
-      callback.highlightPostNo(no)
-    }
+      callback.highlightPostNos(selectedQuotes)
+    }, 250)
   }
 
   private fun showPreview(name: String, file: File?) {
@@ -793,7 +789,7 @@ class ReplyPresenter @Inject constructor(
     fun openPreview(show: Boolean, previewFile: File?)
     fun openPreviewMessage(show: Boolean, message: String?)
     fun openSpoiler(show: Boolean, setUnchecked: Boolean)
-    fun highlightPostNo(no: Int)
+    fun highlightPostNos(postNos: Set<Long>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
     fun onUploadingProgress(percent: Int)

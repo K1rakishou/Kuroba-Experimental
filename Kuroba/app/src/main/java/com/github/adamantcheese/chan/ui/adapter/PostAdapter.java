@@ -84,7 +84,7 @@ public class PostAdapter
     private String error = null;
     private Post highlightedPost;
     private String highlightedPostId;
-    private int highlightedPostNo = -1;
+    private Set<Long> highlightedPostNo = new HashSet<>();
     private CharSequence highlightedPostTripcode;
     private long selectedPost = -1L;
     private int lastSeenIndicatorPosition = -1;
@@ -217,7 +217,7 @@ public class PostAdapter
     private boolean shouldHighlightPost(Post post) {
         return post == highlightedPost
                 || post.posterId.equals(highlightedPostId)
-                || post.no == highlightedPostNo
+                || highlightedPostNo.contains(post.no)
                 || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
     }
 
@@ -418,7 +418,7 @@ public class PostAdapter
     public void cleanup() {
         highlightedPost = null;
         highlightedPostId = null;
-        highlightedPostNo = -1;
+        highlightedPostNo.clear();
         highlightedPostTripcode = null;
 
         selectedPost = -1L;
@@ -450,7 +450,7 @@ public class PostAdapter
     public void highlightPost(Post post) {
         highlightedPost = post;
         highlightedPostId = null;
-        highlightedPostNo = -1;
+        highlightedPostNo.clear();
         highlightedPostTripcode = null;
         notifyDataSetChanged();
     }
@@ -458,7 +458,7 @@ public class PostAdapter
     public void highlightPostId(String id) {
         highlightedPost = null;
         highlightedPostId = id;
-        highlightedPostNo = -1;
+        highlightedPostNo.clear();
         highlightedPostTripcode = null;
         notifyDataSetChanged();
     }
@@ -466,15 +466,16 @@ public class PostAdapter
     public void highlightPostTripcode(CharSequence tripcode) {
         highlightedPost = null;
         highlightedPostId = null;
-        highlightedPostNo = -1;
+        highlightedPostNo.clear();
         highlightedPostTripcode = tripcode;
         notifyDataSetChanged();
     }
 
-    public void highlightPostNo(int no) {
+    public void highlightPostNos(Set<Long> postNos) {
         highlightedPost = null;
         highlightedPostId = null;
-        highlightedPostNo = no;
+        highlightedPostNo.clear();
+        highlightedPostNo.addAll(postNos);
         highlightedPostTripcode = null;
         notifyDataSetChanged();
     }

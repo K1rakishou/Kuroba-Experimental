@@ -36,6 +36,7 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
+import com.github.adamantcheese.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
 import com.github.adamantcheese.chan.core.manager.PostHideManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
@@ -110,6 +111,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var postHideManager: PostHideManager
+  @Inject
+  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -227,18 +230,24 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun openReplyInternal(openReplyLayout: Boolean): Boolean {
-    if (openReplyLayout) {
-      val supportsPosting = presenter.chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
-        return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
-      } ?: false
-
-      if (!supportsPosting) {
-        AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
-        return false
-      }
+    if (openReplyLayout && !canOpenReplyLayout()) {
+      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
+      return false
     }
 
     threadListLayout.openReply(openReplyLayout)
+    return true
+  }
+
+  fun canOpenReplyLayout(): Boolean {
+    val supportsPosting = presenter.chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
+      return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
+    } ?: false
+
+    if (!supportsPosting) {
+      return false
+    }
+
     return true
   }
 
@@ -512,19 +521,43 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun quote(post: Post, withText: Boolean) {
-    if (!openReplyInternal(true)) {
+    if (!canOpenReplyLayout()) {
+      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
       return
     }
 
-    threadListLayout.replyPresenter.quote(post, withText)
+    val descriptor = chanDescriptor
+      ?: return
+
+    bottomNavBarVisibilityStateManager.replyViewStateChanged(
+      descriptor.isCatalogDescriptor(),
+      true
+    )
+
+    postDelayed({
+      openReplyInternal(true)
+      threadListLayout.replyPresenter.quote(post, withText)
+    }, 100L)
   }
 
   override fun quote(post: Post, text: CharSequence) {
-    if (!openReplyInternal(true)) {
+    if (!canOpenReplyLayout()) {
+      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
       return
     }
 
-    threadListLayout.replyPresenter.quote(post, text)
+    val descriptor = chanDescriptor
+      ?: return
+
+    bottomNavBarVisibilityStateManager.replyViewStateChanged(
+      descriptor.isCatalogDescriptor(),
+      true
+    )
+
+    postDelayed({
+      openReplyInternal(true)
+      threadListLayout.replyPresenter.quote(post, text)
+    }, 100L)
   }
 
   @Suppress("MoveLambdaOutsideParentheses")

@@ -767,8 +767,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.selectPost(post)
   }
 
-  override fun highlightPostNo(no: Int) {
-    postAdapter.highlightPostNo(no)
+  override fun highlightPostNos(postNos: Set<Long>) {
+    postAdapter.highlightPostNos(postNos)
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {

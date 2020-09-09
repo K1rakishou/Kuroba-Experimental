@@ -86,6 +86,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -889,8 +890,8 @@ public class ReplyLayout
     }
 
     @Override
-    public void highlightPostNo(int no) {
-        callback.highlightPostNo(no);
+    public void highlightPostNos(Set<Long> postNos) {
+        callback.highlightPostNos(postNos);
     }
 
     @Override
@@ -1108,7 +1109,7 @@ public class ReplyLayout
     }
 
     public interface ReplyLayoutCallback {
-        void highlightPostNo(int no);
+        void highlightPostNos(Set<Long> postNos);
 
         void openReply(boolean open);
 
