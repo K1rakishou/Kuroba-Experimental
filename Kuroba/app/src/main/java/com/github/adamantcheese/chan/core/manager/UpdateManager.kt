@@ -68,7 +68,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * The APK files are downloaded to the public Download directory, and the default APK install
  * screen is launched after downloading.
- */
+ */ 
 class UpdateManager(
   private val context: Context
 ) : CoroutineScope {
