@@ -21,9 +21,9 @@ install:
 script: 
   - cd Kuroba || travis_terminate 1;
   - chmod +x gradlew || travis_terminate 2;
-  - ./gradlew assembleDevDebug --console plain -x lint || travis_terminate 3;
-  - ./gradlew test || travis_terminate 4;
-#  - python3 upload_apk.py http://94.140.116.243:8080 multi-feature || travis_terminate 5;
+  - ./gradlew assembleBetaDebug --console plain -x lint || travis_terminate 3;
+#  - ./gradlew test || travis_terminate 4;
+  - python3 upload_apk.py http://94.140.116.243:8080 beta || travis_terminate 5;
 
 notifications:
   email: false
