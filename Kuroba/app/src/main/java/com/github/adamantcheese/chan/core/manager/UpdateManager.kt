@@ -186,6 +186,7 @@ class UpdateManager(
       withContext(Dispatchers.Main) {
         when (response) {
           is JsonReaderRequest.JsonReaderResponse.Success -> {
+            Logger.d(TAG, "BetaUpdateApiRequest success")
             onSuccessfullyGotLatestApkUuid(response.result, manual)
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
@@ -278,6 +279,8 @@ class UpdateManager(
       withContext(Dispatchers.Main) {
         when (response) {
           is JsonReaderRequest.JsonReaderResponse.Success -> {
+            Logger.d(TAG, "ReleaseUpdateApiRequest success")
+
             if (
               !processUpdateApiResponse(response.result, manual)
               && manual
