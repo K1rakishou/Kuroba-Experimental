@@ -102,10 +102,8 @@ class UpdateManager(
   fun autoUpdateCheck() {
     BackgroundUtils.ensureMainThread()
 
-    // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
-    //  to make beta builds
-    if (!isStableBuild()) {
-      Logger.d(TAG, "Updater is disabled for beta/dev builds!")
+    if (isDevBuild()) {
+      Logger.d(TAG, "Updater is disabled for dev builds!")
       return
     }
 
@@ -127,9 +125,7 @@ class UpdateManager(
   }
 
   fun manualUpdateCheck() {
-    // TODO(KurobaEx): change this to isReleaseOrBeta build when we have infrastructure
-    //  to make beta builds
-    if (!isStableBuild()) {
+    if (isDevBuild()) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
       return
     }
