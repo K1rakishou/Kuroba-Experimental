@@ -385,17 +385,13 @@ class UpdateManager(
   }
 
   private fun notifyNewApkUpdate() {
-    launch(Dispatchers.Main) {
-      PersistableChanState.hasNewApkUpdate.set(true)
-      settingsNotificationManager.notify(SettingNotificationType.ApkUpdate)
-    }
+    PersistableChanState.hasNewApkUpdate.set(true)
+    settingsNotificationManager.notify(SettingNotificationType.ApkUpdate)
   }
 
   private fun cancelApkUpdateNotification() {
-    launch(Dispatchers.Main) {
-      PersistableChanState.hasNewApkUpdate.set(false)
-      settingsNotificationManager.cancel(SettingNotificationType.ApkUpdate)
-    }
+    PersistableChanState.hasNewApkUpdate.set(false)
+    settingsNotificationManager.cancel(SettingNotificationType.ApkUpdate)
   }
 
   @Suppress("ConstantConditionIf")
@@ -584,6 +580,8 @@ class UpdateManager(
     if (!BackgroundUtils.isInForeground()) {
       return
     }
+
+    cancelApkUpdateNotification()
 
     // First open the dialog that asks to retry and calls this method again.
     AlertDialog.Builder(context)
