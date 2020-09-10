@@ -21,6 +21,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BoardsSetupController(
@@ -102,6 +103,10 @@ class BoardsSetupController(
     super.onDestroy()
 
     presenter.onDestroy()
+  }
+
+  override fun onBoardsLoaded() {
+    mainScope.launch { showToast(R.string.controller_boards_setup_boards_updated) }
   }
 
   private fun onStateChanged(state: BoardsSetupControllerState) {

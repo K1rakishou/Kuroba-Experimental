@@ -83,6 +83,8 @@ class BoardsSetupPresenter(
           return@launch
         }
 
+      withViewNormal { onBoardsLoaded() }
+
       displayActiveBoardsInternal()
       boardInfoLoaded.set(true)
     }
