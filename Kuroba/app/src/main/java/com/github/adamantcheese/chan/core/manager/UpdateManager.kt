@@ -96,6 +96,13 @@ class UpdateManager(
     inject(this)
   }
 
+  fun onDestroy() {
+    job.cancelChildren()
+
+    cancelableDownload?.cancel()
+    cancelableDownload = null
+  }
+
   /**
    * Runs every time onCreate is called on the StartActivity.
    */
@@ -657,11 +664,6 @@ class UpdateManager(
         updateInstallRequested(responseRelease)
       }
     }
-  }
-
-  fun onDestroy() {
-    cancelableDownload?.cancel()
-    cancelableDownload = null
   }
 
   companion object {

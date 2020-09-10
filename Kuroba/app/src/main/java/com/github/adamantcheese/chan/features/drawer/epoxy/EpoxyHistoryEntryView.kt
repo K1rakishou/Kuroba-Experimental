@@ -59,6 +59,9 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
     threadThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
     siteThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_site_image_size).toInt()
+
+    threadThumbnailImage.visibility = View.GONE
+    siteThumbnailImage.visibility = View.GONE
   }
 
   @ModelProp(ModelProp.Option.DoNotHash)
@@ -121,8 +124,16 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   @OnViewRecycled
   fun onRecycled() {
-    disposeRequest()
+    threadImageRequestDisposable?.dispose()
+    threadImageRequestDisposable = null
+
+    siteImageRequestDisposable?.dispose()
+    siteImageRequestDisposable = null
+
     imagesLoaderRequestData = null
+
+    threadThumbnailImage.setImageBitmap(null)
+    siteThumbnailImage.setImageBitmap(null)
   }
 
   @AfterPropsSet
@@ -141,7 +152,10 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
         threadThumbnailImageSize,
         threadThumbnailImageSize,
         listOf(CIRCLE_CROP),
-        { drawable -> threadThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+        { drawable ->
+          threadThumbnailImageRef.get()?.visibility = View.VISIBLE
+          threadThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
+        }
       )
     }
 
@@ -155,17 +169,12 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
         siteThumbnailImageSize,
         siteThumbnailImageSize,
         listOf(CIRCLE_CROP),
-        { drawable -> siteThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
+        { drawable ->
+          siteThumbnailImageRef.get()?.visibility = View.VISIBLE
+          siteThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
+        }
       )
     }
-  }
-
-  private fun disposeRequest() {
-    threadImageRequestDisposable?.dispose()
-    threadImageRequestDisposable = null
-
-    siteImageRequestDisposable?.dispose()
-    siteImageRequestDisposable = null
   }
 
   data class ImagesLoaderRequestData(
