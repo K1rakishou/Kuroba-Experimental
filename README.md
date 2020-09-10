@@ -30,7 +30,6 @@ All beta versions - https://kuroba.io:8443/apks/0
 Release versions are not available yet, but you will be able to find them here - https://github.com/K1rakishou/Kuroba-Experimental/releases
 
 ##### Currently supported sites
-Sites are supported on a PR basis. You want the site, you do the work.
 - 4Chan
 - Dvach
 - 8Kun (thanks to @jirn073-76)
@@ -41,4 +40,4 @@ Sites are supported on a PR basis. You want the site, you do the work.
 - ArchivedMoe (partially)
 
 ## License
-[Kuroba is GPLv3](https://github.com/Adamantcheese/Kuroba/blob/multi-feature/COPYING.txt), [licenses of the used libraries.](https://github.com/Adamantcheese/Kuroba/blob/multi-feature/Kuroba/app/src/main/assets/html/licenses.html)
+[Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)
