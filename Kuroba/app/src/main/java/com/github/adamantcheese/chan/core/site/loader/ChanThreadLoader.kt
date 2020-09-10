@@ -129,11 +129,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       }
     }
 
-  /**
-   * **Do not call this constructor yourself, obtain ChanLoaders through [ChanLoaderManager]**
-   * Also, do not use feather().instance(WatchManager.class) here because it will create a cyclic
-   * dependency instantiation
-   */
   init {
     inject(this)
   }
