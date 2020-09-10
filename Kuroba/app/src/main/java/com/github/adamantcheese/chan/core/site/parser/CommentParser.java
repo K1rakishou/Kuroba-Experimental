@@ -469,7 +469,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         String href = extractQuote(anchor.attr("href"), post);
         Matcher externalMatcher = matchExternalQuote(href, post);
 
-        if (externalMatcher.matches()) {
+        if (externalMatcher.find()) {
             String board = externalMatcher.group(1);
             long threadId = Long.parseLong(externalMatcher.group(2));
             long postId = Long.parseLong(externalMatcher.group(3));

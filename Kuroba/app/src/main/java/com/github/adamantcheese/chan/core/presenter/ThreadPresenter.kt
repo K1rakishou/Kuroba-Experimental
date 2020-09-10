@@ -1116,7 +1116,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        val boardDescriptor = BoardDescriptor.create(siteName, searchLink.toString())
+        val boardDescriptor = BoardDescriptor.create(siteName, searchLink.board)
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board == null) {

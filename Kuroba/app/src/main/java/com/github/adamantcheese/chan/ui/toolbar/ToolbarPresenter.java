@@ -116,10 +116,17 @@ public class ToolbarPresenter {
     }
 
     void openSearch() {
-        openSearch(null);
+        openSearch(null, null);
     }
 
-    void openSearch(@Nullable String input) {
+    void openSearch(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
+        openSearch(null, listener);
+    }
+
+    void openSearch(
+            @Nullable String input,
+            @Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener
+    ) {
         if (item == null || item.search) {
             return;
         }
@@ -129,7 +136,7 @@ public class ToolbarPresenter {
         item.searchText = input;
         item.search = true;
 
-        callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
+        callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE, listener);
         callback.onSearchVisibilityChanged(item, true);
     }
 

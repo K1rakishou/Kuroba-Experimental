@@ -766,9 +766,10 @@ class BrowseController(context: Context) : ThreadController(context),
     super.onSlideChanged(leftOpen)
 
     if (searchQuery != null) {
-      toolbar!!.openSearch(searchQuery)
-      toolbar!!.searchInput(searchQuery)
-      searchQuery = null
+      toolbar!!.openSearchWithCallback {
+        toolbar!!.searchInput(searchQuery)
+        searchQuery = null
+      }
     }
 
     if (chanDescriptor != null) {

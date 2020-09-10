@@ -209,9 +209,8 @@ class ChanThreadLoaderCoordinator(
   }
 
   companion object {
-    private const val TAG = "ChanLoaderRequestExecutor"
+    private const val TAG = "ChanThreadLoaderCoordinator"
     private const val threadFactoryName = "post_parser_thread_%d"
-    private const val NOT_FOUND = 404
 
     private val THREAD_COUNT = Runtime.getRuntime().availableProcessors()
     private val threadIndex = AtomicInteger(0)

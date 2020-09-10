@@ -42,7 +42,7 @@ public abstract class ToolbarNavigationController extends NavigationController i
     }
 
     public void showSearch() {
-        toolbar.openSearch();
+        toolbar.openSearchWithQuery(null);
     }
 
     @Override

@@ -346,12 +346,12 @@ public class Toolbar
         }
     }
 
-    public void openSearch() {
-        presenter.openSearch();
+    public void openSearchWithCallback(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
+        presenter.openSearch(listener);
     }
 
-    public void openSearch(@Nullable String input) {
-        presenter.openSearch(input);
+    public void openSearchWithQuery(@Nullable String query) {
+        presenter.openSearch(query, null);
     }
 
     public boolean closeSearch() {

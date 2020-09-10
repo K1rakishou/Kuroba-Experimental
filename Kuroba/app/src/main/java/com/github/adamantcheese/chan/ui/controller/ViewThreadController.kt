@@ -501,18 +501,18 @@ open class ViewThreadController(
   }
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {
-    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $searchQuery)")
+    Logger.d(TAG, "showBoardInternal($boardDescriptor, $searchQuery)")
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
-      // slide layout
-      doubleNavigationController!!.switchToController(true)
-
       val browseController = doubleNavigationController!!.leftController as BrowseController
       browseController.setBoard(boardDescriptor)
       if (searchQuery != null) {
         browseController.searchQuery = searchQuery
       }
+
+      // slide layout
+      doubleNavigationController!!.switchToController(true)
 
       return
     }
@@ -523,10 +523,8 @@ open class ViewThreadController(
       browseController.setBoard(boardDescriptor)
 
       if (searchQuery != null) {
-        val toolbar = browseController.toolbar
-        if (toolbar != null) {
-          toolbar.openSearch()
-          toolbar.searchInput(searchQuery)
+        browseController.toolbar?.let { toolbar ->
+          toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
         }
       }
 
@@ -542,15 +540,15 @@ open class ViewThreadController(
       }
     }
 
-    browseController!!.setBoard(boardDescriptor)
-    requireNavController().popController(false)
+    if (browseController != null) {
+      browseController.setBoard(boardDescriptor)
+      requireNavController().popController(false)
 
-    // search after we're at the browse controller
-    if (searchQuery != null && browseController != null) {
-      val toolbar = browseController.toolbar
-      if (toolbar != null) {
-        toolbar.openSearch()
-        toolbar.searchInput(searchQuery)
+      // search after we're at the browse controller
+      if (searchQuery != null) {
+        browseController.toolbar?.let { toolbar ->
+          toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
+        }
       }
     }
   }

@@ -46,7 +46,6 @@ import com.github.adamantcheese.chan.ui.theme.ArrowMenuDrawable;
 import com.github.adamantcheese.chan.ui.theme.DropdownArrowDrawable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
@@ -323,11 +322,6 @@ public class ToolbarContainer extends FrameLayout {
         AtomicInteger animationsCount = new AtomicInteger(3);
         AtomicBoolean listenerCalled = new AtomicBoolean(false);
 
-        Logger.d(TAG, "setFadeAnimation() called, " +
-                "newView==null: " + (newView == null) + ", " +
-                "previousView==null: " + (previousView == null) + ", " +
-                "listener==null: " + (listener == null));
-
         // Previous animation
         ValueAnimator previousAnimation = ObjectAnimator.ofFloat(previousView.view, View.ALPHA, 1f, 0f);
         previousAnimation.setDuration(ANIMATION_DURATION);
@@ -338,18 +332,10 @@ public class ToolbarContainer extends FrameLayout {
                 removeItem(previousView);
                 ToolbarContainer.this.previousView = null;
 
-                Logger.d(TAG, "setFadeAnimation() previousAnimation " +
-                        "onAnimationEndInternal(end==true: " + end + "), " +
-                        "animationsCount=" + animationsCount.get() + ", " +
-                        "listenerCalled=" + listenerCalled.get());
-
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
-                        Logger.d(TAG, "setFadeAnimation() previousAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
-                    } else {
-                        Logger.d(TAG, "setFadeAnimation() previousAnimation onAnimationEnded is null");
                     }
                 }
             }
@@ -377,18 +363,10 @@ public class ToolbarContainer extends FrameLayout {
             private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
 
-                Logger.d(TAG, "setFadeAnimation() newAnimation " +
-                        "onAnimationEndInternal(end==true: " + end + "), " +
-                        "animationsCount=" + animationsCount.get() + ", " +
-                        "listenerCalled=" + listenerCalled.get());
-
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
-                        Logger.d(TAG, "setFadeAnimation() newAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
-                    } else {
-                        Logger.d(TAG, "setFadeAnimation() newAnimation onAnimationEnded is null");
                     }
                 }
             }
@@ -422,18 +400,10 @@ public class ToolbarContainer extends FrameLayout {
             private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
 
-                Logger.d(TAG, "setFadeAnimation() arrowAnimation " +
-                        "onAnimationEndInternal(end==true: " + end + "), " +
-                        "animationsCount=" + animationsCount.get() + ", " +
-                        "listenerCalled=" + listenerCalled.get());
-
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
-                        Logger.d(TAG, "setFadeAnimation() arrowAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
-                    } else {
-                        Logger.d(TAG, "setFadeAnimation() arrowAnimation onAnimationEnded is null");
                     }
                 }
             }
@@ -464,12 +434,6 @@ public class ToolbarContainer extends FrameLayout {
         AtomicInteger animationsCount = new AtomicInteger(2);
         AtomicBoolean listenerCalled = new AtomicBoolean(false);
 
-        Logger.d(TAG, "setPushPopAnimation() called, " +
-                "newView==null: " + (newView == null) + ", " +
-                "previousView==null: " + (previousView == null) + ", " +
-                "listener==null: " + (listener == null) + ", " +
-                "animationStyle=" + animationStyle.name());
-
         // Previous animation
         ValueAnimator previousAnimation = getShortAnimator();
         previousAnimation.addUpdateListener(a -> {
@@ -482,18 +446,10 @@ public class ToolbarContainer extends FrameLayout {
                 removeItem(previousView);
                 ToolbarContainer.this.previousView = null;
 
-                Logger.d(TAG, "setPushPopAnimation() previousAnimation " +
-                        "onAnimationEndInternal(end==true: " + end + "), " +
-                        "animationsCount=" + animationsCount.get() + ", " +
-                        "listenerCalled=" + listenerCalled.get());
-
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
-                        Logger.d(TAG, "setPushPopAnimation() previousAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
-                    } else {
-                        Logger.d(TAG, "setPushPopAnimation() previousAnimation onAnimationEnded is null");
                     }
                 }
             }
@@ -531,18 +487,10 @@ public class ToolbarContainer extends FrameLayout {
             private void onAnimationEndInternal(boolean end) {
                 animatorSet.remove(newView.view);
 
-                Logger.d(TAG, "setPushPopAnimation() newAnimation " +
-                        "onAnimationEndInternal(end==true: " + end + "), " +
-                        "animationsCount=" + animationsCount.get() + ", " +
-                        "listenerCalled=" + listenerCalled.get());
-
                 if (animationsCount.decrementAndGet() <= 0
                         && listenerCalled.compareAndSet(false, true)) {
                     if (listener != null) {
-                        Logger.d(TAG, "setPushPopAnimation() newAnimation calling onAnimationEnded");
                         listener.onAnimationEnded();
-                    } else {
-                        Logger.d(TAG, "setPushPopAnimation() newAnimation onAnimationEnded is null");
                     }
                 }
             }
