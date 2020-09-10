@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager
+import com.github.adamantcheese.chan.core.manager.SettingsNotificationManager
 import com.github.adamantcheese.chan.core.manager.WindowInsetsListener
 import com.github.adamantcheese.chan.core.navigation.HasNavigation
 import com.github.adamantcheese.chan.core.settings.ChanSettings
@@ -76,6 +77,8 @@ class DrawerController(
   lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var settingsNotificationManager: SettingsNotificationManager
 
   private lateinit var rootLayout: FrameLayout
   private lateinit var container: FrameLayout
@@ -197,6 +200,9 @@ class DrawerController(
           Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForBookmarksBadgeStateChanges()", error)
         }
       )
+
+    compositeDisposable += settingsNotificationManager.listenForNotificationUpdates()
+      .subscribe { onSettingsNotificationChanged() }
 
     // Must be called after drawerPresenter.listenForStateChanges() so it receives the "Loading"
     // state as well as other states
@@ -454,25 +460,46 @@ class DrawerController(
   }
 
   private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
-    if (state.totalUnseenPostsCount > 0) {
-      val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
-
-      badgeDrawable.maxCharacterCount = BADGE_COUNTER_MAX_NUMBERS
-      badgeDrawable.number = state.totalUnseenPostsCount
-
-      if (state.hasUnreadReplies) {
-        badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
-      } else {
-        badgeDrawable.backgroundColor = themeHelper.theme.backColor
+    if (state.totalUnseenPostsCount <= 0) {
+      if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
+        bottomNavView.removeBadge(R.id.action_bookmarks)
       }
 
-      badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
       return
     }
 
-    if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
-      bottomNavView.removeBadge(R.id.action_bookmarks)
+    val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
+
+    badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
+    badgeDrawable.number = state.totalUnseenPostsCount
+
+    if (state.hasUnreadReplies) {
+      badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
+    } else {
+      badgeDrawable.backgroundColor = themeHelper.theme.backColor
     }
+
+    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+  }
+
+  private fun onSettingsNotificationChanged() {
+    val notificationsCount = settingsNotificationManager.count()
+
+    if (notificationsCount <= 0) {
+      if (bottomNavView.getBadge(R.id.action_settings) != null) {
+        bottomNavView.removeBadge(R.id.action_settings)
+      }
+
+      return
+    }
+
+    val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_settings)
+
+    badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
+    badgeDrawable.number = notificationsCount
+
+    badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
+    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {
@@ -567,6 +594,7 @@ class DrawerController(
 
   companion object {
     private const val TAG = "DrawerController"
-    private const val BADGE_COUNTER_MAX_NUMBERS = 5
+    private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
+    private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
   }
 }
