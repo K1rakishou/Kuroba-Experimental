@@ -29,12 +29,10 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.chan.utils.StringUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.ModularResult.Companion.error
-import com.github.adamantcheese.common.ModularResult.Companion.value
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.google.gson.Gson
@@ -211,32 +209,24 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   }
 
   private fun requestMoreDataInternal(): Disposable {
-    val getDataResult = Single.fromCallable {
-      val requestJob = getData()
-        ?: return@fromCallable error<Job>(ThreadAlreadyArchivedException())
-
-      return@fromCallable value(requestJob)
+    return Single.fromCallable {
+      return@fromCallable Try { getData() }
+        .peekError { requestJob = null }
     }
-
-    return getDataResult
       .subscribeOn(backgroundScheduler)
       .observeOn(AndroidSchedulers.mainThread())
       .subscribe({ result ->
         when (result) {
-          is ModularResult.Value -> requestJob = result.value
-          is ModularResult.Error -> handleErrorResult(result.error)
+          is ModularResult.Value -> {
+            // no-op
+          }
+          is ModularResult.Error -> {
+            notifyAboutError(ChanLoaderException(result.error))
+          }
         }
       }, { error ->
         notifyAboutError(ChanLoaderException(error))
       })
-  }
-
-  private fun handleErrorResult(error: Throwable) {
-    if (error is ThreadAlreadyArchivedException) {
-      return
-    }
-
-    notifyAboutError(ChanLoaderException(error))
   }
 
   /**
@@ -324,24 +314,30 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     clearPendingRunnable()
   }
 
-  private fun getData(): Job? {
+  @Synchronized
+  private fun getData() {
     BackgroundUtils.ensureBackgroundThread()
+
+    if (requestJob != null) {
+      return
+    }
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        Logger.d(TAG, "Requested thread /" + chanDescriptor.boardCode() + "/, " + StringUtils.maskPostNo(chanDescriptor.threadNo))
+        Logger.d(TAG, "Requested thread /${chanDescriptor}/")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        Logger.d(TAG, "Requested catalog /" + chanDescriptor.boardCode() + "/")
+        Logger.d(TAG, "Requested catalog /${chanDescriptor}/")
       }
     }
 
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
-
       onErrorResponse(ChanLoaderException(error))
-      return null
+
+      requestJob = null
+      return
     }
 
     val chanReader = site.chanReader()
@@ -349,7 +345,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     val requestParams = ChanLoaderRequestParams(
       chanDescriptor,
       chanReader,
-      synchronized(this) { thread?.posts ?: ArrayList() }
+      thread?.posts ?: ArrayList()
     )
 
     val url = getChanUrl(site, chanDescriptor).toString()
@@ -359,7 +355,9 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
-    return chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
+    requestJob = chanThreadLoaderCoordinator.loadThread(url, requestParams) { chanLoaderResponseResult ->
+      requestJob = null
+
       when (chanLoaderResponseResult) {
         is ModularResult.Value -> {
           val chanLoaderResponse = when (val threadLoadResult = chanLoaderResponseResult.value) {
@@ -385,8 +383,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   }
 
   private suspend fun onResponse(response: ChanLoaderResponse) {
-    requestJob = null
-
     try {
       onResponseInternal(response)
     } catch (error: Throwable) {
@@ -480,8 +476,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   }
 
   private fun onErrorResponse(error: ChanLoaderException) {
-    requestJob = null
-
     if (error.isCoroutineCancellationError()) {
       Logger.d(TAG, "Request canceled")
       return
@@ -517,8 +511,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     suspend fun onChanLoaderData(result: ChanThread)
     fun onChanLoaderError(error: ChanLoaderException)
   }
-
-  private class ThreadAlreadyArchivedException : Exception("Thread already archived")
 
   companion object {
     private const val TAG = "ChanThreadLoader"
