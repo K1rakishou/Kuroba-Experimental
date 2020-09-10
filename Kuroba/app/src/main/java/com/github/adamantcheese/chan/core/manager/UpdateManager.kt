@@ -58,7 +58,6 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -236,20 +235,9 @@ class UpdateManager(
         return
       }
 
-      //new version or commit, update
-      val versionCodeStringMatcher = VERSION_CODE_PATTERN.matcher(versionCode.toString())
-      if (!versionCodeStringMatcher.matches()) {
-        // to reuse the failed code below
-        throw Exception("Failed to find version code string in \"${versionCode}\"")
-      }
-
       val fauxResponse = ReleaseUpdateApiResponse()
       fauxResponse.versionCode = versionCode
-      fauxResponse.versionCodeString = calculateVersionCodeString(
-        versionCodeStringMatcher,
-        commitHash
-      )
-
+      fauxResponse.versionCodeString = "v$versionCode"
       fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
       fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
 
@@ -259,14 +247,6 @@ class UpdateManager(
       Logger.e(TAG, "onSuccessfullyGotLatestApkUuid unknown error", e)
       failedUpdate(manual)
     }
-  }
-
-  @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-  private fun calculateVersionCodeString(versionCodeStringMatcher: Matcher, commitHash: String): String {
-    return ("v" + Integer.valueOf(versionCodeStringMatcher.group(1))
-      + "." + Integer.valueOf(versionCodeStringMatcher.group(2))
-      + "." + Integer.valueOf(versionCodeStringMatcher.group(3))
-      + "-" + commitHash.substring(0, 7))
   }
 
   private suspend fun updateRelease(manual: Boolean) {
