@@ -28,6 +28,7 @@ import com.github.adamantcheese.model.entity.navigation.NavHistoryElementInfoEnt
 import com.github.adamantcheese.model.entity.view.ChanThreadsWithPosts
 import com.github.adamantcheese.model.entity.view.OldChanPostThread
 import com.github.adamantcheese.model.migrations.Migration_v1_to_v2
+import com.github.adamantcheese.model.migrations.Migration_v2_to_v3
 
 @Database(
   entities = [
@@ -60,7 +61,7 @@ import com.github.adamantcheese.model.migrations.Migration_v1_to_v2
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 2,
+  version = 3,
   exportSchema = true
 )
 @TypeConverters(
@@ -124,7 +125,8 @@ abstract class KurobaDatabase : RoomDatabase() {
         DATABASE_NAME
       )
         .addMigrations(
-          Migration_v1_to_v2()
+          Migration_v1_to_v2(),
+          Migration_v2_to_v3()
         )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()
