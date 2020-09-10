@@ -187,6 +187,10 @@ public class AndroidUtils {
         return getFlavorType() == FlavorType.Dev;
     }
 
+    public static boolean isBetaBuild() {
+        return getFlavorType() == FlavorType.Beta;
+    }
+
     public static FlavorType getFlavorType() {
         switch (BuildConfig.FLAVOR_TYPE) {
             case 0:

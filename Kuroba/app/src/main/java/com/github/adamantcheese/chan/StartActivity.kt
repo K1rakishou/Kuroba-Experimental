@@ -224,8 +224,11 @@ class StartActivity : AppCompatActivity(),
     showAppBetaVersionWarning()
   }
 
-  // TODO(KurobaEx): remove some time in the future
   private fun showAppBetaVersionWarning() {
+    if (!AndroidUtils.isBetaBuild()) {
+      return
+    }
+
     if (PersistableChanState.appBetaVersionWarningShown.get()) {
       return
     }
