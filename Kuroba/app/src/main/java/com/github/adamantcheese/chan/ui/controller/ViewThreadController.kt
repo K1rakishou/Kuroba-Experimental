@@ -469,11 +469,15 @@ open class ViewThreadController(
   override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
     Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
 
+    val fullThreadName = threadToOpenDescriptor.siteName() + "/" +
+      threadToOpenDescriptor.boardCode() + "/" +
+      threadToOpenDescriptor.threadNo
+
     AlertDialog.Builder(context)
       .setNegativeButton(R.string.cancel, null)
       .setPositiveButton(R.string.ok) { _, _ -> showExternalThreadInternal(threadToOpenDescriptor) }
       .setTitle(R.string.open_thread_confirmation)
-      .setMessage("/" + threadToOpenDescriptor.boardCode() + "/" + threadToOpenDescriptor.threadNo)
+      .setMessage(fullThreadName)
       .show()
   }
 
