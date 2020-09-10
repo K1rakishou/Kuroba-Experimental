@@ -237,7 +237,7 @@ class UpdateManager(
 
       val fauxResponse = ReleaseUpdateApiResponse()
       fauxResponse.versionCode = versionCode
-      fauxResponse.versionCodeString = "v$versionCode"
+      fauxResponse.versionCodeString = "v$versionCode-$commitHash"
       fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
       fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
 
