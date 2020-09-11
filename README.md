@@ -27,7 +27,10 @@ Latest beta version - https://kuroba.io:8443/latest_apk
 
 All beta versions - https://kuroba.io:8443/apks/0
 
-Release versions are not available yet, but you will be able to find them here - https://github.com/K1rakishou/Kuroba-Experimental/releases
+Release version is not available yet, but you will be able to find it here - https://github.com/K1rakishou/Kuroba-Experimental/releases
+F-Droid version will be available at the same time.
+
+Both of them should be ready by September 25th.
 
 ##### Currently supported sites
 - 4Chan
