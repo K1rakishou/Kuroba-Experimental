@@ -6,7 +6,8 @@ import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
 import coil.network.HttpException
-import coil.request.LoadRequest
+import coil.request.Disposable
+import coil.request.ImageRequest
 import coil.request.RequestDisposable
 import coil.size.Scale
 import coil.transform.Transformation
@@ -30,7 +31,7 @@ class ImageLoaderV2(
     context: Context,
     requestUrl: String,
     listener: ImageListener
-  ): RequestDisposable {
+  ): Disposable {
     BackgroundUtils.ensureMainThread()
     return loadFromNetwork(context, requestUrl, null, null, listener)
   }
@@ -44,7 +45,7 @@ class ImageLoaderV2(
     listener: SimpleImageListener,
     @DrawableRes errorDrawableId: Int? = null,
     @DrawableRes notFoundDrawableId: Int? = errorDrawableId
-  ): RequestDisposable {
+  ): Disposable {
     val listenerRef = AtomicReference(listener)
     val contextRef = AtomicReference(context)
     val lifecycle = context.getLifecycleFromContext()
@@ -53,7 +54,7 @@ class ImageLoaderV2(
       Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
     }
 
-    val request = with(LoadRequest.Builder(context)) {
+    val request = with(ImageRequest.Builder(context)) {
       if (url != null) {
         data(url)
       } else {
@@ -115,7 +116,7 @@ class ImageLoaderV2(
       build()
     }
 
-    return imageLoader.execute(request)
+    return imageLoader.enqueue(request)
   }
 
   fun loadFromResources(
@@ -134,7 +135,7 @@ class ImageLoaderV2(
       Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
     }
 
-    val request = with(LoadRequest.Builder(context)) {
+    val request = with(ImageRequest.Builder(context)) {
       data(drawableId)
       lifecycle(lifecycle)
       transformations(transformations)
@@ -171,7 +172,7 @@ class ImageLoaderV2(
       build()
     }
 
-    return imageLoader.execute(request)
+    return imageLoader.enqueue(request)
   }
 
   fun loadFromNetwork(
@@ -188,7 +189,7 @@ class ImageLoaderV2(
       Logger.d(TAG, "loadFromNetwork(url=$url, width=$width, height=$height)")
     }
 
-    val request = with(LoadRequest.Builder(context)) {
+    val request = with(ImageRequest.Builder(context)) {
       if (url != null) {
         data(url)
       } else {
@@ -232,7 +233,7 @@ class ImageLoaderV2(
       build()
     }
 
-    return imageLoader.execute(request)
+    return imageLoader.enqueue(request)
   }
 
   @Suppress("UnnecessaryVariable")

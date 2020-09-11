@@ -52,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 
-import coil.request.RequestDisposable;
+import coil.request.Disposable;
 
 import static com.github.adamantcheese.chan.Chan.inject;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
@@ -62,7 +62,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private static final String TAG = "ThumbnailView";
     private static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
 
-    private RequestDisposable requestDisposable;
+    private Disposable requestDisposable;
     private boolean circular = false;
     private int rounding = 0;
     private boolean clickable = false;

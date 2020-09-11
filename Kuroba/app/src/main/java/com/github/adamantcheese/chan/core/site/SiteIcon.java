@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-import coil.request.RequestDisposable;
+import coil.request.Disposable;
 import okhttp3.HttpUrl;
 
 public class SiteIcon {
@@ -39,7 +39,7 @@ public class SiteIcon {
     private HttpUrl url;
     private Drawable drawable;
     @Nullable
-    private RequestDisposable requestDisposable;
+    private Disposable requestDisposable;
 
     public static SiteIcon fromFavicon(ImageLoaderV2 imageLoaderV2, HttpUrl url) {
         SiteIcon siteIcon = new SiteIcon(imageLoaderV2);

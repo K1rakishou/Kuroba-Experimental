@@ -151,8 +151,9 @@ public class AppModule {
     @Singleton
     public ImageLoader provideCoilImageLoader(Context applicationContext) {
         Logger.d(DI_TAG, "Coil Image loader");
-        return ImageLoader
-                .builder(applicationContext)
+
+        return new ImageLoader.Builder(applicationContext)
+                .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
