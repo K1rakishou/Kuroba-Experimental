@@ -65,6 +65,7 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -460,9 +461,8 @@ class StartActivity : AppCompatActivity(),
           browseController?.loadWithDefaultBoard()
         }
 
-        // Wait a little bit so that the BrowseController's toolbar transition animation has enough
-        // time to complete so that we don't cancel it accidentally (which will cause catalog toolbar
-        // to be shown in the thread).
+        // Give toolbar transition animation a little bit of time so there is no conflicts
+        delay(ANIMATION_DURATION)
         loadThread(topNavElement.descriptor)
       }
     }.exhaustive
@@ -540,6 +540,8 @@ class StartActivity : AppCompatActivity(),
     browseController?.setBoard(boardThreadPair.first!!)
 
     if (boardThreadPair.second != null) {
+      // Give toolbar transition animation a little bit of time so there is no conflicts
+      delay(ANIMATION_DURATION)
       browseController?.showThread(boardThreadPair.second!!, false)
     }
 
@@ -845,5 +847,6 @@ class StartActivity : AppCompatActivity(),
   companion object {
     private const val TAG = "StartActivity"
     private const val STATE_KEY = "chan_state"
+    private const val ANIMATION_DURATION = 500L
   }
 }
