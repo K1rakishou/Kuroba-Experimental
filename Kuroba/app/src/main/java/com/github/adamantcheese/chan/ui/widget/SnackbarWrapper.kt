@@ -1,6 +1,8 @@
 package com.github.adamantcheese.chan.ui.widget
 
+import android.content.Context
 import android.view.View
+import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
@@ -122,7 +124,7 @@ class SnackbarWrapper private constructor(
       snackbar.isGestureInsetBottomIgnored = false
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
-      AndroidUtils.fixSnackbarText(view.context, snackbar)
+      fixSnackbarColors(view.context, snackbar)
       return SnackbarWrapper(snackbar)
     }
 
@@ -134,8 +136,14 @@ class SnackbarWrapper private constructor(
       snackbar.isGestureInsetBottomIgnored = false
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
-      AndroidUtils.fixSnackbarText(view.context, snackbar)
+      fixSnackbarColors(view.context, snackbar)
       return SnackbarWrapper(snackbar)
+    }
+
+    private fun fixSnackbarColors(context: Context, snackbar: Snackbar) {
+      snackbar.setTextColor(AndroidUtils.getAttrColor(context, R.attr.text_color_primary))
+      snackbar.setActionTextColor(AndroidUtils.getAttrColor(context, R.attr.colorAccent))
+      snackbar.view.setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor))
     }
   }
 }
