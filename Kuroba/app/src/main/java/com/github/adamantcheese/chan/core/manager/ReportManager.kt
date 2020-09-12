@@ -293,15 +293,15 @@ class ReportManager(
 
   private fun getSettingsStateString(): String {
     return buildString {
-      appendln("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
-      appendln("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
-      appendln("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
-      appendln("Concurrent file loading chunks count: ${ChanSettings.concurrentDownloadChunkCount.get().toInt()}")
-      appendln("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
-      appendln("Saved files base dir info: ${getFilesLocationInfo()}")
-      appendln("Phone layout mode: ${ChanSettings.layoutMode.get().name}")
-      appendln("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
-      appendln("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
+      appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
+      appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
+      appendLine("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
+      appendLine("Concurrent file loading chunks count: ${ChanSettings.concurrentDownloadChunkCount.get().toInt()}")
+      appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
+      appendLine("Saved files base dir info: ${getFilesLocationInfo()}")
+      appendLine("Phone layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
+      appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
+      appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
     }
   }
 
