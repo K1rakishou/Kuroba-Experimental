@@ -1,10 +1,10 @@
 package com.github.adamantcheese.common
 
-import android.util.JsonReader
-import android.util.JsonToken
 import android.view.View
 import android.view.ViewGroup
 import com.github.adamantcheese.common.ModularResult.Companion.Try
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 import kotlinx.coroutines.*
 import okhttp3.*
 import java.io.IOException
@@ -37,7 +37,7 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
 
 
 fun JsonReader.nextStringOrNull(): String? {
-  if (peek() == JsonToken.NULL) {
+  if (peek() != JsonToken.STRING) {
     skipValue()
     return null
   }
@@ -50,6 +50,24 @@ fun JsonReader.nextStringOrNull(): String? {
   return value
 }
 
+fun JsonReader.nextIntOrNull(): Int? {
+  if (peek() != JsonToken.NUMBER) {
+    skipValue()
+    return null
+  }
+
+  return nextInt()
+}
+
+fun JsonReader.nextBooleanOrNull(): Boolean? {
+  if (peek() != JsonToken.BOOLEAN) {
+    skipValue()
+    return null
+  }
+
+  return nextBoolean()
+}
+
 inline fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
   beginObject()
 
@@ -57,6 +75,16 @@ inline fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
     return func(this)
   } finally {
     endObject()
+  }
+}
+
+inline fun <T> JsonReader.jsonArray(next: JsonReader.() -> T): T {
+  beginArray()
+
+  try {
+    return next(this)
+  } finally {
+    endArray()
   }
 }
 

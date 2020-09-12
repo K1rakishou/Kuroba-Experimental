@@ -20,7 +20,10 @@ import com.github.adamantcheese.chan.core.model.export.ExportedAppSettings
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Export
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository.ImportExport.Import
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.chan.core.usecase.KurobaSettingsImportUseCase
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
+import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile
@@ -36,7 +39,8 @@ import javax.inject.Inject
 class ImportExportRepository @Inject
 constructor(
   private val gson: Gson,
-  private val fileManager: FileManager
+  private val fileManager: FileManager,
+  private val kurobaSettingsImportUseCase: KurobaSettingsImportUseCase
 ) {
 
   fun exportTo(settingsFile: ExternalFile, isNewFile: Boolean, callbacks: ImportExportCallbacks) {
@@ -124,6 +128,25 @@ constructor(
     }
   }
 
+  suspend fun doImportFromKuroba(settingsFile: ExternalFile): ModularResult<Boolean> {
+    return Try {
+      if (!fileManager.exists(settingsFile)) {
+        Logger.d(TAG, "There is nothing to import, importFile does not exist " + settingsFile.getFullPath())
+        return@Try false
+      }
+
+      if (!fileManager.canRead(settingsFile)) {
+        throw IOException(
+          "Something wrong with import file (Can't read or it doesn't exist) " + settingsFile.getFullPath()
+        )
+      }
+
+      kurobaSettingsImportUseCase.execute(settingsFile).unwrap()
+
+      return@Try true
+    }
+  }
+
   private fun deleteExportFile(exportFile: AbstractFile) {
     if (!fileManager.delete(exportFile)) {
       Logger.w(TAG, "Could not delete export file " + exportFile.getFullPath())
@@ -155,10 +178,10 @@ constructor(
 
   @Throws(java.sql.SQLException::class, IOException::class)
   private fun readSettingsFromDatabase(): ExportedAppSettings {
-
     val settings = ChanSettings.serializeToString()
 
     return ExportedAppSettings(
+      CURRENT_EXPORT_SETTINGS_VERSION,
       Collections.emptyList(),
       Collections.emptyList(),
       Collections.emptyList(),

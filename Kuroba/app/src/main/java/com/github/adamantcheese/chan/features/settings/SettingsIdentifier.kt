@@ -540,6 +540,20 @@ sealed class ImportExportScreen(
     }
   }
 
+  sealed class ImportFromKurobaSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainSettingsGroup.getGroupIdentifier()
+  ) : IGroup,
+    ImportExportScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ImportSettingsFromKuroba : ImportFromKurobaSettingsGroup("import_settings_from_kuroba")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = ImportExportScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("import_from_kurpba_settings_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("import_export_screen")
   }

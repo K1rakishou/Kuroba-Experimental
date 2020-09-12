@@ -3,6 +3,7 @@ package com.github.adamantcheese.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.base.SerializedCoroutineExecutor
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostHide
@@ -69,6 +70,23 @@ class PostHideManager(
           return@post
         }
     }
+  }
+
+  suspend fun createManySuspend(chanPostHideList: List<ChanPostHide>) {
+    lock.write {
+      chanPostHideList.forEach { chanPostHide -> postHideMap[chanPostHide.postDescriptor] = chanPostHide }
+    }
+
+    chanPostHideRepository.createMany(chanPostHideList)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "chanPostHideRepository.createMany() error", error)
+        lock.write { chanPostHideList.forEach { chanPostHide -> postHideMap.remove(chanPostHide.postDescriptor) } }
+        return
+      }
+  }
+
+  suspend fun getTotalCount(): ModularResult<Int> {
+    return chanPostHideRepository.getTotalCount()
   }
 
   fun remove(postDescriptor: PostDescriptor) {

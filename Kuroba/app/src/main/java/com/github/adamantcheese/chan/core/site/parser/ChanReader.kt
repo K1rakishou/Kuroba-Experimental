@@ -16,10 +16,10 @@
  */
 package com.github.adamantcheese.chan.core.site.parser
 
-import android.util.JsonReader
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.gson.stream.JsonReader
 
 interface ChanReader {
   suspend fun getParser(): PostParser?

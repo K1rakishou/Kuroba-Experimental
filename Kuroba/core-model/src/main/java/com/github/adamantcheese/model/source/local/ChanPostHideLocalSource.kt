@@ -46,9 +46,16 @@ class ChanPostHideLocalSource(
     }
   }
 
+  suspend fun getTotalCount(): Int {
+    ensureInTransaction()
+
+    return chanPostHideDao.totalCount()
+  }
+
   suspend fun deleteAll() {
     ensureInTransaction()
 
     chanPostHideDao.deleteAll()
   }
+
 }

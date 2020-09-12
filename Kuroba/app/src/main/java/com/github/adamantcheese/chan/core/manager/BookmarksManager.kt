@@ -164,6 +164,43 @@ class BookmarksManager(
     }
   }
 
+  suspend fun createBookmark(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    title: String? = null,
+    thumbnailUrl: HttpUrl? = null,
+    persist: Boolean = false
+  ): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    return lock.write {
+      if (bookmarks.containsKey(threadDescriptor)) {
+        return@write false
+      }
+
+      val threadBookmark = ThreadBookmark.create(threadDescriptor).apply {
+        this.title = title
+        this.thumbnailUrl = thumbnailUrl
+      }
+
+      if (isDevFlavor) {
+        check(!orders.contains(threadDescriptor)) { "orders already contains $threadDescriptor" }
+      }
+
+      orders.add(0, threadDescriptor)
+      bookmarks[threadDescriptor] = threadBookmark
+      ensureBookmarksAndOrdersConsistency()
+
+      if (persist) {
+        persistBookmarksInternal()
+      }
+
+      bookmarksChangedSubject.onNext(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
+
+      Logger.d(TAG, "Bookmark created ($threadDescriptor)")
+      return@write true
+    }
+  }
+
   @JvmOverloads
   fun createBookmark(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -586,31 +623,27 @@ class BookmarksManager(
     if (blocking) {
       runBlocking {
         Logger.d(TAG, "persistBookmarks blocking called")
-
-        try {
-          bookmarksRepository.persist(getBookmarksOrdered()).safeUnwrap { error ->
-            Logger.e(TAG, "Failed to persist bookmarks blocking", error)
-            return@runBlocking
-          }
-        } finally {
-          Logger.d(TAG, "persistBookmarks blocking finished")
-          persistRunning.set(false)
-        }
+        persistBookmarksInternal()
+        Logger.d(TAG, "persistBookmarks blocking finished")
       }
     } else {
-      Logger.d(TAG, "persistBookmarks async called")
-
       appScope.launch {
-        try {
-          bookmarksRepository.persist(getBookmarksOrdered()).safeUnwrap { error ->
-            Logger.e(TAG, "Failed to persist bookmarks async", error)
-            return@launch
-          }
-        } finally {
-          Logger.d(TAG, "persistBookmarks async finished")
-          persistRunning.set(false)
-        }
+        Logger.d(TAG, "persistBookmarks async called")
+        persistBookmarksInternal()
+        Logger.d(TAG, "persistBookmarks async finished")
       }
+    }
+  }
+
+  private suspend fun persistBookmarksInternal() {
+
+    try {
+      bookmarksRepository.persist(getBookmarksOrdered()).safeUnwrap { error ->
+        Logger.e(TAG, "Failed to persist bookmarks", error)
+        return
+      }
+    } finally {
+      persistRunning.set(false)
     }
   }
 

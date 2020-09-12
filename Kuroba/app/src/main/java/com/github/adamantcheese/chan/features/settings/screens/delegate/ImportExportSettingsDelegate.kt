@@ -65,6 +65,27 @@ class ImportExportSettingsDelegate(
     })
   }
 
+  fun onImportFromKurobaClicked() {
+    fileChooser.openChooseFileDialog(object : FileChooserCallback() {
+      override fun onResult(uri: Uri) {
+        val externalFile = fileManager.fromUri(uri)
+        if (externalFile == null) {
+          val message = "onImportFromKurobaClicked() fileManager.fromUri() returned null, uri = $uri"
+          Logger.d(TAG, message)
+          showToast(context, message, Toast.LENGTH_LONG)
+          return
+        }
+
+        navigationController.presentController(loadingViewController)
+        presenter.doImportFromKuroba(externalFile)
+      }
+
+      override fun onCancel(reason: String) {
+        showToast(context, reason, Toast.LENGTH_LONG)
+      }
+    })
+  }
+
   @Suppress("MoveLambdaOutsideParentheses")
   private fun showDirectoriesWillBeResetToDefaultDialog() {
     val alertDialog = AlertDialog.Builder(context)

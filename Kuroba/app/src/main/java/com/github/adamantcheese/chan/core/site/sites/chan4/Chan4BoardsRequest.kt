@@ -16,14 +16,16 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.chan4
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.common.jsonArray
+import com.github.adamantcheese.common.jsonObject
 import com.github.adamantcheese.model.data.board.BoardBuilder
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
@@ -38,11 +40,11 @@ class Chan4BoardsRequest(
   override suspend fun readJson(reader: JsonReader): SiteBoards {
     val list: MutableList<ChanBoard> = ArrayList()
     
-    reader.withObject {
+    reader.jsonObject {
       while (hasNext()) {
         val key = nextName()
         if (key == "boards") {
-          withArray {
+          jsonArray {
             while (hasNext()) {
               val board = readBoardEntry(this)
               if (board != null) {
@@ -61,7 +63,7 @@ class Chan4BoardsRequest(
   
   @Throws(IOException::class)
   private fun readBoardEntry(reader: JsonReader): ChanBoard? {
-    return reader.withObject {
+    return reader.jsonObject {
       val board = BoardBuilder(siteDescriptor)
 
       while (hasNext()) {
@@ -91,16 +93,16 @@ class Chan4BoardsRequest(
   
       if (board.hasMissingInfo()) {
         // Invalid data, ignore
-        return@withObject null
+        return@jsonObject null
       }
 
-      return@withObject board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
+      return@jsonObject board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
     }
     
   }
   
   private fun readCooldowns(reader: JsonReader, boardBuilder: BoardBuilder) {
-    reader.withObject {
+    reader.jsonObject {
       while (hasNext()) {
         when (nextName()) {
           "threads" -> boardBuilder.cooldownThreads = nextInt()

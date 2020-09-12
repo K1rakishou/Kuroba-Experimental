@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.usecase
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
@@ -12,6 +11,7 @@ import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import okhttp3.Request

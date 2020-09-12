@@ -1,7 +1,5 @@
 package com.github.adamantcheese.model.parser
 
-import android.util.JsonReader
-import android.util.JsonToken
 import com.github.adamantcheese.common.jsonObject
 import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.common.nextStringOrNull
@@ -11,6 +9,8 @@ import com.github.adamantcheese.model.data.archive.ArchivePostMedia
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.util.extractFileNameExtension
 import com.github.adamantcheese.model.util.removeExtensionIfPresent
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 
 class ArchivesJsonParser(
   loggerTag: String,

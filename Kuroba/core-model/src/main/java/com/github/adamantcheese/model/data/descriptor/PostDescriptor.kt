@@ -107,7 +107,6 @@ open class PostDescriptor protected constructor(
     fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
       require(threadNo > 0) { "Bad threadNo: $threadNo" }
       require(postNo > 0) { "Bad postNo: $postNo" }
-      require(postSubNo >= 0) { "Bad postSubNo: $postSubNo" }
 
       return PostDescriptor(
         ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo),

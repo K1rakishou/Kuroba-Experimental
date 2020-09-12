@@ -16,11 +16,13 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.chan4
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.common.jsonArray
+import com.github.adamantcheese.common.jsonObject
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import java.util.*
 
@@ -35,7 +37,7 @@ class Chan4PagesRequest(
   
   override suspend fun readJson(reader: JsonReader): BoardPages {
     val pages: MutableList<BoardPage> = ArrayList()
-    reader.withArray {
+    reader.jsonArray {
       while (hasNext()) {
         pages.add(readPageEntry(this))
       }
@@ -48,7 +50,7 @@ class Chan4PagesRequest(
     var pageIndex = -1
     var threadNoTimeModPairs: List<ThreadNoTimeModPair>? = null
     
-    reader.withObject {
+    reader.jsonObject {
       while (hasNext()) {
         when (nextName()) {
           "page" -> pageIndex = nextInt()
@@ -68,7 +70,7 @@ class Chan4PagesRequest(
   private fun readThreadTimes(reader: JsonReader): List<ThreadNoTimeModPair> {
     val threadNoTimeModPairs: MutableList<ThreadNoTimeModPair> = ArrayList()
     
-    reader.withArray {
+    reader.jsonArray {
       while (hasNext()) {
         threadNoTimeModPairs.add(readThreadTime(this))
       }
@@ -81,7 +83,7 @@ class Chan4PagesRequest(
     var no = -1L
     var modified: Long = -1
     
-    reader.withObject {
+    reader.jsonObject {
       while (hasNext()) {
         when (nextName()) {
           "no" -> no = nextInt().toLong()

@@ -102,11 +102,20 @@ open class SiteManager(
     return lock.read { siteMap.keys.count { siteDescriptor -> isSiteActive(siteDescriptor) } }
   }
 
-  suspend fun activateOrDeactivateSite(siteDescriptor: SiteDescriptor, activate: Boolean): Boolean {
+  suspend fun activateOrDeactivateSite(
+    siteDescriptor: SiteDescriptor,
+    activate: Boolean,
+    doAfterPersist: (() -> Unit)? = null
+  ): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
     val updated = lock.write {
+      val enabled = siteMap[siteDescriptor]?.enabled() ?: false
+      if (!enabled) {
+        return@write false
+      }
+
       val chanSiteData = siteDataMap[siteDescriptor]
         ?: return@write false
 
@@ -122,7 +131,11 @@ open class SiteManager(
       return false
     }
 
-    debouncer.post(DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
+    debouncer.post(DEBOUNCE_TIME_MS) {
+      siteRepository.persist(getSitesOrdered())
+      doAfterPersist?.invoke()
+    }
+
     sitesChanged()
 
     return true

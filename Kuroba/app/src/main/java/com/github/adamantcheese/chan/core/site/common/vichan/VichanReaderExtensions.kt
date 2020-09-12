@@ -1,9 +1,9 @@
 package com.github.adamantcheese.chan.core.site.common.vichan
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.google.gson.stream.JsonReader
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class VichanReaderExtensions {

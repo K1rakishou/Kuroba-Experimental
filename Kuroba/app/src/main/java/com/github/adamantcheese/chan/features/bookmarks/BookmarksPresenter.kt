@@ -56,6 +56,7 @@ class BookmarksPresenter(
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
           .asFlow()
+          .debounce(500.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
               ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->

@@ -25,6 +25,12 @@ abstract class ChanPostHideDao {
   abstract suspend fun selectAllInThread(siteName: String, boardCode: String, threadNo: Long): List<ChanPostHideEntity>
 
   @Query("""
+    SELECT COUNT(*)
+    FROM ${ChanPostHideEntity.TABLE_NAME}
+  """)
+  abstract suspend fun totalCount(): Int
+
+  @Query("""
     DELETE
     FROM ${ChanPostHideEntity.TABLE_NAME}
     WHERE

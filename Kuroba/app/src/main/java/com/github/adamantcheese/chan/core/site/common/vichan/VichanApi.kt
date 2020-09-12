@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.site.common.vichan
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.model.Post
@@ -16,6 +15,7 @@ import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.gson.stream.JsonReader
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
