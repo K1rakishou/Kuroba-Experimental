@@ -34,6 +34,14 @@ class ChanPostHideRepository(
     }
   }
 
+  suspend fun getTotalCount(): ModularResult<Int> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.getTotalCount()
+      }
+    }
+  }
+
   suspend fun removeMany(postDescriptorList: List<PostDescriptor>): ModularResult<Unit> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {

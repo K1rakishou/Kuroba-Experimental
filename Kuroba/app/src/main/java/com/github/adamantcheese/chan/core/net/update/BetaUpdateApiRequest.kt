@@ -16,9 +16,10 @@
  */
 package com.github.adamantcheese.chan.core.net.update
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
+import com.github.adamantcheese.common.jsonObject
+import com.google.gson.stream.JsonReader
 import okhttp3.Request
 
 class BetaUpdateApiRequest(
@@ -34,7 +35,7 @@ class BetaUpdateApiRequest(
     var responseCode: Int? = null
     var commitHash: String? = null
   
-    reader.withObject {
+    reader.jsonObject {
       while (hasNext()) {
         when (nextName()) {
           "apk_version" -> responseCode = nextInt()

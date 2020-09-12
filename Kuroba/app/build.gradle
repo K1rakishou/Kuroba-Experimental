@@ -300,7 +300,7 @@ dependencies {
 
     implementation 'com.github.K1rakishou:Feather2:ec21592613'
     // noinspection GradleDependency wants to upgrade to older version
-    implementation 'com.github.K1rakishou:Fuck-Storage-Access-Framework:v1.0-alpha40'
+    implementation 'com.github.K1rakishou:Fuck-Storage-Access-Framework:v1.0-alpha42'
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     kapt "androidx.room:room-compiler:${versions.room_version}"

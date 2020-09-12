@@ -1,12 +1,12 @@
 package com.github.adamantcheese.model.source.remote
 
-import android.util.JsonReader
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.archive.ArchiveThread
 import com.github.adamantcheese.model.parser.ArchivesJsonParser
 import com.github.adamantcheese.model.util.ensureBackgroundThread
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request

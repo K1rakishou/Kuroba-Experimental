@@ -23,6 +23,7 @@ import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
 import com.github.adamantcheese.chan.core.repository.LastReplyRepository;
 import com.github.adamantcheese.chan.core.site.ParserRepository;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
+import com.github.adamantcheese.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -35,10 +36,16 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public ImportExportRepository provideImportExportRepository(
-            Gson gson, FileManager fileManager
+            Gson gson,
+            FileManager fileManager,
+            KurobaSettingsImportUseCase kurobaSettingsImportUseCase
     ) {
         Logger.d(AppModule.DI_TAG, "Import export repository");
-        return new ImportExportRepository(gson, fileManager);
+        return new ImportExportRepository(
+                gson,
+                fileManager,
+                kurobaSettingsImportUseCase
+        );
     }
 
     @Provides

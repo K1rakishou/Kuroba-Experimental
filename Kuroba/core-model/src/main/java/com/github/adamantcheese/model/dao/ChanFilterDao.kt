@@ -23,6 +23,7 @@ abstract class ChanFilterDao {
     FROM ${ChanFilterEntity.TABLE_NAME} cfe
     LEFT JOIN ${ChanFilterBoardConstraintEntity.TABLE_NAME} cfbce
         ON cfe.${ChanFilterEntity.FILTER_ID_COLUMN_NAME} = cfbce.${ChanFilterBoardConstraintEntity.OWNER_FILTER_ID_COLUMN_NAME}
+    GROUP BY cfe.${ChanFilterEntity.FILTER_ID_COLUMN_NAME}
     ORDER BY cfe.${ChanFilterEntity.FILTER_ORDER_COLUMN_NAME} ASC
   """)
   abstract suspend fun selectAll(): List<ChanFilterFull>

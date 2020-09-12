@@ -356,6 +356,13 @@ class BoardManager(
     }
   }
 
+  fun getTotalCount(): Int {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read { boardsMap.values.sumBy { map -> map.size } }
+  }
+
   fun onBoardMoved(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()

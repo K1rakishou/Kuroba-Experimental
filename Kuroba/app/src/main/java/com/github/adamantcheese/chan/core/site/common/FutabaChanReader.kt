@@ -1,6 +1,5 @@
 package com.github.adamantcheese.chan.core.site.common
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
@@ -18,6 +17,7 @@ import com.github.adamantcheese.model.data.bookmark.StickyThread
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jsoup.parser.Parser

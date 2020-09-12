@@ -1,16 +1,22 @@
 package com.github.adamantcheese.chan.core.di;
 
+import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
+import com.github.adamantcheese.chan.core.manager.ChanFilterManager;
+import com.github.adamantcheese.chan.core.manager.PostHideManager;
 import com.github.adamantcheese.chan.core.manager.SavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
 import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.adamantcheese.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.repository.ChanPostRepository;
 import com.github.k1rakishou.feather2.Provides;
+import com.github.k1rakishou.fsaf.FileManager;
 
 import javax.inject.Singleton;
 
@@ -70,6 +76,30 @@ public class UseCaseModule {
                 replyParser,
                 siteManager,
                 savedReplyManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public KurobaSettingsImportUseCase provideKurobaSettingsImportUseCase(
+            FileManager fileManager,
+            SiteManager siteManager,
+            BoardManager boardManager,
+            ChanFilterManager chanFilterManager,
+            PostHideManager postHideManager,
+            BookmarksManager bookmarksManager,
+            ChanPostRepository chanPostRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "KurobaSettingsImportUseCase");
+
+        return new KurobaSettingsImportUseCase(
+                fileManager,
+                siteManager,
+                boardManager,
+                chanFilterManager,
+                postHideManager,
+                bookmarksManager,
+                chanPostRepository
         );
     }
 

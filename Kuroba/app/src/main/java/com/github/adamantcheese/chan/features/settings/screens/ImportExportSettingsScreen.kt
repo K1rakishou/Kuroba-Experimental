@@ -37,11 +37,36 @@ class ImportExportSettingsScreen(
 
   override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
-      buildMainSettingsScreen()
+      buildMainSettingsGroup(),
+      buildImportFromKurobaGroup()
     )
   }
 
-  private fun buildMainSettingsScreen(): SettingsGroup.SettingsGroupBuilder {
+  private fun buildImportFromKurobaGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = ImportExportScreen.ImportFromKurobaSettingsGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = fun(): SettingsGroup {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.import_from_kuroba),
+          groupIdentifier = identifier
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier =  ImportExportScreen.ImportFromKurobaSettingsGroup.ImportSettingsFromKuroba,
+          topDescriptionIdFunc = { R.string.import_from_kuroba },
+          bottomDescriptionIdFunc = { R.string.import_settings_from_kuroba },
+          callback = { importExportSettingsDelegate.onImportFromKurobaClicked() }
+        )
+
+        return group
+      }
+    )
+  }
+
+  private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
     val identifier = ImportExportScreen.MainSettingsGroup
 
     return SettingsGroup.SettingsGroupBuilder(
@@ -57,7 +82,8 @@ class ImportExportSettingsScreen(
           identifier =  ImportExportScreen.MainSettingsGroup.ExportSetting,
           topDescriptionIdFunc = { R.string.export_settings },
           bottomDescriptionIdFunc = { R.string.export_settings_to_a_file },
-          callback = { importExportSettingsDelegate.onExportClicked() }
+          callback = { importExportSettingsDelegate.onExportClicked() },
+          isEnabledFunc = { false }
         )
 
         group += LinkSettingV2.createBuilder(
@@ -65,7 +91,8 @@ class ImportExportSettingsScreen(
           identifier =  ImportExportScreen.MainSettingsGroup.ImportSetting,
           topDescriptionIdFunc = { R.string.import_settings },
           bottomDescriptionIdFunc = { R.string.import_settings_from_a_file },
-          callback = { importExportSettingsDelegate.onImportClicked() }
+          callback = { importExportSettingsDelegate.onImportClicked() },
+          isEnabledFunc = { false }
         )
 
         return group

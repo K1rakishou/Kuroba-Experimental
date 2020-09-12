@@ -16,7 +16,6 @@
  */
 package com.github.adamantcheese.chan.core.site.loader
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.site.Site
@@ -37,6 +36,7 @@ import com.github.adamantcheese.common.suspendCall
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.google.gson.Gson
+import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import okhttp3.Request

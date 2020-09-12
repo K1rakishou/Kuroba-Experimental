@@ -19,10 +19,12 @@ package com.github.adamantcheese.chan.core.net.update
 import android.os.Build
 import android.text.Html
 import android.text.Spanned
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.adamantcheese.common.jsonArray
+import com.github.adamantcheese.common.jsonObject
+import com.google.gson.stream.JsonReader
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.ast.Node
@@ -40,7 +42,7 @@ class ReleaseUpdateApiRequest(
   override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {
     val response = ReleaseUpdateApiResponse()
     
-    reader.withObject {
+    reader.jsonObject {
       while (reader.hasNext()) {
         when (reader.nextName()) {
           "tag_name" -> readVersionCode(response, reader)
@@ -79,10 +81,10 @@ class ReleaseUpdateApiRequest(
   
   private fun readApkUrl(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
     try {
-      reader.withArray {
+      reader.jsonArray {
         while (hasNext()) {
           if (responseRelease.apkURL == null) {
-            withObject {
+            jsonObject {
               while (hasNext()) {
                 if ("browser_download_url" == nextName()) {
                   responseRelease.apkURL = nextString().toHttpUrl()

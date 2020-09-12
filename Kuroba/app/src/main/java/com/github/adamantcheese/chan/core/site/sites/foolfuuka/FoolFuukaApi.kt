@@ -1,7 +1,5 @@
 package com.github.adamantcheese.chan.core.site.sites.foolfuuka
 
-import android.util.JsonReader
-import android.util.JsonToken
 import com.github.adamantcheese.chan.core.mapper.ArchiveThreadMapper
 import com.github.adamantcheese.chan.core.site.common.CommonClientException
 import com.github.adamantcheese.chan.core.site.common.CommonSite
@@ -17,6 +15,8 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.source.remote.ArchivesRemoteSource
 import com.github.adamantcheese.model.util.extractFileNameExtension
 import com.github.adamantcheese.model.util.removeExtensionIfPresent
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonToken
 
 class FoolFuukaApi(
   site: CommonSite

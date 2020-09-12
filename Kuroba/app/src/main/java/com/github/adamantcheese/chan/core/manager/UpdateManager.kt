@@ -438,6 +438,7 @@ class UpdateManager(
         }
 
         override fun onSuccess(file: RawFile) {
+          Logger.d(TAG, "APK download success")
           BackgroundUtils.ensureMainThread()
 
           if (updateDownloadDialog != null) {
@@ -463,6 +464,8 @@ class UpdateManager(
         }
 
         override fun onFail(exception: Exception) {
+          Logger.e(TAG, "APK download failed", exception)
+
           if (!BackgroundUtils.isInForeground()) {
             return
           }
@@ -483,6 +486,8 @@ class UpdateManager(
         }
 
         override fun onCancel() {
+          Logger.e(TAG, "APK download canceled")
+
           if (!BackgroundUtils.isInForeground()) {
             return
           }

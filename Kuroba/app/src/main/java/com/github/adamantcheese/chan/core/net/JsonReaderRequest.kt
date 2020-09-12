@@ -16,11 +16,11 @@
  */
 package com.github.adamantcheese.chan.core.net
 
-import android.util.JsonReader
 import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
+import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import java.io.IOException
 import java.io.InputStreamReader
@@ -78,26 +78,6 @@ abstract class JsonReaderRequest<T>(
     class ServerError(val statusCode: Int) : JsonReaderResponse<Nothing>()
     class UnknownServerError(val error: Throwable) : JsonReaderResponse<Nothing>()
     class ParsingError(val error: Throwable) : JsonReaderResponse<Nothing>()
-  }
-
-  protected fun <T> JsonReader.withObject(next: JsonReader.() -> T): T {
-    beginObject()
-
-    try {
-      return next(this)
-    } finally {
-      endObject()
-    }
-  }
-
-  protected fun <T> JsonReader.withArray(next: JsonReader.() -> T): T {
-    beginArray()
-
-    try {
-      return next(this)
-    } finally {
-      endArray()
-    }
   }
 
   enum class RequestType(val requestTag: String) {

@@ -124,13 +124,12 @@ internal class PostParseWorker(
           filterOnlyOP = filter.onlyOnOP
         )
       }
-      // TODO(KurobaEx): Filter watching.
-//      FilterEngine.FilterAction.WATCH -> {
-//        PostFilter(
-//          filterWatch = true,
-//          filterOnlyOP = true
-//        )
-//      }
+      FilterEngine.FilterAction.WATCH -> {
+        PostFilter(
+          filterWatch = true,
+          filterOnlyOP = true
+        )
+      }
     }
   }
 
