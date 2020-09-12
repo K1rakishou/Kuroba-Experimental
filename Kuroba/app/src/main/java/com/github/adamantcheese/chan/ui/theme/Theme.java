@@ -146,7 +146,6 @@ public class Theme {
         theme.applyStyle(R.style.Chan_Theme, true);
         theme.applyStyle(resValue, true);
 
-        //@formatter:off
         TypedArray ta = theme.obtainStyledAttributes(new int[]{
             R.attr.post_quote_color,
             R.attr.post_highlight_quote_color,
@@ -173,7 +172,7 @@ public class Theme {
             R.attr.pin_posts_has_replies_color,
             R.attr.pin_posts_normal_color
         });
-        //@formatter:on
+
         quoteColor = ta.getColor(0, 0);
         highlightQuoteColor = ta.getColor(1, 0);
         linkColor = ta.getColor(2, 0);

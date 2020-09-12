@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.features.drawer
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -151,13 +152,13 @@ class DrawerController(
 
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(themeHelper.theme.textPrimary, themeHelper.theme.textSecondary)
+      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
     )
     bottomNavView.itemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(themeHelper.theme.textPrimary, themeHelper.theme.textSecondary)
+      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
     )
-    bottomNavView.setBackgroundColor(themeHelper.theme.backColorSecondary)
+    bottomNavView.setBackgroundColor(themeHelper.theme.primaryColor.color)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       if (bottomNavView.selectedItemId == menuItem.itemId) {

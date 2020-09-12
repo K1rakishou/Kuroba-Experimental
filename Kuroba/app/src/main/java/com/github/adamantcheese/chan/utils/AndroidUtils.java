@@ -34,7 +34,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -54,7 +53,6 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -64,7 +62,6 @@ import androidx.core.app.NotificationManagerCompat;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.ui.theme.Theme;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -541,12 +538,6 @@ public class AndroidUtils {
         } else {
             return false;
         }
-    }
-
-    public static void fixSnackbarText(Context context, Snackbar snackbar) {
-        ((TextView) snackbar.getView().findViewById(R.id.snackbar_text)).setTextColor(Color.WHITE);
-        snackbar.setActionTextColor(getAttrColor(context, R.attr.colorAccent));
-        snackbar.getView().setBackgroundColor(getAttrColor(context, R.attr.backcolor_secondary));
     }
 
     public static boolean isConnected(int type) {
