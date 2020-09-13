@@ -116,7 +116,7 @@ class DvachApi internal constructor(
       op.threadImagesCount(builder.threadImagesCount)
       op.uniqueIps(builder.uniqueIps)
       op.lastModified(builder.lastModified)
-      chanReaderProcessor.op = op
+      chanReaderProcessor.setOp(op)
     }
 
     chanReaderProcessor.addPost(builder)

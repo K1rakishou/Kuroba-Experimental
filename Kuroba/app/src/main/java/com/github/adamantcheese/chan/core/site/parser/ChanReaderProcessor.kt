@@ -22,31 +22,66 @@ import com.github.adamantcheese.common.mutableListWithCap
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
   val chanDescriptor: ChanDescriptor
 ) {
-  private val toParse = ArrayList<Post.Builder>()
+  private val toParse = mutableListWithCap<Post.Builder>(64)
   private val postNoOrderedList = mutableListWithCap<Long>(64)
+  private var op: Post.Builder? = null
 
-  var op: Post.Builder? = null
+  private val lock = Mutex()
 
-  fun getThreadCap(): Int {
-    var maxCount = op?.stickyCap ?: Int.MAX_VALUE
-    if (maxCount < 0) {
-      maxCount = Int.MAX_VALUE
+  suspend fun setOp(op: Post.Builder?) {
+    lock.withLock { this.op = op }
+  }
+
+  suspend fun getOp(): Post.Builder? {
+    return lock.withLock { this.op }
+  }
+
+  suspend fun getThreadCap(): Int {
+    return lock.withLock {
+      var maxCount = op?.stickyCap ?: Int.MAX_VALUE
+      if (maxCount < 0) {
+        maxCount = Int.MAX_VALUE
+      }
+
+      return@withLock maxCount
     }
-
-    return maxCount
   }
 
   suspend fun addPost(postBuilder: Post.Builder) {
-    if (differsFromCached(postBuilder)) {
-      addForParse(postBuilder)
-    }
+    lock.withLock {
+      if (differsFromCached(postBuilder)) {
+        addForParse(postBuilder)
+      }
 
-    postNoOrderedList.add(postBuilder.id)
+      postNoOrderedList.add(postBuilder.id)
+    }
+  }
+
+  suspend fun getToParse(): List<Post.Builder> {
+    return lock.withLock { toParse }
+  }
+
+  suspend fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
+    return lock.withLock {
+      return@withLock postNoOrderedList.mapNotNull { postNo ->
+        return@mapNotNull posts.firstOrNull { post -> post.no == postNo }
+      }
+    }
+  }
+
+  suspend fun getPostNoListOrdered(): List<Long> {
+    return lock.withLock { postNoOrderedList }
+  }
+
+  suspend fun getTotalPostsCount(): Int {
+    return lock.withLock { postNoOrderedList.size }
   }
 
   private suspend fun differsFromCached(builder: Post.Builder): Boolean {
@@ -66,27 +101,30 @@ class ChanReaderProcessor(
     }
 
     val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
-      ?: return true
+    if (chanPost == null) {
+      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      return true
+    }
 
-    return PostUtils.postsDiffer(builder, chanPost)
+    if (PostUtils.postsDiffer(builder, chanPost)) {
+      return true
+    }
+
+    val cachedPostHash = chanPostRepository.getPostHash(builder.postDescriptor)
+    if (cachedPostHash == null) {
+      return true
+    }
+
+    if (builder.getPostHash != cachedPostHash) {
+      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      return true
+    }
+
+    return false
   }
 
 
   private fun addForParse(postBuilder: Post.Builder) {
     toParse.add(postBuilder)
-  }
-
-  fun getToParse(): List<Post.Builder> {
-    return toParse
-  }
-
-  fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
-    return postNoOrderedList.mapNotNull { postNo ->
-      return@mapNotNull posts.firstOrNull { post -> post.no == postNo }
-    }
-  }
-
-  fun getPostNoListOrdered(): List<Long> {
-    return postNoOrderedList
   }
 }

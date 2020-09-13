@@ -60,8 +60,9 @@ internal class NormalPostLoader(
       )
     }
 
-    val cachedPostsCount = chanPostRepository.getCachedValuesCount()
+    val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
     val postsFromCache = reloadedPosts.count { post -> post.isFromCache }
+    val fromDatabase = reloadedPosts.count { post -> !post.isFromCache }
 
     val logStr = createLogString(
       url,
@@ -70,14 +71,16 @@ internal class NormalPostLoader(
       reloadingDuration,
       reloadedPosts,
       postsFromCache,
+      fromDatabase,
       parsingDuration,
       parsedPosts,
-      cachedPostsCount
+      cachedPostsCount,
+      chanReaderProcessor.getTotalPostsCount()
     )
 
     Logger.d(TAG, logStr)
 
-    val op = checkNotNull(chanReaderProcessor.op) { "OP is null" }
+    val op = checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
     return ThreadLoadResult.LoadedNormally(processPosts(op, reloadedPosts, requestParams))
   }
 
@@ -153,9 +156,11 @@ internal class NormalPostLoader(
     reloadingDuration: Duration,
     reloadedPosts: List<Post>,
     postsFromCache: Int,
+    postsFromDatabase: Int,
     parsingDuration: Duration,
     parsedPosts: List<Post>,
-    cachedPostsCount: Int
+    cachedPostsCount: Int,
+    totalPostsCount: Int
   ): String {
     val urlToLog = if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
       url
@@ -166,8 +171,8 @@ internal class NormalPostLoader(
     return buildString {
       appendLine("ChanReaderRequest.readJson() stats: url = $urlToLog.")
       appendLine("Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).")
-      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache).")
-      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} posts).")
+      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache, from database: $postsFromDatabase).")
+      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} out of $totalPostsCount posts).")
       appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
     }
   }

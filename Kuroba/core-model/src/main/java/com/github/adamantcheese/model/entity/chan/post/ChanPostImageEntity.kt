@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.entity.chan.post
 
 import androidx.room.*
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.post.ChanPostImageType
 import okhttp3.HttpUrl
 
@@ -40,7 +41,7 @@ data class ChanPostImageEntity(
   @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
   val ownerPostId: Long,
   @ColumnInfo(name = OWNER_ARCHIVE_ID_COLUMN_NAME)
-  val ownerArchiveId: Long = 0L,
+  val ownerArchiveId: Long = ArchiveDescriptor.NO_ARCHIVE_ID,
   @ColumnInfo(name = SERVER_FILENAME_COLUMN_NAME)
   val serverFilename: String,
   @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)

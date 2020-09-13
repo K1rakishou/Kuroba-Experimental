@@ -23,6 +23,8 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.loader.LoaderType;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
+import com.github.adamantcheese.chan.utils.PostUtils;
+import com.github.adamantcheese.common.MurmurHashUtils;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor;
@@ -38,6 +40,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import kotlin.Lazy;
+import kotlin.LazyKt;
 
 /**
  * Contains all data needed to represent a single post.<br>
@@ -462,11 +467,21 @@ public class Post implements Comparable<Post> {
         @Nullable
         public ArchiveDescriptor archiveDescriptor = null;
 
+        private final Lazy<MurmurHashUtils.Murmur3Hash> commentHash = LazyKt.lazy(
+                this,
+                () -> PostUtils.getPostHash(this)
+        );
+
         public Builder() {
         }
 
-        public Set<Long> getRepliesToIds() {
-            return repliesToIds;
+        public synchronized MurmurHashUtils.Murmur3Hash getGetPostHash() {
+            int commentUpdateCounter = postCommentBuilder.getCommentUpdateCounter();
+            if (commentUpdateCounter > 1) {
+                throw new IllegalStateException("Bad commentUpdateCounter: " + commentUpdateCounter);
+            }
+
+            return commentHash.getValue();
         }
 
         public synchronized PostDescriptor getPostDescriptor() {

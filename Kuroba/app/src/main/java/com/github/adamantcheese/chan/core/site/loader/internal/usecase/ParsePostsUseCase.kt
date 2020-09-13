@@ -1,6 +1,9 @@
 package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
@@ -20,7 +23,6 @@ import kotlinx.coroutines.supervisorScope
 class ParsePostsUseCase(
   private val verboseLogsEnabled: Boolean,
   private val dispatcher: CoroutineDispatcher,
-  private val archivesManager: ArchivesManager,
   private val chanPostRepository: ChanPostRepository,
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,

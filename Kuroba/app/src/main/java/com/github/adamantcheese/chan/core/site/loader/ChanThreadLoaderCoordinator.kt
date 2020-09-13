@@ -17,7 +17,10 @@
 package com.github.adamantcheese.chan.core.site.loader
 
 import com.github.adamantcheese.chan.core.di.NetModule
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.adamantcheese.chan.core.site.loader.internal.NormalPostLoader
@@ -66,7 +69,6 @@ class ChanThreadLoaderCoordinator(
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val appConstants: AppConstants,
-  private val archivesManager: ArchivesManager,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
   private val themeHelper: ThemeHelper,
@@ -80,7 +82,6 @@ class ChanThreadLoaderCoordinator(
   private val reloadPostsFromDatabaseUseCase by lazy {
     ReloadPostsFromDatabaseUseCase(
       gson,
-      archivesManager,
       chanPostRepository,
       themeHelper,
       boardManager
@@ -91,7 +92,6 @@ class ChanThreadLoaderCoordinator(
     ParsePostsUseCase(
       verboseLogsEnabled,
       dispatcher,
-      archivesManager,
       chanPostRepository,
       filterEngine,
       postFilterManager,

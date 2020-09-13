@@ -6,14 +6,6 @@ import android.content.Context
 class AppConstants(context: Context) {
   val maxPostsCountInPostsCache: Int
 
-  /**
-   * After every archive fetch, we store the information whether that fetch was successful or
-   * not in the database, to accumulate all that data afterwards, and figure out whether an
-   * archive still works or maybe it's down, or maybe it has changed some json fields and now
-   * nothing works etc.
-   * */
-  val archiveFetchHistoryMaxEntries = 5
-
   val maxAmountOfPostsInDatabase = 125_000
   val maxAmountOfThreadsInDatabase = 12_500
 

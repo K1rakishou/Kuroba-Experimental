@@ -141,7 +141,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showEmpty()
   }
 
-  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+  fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor == this.currentChanDescriptor) {
       return
     }
@@ -165,21 +165,6 @@ class ThreadPresenter @Inject constructor(
       )
 
     threadPresenterCallback?.showLoading()
-
-    chanDescriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
-      supervisorScope {
-        val jobs = mutableListOf<Deferred<Unit>>()
-
-        jobs += async(Dispatchers.Default) { seenPostsManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.Default) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.Default) { savedReplyManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.Default) { postHideManager.preloadForThread(threadDescriptor) }
-
-        ModularResult.Try { jobs.awaitAll() }
-          .peekError { error -> Logger.e(TAG, "Error while waiting for managers' initialization", error) }
-          .ignore()
-      }
-    }
 
     Logger.d(TAG, "chanLoaderManager.obtain($chanDescriptor)")
     chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
@@ -207,13 +192,34 @@ class ThreadPresenter @Inject constructor(
     compositeDisposable.clear()
   }
 
-  fun requestInitialData() {
-    if (isBound) {
-      if (chanLoader!!.thread == null) {
-        requestData()
-      } else {
-        chanLoader!!.quickLoad()
+  suspend fun requestInitialData() {
+    if (!isBound) {
+      return
+    }
+
+    val descriptor = chanDescriptor
+        ?: return
+
+    descriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
+      supervisorScope {
+        val jobs = mutableListOf<Deferred<Unit>>()
+
+        jobs += async(Dispatchers.IO) { seenPostsManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
+        jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor) }
+
+        ModularResult.Try { jobs.awaitAll() }
+          .peekError { error -> Logger.e(TAG, "Error while waiting for managers' initialization", error) }
+          .ignore()
       }
+    }
+
+    if (chanLoader?.thread == null) {
+      requestData()
+    } else {
+      chanLoader!!.quickLoad()
     }
   }
 

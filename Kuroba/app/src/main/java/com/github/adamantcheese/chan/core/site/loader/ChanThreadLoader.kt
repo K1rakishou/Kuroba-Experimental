@@ -96,7 +96,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       filterEngine,
       chanPostRepository,
       appConstants,
-      archivesManager,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
       themeHelper,

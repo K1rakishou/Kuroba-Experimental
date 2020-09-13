@@ -196,7 +196,7 @@ class FutabaChanReader(
       if (builder.sticky) {
         op.stickyCap(stickyCap)
       }
-      chanReaderProcessor.op = op
+      chanReaderProcessor.setOp(op)
     }
 
     if (countryCode != null && countryName != null) {

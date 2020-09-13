@@ -33,7 +33,6 @@ import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.common.mutableMapWithCap
 import com.github.adamantcheese.common.putIfNotContains
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkReplyView
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
 import com.github.adamantcheese.model.data.post.ChanPost
@@ -545,13 +544,11 @@ class ReplyNotificationsHelper(
   private suspend fun getOriginalPostsForNotifications(
     threadDescriptors: Set<ChanDescriptor.ThreadDescriptor>
   ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
-    return chanPostRepository.getCatalogOriginalPosts(
-      threadDescriptors,
-      ArchiveDescriptor.NO_ARCHIVE_ID
-    ).mapErrorToValue { error ->
-      Logger.e(TAG, "chanPostRepository.getCatalogOriginalPosts() failed", error)
-      return@mapErrorToValue emptyMap<ChanDescriptor.ThreadDescriptor, ChanPost>()
-    }
+    return chanPostRepository.getCatalogOriginalPosts(threadDescriptors)
+      .mapErrorToValue { error ->
+        Logger.e(TAG, "chanPostRepository.getCatalogOriginalPosts() failed", error)
+        return@mapErrorToValue emptyMap<ChanDescriptor.ThreadDescriptor, ChanPost>()
+      }
   }
 
   private fun NotificationCompat.Builder.setupClickOnNotificationIntent(
