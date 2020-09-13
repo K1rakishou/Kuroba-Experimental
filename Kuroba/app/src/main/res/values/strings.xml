@@ -476,6 +476,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_screen_appearance">Appearance</string>
     <string name="settings_group_appearance">Appearance</string>
     <string name="setting_theme">Theme</string>
+    <string name="setting_full_screen_mode">Image viewer full screen mode</string>
+    <string name="setting_full_screen_mode_description">Switch to fullscreen mode when viewing images</string>
 
     <!-- Appearance -->
     <string name="settings_group_layout">Layout</string>

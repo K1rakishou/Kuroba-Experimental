@@ -265,6 +265,7 @@ sealed class AppearanceScreen(
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object ThemeCustomization : MainGroup("theme_customization")
+    object ImageViewerFullscreenMode : MainGroup("image_viewer_fullscreen_mode")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()

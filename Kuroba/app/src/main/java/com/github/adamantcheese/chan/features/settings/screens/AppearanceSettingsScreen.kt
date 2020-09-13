@@ -341,6 +341,14 @@ class AppearanceSettingsScreen(
           callback = { navigationController.pushController(ThemeSettingsController(context)) }
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.MainGroup.ImageViewerFullscreenMode,
+          topDescriptionIdFunc = { R.string.setting_full_screen_mode },
+          bottomDescriptionIdFunc = { R.string.setting_full_screen_mode_description },
+          setting = ChanSettings.imageViewerFullscreenMode
+        )
+
         return group
       }
     )

@@ -16,8 +16,10 @@
  */
 package com.github.adamantcheese.chan.ui.view
 
+import android.animation.Animator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.adamantcheese.chan.Chan
@@ -28,6 +30,7 @@ import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
+import com.github.adamantcheese.chan.ui.widget.SimpleAnimatorListener
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.updateMargins
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -42,6 +45,7 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   private var currentCollapseScale = 0f
   private var bottomNavViewHeight = 0
   private var listeningForInsetsChanges = false
+  private var animating = false
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -129,6 +133,14 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     startListeningForInsetsChangesIfNeeded()
   }
 
+  override fun setOnClickListener(listener: OnClickListener?) {
+    super.setOnClickListener { view ->
+      if (this.visibility == View.VISIBLE && !animating) {
+        listener?.onClick(view)
+      }
+    }
+  }
+
   private fun startListeningForInsetsChangesIfNeeded() {
     if (listeningForInsetsChanges) {
       return
@@ -172,6 +184,10 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     }
 
     if (offset != currentCollapseScale) {
+      if (animating) {
+        animate().cancel()
+      }
+
       currentCollapseScale = 1f - offset
 
       if (offset < 1f) {
@@ -211,6 +227,19 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
         .scaleY(currentCollapseScale)
         .setDuration(300)
         .setStartDelay(0)
+        .setListener(object : SimpleAnimatorListener() {
+          override fun onAnimationEnd(animation: Animator?) {
+            animating = false
+          }
+
+          override fun onAnimationCancel(animation: Animator?) {
+            animating = false
+          }
+
+          override fun onAnimationStart(animation: Animator?) {
+            animating = true
+          }
+        })
         .setInterpolator(SLOWDOWN)
         .start()
     }

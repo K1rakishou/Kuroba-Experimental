@@ -188,7 +188,6 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    FullScreenUtils.setupDefaultFlags(this)
     FullScreenUtils.setupFullscreen(this)
     FullScreenUtils.setupStatusAndNavBarColors(this)
 

@@ -811,12 +811,20 @@ public class ImageViewerController
 
     @Override
     public void resetImmersive() {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         mainHandler.removeCallbacks(uiHideCall);
         mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
     }
 
     @Override
     public void showSystemUI(boolean show) {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         if (show) {
             showSystemUI();
             mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
@@ -826,6 +834,10 @@ public class ImageViewerController
     }
 
     private void hideSystemUI() {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         if (isInImmersiveMode) {
             return;
         }
@@ -848,6 +860,10 @@ public class ImageViewerController
     }
 
     private void showSystemUI() {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         if (!isInImmersiveMode) {
             return;
         }
@@ -865,6 +881,10 @@ public class ImageViewerController
     }
 
     private void hideToolbar() {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         Toolbar toolbar = requireNavController().requireToolbar();
 
         ViewGroup.LayoutParams params = toolbar.getLayoutParams();
@@ -875,6 +895,10 @@ public class ImageViewerController
     }
 
     private void showToolbar() {
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            return;
+        }
+
         Toolbar toolbar = requireNavController().requireToolbar();
 
         ViewGroup.LayoutParams params = toolbar.getLayoutParams();

@@ -55,8 +55,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
     public static final String EMPTY_JSON = "{}";
-    public static final String NOTIFY_ALL_POSTS = "all";
-    public static final String NOTIFY_ONLY_QUOTES = "quotes";
     public static final String NO_HASH_SET = "NO_HASH_SET";
 
     public enum MediaAutoLoadMode
@@ -184,6 +182,7 @@ public class ChanSettings {
     //region APPEARANCE
     // Theme
     private static final StringSetting theme;
+    public static final BooleanSetting imageViewerFullscreenMode;
 
     // Layout
     public static final OptionsSetting<LayoutMode> layoutMode;
@@ -329,6 +328,7 @@ public class ChanSettings {
             //region APPEARANCE
             // Theme
             theme = new StringSetting(p, "preference_theme", "tomorrow");
+            imageViewerFullscreenMode = new BooleanSetting(p, "image_viewer_fullscreen_mode", true);
 
             //Layout
             layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
