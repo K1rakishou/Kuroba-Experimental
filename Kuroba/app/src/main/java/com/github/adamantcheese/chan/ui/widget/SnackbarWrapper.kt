@@ -2,9 +2,11 @@ package com.github.adamantcheese.chan.ui.widget
 
 import android.content.Context
 import android.view.View
+import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.adamantcheese.chan.ui.layout.ThreadLayout
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
 import com.github.adamantcheese.chan.ui.view.HidingFloatingActionButton
 import com.github.adamantcheese.chan.utils.AndroidUtils
@@ -13,10 +15,20 @@ import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.findChild
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
+import javax.inject.Inject
 
 class SnackbarWrapper private constructor(
   private var snackbar: Snackbar? = null
 ) {
+
+  @Inject
+  lateinit var themeHelper: ThemeHelper
+
+  init {
+    Chan.inject(this)
+
+    snackbar?.view?.setBackgroundColor(themeHelper.theme.primaryColor.color)
+  }
 
   fun dismiss() {
     snackbar?.dismiss()
@@ -143,7 +155,6 @@ class SnackbarWrapper private constructor(
     private fun fixSnackbarColors(context: Context, snackbar: Snackbar) {
       snackbar.setTextColor(AndroidUtils.getAttrColor(context, R.attr.text_color_primary))
       snackbar.setActionTextColor(AndroidUtils.getAttrColor(context, R.attr.colorAccent))
-      snackbar.view.setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor))
     }
   }
 }
