@@ -97,9 +97,9 @@ public class DefaultPostParser implements PostParser {
                     callback
             );
 
-            builder.postCommentBuilder.setComment(parsedComment);
+            builder.postCommentBuilder.setParsedComment(parsedComment);
         } else {
-            builder.postCommentBuilder.setComment(new SpannableString(""));
+            builder.postCommentBuilder.setParsedComment(new SpannableString(""));
         }
 
         return builder

@@ -5,7 +5,7 @@ import android.text.TextUtils
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.PostImage
-import com.github.adamantcheese.model.data.archive.ArchivePost
+import com.github.adamantcheese.common.MurmurHashUtils
 import com.github.adamantcheese.model.data.post.ChanPost
 import com.github.adamantcheese.model.data.post.ChanPostImage
 import java.util.*
@@ -111,40 +111,10 @@ object PostUtils {
       }
     }
 
-    if (postRepliesDiffer(postBuilder, chanPost)) {
-      return true
-    }
+    // We do not compare comments, subject, name, tripcode, posterId, capcode and repliesTo here
+    // because they may differ from the ones of a parsed post.
+
     if (postImagesDiffer2(postBuilder.postImages, chanPost.postImages)) {
-      return true
-    }
-    if (postBuilder.postCommentBuilder.getComment().toString() != chanPost.postComment.text) {
-      return true
-    }
-    if (postBuilder.subject?.toString() != chanPost.subject.toString()) {
-      return true
-    }
-    if (postBuilder.name != chanPost.name) {
-      return true
-    }
-    if (postBuilder.tripcode?.toString() != chanPost.tripcode.text) {
-      return true
-    }
-    if (postBuilder.posterId != chanPost.posterId) {
-      return true
-    }
-    if (postBuilder.moderatorCapcode != chanPost.moderatorCapcode) {
-      return true
-    }
-
-    return false
-  }
-
-  private fun postRepliesDiffer(postBuilder: Post.Builder, chanPost: ChanPost): Boolean {
-    if (postBuilder.getRepliesToIds().size != chanPost.repliesTo.size) {
-      return true
-    }
-
-    if (postBuilder.getRepliesToIds() != chanPost.repliesTo) {
       return true
     }
 
@@ -170,68 +140,6 @@ object PostUtils {
         return true
       }
       if (postImage.thumbnailUrl != chanPostImage.thumbnailUrl) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  /**
-   * This version of postsDiffer function is to compare a post from archives with already cached
-   * post from the DB. We only care about the images count difference. It changes when original
-   * image gets deleted by mods. We would also like to check the comments difference, but we can't
-   * because at this point [archivePost]'s comment is still unparsed so it contains stuff like HTMl
-   * tags etc.
-   * */
-  fun shouldRetainPostFromArchive(archivePost: ArchivePost, cachedArchivePost: ChanPost): Boolean {
-    if (archivePost.archivePostMediaList.size > cachedArchivePost.postImages.size) {
-      // Archived post has more images than the cached post
-      return true
-    }
-
-    repeat(archivePost.archivePostMediaList.size) { index ->
-      val archiveImage = archivePost.archivePostMediaList[index]
-      val cachedArchiveImage = cachedArchivePost.postImages[index]
-
-      // If archived post has an original image and cached post has no original image - retain
-      // the archived post.
-      if (archiveImage.imageUrl != null && cachedArchiveImage.imageUrl == null) {
-        return true
-      }
-
-      // If archived post has a thumbnail image and cached post has no thumbnail image - retain
-      // the archived post.
-      if (archiveImage.thumbnailUrl != null && cachedArchiveImage.thumbnailUrl == null) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  /**
-   * Same as above but for Post.Builder
-   * */
-  fun shouldRetainPostFromArchive(archivePost: ArchivePost, freshPost: Post.Builder): Boolean {
-    if (archivePost.archivePostMediaList.size > freshPost.postImages.size) {
-      // Archived post has more images than the fresh post
-      return true
-    }
-
-    repeat(archivePost.archivePostMediaList.size) { index ->
-      val archiveImage = archivePost.archivePostMediaList[index]
-      val freshImage = freshPost.postImages[index]
-
-      // If archived post has an original image and cached post has no original image - retain
-      // the archived post.
-      if (archiveImage.imageUrl != null && freshImage.imageUrl == null) {
-        return true
-      }
-
-      // If archived post has a thumbnail image and cached post has no thumbnail image - retain
-      // the archived post.
-      if (archiveImage.thumbnailUrl != null && freshImage.thumbnailUrl == null) {
         return true
       }
     }
@@ -343,4 +251,17 @@ object PostUtils {
 
     return false
   }
+
+  @JvmStatic
+  fun getPostHash(postBuilder: Post.Builder): MurmurHashUtils.Murmur3Hash {
+    val inputString = postBuilder.postCommentBuilder.getComment().toString() +
+      (postBuilder.subject ?: "") +
+      (postBuilder.name ?: "") +
+      (postBuilder.tripcode ?: "") +
+      (postBuilder.posterId ?: "") +
+      (postBuilder.moderatorCapcode ?: "")
+
+    return MurmurHashUtils.murmurhash3_x64_128(inputString)
+  }
+
 }

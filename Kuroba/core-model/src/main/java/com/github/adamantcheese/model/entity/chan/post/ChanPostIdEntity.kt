@@ -1,6 +1,7 @@
 package com.github.adamantcheese.model.entity.chan.post
 
 import androidx.room.*
+import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
 
 @Entity(
@@ -44,7 +45,7 @@ data class ChanPostIdEntity(
   @ColumnInfo(name = POST_ID_COLUMN_NAME)
   var postId: Long = 0L,
   @ColumnInfo(name = OWNER_ARCHIVE_ID_COLUMN_NAME)
-  var ownerArchiveId: Long = 0L,
+  var ownerArchiveId: Long = ArchiveDescriptor.NO_ARCHIVE_ID,
   @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
   val ownerThreadId: Long = 0L,
   @ColumnInfo(name = POST_NO_COLUMN_NAME)

@@ -304,14 +304,13 @@ class ThreadLayout @JvmOverloads constructor(
 
   override suspend fun showPosts(
     thread: ChanThread?,
-    filter: PostsFilter,
-    refreshAfterHideOrRemovePosts: Boolean
+    filter: PostsFilter
   ) {
     if (thread == null) {
       return
     }
 
-    threadListLayout.showPosts(thread, filter, visible != Visible.THREAD, refreshAfterHideOrRemovePosts)
+    threadListLayout.showPosts(thread, filter, visible != Visible.THREAD)
     switchVisible(Visible.THREAD)
     callback.onShowPosts()
   }

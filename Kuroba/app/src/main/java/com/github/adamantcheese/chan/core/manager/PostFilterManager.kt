@@ -43,32 +43,89 @@ class PostFilterManager {
     lock.write { filterStorage.clear() }
   }
 
+  fun isEnabled(postDescriptor: PostDescriptor): Boolean {
+    return lock.read { filterStorage[postDescriptor]?.enabled ?: false }
+  }
+
+  fun getFilterHash(postDescriptor: PostDescriptor): Int {
+    return lock.read { filterStorage[postDescriptor]?.hashCode() ?: 0 }
+  }
+
   fun getFilterHighlightedColor(postDescriptor: PostDescriptor): Int {
-    return lock.read { filterStorage[postDescriptor]?.filterHighlightedColor ?: 0 }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read 0
+      }
+
+      return@read filterStorage[postDescriptor]?.filterHighlightedColor ?: 0
+    }
   }
 
   fun getFilterStub(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterStub ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterStub ?: false
+    }
   }
 
   fun getFilterRemove(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterRemove ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterRemove ?: false
+    }
   }
 
   fun getFilterWatch(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterWatch ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterWatch ?: false
+    }
   }
 
   fun getFilterReplies(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterReplies ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterReplies ?: false
+    }
   }
 
   fun getFilterOnlyOP(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterOnlyOP ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterOnlyOP ?: false
+    }
   }
 
   fun getFilterSaved(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { filterStorage[postDescriptor]?.filterSaved ?: false }
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      return@read filterStorage[postDescriptor]?.filterSaved ?: false
+    }
   }
 
   fun hasFilterParameters(postDescriptor: PostDescriptor): Boolean {

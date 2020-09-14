@@ -112,7 +112,7 @@ class FoolFuukaApi(
     chanReaderProcessor.addPost(postBuilder)
 
     if (postBuilder.op) {
-      chanReaderProcessor.op = postBuilder
+      chanReaderProcessor.setOp(postBuilder)
     }
   }
 

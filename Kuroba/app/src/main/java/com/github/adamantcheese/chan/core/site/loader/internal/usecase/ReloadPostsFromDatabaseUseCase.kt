@@ -1,20 +1,17 @@
 package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
-import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.mapper.ChanPostMapper
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
-import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.google.gson.Gson
 
 class ReloadPostsFromDatabaseUseCase(
   private val gson: Gson,
-  private val archivesManager: ArchivesManager,
   private val chanPostRepository: ChanPostRepository,
   private val themeHelper: ThemeHelper,
   private val boardManager: BoardManager
@@ -27,7 +24,6 @@ class ReloadPostsFromDatabaseUseCase(
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
-    boardManager.awaitUntilInitialized()
 
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -36,9 +32,7 @@ class ReloadPostsFromDatabaseUseCase(
         // When in the mode, we can just select every post we have for this thread
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
-        chanPostRepository.getThreadPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, maxCount)
-          .unwrap()
-          .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
+        chanPostRepository.getThreadPosts(chanDescriptor, maxCount)
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToGet = chanReaderProcessor.getPostNoListOrdered()
@@ -49,8 +43,7 @@ class ReloadPostsFromDatabaseUseCase(
         // is to get every post by it's postNo that we receive from the server. It's
         // already in correct order (the server order) so we don't even need to sort
         // them.
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, postsToGet)
-          .unwrap()
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
       }
     }.map { post ->
       return@map ChanPostMapper.toPost(
@@ -70,22 +63,20 @@ class ReloadPostsFromDatabaseUseCase(
   suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
+    chanPostRepository.awaitUntilInitialized()
+
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        chanPostRepository.getThreadPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, Int.MAX_VALUE)
-          .unwrap()
-          .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
+        chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
       }
       is ChanDescriptor.CatalogDescriptor -> {
+        boardManager.awaitUntilInitialized()
+
         val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
           ?: return emptyList()
 
         val postsToLoadCount = board.pages * board.perPage
-
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, ArchiveDescriptor.NO_ARCHIVE_ID, postsToLoadCount)
-          .unwrap()
-          // Sort in descending order by threads' lastModified value because that's the BUMP ordering
-          .sortedByDescending { chanPost -> chanPost.lastModified }
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount).unwrap()
       }
     }.map { post ->
       return@map ChanPostMapper.toPost(

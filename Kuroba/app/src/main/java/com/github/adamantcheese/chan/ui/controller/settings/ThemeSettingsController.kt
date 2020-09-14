@@ -344,7 +344,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       val postPreloadedInfoHolder = PostPreloadedInfoHolder()
       postPreloadedInfoHolder.preloadPostsInfo(posts)
-      adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts), false)
+      adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts))
       adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
       postsView.adapter = adapter
 

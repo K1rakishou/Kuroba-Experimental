@@ -1,6 +1,9 @@
 package com.github.adamantcheese.chan.core.site.loader.internal.usecase
 
-import com.github.adamantcheese.chan.core.manager.*
+import com.github.adamantcheese.chan.core.manager.BoardManager
+import com.github.adamantcheese.chan.core.manager.FilterEngine
+import com.github.adamantcheese.chan.core.manager.PostFilterManager
+import com.github.adamantcheese.chan.core.manager.SavedReplyManager
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.PostParseWorker
@@ -20,7 +23,6 @@ import kotlinx.coroutines.supervisorScope
 class ParsePostsUseCase(
   private val verboseLogsEnabled: Boolean,
   private val dispatcher: CoroutineDispatcher,
-  private val archivesManager: ArchivesManager,
   private val chanPostRepository: ChanPostRepository,
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
@@ -50,18 +52,8 @@ class ParsePostsUseCase(
       return emptyList()
     }
 
-    val internalIds = postBuildersToParse
-      .map { postBuilder -> postBuilder.id }
-      .toMutableSet()
-
-    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      boardDescriptors.addAll(
-        boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor())
-      )
-    }
-
+    val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
+    val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
 
     return supervisorScope {
@@ -86,6 +78,36 @@ class ParsePostsUseCase(
 
           return@flatMap deferred.awaitAll().filterNotNull()
         }
+    }
+  }
+
+  private fun getBoardDescriptors(chanDescriptor: ChanDescriptor): Set<BoardDescriptor> {
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return emptySet()
+    }
+
+    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
+    boardDescriptors.addAll(boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor()))
+    return boardDescriptors
+  }
+
+  private suspend fun getInternalIds(
+    chanDescriptor: ChanDescriptor,
+    postBuildersToParse: List<Post.Builder>
+  ): Set<Long> {
+    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
+
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      return postsToParseNoSet
+    }
+
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        return postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        return postsToParseNoSet
+      }
     }
   }
 

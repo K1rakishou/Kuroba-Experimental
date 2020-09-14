@@ -232,7 +232,6 @@ class ChanPostLocalSource(
   }
 
   suspend fun getCatalogOriginalPosts(
-    archiveIds: Set<Long>,
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
     ensureInTransaction()
@@ -265,7 +264,7 @@ class ChanPostLocalSource(
         postNoSet
       )
 
-      val posts = loadOriginalPostsInternal(chanThreadEntityList, catalogDescriptor, archiveIds)
+      val posts = loadOriginalPostsInternal(chanThreadEntityList, catalogDescriptor)
 
       posts.forEach { chanPost ->
         val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
@@ -283,7 +282,6 @@ class ChanPostLocalSource(
 
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
-    archiveIds: Set<Long>,
     count: Int
   ): List<ChanPost> {
     ensureInTransaction()
@@ -303,12 +301,11 @@ class ChanPostLocalSource(
       return emptyList()
     }
 
-    return loadOriginalPostsInternal(chanThreadEntityList, descriptor, archiveIds)
+    return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
   }
 
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
-    archiveIds: Set<Long>,
     originalPostNoList: List<Long>
   ): List<ChanPost> {
     ensureInTransaction()
@@ -332,19 +329,18 @@ class ChanPostLocalSource(
       return emptyList()
     }
 
-    return loadOriginalPostsInternal(chanThreadEntityList, descriptor, archiveIds)
+    return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
   }
 
   private suspend fun loadOriginalPostsInternal(
     chanThreadEntityList: List<ChanThreadEntity>,
-    descriptor: ChanDescriptor.CatalogDescriptor,
-    archiveIds: Set<Long>
+    descriptor: ChanDescriptor.CatalogDescriptor
   ): List<ChanPost> {
     // Load threads' original posts
     val chanPostFullMap = chanThreadEntityList
       .map { chanThreadEntity -> chanThreadEntity.threadId }
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk, archiveIds) }
+      .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
       .associateBy { chanPostEntity -> chanPostEntity.chanPostIdEntity.ownerThreadId }
 
     if (chanPostFullMap.isEmpty()) {
@@ -382,54 +378,6 @@ class ChanPostLocalSource(
 
   suspend fun getThreadPosts(
     descriptor: ChanDescriptor.ThreadDescriptor,
-    archiveIds: Set<Long>,
-    postNoCollection: Collection<Long>
-  ): List<ChanPost> {
-    ensureInTransaction()
-
-    // Load descriptor's thread
-    val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
-      ?: return emptyList()
-
-    val chanPostFullList = chanPostDao.selectMany(
-      chanThreadEntity.threadId,
-      archiveIds,
-      postNoCollection
-    )
-
-    if (chanPostFullList.isEmpty()) {
-      return emptyList()
-    }
-
-    val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
-
-    // Load posts' comments/subjects/tripcodes and other Spannables
-    val textSpansGroupedByPostId = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
-      .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
-
-    val posts = chanPostFullList
-      .mapNotNull { chanPostFull ->
-        val postTextSnapEntityList =
-          textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
-
-        return@mapNotNull ChanPostMapper.fromEntity(
-          gson,
-          descriptor,
-          chanThreadEntity,
-          chanPostFull.chanPostIdEntity,
-          chanPostFull.chanPostEntity,
-          postTextSnapEntityList
-        )
-      }
-
-    return getPostsAdditionalData(postIdList, posts)
-  }
-
-  suspend fun getThreadPosts(
-    descriptor: ChanDescriptor.ThreadDescriptor,
-    archiveIds: Set<Long>,
     postsNoToIgnore: Set<Long>,
     maxCount: Int
   ): List<ChanPost> {
@@ -440,7 +388,7 @@ class ChanPostLocalSource(
     val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
       ?: return emptyList()
 
-    val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId, archiveIds)
+    val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId)
       ?: return emptyList()
 
     // Load thread's posts. We need to sort them because we sort them right in the SQL query in
@@ -451,7 +399,6 @@ class ChanPostLocalSource(
         .flatMap { chunk ->
           return@flatMap chanPostDao.selectAllByThreadId(
             chanThreadEntity.threadId,
-            archiveIds,
             chunk,
             maxCount
           )
@@ -459,7 +406,6 @@ class ChanPostLocalSource(
     } else {
       chanPostDao.selectAllByThreadId(
         chanThreadEntity.threadId,
-        archiveIds,
         emptyList(),
         maxCount
       ).toMutableList()

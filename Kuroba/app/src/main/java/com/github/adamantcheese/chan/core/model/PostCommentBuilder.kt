@@ -7,9 +7,17 @@ class PostCommentBuilder(
   private var comment: CharSequence? = null,
   private val postLinkables: MutableSet<PostLinkable> = mutableSetOf()
 ) {
+  var commentUpdateCounter: Int = 0
+    private set
 
   @Synchronized
   fun setComment(comment: CharSequence) {
+    this.comment = comment
+    ++this.commentUpdateCounter
+  }
+
+  @Synchronized
+  fun setParsedComment(comment: CharSequence) {
     this.comment = comment
   }
 

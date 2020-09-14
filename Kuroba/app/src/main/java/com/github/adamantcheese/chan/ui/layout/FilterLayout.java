@@ -288,6 +288,11 @@ public class FilterLayout
         List<FloatingMenuItem> menuItems = new ArrayList<>(6);
 
         for (FilterAction action : FilterAction.values()) {
+            if (action == FilterAction.WATCH) {
+                // TODO(KurobaEx): Filter watching.
+                continue;
+            }
+
             menuItems.add(new FloatingMenuItem(action, FilterAction.actionName(action)));
         }
 
@@ -426,13 +431,12 @@ public class FilterLayout
         onlyOnOP.setChecked(chanFilterMutable.getOnlyOnOP());
         applyToSaved.setChecked(chanFilterMutable.getApplyToSaved());
 
-        // TODO(KurobaEx): Filter watching.
-//        if (filter.action == FilterAction.WATCH.id) {
-//            applyToReplies.setEnabled(false);
-//            onlyOnOP.setChecked(true);
-//            onlyOnOP.setEnabled(false);
-//            applyToSaved.setEnabled(false);
-//        }
+        if (chanFilterMutable.getAction() == FilterAction.WATCH.id) {
+            applyToReplies.setEnabled(false);
+            onlyOnOP.setChecked(true);
+            onlyOnOP.setEnabled(false);
+            applyToSaved.setEnabled(false);
+        }
     }
 
     private void updateFilterAction() {
@@ -446,14 +450,13 @@ public class FilterLayout
 
         colorPreview.setBackgroundColor(chanFilterMutable.getColor());
 
-        // TODO(KurobaEx): Filter watching.
-//        if (filter.action != FilterAction.WATCH.id) {
-//            applyToReplies.setEnabled(true);
-//            onlyOnOP.setEnabled(true);
-//            onlyOnOP.setChecked(false);
-//            applyToSaved.setEnabled(true);
-//            return;
-//        }
+        if (chanFilterMutable.getAction() != FilterAction.WATCH.id) {
+            applyToReplies.setEnabled(true);
+            onlyOnOP.setEnabled(true);
+            onlyOnOP.setChecked(false);
+            applyToSaved.setEnabled(true);
+            return;
+        }
 
         applyToReplies.setEnabled(false);
         onlyOnOP.setEnabled(false);

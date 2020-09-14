@@ -3,6 +3,7 @@ package com.github.adamantcheese.common
 import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -20,7 +21,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   private val logStates: Boolean = false,
   private val value: CompletableDeferred<T> = CompletableDeferred()
 ) {
-  private val toRunAfterInitialized = mutableListOf<(Throwable?) -> Unit>()
+  private val toRunAfterInitialized = CopyOnWriteArraySet<(Throwable?) -> Unit>()
   private val error = AtomicReference<Throwable>(null)
 
   fun initWithValue(newValue: T) {

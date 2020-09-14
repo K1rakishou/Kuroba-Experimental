@@ -158,7 +158,7 @@ class VichanApi(
       op.threadImagesCount(builder.threadImagesCount)
       op.uniqueIps(builder.uniqueIps)
       op.lastModified(builder.lastModified)
-      chanReaderProcessor.op = op
+      chanReaderProcessor.setOp(op)
     }
 
     if (countryCode != null && countryName != null) {

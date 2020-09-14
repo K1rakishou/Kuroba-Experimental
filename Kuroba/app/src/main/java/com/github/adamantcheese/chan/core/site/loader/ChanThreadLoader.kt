@@ -96,7 +96,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       filterEngine,
       chanPostRepository,
       appConstants,
-      archivesManager,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
       themeHelper,
@@ -138,6 +137,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
    *
    * @param listener the listener to add
    */
+  @Synchronized
   fun addListener(listener: ChanLoaderCallback) {
     BackgroundUtils.ensureMainThread()
     listeners.add(listener)
@@ -149,6 +149,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
    * @param listener the listener to remove
    * @return true if there are no more listeners, false otherwise
    */
+  @Synchronized
   fun removeListener(listener: ChanLoaderCallback?): Boolean {
     BackgroundUtils.ensureMainThread()
 
@@ -222,14 +223,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       }, { error ->
         notifyAboutError(ChanLoaderException(error))
       })
-  }
-
-  /**
-   * Request more data if [getTimeUntilLoadMore] is negative.
-   */
-  fun loadMoreIfTime(): Boolean {
-    BackgroundUtils.ensureMainThread()
-    return timeUntilLoadMore < 0L && requestMoreData()
   }
 
   fun quickLoad() {
@@ -314,6 +307,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     BackgroundUtils.ensureBackgroundThread()
 
     if (requestJob != null) {
+      Logger.d(TAG, "getData() requestJob is not null!")
       return
     }
 
