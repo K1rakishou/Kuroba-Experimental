@@ -9,7 +9,7 @@ open class Logger(private val verboseLogs: Boolean) {
       return
     }
 
-    Log.d(tag, String.format("[%s]: %s", Thread.currentThread().name, message))
+    Log.d(tag, String.format("%s", message))
   }
 
   internal open fun logError(tag: String, message: String, error: Throwable? = null) {

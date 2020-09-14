@@ -427,8 +427,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   suspend fun showPosts(
     thread: ChanThread,
     filter: PostsFilter,
-    initial: Boolean,
-    refreshAfterHideOrRemovePosts: Boolean
+    initial: Boolean
   ) {
     showingThread = thread
 
@@ -457,8 +456,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.setThread(
       thread.chanDescriptor,
       thread.postPreloadedInfoHolder,
-      filter.apply(thread.posts),
-      refreshAfterHideOrRemovePosts
+      filter.apply(thread.posts)
     )
   }
 

@@ -52,18 +52,8 @@ class ParsePostsUseCase(
       return emptyList()
     }
 
-    val internalIds = postBuildersToParse
-      .map { postBuilder -> postBuilder.id }
-      .toMutableSet()
-
-    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      boardDescriptors.addAll(
-        boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor())
-      )
-    }
-
+    val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
+    val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
 
     return supervisorScope {
@@ -88,6 +78,36 @@ class ParsePostsUseCase(
 
           return@flatMap deferred.awaitAll().filterNotNull()
         }
+    }
+  }
+
+  private fun getBoardDescriptors(chanDescriptor: ChanDescriptor): Set<BoardDescriptor> {
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return emptySet()
+    }
+
+    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
+    boardDescriptors.addAll(boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor()))
+    return boardDescriptors
+  }
+
+  private suspend fun getInternalIds(
+    chanDescriptor: ChanDescriptor,
+    postBuildersToParse: List<Post.Builder>
+  ): Set<Long> {
+    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
+
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      return postsToParseNoSet
+    }
+
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        return postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        return postsToParseNoSet
+      }
     }
   }
 

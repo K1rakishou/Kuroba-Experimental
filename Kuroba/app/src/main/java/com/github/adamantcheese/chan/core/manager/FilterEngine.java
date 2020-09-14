@@ -31,6 +31,7 @@ import com.github.adamantcheese.model.data.filter.ChanFilter;
 import com.github.adamantcheese.model.data.filter.ChanFilterMutable;
 import com.github.adamantcheese.model.data.filter.FilterType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,16 +87,16 @@ public class FilterEngine {
         return chanFilterManager.getAllFilters();
     }
 
-    // TODO(KurobaEx): Filter watching.
-//    public List<Filter> getEnabledWatchFilters() {
-//        List<Filter> watchFilters = new ArrayList<>();
-//        for (Filter f : getEnabledFilters()) {
-//            if (f.action == FilterAction.WATCH.id) {
-//                watchFilters.add(f);
-//            }
-//        }
-//        return watchFilters;
-//    }
+    public List<ChanFilter> getEnabledWatchFilters() {
+        List<ChanFilter> watchFilters = new ArrayList<>();
+        for (ChanFilter f : getEnabledFilters()) {
+            if (f.getAction() == FilterAction.WATCH.id) {
+                watchFilters.add(f);
+            }
+        }
+
+        return watchFilters;
+    }
 
     public boolean matchesBoard(ChanFilter filter, ChanBoard board) {
         return filter.matchesBoard(board.getBoardDescriptor());
@@ -304,8 +305,6 @@ public class FilterEngine {
                 synchronized (patternCache) {
                     patternCache.put(filter.getPattern(), pattern);
                 }
-
-                Logger.d(TAG, "Resulting pattern: " + pattern.pattern());
             }
         }
 
@@ -346,8 +345,6 @@ public class FilterEngine {
                 synchronized (patternCache) {
                     patternCache.put(filter.getPattern(), pattern);
                 }
-
-                Logger.d(TAG, "Resulting pattern: " + pattern.pattern());
             }
         }
 

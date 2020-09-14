@@ -154,7 +154,7 @@ public class MurmurHashUtils {
 
         @Override
         public String toString() {
-            return "LongPair{" +
+            return "Murmur3Hash{" +
                     "val1=" + val1 +
                     ", val2=" + val2 +
                     '}';

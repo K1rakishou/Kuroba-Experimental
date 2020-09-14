@@ -24,7 +24,6 @@ class ReloadPostsFromDatabaseUseCase(
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
-    boardManager.awaitUntilInitialized()
 
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -34,8 +33,6 @@ class ReloadPostsFromDatabaseUseCase(
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
         chanPostRepository.getThreadPosts(chanDescriptor, maxCount)
-          .unwrap()
-          .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToGet = chanReaderProcessor.getPostNoListOrdered()
@@ -46,8 +43,7 @@ class ReloadPostsFromDatabaseUseCase(
         // is to get every post by it's postNo that we receive from the server. It's
         // already in correct order (the server order) so we don't even need to sort
         // them.
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet)
-          .unwrap()
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
       }
     }.map { post ->
       return@map ChanPostMapper.toPost(
@@ -67,22 +63,20 @@ class ReloadPostsFromDatabaseUseCase(
   suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<Post> {
     BackgroundUtils.ensureBackgroundThread()
 
+    chanPostRepository.awaitUntilInitialized()
+
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
-          .unwrap()
-          .sortedBy { chanPost -> chanPost.postDescriptor.postNo }
       }
       is ChanDescriptor.CatalogDescriptor -> {
+        boardManager.awaitUntilInitialized()
+
         val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
           ?: return emptyList()
 
         val postsToLoadCount = board.pages * board.perPage
-
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount)
-          .unwrap()
-          // Sort in descending order by threads' lastModified value because that's the BUMP ordering
-          .sortedByDescending { chanPost -> chanPost.lastModified }
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount).unwrap()
       }
     }.map { post ->
       return@map ChanPostMapper.toPost(

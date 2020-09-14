@@ -143,21 +143,21 @@ public class Chan
     private void onCreateInternal() {
         registerActivityLifecycleCallbacks(this);
 
+        boolean isDev = getFlavorType() == AndroidUtils.FlavorType.Dev;
+        boolean isBeta = getFlavorType() == AndroidUtils.FlavorType.Beta;
+
         System.setProperty(
                 "kotlinx.coroutines.debug",
-                getFlavorType() == AndroidUtils.FlavorType.Dev ? "on" : "off"
+                isDev ? "on" : "off"
         );
 
-        AppConstants appConstants = new AppConstants(getApplicationContext());
+        AppConstants appConstants = new AppConstants(getApplicationContext(), isDev);
         logAppConstants(appConstants);
 
         SavingNotification.setupChannel();
 
         Dns okHttpDns = getOkHttpDns();
         OkHttpProtocols okHttpProtocols = getOkHttpProtocols();
-
-        boolean isDev = getFlavorType() == AndroidUtils.FlavorType.Dev;
-        boolean isBeta = getFlavorType() == AndroidUtils.FlavorType.Beta;
 
         ModelMainComponent modelMainComponent = DatabaseModuleInjector.build(
                 this,
@@ -239,7 +239,7 @@ public class Chan
                 return;
             }
 
-            Logger.e("APP", "RxJava undeliverable exception", e);
+            Logger.e(TAG, "RxJava undeliverable exception", e);
             onUnhandledException(e, exceptionToString(true, e));
 
             // Do not exit the app here! Most of the time an exception that comes here is not a
@@ -249,14 +249,16 @@ public class Chan
 
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
             // if there's any uncaught crash stuff, just dump them to the log and exit immediately
-            Logger.e("APP", "Unhandled exception", e);
+            Logger.e(TAG, "Unhandled exception", e);
             onUnhandledException(e, exceptionToString(false, e));
             System.exit(999);
         });
     }
 
     private void logAppConstants(AppConstants appConstants) {
-        Logger.d("APP", "maxPostsCountInPostsCache = " + appConstants.getMaxPostsCountInPostsCache());
+        Logger.d(TAG, "maxPostsCountInPostsCache = " + appConstants.getMaxPostsCountInPostsCache());
+        Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.getMaxAmountOfPostsInDatabase());
+        Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.getMaxAmountOfThreadsInDatabase());
     }
 
     private Dns getOkHttpDns() {
@@ -273,15 +275,11 @@ public class Chan
     private OkHttpProtocols getOkHttpProtocols() {
         if (ChanSettings.okHttpAllowHttp2.get()) {
             Logger.d(AppModule.DI_TAG, "Using HTTP_2 and HTTP_1_1");
-            return new OkHttpProtocols(
-                    Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1)
-            );
+            return new OkHttpProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
         }
 
         Logger.d(AppModule.DI_TAG, "Using HTTP_1_1");
-        return new OkHttpProtocols(
-                Collections.singletonList(Protocol.HTTP_1_1)
-        );
+        return new OkHttpProtocols(Collections.singletonList(Protocol.HTTP_1_1));
     }
 
     private boolean isEmulator() {

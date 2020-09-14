@@ -104,6 +104,7 @@ internal class PostParseWorker(
     return when (FilterEngine.FilterAction.forId(filter.action)) {
       FilterEngine.FilterAction.COLOR -> {
         PostFilter(
+          enabled = filter.enabled,
           filterHighlightedColor = filter.color,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP,
@@ -112,6 +113,7 @@ internal class PostParseWorker(
       }
       FilterEngine.FilterAction.HIDE -> {
         PostFilter(
+          enabled = filter.enabled,
           filterStub = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP
@@ -119,6 +121,7 @@ internal class PostParseWorker(
       }
       FilterEngine.FilterAction.REMOVE -> {
         PostFilter(
+          enabled = filter.enabled,
           filterRemove = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP
@@ -126,6 +129,7 @@ internal class PostParseWorker(
       }
       FilterEngine.FilterAction.WATCH -> {
         PostFilter(
+          enabled = filter.enabled,
           filterWatch = true,
           filterOnlyOP = true
         )

@@ -34,9 +34,9 @@ import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.theme.Theme;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
-import com.github.adamantcheese.chan.utils.PostUtils;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.Nullable;
@@ -317,42 +317,27 @@ public class PostAdapter
     public void setThread(
             ChanDescriptor chanDescriptor,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
-            List<PostIndexed> indexedPosts,
-            boolean refreshAfterHideOrRemovePosts
+            List<PostIndexed> indexedPosts
     ) {
         BackgroundUtils.ensureMainThread();
 
-        // changed threads, update
-        boolean changed = (this.chanDescriptor != null && !this.chanDescriptor.equals(chanDescriptor));
-        int lastLastSeenIndicator = lastSeenIndicatorPosition;
-
         this.chanDescriptor = chanDescriptor;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
-
         showError(null);
 
         List<Post> posts = extractPosts(indexedPosts);
-        changed = hasChangedPosts(posts, changed);
 
         updatingPosts.clear();
-
         displayList.clear();
         displayList.addAll(posts);
         indexedDisplayList.clear();
         indexedDisplayList.addAll(indexedPosts);
-
         lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor);
 
-        boolean shouldUpdate = changed
-                // Update for indicator (adds/removes extra recycler item that causes inconsistency
-                // exceptions) or if something changed per reasons above
-                || lastLastSeenIndicator != lastSeenIndicatorPosition
-                // When true that means that the user has just hid or removed post/thread
-                // so we need to refresh the UI
-                || refreshAfterHideOrRemovePosts;
+        notifyDataSetChanged();
 
-        if (shouldUpdate) {
-            notifyDataSetChanged();
+        if (AndroidUtils.isDevBuild()) {
+            Logger.d(TAG, "setThread() notifyDataSetChanged called");
         }
     }
 
@@ -368,25 +353,6 @@ public class PostAdapter
         }
 
         return posts;
-    }
-
-    private boolean hasChangedPosts(List<Post> posts, boolean changed) {
-        boolean localChanged = changed;
-
-        if (!localChanged && displayList.size() == posts.size()) {
-            for (int i = 0; i < displayList.size(); i++) {
-                if (PostUtils.postsDiffer(displayList.get(i), posts.get(i))) {
-                    // posts are different, or a post got deleted and needs to be updated
-                    localChanged = true;
-                    break;
-                }
-            }
-        } else {
-            // new posts or fewer posts, update
-            localChanged = true;
-        }
-
-        return localChanged;
     }
 
     private int getLastSeenIndicatorPosition(ChanDescriptor chanDescriptor) {

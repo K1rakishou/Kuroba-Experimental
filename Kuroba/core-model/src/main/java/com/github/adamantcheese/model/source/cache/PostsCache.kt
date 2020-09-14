@@ -3,15 +3,26 @@ package com.github.adamantcheese.model.source.cache
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.common.MurmurHashUtils
 import com.github.adamantcheese.common.mutableMapWithCap
+import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.post.ChanPost
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
-class PostsCache(private val maxValueCount: Int) {
+class PostsCache(
+  private val maxValueCount: Int,
+  private val loggerTag: String,
+  private val logger: Logger,
+) {
+  private val tag = "$loggerTag PostsCache"
+
   private val mutex = Mutex()
   private val currentValuesCount = AtomicInteger(0)
 
@@ -24,41 +35,69 @@ class PostsCache(private val maxValueCount: Int) {
   @GuardedBy("mutex")
   private val accessTimes = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(128)
 
-  @GuardedBy("mutes")
+  @GuardedBy("mutex")
   private val rawPostHashesMap = mutableMapWithCap<PostDescriptor, MurmurHashUtils.Murmur3Hash>(1024)
 
-  suspend fun putIntoCache(postDescriptor: PostDescriptor, post: ChanPost) {
+  private val lastEvictInvokeTime = AtomicLong(0L)
+
+  suspend fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
+    mutex.withLock { rawPostHashesMap[postDescriptor] = hash }
+  }
+
+  suspend fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
+    return mutex.withLock { rawPostHashesMap[postDescriptor] }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  suspend fun putIntoCache(post: ChanPost) {
+    putManyIntoCache(listOf(post))
+  }
+
+  @OptIn(ExperimentalTime::class)
+  suspend fun putManyIntoCache(posts: Collection<ChanPost>) {
+    if (posts.isEmpty()) {
+      return
+    }
+
     mutex.withLock {
-      val threadDescriptor = post.postDescriptor.threadDescriptor()
+      val threadDescriptors = posts.map { post -> post.postDescriptor.threadDescriptor() }.toSet()
 
-      if (!postsCache.containsKey(threadDescriptor)) {
-        postsCache[threadDescriptor] = TreeMap(POST_COMPARATOR)
-      }
-
-      val count = if (!postsCache[threadDescriptor]!!.containsKey(postDescriptor)) {
-        currentValuesCount.incrementAndGet()
-      } else {
-        currentValuesCount.get()
-      }
-
-      if (count > maxValueCount) {
-        // Evict 35% of the cache
-        var amountToEvict = (count / 100) * 35
-        if (amountToEvict >= postsCache.size) {
-          amountToEvict = postsCache.size - 1
-        }
-
-        if (amountToEvict > 0) {
-          evictOld(amountToEvict)
+      threadDescriptors.forEach { threadDescriptor ->
+        if (!postsCache.containsKey(threadDescriptor)) {
+          postsCache[threadDescriptor] = TreeMap(POST_COMPARATOR)
         }
       }
 
-      if (post.isOp) {
-        originalPostsCache[threadDescriptor] = post
+      if (currentValuesCount.get() > maxValueCount && accessTimes.size > IMMUNE_THREADS_COUNT) {
+        val delta = System.currentTimeMillis() - lastEvictInvokeTime.get()
+        if (delta > EVICTION_TIMEOUT_MS) {
+          // Evict 35% of the cache
+          val amountToEvict = (currentValuesCount.get() / 100) * 35
+          if (amountToEvict > 0) {
+            logger.log(tag, "evictOld start (posts: ${currentValuesCount.get()}/${maxValueCount})")
+            val time = measureTime { evictOld(amountToEvict) }
+            logger.log(tag, "evictOld end (posts: ${currentValuesCount.get()}/${maxValueCount}), took ${time}")
+          }
+
+          lastEvictInvokeTime.set(System.currentTimeMillis())
+        }
       }
 
-      accessTimes[threadDescriptor] = System.currentTimeMillis()
-      postsCache[threadDescriptor]!![postDescriptor] = post
+      posts.forEach { post ->
+        val threadDescriptor = post.postDescriptor.threadDescriptor()
+        val postDescriptor = post.postDescriptor
+
+        if (post.isOp) {
+          originalPostsCache[threadDescriptor] = post
+        }
+
+        if (!postsCache[threadDescriptor]!!.containsKey(postDescriptor)) {
+          currentValuesCount.incrementAndGet()
+        }
+
+        postsCache[threadDescriptor]!![postDescriptor] = post
+        accessTimes[threadDescriptor] = 0L
+      }
     }
   }
 
@@ -82,14 +121,6 @@ class PostsCache(private val maxValueCount: Int) {
       return@withLock post
         .apply { isFromCache = true }
     }
-  }
-
-  suspend fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
-    mutex.withLock { rawPostHashesMap[postDescriptor] = hash }
-  }
-
-  suspend fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
-    return mutex.withLock { rawPostHashesMap[postDescriptor] }
   }
 
   suspend fun getOriginalPostsFromCache(
@@ -198,20 +229,26 @@ class PostsCache(private val maxValueCount: Int) {
   }
 
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    deleteThreads(listOf(threadDescriptor))
+  }
+
+  suspend fun deleteThreads(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     mutex.withLock {
-      val size = postsCache[threadDescriptor]?.size ?: -1
-      if (size > 0) {
-        currentValuesCount.addAndGet(-size)
-      }
-
-      postsCache.remove(threadDescriptor)?.let { map ->
-        map.keys.forEach { postDescriptor ->
-          rawPostHashesMap.remove(postDescriptor)
+      threadDescriptors.forEach { threadDescriptor ->
+        val size = postsCache[threadDescriptor]?.size ?: -1
+        if (size > 0) {
+          currentValuesCount.addAndGet(-size)
         }
-      }
 
-      originalPostsCache.remove(threadDescriptor)
-      accessTimes.remove(threadDescriptor)
+        postsCache.remove(threadDescriptor)?.let { map ->
+          map.keys.forEach { postDescriptor ->
+            rawPostHashesMap.remove(postDescriptor)
+          }
+        }
+
+        originalPostsCache.remove(threadDescriptor)
+        accessTimes.remove(threadDescriptor)
+      }
     }
   }
 
@@ -270,12 +307,27 @@ class PostsCache(private val maxValueCount: Int) {
     }
   }
 
-  suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+  suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
     return mutex.withLock {
       accessTimes[threadDescriptor] = System.currentTimeMillis()
-      val posts = postsCache[threadDescriptor]?.values?.toList() ?: emptyList()
 
-      return@withLock posts.onEach { post -> post.isFromCache = true }
+      val posts = postsCache[threadDescriptor]?.values?.toList()?.takeLast(maxCount)
+        ?: emptyList()
+
+      return@withLock posts
+        .onEach { post -> post.isFromCache = true }
+    }
+  }
+
+  suspend fun getAllPostNoSet(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): Set<Long> {
+    return mutex.withLock {
+      accessTimes[threadDescriptor] = System.currentTimeMillis()
+
+      return@withLock postsCache[threadDescriptor]?.values
+        ?.map { it.postDescriptor.postNo }
+        ?.takeLast(maxCount)
+        ?.toSet()
+        ?: emptySet()
     }
   }
 
@@ -284,35 +336,43 @@ class PostsCache(private val maxValueCount: Int) {
     require(mutex.isLocked) { "mutex must be locked!" }
 
     val keysSorted = accessTimes.entries
-      // We will get the latest accessed key in the beginning of the list
+      // We will get the oldest accessed key in the beginning of the list
       .sortedBy { (_, lastAccessTime) -> lastAccessTime }
+      .dropLast(IMMUNE_THREADS_COUNT)
       .map { (key, _) -> key }
 
+    if (keysSorted.isEmpty()) {
+      logger.log(tag, "keysSorted is empty, accessTimes size=${accessTimes.size}")
+      return
+    }
+
+    logger.log(tag, "keysSorted size=${keysSorted.size}, " +
+      "accessTimes size=${accessTimes.size}, " +
+      "currentValuesCount=${currentValuesCount.get()}")
+
     val keysToEvict = mutableListOf<ChanDescriptor.ThreadDescriptor>()
-    var amountToEvict = amountToEvictParam
+    var amountOfPostsToEvict = amountToEvictParam
 
     for (key in keysSorted) {
-      if (amountToEvict <= 0) {
+      if (amountOfPostsToEvict <= 0) {
         break
       }
 
-      // TODO(KurobaEx): do not evict posts for the freshest N threads (let's say 10). We need
-      //  to do this to avoid a situation where there is a a couple of really huge threads
-      //  (10k+ replies) and the user constantly switches between them. So to avoid constantly
-      //  removing/reloading posts from/into cache we need to skip those threads. In other words,
-      //  we need to make 10 freshest threads immune to evict procedure.
       val count = postsCache[key]?.size ?: 0
 
       keysToEvict += key
-      amountToEvict -= count
+      amountOfPostsToEvict -= count
       currentValuesCount.addAndGet(-count)
     }
+
+    logger.log(tag, "Evicting ${keysToEvict.size} threads, postsToEvict=${amountToEvictParam - amountOfPostsToEvict}")
 
     if (currentValuesCount.get() < 0) {
       currentValuesCount.set(0)
     }
 
     if (keysToEvict.isEmpty()) {
+      logger.log(tag, "keysToEvict is empty")
       return
     }
 
@@ -323,6 +383,7 @@ class PostsCache(private val maxValueCount: Int) {
         }
       }
 
+      originalPostsCache.remove(threadDescriptor)
       postsCache.remove(threadDescriptor)?.clear()
       accessTimes.remove(threadDescriptor)
     }
@@ -360,6 +421,16 @@ class PostsCache(private val maxValueCount: Int) {
   }
 
   companion object {
+    // The freshest N threads that will never have their posts evicted from the cache. Let's say we
+    // have 16 threads in the cache and we want to delete such amount of posts that it will delete
+    // posts from 10 threads. Without considering the immune threads it will evict posts for 10
+    // threads and will leave 6 threads in the cache. But with immune threads it will only evict
+    // posts for 6 oldest threads, always leaving the freshest 10 untouched.
+    private const val IMMUNE_THREADS_COUNT = 10
+
+    // 1 minute
+    private val EVICTION_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(1)
+
     private val POST_COMPARATOR = kotlin.Comparator<PostDescriptor> { desc1, desc2 ->
       return@Comparator desc1.postNo.compareTo(desc2.postNo)
     }

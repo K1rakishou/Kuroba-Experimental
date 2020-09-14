@@ -18,7 +18,6 @@ package com.github.adamantcheese.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
-import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.base.RendezvousCoroutineExecutor
@@ -67,6 +66,8 @@ import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -86,6 +87,7 @@ class ThreadPresenter @Inject constructor(
   private val seenPostsManager: SeenPostsManager,
   private val historyNavigationManager: HistoryNavigationManager,
   private val postFilterManager: PostFilterManager,
+  private val chanFilterManager: ChanFilterManager,
   private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 ) : ChanLoaderCallback,
@@ -135,6 +137,12 @@ class ThreadPresenter @Inject constructor(
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback?) {
     this.context = context
     this.threadPresenterCallback = threadPresenterCallback
+
+    launch {
+      chanFilterManager.listenForFiltersChanges()
+        .debounce(500L)
+        .collect { onFiltersChanged() }
+    }
   }
 
   fun showNoContent() {
@@ -238,22 +246,20 @@ class ThreadPresenter @Inject constructor(
       threadPresenterCallback?.showLoading()
 
       chanPostRepository.awaitUntilInitialized()
-      chanPostRepository.deleteThread(threadDescriptor).safeUnwrap { error ->
-        Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error)
+      chanPostRepository.deleteThread(threadDescriptor)
+        .peekError { error -> Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error) }
 
-        showToast(
-          context,
-          context.getString(R.string.thread_presenter_failed_to_delete_thread),
-          Toast.LENGTH_LONG
-        )
+      val postDescriptors = chanLoader?.thread?.posts
+        ?.map { post -> post.postDescriptor }
+        ?: emptyList()
 
-        return@launch
-      }
-
+      postFilterManager.removeMany(postDescriptors)
       chanLoader?.thread?.clearPosts()
+
       chanLoader?.requestData()
     }
   }
+
 
   fun requestData() {
     BackgroundUtils.ensureMainThread()
@@ -392,7 +398,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   suspend fun refreshUI() {
-    showPosts(true)
+    showPosts()
   }
 
   @Synchronized
@@ -435,6 +441,53 @@ class ThreadPresenter @Inject constructor(
     if (currentChanDescriptor != null) {
       onDemandContentLoaderManager.onPostUnbind(currentChanDescriptor!!, post, isActuallyRecycling)
       seenPostsManager.onPostUnbind(currentChanDescriptor!!, post)
+    }
+  }
+
+  private suspend fun onFiltersChanged() {
+    chanPostRepository.awaitUntilInitialized()
+    Logger.d(TAG, "onFiltersChanged() clearing posts cache")
+
+    var shouldShowLoadingIndicator = false
+
+    chanLoaderManager.currentCatalogDescriptor?.let { catalogDescriptor ->
+      val chanLoader = chanLoaderManager.getLoader(catalogDescriptor)
+        ?: return@let
+
+      val catalogPosts = chanLoader.thread?.posts
+        ?: return@let
+
+      val threadDescriptors = catalogPosts.map { catalogPost ->
+        check(catalogPost.isOP) { "Not OP post!" }
+        return@map ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, catalogPost.no)
+      }
+
+      if (catalogDescriptor == currentChanDescriptor) {
+        shouldShowLoadingIndicator = true
+      }
+
+      chanPostRepository.deleteThreadsFromCache(threadDescriptors)
+
+      chanLoader.thread?.clearPosts()
+      chanLoader.requestData()
+    }
+
+    chanLoaderManager.currentThreadDescriptor?.let { threadDescriptor ->
+      val chanLoader = chanLoaderManager.getLoader(threadDescriptor)
+        ?: return@let
+
+      if (threadDescriptor == currentChanDescriptor) {
+        shouldShowLoadingIndicator = true
+      }
+
+      chanPostRepository.deleteThreadsFromCache(listOf(threadDescriptor))
+
+      chanLoader.thread?.clearPosts()
+      chanLoader.requestData()
+    }
+
+    if (shouldShowLoadingIndicator) {
+      threadPresenterCallback?.showLoading()
     }
   }
 
@@ -1403,12 +1456,11 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showPostInfo(text.toString())
   }
 
-  private suspend fun showPosts(refreshAfterHideOrRemovePosts: Boolean = false) {
+  private suspend fun showPosts() {
     if (chanLoader != null && chanLoader!!.thread != null) {
       threadPresenterCallback?.showPosts(
         chanLoader!!.thread,
-        PostsFilter(order, searchQuery),
-        refreshAfterHideOrRemovePosts
+        PostsFilter(order, searchQuery)
       )
     }
   }
@@ -1462,7 +1514,7 @@ class ThreadPresenter @Inject constructor(
     val displayingPosts: List<Post>
     val currentPosition: IntArray
 
-    suspend fun showPosts(thread: ChanThread?, filter: PostsFilter, refreshAfterHideOrRemovePosts: Boolean)
+    suspend fun showPosts(thread: ChanThread?, filter: PostsFilter)
     fun postClicked(post: Post)
     fun showError(error: ChanLoaderException)
     fun showLoading()

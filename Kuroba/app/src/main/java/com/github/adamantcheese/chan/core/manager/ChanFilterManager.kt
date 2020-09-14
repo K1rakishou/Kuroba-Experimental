@@ -10,6 +10,11 @@ import com.github.adamantcheese.model.data.filter.ChanFilter
 import com.github.adamantcheese.model.repository.ChanFilterRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -22,6 +27,8 @@ class ChanFilterManager(
   private val chanFilterRepository: ChanFilterRepository,
   private val postFilterManager: PostFilterManager
 ) {
+  private val filtersChangedChannel = Channel<Unit>(Channel.RENDEZVOUS)
+
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanFilterManager")
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -37,6 +44,13 @@ class ChanFilterManager(
       val time = measureTime { loadFiltersInternal() }
       Logger.d(TAG, "loadFilters() took ${time}")
     }
+  }
+
+  fun listenForFiltersChanges(): Flow<Unit> {
+    return filtersChangedChannel
+      .receiveAsFlow()
+      .flowOn(Dispatchers.Main)
+      .catch { error -> Logger.e(TAG, "Error while listening for filtersChangedSubject updates", error) }
   }
 
   private suspend fun loadFiltersInternal() {
@@ -84,6 +98,7 @@ class ChanFilterManager(
         postFilterManager.clear()
       }
 
+      filtersChangedChannel.offer(Unit)
       onUpdated()
     }
   }
@@ -135,6 +150,7 @@ class ChanFilterManager(
         .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
+      filtersChangedChannel.offer(Unit)
       postFilterManager.clear()
       onUpdated()
     }
@@ -167,12 +183,13 @@ class ChanFilterManager(
         return@post
       }
 
-      val allFilters = lock.read { filters.map { filter -> filter.copy() } }
+      val allFilters = lock.read { this.filters.map { filter -> filter.copy() } }
 
       chanFilterRepository.updateAllFilters(allFilters)
         .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
+      filtersChangedChannel.offer(Unit)
       postFilterManager.clear()
       onUpdated()
     }
@@ -187,7 +204,10 @@ class ChanFilterManager(
   }
 
   fun getEnabledFiltersSorted(): List<ChanFilter> {
-    return lock.read { filters.map { filter -> filter.copy() } }
+    return lock.read {
+      return@read filters.filter { filter -> filter.enabled }
+        .map { filter -> filter.copy() }
+    }
   }
 
   private suspend fun updateOldFilterInternal(indexOfThisFilter: Int, newChanFilter: ChanFilter): Boolean {

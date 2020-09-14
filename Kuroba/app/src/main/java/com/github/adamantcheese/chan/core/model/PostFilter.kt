@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.core.model
 
 data class PostFilter(
+  var enabled: Boolean = false,
   var filterHighlightedColor: Int = 0,
   var filterStub: Boolean = false,
   var filterRemove: Boolean = false,

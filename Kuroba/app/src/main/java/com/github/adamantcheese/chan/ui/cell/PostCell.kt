@@ -112,6 +112,7 @@ class PostCell : LinearLayout, PostCellInterface {
   private var highlighted = false
   private var postSelected = false
   private var showDivider = false
+  private var filterHash = 0
 
   private val thumbnailViews: MutableList<PostImageThumbnailView> = ArrayList(1)
   private val commentMovementMethod = PostViewMovementMethod()
@@ -226,6 +227,8 @@ class PostCell : LinearLayout, PostCellInterface {
     theme: Theme
   ) {
 
+    val filterHash = postFilterManager.getFilterHash(post.postDescriptor)
+
     if (this.post != null
       && this.post == post
       && this.inPopup == inPopup
@@ -233,6 +236,7 @@ class PostCell : LinearLayout, PostCellInterface {
       && this.postSelected == selected
       && this.markedNo == markedNo
       && this.showDivider == showDivider
+      && this.filterHash == filterHash
     ) {
       return
     }
@@ -248,6 +252,7 @@ class PostCell : LinearLayout, PostCellInterface {
     this.postSelected = selected
     this.markedNo = markedNo
     this.showDivider = showDivider
+    this.filterHash = filterHash
 
     hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
     bindPost(theme, post)

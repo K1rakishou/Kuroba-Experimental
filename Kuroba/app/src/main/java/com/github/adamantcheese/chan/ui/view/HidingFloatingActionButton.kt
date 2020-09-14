@@ -184,10 +184,6 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     }
 
     if (offset != currentCollapseScale) {
-      if (animating) {
-        animate().cancel()
-      }
-
       currentCollapseScale = 1f - offset
 
       if (offset < 1f) {
