@@ -25,6 +25,19 @@ class ChanPostHideLocalSource(
     ).map { chanPostHideEntity -> ChanPostHideMapper.fromEntity(chanPostHideEntity) }
   }
 
+  suspend fun preloadForCatalog(
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    count: Int
+  ): List<ChanPostHide> {
+    ensureInTransaction()
+
+    return chanPostHideDao.selectLatestForCatalog(
+      catalogDescriptor.siteName(),
+      catalogDescriptor.boardCode(),
+      count
+    ).map { chanPostHideEntity -> ChanPostHideMapper.fromEntity(chanPostHideEntity) }
+  }
+
   suspend fun createMany(chanPostHideList: List<ChanPostHide>) {
     ensureInTransaction()
 
@@ -57,5 +70,4 @@ class ChanPostHideLocalSource(
 
     chanPostHideDao.deleteAll()
   }
-
 }

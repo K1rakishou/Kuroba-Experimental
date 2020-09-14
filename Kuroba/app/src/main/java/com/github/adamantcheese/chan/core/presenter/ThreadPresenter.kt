@@ -200,35 +200,53 @@ class ThreadPresenter @Inject constructor(
     compositeDisposable.clear()
   }
 
-  suspend fun requestInitialData() {
+  suspend fun requestThreadInitialData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (!isBound) {
       return
     }
 
-    val descriptor = chanDescriptor
-        ?: return
-
-    descriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
-      supervisorScope {
-        val jobs = mutableListOf<Deferred<Unit>>()
-
-        jobs += async(Dispatchers.IO) { seenPostsManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
-        jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor) }
-
-        ModularResult.Try { jobs.awaitAll() }
-          .peekError { error -> Logger.e(TAG, "Error while waiting for managers' initialization", error) }
-          .ignore()
-      }
-    }
-
-    if (chanLoader?.thread == null) {
-      requestData()
-    } else {
+    if (chanLoader?.thread != null) {
       chanLoader!!.quickLoad()
+      return
     }
+
+    supervisorScope {
+      val jobs = mutableListOf<Deferred<Unit>>()
+
+      jobs += async(Dispatchers.IO) { seenPostsManager.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor) }
+
+      ModularResult.Try { jobs.awaitAll() }
+        .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
+        .ignore()
+    }
+
+    requestData()
+  }
+
+  suspend fun requestCatalogInitialData(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
+    if (!isBound) {
+      return
+    }
+
+    threadPresenterCallback?.showLoading()
+
+    supervisorScope {
+      val jobs = mutableListOf<Deferred<Unit>>()
+
+      jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
+
+      ModularResult.Try { jobs.awaitAll() }
+        .peekError { error -> Logger.e(TAG, "requestCatalogInitialData() error", error) }
+        .ignore()
+    }
+
+    chanLoader?.requestData()
   }
 
   fun forceRequestData() {
@@ -259,7 +277,6 @@ class ThreadPresenter @Inject constructor(
       chanLoader?.requestData()
     }
   }
-
 
   fun requestData() {
     BackgroundUtils.ensureMainThread()

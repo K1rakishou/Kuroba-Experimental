@@ -580,7 +580,7 @@ open class ViewThreadController(
     setPinIconState(false)
     updateLeftPaneHighlighting(threadDescriptor)
 
-    presenter.requestInitialData()
+    presenter.requestThreadInitialData(threadDescriptor)
     showHints()
   }
 

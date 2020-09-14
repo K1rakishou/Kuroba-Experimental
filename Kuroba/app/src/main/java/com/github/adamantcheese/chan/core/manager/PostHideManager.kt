@@ -39,10 +39,23 @@ class PostHideManager(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
+  suspend fun preloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForCatalog($catalogDescriptor) begin")
+    }
+
+    val time = measureTime { preloadForCatalogInternal(catalogDescriptor, CATALOG_PRELOAD_MAX_COUNT) }
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "preloadForCatalog($catalogDescriptor) end, took $time")
+    }
+  }
+
   private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val chanPostHides = chanPostHideRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->
-        Logger.e(TAG, "chanPostHideRepository.preloadForThread() error", error)
+        Logger.e(TAG, "chanPostHideRepository.preloadForThreadInternal() error", error)
         return
       }
 
@@ -51,6 +64,29 @@ class PostHideManager(
         postHideMap[chanPostHide.postDescriptor] = chanPostHide
       }
     }
+
+    Logger.d(TAG, "chanPostHideRepository.preloadForThreadInternal() " +
+      "preloaded ${chanPostHides.size} post hides")
+  }
+
+  private suspend fun preloadForCatalogInternal(
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    count: Int
+  ) {
+    val chanPostHides = chanPostHideRepository.preloadForCatalog(catalogDescriptor, count)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "chanPostHideRepository.preloadForCatalogInternal() error", error)
+        return
+      }
+
+    lock.write {
+      chanPostHides.forEach { chanPostHide ->
+        postHideMap[chanPostHide.postDescriptor] = chanPostHide
+      }
+    }
+
+    Logger.d(TAG, "chanPostHideRepository.preloadForCatalogInternal() " +
+      "preloaded ${chanPostHides.size} post hides")
   }
 
   fun create(chanPostHide: ChanPostHide) {
@@ -148,5 +184,6 @@ class PostHideManager(
 
   companion object {
     private const val TAG = "PostHideManager"
+    private const val CATALOG_PRELOAD_MAX_COUNT = 1024
   }
 }
