@@ -317,7 +317,7 @@ dependencies {
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:${versions.mockito_kotlin}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
+    devImplementation 'com.squareup.leakcanary:leakcanary-android:2.4'
 }
 
 // Download the current archives.json file for the build

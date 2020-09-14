@@ -48,7 +48,6 @@ class PostsCache(
     return mutex.withLock { rawPostHashesMap[postDescriptor] }
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun putIntoCache(post: ChanPost) {
     putManyIntoCache(listOf(post))
   }
