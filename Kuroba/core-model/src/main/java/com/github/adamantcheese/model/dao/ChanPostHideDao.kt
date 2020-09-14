@@ -25,6 +25,24 @@ abstract class ChanPostHideDao {
   abstract suspend fun selectAllInThread(siteName: String, boardCode: String, threadNo: Long): List<ChanPostHideEntity>
 
   @Query("""
+    SELECT *
+    FROM ${ChanPostHideEntity.TABLE_NAME}
+    WHERE
+        ${ChanPostHideEntity.SITE_NAME_COLUMN_NAME} = :siteName
+    AND
+        ${ChanPostHideEntity.BOARD_CODE_COLUMN_NAME} = :boardCode
+    AND 
+        ${ChanPostHideEntity.THREAD_NO_COLUMN_NAME} = ${ChanPostHideEntity.POST_NO_COLUMN_NAME}
+    ORDER BY ${ChanPostHideEntity.THREAD_NO_COLUMN_NAME} DESC
+    LIMIT :count
+  """)
+  abstract suspend fun selectLatestForCatalog(
+    siteName: String,
+    boardCode: String,
+    count: Int
+  ): List<ChanPostHideEntity>
+
+  @Query("""
     SELECT COUNT(*)
     FROM ${ChanPostHideEntity.TABLE_NAME}
   """)

@@ -611,9 +611,13 @@ class BrowseController(context: Context) : ThreadController(context),
         buildMenu()
       }
 
-      val presenter = threadLayout.presenter
-      presenter.bindChanDescriptor(CatalogDescriptor.create(boardDescriptor.siteName(), boardDescriptor.boardCode))
-      presenter.requestData()
+      val catalogDescriptor = CatalogDescriptor.create(
+        boardDescriptor.siteName(),
+        boardDescriptor.boardCode
+      )
+
+      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
+      threadLayout.presenter.requestCatalogInitialData(catalogDescriptor)
 
       requireNavController().requireToolbar().updateTitle(navigation)
     }

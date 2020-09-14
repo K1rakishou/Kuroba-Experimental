@@ -218,6 +218,7 @@ class PostHideHelper(
     filterSaved: Boolean
   ) {
     postFilterManager.update(childPost.postDescriptor) { postFilter: PostFilter ->
+      postFilter.enabled = true
       postFilter.filterHighlightedColor = filterHighlightedColor
       postFilter.filterStub = filterStub
       postFilter.filterRemove = filterRemove

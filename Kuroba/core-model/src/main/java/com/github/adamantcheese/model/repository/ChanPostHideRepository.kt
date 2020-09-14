@@ -26,6 +26,17 @@ class ChanPostHideRepository(
     }
   }
 
+  suspend fun preloadForCatalog(
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    count: Int
+  ): ModularResult<List<ChanPostHide>> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.preloadForCatalog(catalogDescriptor, count)
+      }
+    }
+  }
+
   suspend fun createMany(chanPostHideList: List<ChanPostHide>): ModularResult<Unit> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
