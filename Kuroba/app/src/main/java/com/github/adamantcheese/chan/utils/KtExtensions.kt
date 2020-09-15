@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.utils
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.drawable.ColorDrawable
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.*
@@ -68,4 +69,23 @@ fun Controller.findControllerOrNull(predicate: (Controller) -> Boolean): Control
   }
 
   return null
+}
+
+fun View.setAlphaFast(newAlpha: Float) {
+  if (alpha != newAlpha) {
+    alpha = newAlpha
+  }
+}
+
+fun View.setVisibilityFast(newVisibility: Int) {
+  if (visibility != newVisibility) {
+    visibility = newVisibility
+  }
+}
+
+fun View.setBackgroundColorFast(newBackgroundColor: Int) {
+  val prevColor = (background as? ColorDrawable)?.color
+  if (prevColor != newBackgroundColor) {
+    setBackgroundColor(newBackgroundColor)
+  }
 }

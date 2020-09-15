@@ -390,7 +390,7 @@ public class AlbumDownloadController
         public void onBindViewHolder(AlbumDownloadCell holder, int position) {
             AlbumDownloadItem item = items.get(position);
 
-            holder.thumbnailView.bindPostImage(item.postImage, true, dp(100), dp(100));
+            holder.thumbnailView.bindPostImage(item.postImage, dp(100), dp(100));
             setItemChecked(holder, item.checked, false);
         }
 

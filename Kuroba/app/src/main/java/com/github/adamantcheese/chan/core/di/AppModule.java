@@ -45,20 +45,25 @@ import javax.inject.Singleton;
 import coil.ImageLoader;
 import coil.request.CachePolicy;
 import kotlinx.coroutines.CoroutineScope;
+import okhttp3.Cache;
 import okhttp3.Dns;
+import okhttp3.OkHttpClient;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMaxScreenSize;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getMinScreenSize;
 
 public class AppModule {
-    private Context applicationContext;
-    private CoroutineScope applicationCoroutineScope;
-    private Dns okHttpDns;
-    private Chan.OkHttpProtocols okHttpProtocols;
-    private AppConstants appConstants;
-
     public static final String DI_TAG = "Dependency Injection";
+    private static final String IMAGE_CACHE_DIR = "coil_image_cache_dir";
+    private static final long ONE_MB = 1024  * 1024;
+    private static final long IMAGE_CACHE_MAX_SIZE = 160 * ONE_MB;
+
+    private final Context applicationContext;
+    private final CoroutineScope applicationCoroutineScope;
+    private final Dns okHttpDns;
+    private final Chan.OkHttpProtocols okHttpProtocols;
+    private final AppConstants appConstants;
 
     public AppModule(
             Context applicationContext,
@@ -82,7 +87,6 @@ public class AppModule {
 
     public static File getCacheDir() {
         File cacheDir;
-
         File externalStorage = getAppContext().getExternalCacheDir();
 
         // See also res/xml/filepaths.xml for the fileprovider.
@@ -152,11 +156,21 @@ public class AppModule {
     public ImageLoader provideCoilImageLoader(Context applicationContext) {
         Logger.d(DI_TAG, "Coil Image loader");
 
+        File imageCacheDir = new File(applicationContext.getCacheDir(), IMAGE_CACHE_DIR);
+        if (!imageCacheDir.mkdirs()) {
+            throw new IllegalStateException("mkdirs failed to create " + imageCacheDir.getAbsolutePath());
+        }
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .cache(new Cache(imageCacheDir, IMAGE_CACHE_MAX_SIZE))
+                .build();
+
         return new ImageLoader.Builder(applicationContext)
                 .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
+                .callFactory(okHttpClient)
                 .build();
     }
 

@@ -131,7 +131,8 @@ class MediaSettingsScreen(
           identifier = MediaScreen.LoadingGroup.AutoLoadThreadImages,
           topDescriptionIdFunc = { R.string.setting_auto_load_thread_images },
           bottomDescriptionIdFunc = { R.string.setting_auto_load_thread_images_description },
-          setting = ChanSettings.autoLoadThreadImages
+          setting = ChanSettings.autoLoadThreadImages,
+          requiresRestart = true
         )
 
         group += BooleanSettingV2.createBuilder(

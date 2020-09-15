@@ -23,6 +23,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.PrefetchImageDownloadIndicatorManager;
@@ -30,7 +31,7 @@ import com.github.adamantcheese.chan.core.manager.PrefetchState;
 import com.github.adamantcheese.chan.core.model.PostImage;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
 import javax.inject.Inject;
@@ -43,6 +44,8 @@ import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 
 public class PostImageThumbnailView extends ThumbnailView {
     private static final String TAG = "PostImageThumbnailView";
+    private static final float prefetchIndicatorMargin = dp(4);
+    private static final int prefetchIndicatorSize = dp(16);
 
     @Inject
     PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager;
@@ -50,17 +53,16 @@ public class PostImageThumbnailView extends ThumbnailView {
     ThemeHelper themeHelper;
 
     private PostImage postImage;
-    private Drawable playIcon;
     private float ratio = 0f;
-    private boolean showPrefetchLoadingIndicator = false;
+    private boolean showPrefetchLoadingIndicator;
     private boolean prefetching = false;
-    private final float prefetchIndicatorMargin = dp(4);
-    private final int prefetchIndicatorSize = dp(16);
-    private Rect bounds = new Rect();
-    private Rect circularProgressDrawableBounds = new Rect();
+    private final Rect bounds = new Rect();
+    private final Rect circularProgressDrawableBounds = new Rect();
+    private Drawable playIcon = null;
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
-    private SegmentedCircleDrawable segmentedCircleDrawable = new SegmentedCircleDrawable();
+    @Nullable
+    private SegmentedCircleDrawable segmentedCircleDrawable = null;
 
     public PostImageThumbnailView(Context context) {
         this(context, null);
@@ -74,23 +76,20 @@ public class PostImageThumbnailView extends ThumbnailView {
         super(context, attrs, defStyle);
         inject(this);
 
+        this.playIcon = AndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
         this.showPrefetchLoadingIndicator = ChanSettings.autoLoadThreadImages.get()
                 && ChanSettings.showPrefetchLoadingIndicator.get();
 
-        playIcon = context.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
-
-        segmentedCircleDrawable.setColor(themeHelper.getTheme().accentColor.color);
-        segmentedCircleDrawable.setAlpha(192);
-        segmentedCircleDrawable.percentage(.0f);
-
         if (showPrefetchLoadingIndicator) {
+            segmentedCircleDrawable = new SegmentedCircleDrawable();
+            segmentedCircleDrawable.setColor(themeHelper.getTheme().accentColor.color);
+            segmentedCircleDrawable.setAlpha(192);
+            segmentedCircleDrawable.percentage(.0f);
+
             Disposable disposable = prefetchImageDownloadIndicatorManager.listenForPrefetchStateUpdates()
                     .filter((prefetchState) -> showPrefetchLoadingIndicator && postImage != null)
                     .filter((prefetchState) -> prefetchState.getPostImage().equalUrl(postImage))
-                    .subscribe(
-                            this::onPrefetchStateChanged,
-                            (e) -> Logger.e(TAG, "Error while listening for prefetch state updates", e)
-                    );
+                    .subscribe(this::onPrefetchStateChanged);
 
             compositeDisposable.add(disposable);
         }
@@ -102,7 +101,6 @@ public class PostImageThumbnailView extends ThumbnailView {
 
     public void bindPostImage(
             @NonNull PostImage postImage,
-            boolean useHiRes,
             int width,
             int height
     ) {
@@ -113,7 +111,7 @@ public class PostImageThumbnailView extends ThumbnailView {
         this.postImage = postImage;
 
         if (!postImage.isInlined) {
-            String url = getUrl(postImage, useHiRes);
+            String url = getUrl(postImage);
             setUrl(url, width, height);
         }
     }
@@ -126,7 +124,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     }
 
     private void onPrefetchStateChanged(PrefetchState prefetchState) {
-        if (!showPrefetchLoadingIndicator) {
+        if (!showPrefetchLoadingIndicator && segmentedCircleDrawable != null) {
             return;
         }
 
@@ -157,19 +155,16 @@ public class PostImageThumbnailView extends ThumbnailView {
         }
     }
 
-    private String getUrl(PostImage postImage, boolean useHiRes) {
+    private String getUrl(PostImage postImage) {
         String url = postImage.getThumbnailUrl().toString();
 
-        boolean autoLoad = ChanSettings.autoLoadThreadImages.get();
-        boolean highRes = ChanSettings.highResCells.get() && useHiRes;
+        boolean highRes = ChanSettings.highResCells.get();
         boolean hasImageUrl = postImage.imageUrl != null;
 
-        if ((autoLoad || highRes) && hasImageUrl) {
-            if (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get()) {
-                url = postImage.type == ChanPostImageType.STATIC
-                        ? postImage.imageUrl.toString()
-                        : postImage.getThumbnailUrl().toString();
-            }
+        if (highRes && hasImageUrl && (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get())) {
+            url = postImage.type == ChanPostImageType.STATIC
+                    ? postImage.imageUrl.toString()
+                    : postImage.getThumbnailUrl().toString();
         }
 
         return url;
@@ -198,7 +193,7 @@ public class PostImageThumbnailView extends ThumbnailView {
             playIcon.draw(canvas);
         }
 
-        if (showPrefetchLoadingIndicator && !error && prefetching) {
+        if (segmentedCircleDrawable != null && showPrefetchLoadingIndicator && !error && prefetching) {
             canvas.save();
             canvas.translate(prefetchIndicatorMargin, prefetchIndicatorMargin);
 

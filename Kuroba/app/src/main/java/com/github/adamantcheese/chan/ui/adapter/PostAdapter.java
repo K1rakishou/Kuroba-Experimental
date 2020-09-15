@@ -34,6 +34,7 @@ import com.github.adamantcheese.chan.ui.cell.PostCell;
 import com.github.adamantcheese.chan.ui.cell.PostCellInterface;
 import com.github.adamantcheese.chan.ui.cell.ThreadStatusCell;
 import com.github.adamantcheese.chan.ui.theme.Theme;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -65,6 +66,8 @@ public class PostAdapter
 
     @Inject
     ChanThreadViewableInfoManager chanThreadViewableInfoManager;
+    @Inject
+    ThemeHelper themeHelper;
 
     private final PostAdapterCallback postAdapterCallback;
     private final PostCellInterface.PostCellCallback postCellCallback;
@@ -109,6 +112,11 @@ public class PostAdapter
         this.postCellCallback = postCellCallback;
         this.statusCellCallback = statusCellCallback;
         this.theme = theme;
+
+        themeHelper.preloadAttributeResource(
+                recyclerView.getContext(),
+                android.R.attr.selectableItemBackgroundBorderless
+        );
 
         setHasStableIds(true);
     }

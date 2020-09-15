@@ -56,11 +56,11 @@ import com.github.adamantcheese.chan.ui.text.span.ClearableSpan
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.ui.view.PostImageThumbnailView
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.adamantcheese.chan.utils.AndroidUtils
-import com.github.adamantcheese.chan.utils.BitmapUtils
+import com.github.adamantcheese.chan.utils.*
 import com.github.adamantcheese.chan.utils.PostUtils.getReadableFileSize
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
@@ -81,6 +81,8 @@ class PostCell : LinearLayout, PostCellInterface {
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
+  @Inject
+  lateinit var themeHelper: ThemeHelper
 
   private lateinit var relativeLayoutContainer: RelativeLayout
   private lateinit var title: TextView
@@ -271,13 +273,17 @@ class PostCell : LinearLayout, PostCellInterface {
       return null
     }
 
+    val isTextOnly = ChanSettings.textOnly.get()
+
     for (i in 0 until post!!.postImagesCount) {
-      if (post!!.postImages[i].equalUrl(postImage)) {
-        return if (ChanSettings.textOnly.get()) {
-          null
-        } else {
-          thumbnailViews[i]
-        }
+      if (!post!!.postImages[i].equalUrl(postImage)) {
+        continue
+      }
+
+      if (isTextOnly) {
+        return null
+      } else {
+        return thumbnailViews[i]
       }
     }
 
@@ -326,8 +332,11 @@ class PostCell : LinearLayout, PostCellInterface {
     options.setColorFilter(theme.textSecondary)
     replies.isClickable = threadMode
 
-    AndroidUtils.setBoundlessRoundRippleBackground(replies)
-    AndroidUtils.setBoundlessRoundRippleBackground(options)
+    val selectableItemBackgroundBorderless =
+      themeHelper.getAttributeResource(android.R.attr.selectableItemBackgroundBorderless)
+
+    replies.setBackgroundResource(selectableItemBackgroundBorderless)
+    options.setBackgroundResource(selectableItemBackgroundBorderless)
 
     if (!threadMode) {
       replies.setBackgroundResource(0)
@@ -354,12 +363,7 @@ class PostCell : LinearLayout, PostCellInterface {
       bindRepliesText()
     }
 
-    divider.visibility = if (showDivider) {
-      View.VISIBLE
-    } else {
-      View.GONE
-    }
-
+    divider.setVisibilityFast(if (showDivider) View.VISIBLE else View.GONE)
     startAttentionLabelFadeOutAnimation()
 
     if (callback != null) {
@@ -394,8 +398,8 @@ class PostCell : LinearLayout, PostCellInterface {
 
     if (!callback!!.hasAlreadySeenPost(post!!)) {
       unseenPostIndicatorFadeOutAnimation.start(
-        { alpha -> postAttentionLabel.alpha = alpha },
-        { postAttentionLabel.visibility = View.INVISIBLE }
+        { alpha -> postAttentionLabel.setAlphaFast(alpha) },
+        { postAttentionLabel.setVisibilityFast(View.INVISIBLE) }
       )
     }
   }
@@ -407,30 +411,32 @@ class PostCell : LinearLayout, PostCellInterface {
 
     // Filter label is more important than unseen post label
     if (hasColoredFilter) {
-      postAttentionLabel.visibility = View.VISIBLE
-      postAttentionLabel.setBackgroundColor(
+      postAttentionLabel.setVisibilityFast(View.VISIBLE)
+
+      postAttentionLabel.setBackgroundColorFast(
         postFilterManager.getFilterHighlightedColor(post.postDescriptor)
       )
+
       return
     }
 
     if (ChanSettings.markUnseenPosts.get()) {
       if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
-        postAttentionLabel.visibility = View.VISIBLE
-        postAttentionLabel.setBackgroundColor(theme.subjectColor)
+        postAttentionLabel.setVisibilityFast(View.VISIBLE)
+        postAttentionLabel.setBackgroundColorFast(theme.subjectColor)
         return
       }
     }
 
     // No filters for this post and the user has already seen it
-    postAttentionLabel.visibility = View.GONE
+    postAttentionLabel.setVisibilityFast(View.GONE)
   }
 
   private fun bindBackgroundColor(theme: Theme, post: Post) {
     when {
-      highlighted -> setBackgroundColor(theme.highlightedColor)
-      post.isSavedReply -> setBackgroundColor(theme.savedReplyColor)
-      postSelected -> setBackgroundColor(theme.selectedColor)
+      highlighted -> setBackgroundColorFast(theme.highlightedColor)
+      post.isSavedReply -> setBackgroundColorFast(theme.savedReplyColor)
+      postSelected -> setBackgroundColorFast(theme.selectedColor)
       threadMode -> setBackgroundResource(0)
       else -> setBackgroundResource(R.drawable.item_background)
     }
@@ -516,7 +522,7 @@ class PostCell : LinearLayout, PostCellInterface {
       }
     }
 
-    title.setText(TextUtils.concat(*titleParts.toTypedArray()))
+    title.text = TextUtils.concat(*titleParts.toTypedArray())
   }
 
   private fun getFilename(image: PostImage): String {
@@ -563,11 +569,13 @@ class PostCell : LinearLayout, PostCellInterface {
 
     comment.setTextColor(theme.textPrimary)
 
-    comment.visibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
+    val newVisibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
       View.GONE
     } else {
       View.VISIBLE
     }
+
+    comment.setVisibilityFast(newVisibility)
   }
 
   private fun getCommentText(post: Post): CharSequence {
@@ -595,8 +603,8 @@ class PostCell : LinearLayout, PostCellInterface {
   }
 
   private fun bindRepliesWithImageCountText(post: Post, repliesFromSize: Int) {
-    replies.visibility = View.VISIBLE
-    repliesAdditionalArea.visibility = View.VISIBLE
+    replies.setVisibilityFast(View.VISIBLE)
+    repliesAdditionalArea.setVisibilityFast(View.VISIBLE)
 
     val replyCount = if (threadMode) {
       repliesFromSize
@@ -611,13 +619,15 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     if (callback != null && !ChanSettings.neverShowPages.get()) {
-      val boardPage = callback!!.getPage(post)
-      if (boardPage != null && PostsFilter.Order.isNotBumpOrder(ChanSettings.boardOrder.get())) {
-        text += ", page " + boardPage.currentPage
+      if (PostsFilter.Order.isNotBumpOrder(ChanSettings.boardOrder.get())) {
+        val boardPage = callback?.getPage(post)
+        if (boardPage != null) {
+          text += ", page " + boardPage.currentPage
+        }
       }
     }
 
-    replies.setText(text)
+    replies.text = text
 
     AndroidUtils.updatePaddings(comment, -1, -1, -1, 0)
     AndroidUtils.updatePaddings(replies, -1, -1, paddingPx, -1)
@@ -734,17 +744,16 @@ class PostCell : LinearLayout, PostCellInterface {
         generatedId++
       }
 
-      val size = AndroidUtils.getDimen(R.dimen.cell_post_thumbnail_size)
       thumbnailView.id = idToSet
 
-      val layoutParams = RelativeLayout.LayoutParams(size, size)
+      val layoutParams = RelativeLayout.LayoutParams(CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
       layoutParams.alignWithParent = true
 
       if (!first) {
         layoutParams.addRule(RelativeLayout.BELOW, lastId)
       }
 
-      thumbnailView.bindPostImage(image, false, size, size)
+      thumbnailView.bindPostImage(image, CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
       thumbnailView.isClickable = true
 
       // Always set the click listener to avoid check the file cache (which will touch the
@@ -759,22 +768,22 @@ class PostCell : LinearLayout, PostCellInterface {
         return@setOnLongClickListener true
       }
 
-      thumbnailView.setRounding(AndroidUtils.dp(2f))
+      thumbnailView.setRounding(THUMBNAIL_ROUNDING)
 
       val bottomMargin = if (i + 1 == post.postImagesCount) {
-        AndroidUtils.dp(1f) + AndroidUtils.dp(4f)
+        THUMBNAIL_BOTTOM_MARGIN
       } else {
         0
       }
 
       val topMargin = if (first) {
-        AndroidUtils.dp(4f)
+        THUMBNAIL_TOP_MARGIN
       } else {
         0
       }
 
       layoutParams.setMargins(
-        AndroidUtils.dp(4f),
+        THUMBNAIL_LEFT_MARGIN,
         topMargin,
         0,
         // 1 extra for bottom divider
@@ -1311,5 +1320,10 @@ class PostCell : LinearLayout, PostCellInterface {
     )
 
     private val BACKGROUND_SPAN = BackgroundColorSpan(0x6633B5E5)
+    private val CELL_POST_THUMBNAIL_SIZE = AndroidUtils.getDimen(R.dimen.cell_post_thumbnail_size)
+    private val THUMBNAIL_ROUNDING = AndroidUtils.dp(2f)
+    private val THUMBNAIL_BOTTOM_MARGIN = AndroidUtils.dp(5f)
+    private val THUMBNAIL_TOP_MARGIN = AndroidUtils.dp(4f)
+    private val THUMBNAIL_LEFT_MARGIN = AndroidUtils.dp(4f)
   }
 }

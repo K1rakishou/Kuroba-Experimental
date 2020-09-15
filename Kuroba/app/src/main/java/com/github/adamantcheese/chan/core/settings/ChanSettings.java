@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
+import static com.github.adamantcheese.chan.utils.AndroidUtils.dp;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppDir;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getPreferences;
@@ -56,6 +57,7 @@ public class ChanSettings {
     private static final String TAG = "ChanSettings";
     public static final String EMPTY_JSON = "{}";
     public static final String NO_HASH_SET = "NO_HASH_SET";
+    public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     public enum MediaAutoLoadMode
             implements OptionSettingItem {

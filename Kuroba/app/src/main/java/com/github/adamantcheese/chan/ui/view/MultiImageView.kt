@@ -41,7 +41,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
-import coil.request.RequestDisposable
+import coil.request.Disposable
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.github.adamantcheese.chan.Chan
@@ -122,7 +122,7 @@ class MultiImageView @JvmOverloads constructor(
 
   private var imageNotFoundPlaceholderLoadJob: Job? = null
   private var webmStreamSourceInitJob: Job? = null
-  private var thumbnailRequestDisposable: RequestDisposable? = null
+  private var thumbnailRequestDisposable: Disposable? = null
   private var callback: Callback? = null
   private var op = false
   private var exoPlayer: SimpleExoPlayer? = null

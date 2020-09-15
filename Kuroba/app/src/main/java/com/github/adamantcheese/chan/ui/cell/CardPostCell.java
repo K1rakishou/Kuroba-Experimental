@@ -222,17 +222,16 @@ public class CardPostCell
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
 
-            int width = ChanSettings.autoLoadThreadImages.get()
-                    ? Math.max(500, thumbView.getWidth())
+            int width = ChanSettings.highResCells.get()
+                    ? Math.max(ChanSettings.HI_RES_THUMBNAIL_SIZE, thumbView.getWidth())
                     : thumbView.getWidth();
 
-            int height =  ChanSettings.autoLoadThreadImages.get()
-                    ? Math.max(500, thumbView.getHeight())
+            int height =  ChanSettings.highResCells.get()
+                    ? Math.max(ChanSettings.HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
                     : thumbView.getHeight();
 
             thumbView.bindPostImage(
                     firstPostImage,
-                    true,
                     width,
                     height
             );

@@ -55,9 +55,11 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.R;
@@ -121,6 +123,10 @@ public class AndroidUtils {
 
     public static String getQuantityString(int res, int quantity, Object... formatArgs) {
         return getRes().getQuantityString(res, quantity, formatArgs);
+    }
+
+    public static Drawable getDrawable(@DrawableRes int res) {
+        return ContextCompat.getDrawable(getAppContext(), res);
     }
 
     public static CharSequence getApplicationLabel() {

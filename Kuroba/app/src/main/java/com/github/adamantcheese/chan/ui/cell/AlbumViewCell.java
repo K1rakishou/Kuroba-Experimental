@@ -67,9 +67,8 @@ public class AlbumViewCell
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
         thumbnailView.bindPostImage(
                 postImage,
-                true,
-                ChanSettings.autoLoadThreadImages.get() ? 500 : thumbnailSize,
-                ChanSettings.autoLoadThreadImages.get() ? 500 : thumbnailSize
+                ChanSettings.highResCells.get() ? ChanSettings.HI_RES_THUMBNAIL_SIZE : thumbnailSize,
+                ChanSettings.highResCells.get() ? ChanSettings.HI_RES_THUMBNAIL_SIZE : thumbnailSize
         );
 
         String details = postImage.extension.toUpperCase()

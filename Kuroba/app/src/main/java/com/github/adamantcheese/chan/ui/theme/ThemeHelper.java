@@ -25,6 +25,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.AttrRes;
 import androidx.annotation.DrawableRes;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -49,8 +50,8 @@ public class ThemeHelper {
     private static final String TAG = "ThemeHelper";
 
     private List<Theme> themes = new ArrayList<>();
-
     private Theme theme;
+    private AttributeCache attributeCache = new AttributeCache();
 
     private static final Typeface TALLEYRAND =
             Typeface.createFromAsset(getAppContext().getAssets(), "font/Talleyrand.ttf");
@@ -83,6 +84,14 @@ public class ThemeHelper {
         }
 
         updateCurrentTheme();
+    }
+
+    public void preloadAttributeResource(Context context, @AttrRes int attrId) {
+        attributeCache.preloadAttribute(context, attrId);
+    }
+
+    public int getAttributeResource(@AttrRes int attrId) {
+        return attributeCache.getAttribute(attrId);
     }
 
     public void changeTheme(Theme theme, PrimaryColor primaryColor, PrimaryColor accentColor) {

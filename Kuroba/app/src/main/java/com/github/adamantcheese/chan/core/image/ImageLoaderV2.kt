@@ -8,7 +8,6 @@ import coil.ImageLoader
 import coil.network.HttpException
 import coil.request.Disposable
 import coil.request.ImageRequest
-import coil.request.RequestDisposable
 import coil.size.Scale
 import coil.transform.Transformation
 import com.github.adamantcheese.chan.R
@@ -26,6 +25,20 @@ class ImageLoaderV2(
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
+
+  @Suppress("UnnecessaryVariable")
+  fun load(
+    context: Context,
+    postImage: PostImage,
+    width: Int,
+    height: Int,
+    listener: ImageListener
+  ): Disposable {
+    BackgroundUtils.ensureMainThread()
+
+    val url = postImage.getThumbnailUrl().toString()
+    return loadFromNetwork(context, url, width, height, listener)
+  }
 
   fun loadFromNetwork(
     context: Context,
@@ -119,69 +132,13 @@ class ImageLoaderV2(
     return imageLoader.enqueue(request)
   }
 
-  fun loadFromResources(
-    context: Context,
-    @DrawableRes drawableId: Int,
-    width: Int?,
-    height: Int?,
-    transformations: List<Transformation>,
-    listener: SimpleImageListener
-  ): RequestDisposable {
-    val listenerRef = AtomicReference(listener)
-    val contextRef = AtomicReference(context)
-    val lifecycle = context.getLifecycleFromContext()
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
-    }
-
-    val request = with(ImageRequest.Builder(context)) {
-      data(drawableId)
-      lifecycle(lifecycle)
-      transformations(transformations)
-      allowHardware(true)
-      scale(Scale.FIT)
-
-      if ((width != null && width > 0) && (height != null && height > 0)) {
-        size(width, height)
-      }
-
-      listener(
-        onError = { _, throwable ->
-          listenerRef.set(null)
-          contextRef.set(null)
-
-          throw throwable
-        },
-        onCancel = {
-          listenerRef.set(null)
-          contextRef.set(null)
-        }
-      )
-      target(
-        onSuccess = { drawable ->
-          try {
-            listenerRef.get()?.onResponse(drawable as BitmapDrawable)
-          } finally {
-            listenerRef.set(null)
-            contextRef.set(null)
-          }
-        }
-      )
-
-      build()
-    }
-
-    return imageLoader.enqueue(request)
-  }
-
   fun loadFromNetwork(
     context: Context,
     url: String?,
     width: Int?,
     height: Int?,
     listener: ImageListener
-  ): RequestDisposable {
+  ): Disposable {
     val localListener = AtomicReference(listener)
     val lifecycle = context.getLifecycleFromContext()
 
@@ -236,18 +193,60 @@ class ImageLoaderV2(
     return imageLoader.enqueue(request)
   }
 
-  @Suppress("UnnecessaryVariable")
-  fun load(
+  fun loadFromResources(
     context: Context,
-    postImage: PostImage,
-    width: Int,
-    height: Int,
-    listener: ImageListener
-  ): RequestDisposable? {
-    BackgroundUtils.ensureMainThread()
+    @DrawableRes drawableId: Int,
+    width: Int?,
+    height: Int?,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ): Disposable {
+    val listenerRef = AtomicReference(listener)
+    val contextRef = AtomicReference(context)
+    val lifecycle = context.getLifecycleFromContext()
 
-    val url = postImage.getThumbnailUrl().toString()
-    return loadFromNetwork(context, url, width, height, listener)
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "loadFromResources(drawableId=$drawableId, width=$width, height=$height)")
+    }
+
+    val request = with(ImageRequest.Builder(context)) {
+      data(drawableId)
+      lifecycle(lifecycle)
+      transformations(transformations)
+      allowHardware(true)
+      scale(Scale.FIT)
+
+      if ((width != null && width > 0) && (height != null && height > 0)) {
+        size(width, height)
+      }
+
+      listener(
+        onError = { _, throwable ->
+          listenerRef.set(null)
+          contextRef.set(null)
+
+          throw throwable
+        },
+        onCancel = {
+          listenerRef.set(null)
+          contextRef.set(null)
+        }
+      )
+      target(
+        onSuccess = { drawable ->
+          try {
+            listenerRef.get()?.onResponse(drawable as BitmapDrawable)
+          } finally {
+            listenerRef.set(null)
+            contextRef.set(null)
+          }
+        }
+      )
+
+      build()
+    }
+
+    return imageLoader.enqueue(request)
   }
 
   @Synchronized
