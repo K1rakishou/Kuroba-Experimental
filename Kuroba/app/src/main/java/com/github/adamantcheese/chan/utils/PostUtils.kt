@@ -44,7 +44,7 @@ object PostUtils {
   @JvmStatic
   fun findPostById(id: Long, thread: ChanThread?): Post? {
     if (thread != null) {
-      for (post in thread.posts) {
+      for (post in thread.getPosts()) {
         if (post.no == id) {
           return post
         }

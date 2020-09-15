@@ -36,7 +36,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
-import coil.request.RequestDisposable
+import coil.request.Disposable
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
@@ -1242,7 +1242,7 @@ class PostCell : LinearLayout, PostCellInterface {
     private val context: Context
     private val postIcons: PostIcons
     private val url: HttpUrl
-    private var requestDisposable: RequestDisposable? = null
+    private var requestDisposable: Disposable? = null
 
     var drawable: Drawable? = null
       private set

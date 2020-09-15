@@ -267,7 +267,7 @@ class ThreadPresenter @Inject constructor(
       chanPostRepository.deleteThread(threadDescriptor)
         .peekError { error -> Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error) }
 
-      val postDescriptors = chanLoader?.thread?.posts
+      val postDescriptors = chanLoader?.thread?.getPosts()
         ?.map { post -> post.postDescriptor }
         ?: emptyList()
 
@@ -471,7 +471,7 @@ class ThreadPresenter @Inject constructor(
       val chanLoader = chanLoaderManager.getLoader(catalogDescriptor)
         ?: return@let
 
-      val catalogPosts = chanLoader.thread?.posts
+      val catalogPosts = chanLoader.thread?.getPosts()
         ?: return@let
 
       val threadDescriptors = catalogPosts.map { catalogPost ->
@@ -568,15 +568,15 @@ class ThreadPresenter @Inject constructor(
       val lastLoadedPostNo = chanThreadViewableInfo.lastLoadedPostNo
 
       if (lastLoadedPostNo > 0) {
-        for (post in result.posts) {
+        for (post in result.getPosts()) {
           if (post.no == lastLoadedPostNo) {
-            more = result.postsCount - result.posts.indexOf(post) - 1
+            more = result.postsCount - result.getPosts().indexOf(post) - 1
             break
           }
         }
       }
 
-      chanThreadViewableInfo.lastLoadedPostNo = result.posts.lastOrNull()?.no ?: -1L
+      chanThreadViewableInfo.lastLoadedPostNo = result.getPosts().lastOrNull()?.no ?: -1L
 
       if (chanThreadViewableInfo.lastViewedPostNo < 0L) {
         chanThreadViewableInfo.lastViewedPostNo = chanThreadViewableInfo.lastLoadedPostNo
@@ -667,7 +667,7 @@ class ThreadPresenter @Inject constructor(
       ?: return
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor && thread.postsCount > 0) {
-      val posts = thread.posts
+      val posts = thread.getPosts()
       val lastPostNo = posts.last().no
 
       chanThreadViewableInfoManager.update(chanDescriptor!!) { chanThreadViewableInfo ->
@@ -1028,16 +1028,7 @@ class ThreadPresenter @Inject constructor(
         POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
         POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
         POST_OPTION_DELETE -> requestDeletePost(post)
-        POST_OPTION_SAVE -> {
-          if (savedReplyManager.isSaved(post.postDescriptor)) {
-            savedReplyManager.unsavePost(post.postDescriptor)
-          } else {
-            savedReplyManager.savePost(post.postDescriptor)
-          }
-
-          // force reload for reply highlighting
-          requestData()
-        }
+        POST_OPTION_SAVE -> saveUnsavePost(post)
         POST_OPTION_BOOKMARK -> {
           val descriptor = currentChanDescriptor
             ?: return@post
@@ -1325,6 +1316,20 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.unhideOrUnremovePost(post)
   }
 
+  private suspend fun saveUnsavePost(post: Post) {
+    if (savedReplyManager.isSaved(post.postDescriptor)) {
+      savedReplyManager.unsavePost(post.postDescriptor)
+    } else {
+      savedReplyManager.savePost(post.postDescriptor)
+    }
+
+    chanPostRepository.deletePostFromCache(post.postDescriptor)
+    chanLoader?.thread?.deletePost(post.postDescriptor)
+
+    // force reload for reply highlighting
+    requestData()
+  }
+
   private fun requestDeletePost(post: Post) {
     if (siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor) == null) {
       return
@@ -1375,6 +1380,9 @@ class ThreadPresenter @Inject constructor(
 
             if (isSuccess) {
               savedReplyManager.unsavePost(post.postDescriptor)
+              chanLoader?.thread?.deletePost(post.postDescriptor)
+
+              requestData()
             }
           }
 
@@ -1433,7 +1441,7 @@ class ThreadPresenter @Inject constructor(
 
       var count = 0
 
-      chanLoader?.thread?.posts?.forEach { p ->
+      chanLoader?.thread?.getPosts()?.forEach { p ->
         if (p.posterId == post.posterId) {
           count++
         }
@@ -1492,7 +1500,7 @@ class ThreadPresenter @Inject constructor(
       if (wholeChain) {
         val thread = chanLoader!!.thread
         if (thread != null) {
-          posts.addAll(findPostWithReplies(post.no, thread.posts))
+          posts.addAll(findPostWithReplies(post.no, thread.getPosts()))
         }
       } else {
         val foundPost = findPostById(post.no, chanLoader!!.thread)
@@ -1510,7 +1518,7 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val posts = chanLoader?.thread?.posts
+    val posts = chanLoader?.thread?.getPosts()
       ?: return
 
     val threadDescriptor = (currentChanDescriptor as? ChanDescriptor.ThreadDescriptor)

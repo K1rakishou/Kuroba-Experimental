@@ -9,7 +9,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import coil.request.RequestDisposable
+import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import com.airbnb.epoxy.*
 import com.github.adamantcheese.chan.Chan.inject
@@ -35,8 +35,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   lateinit var themeHelper: ThemeHelper
 
   private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
-  private var threadImageRequestDisposable: RequestDisposable? = null
-  private var siteImageRequestDisposable: RequestDisposable? = null
+  private var threadImageRequestDisposable: Disposable? = null
+  private var siteImageRequestDisposable: Disposable? = null
   private var descriptor: ChanDescriptor? = null
 
   private val viewHolder: LinearLayout

@@ -334,7 +334,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
     val requestParams = ChanLoaderRequestParams(
       chanDescriptor,
       chanReader,
-      thread?.posts ?: ArrayList()
+      thread?.getPosts() ?: ArrayList()
     )
 
     val url = getChanUrl(site, chanDescriptor).toString()
@@ -410,7 +410,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
 
       val title = PostHelper.getTitle(localThread.op, chanDescriptor)
 
-      for (post in localThread.posts) {
+      for (post in localThread.getPosts()) {
         post.title = title
       }
 
