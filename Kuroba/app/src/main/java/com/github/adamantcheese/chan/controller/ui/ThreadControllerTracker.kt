@@ -44,6 +44,10 @@ class ThreadControllerTracker(
   private var behindTrackingController: Controller? = null
 
   override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+    if (event.pointerCount != 1) {
+      return false
+    }
+
     val navController = navigationController
     if (navController.top == null) {
       return false
@@ -107,6 +111,10 @@ class ThreadControllerTracker(
   }
 
   override fun onTouchEvent(parentView: ViewParent, event: MotionEvent): Boolean {
+    if (event.pointerCount != 1) {
+      return false
+    }
+
     if (!tracking || velocityTracker == null) {
       // tracking already ended
       return false

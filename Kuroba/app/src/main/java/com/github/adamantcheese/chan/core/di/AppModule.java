@@ -157,7 +157,7 @@ public class AppModule {
         Logger.d(DI_TAG, "Coil Image loader");
 
         File imageCacheDir = new File(applicationContext.getCacheDir(), IMAGE_CACHE_DIR);
-        if (!imageCacheDir.mkdirs()) {
+        if (!imageCacheDir.exists() && !imageCacheDir.mkdirs()) {
             throw new IllegalStateException("mkdirs failed to create " + imageCacheDir.getAbsolutePath());
         }
 
