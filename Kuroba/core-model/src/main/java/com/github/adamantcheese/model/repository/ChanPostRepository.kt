@@ -104,6 +104,12 @@ class ChanPostRepository(
     postCache.deleteThreads(threadDescriptors)
   }
 
+  suspend fun deletePostFromCache(postDescriptor: PostDescriptor) {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    postCache.deletePost(postDescriptor)
+  }
+
   suspend fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 

@@ -115,7 +115,7 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
-    for (post in chanThread.posts) {
+    for (post in chanThread.getPosts()) {
       if (!post.isOP) {
         Logger.e(TAG, "bookmarkEveryThread() post is not OP")
         continue

@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.doOnPreDraw
-import coil.request.RequestDisposable
+import coil.request.Disposable
 import coil.transform.GrayscaleTransformation
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
@@ -40,7 +40,7 @@ class EpoxySiteView @JvmOverloads constructor(
   private val siteSettings: AppCompatImageView
 
   private var descriptor: SiteDescriptor? = null
-  private var requestDisposable: RequestDisposable? = null
+  private var requestDisposable: Disposable? = null
 
   init {
     inflate(context, R.layout.epoxy_site_view, this)

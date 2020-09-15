@@ -456,7 +456,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.setThread(
       thread.chanDescriptor,
       thread.postPreloadedInfoHolder,
-      filter.apply(thread.posts)
+      filter.apply(thread.getPosts())
     )
   }
 
@@ -844,7 +844,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
         if (postInfoMapItemDecoration != null) {
           postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.execute(thread.posts),
+            extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
             thread.postsCount
           )
         }

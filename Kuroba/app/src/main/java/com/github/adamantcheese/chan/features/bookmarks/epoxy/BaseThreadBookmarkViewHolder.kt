@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import coil.request.RequestDisposable
+import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
@@ -39,7 +39,7 @@ open class BaseThreadBookmarkViewHolder(
   lateinit var themeHelper: ThemeHelper
 
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
-  private var requestDisposable: RequestDisposable? = null
+  private var requestDisposable: Disposable? = null
   private var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
 
   private lateinit var viewHolder: LinearLayout
