@@ -86,7 +86,7 @@ class BoardManager(
 
           val sortedActiveBoards = chanBoards
             .filter { chanBoard -> chanBoard.active }
-            .sortedByDescending { chanBoard -> chanBoard.order }
+            .sortedBy { chanBoard -> chanBoard.order }
 
           sortedActiveBoards.forEach { activeBoard ->
             ordersMap[siteDescriptor]!!.add(activeBoard.boardDescriptor)
