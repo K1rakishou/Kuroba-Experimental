@@ -788,6 +788,8 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
+    <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
+    <string name="controller_bookmarks_bookmark_loading">Loading…</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
 
