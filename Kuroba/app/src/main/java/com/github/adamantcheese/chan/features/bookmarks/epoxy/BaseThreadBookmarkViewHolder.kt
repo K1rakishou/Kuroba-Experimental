@@ -105,6 +105,14 @@ open class BaseThreadBookmarkViewHolder(
       return
     }
 
+    if (threadBookmarkStats.isArchive) {
+      bookmarkStats.visibility = View.VISIBLE
+      bookmarkAdditionalStats?.visibility = View.GONE
+
+      setArchiveBookmarksStats()
+      return
+    }
+
     if (!threadBookmarkStats.showBookmarkStats) {
       bookmarkStats.visibility = View.GONE
       bookmarkAdditionalStats?.visibility = View.GONE
@@ -173,10 +181,19 @@ open class BaseThreadBookmarkViewHolder(
     return true
   }
 
+  private fun setArchiveBookmarksStats() {
+    bookmarkStats.text = bookmarkStats.context.getString(R.string.controller_bookmarks_bookmark_of_archived_thread)
+    bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+    bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
+    bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
+  }
+
   private fun setRegularBookmarksStats(isGridMode: Boolean, threadBookmarkStats: ThreadBookmarkStats) {
+    val context = bookmarkStats.context
+
     bookmarkStats.text = buildString {
       if (threadBookmarkStats.isFirstFetch) {
-        append("Loading...")
+        append(context.getString(R.string.controller_bookmarks_bookmark_loading))
         return@buildString
       }
 

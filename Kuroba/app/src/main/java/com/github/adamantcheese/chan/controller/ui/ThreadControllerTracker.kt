@@ -11,7 +11,7 @@ import android.view.ViewParent
 import android.widget.Scroller
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.ui.controller.navigation.NavigationController
-import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -70,14 +70,12 @@ class ThreadControllerTracker(
     }
 
     when (actionMasked) {
-      MotionEvent.ACTION_DOWN -> {
-        interceptedEvent = MotionEvent.obtain(event)
-      }
+      MotionEvent.ACTION_DOWN -> interceptedEvent = MotionEvent.obtain(event)
       MotionEvent.ACTION_MOVE -> {
         val x = event.x - interceptedEvent!!.x
         val y = event.y - interceptedEvent!!.y
 
-        if (abs(y) >= slopPixels || interceptedEvent!!.x < AndroidUtils.dp(20f)) {
+        if (abs(y) >= slopPixels || interceptedEvent!!.x < MAX_POINTER_DISTANCE_FROM_LEFT_PART_OF_SCREEN) {
           blockTracking = true
         }
 
@@ -126,7 +124,8 @@ class ThreadControllerTracker(
     velocityTracker!!.addMovement(event)
 
     when (event.actionMasked) {
-      MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+      MotionEvent.ACTION_CANCEL,
+      MotionEvent.ACTION_UP -> {
         scroller.forceFinished(true)
         velocityTracker!!.addMovement(event)
         velocityTracker!!.computeCurrentVelocity(1000)
@@ -134,12 +133,10 @@ class ThreadControllerTracker(
         var velocity = velocityTracker!!.xVelocity.toInt()
         if (translationX > 0) {
           var doFlingAway = false
-          val isEnoughVelocity = velocity > 0
-            && abs(velocity) > AndroidUtils.dp(800f)
-            && abs(velocity) < maxFlingPixels
+          val isEnoughVelocity = velocity > 0 && abs(velocity) > FLING_MIN_VELOCITY && abs(velocity) < maxFlingPixels
 
           if (isEnoughVelocity || translationX >= getWidthFunc() * 3 / 4) {
-            velocity = AndroidUtils.dp(2000f).coerceAtLeast(velocity)
+            velocity = Math.max(MAX_VELOCITY, velocity);
             scroller.fling(translationX, 0, velocity, 0, 0, Int.MAX_VALUE, 0, 0)
 
             // Make sure the animation always goes past the end
@@ -149,6 +146,7 @@ class ThreadControllerTracker(
 
             doFlingAway = true
           }
+
           if (doFlingAway) {
             startFlingAnimation(true)
           } else {
@@ -266,4 +264,9 @@ class ThreadControllerTracker(
     }
   }
 
+  companion object {
+    private val MAX_VELOCITY = dp(2000f)
+    private val FLING_MIN_VELOCITY = dp(800f)
+    private val MAX_POINTER_DISTANCE_FROM_LEFT_PART_OF_SCREEN = dp(20f)
+  }
 }

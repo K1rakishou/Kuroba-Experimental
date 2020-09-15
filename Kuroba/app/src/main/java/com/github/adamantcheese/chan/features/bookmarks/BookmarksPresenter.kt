@@ -220,7 +220,7 @@ class BookmarksPresenter(
     if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
       return ThreadBookmarkStats(
         watching = threadBookmarkView.isWatching(),
-        showBookmarkStats = false
+        isArchive = true
       )
     }
 
@@ -230,6 +230,7 @@ class BookmarksPresenter(
 
     return ThreadBookmarkStats(
       watching = threadBookmarkView.isWatching(),
+      isArchive = false,
       showBookmarkStats = isWatcherEnabled,
       newPosts = threadBookmarkView.newPostsCount(),
       newQuotes = threadBookmarkView.newQuotesCount(),
