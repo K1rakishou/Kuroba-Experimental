@@ -134,7 +134,7 @@ class ThreadPresenter @Inject constructor(
       return bookmarksManager.exists(threadDescriptor)
     }
 
-  fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback?) {
+  fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
     this.context = context
     this.threadPresenterCallback = threadPresenterCallback
 
