@@ -105,6 +105,20 @@ class ReplyPresenter @Inject constructor(
       unbindChanDescriptor()
     }
 
+    val thisSite = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    if (thisSite == null) {
+      Logger.e(TAG, "bindChanDescriptor couldn't find ${chanDescriptor.siteDescriptor()}")
+      return false
+    }
+
+    val thisBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    if (thisBoard == null) {
+      Logger.e(TAG, "bindChanDescriptor couldn't find ${chanDescriptor.boardDescriptor()}")
+      return false
+    }
+
+    this.chanBoard = thisBoard
+    this.site = thisSite
     this.bound = true
     this.chanDescriptor = chanDescriptor
 
@@ -119,15 +133,6 @@ class ReplyPresenter @Inject constructor(
     } else {
       R.string.reply_comment_board
     }
-
-    val thisBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-      ?: return false
-
-    val thisSite = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?: return false
-
-    this.chanBoard = thisBoard
-    this.site = thisSite
 
     callback.loadDraftIntoViews(draft)
     callback.updateCommentCount(0, thisBoard.maxCommentChars, false)

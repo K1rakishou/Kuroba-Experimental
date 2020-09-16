@@ -61,9 +61,16 @@ class SnackbarWrapper private constructor(
         super.onDismissed(transientBottomBar, event)
 
         val view = transientBottomBar.view
-
         snackbar?.removeCallback(this)
-        findFab(view)?.show()
+
+        val bottomNavigationView = findBottomNavigationView(view)
+        if (bottomNavigationView == null) {
+          return
+        }
+
+        if (bottomNavigationView.isFullyVisible()) {
+          findFab(view)?.show()
+        }
       }
     })
 
@@ -94,6 +101,18 @@ class SnackbarWrapper private constructor(
   }
 
   private fun updateSnackbarBottomPaddingSuperHacky(snackbarView: View) {
+    val bottomNavView = findBottomNavigationView(snackbarView)
+    if (bottomNavView == null) {
+      return
+    }
+
+    if (snackbarView.y + snackbarView.height > bottomNavView.y) {
+      val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
+      snackbarView.translationY = -(newTranslationY + MARGIN)
+    }
+  }
+
+  private fun findBottomNavigationView(snackbarView: View): HidingBottomNavigationView? {
     var parent = snackbarView.parent
 
     while (parent != null && parent !is DrawerWidthAdjustingLayout) {
@@ -102,21 +121,20 @@ class SnackbarWrapper private constructor(
 
     if (parent !is DrawerWidthAdjustingLayout) {
       Logger.e("SnackbarWrapper", "Couldn't find DrawerWidthAdjustingLayout!!!")
-      return
+      return null
     }
 
     val drawer = parent
-    val bottomNavView = drawer.findChild { view -> view is HidingBottomNavigationView }
+    val bottomNavView = drawer.findChild { view ->
+      view is HidingBottomNavigationView
+    } as? HidingBottomNavigationView
 
     if (bottomNavView == null) {
       Logger.e("SnackbarWrapper", "Couldn't find HidingBottomNavigationView!!!")
-      return
+      return null
     }
 
-    if (snackbarView.y + snackbarView.height > bottomNavView.y) {
-      val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
-      snackbarView.translationY = -(newTranslationY + MARGIN)
-    }
+    return bottomNavView
   }
 
   companion object {

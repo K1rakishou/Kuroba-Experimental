@@ -7,7 +7,7 @@ internal fun SupportSQLiteDatabase.changeTableName(fromName: String, toName: Str
 }
 
 internal fun SupportSQLiteDatabase.dropTable(tableName: String) {
-  execSQL("DROP TABLE `$tableName`")
+  execSQL("DROP TABLE IF EXISTS `$tableName`")
 }
 
 internal fun String.getTempTableName(): String {

@@ -84,6 +84,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     restoreHeightWithAnimation()
   }
 
+  fun isFullyVisible(): Boolean {
+    return translationY.toInt() == 0
+  }
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     attachedToWindow = true
