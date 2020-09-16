@@ -721,7 +721,24 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    if (!threadListLayout.scrolledToBottom() && BackgroundUtils.isInForeground()) {
+    val descriptor = presenter.chanDescriptor
+      ?: return
+
+    if (threadListLayout.scrolledToBottom() || !BackgroundUtils.isInForeground()) {
+      dismissSnackbar()
+      return
+    }
+
+    val isReplyLayoutVisible = when (descriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        bottomNavBarVisibilityStateManager.isThreadReplyLayoutVisible()
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        bottomNavBarVisibilityStateManager.isCatalogReplyLayoutVisible()
+      }
+    }
+
+    if (!isReplyLayoutVisible) {
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 
@@ -730,13 +747,10 @@ class ThreadLayout @JvmOverloads constructor(
           presenter.onNewPostsViewClicked()
           dismissSnackbar()
         }
+
         show()
       }
-
-      return
     }
-
-    dismissSnackbar()
   }
 
   private fun dismissSnackbar() {

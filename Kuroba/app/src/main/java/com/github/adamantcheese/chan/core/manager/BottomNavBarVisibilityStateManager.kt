@@ -53,6 +53,14 @@ class BottomNavBarVisibilityStateManager {
     return state.nextSetBit(0) >= 0
   }
 
+  fun isThreadReplyLayoutVisible(): Boolean {
+    return state.get(ThreadReplyViewBit)
+  }
+
+  fun isCatalogReplyLayoutVisible(): Boolean {
+    return state.get(CatalogReplyViewBit)
+  }
+
   companion object {
     private const val TAG = "BottomNavBarVisibilityStateManager"
 

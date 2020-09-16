@@ -100,7 +100,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-  private lateinit var reply: ReplyLayout
+  private lateinit var replyLayout: ReplyLayout
   private lateinit var searchStatus: TextView
   private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
@@ -174,7 +174,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   val replyPresenter: ReplyPresenter
-    get() = reply.getPresenter()
+    get() = replyLayout.getPresenter()
 
   val displayingPosts: List<Post>
     get() = postAdapter.displayList
@@ -233,16 +233,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     Chan.inject(this)
 
     // View binding
-    reply = findViewById(R.id.reply)
+    replyLayout = findViewById(R.id.reply)
     searchStatus = findViewById(R.id.search_status)
     recyclerView = findViewById(R.id.recycler_view)
 
-    val params = reply.layoutParams as LayoutParams
+    val params = replyLayout.layoutParams as LayoutParams
     params.gravity = Gravity.BOTTOM
-    reply.layoutParams = params
+    replyLayout.layoutParams = params
 
     // View setup
-    reply.setCallback(this)
+    replyLayout.setCallback(this)
     searchStatus.typeface = themeHelper.theme.mainFont
   }
 
@@ -432,7 +432,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     showingThread = thread
 
     if (initial) {
-      reply.bindLoadable(thread.chanDescriptor)
+      replyLayout.bindLoadable(thread.chanDescriptor)
 
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
@@ -462,7 +462,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onBack(): Boolean {
     return when {
-      reply.onBack() -> true
+      replyLayout.onBack() -> true
       replyOpen -> {
         openReply(false)
         true
@@ -506,7 +506,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     replyOpen = open
 
-    reply.measure(
+    replyLayout.measure(
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     )
@@ -517,16 +517,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
     }
 
-    val height = reply.measuredHeight
-    val viewPropertyAnimator = reply.animate()
+    val height = replyLayout.measuredHeight
+    val viewPropertyAnimator = replyLayout.animate()
 
     viewPropertyAnimator.setListener(null)
     viewPropertyAnimator.interpolator = DecelerateInterpolator(2f)
     viewPropertyAnimator.duration = 350
 
     if (open) {
-      reply.visibility = VISIBLE
-      reply.translationY = height.toFloat()
+      replyLayout.visibility = VISIBLE
+      replyLayout.translationY = height.toFloat()
 
       viewPropertyAnimator.translationY(0f)
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
@@ -539,7 +539,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
       })
     } else {
-      reply.translationY = 0f
+      replyLayout.translationY = 0f
 
       viewPropertyAnimator.translationY(height.toFloat())
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
@@ -549,16 +549,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         override fun onAnimationEnd(animation: Animator) {
           viewPropertyAnimator.setListener(null)
-          reply.visibility = GONE
+          replyLayout.visibility = GONE
         }
       })
     }
 
-    reply.onOpen(open)
+    replyLayout.onOpen(open)
     setRecyclerViewPadding()
 
     if (!open) {
-      AndroidUtils.hideKeyboard(reply)
+      AndroidUtils.hideKeyboard(replyLayout)
     }
 
     threadListLayoutCallback?.replyLayoutOpen(open)
@@ -693,7 +693,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun cleanup() {
     postAdapter.cleanup()
-    reply.cleanup()
+    replyLayout.cleanup()
 
     openReply(false)
 
@@ -873,13 +873,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     // measurements
     if (replyOpen) {
-      reply.measure(
+      replyLayout.measure(
         MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
       )
 
       // recycler view padding calculations
-      recyclerBottom += reply.measuredHeight
+      recyclerBottom += replyLayout.measuredHeight
     }
 
     if (searchOpen) {
@@ -918,11 +918,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun onImageOptionsApplied(modifiedReply: Reply?, filenameRemoved: Boolean) {
-    reply.onImageOptionsApplied(modifiedReply, filenameRemoved)
+    replyLayout.onImageOptionsApplied(modifiedReply, filenameRemoved)
   }
 
   fun onImageOptionsComplete() {
-    reply.onImageOptionsComplete()
+    replyLayout.onImageOptionsComplete()
   }
 
   fun onPostUpdated(post: Post) {

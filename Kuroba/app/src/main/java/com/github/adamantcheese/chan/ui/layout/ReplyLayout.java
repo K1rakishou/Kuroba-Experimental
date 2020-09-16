@@ -371,10 +371,12 @@ public class ReplyLayout
     public void bindLoadable(ChanDescriptor chanDescriptor) {
         Site site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor());
         if (site == null) {
+            Logger.e(TAG, "bindLoadable couldn't find site " + chanDescriptor.siteDescriptor());
             return;
         }
 
         if (!presenter.bindChanDescriptor(chanDescriptor)) {
+            Logger.e(TAG, "bindLoadable failed to bind " + chanDescriptor);
             cleanup();
             return;
         }
@@ -584,6 +586,7 @@ public class ReplyLayout
                     //reset progress to 0 upon uploading start
                     currentProgress.setVisibility(INVISIBLE);
                     destroyCurrentAuthentication();
+                    callback.updatePadding();
                     onPageSet.invoke();
                 });
 
@@ -594,6 +597,7 @@ public class ReplyLayout
                 globalWindowInsetsManager.requestInsetsDispatch(() -> {
                     setWrappingMode(presenter.isExpanded());
                     destroyCurrentAuthentication();
+                    callback.updatePadding();
                     onPageSet.invoke();
                 });
 
@@ -605,6 +609,7 @@ public class ReplyLayout
                 globalWindowInsetsManager.runWhenKeyboardIsHidden(() -> {
                     setWrappingMode(true);
                     captchaContainer.requestFocus(View.FOCUS_DOWN);
+                    callback.updatePadding();
                     onPageSet.invoke();
                 });
 
