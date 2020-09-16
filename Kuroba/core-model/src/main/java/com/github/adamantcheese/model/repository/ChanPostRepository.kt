@@ -242,10 +242,10 @@ class ChanPostRepository(
   }
 
   @OptIn(ExperimentalTime::class)
-  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    applicationScope.myAsync {
+    return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         logger.log(TAG, "preloadForThread($threadDescriptor) begin")
 

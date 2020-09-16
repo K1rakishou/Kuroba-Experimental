@@ -6,6 +6,7 @@ import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.site.parser.ChanReaderProcessor
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
+import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.repository.ChanPostRepository
 import com.google.gson.Gson
@@ -67,6 +68,11 @@ class ReloadPostsFromDatabaseUseCase(
 
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
+        chanPostRepository.preloadForThread(chanDescriptor).safeUnwrap { error ->
+          Logger.e(TAG, "Failed to preload posts for thread ${chanDescriptor}", error)
+          return emptyList()
+        }
+
         chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
       }
       is ChanDescriptor.CatalogDescriptor -> {
@@ -86,6 +92,10 @@ class ReloadPostsFromDatabaseUseCase(
         null
       )
     }
+  }
+
+  companion object {
+    private const val TAG = "ReloadPostsFromDatabaseUseCase"
   }
 
 }

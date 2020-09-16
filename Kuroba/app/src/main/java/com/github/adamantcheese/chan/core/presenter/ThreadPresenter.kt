@@ -217,7 +217,7 @@ class ThreadPresenter @Inject constructor(
       jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
       jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
       jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor).unwrap() }
 
       ModularResult.Try { jobs.awaitAll() }
         .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
