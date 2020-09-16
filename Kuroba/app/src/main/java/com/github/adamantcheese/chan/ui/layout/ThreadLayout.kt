@@ -225,7 +225,8 @@ class ThreadLayout @JvmOverloads constructor(
       }
     }
     else if (v === replyButton) {
-      openReplyInternal(true)
+      // Give some time for the keyboard to show up
+      replyButton.postDelayed({ openReplyInternal(true) }, 100L)
     }
   }
 

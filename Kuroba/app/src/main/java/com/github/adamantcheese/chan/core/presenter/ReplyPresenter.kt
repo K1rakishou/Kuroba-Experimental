@@ -50,8 +50,6 @@ import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 class ReplyPresenter @Inject constructor(
   private val context: Context,
@@ -287,7 +285,8 @@ class ReplyPresenter @Inject constructor(
         submitOrAuthenticate()
       } else {
         val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_reply, timeLeft)
-        switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
+        switchPage(Page.INPUT)
+        callback.openMessage(errorMessage)
       }
 
       return
@@ -298,7 +297,8 @@ class ReplyPresenter @Inject constructor(
       submitOrAuthenticate()
     } else {
       val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_thread, timeLeft)
-      switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
+      switchPage(Page.INPUT)
+      callback.openMessage(errorMessage)
     }
   }
 
@@ -481,7 +481,7 @@ class ReplyPresenter @Inject constructor(
 
   private fun makeSubmitCall() {
     launch {
-      switchPageSuspend(Page.LOADING)
+      switchPage(Page.LOADING)
 
       site.actions().post(draft)
         .catch { error -> onPostError(error) }
@@ -517,7 +517,8 @@ class ReplyPresenter @Inject constructor(
         }
 
         Logger.e(TAG, "onPostComplete error: $errorMessage")
-        switchPage(Page.INPUT, { callback.openMessage(errorMessage) })
+        switchPage(Page.INPUT)
+        callback.openMessage(errorMessage)
       }
     }
   }
@@ -571,7 +572,7 @@ class ReplyPresenter @Inject constructor(
       Logger.e(TAG, "Couldn't create responsePostDescriptor, replyResponse=${replyResponse}")
     }
 
-    switchPageSuspend(Page.INPUT)
+    switchPage(Page.INPUT)
 
     closeAll()
     highlightQuotes()
@@ -621,9 +622,9 @@ class ReplyPresenter @Inject constructor(
     BackgroundUtils.runOnMainThread { callback.onUploadingProgress(percent) }
   }
 
-  private suspend fun onPostError(exception: Throwable?) {
+  private fun onPostError(exception: Throwable?) {
     Logger.e(TAG, "onPostError", exception)
-    switchPageSuspend(Page.INPUT)
+    switchPage(Page.INPUT)
 
     var errorMessage = AndroidUtils.getString(R.string.reply_error)
     if (exception != null) {
@@ -636,25 +637,13 @@ class ReplyPresenter @Inject constructor(
     callback.openMessage(errorMessage)
   }
 
-  private suspend fun switchPageSuspend(
-    page: Page,
-    useV2NoJsCaptcha: Boolean = true,
-    autoReply: Boolean = true
-  ) {
-    return suspendCoroutine { continuation ->
-      switchPage(page, { continuation.resume(Unit) }, useV2NoJsCaptcha, autoReply)
-    }
-  }
-
   @JvmOverloads
   fun switchPage(
     page: Page,
-    onSwitched: (() -> Unit)? = null,
     useV2NoJsCaptcha: Boolean = true,
     autoReply: Boolean = true
   ) {
     if (useV2NoJsCaptcha && this.page == page) {
-      onSwitched?.invoke()
       return
     }
 
@@ -662,30 +651,24 @@ class ReplyPresenter @Inject constructor(
 
     when (page) {
       Page.LOADING,
-      Page.INPUT -> {
-        callback.setPage(page) { onSwitched?.invoke() }
-      }
+      Page.INPUT -> callback.setPage(page)
       Page.AUTHENTICATION -> {
-        callback.setPage(Page.AUTHENTICATION) {
-          val authentication = site.actions().postAuthenticate()
+        callback.setPage(Page.AUTHENTICATION)
 
-          // cleanup resources tied to the new captcha layout/presenter
-          callback.destroyCurrentAuthentication()
+        // cleanup resources tied to the new captcha layout/presenter
+        callback.destroyCurrentAuthentication()
 
-          try {
-            // If the user doesn't have WebView installed it will throw an error
-            callback.initializeAuthentication(
-              site,
-              authentication,
-              this,
-              useV2NoJsCaptcha,
-              autoReply
-            )
-          } catch (error: Throwable) {
-            onAuthenticationFailed(error)
-          }
-
-          onSwitched?.invoke()
+        try {
+          // If the user doesn't have WebView installed it will throw an error
+          callback.initializeAuthentication(
+            site,
+            site.actions().postAuthenticate(),
+            this,
+            useV2NoJsCaptcha,
+            autoReply
+          )
+        } catch (error: Throwable) {
+          onAuthenticationFailed(error)
         }
       }
     }
@@ -764,7 +747,7 @@ class ReplyPresenter @Inject constructor(
     fun loadViewsIntoDraft(draft: Reply?)
     fun loadDraftIntoViews(draft: Reply?)
     fun adjustSelection(start: Int, amount: Int)
-    fun setPage(page: Page, onPageSet: () -> Unit)
+    fun setPage(page: Page)
     fun initializeAuthentication(
       site: Site?,
       authentication: SiteAuthentication?,

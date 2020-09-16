@@ -90,9 +90,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
-
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.adamantcheese.chan.Chan.inject;
@@ -236,6 +233,7 @@ public class ReplyLayout
         }
 
         setWrappingMode(matchParent);
+        callback.updatePadding();
     }
 
     @Override
@@ -573,45 +571,36 @@ public class ReplyLayout
     }
 
     @Override
-    public void setPage(@NotNull ReplyPresenter.Page page, @NotNull Function0<Unit> onPageSet) {
+    public void setPage(@NotNull ReplyPresenter.Page page) {
         Logger.d(TAG, "Switching to page " + page.name());
 
         switch (page) {
             case LOADING:
                 setView(progressLayout);
 
-                globalWindowInsetsManager.requestInsetsDispatch(() -> {
-                    setWrappingMode(false);
+                setWrappingMode(false);
 
-                    //reset progress to 0 upon uploading start
-                    currentProgress.setVisibility(INVISIBLE);
-                    destroyCurrentAuthentication();
-                    callback.updatePadding();
-                    onPageSet.invoke();
-                });
+                //reset progress to 0 upon uploading start
+                currentProgress.setVisibility(INVISIBLE);
+                destroyCurrentAuthentication();
+                callback.updatePadding();
 
                 break;
             case INPUT:
                 setView(replyInputLayout);
 
-                globalWindowInsetsManager.requestInsetsDispatch(() -> {
-                    setWrappingMode(presenter.isExpanded());
-                    destroyCurrentAuthentication();
-                    callback.updatePadding();
-                    onPageSet.invoke();
-                });
+                setWrappingMode(presenter.isExpanded());
+                destroyCurrentAuthentication();
+                callback.updatePadding();
 
                 break;
             case AUTHENTICATION:
                 AndroidUtils.hideKeyboard(this);
                 setView(captchaContainer);
 
-                globalWindowInsetsManager.runWhenKeyboardIsHidden(() -> {
-                    setWrappingMode(true);
-                    captchaContainer.requestFocus(View.FOCUS_DOWN);
-                    callback.updatePadding();
-                    onPageSet.invoke();
-                });
+                setWrappingMode(true);
+                captchaContainer.requestFocus(View.FOCUS_DOWN);
+                callback.updatePadding();
 
                 break;
         }
@@ -843,7 +832,7 @@ public class ReplyLayout
     @Override
     public void onFallbackToV1CaptchaView(boolean autoReply) {
         // fallback to v1 captcha window
-        presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, null, false, autoReply);
+        presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, false, autoReply);
     }
 
     @Override

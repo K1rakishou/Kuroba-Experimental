@@ -65,6 +65,7 @@ import com.github.adamantcheese.chan.ui.view.PostInfoMapItemDecoration
 import com.github.adamantcheese.chan.ui.view.ThumbnailView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
+import com.github.adamantcheese.chan.utils.AndroidUtils.getDimen
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.updatePaddings
@@ -83,7 +84,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   : FrameLayout(context, attrs),
   ReplyLayoutCallback,
   Toolbar.ToolbarHeightUpdatesCallback,
-  CoroutineScope{
+  CoroutineScope {
 
   @Inject
   lateinit var themeHelper: ThemeHelper
@@ -123,6 +124,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var spanCount = 2
   private var background = 0
   private var searchOpen = false
+  private var onToolbarHeightKnownAlreadyCalled = false
   private var lastPostCount = 0
   private var hat: Bitmap? = null
   private var showingThread: ChanThread? = null
@@ -298,6 +300,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {
+    if (onToolbarHeightKnownAlreadyCalled) {
+      return
+    }
+
+    onToolbarHeightKnownAlreadyCalled = true
     setRecyclerViewPadding()
   }
 
@@ -345,7 +352,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
-    val cardWidth = AndroidUtils.getDimen(R.dimen.grid_card_width)
+    val cardWidth = getDimen(R.dimen.grid_card_width)
     val gridCountSetting = ChanSettings.boardGridSpanCount.get()
     val compactMode: Boolean
 
@@ -657,7 +664,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           // PostStubCell does not have grid_card_margin
           top.getTop() != searchExtraHeight + dp(1f)
         } else {
-          top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
+          top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
         }
       }
     }
@@ -668,7 +675,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         // PostStubCell does not have grid_card_margin
         top.getTop() != toolbarHeight() + dp(1f)
       } else {
-        top.top != AndroidUtils.getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
+        top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
       }
     }
     return true
@@ -871,6 +878,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     var recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
 
+    val keyboardOpened = globalWindowInsetsManager.isKeyboardOpened
+
     // measurements
     if (replyOpen) {
       replyLayout.measure(
@@ -878,8 +887,19 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
       )
 
-      // recycler view padding calculations
-      recyclerBottom += replyLayout.measuredHeight
+      val bottomPadding = if (keyboardOpened) {
+        replyLayout.paddingBottom
+      } else {
+        0
+      }
+
+      recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop - bottomPadding)
+    } else {
+      if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+        recyclerBottom += globalWindowInsetsManager.bottom()
+      } else {
+        recyclerBottom += globalWindowInsetsManager.bottom() + getDimen(R.dimen.bottom_nav_view_height)
+      }
     }
 
     if (searchOpen) {

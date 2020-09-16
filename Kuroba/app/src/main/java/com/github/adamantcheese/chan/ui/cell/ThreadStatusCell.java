@@ -32,15 +32,11 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
-import com.github.adamantcheese.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.adamantcheese.chan.core.manager.WindowInsetsListener;
 import com.github.adamantcheese.chan.core.model.ChanThread;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
-import com.github.adamantcheese.common.KotlinExtensionsKt;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.ArchiveDescriptor;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
@@ -48,10 +44,9 @@ import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import javax.inject.Inject;
 
 import static com.github.adamantcheese.chan.Chan.inject;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getDimen;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getString;
 
-public class ThreadStatusCell extends LinearLayout implements View.OnClickListener, WindowInsetsListener {
+public class ThreadStatusCell extends LinearLayout implements View.OnClickListener {
     private static final int UPDATE_INTERVAL = 1000;
     private static final int MESSAGE_INVALIDATE = 1;
 
@@ -59,8 +54,6 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     ThemeHelper themeHelper;
     @Inject
     BoardManager boardManager;
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private Callback callback;
     private boolean running = false;
@@ -93,7 +86,6 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         text = findViewById(R.id.text);
         text.setTypeface(themeHelper.getTheme().mainFont);
 
-        updatePaddings();
         setOnClickListener(this);
     }
 
@@ -274,39 +266,12 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         schedule();
-
-        globalWindowInsetsManager.addInsetsUpdatesListener(this);
-    }
-
-    @Override
-    public void onInsetsChanged() {
-        updatePaddings();
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         unschedule();
-
-        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
-    }
-
-    private void updatePaddings() {
-        int bottomPadding = getDimen(R.dimen.bottom_nav_view_height) + globalWindowInsetsManager.bottom();
-
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            bottomPadding = globalWindowInsetsManager.bottom();
-        }
-
-        KotlinExtensionsKt.updateMargins(
-                this,
-                null,
-                null,
-                null,
-                null,
-                null,
-                bottomPadding
-        );
     }
 
     @Override
