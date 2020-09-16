@@ -22,7 +22,7 @@ import com.github.adamantcheese.chan.core.site.sites.Wired7
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.core.site.sites.chan420.Chan420
 import com.github.adamantcheese.chan.core.site.sites.dvach.Dvach
-import com.github.adamantcheese.chan.core.site.sites.foolfuuka.ArchivedMoe
+import com.github.adamantcheese.chan.core.site.sites.foolfuuka.sites.*
 import com.github.adamantcheese.chan.core.site.sites.kun8.Kun8
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import java.util.*
@@ -38,16 +38,13 @@ object SiteRegistry {
 
   init {
     URL_HANDLERS.add(Chan4.URL_HANDLER)
-    //8chan was here but was removed
     URL_HANDLERS.add(Lainchan.URL_HANDLER)
-    //arisuchan was here but was removed
     URL_HANDLERS.add(Sushichan.URL_HANDLER)
     URL_HANDLERS.add(Dvach.URL_HANDLER)
     URL_HANDLERS.add(Wired7.URL_HANDLER)
-    //chan55 was here but was removed
     URL_HANDLERS.add(Kun8.URL_HANDLER)
     URL_HANDLERS.add(Chan420.URL_HANDLER)
-    URL_HANDLERS.add(ArchivedMoe.URL_HANDLER)
+    URL_HANDLERS.add(BaseFoolFuukaSite.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -57,6 +54,13 @@ object SiteRegistry {
     addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
     addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
     addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
+    addSiteToSiteClassesMap(ForPlebs.SITE_NAME, ForPlebs::class.java)
+    addSiteToSiteClassesMap(Nyafuu.SITE_NAME, Nyafuu::class.java)
+    addSiteToSiteClassesMap(RebeccaBlackTech.SITE_NAME, RebeccaBlackTech::class.java)
+    addSiteToSiteClassesMap(DesuArchive.SITE_NAME, DesuArchive::class.java)
+    addSiteToSiteClassesMap(Fireden.SITE_NAME, Fireden::class.java)
+    addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
+    addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {

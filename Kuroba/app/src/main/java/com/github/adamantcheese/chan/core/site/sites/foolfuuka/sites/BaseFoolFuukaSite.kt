@@ -1,44 +1,44 @@
-package com.github.adamantcheese.chan.core.site.sites.foolfuuka
+package com.github.adamantcheese.chan.core.site.sites.foolfuuka.sites
 
+import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.adamantcheese.chan.core.site.Site
-import com.github.adamantcheese.chan.core.site.Site.BoardsType
-import com.github.adamantcheese.chan.core.site.SiteIcon
-import com.github.adamantcheese.chan.core.site.common.FoolFuukaCommentParser
-import com.github.adamantcheese.model.data.archive.ArchiveType
+import com.github.adamantcheese.chan.core.site.common.CommonSite
+import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class ArchivedMoe : BaseFoolFuukaSite() {
+abstract class BaseFoolFuukaSite : CommonSite() {
+  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
+    enabled = false,
+    siteSendsCorrectFileSizeInBytes = false,
+    canFileHashBeTrusted = false
+  )
 
-  override fun setup() {
-    setEnabled(true)
-    setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))
-    setBoardsType(BoardsType.INFINITE)
-    setResolvable(URL_HANDLER)
-    setConfig(object : CommonConfig() {})
-    setEndpoints(FoolFuukaEndpoints(this, rootUrl()))
-    setActions(FoolFuukaActions(this))
-    setApi(FoolFuukaApi(this))
-    setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
+  abstract fun rootUrl(): HttpUrl
+
+  final override fun commentParserType(): CommentParserType = CommentParserType.FoolFuukaParser
+  final override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties = chunkDownloaderSiteProperties
+
+  interface FoolFuukaSiteStatic {
+    val FAVICON_URL: HttpUrl
+    val ROOT: String
+    val ROOT_URL: HttpUrl
+    val SITE_NAME: String
+    val MEDIA_HOSTS: Array<String>
+    val NAMES: Array<String>
+    val CLASS: Class<out Site>
   }
 
-  override fun rootUrl(): HttpUrl = ROOT_URL
-
   companion object {
-    val FAVICON_URL = "https://archived.moe/favicon.ico".toHttpUrl()
-    val ROOT = "https://archived.moe/"
-    val ROOT_URL = ROOT.toHttpUrl()
-    val SITE_NAME = ArchiveType.ArchivedMoe.domain
+    lateinit var foolFuukaSiteStatic: FoolFuukaSiteStatic
 
     val URL_HANDLER = object : CommonSiteUrlHandler() {
       override val url: HttpUrl
-        get() = ROOT_URL
+        get() = foolFuukaSiteStatic.ROOT_URL
       override val mediaHosts: Array<String>
-        get() = arrayOf(ROOT_URL.toString())
+        get() = foolFuukaSiteStatic.MEDIA_HOSTS
       override val names: Array<String>
-        get() = arrayOf("archived")
+        get() = foolFuukaSiteStatic.NAMES
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
         when (chanDescriptor) {
@@ -67,7 +67,7 @@ class ArchivedMoe : BaseFoolFuukaSite() {
         }
       }
 
-      override fun getSiteClass(): Class<out Site>? = ArchivedMoe::class.java
+      override fun getSiteClass(): Class<out Site> = foolFuukaSiteStatic.CLASS
     }
   }
 }

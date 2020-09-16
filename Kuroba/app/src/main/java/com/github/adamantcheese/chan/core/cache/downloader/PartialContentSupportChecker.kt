@@ -52,6 +52,10 @@ internal class PartialContentSupportChecker(
       ?.enabled
       ?: false
 
+    if (!enabled) {
+      return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
+    }
+
     val fileSize = activeDownloads.get(url)?.extraInfo?.fileSize ?: -1L
     if (fileSize > 0) {
       val hostAlreadyChecked = synchronized(checkedChanHosts) {
@@ -62,10 +66,6 @@ internal class PartialContentSupportChecker(
       // lifetime) we can go a fast route and  just check the cached value (whether the site)
       // supports partial content or not
       if (hostAlreadyChecked) {
-        if (!enabled) {
-          return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
-        }
-
         val siteSendsFileSizeInBytes = site
           ?.getChunkDownloaderSiteProperties()
           ?.siteSendsCorrectFileSizeInBytes

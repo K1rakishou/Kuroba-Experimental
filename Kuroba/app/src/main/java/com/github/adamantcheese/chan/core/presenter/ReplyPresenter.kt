@@ -154,11 +154,13 @@ class ReplyPresenter @Inject constructor(
 
     job.cancelChildren()
 
-    draft.file = null
-    draft.fileName = ""
+    if (::draft.isInitialized) {
+      draft.file = null
+      draft.fileName = ""
 
-    callback.loadViewsIntoDraft(draft)
-    replyManager.putReply(chanDescriptor, draft)
+      callback.loadViewsIntoDraft(draft)
+      replyManager.putReply(chanDescriptor, draft)
+    }
 
     closeAll()
   }
