@@ -139,10 +139,32 @@ abstract class ChanThreadDao {
     """)
   abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
 
-  @Query("SELECT * FROM ${ChanThreadsWithPosts.VIEW_NAME} LIMIT :count OFFSET :offset")
+  @Query("""
+    SELECT 
+        ctwp.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}, 
+        ctwp.${ChanThreadsWithPosts.THREAD_NO_COLUMN_NAME},
+        ctwp.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME},
+        ctwp.${ChanThreadsWithPosts.POSTS_COUNT_COLUMN_NAME},
+        tb.${ChanThreadsWithPosts.THREAD_BOOKMARK_ID_COLUMN_NAME} 
+    FROM ${ChanThreadsWithPosts.VIEW_NAME} AS ctwp 
+    LEFT OUTER JOIN thread_bookmark AS tb 
+        ON ctwp.thread_id = tb.owner_thread_id 
+    LIMIT :count OFFSET :offset
+  """)
   abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
 
-  @Query("SELECT * FROM ${OldChanPostThread.VIEW_NAME} LIMIT :count OFFSET :offset")
+  @Query("""
+    SELECT 
+        ctwp.${OldChanPostThread.THREAD_ID_COLUMN_NAME}, 
+        ctwp.${OldChanPostThread.THREAD_NO_COLUMN_NAME},
+        ctwp.${OldChanPostThread.LAST_MODIFIED_COLUMN_NAME},
+        ctwp.${OldChanPostThread.POSTS_COUNT_COLUMN_NAME},
+        tb.${OldChanPostThread.THREAD_BOOKMARK_ID_COLUMN_NAME} 
+    FROM ${OldChanPostThread.VIEW_NAME} AS ctwp 
+    LEFT OUTER JOIN thread_bookmark AS tb 
+        ON ctwp.thread_id = tb.owner_thread_id 
+    LIMIT :count OFFSET :offset
+  """)
   abstract suspend fun selectOldThreads(offset: Int, count: Int): List<OldChanPostThread>
 
   @Query("SELECT COUNT(*) FROM ${ChanThreadEntity.TABLE_NAME}")

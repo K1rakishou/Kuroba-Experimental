@@ -590,21 +590,30 @@ class ChanPostLocalSource(
     chanPostDao.deletePost(chanThreadEntity.threadId, postDescriptor.postNo, postDescriptor.postSubNo)
   }
 
-  suspend fun deleteOldPosts(toDeleteCount: Int): Int {
+  suspend fun deleteOldPosts(toDeleteCount: Int): DeleteResult {
     ensureInTransaction()
     require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }
 
     var deletedTotal = 0
+    var skippedTotal = 0
     var offset = 0
 
     do {
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
         logger.log(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
-        return deletedTotal
+        return DeleteResult(deletedTotal, skippedTotal)
       }
 
       for (thread in threadBatch) {
+        if (thread.threadBookmarkId != null) {
+          skippedTotal += thread.postsCount
+
+          logger.log(TAG, "deleteOldPosts() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
+            "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount})")
+          continue
+        }
+
         if (deletedTotal >= toDeleteCount) {
           logger.log(TAG, "deleteOldPosts() Deleted enough posts (deletedTotal = $deletedTotal, " +
             "toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount}), exiting early")
@@ -621,24 +630,32 @@ class ChanPostLocalSource(
       offset += threadBatch.size
     } while (deletedTotal < toDeleteCount)
 
-    return deletedTotal
+    return DeleteResult(deletedTotal, skippedTotal)
   }
 
-  suspend fun deleteOldThreads(toDeleteCount: Int): Int {
+  suspend fun deleteOldThreads(toDeleteCount: Int): DeleteResult {
     ensureInTransaction()
     require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }
 
     var deletedTotal = 0
+    var skippedTotal = 0
     var offset = 0
 
     do {
       val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
         logger.log(TAG, "deleteOldThreads() selectOldThreads returned empty list")
-        return deletedTotal
+        return DeleteResult(deletedTotal, skippedTotal)
       }
 
       for (thread in threadBatch) {
+        if (thread.threadBookmarkId != null) {
+          ++skippedTotal
+          logger.log(TAG, "deleteOldThreads() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
+            "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount)")
+          continue
+        }
+
         if (deletedTotal >= toDeleteCount) {
           logger.log(TAG, "deleteOldThreads() Deleted enough threads (deletedTotal = $deletedTotal, " +
             "toDeleteCount = $toDeleteCount), exiting early")
@@ -652,8 +669,10 @@ class ChanPostLocalSource(
       offset += threadBatch.size
     } while (deletedTotal < toDeleteCount)
 
-    return deletedTotal
+    return DeleteResult(deletedTotal, skippedTotal)
   }
+
+  data class DeleteResult(val deletedTotal: Int = 0, val skippedTotal: Int = 0)
 
   companion object {
     private const val THREADS_IN_BATCH = 128
