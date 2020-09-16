@@ -40,7 +40,16 @@ Both of them should be ready by September 25th.
 - Lainchan
 - Sushichan
 - Wired-7 (thanks to @Wired-7)
-- ArchivedMoe (partially)
+
+##### Currently supported 4chan archives
+- ArchivedMoe
+- ArchiveOfSins
+- B4k
+- DesuArchive
+- Fireden 
+- 4Plebs 
+- Nyafuu 
+- RebeccaBlackTech
 
 ## License
 [Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)
