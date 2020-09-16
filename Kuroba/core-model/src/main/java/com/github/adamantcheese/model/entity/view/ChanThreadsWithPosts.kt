@@ -3,6 +3,7 @@ package com.github.adamantcheese.model.entity.view
 import androidx.room.ColumnInfo
 import androidx.room.DatabaseView
 import com.github.adamantcheese.model.KurobaDatabase
+import com.github.adamantcheese.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.adamantcheese.model.entity.chan.post.ChanPostEntity
 import com.github.adamantcheese.model.entity.chan.post.ChanPostIdEntity
 import com.github.adamantcheese.model.entity.chan.thread.ChanThreadEntity
@@ -42,7 +43,9 @@ data class ChanThreadsWithPosts(
   @ColumnInfo(name = LAST_MODIFIED_COLUMN_NAME)
   val lastModified: Long,
   @ColumnInfo(name = POSTS_COUNT_COLUMN_NAME)
-  val postsCount: Int
+  val postsCount: Int,
+  @ColumnInfo(name = THREAD_BOOKMARK_ID_COLUMN_NAME)
+  val threadBookmarkId: Long? = null
 ) {
 
   companion object {
@@ -51,6 +54,7 @@ data class ChanThreadsWithPosts(
     const val THREAD_ID_COLUMN_NAME = ChanThreadEntity.THREAD_ID_COLUMN_NAME
     const val THREAD_NO_COLUMN_NAME = ChanThreadEntity.THREAD_NO_COLUMN_NAME
     const val LAST_MODIFIED_COLUMN_NAME = ChanThreadEntity.LAST_MODIFIED_COLUMN_NAME
+    const val THREAD_BOOKMARK_ID_COLUMN_NAME = ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME
     const val POSTS_COUNT_COLUMN_NAME = "posts_count"
   }
 }

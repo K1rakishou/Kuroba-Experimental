@@ -106,7 +106,8 @@ class DatabaseSettingsSummaryScreen(
               chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
             }
 
-            AndroidUtils.showToast(context, "Done, deleted $deleted thread rows")
+            AndroidUtils.showToast(context, "Done, deleted ${deleted.deletedTotal} thread rows, " +
+              "skipped ${deleted.skippedTotal} thread rows")
           }
         )
 
@@ -128,7 +129,8 @@ class DatabaseSettingsSummaryScreen(
               chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
             }
 
-            AndroidUtils.showToast(context, "Done, deleted $deleted post rows")
+            AndroidUtils.showToast(context, "Done, deleted ${deleted.deletedTotal} post rows, " +
+              "skipped ${deleted.skippedTotal} post rows")
           }
         )
 
