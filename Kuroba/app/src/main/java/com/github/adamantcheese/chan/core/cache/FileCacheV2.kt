@@ -393,7 +393,7 @@ class FileCacheV2(
         }
         // Progress
         is FileDownloadResult.Progress -> {
-          val chunkSize = if (result.chunkSize == 0L) {
+          val chunkSize = if (result.chunkSize <= 0L) {
             1L
           } else {
             result.chunkSize

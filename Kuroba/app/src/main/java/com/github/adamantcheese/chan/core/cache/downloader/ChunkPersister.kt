@@ -65,8 +65,13 @@ internal class ChunkPersister(
 
         try {
           chunkResponse.response.useAsResponseBody { responseBody ->
-            val chunkSize = responseBody.contentLength()
+            var chunkSize = responseBody.contentLength()
+
             if (totalChunksCount == 1) {
+              if (chunkSize <= 0) {
+                chunkSize = activeDownloads.get(url)?.extraInfo?.fileSize ?: -1
+              }
+
               // When downloading the whole file in a single chunk we can only know
               // for sure the whole size of the file at this point since we probably
               // didn't send the HEAD request

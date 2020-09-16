@@ -388,8 +388,8 @@ abstract class CommonSite : SiteBase() {
       return SimpleHttpUrl(url.build().newBuilder())
     }
     
-    fun s(segment: String?): SimpleHttpUrl {
-      url.addPathSegment(segment!!)
+    fun s(segment: String): SimpleHttpUrl {
+      url.addPathSegment(segment)
       return this
     }
     

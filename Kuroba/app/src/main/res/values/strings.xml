@@ -797,7 +797,7 @@ Don't have a 4chan Pass?<br>
     <string name="controller_boards_setup_title">Configure boards of %1$s</string>
     <string name="controller_boards_setup_boards_updated">Boards updated</string>
 
-    <string name="controller_add_boards_no_boards">No boards found. Try adding a board manually by it\'s code</string>
+    <string name="controller_add_boards_no_boards">No boards found</string>
 
     <string name="controller_boards_selection_no_boards">No boards found</string>
     <string name="controller_boards_selection_sites">Sites</string>

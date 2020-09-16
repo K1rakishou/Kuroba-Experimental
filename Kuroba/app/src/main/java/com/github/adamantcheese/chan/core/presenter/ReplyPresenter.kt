@@ -133,7 +133,11 @@ class ReplyPresenter @Inject constructor(
     }
 
     callback.loadDraftIntoViews(draft)
-    callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
+
+    if (thisBoard.maxCommentChars > 0) {
+      callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
+    }
+
     callback.setCommentHint(AndroidUtils.getString(stringId))
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
@@ -356,6 +360,10 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onCommentTextChanged(text: CharSequence) {
+    if (chanBoard.maxCommentChars < 0) {
+      return
+    }
+
     val length = text.toString().toByteArray(UTF_8).size
     callback.updateCommentCount(length, chanBoard.maxCommentChars, length > chanBoard.maxCommentChars)
   }
@@ -711,7 +719,7 @@ class ReplyPresenter @Inject constructor(
       chanBoard.maxFileSize
     }
 
-    //if the max size is undefined for the board, ignore this message
+    // if the max size is undefined for the board, ignore this message
     if (file != null && file.length() > maxSize && maxSize != -1) {
       val fileSize = getReadableFileSize(file.length())
       val stringResId = if (probablyWebm) {

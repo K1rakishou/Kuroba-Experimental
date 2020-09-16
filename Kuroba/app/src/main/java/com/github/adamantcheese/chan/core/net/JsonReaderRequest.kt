@@ -83,6 +83,7 @@ abstract class JsonReaderRequest<T>(
   enum class RequestType(val requestTag: String) {
     Chan420BoardsRequest("Chan420Boards"),
     Chan4BoardsRequest("Chan4Boards"),
+    Kun8BoardsRequest("Kun8Boards"),
     Chan4PagesRequest("Chan4Pages"),
     BetaUpdateApiRequest("BetaUpdateApi"),
     DvachBoardsRequest("DvachBoards"),

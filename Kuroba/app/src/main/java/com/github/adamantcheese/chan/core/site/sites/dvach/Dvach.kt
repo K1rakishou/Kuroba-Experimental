@@ -102,11 +102,15 @@ class Dvach : CommonSite() {
     })
     setEndpoints(object : VichanEndpoints(this, "https://2ch.hk", "https://2ch.hk") {
       override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
-        return root.builder().s(arg["path"]).url()
+        val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
+
+        return root.builder().s(path).url()
       }
 
       override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
-        return root.builder().s(arg["thumbnail"]).url()
+        val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
+
+        return root.builder().s(thumbnail).url()
       }
 
       override fun boards(): HttpUrl {
