@@ -193,8 +193,6 @@ public class ReplyLayout
         super.onAttachedToWindow();
 
         EventBus.getDefault().register(this);
-        captchaHolder.setListener(this);
-
         globalWindowInsetsManager.addKeyboardUpdatesListener(this);
     }
 
@@ -213,7 +211,6 @@ public class ReplyLayout
         }
 
         EventBus.getDefault().unregister(this);
-        captchaHolder.removeListener();
 
         globalWindowInsetsManager.removeKeyboardUpdatesListener(this);
     }
@@ -384,6 +381,12 @@ public class ReplyLayout
         } else {
             captcha.setVisibility(GONE);
         }
+
+        captchaHolder.setListener(chanDescriptor, this);
+    }
+
+    public void clearCaptchaHolderCallbacks() {
+        captchaHolder.clearCallbacks();
     }
 
     public void cleanup() {

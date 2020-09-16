@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,22 +31,30 @@ public class CaptchaHolder {
     private Timer timer;
 
     @Nullable
-    private CaptchaValidationListener captchaValidationListener;
+    private CaptchaValidationListener catalogCaptchaValidationListener;
+    @Nullable
+    private CaptchaValidationListener threadCaptchaValidationListener;
 
     @GuardedBy("itself")
     private final List<CaptchaInfo> captchaQueue = new ArrayList<>();
 
-    public void setListener(CaptchaValidationListener listener) {
+    public void setListener(ChanDescriptor descriptor, CaptchaValidationListener listener) {
         BackgroundUtils.ensureMainThread();
 
-        captchaValidationListener = listener;
+        if (descriptor.isCatalogDescriptor()) {
+            catalogCaptchaValidationListener = listener;
+        } else {
+            threadCaptchaValidationListener = listener;
+        }
+
         notifyListener();
     }
 
-    public void removeListener() {
+    public void clearCallbacks() {
         BackgroundUtils.ensureMainThread();
 
-        captchaValidationListener = null;
+        catalogCaptchaValidationListener = null;
+        threadCaptchaValidationListener = null;
     }
 
     public void addNewToken(String token, long tokenLifetime) {
@@ -158,8 +167,12 @@ public class CaptchaHolder {
                 count = captchaQueue.size();
             }
 
-            if (captchaValidationListener != null) {
-                captchaValidationListener.onCaptchaCountChanged(count);
+            if (catalogCaptchaValidationListener != null) {
+                catalogCaptchaValidationListener.onCaptchaCountChanged(count);
+            }
+
+            if (threadCaptchaValidationListener != null) {
+                threadCaptchaValidationListener.onCaptchaCountChanged(count);
             }
         });
     }

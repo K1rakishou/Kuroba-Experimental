@@ -294,6 +294,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     job.cancelChildren()
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
+    replyLayout.clearCaptchaHolderCallbacks()
 
     forceRecycleAllPostViews()
     recyclerView.adapter = null
