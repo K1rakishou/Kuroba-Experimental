@@ -17,7 +17,7 @@
 package com.github.adamantcheese.chan.core.site.loader
 
 import com.github.adamantcheese.chan.Chan.inject
-import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.*
 import com.github.adamantcheese.chan.core.model.ChanThread
 import com.github.adamantcheese.chan.core.model.Post

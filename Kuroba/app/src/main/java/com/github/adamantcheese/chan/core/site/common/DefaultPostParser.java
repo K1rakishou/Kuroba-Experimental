@@ -94,6 +94,7 @@ public class DefaultPostParser implements PostParser {
                     theme,
                     builder,
                     builder.postCommentBuilder.getComment(),
+                    ChanSettings.parsePostImageLinks.get(),
                     callback
             );
 
@@ -231,6 +232,7 @@ public class DefaultPostParser implements PostParser {
             Theme theme,
             Post.Builder post,
             CharSequence commentRaw,
+            boolean addPostImages,
             Callback callback
     ) {
         CharSequence total = new SpannableString("");
@@ -254,7 +256,10 @@ public class DefaultPostParser implements PostParser {
             Logger.e(TAG, "Error parsing comment html", e);
         }
 
-        CommentParserHelper.addPostImages(post);
+        if (addPostImages) {
+            CommentParserHelper.addPostImages(post);
+        }
+
         return total;
     }
 

@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.net.update
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.common.jsonObject
 import com.google.gson.stream.JsonReader
@@ -24,9 +24,9 @@ import okhttp3.Request
 
 class BetaUpdateApiRequest(
   request: Request,
-  okHttpClient: NetModule.ProxiedOkHttpClient
+  okHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BetaUpdateApiRequest.DevUpdateApiResponse>(
-  RequestType.BetaUpdateApiRequest,
+  JsonRequestType.BetaUpdateApiJsonRequest,
   request,
   okHttpClient
 ) {

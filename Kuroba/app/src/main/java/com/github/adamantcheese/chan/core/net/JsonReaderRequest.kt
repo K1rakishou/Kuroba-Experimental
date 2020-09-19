@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.net
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
@@ -24,14 +24,14 @@ import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import java.io.IOException
 import java.io.InputStreamReader
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 abstract class JsonReaderRequest<T>(
-  protected val requestType: RequestType,
+  protected val jsonRequestType: JsonRequestType,
   protected val request: Request,
-  private val proxiedOkHttpClient: NetModule.ProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -41,7 +41,7 @@ abstract class JsonReaderRequest<T>(
         proxiedOkHttpClient.proxiedClient.suspendCall(request)
       }
 
-      Logger.d(TAG, "Request \"${requestType.requestTag}\" to \"${request.url}\" " +
+      Logger.d(TAG, "Request \"${jsonRequestType.requestTag}\" to \"${request.url}\" " +
         "took ${timedValue.duration.inMilliseconds}ms")
 
       return@Try timedValue.value
@@ -61,7 +61,7 @@ abstract class JsonReaderRequest<T>(
     try {
       return response.body!!.use { body ->
         return@use body.byteStream().use { inputStream ->
-          return@use JsonReader(InputStreamReader(inputStream, UTF8)).use { jsonReader ->
+          return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
             return@use JsonReaderResponse.Success(readJson(jsonReader))
           }
         }
@@ -80,19 +80,18 @@ abstract class JsonReaderRequest<T>(
     class ParsingError(val error: Throwable) : JsonReaderResponse<Nothing>()
   }
 
-  enum class RequestType(val requestTag: String) {
-    Chan420BoardsRequest("Chan420Boards"),
-    Chan4BoardsRequest("Chan4Boards"),
-    Kun8BoardsRequest("Kun8Boards"),
-    Chan4PagesRequest("Chan4Pages"),
-    BetaUpdateApiRequest("BetaUpdateApi"),
-    DvachBoardsRequest("DvachBoards"),
-    ReleaseUpdateApiRequest("ReleaseUpdateApi")
+  enum class JsonRequestType(val requestTag: String) {
+    Chan420BoardsJsonRequest("Chan420Boards"),
+    Chan4BoardsJsonRequest("Chan4Boards"),
+    Kun8BoardsJsonRequest("Kun8Boards"),
+    Chan4PagesJsonRequest("Chan4Pages"),
+    BetaUpdateApiJsonRequest("BetaUpdateApi"),
+    DvachBoardsJsonRequest("DvachBoards"),
+    ReleaseUpdateApiJsonRequest("ReleaseUpdateApi")
   }
 
   companion object {
     private const val TAG = "JsonReaderRequest"
-    private val UTF8 = Charset.forName("UTF-8")
   }
 
 }

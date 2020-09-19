@@ -33,6 +33,7 @@ public interface PostParser {
             Theme theme,
             Post.Builder post,
             CharSequence commentRaw,
+            boolean addPostImages,
             Callback callback
     );
 

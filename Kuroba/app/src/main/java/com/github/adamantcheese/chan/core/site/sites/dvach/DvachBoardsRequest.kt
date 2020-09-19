@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.dvach
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.common.jsonArray
@@ -32,8 +32,8 @@ class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: NetModule.ProxiedOkHttpClient
-) : JsonReaderRequest<List<ChanBoard>>(RequestType.DvachBoardsRequest, request, okHttpClient) {
+  okHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<List<ChanBoard>>(JsonRequestType.DvachBoardsJsonRequest, request, okHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): List<ChanBoard> {
     val list: MutableList<ChanBoard> = ArrayList()

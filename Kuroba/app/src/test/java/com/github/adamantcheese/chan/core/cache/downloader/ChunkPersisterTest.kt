@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.cache.downloader
 
+import com.github.adamantcheese.chan.core.base.TestModule
 import com.github.adamantcheese.chan.core.cache.CacheHandler
 import com.github.adamantcheese.chan.core.cache.FileCacheV2.Companion.MIN_CHUNK_SIZE
 import com.github.adamantcheese.chan.core.cache.createFileDownloadRequest

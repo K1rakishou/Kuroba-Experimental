@@ -30,7 +30,7 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -66,7 +66,7 @@ public class CaptchaNojsLayoutV1
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    NetModule.ProxiedOkHttpClient okHttpClient;
+    ProxiedOkHttpClient okHttpClient;
 
     private AuthenticationLayoutCallback callback;
     private String baseUrl;

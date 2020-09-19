@@ -549,9 +549,9 @@ class StartActivity : AppCompatActivity(),
 
   private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
     val boardDescriptor =
-      (resolveChanDescriptor(state.board) as ChanDescriptor.CatalogDescriptor).boardDescriptor
+      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
     val threadDescriptor =
-      resolveChanDescriptor(state.thread) as ChanDescriptor.ThreadDescriptor
+      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
 
     return Pair(boardDescriptor, threadDescriptor)
   }

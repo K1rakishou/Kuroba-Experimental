@@ -157,17 +157,17 @@ class ReportManager(
       val resultString = buildString {
         // To avoid log spam that may happen because of, let's say, server failure for
         // couple of days, we want some kind of marker to be able to filter them
-        appendln("=== LOGS(${getCurrentDateAndTimeUTC()}) ===")
+        appendLine("=== LOGS(${getCurrentDateAndTimeUTC()}) ===")
         logs?.let { append(it) }
         append("\n\n")
 
         if (!logsAlreadyContainCrash) {
-          appendln("=== STACKTRACE ===")
+          appendLine("=== STACKTRACE ===")
           append(error)
           append("\n\n")
         }
 
-        appendln("=== SETTINGS ===")
+        appendLine("=== SETTINGS ===")
         append(settings)
       }
 

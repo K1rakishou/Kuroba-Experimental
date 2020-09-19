@@ -19,7 +19,7 @@ package com.github.adamantcheese.chan.core.net.update
 import android.os.Build
 import android.text.Html
 import android.text.Spanned
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.adamantcheese.common.jsonArray
@@ -36,8 +36,8 @@ import java.util.regex.Pattern
 
 class ReleaseUpdateApiRequest(
   request: Request,
-  okHttpClient: NetModule.ProxiedOkHttpClient
-) : JsonReaderRequest<ReleaseUpdateApiResponse>(RequestType.ReleaseUpdateApiRequest, request, okHttpClient) {
+  okHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<ReleaseUpdateApiResponse>(JsonRequestType.ReleaseUpdateApiJsonRequest, request, okHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {
     val response = ReleaseUpdateApiResponse()

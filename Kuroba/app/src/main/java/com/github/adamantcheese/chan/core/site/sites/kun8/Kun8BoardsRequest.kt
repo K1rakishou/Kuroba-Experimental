@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.site.sites.kun8
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
@@ -17,8 +17,8 @@ class Kun8BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: NetModule.ProxiedOkHttpClient
-) : JsonReaderRequest<SiteBoards>(RequestType.Kun8BoardsRequest, request, okHttpClient) {
+  okHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<SiteBoards>(JsonRequestType.Kun8BoardsJsonRequest, request, okHttpClient) {
 
   override suspend fun readJson(reader: JsonReader): SiteBoards {
     val list: MutableList<ChanBoard> = ArrayList()

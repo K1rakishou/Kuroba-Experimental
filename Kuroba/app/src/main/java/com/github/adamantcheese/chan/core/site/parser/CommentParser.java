@@ -29,6 +29,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.site.parser.style.StyleRule;
+import com.github.adamantcheese.chan.core.site.parser.style.StyleRulesParams;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
@@ -48,7 +50,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.github.adamantcheese.chan.core.site.parser.StyleRule.tagRule;
+import static com.github.adamantcheese.chan.core.site.parser.style.StyleRule.tagRule;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.sp;
 
 @AnyThread
@@ -153,7 +155,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
                 for (StyleRule rule : rules) {
                     if (rule.highPriority() == highPriority && rule.applies(element)) {
-                        return rule.apply(theme, callback, post, text, element);
+                        return rule.apply(new StyleRulesParams(theme, text, element, callback, post));
                     }
                 }
             }

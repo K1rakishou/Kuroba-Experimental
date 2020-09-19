@@ -16,6 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site;
 
+import androidx.annotation.Nullable;
 import androidx.collection.ArrayMap;
 
 import com.github.adamantcheese.chan.core.model.Post;
@@ -55,6 +56,11 @@ public interface SiteEndpoints {
     HttpUrl report(Post post);
 
     HttpUrl login();
+
+    @Nullable
+    default HttpUrl search() {
+        return null;
+    }
 
     static Map<String, String> makeArgument(String key, String value) {
         Map<String, String> map = new ArrayMap<>(1);

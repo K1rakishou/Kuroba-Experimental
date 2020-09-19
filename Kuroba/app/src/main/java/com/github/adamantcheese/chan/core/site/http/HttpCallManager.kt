@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.http
 
-import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
 import com.github.adamantcheese.common.ModularResult.Companion.Try

@@ -17,7 +17,7 @@
 package com.github.adamantcheese.chan.core.site.common.vichan
 
 import android.text.TextUtils
-import com.github.adamantcheese.chan.core.di.NetModule.ProxiedOkHttpClient
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.SiteAuthentication
 import com.github.adamantcheese.chan.core.site.common.CommonClientException

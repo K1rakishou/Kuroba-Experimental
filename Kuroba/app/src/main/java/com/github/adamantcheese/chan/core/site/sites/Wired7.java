@@ -19,7 +19,7 @@ package com.github.adamantcheese.chan.core.site.sites;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.site.ChunkDownloaderSiteProperties;
 import com.github.adamantcheese.chan.core.site.Site;
@@ -148,7 +148,7 @@ public class Wired7
 
         Wired7Actions(
                 CommonSite commonSite,
-                NetModule.ProxiedOkHttpClient okHttpClient,
+                ProxiedOkHttpClient okHttpClient,
                 SiteManager siteManager
         ) {
             super(commonSite, okHttpClient, siteManager);

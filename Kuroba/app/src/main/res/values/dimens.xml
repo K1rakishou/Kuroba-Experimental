@@ -32,4 +32,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="thread_list_bookmark_view_image_size">48dp</dimen>
     <dimen name="thread_grid_bookmark_view_image_size">72dp</dimen>
     <dimen name="thread_grid_bookmark_view_size">128dp</dimen>
+    <dimen name="search_post_thumbnail_size">72dp</dimen>
 </resources>

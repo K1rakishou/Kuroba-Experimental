@@ -18,6 +18,7 @@ package com.github.adamantcheese.chan.core.di;
 
 import android.content.Context;
 
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2;
 import com.github.adamantcheese.chan.core.loader.OnDemandContentLoader;
 import com.github.adamantcheese.chan.core.loader.impl.InlinedFileInfoLoader;
@@ -191,7 +192,7 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReportManager provideReportManager(
-            NetModule.ProxiedOkHttpClient okHttpClient,
+            ProxiedOkHttpClient okHttpClient,
             Gson gson,
             SettingsNotificationManager settingsNotificationManager
     ) {

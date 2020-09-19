@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.common.vichan;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.common.ModularResult;
 
@@ -46,12 +46,12 @@ import okhttp3.ResponseBody;
 public class VichanAntispam {
     private static final String TAG = "Antispam";
 
-    private NetModule.ProxiedOkHttpClient okHttpClient;
+    private ProxiedOkHttpClient okHttpClient;
 
     private HttpUrl url;
     private List<String> fieldsToIgnore = new ArrayList<>();
 
-    public VichanAntispam(NetModule.ProxiedOkHttpClient okHttpClient, HttpUrl url) {
+    public VichanAntispam(ProxiedOkHttpClient okHttpClient, HttpUrl url) {
         this.okHttpClient = okHttpClient;
         this.url = url;
     }
