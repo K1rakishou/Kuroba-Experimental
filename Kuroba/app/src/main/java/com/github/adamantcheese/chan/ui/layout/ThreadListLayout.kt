@@ -68,6 +68,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import com.github.adamantcheese.chan.utils.AndroidUtils.getDimen
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.chan.utils.PostUtils
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -445,17 +446,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
       recyclerView.recycledViewPool.clear()
-
-      val chanDescriptor = currentChanDescriptorOrNull()
-      if (chanDescriptor != null) {
-        chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
-          when (postViewMode) {
-            PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(index, top)
-            PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(index, top)
-          }
-        }
-      }
-
       party()
     }
 
@@ -466,6 +456,60 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       thread.postPreloadedInfoHolder,
       filter.apply(thread.getPosts())
     )
+
+    val chanDescriptor = currentChanDescriptorOrNull()
+    if (chanDescriptor != null) {
+      restorePrevScrollPosition(chanDescriptor, thread, initial)
+    }
+  }
+
+  private fun restorePrevScrollPosition(chanDescriptor: ChanDescriptor, thread: ChanThread, initial: Boolean) {
+    val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
+    val markedPost = if (markedPostNo != null) {
+      PostUtils.findPostById(markedPostNo, thread)
+    } else {
+      null
+    }
+
+    if (markedPost == null && initial) {
+      chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
+        when (postViewMode) {
+          PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(index, top)
+          PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(index, top)
+        }
+      }
+
+      return
+    }
+
+    if (markedPost != null) {
+      chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(chanDescriptor) { postNo ->
+        val position = getPostPositionInAdapter(postNo)
+        if (position >= 0) {
+          highlightPost(markedPost)
+
+          when (postViewMode) {
+            PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, 0)
+            PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(position, 0)
+          }
+        }
+      }
+    }
+  }
+
+  private fun getPostPositionInAdapter(postNo: Long): Int {
+    var position = -1
+    val posts = postAdapter.displayList
+
+    for (i in posts.indices) {
+      val post = posts[i]
+      if (post.no == postNo) {
+        position = i
+        break
+      }
+    }
+
+    return position
   }
 
   fun onBack(): Boolean {
@@ -500,6 +544,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun gainedFocus() {
+    val chanDescriptor = currentChanDescriptorOrNull()
+    val currentThread = thread
+    if (chanDescriptor != null && currentThread != null) {
+      restorePrevScrollPosition(chanDescriptor, currentThread, false)
+    }
+
     showToolbarIfNeeded()
   }
 
@@ -747,7 +797,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     recyclerView.doOnPreDraw {
       if (recyclerView.layoutManager is LinearLayoutManager) {
-        (recyclerView.layoutManager as LinearLayoutManager)!!.scrollToPositionWithOffset(
+        (recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
           scrollPosition,
           SCROLL_OFFSET
         )

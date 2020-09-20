@@ -20,6 +20,7 @@ import com.github.adamantcheese.chan.core.model.SiteBoards
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -71,13 +72,11 @@ interface Site {
     /**
      * This board supports posting with images.
      */
-    // TODO(multisite) use this
     POSTING_IMAGE,
 
     /**
      * This board supports posting with a checkbox to mark the posted image as a spoiler.
      */
-    // TODO(multisite) use this
     POSTING_SPOILER
   }
 
@@ -152,4 +151,6 @@ interface Site {
    */
   suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?>
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
+
+  fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 }

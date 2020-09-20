@@ -19,6 +19,8 @@ package com.github.adamantcheese.chan.core.di;
 import android.net.ConnectivityManager;
 
 import com.github.adamantcheese.chan.Chan;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.adamantcheese.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.cache.CacheHandler;
 import com.github.adamantcheese.chan.core.cache.FileCacheV2;
 import com.github.adamantcheese.chan.core.cache.stream.WebmStreamingSource;
@@ -97,7 +99,7 @@ public class NetModule {
     @Singleton
     public ProxiedOkHttpClient provideProxiedOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
         Logger.d(AppModule.DI_TAG, "ProxiedOkHTTP client");
-        return new ProxiedOkHttpClient(okHttpDns, okHttpProtocols);
+        return new RealProxiedOkHttpClient(okHttpDns, okHttpProtocols);
     }
 
     /**
@@ -115,33 +117,5 @@ public class NetModule {
                 .protocols(okHttpProtocols.protocols)
                 .dns(okHttpDns)
                 .build();
-    }
-
-    // this is basically the same as OkHttpClient, but with a singleton for a proxy instance
-    public static class ProxiedOkHttpClient {
-        private OkHttpClient proxiedClient;
-        private Dns okHttpDns;
-        private Chan.OkHttpProtocols okHttpProtocols;
-
-        public ProxiedOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
-            this.okHttpDns = okHttpDns;
-            this.okHttpProtocols = okHttpProtocols;
-        }
-
-        public synchronized OkHttpClient getProxiedClient() {
-            if (proxiedClient == null) {
-                // Proxies are usually slow, so they have increased timeouts
-                proxiedClient = new OkHttpClient.Builder()
-                        .proxy(ChanSettings.getProxy())
-                        .connectTimeout(30, SECONDS)
-                        .readTimeout(30, SECONDS)
-                        .writeTimeout(30, SECONDS)
-                        .protocols(okHttpProtocols.protocols)
-                        .dns(okHttpDns)
-                        .build();
-            }
-
-            return proxiedClient;
-        }
     }
 }

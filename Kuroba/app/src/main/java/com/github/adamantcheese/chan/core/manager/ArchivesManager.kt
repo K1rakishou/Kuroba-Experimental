@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-class ArchivesManager(
+open class ArchivesManager(
   private val appContext: Context,
   private val applicationScope: CoroutineScope,
   private val gson: Gson,

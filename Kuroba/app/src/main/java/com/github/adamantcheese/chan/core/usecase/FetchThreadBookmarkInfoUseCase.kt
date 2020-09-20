@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.usecase
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.BookmarksManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
@@ -25,7 +25,7 @@ class FetchThreadBookmarkInfoUseCase(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val okHttpClient: NetModule.ProxiedOkHttpClient,
+  private val okHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager
 ) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, ModularResult<List<ThreadBookmarkFetchResult>>> {

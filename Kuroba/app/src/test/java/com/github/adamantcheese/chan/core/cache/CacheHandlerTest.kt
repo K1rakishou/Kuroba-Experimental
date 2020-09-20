@@ -1,6 +1,6 @@
 package com.github.adamantcheese.chan.core.cache
 
-import com.github.adamantcheese.chan.core.cache.downloader.TestModule
+import com.github.adamantcheese.chan.core.base.TestModule
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile

@@ -86,8 +86,8 @@ public class ThreadSlideController
         slidingPaneLayout.setSliderFadeColor(fadeColor);
         slidingPaneLayout.openPane();
 
-        setLeftController(null);
-        setRightController(null);
+        setLeftController(null, false);
+        setRightController(null, false);
     }
 
     @Override
@@ -120,7 +120,7 @@ public class ThreadSlideController
         }
         if (restoredOpen != leftOpen) {
             leftOpen = restoredOpen;
-            slideStateChanged();
+            slideStateChanged(false);
         }
     }
 
@@ -146,6 +146,11 @@ public class ThreadSlideController
 
     @Override
     public void switchToController(boolean leftController) {
+        switchToController(leftController, true);
+    }
+
+    @Override
+    public void switchToController(boolean leftController, boolean animated) {
         if (leftController != leftOpen()) {
             if (leftController) {
                 slidingPaneLayout.openPane();
@@ -159,7 +164,7 @@ public class ThreadSlideController
             );
 
             leftOpen = leftController;
-            slideStateChanged();
+            slideStateChanged(animated);
         }
     }
 
@@ -168,7 +173,7 @@ public class ThreadSlideController
         this.emptyView = emptyView;
     }
 
-    public void setLeftController(Controller leftController) {
+    public void setLeftController(Controller leftController, boolean animated) {
         if (this.leftController != null) {
             this.leftController.onHide();
             removeChildController(this.leftController);
@@ -181,12 +186,12 @@ public class ThreadSlideController
             leftController.attachToParentView(slidingPaneLayout.leftPane);
             leftController.onShow();
             if (leftOpen()) {
-                setParentNavigationItem(true);
+                setParentNavigationItem(true, animated);
             }
         }
     }
 
-    public void setRightController(Controller rightController) {
+    public void setRightController(Controller rightController, boolean animated) {
         if (this.rightController != null) {
             this.rightController.onHide();
             removeChildController(this.rightController);
@@ -201,7 +206,7 @@ public class ThreadSlideController
             rightController.attachToParentView(slidingPaneLayout.rightPane);
             rightController.onShow();
             if (!leftOpen()) {
-                setParentNavigationItem(false);
+                setParentNavigationItem(false, animated);
             }
         } else {
             slidingPaneLayout.rightPane.addView(emptyView);
@@ -300,7 +305,11 @@ public class ThreadSlideController
     }
 
     private void slideStateChanged() {
-        setParentNavigationItem(leftOpen);
+        slideStateChanged(true);
+    }
+
+    private void slideStateChanged(boolean animated) {
+        setParentNavigationItem(leftOpen, animated);
 
         if (leftOpen && rightController instanceof ReplyAutoCloseListener) {
             ((ReplyAutoCloseListener) rightController).onReplyViewShouldClose();
@@ -326,6 +335,10 @@ public class ThreadSlideController
     }
 
     private void setParentNavigationItem(boolean left) {
+        setParentNavigationItem(left, true);
+    }
+
+    private void setParentNavigationItem(boolean left, boolean animate) {
         Toolbar toolbar = requireNavController().requireToolbar();
 
         //default, blank navigation item with no menus or titles, so other layouts don't mess up
@@ -344,7 +357,7 @@ public class ThreadSlideController
         navigation.swipeable = false;
         navigation.handlesToolbarInset = true;
         navigation.hasDrawer = true;
-        toolbar.setNavigationItem(true, true, navigation, null);
+        toolbar.setNavigationItem(animate, true, navigation, null);
     }
 
     public interface ReplyAutoCloseListener {

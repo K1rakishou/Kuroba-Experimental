@@ -20,7 +20,7 @@ import android.content.Context;
 
 import androidx.annotation.Nullable;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 
@@ -61,22 +61,22 @@ public class CaptchaNoJsPresenterV2 {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final CaptchaNoJsHtmlParser parser;
-    private final NetModule.ProxiedOkHttpClient okHttpClient;
+    private final ProxiedOkHttpClient okHttpClient;
 
     @Nullable
     private AuthenticationCallbacks callbacks;
     @Nullable
     private CaptchaInfo prevCaptchaInfo = null;
 
-    private AtomicBoolean verificationInProgress = new AtomicBoolean(false);
-    private AtomicBoolean captchaRequestInProgress = new AtomicBoolean(false);
+    private final AtomicBoolean verificationInProgress = new AtomicBoolean(false);
+    private final AtomicBoolean captchaRequestInProgress = new AtomicBoolean(false);
     private String siteKey;
     private String baseUrl;
     private long lastTimeCaptchaRequest = 0L;
 
     public CaptchaNoJsPresenterV2(
             @Nullable AuthenticationCallbacks callbacks,
-            NetModule.ProxiedOkHttpClient okHttpClient,
+            ProxiedOkHttpClient okHttpClient,
             Context context
     ) {
         this.callbacks = callbacks;

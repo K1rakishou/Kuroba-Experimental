@@ -24,7 +24,6 @@ import androidx.annotation.AnyThread;
 import com.github.adamantcheese.chan.BuildConfig;
 import com.github.adamantcheese.chan.core.model.Post;
 import com.github.adamantcheese.chan.core.model.PostImage;
-import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable;
 import com.github.adamantcheese.chan.ui.theme.Theme;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -96,10 +95,6 @@ public class CommentParserHelper {
     }
 
     public static void addPostImages(Post.Builder post) {
-        if (!ChanSettings.parsePostImageLinks.get()) {
-            return;
-        }
-
         for (PostLinkable linkable : post.getLinkables()) {
             if (post.postImages.size() >= 5) {
                 // max 5 images hotlinked

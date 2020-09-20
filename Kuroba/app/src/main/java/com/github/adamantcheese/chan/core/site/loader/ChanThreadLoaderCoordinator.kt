@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.loader
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.manager.BoardManager
 import com.github.adamantcheese.chan.core.manager.FilterEngine
 import com.github.adamantcheese.chan.core.manager.PostFilterManager
@@ -64,7 +64,7 @@ import kotlin.time.measureTimedValue
  * */
 class ChanThreadLoaderCoordinator(
   private val gson: Gson,
-  private val okHttpClient: NetModule.ProxiedOkHttpClient,
+  private val okHttpClient: ProxiedOkHttpClient,
   private val savedReplyManager: SavedReplyManager,
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,

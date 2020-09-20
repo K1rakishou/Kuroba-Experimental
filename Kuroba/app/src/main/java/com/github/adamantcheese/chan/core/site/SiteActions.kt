@@ -17,6 +17,7 @@
 package com.github.adamantcheese.chan.core.site
 
 import com.github.adamantcheese.chan.core.model.SiteBoards
+import com.github.adamantcheese.chan.core.net.HtmlReaderRequest
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.http.DeleteRequest
 import com.github.adamantcheese.chan.core.site.http.DeleteResponse
@@ -25,6 +26,9 @@ import com.github.adamantcheese.chan.core.site.http.ReplyResponse
 import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginRequest
 import com.github.adamantcheese.chan.core.site.http.login.AbstractLoginResponse
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4PagesRequest
+import com.github.adamantcheese.chan.core.site.sites.search.SearchError
+import com.github.adamantcheese.chan.core.site.sites.search.SearchParams
+import com.github.adamantcheese.chan.core.site.sites.search.SearchResult
 import com.github.adamantcheese.model.data.board.ChanBoard
 import kotlinx.coroutines.flow.Flow
 
@@ -39,6 +43,9 @@ interface SiteActions {
   fun logout()
   fun isLoggedIn(): Boolean
   fun loginDetails(): AbstractLoginRequest?
+
+  suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> =
+    HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
 
   enum class LoginType {
     Passcode,

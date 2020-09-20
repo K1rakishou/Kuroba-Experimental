@@ -23,7 +23,7 @@ import android.graphics.BitmapFactory;
 import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.utils.BackgroundUtils;
 import com.github.adamantcheese.chan.utils.IOUtils;
 import com.github.adamantcheese.chan.utils.Logger;
@@ -63,10 +63,10 @@ public class CaptchaNoJsHtmlParser {
     private static final String CHALLENGE_IMAGE_FILE_NAME = "challenge_image_file";
     private static final int SUCCESS_STATUS_CODE = 200;
 
-    private NetModule.ProxiedOkHttpClient okHttpClient;
+    private ProxiedOkHttpClient okHttpClient;
     private Context context;
 
-    public CaptchaNoJsHtmlParser(Context context, NetModule.ProxiedOkHttpClient okHttpClient) {
+    public CaptchaNoJsHtmlParser(Context context, ProxiedOkHttpClient okHttpClient) {
         this.context = context;
         this.okHttpClient = okHttpClient;
     }

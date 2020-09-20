@@ -18,7 +18,7 @@ package com.github.adamantcheese.chan.core.site
 
 import com.github.adamantcheese.SettingProvider
 import com.github.adamantcheese.chan.Chan.instance
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
 import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.BoardManager
@@ -44,7 +44,7 @@ abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
-  protected val okHttpClient: NetModule.ProxiedOkHttpClient by lazy { instance(NetModule.ProxiedOkHttpClient::class.java) }
+  protected val okHttpClient: ProxiedOkHttpClient by lazy { instance(ProxiedOkHttpClient::class.java) }
   protected val siteManager: SiteManager by lazy { instance(SiteManager::class.java) }
   protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
   protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }

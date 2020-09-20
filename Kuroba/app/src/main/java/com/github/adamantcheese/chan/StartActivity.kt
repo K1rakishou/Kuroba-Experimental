@@ -59,13 +59,13 @@ import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -460,11 +460,23 @@ class StartActivity : AppCompatActivity(),
           browseController?.loadWithDefaultBoard()
         }
 
-        // Give toolbar transition animation a little bit of time so there is no conflicts
-        delay(ANIMATION_DURATION)
         loadThread(topNavElement.descriptor)
       }
     }.exhaustive
+  }
+
+  fun loadThread(postDescriptor: PostDescriptor) {
+    lifecycleScope.launch {
+      drawerController.closeAllNonMainControllers()
+
+      if (!postDescriptor.isOP()) {
+        chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
+          chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
+        }
+      }
+
+      browseController?.showThread(postDescriptor.threadDescriptor(), false)
+    }
   }
 
   suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -539,24 +551,22 @@ class StartActivity : AppCompatActivity(),
     browseController?.setBoard(boardThreadPair.first!!)
 
     if (boardThreadPair.second != null) {
-      // Give toolbar transition animation a little bit of time so there is no conflicts
-      delay(ANIMATION_DURATION)
       browseController?.showThread(boardThreadPair.second!!, false)
     }
 
     return true
   }
 
-  private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
     val boardDescriptor =
-      (resolveChanDescriptor(state.board) as ChanDescriptor.CatalogDescriptor).boardDescriptor
+      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
     val threadDescriptor =
-      resolveChanDescriptor(state.thread) as ChanDescriptor.ThreadDescriptor
+      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
 
     return Pair(boardDescriptor, threadDescriptor)
   }
 
-  private suspend fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
+  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
     val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
       ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
     } else {
@@ -583,7 +593,7 @@ class StartActivity : AppCompatActivity(),
         drawerController.pushChildController(split)
 
         split.setDrawerCallbacks(drawerController)
-        split.setLeftController(mainNavigationController)
+        split.setLeftController(mainNavigationController, false)
       }
       ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
@@ -600,7 +610,7 @@ class StartActivity : AppCompatActivity(),
       mainNavigationController.pushController(slideController, false)
 
       slideController.setDrawerCallbacks(drawerController)
-      slideController.setLeftController(browseController)
+      slideController.setLeftController(browseController, false)
     } else {
       mainNavigationController.pushController(browseController, false)
     }
@@ -846,6 +856,5 @@ class StartActivity : AppCompatActivity(),
   companion object {
     private const val TAG = "StartActivity"
     private const val STATE_KEY = "chan_state"
-    private const val ANIMATION_DURATION = 500L
   }
 }

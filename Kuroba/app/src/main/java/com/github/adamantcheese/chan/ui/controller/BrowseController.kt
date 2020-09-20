@@ -56,10 +56,8 @@ import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDesc
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class BrowseController(context: Context) : ThreadController(context),
   ThreadLayoutCallback,
@@ -250,7 +248,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  private suspend fun buildMenu() {
+  private fun buildMenu() {
     val menuBuilder = navigation.buildMenu(ToolbarMenuType.CatalogListMenu)
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
@@ -278,14 +276,12 @@ class BrowseController(context: Context) : ThreadController(context),
       .build()
       .build()
 
-    suspendCancellableCoroutine<Unit> { continuation ->
-      requireNavController().requireToolbar().setNavigationItem(
-        true,
-        true,
-        navigation,
-        themeHelper.theme
-      ) { continuation.resume(Unit) }
-    }
+    requireNavController().requireToolbar().setNavigationItem(
+      false,
+      true,
+      navigation,
+      themeHelper.theme
+    )
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -689,30 +685,32 @@ class BrowseController(context: Context) : ThreadController(context),
             viewThreadController!!.drawerCallbacks = drawerCallbacks
 
             viewThreadController.loadThread(threadDescriptor)
+            viewThreadController.onShow()
           }
         } else {
           val navigationController = StyledToolbarNavigationController(context)
-          splitNav.setRightController(navigationController)
+          splitNav.setRightController(navigationController, animated)
           val viewThreadController = ViewThreadController(context, threadDescriptor)
           navigationController.pushController(viewThreadController, false)
           viewThreadController.drawerCallbacks = drawerCallbacks
         }
-        splitNav.switchToController(false)
+        splitNav.switchToController(false, animated)
       }
       slideNav != null -> {
         // Create a threadview in the right part of the slide nav *without* a toolbar
         if (slideNav.getRightController() is ViewThreadController) {
           (slideNav.getRightController() as ViewThreadController).loadThread(threadDescriptor)
+          (slideNav.getRightController() as ViewThreadController).onShow()
         } else {
           val viewThreadController = ViewThreadController(
             context,
             threadDescriptor
           )
 
-          slideNav.setRightController(viewThreadController)
+          slideNav.setRightController(viewThreadController, animated)
           viewThreadController.drawerCallbacks = drawerCallbacks
         }
-        slideNav.switchToController(false)
+        slideNav.switchToController(false, animated)
       }
       else -> {
         // the target ThreadNav must be pushed to the parent nav controller

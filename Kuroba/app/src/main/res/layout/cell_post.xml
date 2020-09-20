@@ -102,8 +102,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_alignParentRight="true"
             android:padding="4dp"
             android:src="@drawable/ic_more_vert_24dp"
-            android:tint="?attr/text_color_secondary"
-            tools:ignore="ContentDescription" />
+            tools:ignore="ContentDescription"
+            app:tint="?attr/text_color_secondary" />
 
     </RelativeLayout>
 

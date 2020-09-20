@@ -33,10 +33,10 @@ import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.Chan.inject
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.StartActivity
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.cache.FileCacheListener
 import com.github.adamantcheese.chan.core.cache.FileCacheV2
 import com.github.adamantcheese.chan.core.cache.downloader.CancelableDownload
-import com.github.adamantcheese.chan.core.di.NetModule
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.net.update.BetaUpdateApiRequest
 import com.github.adamantcheese.chan.core.net.update.ReleaseUpdateApiRequest
@@ -81,7 +81,7 @@ class UpdateManager(
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject
-  lateinit var okHttpClient: NetModule.ProxiedOkHttpClient
+  lateinit var okHttpClient: ProxiedOkHttpClient
 
   private var updateDownloadDialog: ProgressDialog? = null
   private var cancelableDownload: CancelableDownload? = null

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.adamantcheese.chan.core.site.parser;
+package com.github.adamantcheese.chan.core.site.parser.style;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -26,7 +26,12 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.text.style.UnderlineSpan;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.github.adamantcheese.chan.core.model.Post;
+import com.github.adamantcheese.chan.core.site.parser.CommentParserHelper;
+import com.github.adamantcheese.chan.core.site.parser.PostParser;
 import com.github.adamantcheese.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.BackgroundColorSpanHashed;
 import com.github.adamantcheese.chan.ui.text.span.CustomTypefaceSpan;
@@ -192,13 +197,7 @@ public class StyleRule {
         return false;
     }
 
-    public CharSequence apply(
-            Theme theme,
-            PostParser.Callback callback,
-            Post.Builder post,
-            CharSequence text,
-            Element element
-    ) {
+    public CharSequence apply(StyleRulesParams styleRulesParams) {
         if (nullify) {
             return null;
         }
@@ -207,9 +206,17 @@ public class StyleRule {
             return justText;
         }
 
-        CharSequence result = text;
-        for (Action action : actions) {
-            result = action.execute(theme, callback, post, result, element);
+        @NonNull Theme theme = styleRulesParams.getTheme();
+        @NonNull CharSequence resultText = styleRulesParams.getText();
+        @NonNull Element element = styleRulesParams.getElement();
+
+        @Nullable Post.Builder post = styleRulesParams.getPost();
+        @Nullable PostParser.Callback callback = styleRulesParams.getCallback();
+
+        if (callback != null && post != null) {
+            for (Action action : actions) {
+                resultText = action.execute(theme, callback, post, resultText, element);
+            }
         }
 
         List<Object> spansToApply = new ArrayList<>(2);
@@ -250,11 +257,11 @@ public class StyleRule {
             spansToApply.add(new AbsoluteSizeSpanHashed(size));
         }
 
-        if (link != null) {
+        if (link != null && post != null) {
             PostLinkable pl = new PostLinkable(
                     theme,
-                    result,
-                    new PostLinkable.Value.StringValue(result),
+                    resultText,
+                    new PostLinkable.Value.StringValue(resultText),
                     link
             );
 
@@ -263,19 +270,19 @@ public class StyleRule {
         }
 
         if (!spansToApply.isEmpty()) {
-            result = applySpan(result, spansToApply);
+            resultText = applySpan(resultText, spansToApply);
         }
 
         // Apply break if not the last element.
         if (blockElement && element.nextSibling() != null) {
-            result = TextUtils.concat(result, "\n");
+            resultText = TextUtils.concat(resultText, "\n");
         }
 
-        if (linkify) {
-            CommentParserHelper.detectLinks(theme, post, result.toString(), new SpannableString(result));
+        if (linkify && post != null) {
+            CommentParserHelper.detectLinks(theme, post, resultText.toString(), new SpannableString(resultText));
         }
 
-        return result;
+        return resultText;
     }
 
     private int getForegroundColor(Theme theme, ForegroundColor foregroundColor) {

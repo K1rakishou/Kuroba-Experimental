@@ -6,7 +6,7 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser
 import com.github.adamantcheese.chan.core.site.parser.ICommentParser
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager
 import com.github.adamantcheese.chan.core.site.parser.PostParser
-import com.github.adamantcheese.chan.core.site.parser.StyleRule
+import com.github.adamantcheese.chan.core.site.parser.style.StyleRule
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.text.span.PostLinkable.Value.*
 import com.github.adamantcheese.common.groupOrNull

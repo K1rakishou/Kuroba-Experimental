@@ -37,7 +37,7 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
 
 import com.github.adamantcheese.chan.R;
-import com.github.adamantcheese.chan.core.di.NetModule;
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.site.Site;
 import com.github.adamantcheese.chan.core.site.SiteAuthentication;
 import com.github.adamantcheese.chan.ui.captcha.AuthenticationLayoutCallback;
@@ -75,7 +75,7 @@ public class CaptchaNoJsLayoutV2
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    NetModule.ProxiedOkHttpClient okHttpClient;
+    ProxiedOkHttpClient okHttpClient;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
         this(context, null, 0);

@@ -5,6 +5,7 @@ import android.webkit.WebView
 import com.github.adamantcheese.chan.BuildConfig
 import com.github.adamantcheese.chan.core.model.Post
 import com.github.adamantcheese.chan.core.model.SiteBoards
+import com.github.adamantcheese.chan.core.net.HtmlReaderRequest
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.settings.OptionSettingItem
 import com.github.adamantcheese.chan.core.settings.OptionsSetting
@@ -22,6 +23,9 @@ import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginRequest
 import com.github.adamantcheese.chan.core.site.http.login.Chan4LoginResponse
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.chan.core.site.sites.search.SearchParams
+import com.github.adamantcheese.chan.core.site.sites.search.SearchResult
+import com.github.adamantcheese.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -37,7 +41,7 @@ import okhttp3.Request
 import java.util.*
 
 @Suppress("PropertyName")
-class Chan4 : SiteBase() {
+open class Chan4 : SiteBase() {
   private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 
   private val TAG = "Chan4"
@@ -70,6 +74,7 @@ class Chan4 : SiteBase() {
     private val s = HttpUrl.Builder().scheme("https").host("s.4cdn.org").build()
     private val sys = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
+    private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
     override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
       return a.newBuilder()
@@ -185,6 +190,10 @@ class Chan4 : SiteBase() {
 
     override fun login(): HttpUrl {
       return sys.newBuilder().addPathSegment("auth").build()
+    }
+
+    override fun search(): HttpUrl? {
+      return search
     }
   }
 
@@ -352,6 +361,29 @@ class Chan4 : SiteBase() {
         passPass.get()
       )
     }
+
+    override suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+      val page = searchParams.page ?: 0
+
+      // https://find.4chan.org/?q=test&o=0
+      val searchUrl = requireNotNull(endpoints().search())
+        .newBuilder()
+        .addQueryParameter("q", searchParams.query)
+        .addQueryParameter("o", page.toString())
+        .build()
+
+      val request = Request.Builder()
+        .url(searchUrl)
+        .get()
+        .build()
+
+      return Chan4SearchRequest(
+        request,
+        okHttpClient,
+        searchParams.query,
+        searchParams.page
+      ).execute()
+    }
   }
 
   override fun initializeSettings() {
@@ -459,6 +491,8 @@ class Chan4 : SiteBase() {
 
     return settings
   }
+
+  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQuerySearch
 
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),

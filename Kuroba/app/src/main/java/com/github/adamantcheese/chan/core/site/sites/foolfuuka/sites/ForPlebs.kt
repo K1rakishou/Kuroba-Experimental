@@ -15,7 +15,6 @@ class ForPlebs : BaseFoolFuukaSite() {
   override fun rootUrl(): HttpUrl = ROOT_URL
 
   override fun setup() {
-    // Disabled for now, https does not work and Android won't allow to use non-https links
     setEnabled(true)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))

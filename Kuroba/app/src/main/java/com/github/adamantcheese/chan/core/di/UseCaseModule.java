@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.di;
 
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.adamantcheese.chan.core.manager.BoardManager;
 import com.github.adamantcheese.chan.core.manager.BookmarksManager;
 import com.github.adamantcheese.chan.core.manager.ChanFilterManager;
@@ -8,10 +9,13 @@ import com.github.adamantcheese.chan.core.manager.SavedReplyManager;
 import com.github.adamantcheese.chan.core.manager.SiteManager;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.core.site.parser.ReplyParser;
+import com.github.adamantcheese.chan.core.site.parser.search.Chan4SearchPostParser;
 import com.github.adamantcheese.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.adamantcheese.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.adamantcheese.chan.core.usecase.GlobalSearchUseCase;
 import com.github.adamantcheese.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.adamantcheese.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.adamantcheese.chan.ui.theme.ThemeHelper;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.model.repository.ChanPostRepository;
@@ -44,7 +48,7 @@ public class UseCaseModule {
     @Provides
     public FetchThreadBookmarkInfoUseCase provideFetchThreadBookmarkInfoUseCase(
             CoroutineScope appScope,
-            NetModule.ProxiedOkHttpClient okHttpClient,
+            ProxiedOkHttpClient okHttpClient,
             SiteManager siteManager,
             BookmarksManager bookmarksManager
 
@@ -100,6 +104,21 @@ public class UseCaseModule {
                 postHideManager,
                 bookmarksManager,
                 chanPostRepository
+        );
+    }
+
+    @Singleton
+    @Provides
+    public GlobalSearchUseCase provideGlobalSearchUseCase(
+            SiteManager siteManager,
+            ThemeHelper themeHelper
+    ) {
+        Logger.d(AppModule.DI_TAG, "GlobalSearchUseCase");
+
+        return new GlobalSearchUseCase(
+                siteManager,
+                themeHelper,
+                new Chan4SearchPostParser()
         );
     }
 

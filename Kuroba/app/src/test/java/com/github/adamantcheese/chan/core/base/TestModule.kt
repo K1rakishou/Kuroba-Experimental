@@ -1,6 +1,8 @@
-package com.github.adamantcheese.chan.core.cache.downloader
+package com.github.adamantcheese.chan.core.base
 
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.cache.CacheHandler
+import com.github.adamantcheese.chan.core.cache.downloader.*
 import com.github.adamantcheese.chan.core.site.SiteResolver
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
 import com.github.k1rakishou.fsaf.FileManager
@@ -17,6 +19,7 @@ import java.util.concurrent.TimeUnit
 
 class TestModule {
   private var okHttpClient: OkHttpClient? = null
+  private var proxiedOkHttpClient: ProxiedOkHttpClient? = null
   private var fileManager: FileManager? = null
   private var cacheHandler: CacheHandler? = null
   private var chunkDownloader: ChunkDownloader? = null
@@ -178,4 +181,29 @@ class TestModule {
 
     return okHttpClient!!
   }
+
+  fun provideProxiedOkHttpClient(): ProxiedOkHttpClient {
+    if (proxiedOkHttpClient == null) {
+      proxiedOkHttpClient = TestProxiedOkHttpClient()
+    }
+
+    return proxiedOkHttpClient!!
+  }
+
+  class TestProxiedOkHttpClient : ProxiedOkHttpClient {
+    private var okHttpClient: OkHttpClient? = null
+
+    override fun getProxiedClient(): OkHttpClient {
+      if (okHttpClient == null) {
+        okHttpClient = OkHttpClient.Builder()
+          .connectTimeout(5, TimeUnit.SECONDS)
+          .readTimeout(5, TimeUnit.SECONDS)
+          .writeTimeout(5, TimeUnit.SECONDS)
+          .build()
+      }
+
+      return okHttpClient!!
+    }
+  }
+
 }

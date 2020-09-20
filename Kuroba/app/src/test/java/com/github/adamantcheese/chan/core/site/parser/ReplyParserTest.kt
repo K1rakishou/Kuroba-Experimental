@@ -1,5 +1,6 @@
 package com.github.adamantcheese.chan.core.site.parser
 
+import com.github.adamantcheese.chan.core.manager.ArchivesManager
 import com.github.adamantcheese.chan.core.manager.SiteManager
 import com.github.adamantcheese.chan.core.site.ParserRepository
 import com.github.adamantcheese.chan.core.site.sites.Lainchan
@@ -22,6 +23,7 @@ import org.robolectric.shadows.ShadowLog
 @RunWith(RobolectricTestRunner::class)
 class ReplyParserTest {
   lateinit var siteManager: SiteManager
+  lateinit var archivesManager: ArchivesManager
   lateinit var parserRepository: ParserRepository
   lateinit var replyParser: ReplyParser
 
@@ -31,8 +33,10 @@ class ReplyParserTest {
     ShadowLog.stream = System.out
 
     siteManager = Mockito.mock(SiteManager::class.java)
+    archivesManager = Mockito.mock(ArchivesManager::class.java)
+
     val mockReplyManager = Mockito.mock(MockReplyManager::class.java)
-    parserRepository = ParserRepository(mockReplyManager)
+    parserRepository = ParserRepository(mockReplyManager, archivesManager)
 
     replyParser = ReplyParser(siteManager, parserRepository)
   }

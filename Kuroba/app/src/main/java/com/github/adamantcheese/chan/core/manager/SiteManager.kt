@@ -352,7 +352,7 @@ open class SiteManager(
   }
 
   @OptIn(ExperimentalTime::class)
-  suspend fun awaitUntilInitialized() {
+  open suspend fun awaitUntilInitialized() {
     if (isReady()) {
       return
     }
@@ -386,15 +386,13 @@ open class SiteManager(
 
     val site = instantiateSiteClass(clazz)
       ?: throw IllegalStateException("Couldn't instantiate site: ${clazz::class.java.simpleName}")
+
+    // TODO(KurobaEx): make initialization lazy
     val settings = chanSiteData.siteUserSettings
       ?: JsonSettings(hashMapOf())
-
+    
+    // TODO(KurobaEx): make initialization lazy
     site.initialize(settings)
-
-    if (chanSiteData.active) {
-      site.loadBoardInfo()
-    }
-
     return site
   }
 

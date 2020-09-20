@@ -16,7 +16,7 @@
  */
 package com.github.adamantcheese.chan.core.site.sites.chan4
 
-import com.github.adamantcheese.chan.core.di.NetModule
+import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.common.jsonArray
 import com.github.adamantcheese.common.jsonObject
@@ -30,9 +30,9 @@ class Chan4PagesRequest(
   private val boardDescriptor: BoardDescriptor,
   private val boardTotalPagesCount: Int,
   request: Request,
-  okHttpClient: NetModule.ProxiedOkHttpClient
+  okHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<Chan4PagesRequest.BoardPages>(
-  RequestType.Chan4PagesRequest, request, okHttpClient
+  JsonRequestType.Chan4PagesJsonRequest, request, okHttpClient
 ) {
   
   override suspend fun readJson(reader: JsonReader): BoardPages {

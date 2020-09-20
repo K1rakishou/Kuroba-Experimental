@@ -38,8 +38,7 @@ import javax.inject.Inject
 class BookmarksController(
   context: Context,
   bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>
-)
-  : Controller(context),
+) : Controller(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback {
 

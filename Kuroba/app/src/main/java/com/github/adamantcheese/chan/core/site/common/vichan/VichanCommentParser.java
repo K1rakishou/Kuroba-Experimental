@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 import com.github.adamantcheese.chan.core.site.parser.CommentParser;
 import com.github.adamantcheese.chan.core.site.parser.ICommentParser;
 import com.github.adamantcheese.chan.core.site.parser.MockReplyManager;
-import com.github.adamantcheese.chan.core.site.parser.StyleRule;
+import com.github.adamantcheese.chan.core.site.parser.style.StyleRule;
 
 import java.util.regex.Pattern;
 

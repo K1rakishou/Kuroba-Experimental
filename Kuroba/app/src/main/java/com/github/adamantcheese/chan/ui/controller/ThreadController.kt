@@ -108,6 +108,12 @@ abstract class ThreadController(
     }
   }
 
+  override fun onShow() {
+    super.onShow()
+
+    threadLayout.gainedFocus()
+  }
+
   override fun onDestroy() {
     super.onDestroy()
     drawerCallbacks = null

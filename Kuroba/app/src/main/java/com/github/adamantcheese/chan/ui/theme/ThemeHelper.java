@@ -21,7 +21,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.AnyThread;
@@ -39,12 +38,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.BLACK;
-import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.BROWN;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.DARK;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.GREEN;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.ORANGE;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.RED;
-import static com.github.adamantcheese.chan.utils.AndroidUtils.getAppContext;
 
 public class ThemeHelper {
     private static final String TAG = "ThemeHelper";
@@ -53,27 +50,19 @@ public class ThemeHelper {
     private Theme theme;
     private AttributeCache attributeCache = new AttributeCache();
 
-    private static final Typeface TALLEYRAND =
-            Typeface.createFromAsset(getAppContext().getAssets(), "font/Talleyrand.ttf");
-    private static final Typeface OPTI_CUBA_LIBRE_TWO =
-            Typeface.createFromAsset(getAppContext().getAssets(), "font/OPTICubaLibreTwo.otf");
-
     public ThemeHelper() {
-        themes.add(new Theme("Light", "light", R.style.Chan_Theme, GREEN));
-        themes.add(new DarkTheme("Dark", "dark", R.style.Chan_Theme_Dark, DARK));
-        themes.add(new DarkTheme("Black", "black", R.style.Chan_Theme_Black, BLACK));
-        themes.add(new DarkTheme("Tomorrow", "tomorrow", R.style.Chan_Theme_Tomorrow, DARK));
-        themes.add(new DarkTheme("Tomorrow Black", "tomorrow_black", R.style.Chan_Theme_TomorrowBlack, BLACK));
-        themes.add(new Theme("Yotsuba", "yotsuba", R.style.Chan_Theme_Yotsuba, RED));
-        themes.add(new Theme("Yotsuba B", "yotsuba_b", R.style.Chan_Theme_YotsubaB, RED));
-        themes.add(new Theme("Photon", "photon", R.style.Chan_Theme_Photon, ORANGE));
-        themes.add(new DarkTheme("Insomnia", "insomnia", R.style.Chan_Theme_Insomnia, DARK));
-        themes.add(new DarkTheme("Gruvbox", "gruvbox", R.style.Chan_Theme_Gruvbox, DARK));
-        themes.add(new DarkTheme("Neon", "neon", R.style.Chan_Theme_Neon, DARK));
-        themes.add(new DarkTheme("Solarized Dark", "solarized_dark", R.style.Chan_Theme_SolarizedDark, ORANGE));
-        Theme holo = new DarkTheme("Holo", "holo", R.style.Chan_Theme_Holo, BROWN, TALLEYRAND, OPTI_CUBA_LIBRE_TWO);
-        holo.altFontIsMain = true;
-        themes.add(holo);
+        themes.add(new ChanTheme("Light", "light", R.style.Chan_Theme, GREEN));
+        themes.add(new DarkChanTheme("Dark", "dark", R.style.Chan_Theme_Dark, DARK));
+        themes.add(new DarkChanTheme("Black", "black", R.style.Chan_Theme_Black, BLACK));
+        themes.add(new DarkChanTheme("Tomorrow", "tomorrow", R.style.Chan_Theme_Tomorrow, DARK));
+        themes.add(new DarkChanTheme("Tomorrow Black", "tomorrow_black", R.style.Chan_Theme_TomorrowBlack, BLACK));
+        themes.add(new ChanTheme("Yotsuba", "yotsuba", R.style.Chan_Theme_Yotsuba, RED));
+        themes.add(new ChanTheme("Yotsuba B", "yotsuba_b", R.style.Chan_Theme_YotsubaB, RED));
+        themes.add(new ChanTheme("Photon", "photon", R.style.Chan_Theme_Photon, ORANGE));
+        themes.add(new DarkChanTheme("Insomnia", "insomnia", R.style.Chan_Theme_Insomnia, DARK));
+        themes.add(new DarkChanTheme("Gruvbox", "gruvbox", R.style.Chan_Theme_Gruvbox, DARK));
+        themes.add(new DarkChanTheme("Neon", "neon", R.style.Chan_Theme_Neon, DARK));
+        themes.add(new DarkChanTheme("Solarized Dark", "solarized_dark", R.style.Chan_Theme_SolarizedDark, ORANGE));
 
         ChanSettings.ThemeColor settingTheme = ChanSettings.getThemeAndColor();
         for (Theme theme : themes) {

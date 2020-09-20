@@ -43,6 +43,7 @@ import com.github.adamantcheese.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.adamantcheese.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.adamantcheese.chan.features.drawer.epoxy.epoxyHistoryEntryView
+import com.github.adamantcheese.chan.features.search.GlobalSearchController
 import com.github.adamantcheese.chan.features.settings.MainSettingsControllerV2
 import com.github.adamantcheese.chan.ui.controller.BrowseController
 import com.github.adamantcheese.chan.ui.controller.ThreadController
@@ -288,6 +289,14 @@ class DrawerController(
     }
   }
 
+  fun openGlobalSearchController() {
+    closeAllNonMainControllers()
+    openControllerWrappedIntoBottomNavAwareController(GlobalSearchController(context))
+    setGlobalSearchMenuItemSelected()
+
+    setDrawerEnabled(false)
+  }
+
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
@@ -326,6 +335,10 @@ class DrawerController(
     bottomNavView.menu.findItem(R.id.action_bookmarks)?.isChecked = true
   }
 
+  fun setGlobalSearchMenuItemSelected() {
+    bottomNavView.menu.findItem(R.id.action_search)?.isChecked = true
+  }
+
   suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false
@@ -341,6 +354,7 @@ class DrawerController(
 
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
+      R.id.action_search -> openGlobalSearchController()
       R.id.action_browse -> {
         closeAllNonMainControllers()
         setDrawerEnabled(true)
@@ -361,7 +375,7 @@ class DrawerController(
     popChildController(false)
   }
 
-  private fun closeAllNonMainControllers() {
+  fun closeAllNonMainControllers() {
     var currentNavController = top
       ?: return
     val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE
