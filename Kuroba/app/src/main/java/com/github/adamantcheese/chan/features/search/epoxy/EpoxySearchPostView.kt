@@ -35,6 +35,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   private val searchPostInfo: MaterialTextView
   private val searchPostImagesContainer: ConstraintLayout
   private val searchPostThumbnail: AppCompatImageView
+  private val searchPostCommentContainer: ConstraintLayout
   private val searchPostComment: MaterialTextView
 
   private val searchPostThumbnailSize: Int
@@ -51,6 +52,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostInfo = findViewById(R.id.search_post_info)
     searchPostImagesContainer = findViewById(R.id.search_post_images_container)
     searchPostThumbnail = findViewById(R.id.search_post_thumbnail)
+    searchPostCommentContainer = findViewById(R.id.search_post_comment_container)
     searchPostComment = findViewById(R.id.search_post_comment)
 
     searchPostThumbnailSize = context.resources.getDimension(R.dimen.search_post_thumbnail_size).toInt()
@@ -88,17 +90,37 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   fun setPostOpInfo(postOpInfo: CharSequence?) {
     if (postOpInfo == null) {
       searchPostOpInfo.text = null
-      searchPostOpInfo.visibility = View.GONE
+      searchPostOpInfo.setVisibilityFast(View.GONE)
       return
     }
 
-    searchPostOpInfo.visibility = View.VISIBLE
     searchPostOpInfo.text = postOpInfo
+    searchPostOpInfo.setVisibilityFast(View.VISIBLE)
   }
 
   @ModelProp
   fun setPostInfo(postInfo: CharSequence) {
+    if (postInfo.isEmpty()) {
+      searchPostInfo.text = null
+      searchPostInfo.setVisibilityFast(View.GONE)
+      return
+    }
+
     searchPostInfo.text = postInfo
+    searchPostInfo.setVisibilityFast(View.VISIBLE)
+  }
+
+
+  @ModelProp
+  fun setPostComment(comment: CharSequence) {
+    if (comment.isEmpty()) {
+      searchPostComment.text = null
+      searchPostCommentContainer.setVisibilityFast(View.GONE)
+      return
+    }
+
+    searchPostComment.text = comment
+    searchPostCommentContainer.setVisibilityFast(View.VISIBLE)
   }
 
   @ModelProp
@@ -106,11 +128,12 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     val thumbnailUrl = thumbnailInfo?.thumbnailUrl
     if (thumbnailUrl == null) {
       searchPostThumbnail.setImageBitmap(null)
-      searchPostThumbnail.setVisibilityFast(View.GONE)
+      searchPostImagesContainer.setVisibilityFast(View.GONE)
       return
     }
 
     val searchPostThumbnailRef = WeakReference(searchPostThumbnail)
+    val searchPostImagesContainerRef = WeakReference(searchPostImagesContainer)
 
     imageDisposable = imageLoaderV2.loadFromNetwork(
       context,
@@ -119,14 +142,10 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
       searchPostThumbnailSize,
       listOf(),
       { drawable ->
-        searchPostThumbnailRef.get()?.setVisibilityFast(View.VISIBLE)
+        searchPostImagesContainerRef.get()?.setVisibilityFast(View.VISIBLE)
         searchPostThumbnailRef.get()?.setImageBitmap(drawable.bitmap)
       }
     )
   }
 
-  @ModelProp
-  fun setPostComment(comment: CharSequence) {
-    searchPostComment.text = comment
-  }
 }

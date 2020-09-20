@@ -51,12 +51,14 @@
         android:id="@+id/search_post_images_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         app:layout_constraintTop_toBottomOf="@+id/search_post_header_container">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/search_post_thumbnail"
             android:layout_width="@dimen/search_post_thumbnail_size"
             android:layout_height="@dimen/search_post_thumbnail_size"
+            android:scaleType="centerCrop"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:src="@drawable/ic_settings_white_24dp" />
@@ -67,6 +69,7 @@
         android:id="@+id/search_post_comment_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         app:layout_constraintTop_toBottomOf="@+id/search_post_images_container">
 
         <com.google.android.material.textview.MaterialTextView
