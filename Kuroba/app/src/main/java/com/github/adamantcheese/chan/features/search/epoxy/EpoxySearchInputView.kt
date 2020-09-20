@@ -7,7 +7,6 @@ import android.widget.FrameLayout
 import androidx.core.widget.doAfterTextChanged
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelView
-import com.airbnb.epoxy.OnViewRecycled
 import com.github.adamantcheese.chan.R
 import com.google.android.material.textfield.TextInputEditText
 
@@ -19,26 +18,24 @@ class EpoxySearchInputView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
   private val inputEditText: TextInputEditText
   private var textWatcher: TextWatcher? = null
-  private var textChangeListener: ((String) -> Unit)? = null
 
   init {
     inflate(context, R.layout.epoxy_search_input_view, this)
 
     inputEditText = findViewById(R.id.input_edit_text)
-
-    textWatcher = inputEditText.doAfterTextChanged {
-      inputEditText.text?.let { editable -> textChangeListener?.invoke(editable.toString()) }
-    }
-  }
-
-  @OnViewRecycled
-  fun onRecycle() {
-    textWatcher?.let { tw -> inputEditText.removeTextChangedListener(tw) }
   }
 
   @CallbackProp
   fun setOnTextEnteredListener(listener: ((String) -> Unit)?) {
-    textChangeListener = listener
+    if (listener == null) {
+      textWatcher?.let { tw -> inputEditText.removeTextChangedListener(tw) }
+      inputEditText.text = null
+      return
+    }
+
+    textWatcher = inputEditText.doAfterTextChanged {
+      inputEditText.text?.let { editable -> listener.invoke(editable.toString()) }
+    }
   }
 
 }

@@ -45,6 +45,7 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.swapAdapter(null, true)
     inputViewRef.set(null)
     presenter.onDestroy()
   }

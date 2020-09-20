@@ -6,7 +6,10 @@ import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import coil.request.Disposable
-import com.airbnb.epoxy.*
+import com.airbnb.epoxy.CallbackProp
+import com.airbnb.epoxy.ModelProp
+import com.airbnb.epoxy.ModelView
+import com.airbnb.epoxy.OnViewRecycled
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.core.image.ImageLoaderV2
@@ -37,7 +40,6 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   private val searchPostThumbnailSize: Int
 
   private var postDescriptor: PostDescriptor? = null
-  private var thumbnailInfo: ThumbnailInfo? = null
   private var imageDisposable: Disposable? = null
 
   init {
@@ -54,34 +56,10 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostThumbnailSize = context.resources.getDimension(R.dimen.search_post_thumbnail_size).toInt()
   }
 
-  @AfterPropsSet
-  fun afterPropsSet() {
-    val thumbnailUrl = thumbnailInfo?.thumbnailUrl
-    if (thumbnailUrl == null) {
-      searchPostImagesContainer.visibility = View.GONE
-      return
-    }
-
-    val searchPostThumbnailRef = WeakReference(searchPostThumbnail)
-
-    imageDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      thumbnailUrl.toString(),
-      searchPostThumbnailSize,
-      searchPostThumbnailSize,
-      listOf(),
-      { drawable ->
-        searchPostThumbnailRef.get()?.setVisibilityFast(View.VISIBLE)
-        searchPostThumbnailRef.get()?.setImageBitmap(drawable.bitmap)
-      }
-    )
-  }
-
   @OnViewRecycled
   fun onRecycle() {
     postDescriptor = null
     searchPostOpInfo.text = null
-    thumbnailInfo = null
 
     imageDisposable?.dispose()
     imageDisposable = null
@@ -125,7 +103,26 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
   @ModelProp
   fun setThumbnail(thumbnailInfo: ThumbnailInfo?) {
-    this.thumbnailInfo = thumbnailInfo
+    val thumbnailUrl = thumbnailInfo?.thumbnailUrl
+    if (thumbnailUrl == null) {
+      searchPostThumbnail.setImageBitmap(null)
+      searchPostThumbnail.setVisibilityFast(View.GONE)
+      return
+    }
+
+    val searchPostThumbnailRef = WeakReference(searchPostThumbnail)
+
+    imageDisposable = imageLoaderV2.loadFromNetwork(
+      context,
+      thumbnailUrl.toString(),
+      searchPostThumbnailSize,
+      searchPostThumbnailSize,
+      listOf(),
+      { drawable ->
+        searchPostThumbnailRef.get()?.setVisibilityFast(View.VISIBLE)
+        searchPostThumbnailRef.get()?.setImageBitmap(drawable.bitmap)
+      }
+    )
   }
 
   @ModelProp

@@ -59,6 +59,7 @@ import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.DescriptorParcelable
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -467,6 +468,20 @@ class StartActivity : AppCompatActivity(),
     }.exhaustive
   }
 
+  fun loadThread(postDescriptor: PostDescriptor) {
+    lifecycleScope.launch {
+      drawerController.closeAllNonMainControllers()
+
+      if (!postDescriptor.isOP()) {
+        chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
+          chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
+        }
+      }
+
+      browseController?.showThread(postDescriptor.threadDescriptor(), false)
+    }
+  }
+
   suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     drawerController.loadThread(threadDescriptor, true)
   }
@@ -583,7 +598,7 @@ class StartActivity : AppCompatActivity(),
         drawerController.pushChildController(split)
 
         split.setDrawerCallbacks(drawerController)
-        split.setLeftController(mainNavigationController)
+        split.setLeftController(mainNavigationController, false)
       }
       ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
@@ -600,7 +615,7 @@ class StartActivity : AppCompatActivity(),
       mainNavigationController.pushController(slideController, false)
 
       slideController.setDrawerCallbacks(drawerController)
-      slideController.setLeftController(browseController)
+      slideController.setLeftController(browseController, false)
     } else {
       mainNavigationController.pushController(browseController, false)
     }

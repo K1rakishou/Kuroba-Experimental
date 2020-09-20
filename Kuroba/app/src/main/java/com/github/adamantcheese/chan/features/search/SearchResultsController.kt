@@ -4,6 +4,7 @@ import android.content.Context
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
+import com.github.adamantcheese.chan.StartActivity
 import com.github.adamantcheese.chan.controller.Controller
 import com.github.adamantcheese.chan.core.site.sites.search.PageCursor
 import com.github.adamantcheese.chan.features.search.data.SearchResultsControllerState
@@ -17,6 +18,7 @@ import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
 import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.plusAssign
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
 class SearchResultsController(
@@ -83,7 +85,7 @@ class SearchResultsController(
         postInfo(searchPostInfo.postInfo.spannedText)
         thumbnail(searchPostInfo.thumbnail)
         postComment(searchPostInfo.postComment.spannedText)
-        onPostClickListener { postDescriptor -> presenter.onSearchPostClicked(postDescriptor) }
+        onPostClickListener { postDescriptor -> onSearchPostClicked(postDescriptor) }
       }
 
       val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.opInfo != null
@@ -118,6 +120,12 @@ class SearchResultsController(
     }
 
     updateTitle(data.currentQueryInfo?.totalFoundEntries)
+  }
+
+  private fun onSearchPostClicked(postDescriptor: PostDescriptor) {
+    // TODO(KurobaEx): remember current state and restore it the next time GlobalSearchController
+    //  is opened
+    (context as? StartActivity)?.loadThread(postDescriptor)
   }
 
   private fun updateTitle(totalFound: Int?) {

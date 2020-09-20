@@ -15,7 +15,6 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.errorMessageOrClassName
-import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -63,10 +62,6 @@ internal class SearchResultsPresenter(
       }
       .onErrorReturn { error -> SearchResultsControllerState.Data(errorState(error.errorMessageOrClassName())) }
       .hide()
-  }
-
-  fun onSearchPostClicked(postDescriptor: PostDescriptor) {
-    // TODO(KurobaEx): redirect to a thread
   }
 
   fun reloadCurrentPage() {

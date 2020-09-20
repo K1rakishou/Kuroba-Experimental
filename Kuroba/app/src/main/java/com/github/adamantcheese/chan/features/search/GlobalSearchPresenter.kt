@@ -14,7 +14,7 @@ import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
+import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,8 +23,8 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   @Inject
   lateinit var siteManager: SiteManager
 
-  private val globalSearchControllerStateSubject = PublishProcessor.create<GlobalSearchControllerState>()
-    .toSerialized()
+  private val globalSearchControllerStateSubject =
+    BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Loading)
 
   private val queryEnterDebouncer = SuspendDebouncer(scope)
 
@@ -34,8 +34,6 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
     Chan.inject(this)
 
     scope.launch {
-      setState(GlobalSearchControllerState.Loading)
-
       siteManager.awaitUntilInitialized()
       loadDefaultSearchState()
     }
@@ -69,6 +67,17 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   }
 
   fun reloadWithSearchQuery(query: String, sitesWithSearch: SitesWithSearch) {
+    if (query.length < MIN_SEARCH_QUERY_LENGTH) {
+      return
+    }
+
+    val prevDataState = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
+    if (prevDataState is GlobalSearchControllerStateData.SearchQueryEntered) {
+      if (prevDataState.query == query) {
+        return
+      }
+    }
+
     queryEnterDebouncer.post(DEBOUNCE_TIMEOUT_MS) {
       val dataState = GlobalSearchControllerStateData.SearchQueryEntered(
         sitesWithSearch,

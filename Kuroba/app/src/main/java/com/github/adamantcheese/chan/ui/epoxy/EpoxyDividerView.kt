@@ -32,8 +32,13 @@ class EpoxyDividerView @JvmOverloads constructor(
     divider.setBackgroundColor(themeHelper.theme.dividerColor)
   }
 
+  @JvmOverloads
   @ModelProp
-  fun updateMargins(margins: NewMargins) {
+  fun updateMargins(margins: NewMargins? = null) {
+    if (margins == null) {
+      return
+    }
+
     divider.updateMargins(
       top = margins.top,
       bottom = margins.bottom,

@@ -375,7 +375,7 @@ class DrawerController(
     popChildController(false)
   }
 
-  private fun closeAllNonMainControllers() {
+  fun closeAllNonMainControllers() {
     var currentNavController = top
       ?: return
     val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE

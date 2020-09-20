@@ -25,7 +25,7 @@ abstract class BasePresenter<V> {
   @CallSuper
   open fun onDestroy() {
     if (!initialized.compareAndSet(true, false)) {
-      throw RuntimeException("Attempt to destroy without creating first")
+      return
     }
 
     this.view = null

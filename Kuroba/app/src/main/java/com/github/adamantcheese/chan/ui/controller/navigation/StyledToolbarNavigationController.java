@@ -115,7 +115,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
             return true;
         } else if (doubleNavigationController != null && childControllers.size() == 1) {
             if (doubleNavigationController.getRightController() == this) {
-                doubleNavigationController.setRightController(null);
+                doubleNavigationController.setRightController(null, false);
                 return true;
             } else {
                 return false;

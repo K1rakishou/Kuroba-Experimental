@@ -55,6 +55,21 @@ class ChanThreadViewableInfoManager(
     }
   }
 
+  fun getMarkedPostNo(chanDescriptor: ChanDescriptor): Long? {
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return null
+    }
+
+    val markedPostNo = lock.read { chanThreadViewableMap[chanDescriptor]?.markedPostNo }
+      ?: return null
+
+    if (markedPostNo < 0L) {
+      return null
+    }
+
+    return markedPostNo
+  }
+
   fun getAndConsumeMarkedPostNo(chanDescriptor: ChanDescriptor, func: (Long) -> Unit) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return

@@ -86,7 +86,7 @@ public class SplitNavigationController
         container.setDivider(dividerView);
         container.build();
 
-        setRightController(null);
+        setRightController(null, false);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class SplitNavigationController
     }
 
     @Override
-    public void setLeftController(Controller leftController) {
+    public void setLeftController(Controller leftController, boolean animated) {
         if (this.leftController != null) {
             this.leftController.onHide();
             removeChildController(this.leftController);
@@ -118,7 +118,7 @@ public class SplitNavigationController
     }
 
     @Override
-    public void setRightController(Controller rightController) {
+    public void setRightController(Controller rightController, boolean animated) {
         if (this.rightController != null) {
             this.rightController.onHide();
             removeChildController(this.rightController);
@@ -145,6 +145,11 @@ public class SplitNavigationController
     @Override
     public Controller getRightController() {
         return rightController;
+    }
+
+    @Override
+    public void switchToController(boolean leftController, boolean animated) {
+
     }
 
     @Override

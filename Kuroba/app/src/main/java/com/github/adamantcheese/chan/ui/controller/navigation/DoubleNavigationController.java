@@ -25,13 +25,15 @@ import com.github.adamantcheese.chan.core.navigation.HasNavigation;
 public interface DoubleNavigationController extends HasNavigation {
     void setEmptyView(ViewGroup emptyView);
 
-    void setLeftController(Controller leftController);
+    void setLeftController(Controller leftController, boolean animated);
 
-    void setRightController(Controller rightController);
+    void setRightController(Controller rightController, boolean animated);
 
     Controller getLeftController();
 
     Controller getRightController();
+
+    void switchToController(boolean leftController, boolean animated);
 
     void switchToController(boolean leftController);
 
