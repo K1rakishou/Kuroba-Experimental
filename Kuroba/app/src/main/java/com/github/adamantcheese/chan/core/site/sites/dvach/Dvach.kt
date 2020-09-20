@@ -25,6 +25,7 @@ import com.github.adamantcheese.chan.core.site.parser.CommentParser
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.board.ChanBoard
@@ -37,6 +38,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.util.*
 
+@DoNotStrip
 class Dvach : CommonSite() {
   private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 

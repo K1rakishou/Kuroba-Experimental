@@ -1,9 +1,11 @@
 package com.github.adamantcheese.chan.core.loader
 
 import com.github.adamantcheese.chan.core.model.Post
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicBoolean
 
+@DoNotStrip
 class PostLoaderData(
   val chanDescriptor: ChanDescriptor,
   val post: Post,

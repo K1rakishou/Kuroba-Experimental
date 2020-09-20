@@ -33,6 +33,7 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.http.Reply;
 import com.github.adamantcheese.chan.core.site.http.ReplyResponse;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.github.adamantcheese.common.ModularResult;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
@@ -51,6 +52,7 @@ import okhttp3.Response;
 
 import static android.text.TextUtils.isEmpty;
 
+@DoNotStrip
 public class Wired7
         extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;

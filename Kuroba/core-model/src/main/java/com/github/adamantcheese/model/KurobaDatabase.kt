@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.model.common.Logger
 import com.github.adamantcheese.model.converter.*
 import com.github.adamantcheese.model.dao.*
@@ -30,6 +31,7 @@ import com.github.adamantcheese.model.entity.view.OldChanPostThread
 import com.github.adamantcheese.model.migrations.Migration_v1_to_v2
 import com.github.adamantcheese.model.migrations.Migration_v2_to_v3
 
+@DoNotStrip
 @Database(
   entities = [
     ChanSiteIdEntity::class,
@@ -67,7 +69,6 @@ import com.github.adamantcheese.model.migrations.Migration_v2_to_v3
 @TypeConverters(
   value = [
     DateTimeTypeConverter::class,
-    LoadableTypeConverter::class,
     VideoServiceTypeConverter::class,
     PeriodTypeConverter::class,
     HttpUrlTypeConverter::class,

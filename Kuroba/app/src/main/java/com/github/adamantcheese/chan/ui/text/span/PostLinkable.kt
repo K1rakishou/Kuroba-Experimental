@@ -21,12 +21,14 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.github.adamantcheese.chan.core.settings.ChanSettings
 import com.github.adamantcheese.chan.ui.theme.Theme
+import com.github.adamantcheese.common.DoNotStrip
 
 /**
  * A Clickable span that handles post clicks. These are created in PostParser for post quotes,
  * spoilers etc. PostCell has a [PostCell.PostViewMovementMethod], that searches spans at the
  * location the TextView was tapped, and handled if it was a PostLinkable.
  */
+@DoNotStrip
 class PostLinkable(
   val theme: Theme,
   val key: CharSequence,

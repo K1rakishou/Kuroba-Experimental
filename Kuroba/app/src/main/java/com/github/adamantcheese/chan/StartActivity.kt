@@ -54,6 +54,7 @@ import com.github.adamantcheese.chan.ui.helper.ImagePickDelegate
 import com.github.adamantcheese.chan.ui.helper.RuntimePermissionsHelper
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.*
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.exhaustive
 import com.github.adamantcheese.common.updatePaddings
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
@@ -72,6 +73,7 @@ import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+@DoNotStrip
 class StartActivity : AppCompatActivity(),
   FSAFActivityCallbacks,
   StartActivityCallbacks {

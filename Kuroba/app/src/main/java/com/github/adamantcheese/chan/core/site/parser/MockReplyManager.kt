@@ -2,6 +2,7 @@ package com.github.adamantcheese.chan.core.site.parser
 
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import java.util.*
@@ -20,6 +21,7 @@ import java.util.*
  *
  * ThreadSafe.
  * */
+@DoNotStrip
 open class MockReplyManager {
   @GuardedBy("this")
   private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()

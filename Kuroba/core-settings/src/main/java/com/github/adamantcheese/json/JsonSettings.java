@@ -16,11 +16,13 @@
  */
 package com.github.adamantcheese.json;
 
+import com.github.adamantcheese.common.DoNotStrip;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@DoNotStrip
 public class JsonSettings {
     @SerializedName("settings")
     Map<String, JsonSetting> settings = new HashMap<>();

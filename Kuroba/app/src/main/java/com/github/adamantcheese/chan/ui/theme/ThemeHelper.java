@@ -32,6 +32,7 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import com.github.adamantcheese.chan.R;
 import com.github.adamantcheese.chan.core.settings.ChanSettings;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.DoNotStrip;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,7 @@ import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.GR
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.ORANGE;
 import static com.github.adamantcheese.chan.ui.theme.ThemeHelper.PrimaryColor.RED;
 
+@DoNotStrip
 public class ThemeHelper {
     private static final String TAG = "ThemeHelper";
 

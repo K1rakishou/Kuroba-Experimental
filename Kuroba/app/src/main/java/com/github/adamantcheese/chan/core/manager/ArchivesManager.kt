@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.core.site.sites.chan4.Chan4
 import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.SuspendableInitializer
 import com.github.adamantcheese.model.data.archive.ArchiveType
@@ -24,6 +25,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+@DoNotStrip
 open class ArchivesManager(
   private val appContext: Context,
   private val applicationScope: CoroutineScope,
@@ -181,6 +183,7 @@ open class ArchivesManager(
     }
   }
 
+  @DoNotStrip
   data class ArchiveData(
     @Expose(serialize = false, deserialize = false)
     private var archiveDescriptor: ArchiveDescriptor? = null,

@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.core.cache;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.adamantcheese.common.DoNotStrip;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.RawFile;
 
@@ -27,6 +28,7 @@ import com.github.k1rakishou.fsaf.file.RawFile;
  *
  * onStart -> onProgress (?) -> (onSuccess | onFail | onNotFound | onStop | onCancel) -> onEnd
  * */
+@DoNotStrip
 public abstract class FileCacheListener {
 
     /**

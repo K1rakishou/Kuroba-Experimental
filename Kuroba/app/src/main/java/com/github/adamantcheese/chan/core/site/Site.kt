@@ -21,11 +21,13 @@ import com.github.adamantcheese.chan.core.net.JsonReaderRequest
 import com.github.adamantcheese.chan.core.site.parser.ChanReader
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
 import com.github.adamantcheese.chan.core.site.sites.search.SiteGlobalSearchType
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
+@DoNotStrip
 interface Site {
   enum class SiteFeature {
     /**

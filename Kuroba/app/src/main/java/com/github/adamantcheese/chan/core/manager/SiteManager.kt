@@ -5,10 +5,7 @@ import com.github.adamantcheese.chan.core.base.SuspendDebouncer
 import com.github.adamantcheese.chan.core.site.Site
 import com.github.adamantcheese.chan.core.site.SiteRegistry
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.SuspendableInitializer
-import com.github.adamantcheese.common.mutableListWithCap
-import com.github.adamantcheese.common.mutableMapWithCap
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.json.JsonSettings
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import com.github.adamantcheese.model.data.site.ChanSiteData
@@ -25,6 +22,7 @@ import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+@DoNotStrip
 open class SiteManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,

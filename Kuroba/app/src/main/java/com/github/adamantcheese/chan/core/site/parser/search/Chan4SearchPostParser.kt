@@ -8,12 +8,14 @@ import com.github.adamantcheese.chan.ui.text.span.PostLinkable
 import com.github.adamantcheese.chan.ui.theme.Theme
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.DoNotStrip
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.util.*
 
+@DoNotStrip
 open class Chan4SearchPostParser {
   private val rules: MutableMap<String, MutableList<StyleRule>> = HashMap()
 

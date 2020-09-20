@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaApi
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.adamantcheese.chan.core.site.common.taimaba.TaimabaEndpoints
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -35,6 +36,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.util.*
 
+@DoNotStrip
 class Chan420 : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     siteSendsCorrectFileSizeInBytes = false,

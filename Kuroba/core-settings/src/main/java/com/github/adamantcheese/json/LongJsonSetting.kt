@@ -16,8 +16,10 @@
  */
 package com.github.adamantcheese.json
 
+import com.github.adamantcheese.common.DoNotStrip
 import com.google.gson.annotations.SerializedName
 
+@DoNotStrip
 data class LongJsonSetting(
   @JvmField
   @SerializedName("value")

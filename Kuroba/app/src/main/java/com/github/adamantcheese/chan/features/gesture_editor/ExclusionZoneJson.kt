@@ -1,8 +1,10 @@
 package com.github.adamantcheese.chan.features.gesture_editor
 
 import android.graphics.Rect
+import com.github.adamantcheese.common.DoNotStrip
 import com.google.gson.annotations.SerializedName
 
+@DoNotStrip
 data class ExclusionZonesJson(
   @SerializedName("min_screen_size")
   val minScreenSize: Int,
@@ -12,6 +14,7 @@ data class ExclusionZonesJson(
   val zones: List<ExclusionZoneJson>
 )
 
+@DoNotStrip
 data class ExclusionZone(
   val screenOrientation: Int,
   val attachSide: AttachSide,
@@ -30,6 +33,7 @@ data class ExclusionZone(
   }
 }
 
+@DoNotStrip
 data class ExclusionZoneJson(
   @SerializedName("screen_orientation")
   val screenOrientation: Int,

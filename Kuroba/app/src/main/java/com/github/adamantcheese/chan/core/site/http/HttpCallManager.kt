@@ -19,6 +19,7 @@ package com.github.adamantcheese.chan.core.site.http
 import com.github.adamantcheese.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.AppConstants
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult.Companion.Try
 import com.github.adamantcheese.common.suspendCall
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,7 @@ import javax.inject.Inject
 /**
  * Manages the [HttpCall] executions.
  */
+@DoNotStrip
 class HttpCallManager @Inject constructor(
   private val okHttpClient: ProxiedOkHttpClient
 ) {

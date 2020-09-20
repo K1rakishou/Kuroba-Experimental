@@ -28,6 +28,7 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanApi;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser;
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints;
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.github.adamantcheese.model.data.board.ChanBoard;
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
+@DoNotStrip
 public class Lainchan extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
     public static final String SITE_NAME = "Lainchan";

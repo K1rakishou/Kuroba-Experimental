@@ -17,6 +17,7 @@ import com.github.adamantcheese.chan.core.site.common.vichan.VichanCommentParser
 import com.github.adamantcheese.chan.core.site.common.vichan.VichanEndpoints
 import com.github.adamantcheese.chan.core.site.http.Reply
 import com.github.adamantcheese.chan.core.site.parser.CommentParserType
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -26,6 +27,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 
+@DoNotStrip
 class Kun8 : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = false,

@@ -37,11 +37,13 @@ import com.github.adamantcheese.chan.ui.toolbar.Toolbar
 import com.github.adamantcheese.chan.ui.widget.CancellableToast
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.Logger
+import com.github.adamantcheese.common.DoNotStrip
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 
+@DoNotStrip
 abstract class Controller(@JvmField var context: Context) {
 
   lateinit var view: ViewGroup

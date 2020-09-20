@@ -6,10 +6,12 @@ import com.github.adamantcheese.chan.core.site.common.FoolFuukaCommentParser
 import com.github.adamantcheese.chan.core.site.sites.foolfuuka.FoolFuukaActions
 import com.github.adamantcheese.chan.core.site.sites.foolfuuka.FoolFuukaApi
 import com.github.adamantcheese.chan.core.site.sites.foolfuuka.FoolFuukaEndpoints
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.model.data.archive.ArchiveType
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
+@DoNotStrip
 class ForPlebs : BaseFoolFuukaSite() {
 
   override fun rootUrl(): HttpUrl = ROOT_URL

@@ -20,11 +20,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.adamantcheese.chan.core.repository.ImportExportRepository;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@DoNotStrip
 public class ExportedAppSettings {
     @SerializedName("exported_settings_version")
     private int version;

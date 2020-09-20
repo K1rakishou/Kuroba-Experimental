@@ -21,7 +21,9 @@ import android.graphics.RectF;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.DoNotStrip;
 
+@DoNotStrip
 public class CustomScaleImageView
         extends SubsamplingScaleImageView {
     private static final String TAG = "CustomScaleImageView";

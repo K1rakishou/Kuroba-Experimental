@@ -16,8 +16,10 @@
  */
 package com.github.adamantcheese.json
 
+import com.github.adamantcheese.common.DoNotStrip
 import com.google.gson.annotations.SerializedName
 
+@DoNotStrip
 open class JsonSetting(
   @SerializedName("key")
   var key: String? = null

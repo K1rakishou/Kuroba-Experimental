@@ -15,8 +15,10 @@ import com.github.adamantcheese.chan.core.model.PostImage
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.getLifecycleFromContext
+import com.github.adamantcheese.common.DoNotStrip
 import java.util.concurrent.atomic.AtomicReference
 
+@DoNotStrip
 class ImageLoaderV2(
   private val imageLoader: ImageLoader,
   private val verboseLogsEnabled: Boolean,

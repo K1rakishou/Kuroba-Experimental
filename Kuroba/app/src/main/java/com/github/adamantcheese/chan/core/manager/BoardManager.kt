@@ -22,6 +22,7 @@ import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+@DoNotStrip
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,

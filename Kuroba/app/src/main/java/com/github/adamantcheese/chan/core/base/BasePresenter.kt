@@ -1,11 +1,13 @@
 package com.github.adamantcheese.chan.core.base
 
 import androidx.annotation.CallSuper
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.ModularResult
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 
+@DoNotStrip
 abstract class BasePresenter<V> {
   private var view: V? = null
   private val initialized = AtomicBoolean(false)

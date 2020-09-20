@@ -1,7 +1,9 @@
 package com.github.adamantcheese.chan.core.cache.downloader
 
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.k1rakishou.fsaf.file.RawFile
 
+@DoNotStrip
 internal sealed class FileDownloadResult {
   class Start(val chunksCount: Int) : FileDownloadResult()
   class Success(val file: RawFile, val requestTime: Long) : FileDownloadResult()

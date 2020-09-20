@@ -3,10 +3,7 @@ package com.github.adamantcheese.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
-import com.github.adamantcheese.common.ModularResult
-import com.github.adamantcheese.common.SuspendableInitializer
-import com.github.adamantcheese.common.mutableListWithCap
-import com.github.adamantcheese.common.mutableMapWithCap
+import com.github.adamantcheese.common.*
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmark
 import com.github.adamantcheese.model.data.bookmark.ThreadBookmarkView
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor
@@ -668,6 +665,7 @@ class BookmarksManager(
     NotifyDelayed
   }
 
+  @DoNotStrip
   sealed class BookmarkChange {
     object BookmarksInitialized : BookmarkChange()
     class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()

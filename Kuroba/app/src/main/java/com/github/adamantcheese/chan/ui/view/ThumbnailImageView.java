@@ -10,8 +10,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.github.adamantcheese.model.data.post.ChanPostImageType;
 
+@DoNotStrip
 public class ThumbnailImageView
         extends AppCompatImageView {
 

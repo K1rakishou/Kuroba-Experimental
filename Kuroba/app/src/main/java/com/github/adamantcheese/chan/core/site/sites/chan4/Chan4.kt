@@ -27,6 +27,7 @@ import com.github.adamantcheese.chan.core.site.sites.search.SearchParams
 import com.github.adamantcheese.chan.core.site.sites.search.SearchResult
 import com.github.adamantcheese.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.adamantcheese.common.errorMessageOrClassName
 import com.github.adamantcheese.model.data.board.ChanBoard
 import com.github.adamantcheese.model.data.descriptor.BoardDescriptor
@@ -41,6 +42,7 @@ import okhttp3.Request
 import java.util.*
 
 @Suppress("PropertyName")
+@DoNotStrip
 open class Chan4 : SiteBase() {
   private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 
@@ -494,6 +496,7 @@ open class Chan4 : SiteBase() {
 
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQuerySearch
 
+  @DoNotStrip
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
     V2NOJS("v2nojs");

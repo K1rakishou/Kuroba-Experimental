@@ -17,12 +17,14 @@
 package com.github.adamantcheese.chan.ui.toolbar
 
 import com.github.adamantcheese.chan.utils.AndroidUtils
+import com.github.adamantcheese.common.DoNotStrip
 import java.util.*
 
 /**
  * An item for a submenu of a ToolbarMenuItem. Most common as subitem for the overflow button.
  * Add with NavigationItem MenuBuilder.
  */
+@DoNotStrip
 open class ToolbarMenuSubItem {
   @JvmField
   var id = 0
