@@ -31,10 +31,12 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.github.adamantcheese.chan.R;
+import com.github.adamantcheese.common.DoNotStrip;
 
 import static com.github.adamantcheese.chan.utils.AndroidUtils.getNotificationManager;
 import static com.github.adamantcheese.chan.utils.AndroidUtils.postToEventBus;
 
+@DoNotStrip
 public class SavingNotification
         extends Service {
     public static final String DONE_TASKS_KEY = "done_tasks";

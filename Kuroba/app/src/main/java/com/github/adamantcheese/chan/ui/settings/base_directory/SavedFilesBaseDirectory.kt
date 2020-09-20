@@ -2,9 +2,11 @@ package com.github.adamantcheese.chan.ui.settings.base_directory
 
 import android.net.Uri
 import com.github.adamantcheese.chan.core.settings.ChanSettings
+import com.github.adamantcheese.common.DoNotStrip
 import com.github.k1rakishou.fsaf.manager.base_directory.BaseDirectory
 import java.io.File
 
+@DoNotStrip
 class SavedFilesBaseDirectory : BaseDirectory() {
 
   override fun getDirFile(): File? {

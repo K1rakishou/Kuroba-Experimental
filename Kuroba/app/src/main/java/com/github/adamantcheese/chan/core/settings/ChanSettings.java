@@ -29,6 +29,7 @@ import com.github.adamantcheese.chan.ui.adapter.PostsFilter;
 import com.github.adamantcheese.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
 import com.github.adamantcheese.chan.utils.AndroidUtils;
 import com.github.adamantcheese.chan.utils.Logger;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -59,6 +60,7 @@ public class ChanSettings {
     public static final String NO_HASH_SET = "NO_HASH_SET";
     public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
+    @DoNotStrip
     public enum MediaAutoLoadMode
             implements OptionSettingItem {
         // ALways auto load, either wifi or mobile
@@ -90,6 +92,7 @@ public class ChanSettings {
         }
     }
 
+    @DoNotStrip
     public enum PostViewMode
             implements OptionSettingItem {
         LIST("list"),
@@ -107,6 +110,7 @@ public class ChanSettings {
         }
     }
 
+    @DoNotStrip
     public enum LayoutMode
             implements OptionSettingItem {
         AUTO("auto"),
@@ -126,6 +130,7 @@ public class ChanSettings {
         }
     }
 
+    @DoNotStrip
     public enum ConcurrentFileDownloadingChunks
             implements OptionSettingItem {
         One("One chunk"),
@@ -148,6 +153,7 @@ public class ChanSettings {
         }
     }
 
+    @DoNotStrip
     public enum ImageClickPreloadStrategy
             implements OptionSettingItem {
         PreloadNext("Preload next image"),

@@ -32,6 +32,7 @@ import com.github.adamantcheese.chan.utils.BitmapUtils;
 import com.github.adamantcheese.chan.utils.ImageDecoder;
 import com.github.adamantcheese.chan.utils.Logger;
 import com.github.adamantcheese.chan.utils.StringUtils;
+import com.github.adamantcheese.common.DoNotStrip;
 import com.github.adamantcheese.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
@@ -236,6 +237,7 @@ public class ImageReencodingPresenter {
         }
     }
 
+    @DoNotStrip
     public static class ImageOptions {
         private boolean fixExif;
         private boolean removeMetadata;
