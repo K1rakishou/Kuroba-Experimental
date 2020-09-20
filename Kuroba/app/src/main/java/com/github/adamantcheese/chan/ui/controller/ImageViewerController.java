@@ -111,10 +111,9 @@ public class ImageViewerController
     private static final int ACTION_SHARE_URL = 4;
     private static final int ACTION_SHARE_CONTENT = 5;
     private static final int ACTION_SEARCH_IMAGE = 6;
-    private static final int ACTION_DOWNLOAD_ALBUM = 7;
-    private static final int ACTION_TRANSPARENCY_TOGGLE = 8;
-    private static final int ACTION_IMAGE_ROTATE = 9;
-    private static final int ACTION_RELOAD = 10;
+    private static final int ACTION_TRANSPARENCY_TOGGLE = 7;
+    private static final int ACTION_IMAGE_ROTATE = 8;
+    private static final int ACTION_RELOAD = 9;
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -264,11 +263,6 @@ public class ImageViewerController
                 this::searchClicked
         );
         overflowBuilder.withSubItem(
-                ACTION_DOWNLOAD_ALBUM,
-                R.string.action_download_album,
-                this::downloadAlbumClicked
-        );
-        overflowBuilder.withSubItem(
                 ACTION_TRANSPARENCY_TOGGLE,
                 R.string.action_transparency_toggle,
                 this::toggleTransparency
@@ -349,13 +343,6 @@ public class ImageViewerController
 
     private void searchClicked(ToolbarMenuSubItem item) {
         presenter.showImageSearchOptions();
-    }
-
-    private void downloadAlbumClicked(ToolbarMenuSubItem item) {
-        List<PostImage> all = presenter.getAllPostImages();
-        AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
-        albumDownloadController.setPostImages(presenter.getChanDescriptor(), all);
-        navigationController.pushController(albumDownloadController);
     }
 
     private void toggleTransparency(ToolbarMenuSubItem item) {
