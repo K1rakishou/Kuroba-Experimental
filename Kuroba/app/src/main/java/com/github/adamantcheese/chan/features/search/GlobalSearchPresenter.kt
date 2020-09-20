@@ -67,10 +67,6 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   }
 
   fun reloadWithSearchQuery(query: String, sitesWithSearch: SitesWithSearch) {
-    if (query.length < MIN_SEARCH_QUERY_LENGTH) {
-      return
-    }
-
     val prevDataState = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
     if (prevDataState is GlobalSearchControllerStateData.SearchQueryEntered) {
       if (prevDataState.query == query) {
