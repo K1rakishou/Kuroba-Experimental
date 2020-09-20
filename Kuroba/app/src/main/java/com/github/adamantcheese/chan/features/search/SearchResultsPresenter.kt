@@ -113,11 +113,15 @@ internal class SearchResultsPresenter(
       searchResult as SearchResult.Success
 
       if (searchResult.totalFoundEntries == null || searchResult.totalFoundEntries <= 0) {
+        Logger.d(TAG, "doSearch() nothing found, query = ${searchResult.query}")
         setState(SearchResultsControllerState.NothingFound(searchResult.query))
         return@withContext
       }
 
+      Logger.d(TAG, "doSearch() found = ${searchResult.searchEntries.size} results " +
+        "and ${searchResult.totalFoundEntries} in total")
       val newStateData = createNewDataState(prevStateData, searchResult)
+
       setState(SearchResultsControllerState.Data(newStateData))
     }
   }
@@ -128,11 +132,19 @@ internal class SearchResultsPresenter(
   ): SearchResultsControllerStateData {
     val combinedSearchPostInfoList = prevStateData?.searchPostInfoList?.toMutableList()
       ?: mutableListOf()
+    val postDescriptorsSet = combinedSearchPostInfoList
+      .map { searchPostInfo -> searchPostInfo.postDescriptor }
+      .toSet()
 
     val theme = themeHelper.theme
 
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
+        if (searchEntryPost.postDescriptor in postDescriptorsSet) {
+          Logger.e(TAG, "Removing duplicate searchEntryPost with descriptor: ${searchEntryPost.postDescriptor}")
+          return@forEach
+        }
+
         combinedSearchPostInfoList += SearchPostInfo(
           postDescriptor = searchEntryPost.postDescriptor,
           opInfo = createOpInfo(searchEntryPost, theme),
