@@ -106,6 +106,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="error">Error</string>
     <string name="help">Help</string>
     <string name="more">More</string>
+    <string name="retry">Retry</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
 
@@ -813,6 +814,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_search_searching">Searching %1$s for \"%2$s\"</string>
     <string name="controller_search_results">%1$s \"%2$s\" found %3$d</string>
+    <string name="controller_search_results_end_of_list">End of results</string>
 
     <string name="successfully_exported_text">Exported successfully"</string>
     <string name="import_warning_title">Warning</string>

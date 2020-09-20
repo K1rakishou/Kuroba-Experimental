@@ -6,10 +6,7 @@ import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.core.base.BasePresenter
-import com.github.adamantcheese.chan.core.site.sites.search.SearchEntryPost
-import com.github.adamantcheese.chan.core.site.sites.search.SearchError
-import com.github.adamantcheese.chan.core.site.sites.search.SearchParams
-import com.github.adamantcheese.chan.core.site.sites.search.SearchResult
+import com.github.adamantcheese.chan.core.site.sites.search.*
 import com.github.adamantcheese.chan.core.usecase.GlobalSearchUseCase
 import com.github.adamantcheese.chan.features.search.data.*
 import com.github.adamantcheese.chan.ui.text.span.ForegroundColorSpanHashed
@@ -18,6 +15,7 @@ import com.github.adamantcheese.chan.ui.theme.ThemeHelper
 import com.github.adamantcheese.chan.utils.BackgroundUtils
 import com.github.adamantcheese.chan.utils.Logger
 import com.github.adamantcheese.common.errorMessageOrClassName
+import com.github.adamantcheese.model.data.descriptor.PostDescriptor
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -40,6 +38,8 @@ internal class SearchResultsPresenter(
   private val searchResultsControllerStateSubject =
     BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.InitialLoading)
 
+  @get:Synchronized
+  @set:Synchronized
   private var currentPage: Int? = null
 
   override fun onCreate(view: SearchResultsView) {
@@ -48,12 +48,15 @@ internal class SearchResultsPresenter(
     Chan.inject(this)
     require(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query length: \"$query\"" }
 
-    scope.launch { doSearch() }
+    scope.launch {
+      doSearch()
+    }
   }
 
   fun listenForStateChanges(): Flowable<SearchResultsControllerState> {
     return searchResultsControllerStateSubject
       .onBackpressureLatest()
+      .distinctUntilChanged()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error ->
         Logger.e(TAG, "Unknown error subscribed to searchResultsPresenter.listenForStateChanges()", error)
@@ -62,16 +65,43 @@ internal class SearchResultsPresenter(
       .hide()
   }
 
+  fun onSearchPostClicked(postDescriptor: PostDescriptor) {
+    // TODO(KurobaEx): redirect to a thread
+  }
+
+  fun reloadCurrentPage() {
+    scope.launch {
+      val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
+      val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
+
+      if (prevStateData?.errorInfo != null) {
+        // Get rid of the error and show loading indicator
+        val stateWithoutError = prevStateData.copy(errorInfo = null)
+        setState(SearchResultsControllerState.Data(stateWithoutError))
+      }
+
+      doSearch()
+    }
+  }
+
+  fun loadNewPage(data: SearchResultsControllerStateData) {
+    scope.launch {
+      val nextPage = (data.nextPageCursor as? PageCursor.Page)?.value
+      if (nextPage == null) {
+        return@launch
+      }
+
+      currentPage = nextPage
+      doSearch()
+    }
+  }
+
   private suspend fun doSearch() {
     withContext(Dispatchers.Default) {
       BackgroundUtils.ensureBackgroundThread()
 
       val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
       val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
-
-      if (prevState !is SearchResultsControllerState.InitialLoading) {
-        setState(SearchResultsControllerState.InitialLoading)
-      }
 
       val searchResult = globalSearchUseCase.execute(SearchParams(siteDescriptor, query, currentPage))
       if (searchResult is SearchResult.Failure) {
@@ -168,8 +198,7 @@ internal class SearchResultsPresenter(
       append(boldSpanned(threadNo.toString()))
 
       if (subject != null) {
-        appendLine()
-
+        append(" ")
         append(subjectSpanned(subject, theme))
       }
     }

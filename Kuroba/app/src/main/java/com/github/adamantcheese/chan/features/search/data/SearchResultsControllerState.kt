@@ -40,6 +40,21 @@ internal class SearchPostInfo(
       "_${postInfo.hashString()}_${thumbnail.hashCode()}_${postInfo.hashString()}"
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SearchPostInfo
+
+    if (combinedHash() != other.combinedHash()) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return combinedHash().hashCode()
+  }
+
 }
 
 internal data class ThumbnailInfo(

@@ -9,7 +9,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.adamantcheese.chan.Chan
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.ui.theme.ThemeHelper
-import com.github.adamantcheese.common.updatePaddings
+import com.github.adamantcheese.common.updateMargins
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -33,13 +33,20 @@ class EpoxyDividerView @JvmOverloads constructor(
   }
 
   @ModelProp
-  fun setTopPadding(topPaddingPx: Int) {
-    divider.updatePaddings(top = topPaddingPx)
+  fun updateMargins(margins: NewMargins) {
+    divider.updateMargins(
+      top = margins.top,
+      bottom = margins.bottom,
+      left = margins.left,
+      right = margins.right
+    )
   }
 
-  @ModelProp
-  fun setBottomPadding(bottomPaddingPx: Int) {
-    divider.updatePaddings(bottom = bottomPaddingPx)
-  }
+  data class NewMargins(
+    val left: Int? = null,
+    val right: Int? = null,
+    val top: Int? = null,
+    val bottom: Int? = null
+  )
 
 }

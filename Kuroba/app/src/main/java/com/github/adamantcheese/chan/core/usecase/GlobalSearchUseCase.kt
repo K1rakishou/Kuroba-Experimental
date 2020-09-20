@@ -23,7 +23,6 @@ class GlobalSearchUseCase(
   private val themeHelper: ThemeHelper,
   private val chan4SearchPostParser: Chan4SearchPostParser
 ) : ISuspendUseCase<SearchParams, SearchResult> {
-
   override suspend fun execute(parameter: SearchParams): SearchResult {
     try {
       return withContext(Dispatchers.IO) { doSearch(parameter) }

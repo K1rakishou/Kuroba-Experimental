@@ -5,17 +5,18 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
 import com.github.adamantcheese.chan.controller.Controller
+import com.github.adamantcheese.chan.core.site.sites.search.PageCursor
 import com.github.adamantcheese.chan.features.search.data.SearchResultsControllerState
 import com.github.adamantcheese.chan.features.search.data.SearchResultsControllerStateData
-import com.github.adamantcheese.chan.features.search.epoxy.epoxySearchPostGapView
-import com.github.adamantcheese.chan.features.search.epoxy.epoxySearchPostView
+import com.github.adamantcheese.chan.features.search.epoxy.*
+import com.github.adamantcheese.chan.ui.epoxy.EpoxyDividerView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyDividerView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyLoadingView
 import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.AndroidUtils.dp
+import com.github.adamantcheese.chan.utils.AndroidUtils.getString
 import com.github.adamantcheese.chan.utils.plusAssign
-import com.github.adamantcheese.chan.utils.withModelsAsync
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
 
 class SearchResultsController(
@@ -49,7 +50,7 @@ class SearchResultsController(
   }
 
   private fun onStateChanged(state: SearchResultsControllerState) {
-    epoxyRecyclerView.withModelsAsync {
+    epoxyRecyclerView.withModels {
       when (state) {
         SearchResultsControllerState.InitialLoading -> {
           epoxyLoadingView {
@@ -77,19 +78,42 @@ class SearchResultsController(
 
       epoxySearchPostView {
         id("epoxy_search_post_view_${searchPostInfo.combinedHash()}")
+        postDescriptor(searchPostInfo.postDescriptor)
         postOpInfo(searchPostInfo.opInfo?.spannedText)
         postInfo(searchPostInfo.postInfo.spannedText)
         thumbnail(searchPostInfo.thumbnail)
         postComment(searchPostInfo.postComment.spannedText)
+        onPostClickListener { postDescriptor -> presenter.onSearchPostClicked(postDescriptor) }
       }
 
       val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.opInfo != null
       if (!isNextPostOP) {
         epoxyDividerView {
           id("epoxy_divider_view_$index")
-          topPadding(DIVIDER_PADDING)
-          bottomPadding(DIVIDER_PADDING)
+          updateMargins(NEW_MARGINS)
         }
+      }
+    }
+
+    if (data.errorInfo != null) {
+      epoxySearchErrorView {
+        id("epoxy_search_error_view")
+        errorText(data.errorInfo.errorText)
+        clickListener { presenter.reloadCurrentPage() }
+      }
+
+      return
+    }
+
+    if (data.nextPageCursor !is PageCursor.End) {
+      epoxySearchLoadingView {
+        id("epoxy_search_loading_view")
+        onBind { _, _, _ -> presenter.loadNewPage(data) }
+      }
+    } else {
+      epoxySearchEndOfResultsView {
+        id("epoxy_search_end_of_results_view")
+        text(getString(R.string.controller_search_results_end_of_list))
       }
     }
 
@@ -98,7 +122,7 @@ class SearchResultsController(
 
   private fun updateTitle(totalFound: Int?) {
     if (totalFound == null) {
-      navigation.title = AndroidUtils.getString(
+      navigation.title = getString(
         R.string.controller_search_searching,
         siteDescriptor.siteName,
         query
@@ -116,6 +140,14 @@ class SearchResultsController(
   }
 
   companion object {
-    private val DIVIDER_PADDING = dp(4f)
+    private val DIVIDER_VERTICAL_MARGINS = dp(8f)
+    private val DIVIDER_HORIZONTAL_MARGINS = dp(4f)
+
+    private val NEW_MARGINS = EpoxyDividerView.NewMargins(
+      top = DIVIDER_VERTICAL_MARGINS,
+      bottom = DIVIDER_VERTICAL_MARGINS,
+      left = DIVIDER_HORIZONTAL_MARGINS,
+      right = DIVIDER_HORIZONTAL_MARGINS
+    )
   }
 }

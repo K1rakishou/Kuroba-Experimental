@@ -1,6 +1,7 @@
 package com.github.adamantcheese.chan.features.search
 
 import android.content.Context
+import android.view.View
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.adamantcheese.chan.R
@@ -18,11 +19,13 @@ import com.github.adamantcheese.chan.ui.epoxy.epoxyTextView
 import com.github.adamantcheese.chan.utils.AndroidUtils
 import com.github.adamantcheese.chan.utils.plusAssign
 import com.github.adamantcheese.model.data.descriptor.SiteDescriptor
+import java.util.concurrent.atomic.AtomicReference
 
 class GlobalSearchController(context: Context) : Controller(context), GlobalSearchView {
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private val presenter = GlobalSearchPresenter()
+  private val inputViewRef = AtomicReference<View>(null)
 
   override fun onCreate() {
     super.onCreate()
@@ -42,10 +45,13 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
   override fun onDestroy() {
     super.onDestroy()
 
+    inputViewRef.set(null)
     presenter.onDestroy()
   }
 
   override fun openSearchResultsController(siteDescriptor: SiteDescriptor, query: String) {
+    inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
+
     requireNavController().pushController(SearchResultsController(context, siteDescriptor, query))
   }
 
@@ -118,6 +124,8 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
     epoxySearchInputView {
       id("global_search_input_view")
       onTextEnteredListener { query -> presenter.reloadWithSearchQuery(query, sitesWithSearch) }
+      onBind { _, view, _ -> inputViewRef.set(view) }
+      onUnbind { _, _ -> inputViewRef.set(null) }
     }
   }
 }

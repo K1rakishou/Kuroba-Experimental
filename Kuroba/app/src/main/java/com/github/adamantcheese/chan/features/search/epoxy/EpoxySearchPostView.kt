@@ -102,6 +102,11 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   }
 
   @ModelProp
+  fun setPostDescriptor(postDescriptor: PostDescriptor) {
+    this.postDescriptor = postDescriptor
+  }
+
+  @ModelProp
   fun setPostOpInfo(postOpInfo: CharSequence?) {
     if (postOpInfo == null) {
       searchPostOpInfo.text = null
