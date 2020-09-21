@@ -554,10 +554,12 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_open_link_browser">Always open links in external browser</string>
     <string name="setting_image_viewer_gestures">Image Viewer gestures</string>
     <string name="setting_image_viewer_gestures_description">Adds ability to use gestures to close (swipe-up) and save (swipe-bottom) an image/gif/webm when viewing them in gallery</string>
-    <string name="settings_captcha_setup">Captcha Settings</string>
-    <string name="settings_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
-    <string name="settings_js_captcha_cookies_title">JS captcha cookies</string>
-    <string name="settings_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
+    <string name="setting_captcha_setup">Captcha Settings</string>
+    <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
+    <string name="setting_js_captcha_cookies_title">JS captcha cookies</string>
+    <string name="setting_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
+    <string name="setting_load_last_opened_board_upon_app_start_title">Load last opened board upon app start</string>
+    <string name="setting_load_last_opened_board_upon_app_start_description">When turned on, upon app start the last visited board will be automatically opened (New KurobaEx behavior). Turning this option off will cause loading the first added board from the board selection list (Default Clover/Kuroba behavior)</string>
 
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>

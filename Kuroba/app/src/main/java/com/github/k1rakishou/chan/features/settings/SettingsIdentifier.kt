@@ -367,6 +367,7 @@ sealed class BehaviorScreen(
     object ImageViewerGestures : GeneralGroup("image_viewer_gestures")
     object CaptchaSetup : GeneralGroup("catpcha_setup")
     object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")
+    object LoadLastOpenedBoardUponAppStart : GeneralGroup("load_last_opened_board_upon_app_start")
     object ClearPostHides : GeneralGroup("clear_post_hides")
 
     companion object : IGroupIdentifier() {

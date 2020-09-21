@@ -93,6 +93,21 @@ open class SiteManager(
       .hide()
   }
 
+  fun firstSiteDescriptor(): SiteDescriptor? {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read {
+      for (siteDescriptorOrdered in orders) {
+        if (isSiteActive(siteDescriptorOrdered)) {
+          return@read siteDescriptorOrdered
+        }
+      }
+
+      return@read null
+    }
+  }
+
   fun activeSiteCount(): Int {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()

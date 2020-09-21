@@ -162,10 +162,6 @@ class StartActivity : AppCompatActivity(),
       fileChooser.removeCallbacks()
     }
 
-    if (::globalWindowInsetsManager.isInitialized) {
-      globalWindowInsetsManager.requestInsetsApplyFunc = null
-    }
-
     while (!stack.isEmpty()) {
       val controller = stack.pop()
       controller.onHide()
@@ -197,10 +193,6 @@ class StartActivity : AppCompatActivity(),
     drawerController = DrawerController(this).apply {
       onCreate()
       onShow()
-    }
-
-    globalWindowInsetsManager.requestInsetsApplyFunc = {
-      ViewCompat.requestApplyInsets(window.decorView)
     }
 
     listenForWindowInsetsChanges()
@@ -436,20 +428,55 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
+    if (!ChanSettings.loadLastOpenedBoardUponAppStart.get()) {
+      Logger.d(TAG, "restoreFresh() loadLastOpenedBoardUponAppStart == false, restoreWithFirstActiveBoard()")
+      restoreWithFirstActiveBoard()
+    } else {
+      Logger.d(TAG, "restoreFresh() loadLastOpenedBoardUponAppStart == true, restoreWithLastViewedBoard()")
+      restoreWithLastViewedBoard()
+    }
+  }
+
+  private suspend fun restoreWithFirstActiveBoard() {
+    var hasBoardDescriptor = false
+
+    val firstSiteDescriptor = siteManager.firstSiteDescriptor()
+    if (firstSiteDescriptor != null) {
+      val firstBoardDescriptor = boardManager.firstBoardDescriptor(firstSiteDescriptor)
+      if (firstBoardDescriptor != null) {
+        Logger.d(TAG, "restoreWithFirstActiveBoard() firstBoardDescriptor != null, showBoard()")
+        browseController?.showBoard(firstBoardDescriptor)
+        hasBoardDescriptor = true
+      }
+    }
+
+    if (!hasBoardDescriptor) {
+      Logger.d(TAG, "restoreWithFirstActiveBoard() firstBoardDescriptor == null, loadWithDefaultBoard()")
+      browseController?.loadWithDefaultBoard()
+    }
+
+    val firstThreadNavElement = historyNavigationManager.getFirstThreadNavElement()
+    if (firstThreadNavElement is NavHistoryElement.Thread) {
+      Logger.d(TAG, "restoreWithFirstActiveBoard() firstThreadNavElement != null, loadThread()")
+      loadThread(firstThreadNavElement.descriptor)
+    }
+  }
+
+  private suspend fun restoreWithLastViewedBoard() {
     val topNavElement = historyNavigationManager.getNavElementAtTop()
     if (topNavElement == null) {
-      Logger.d(TAG, "restoreFresh() historyNavigationManager.getNavElementAtTop() == null, loadWithDefaultBoard()")
+      Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement == null, loadWithDefaultBoard()")
       browseController?.loadWithDefaultBoard()
       return
     }
 
     when (topNavElement) {
       is NavHistoryElement.Catalog -> {
-        Logger.d(TAG, "restoreFresh() topNavElement is Catalog, showBoard()")
+        Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement is Catalog, showBoard()")
         browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
       }
       is NavHistoryElement.Thread -> {
-        Logger.d(TAG, "restoreFresh() topNavElement is Thread, loadThread()")
+        Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement is Thread, loadThread()")
 
         val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
         if (catalogNavElement != null) {
@@ -457,7 +484,7 @@ class StartActivity : AppCompatActivity(),
             "catalogNavElement is not catalog!"
           }
 
-          browseController?.setBoard(catalogNavElement.descriptor.boardDescriptor)
+          browseController?.showBoard(catalogNavElement.descriptor.boardDescriptor)
         } else {
           browseController?.loadWithDefaultBoard()
         }
