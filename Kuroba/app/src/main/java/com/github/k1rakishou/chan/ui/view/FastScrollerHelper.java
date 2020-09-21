@@ -22,6 +22,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 public class FastScrollerHelper {
 
     public static FastScroller create(
+            int toolbarPaddingTop,
             GlobalWindowInsetsManager globalWindowInsetsManager,
             RecyclerView recyclerView,
             @Nullable
@@ -61,7 +62,8 @@ public class FastScrollerHelper {
                 thumbMinLength,
                 targetWidth,
                 bottomNavBarHeight,
-                toolbarHeight
+                toolbarHeight,
+                toolbarPaddingTop
         );
     }
 

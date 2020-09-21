@@ -96,6 +96,7 @@ public class FastScroller
 
     private final int bottomNavBarHeight;
     private final int toolbarHeight;
+    private final int toolbarPaddingTop;
 
     // Final values for the vertical scroll bar
     private final StateListDrawable mVerticalThumbDrawable;
@@ -110,7 +111,7 @@ public class FastScroller
     private final int mHorizontalTrackHeight;
 
     // Dynamic values for the vertical scroll bar
-    int mVerticalThumbHeight;
+    int verticalThumbHeight;
     int realVerticalThumbHeight;
     int mVerticalThumbCenterY;
     float mVerticalDragY;
@@ -173,7 +174,8 @@ public class FastScroller
             int thumbMinLength,
             int targetWidth,
             int bottomNavBarHeight,
-            int toolbarHeight
+            int toolbarHeight,
+            int toolbarPaddingTop
     ) {
         mVerticalThumbDrawable = verticalThumbDrawable;
         mVerticalTrackDrawable = verticalTrackDrawable;
@@ -193,6 +195,7 @@ public class FastScroller
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
         this.bottomNavBarHeight = bottomNavBarHeight;
         this.toolbarHeight = toolbarHeight;
+        this.toolbarPaddingTop = toolbarPaddingTop;
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
         mVerticalTrackDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
@@ -369,10 +372,12 @@ public class FastScroller
             // Draw under scrollbar
             postInfoMapItemDecoration.onDrawOver(
                     canvas,
+                    mRecyclerView,
                     mRecyclerView.getPaddingTop(),
-                    mRecyclerView.getPaddingBottom() + bottomNavBarHeight + globalWindowInsetsManager.bottom(),
+                    mRecyclerView.getPaddingBottom(),
                     recyclerHeight,
-                    recyclerWidth
+                    recyclerWidth,
+                    toolbarPaddingTop
             );
         }
 
@@ -405,7 +410,7 @@ public class FastScroller
     private int getRecyclerViewTopPadding() {
         return mNeedHorizontalScrollbar
                 ? 0
-                : mRecyclerView.getPaddingTop();
+                : mRecyclerView.getPaddingTop() + (toolbarPaddingTop / 2);
     }
 
     private int getRecyclerViewRightPadding() {
@@ -415,15 +420,15 @@ public class FastScroller
     private int getRecyclerViewBottomPadding() {
         return mNeedHorizontalScrollbar
                 ? 0
-                : mRecyclerView.getPaddingBottom() + bottomNavBarHeight + globalWindowInsetsManager.bottom();
+                : mRecyclerView.getPaddingBottom() + (toolbarPaddingTop / 2);
     }
 
     private void drawVerticalScrollbar(Canvas canvas) {
         int viewWidth = mRecyclerViewWidth;
 
         int left = mRecyclerViewLeftPadding + viewWidth - mVerticalThumbWidth;
-        int top = mVerticalThumbCenterY - mVerticalThumbHeight / 2;
-        mVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, mVerticalThumbHeight);
+        int top = mVerticalThumbCenterY - verticalThumbHeight / 2;
+        mVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, verticalThumbHeight);
 
         int trackLength = mRecyclerViewHeight + mRecyclerViewTopPadding + mRecyclerViewBottomPadding;
         mVerticalTrackDrawable.setBounds(0, 0, mVerticalTrackWidth, trackLength);
@@ -496,7 +501,7 @@ public class FastScroller
                     (verticalVisibleLength * verticalVisibleLength) / verticalContentLength
             );
 
-            mVerticalThumbHeight = Math.max(mThumbMinLength, length);
+            verticalThumbHeight = Math.max(mThumbMinLength, length);
             realVerticalThumbHeight = length;
         }
 
@@ -529,7 +534,7 @@ public class FastScroller
                 } else {
                     mDragState = DRAG_Y;
                     mVerticalDragY = (int) ev.getY();
-                    mVerticalDragThumbHeight = mVerticalThumbHeight;
+                    mVerticalDragThumbHeight = verticalThumbHeight;
                 }
 
                 setState(STATE_DRAGGING);
@@ -560,7 +565,7 @@ public class FastScroller
                 } else {
                     mDragState = DRAG_Y;
                     mVerticalDragY = (int) me.getY();
-                    mVerticalDragThumbHeight = mVerticalThumbHeight;
+                    mVerticalDragThumbHeight = verticalThumbHeight;
                 }
                 setState(STATE_DRAGGING);
             }
@@ -657,8 +662,8 @@ public class FastScroller
         boolean insideRTLorLTR = isLayoutRTL()
                 ? x <= mRecyclerViewLeftPadding + mTargetWidth / 2.0f
                 : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mTargetWidth;
-        return insideRTLorLTR && y >= mVerticalThumbCenterY - mVerticalThumbHeight / 2.0f - mTargetWidth
-                && y <= mVerticalThumbCenterY + mVerticalThumbHeight / 2.0f + mTargetWidth;
+        return insideRTLorLTR && y >= mVerticalThumbCenterY - verticalThumbHeight / 2.0f - mTargetWidth
+                && y <= mVerticalThumbCenterY + verticalThumbHeight / 2.0f + mTargetWidth;
     }
 
     @VisibleForTesting

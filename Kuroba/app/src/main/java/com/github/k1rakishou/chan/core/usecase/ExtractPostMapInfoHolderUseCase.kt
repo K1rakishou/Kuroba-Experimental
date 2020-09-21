@@ -14,37 +14,10 @@ class ExtractPostMapInfoHolderUseCase(
 
   override fun execute(parameter: List<Post>): PostMapInfoHolder {
     return PostMapInfoHolder(
-      extractArchivedPostsPositionsFromPostList(parameter),
       extractMyPostsPositionsFromPostList(parameter),
       extractReplyPositionsFromPostList(parameter),
       extractCrossThreadReplyPositionsFromPostList(parameter)
     )
-  }
-
-  private fun extractArchivedPostsPositionsFromPostList(posts: List<Post>): List<IntRange> {
-    if (!ChanSettings.markArchivedPostsOnScrollbar.get()) {
-      return emptyList()
-    }
-
-    val allPostsFromArchive = posts.all { post -> post.archiveDescriptor != null }
-    if (allPostsFromArchive) {
-      return emptyList()
-    }
-
-    val replyRanges: MutableList<IntRange> = ArrayList()
-    val duplicateChecker: MutableSet<Int> = HashSet()
-    var prevIndex = 0
-
-    for ((index, post) in posts.withIndex()) {
-      if (post.archiveDescriptor == null || !duplicateChecker.add(index)) {
-        continue
-      }
-
-      connectRangesIfContiguous(prevIndex, index, replyRanges)
-      prevIndex = index
-    }
-
-    return replyRanges
   }
 
   private fun extractMyPostsPositionsFromPostList(posts: List<Post>): List<IntRange> {
@@ -160,17 +133,12 @@ class ExtractPostMapInfoHolderUseCase(
 }
 
 data class PostMapInfoHolder(
-  val archivedPostsPositionRanges: List<IntRange> = emptyList(),
   val myPostsPositionRanges: List<IntRange> = emptyList(),
   val replyPositionRanges: List<IntRange> = emptyList(),
   val crossThreadQuotePositionRanges: List<IntRange> = emptyList()
 ) {
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
-    if (!rangesTheSame(archivedPostsPositionRanges, otherPostMapInfoHolder.archivedPostsPositionRanges)) {
-      return false
-    }
-
     if (!rangesTheSame(myPostsPositionRanges, otherPostMapInfoHolder.myPostsPositionRanges)) {
       return false
     }

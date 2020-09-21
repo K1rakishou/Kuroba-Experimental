@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.core.graphics.withTranslation
+import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.usecase.PostMapInfoHolder
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
@@ -31,11 +32,6 @@ class PostInfoMapItemDecoration(
     alpha = DEFAULT_ALPHA
   }
 
-  private val archivedPostPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = context.resources.getColor(R.color.archived_post_color)
-    alpha = DEFAULT_ALPHA
-  }
-
   private var postsTotal = 0
 
   fun setItems(
@@ -52,90 +48,88 @@ class PostInfoMapItemDecoration(
 
   fun onDrawOver(
     canvas: Canvas,
+    recyclerView: RecyclerView,
     recyclerTopPadding: Float,
     recyclerBottomPadding: Float,
     recyclerViewHeight: Int,
-    recyclerViewWidth: Int
+    recyclerViewWidth: Int,
+    toolbarPaddingTop: Int
   ) {
     var labelWidth = DEFAULT_LABEL_WIDTH
 
     drawRanges(
       canvas,
+      recyclerView,
       postInfoHolder.myPostsPositionRanges,
       recyclerTopPadding,
       recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
+      toolbarPaddingTop,
       myPostsPaint
     )
     labelWidth += LABEL_WIDTH_INC
 
     drawRanges(
       canvas,
+      recyclerView,
       postInfoHolder.replyPositionRanges,
       recyclerTopPadding,
       recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
+      toolbarPaddingTop,
       yousPaint
     )
     labelWidth += LABEL_WIDTH_INC
 
     drawRanges(
       canvas,
+      recyclerView,
       postInfoHolder.crossThreadQuotePositionRanges,
       recyclerTopPadding,
       recyclerBottomPadding,
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
+      toolbarPaddingTop,
       crossThreadRepliesPaint
-    )
-    labelWidth += LABEL_WIDTH_INC
-
-    drawRanges(
-      canvas,
-      postInfoHolder.archivedPostsPositionRanges,
-      recyclerTopPadding,
-      recyclerBottomPadding,
-      recyclerViewHeight,
-      recyclerViewWidth,
-      labelWidth,
-      archivedPostPaint
     )
     labelWidth += LABEL_WIDTH_INC
   }
 
   private fun drawRanges(
     canvas: Canvas,
+    recyclerView: RecyclerView,
     ranges: List<IntRange>,
     recyclerTopPadding: Float,
     recyclerBottomPadding: Float,
     recyclerViewHeight: Int,
     recyclerViewWidth: Int,
     labelWidth: Float,
+    toolbarPaddingTop: Int,
     paint: Paint
   ) {
-    if (ranges.isEmpty()) {
+    if (ranges.isEmpty() || postsTotal <= 0) {
       return
-    }
-
-    val topOffset = if (isSplitMode) {
-      recyclerTopPadding + recyclerBottomPadding
-    } else {
-      (recyclerTopPadding + recyclerBottomPadding) / 2f
     }
 
     paint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
 
-    var recyclerHeight = recyclerViewHeight.toFloat() - (recyclerTopPadding + recyclerBottomPadding)
-    val unit = (recyclerHeight / postsTotal.toFloat()).coerceAtLeast(MIN_LABEL_HEIGHT)
+    val onePostHeightRaw = recyclerView.computeVerticalScrollRange() / (postsTotal + 1)
+    val recyclerHeight = (recyclerViewHeight.toFloat() - (recyclerTopPadding + recyclerBottomPadding))
+    val unit = ((recyclerHeight / recyclerView.computeVerticalScrollRange()) * onePostHeightRaw).coerceAtLeast(MIN_LABEL_HEIGHT)
     val halfUnit = unit / 2f
-    recyclerHeight -= unit
 
-    canvas.withTranslation(y = (topOffset + halfUnit)) {
+    val topOffset = if (isSplitMode) {
+      recyclerTopPadding
+    } else {
+      ((recyclerTopPadding + recyclerBottomPadding) / 2f) - (toolbarPaddingTop / 2f)
+    }
+
+    canvas.withTranslation(y = topOffset + halfUnit) {
       ranges.forEach { positionRange ->
         val startPosition = positionRange.first
         val endPosition = positionRange.last
@@ -174,7 +168,7 @@ class PostInfoMapItemDecoration(
   private companion object {
     private val MIN_LABEL_HEIGHT = dp(1f).toFloat()
     private val DEFAULT_LABEL_WIDTH = dp(10f).toFloat()
-    private val LABEL_WIDTH_INC = dp(3f).toFloat()
+    private val LABEL_WIDTH_INC = dp(1f).toFloat()
 
     private const val SHOW_DURATION_MS = 500
     private const val DEFAULT_ALPHA = 120

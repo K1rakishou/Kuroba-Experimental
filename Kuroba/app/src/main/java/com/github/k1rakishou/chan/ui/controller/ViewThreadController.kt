@@ -251,13 +251,6 @@ open class ViewThreadController(
         ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
-      .addNestedCheckableItem(
-        ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR,
-        R.string.action_mark_archived_posts_on_scrollbar,
-        true,
-        ChanSettings.markArchivedPostsOnScrollbar.get(),
-        ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR
-      ) { item -> onScrollbarLabelingOptionClicked(item) }
       .build()
   }
 
@@ -431,13 +424,6 @@ open class ViewThreadController(
 
         item as CheckableToolbarMenuSubItem
         item.isCurrentlySelected = markYourPostsOnScrollbar
-      }
-      ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR -> {
-        val markArchivedPostsOnScrollbar = !ChanSettings.markArchivedPostsOnScrollbar.get()
-        ChanSettings.markArchivedPostsOnScrollbar.set(markArchivedPostsOnScrollbar)
-
-        item as CheckableToolbarMenuSubItem
-        item.isCurrentlySelected = markArchivedPostsOnScrollbar
       }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
@@ -758,7 +744,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102
-    private const val ACTION_MARK_ARCHIVED_POSTS_ON_SCROLLBAR = 9103
     private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9200
   }
 }

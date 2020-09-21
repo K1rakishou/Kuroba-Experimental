@@ -912,6 +912,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
         if (fastScroller == null) {
           fastScroller = FastScrollerHelper.create(
+            toolbarPaddingTop(),
             globalWindowInsetsManager,
             recyclerView,
             postInfoMapItemDecoration,
@@ -973,6 +974,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun toolbarHeight(): Int {
     return threadListLayoutCallback!!.toolbar!!.toolbarHeight
+  }
+
+  fun toolbarPaddingTop(): Int {
+    return threadListLayoutCallback!!.toolbar!!.paddingTop
   }
 
   private fun party() {
