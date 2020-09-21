@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
@@ -181,10 +182,11 @@ class UpdateManager(
         Logger.d(TAG, "Calling update API for beta")
         updateBeta(manual)
       }
+      FlavorType.Fdroid,
       FlavorType.Dev -> {
         throw RuntimeException("Updater should be disabled for dev builds")
       }
-    }
+    }.exhaustive
   }
 
   @Suppress("ConstantConditionIf")
@@ -361,7 +363,7 @@ class UpdateManager(
       getApplicationLabel().toString() + " was updated to the latest commit."
     )
 
-    PersistableChanState.previousDevHash.set(BuildConfig.COMMIT_HASH)
+    PersistableChanState.previousDevHash.setSync(BuildConfig.COMMIT_HASH)
     cancelApkUpdateNotification()
   }
 
@@ -390,7 +392,7 @@ class UpdateManager(
     }, 1500)
 
     // Also set the new app version to not show this message again
-    PersistableChanState.previousVersion.set(BuildConfig.VERSION_CODE)
+    PersistableChanState.previousVersion.setSync(BuildConfig.VERSION_CODE)
     cancelApkUpdateNotification()
   }
 

@@ -26,8 +26,6 @@ import javax.inject.Singleton;
 
 import kotlinx.coroutines.CoroutineScope;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
-
 public class UseCaseModule {
 
     @Singleton
@@ -56,7 +54,7 @@ public class UseCaseModule {
         Logger.d(AppModule.DI_TAG, "FetchThreadBookmarkInfoUseCase");
 
         return new FetchThreadBookmarkInfoUseCase(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 okHttpClient,

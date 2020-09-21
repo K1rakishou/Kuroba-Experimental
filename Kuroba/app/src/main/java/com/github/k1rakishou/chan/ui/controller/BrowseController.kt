@@ -289,7 +289,7 @@ class BrowseController(context: Context) : ThreadController(context),
     withNestedOverflow(
       ACTION_DEV_MENU,
       R.string.action_browse_dev_menu,
-      AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
+      AndroidUtils.isDevBuild()
     )
       .addNestedItem(
         DEV_BOOKMARK_EVERY_THREAD,

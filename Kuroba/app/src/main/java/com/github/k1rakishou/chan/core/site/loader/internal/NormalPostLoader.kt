@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsF
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
@@ -162,7 +161,7 @@ internal class NormalPostLoader(
     cachedPostsCount: Int,
     totalPostsCount: Int
   ): String {
-    val urlToLog = if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
+    val urlToLog = if (AndroidUtils.isDevBuild()) {
       url
     } else {
       "<url hidden>"

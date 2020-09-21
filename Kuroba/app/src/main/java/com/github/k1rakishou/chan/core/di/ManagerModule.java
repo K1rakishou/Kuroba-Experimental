@@ -107,7 +107,7 @@ public class ManagerModule {
 
         return new SiteManager(
                 appScope,
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 siteRepository,
                 SiteRegistry.INSTANCE
@@ -124,7 +124,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "Board manager");
         return new BoardManager(
                 appScope,
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 siteRepository,
                 boardRepository
         );
@@ -344,7 +344,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarksManager");
 
         return new BookmarksManager(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 applicationVisibilityManager,
@@ -383,7 +383,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
 
         return new BookmarkWatcherDelegate(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
@@ -408,7 +408,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
 
         return new BookmarkForegroundWatcher(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
@@ -429,7 +429,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
 
         return new BookmarkWatcherCoordinator(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
@@ -459,7 +459,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
         return new ReplyNotificationsHelper(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
@@ -481,7 +481,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
 
         return new LastPageNotificationsHelper(
-                getFlavorType() == AndroidUtils.FlavorType.Dev,
+                AndroidUtils.isDevBuild(),
                 appContext,
                 getNotificationManagerCompat(),
                 pageRequestManager,

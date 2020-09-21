@@ -9,8 +9,6 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
-
 public class StringUtils {
     private static final Pattern IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)");
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toLowerCase(Locale.ENGLISH).toCharArray();
@@ -97,25 +95,8 @@ public class StringUtils {
         return bytesToHex(bytes);
     }
 
-    public static String maskPostNo(@Nullable Long postNo) {
-        if (postNo == null) {
-            return "<null>";
-        }
-
-        String postNoString = String.valueOf(postNo);
-        if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
-            return postNoString;
-        }
-
-        if (postNoString.length() >= 4) {
-            return postNoString.substring(0, postNoString.length() - 3) + "XXX";
-        }
-
-        return postNoString;
-    }
-
     public static String maskImageUrl(@NonNull String url) {
-        if (getFlavorType() == AndroidUtils.FlavorType.Dev) {
+        if (AndroidUtils.isDevBuild()) {
             return url;
         }
 

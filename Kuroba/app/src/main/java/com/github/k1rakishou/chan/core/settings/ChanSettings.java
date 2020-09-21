@@ -41,7 +41,6 @@ import java.net.Proxy;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getPreferences;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.isConnected;
@@ -473,7 +472,7 @@ public class ChanSettings {
                     p,
                     "verbose_logs",
                     // Always true by default for dev flavor
-                    getFlavorType() == AndroidUtils.FlavorType.Dev
+                    AndroidUtils.isDevBuild()
             );
             //endregion
 

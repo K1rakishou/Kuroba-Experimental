@@ -168,7 +168,7 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_FORCE_RELOAD,
         R.string.action_force_reload,
-        AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
+        AndroidUtils.isDevBuild()
       ) { item -> forceReloadClicked(item) }
       .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
@@ -190,7 +190,7 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_GO_TO_POST,
         R.string.action_go_to_post,
-        AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev
+        AndroidUtils.isDevBuild()
       ) { item -> onGoToPostClicked(item) }
       .withScrollBarLabelsOptions()
       .withThreadViewOptions()

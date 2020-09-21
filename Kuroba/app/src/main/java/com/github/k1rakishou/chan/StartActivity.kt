@@ -174,7 +174,7 @@ class StartActivity : AppCompatActivity(),
     val injectTime = measureTime { Chan.inject(this) }
     Logger.d(TAG, "inject took $injectTime")
 
-    if (AndroidUtils.getFlavorType() == AndroidUtils.FlavorType.Dev) {
+    if (AndroidUtils.isDevBuild()) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 

@@ -72,7 +72,6 @@ import kotlinx.coroutines.Dispatchers;
 import okhttp3.Dns;
 import okhttp3.Protocol;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getVerifiedBuildType;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
 import static java.lang.Thread.currentThread;
@@ -143,8 +142,8 @@ public class Chan
     private void onCreateInternal() {
         registerActivityLifecycleCallbacks(this);
 
-        boolean isDev = getFlavorType() == AndroidUtils.FlavorType.Dev;
-        boolean isBeta = getFlavorType() == AndroidUtils.FlavorType.Beta;
+        boolean isDev = AndroidUtils.isDevBuild();
+        boolean isBeta = AndroidUtils.isBetaBuild();
 
         System.setProperty(
                 "kotlinx.coroutines.debug",

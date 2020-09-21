@@ -49,7 +49,6 @@ import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
@@ -988,7 +987,7 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
     }
 
-    if (getFlavorType() == AndroidUtils.FlavorType.Dev && chanDescriptor.threadNoOrNull() ?: -1L > 0) {
+    if (AndroidUtils.isDevBuild() && chanDescriptor.threadNoOrNull() ?: -1L > 0) {
       menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
     }
   }

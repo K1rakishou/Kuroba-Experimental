@@ -89,7 +89,7 @@ class DrawerController(
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
 
-  private val drawerPresenter = DrawerPresenter(getFlavorType() == FlavorType.Dev)
+  private val drawerPresenter = DrawerPresenter(isDevBuild())
   private val childControllersStack = Stack<Controller>()
 
   private val topThreadController: ThreadController?
