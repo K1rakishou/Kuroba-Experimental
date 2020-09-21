@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:background="?backcolor">
 
-    <com.github.adamantcheese.chan.ui.layout.FilesLayout
+    <com.github.k1rakishou.chan.ui.layout.FilesLayout
         android:id="@+id/files_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -68,7 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:clipChildren="false"
             android:clipToPadding="false" />
 
-    </com.github.adamantcheese.chan.ui.layout.FilesLayout>
+    </com.github.k1rakishou.chan.ui.layout.FilesLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"

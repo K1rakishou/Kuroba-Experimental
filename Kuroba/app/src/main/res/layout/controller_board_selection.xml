@@ -7,7 +7,7 @@
     android:clickable="true"
     android:focusable="true">
 
-    <com.github.adamantcheese.chan.ui.view.ViewContainerWithMaxSize
+    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
         android:id="@+id/container_with_max_size"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -32,7 +32,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <com.github.adamantcheese.chan.ui.layout.SearchLayout
+                    <com.github.k1rakishou.chan.ui.layout.SearchLayout
                         android:id="@+id/search_view"
                         android:layout_width="0dp"
                         android:layout_weight="1"
@@ -57,6 +57,6 @@
 
         </androidx.cardview.widget.CardView>
 
-    </com.github.adamantcheese.chan.ui.view.ViewContainerWithMaxSize>
+    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
 
 </FrameLayout>

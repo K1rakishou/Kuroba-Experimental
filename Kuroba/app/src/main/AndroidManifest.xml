@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.github.adamantcheese.chan"
+    package="com.github.k1rakishou.chan"
     android:installLocation="auto">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
-        android:name=".Chan"
+        android:name="com.github.k1rakishou.chan.Chan"
         android:allowBackup="true"
         android:icon="${iconLoc}"
         android:label="${appName}"
@@ -59,7 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:value="598.0dip" />
 
         <activity
-            android:name=".StartActivity"
+            android:name="com.github.k1rakishou.chan.StartActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize">
 
             <intent-filter>
@@ -91,7 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </activity>
 
         <service
-            android:name=".ui.service.SavingNotification"
+            android:name="com.github.k1rakishou.chan.ui.service.SavingNotification"
             android:exported="false" />
 
         <provider

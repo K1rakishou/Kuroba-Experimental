@@ -14,17 +14,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.adamantcheese.chan.ui.layout.ThreadLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.layout.ThreadLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.adamantcheese.chan.ui.view.LoadView
+    <com.github.k1rakishou.chan.ui.view.LoadView
         android:id="@+id/loadview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.github.adamantcheese.chan.ui.view.HidingFloatingActionButton
+    <com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
         android:id="@+id/reply_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -36,4 +36,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:src="@drawable/ic_create_white_24dp"
         tools:ignore="RtlHardcoded" />
 
-</com.github.adamantcheese.chan.ui.layout.ThreadLayout>
+</com.github.k1rakishou.chan.ui.layout.ThreadLayout>

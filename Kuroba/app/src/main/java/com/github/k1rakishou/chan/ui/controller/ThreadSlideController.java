@@ -1,0 +1,370 @@
+/*
+ * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package com.github.k1rakishou.chan.ui.controller;
+
+import android.content.Context;
+import android.view.View;
+import android.view.ViewGroup;
+
+import androidx.slidingpanelayout.widget.SlidingPaneLayout;
+
+import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
+import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
+import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
+import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
+import com.github.k1rakishou.chan.utils.Logger;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+
+import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
+import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+
+public class ThreadSlideController
+        extends Controller
+        implements DoubleNavigationController, SlidingPaneLayout.PanelSlideListener,
+        ToolbarNavigationController.ToolbarSearchCallback {
+    private static final String TAG = "ThreadSlideController";
+
+    public Controller leftController;
+    public Controller rightController;
+
+    @Nullable
+    private DrawerCallbacks drawerCallbacks;
+    private boolean leftOpen = true;
+    private ViewGroup emptyView;
+    private ThreadSlidingPaneLayout slidingPaneLayout;
+
+    public ThreadSlideController(Context context) {
+        super(context);
+    }
+
+    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.drawerCallbacks = drawerCallbacks;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        doubleNavigationController = this;
+
+        navigation.swipeable = false;
+        navigation.handlesToolbarInset = true;
+        navigation.hasDrawer = true;
+
+        view = inflate(context, R.layout.controller_thread_slide);
+
+        slidingPaneLayout = view.findViewById(R.id.sliding_pane_layout);
+        slidingPaneLayout.setThreadSlideController(this);
+        slidingPaneLayout.setPanelSlideListener(this);
+        slidingPaneLayout.setParallaxDistance(dp(100));
+        slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
+        int fadeColor = (getAttrColor(context, R.attr.backcolor) & 0xffffff) + 0xCC000000;
+        slidingPaneLayout.setSliderFadeColor(fadeColor);
+        slidingPaneLayout.openPane();
+
+        setLeftController(null, false);
+        setRightController(null, false);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        drawerCallbacks = null;
+    }
+
+    @Override
+    public void onShow() {
+        super.onShow();
+
+        if (drawerCallbacks != null) {
+            drawerCallbacks.resetBottomNavViewCheckState();
+        }
+    }
+
+    public void onSlidingPaneLayoutStateRestored() {
+        // SlidingPaneLayout does some annoying things for state restoring and incorrectly
+        // tells us if the restored state was open or closed
+        // We need to use reflection to get the private field that stores this correct state
+        boolean restoredOpen = false;
+        try {
+            Field field = SlidingPaneLayout.class.getDeclaredField("mPreservedOpenState");
+            field.setAccessible(true);
+            restoredOpen = field.getBoolean(slidingPaneLayout);
+        } catch (Exception e) {
+            Logger.e(TAG, "Error getting restored open state with reflection", e);
+        }
+        if (restoredOpen != leftOpen) {
+            leftOpen = restoredOpen;
+            slideStateChanged(false);
+        }
+    }
+
+    @Override
+    public void onPanelSlide(View panel, float slideOffset) {
+    }
+
+    @Override
+    public void onPanelOpened(View panel) {
+        if (this.leftOpen != leftOpen()) {
+            this.leftOpen = leftOpen();
+            slideStateChanged();
+        }
+    }
+
+    @Override
+    public void onPanelClosed(View panel) {
+        if (this.leftOpen != leftOpen()) {
+            this.leftOpen = leftOpen();
+            slideStateChanged();
+        }
+    }
+
+    @Override
+    public void switchToController(boolean leftController) {
+        switchToController(leftController, true);
+    }
+
+    @Override
+    public void switchToController(boolean leftController, boolean animated) {
+        if (leftController != leftOpen()) {
+            if (leftController) {
+                slidingPaneLayout.openPane();
+            } else {
+                slidingPaneLayout.closePane();
+            }
+
+            requireNavController().requireToolbar().processScrollCollapse(
+                    Toolbar.TOOLBAR_COLLAPSE_SHOW,
+                    true
+            );
+
+            leftOpen = leftController;
+            slideStateChanged(animated);
+        }
+    }
+
+    @Override
+    public void setEmptyView(ViewGroup emptyView) {
+        this.emptyView = emptyView;
+    }
+
+    public void setLeftController(Controller leftController, boolean animated) {
+        if (this.leftController != null) {
+            this.leftController.onHide();
+            removeChildController(this.leftController);
+        }
+
+        this.leftController = leftController;
+
+        if (leftController != null) {
+            addChildController(leftController);
+            leftController.attachToParentView(slidingPaneLayout.leftPane);
+            leftController.onShow();
+            if (leftOpen()) {
+                setParentNavigationItem(true, animated);
+            }
+        }
+    }
+
+    public void setRightController(Controller rightController, boolean animated) {
+        if (this.rightController != null) {
+            this.rightController.onHide();
+            removeChildController(this.rightController);
+        } else {
+            this.slidingPaneLayout.rightPane.removeAllViews();
+        }
+
+        this.rightController = rightController;
+
+        if (rightController != null) {
+            addChildController(rightController);
+            rightController.attachToParentView(slidingPaneLayout.rightPane);
+            rightController.onShow();
+            if (!leftOpen()) {
+                setParentNavigationItem(false, animated);
+            }
+        } else {
+            slidingPaneLayout.rightPane.addView(emptyView);
+        }
+    }
+
+    @Override
+    public Controller getLeftController() {
+        return leftController;
+    }
+
+    @Override
+    public Controller getRightController() {
+        return rightController;
+    }
+
+    @Override
+    public void openControllerWrappedIntoBottomNavAwareController(Controller controller) {
+        requireStartActivity().openControllerWrappedIntoBottomNavAwareController(controller);
+    }
+
+    @Override
+    public boolean pushController(Controller to) {
+        return navigationController.pushController(to);
+    }
+
+    @Override
+    public boolean pushController(Controller to, boolean animated) {
+        return navigationController.pushController(to, animated);
+    }
+
+    @Override
+    public boolean pushController(Controller to, ControllerTransition controllerTransition) {
+        return navigationController.pushController(to, controllerTransition);
+    }
+
+    @Override
+    public boolean popController() {
+        return navigationController.popController();
+    }
+
+    @Override
+    public boolean popController(boolean animated) {
+        return navigationController.popController(animated);
+    }
+
+    @Override
+    public boolean popController(ControllerTransition controllerTransition) {
+        return navigationController.popController(controllerTransition);
+    }
+
+    @Override
+    public boolean onBack() {
+        if (!leftOpen()) {
+            if (rightController != null && rightController.onBack()) {
+                return true;
+            } else {
+                switchToController(true);
+                return true;
+            }
+        } else {
+            if (leftController != null && leftController.onBack()) {
+                return true;
+            }
+        }
+
+        return super.onBack();
+    }
+
+    @Override
+    public void onSearchVisibilityChanged(boolean visible) {
+        if (leftOpen() && leftController != null
+                && leftController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+            ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchVisibilityChanged(visible);
+        }
+        if (!leftOpen() && rightController != null
+                && rightController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+            ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchVisibilityChanged(visible);
+        }
+    }
+
+    @Override
+    public void onSearchEntered(String entered) {
+        if (leftOpen() && leftController != null
+                && leftController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+            ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchEntered(entered);
+        }
+        if (!leftOpen() && rightController != null
+                && rightController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+            ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchEntered(entered);
+        }
+    }
+
+    private boolean leftOpen() {
+        return slidingPaneLayout.isOpen();
+    }
+
+    private void slideStateChanged() {
+        slideStateChanged(true);
+    }
+
+    private void slideStateChanged(boolean animated) {
+        setParentNavigationItem(leftOpen, animated);
+
+        if (leftOpen && rightController instanceof ReplyAutoCloseListener) {
+            ((ReplyAutoCloseListener) rightController).onReplyViewShouldClose();
+        } else if (!leftOpen && leftController instanceof ReplyAutoCloseListener) {
+            ((ReplyAutoCloseListener) leftController).onReplyViewShouldClose();
+        }
+
+        notifySlideChanged(leftOpen ? leftController : rightController);
+    }
+
+    private void notifySlideChanged(Controller controller) {
+        if (controller == null) {
+            return;
+        }
+
+        if (controller instanceof SlideChangeListener) {
+            ((SlideChangeListener) controller).onSlideChanged(leftOpen);
+        }
+
+        for (Controller childController : controller.childControllers) {
+            notifySlideChanged(childController);
+        }
+    }
+
+    private void setParentNavigationItem(boolean left) {
+        setParentNavigationItem(left, true);
+    }
+
+    private void setParentNavigationItem(boolean left, boolean animate) {
+        Toolbar toolbar = requireNavController().requireToolbar();
+
+        //default, blank navigation item with no menus or titles, so other layouts don't mess up
+        NavigationItem item = new NavigationItem();
+        if (left) {
+            if (leftController != null) {
+                item = leftController.navigation;
+            }
+        } else {
+            if (rightController != null) {
+                item = rightController.navigation;
+            }
+        }
+
+        navigation = item;
+        navigation.swipeable = false;
+        navigation.handlesToolbarInset = true;
+        navigation.hasDrawer = true;
+        toolbar.setNavigationItem(animate, true, navigation, null);
+    }
+
+    public interface ReplyAutoCloseListener {
+        void onReplyViewShouldClose();
+    }
+
+    public interface SlideChangeListener {
+        void onSlideChanged(boolean leftOpen);
+    }
+}

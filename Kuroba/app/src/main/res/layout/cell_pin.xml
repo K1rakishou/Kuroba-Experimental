@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="48dp"
     android:background="@drawable/item_background">
 
-    <com.github.adamantcheese.chan.ui.view.ThumbnailView
+    <com.github.k1rakishou.chan.ui.view.ThumbnailView
         android:id="@+id/thumb"
         android:layout_width="56dp"
         android:layout_height="48dp"

@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.adamantcheese.chan.ui.layout.SelectLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.layout.SelectLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.github.adamantcheese.chan.ui.layout.SearchLayout
+        <com.github.k1rakishou.chan.ui.layout.SearchLayout
             android:id="@+id/search_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -50,4 +50,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:scrollbarStyle="outsideOverlay"
         android:scrollbars="vertical" />
 
-</com.github.adamantcheese.chan.ui.layout.SelectLayout>
+</com.github.k1rakishou.chan.ui.layout.SelectLayout>

@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:background="?attr/backcolor">
 
-    <com.github.adamantcheese.chan.ui.view.CrossfadeView
+    <com.github.k1rakishou.chan.ui.view.CrossfadeView
         android:id="@+id/crossfade"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </FrameLayout>
 
-    </com.github.adamantcheese.chan.ui.view.CrossfadeView>
+    </com.github.k1rakishou.chan.ui.view.CrossfadeView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add"

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.adamantcheese.chan.controller.ui.NavigationControllerContainerLayout
+    <com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

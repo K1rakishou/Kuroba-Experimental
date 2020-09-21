@@ -14,7 +14,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.adamantcheese.chan.ui.cell.PostStubCell xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.cell.PostStubCell xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -43,8 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_gravity="top|right"
         android:padding="4dp"
         android:src="@drawable/ic_overflow"
-        android:tint="?attr/text_color_secondary"
-        tools:ignore="ContentDescription,RtlHardcoded" />
+        tools:ignore="ContentDescription,RtlHardcoded"
+        app:tint="?attr/text_color_secondary" />
 
     <View
         android:id="@+id/divider"
@@ -56,4 +57,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_alignParentBottom="true"
         android:background="?attr/divider_color" />
 
-</com.github.adamantcheese.chan.ui.cell.PostStubCell>
+</com.github.k1rakishou.chan.ui.cell.PostStubCell>

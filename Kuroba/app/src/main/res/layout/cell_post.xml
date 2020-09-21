@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.adamantcheese.chan.ui.cell.PostCell xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.cell.PostCell xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/post_cell"
@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <view
             android:id="@+id/icons"
-            class="com.github.adamantcheese.chan.ui.cell.PostCell$PostIcons"
+            class="com.github.k1rakishou.chan.ui.cell.PostCell$PostIcons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignWithParentIfMissing="true"
@@ -107,4 +107,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     </RelativeLayout>
 
-</com.github.adamantcheese.chan.ui.cell.PostCell>
+</com.github.k1rakishou.chan.ui.cell.PostCell>

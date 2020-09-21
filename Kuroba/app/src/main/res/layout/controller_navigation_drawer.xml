@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.adamantcheese.chan.ui.layout.DrawerWidthAdjustingLayout
+    <com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -30,12 +30,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.github.adamantcheese.chan.ui.view.TouchBlockingFrameLayout
+            <com.github.k1rakishou.chan.ui.view.TouchBlockingFrameLayout
                 android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
 
-            <com.github.adamantcheese.chan.ui.view.HidingBottomNavigationView
+            <com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
                 android:id="@+id/bottom_navigation_view"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/bottom_nav_view_height"
@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </RelativeLayout>
 
-        <com.github.adamantcheese.chan.ui.view.TouchBlockingLinearLayout
+        <com.github.k1rakishou.chan.ui.view.TouchBlockingLinearLayout
             android:id="@+id/drawer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -66,8 +66,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_height="1dp"
                 android:background="?divider_color" />
 
-        </com.github.adamantcheese.chan.ui.view.TouchBlockingLinearLayout>
+        </com.github.k1rakishou.chan.ui.view.TouchBlockingLinearLayout>
 
-    </com.github.adamantcheese.chan.ui.layout.DrawerWidthAdjustingLayout>
+    </com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout>
 
 </FrameLayout>

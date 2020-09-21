@@ -23,7 +23,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <com.github.adamantcheese.chan.ui.layout.SearchLayout
+            <com.github.k1rakishou.chan.ui.layout.SearchLayout
                 android:id="@+id/search_view"
                 android:layout_width="match_parent"
                 android:layout_height="42dp"

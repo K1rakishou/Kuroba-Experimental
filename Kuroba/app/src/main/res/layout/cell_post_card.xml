@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.adamantcheese.chan.ui.cell.CardPostCell xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.cell.CardPostCell xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
     card_view:cardElevation="2dp">
 
-    <com.github.adamantcheese.chan.ui.layout.FixedRatioLinearLayout
+    <com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
         android:id="@+id/card_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.github.adamantcheese.chan.ui.view.PostImageThumbnailView
+            <com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
                 android:id="@+id/thumbnail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
@@ -48,8 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:paddingTop="5dp"
                 android:paddingRight="5dp"
                 android:src="@drawable/ic_overflow"
-                android:tint="?attr/text_color_secondary"
-                tools:ignore="ContentDescription,RtlHardcoded" />
+                tools:ignore="ContentDescription,RtlHardcoded"
+                card_view:tint="?attr/text_color_secondary" />
 
         </FrameLayout>
 
@@ -90,6 +90,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:singleLine="true"
             android:textColor="?attr/text_color_secondary" />
 
-    </com.github.adamantcheese.chan.ui.layout.FixedRatioLinearLayout>
+    </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>
 
-</com.github.adamantcheese.chan.ui.cell.CardPostCell>
+</com.github.k1rakishou.chan.ui.cell.CardPostCell>
