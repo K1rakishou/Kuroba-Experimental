@@ -10,8 +10,6 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.epoxy.*
-import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView
-import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -90,7 +88,7 @@ class SearchResultsController(
 
       val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.opInfo != null
       if (!isNextPostOP) {
-        epoxyDividerView {
+        epoxySearchPostDividerView {
           id("epoxy_divider_view_$index")
           updateMargins(NEW_MARGINS)
         }
@@ -151,7 +149,7 @@ class SearchResultsController(
     private val DIVIDER_VERTICAL_MARGINS = dp(8f)
     private val DIVIDER_HORIZONTAL_MARGINS = dp(4f)
 
-    private val NEW_MARGINS = EpoxyDividerView.NewMargins(
+    private val NEW_MARGINS = EpoxySearchPostDividerView.NewMargins(
       top = DIVIDER_VERTICAL_MARGINS,
       bottom = DIVIDER_VERTICAL_MARGINS,
       left = DIVIDER_HORIZONTAL_MARGINS,
