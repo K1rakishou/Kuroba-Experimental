@@ -35,6 +35,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -134,6 +135,8 @@ class ThreadLayout @JvmOverloads constructor(
   private var refreshedFromSwipe = false
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
+
+  private val scrollToBottomDebouncer = Debouncer(false)
 
   private val job = SupervisorJob()
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
@@ -709,11 +712,16 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showToolbar() {
-    toolbar?.collapseShow(true)
+    val currentToolbar = toolbar
+      ?: return
 
-    if (replyButton.visibility != View.VISIBLE) {
-      replyButton.show()
-    }
+    scrollToBottomDebouncer.post({
+      currentToolbar.collapseShow(true)
+
+      if (replyButton.visibility != View.VISIBLE) {
+        replyButton.show()
+      }
+    }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
   }
 
   override fun showNewPostsNotification(show: Boolean, more: Int) {
@@ -951,5 +959,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   companion object {
     const val TAG = "ThreadLayout"
+
+    private const val SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS = 150L
   }
 }
