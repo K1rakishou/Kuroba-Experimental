@@ -22,11 +22,11 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
-class SiteResolver @Inject constructor(
+open class SiteResolver @Inject constructor(
   private val siteManager: SiteManager
 ) {
 
-  fun findSiteForUrl(url: String): Site? {
+  open fun findSiteForUrl(url: String): Site? {
     var httpUrl = sanitizeUrl(url)
 
     if (httpUrl == null) {

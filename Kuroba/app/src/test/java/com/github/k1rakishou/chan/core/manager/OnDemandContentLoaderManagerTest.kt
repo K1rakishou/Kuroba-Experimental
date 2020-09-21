@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
+import android.os.Looper
 import com.github.k1rakishou.chan.core.loader.*
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -16,10 +17,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows
+import org.robolectric.annotation.LooperMode
 import org.robolectric.shadows.ShadowLog
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
+@LooperMode(LooperMode.Mode.PAUSED)
 class OnDemandContentLoaderManagerTest {
   private val workerScheduler = TestScheduler()
 
@@ -52,6 +56,8 @@ class OnDemandContentLoaderManagerTest {
       TimeUnit.MILLISECONDS
     )
 
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
+
     testSubscriber.assertValueCount(1)
     testSubscriber.assertNoErrors()
     testSubscriber.assertNotComplete()
@@ -76,6 +82,8 @@ class OnDemandContentLoaderManagerTest {
     loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
     loaderManager.onPostBind(loadable, post)
     workerScheduler.advanceTimeBy(200, TimeUnit.MILLISECONDS)
+
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
 
     testSubscriber.assertValueCount(1)
     testSubscriber.assertNoErrors()
@@ -107,6 +115,8 @@ class OnDemandContentLoaderManagerTest {
       advanceByALot(),
       TimeUnit.MILLISECONDS
     )
+
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
 
     testSubscriber.assertValueCount(1)
     testSubscriber.assertNoErrors()
@@ -140,6 +150,8 @@ class OnDemandContentLoaderManagerTest {
       TimeUnit.MILLISECONDS
     )
 
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
+
     testSubscriber.assertNoValues()
     testSubscriber.assertNoErrors()
     testSubscriber.assertNotComplete()
@@ -159,10 +171,13 @@ class OnDemandContentLoaderManagerTest {
 
     loaderManager.listenPostContentUpdates().subscribe(testSubscriber)
     loaderManager.onPostBind(loadable, post)
+
     workerScheduler.advanceTimeBy(
       advanceByALot(),
       TimeUnit.MILLISECONDS
     )
+
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
 
     testSubscriber.assertValueCount(1)
     testSubscriber.assertNoErrors()
@@ -209,6 +224,7 @@ class OnDemandContentLoaderManagerTest {
     }
 
     workerScheduler.advanceTimeBy(15000, TimeUnit.MILLISECONDS)
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
 
     testSubscriber.assertValueCount(1000)
     testSubscriber.assertNoErrors()
@@ -247,6 +263,8 @@ class OnDemandContentLoaderManagerTest {
       verify(loader, times(10)).cancelLoading(any())
     }
 
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
+
     testSubscriber.assertNoValues()
     testSubscriber.assertNoErrors()
     testSubscriber.assertNotComplete()
@@ -283,6 +301,8 @@ class OnDemandContentLoaderManagerTest {
       verify(loader, times(10)).startLoading(any())
       verify(loader, times(10)).cancelLoading(any())
     }
+
+    Shadows.shadowOf(Looper.getMainLooper()).idle()
 
     testSubscriber.assertValueCount(10)
     testSubscriber.assertNoErrors()
