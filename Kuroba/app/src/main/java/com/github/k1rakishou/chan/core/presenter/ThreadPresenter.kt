@@ -666,15 +666,17 @@ class ThreadPresenter @Inject constructor(
     val thread = chanLoader?.thread
       ?: return
 
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor && thread.postsCount > 0) {
+    val descriptor = chanDescriptor
+
+    if (descriptor is ChanDescriptor.ThreadDescriptor && thread.postsCount > 0) {
       val posts = thread.getPosts()
       val lastPostNo = posts.last().no
 
-      chanThreadViewableInfoManager.update(chanDescriptor!!) { chanThreadViewableInfo ->
+      chanThreadViewableInfoManager.update(descriptor) { chanThreadViewableInfo ->
         chanThreadViewableInfo.lastViewedPostNo = lastPostNo
       }
 
-      pastViewedPostNoInfoHolder.setLastViewedPostNo(chanDescriptor!! as ChanDescriptor.ThreadDescriptor, lastPostNo)
+      pastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
     }
 
     threadPresenterCallback?.showNewPostsNotification(false, -1)

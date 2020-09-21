@@ -335,6 +335,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       // while in a layout pass. Postpone to the next frame.
       listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
     }
+
+    if (last == postAdapter.itemCount - 1) {
+      threadListLayoutCallback?.showToolbar()
+    }
   }
 
   private fun updateLastViewedPostNo(last: Int) {
@@ -1014,6 +1018,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean)
     fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean)
+    fun showToolbar()
     fun replyLayoutOpen(open: Boolean)
     fun showImageReencodingWindow(supportsReencode: Boolean)
     fun threadBackPressed(): Boolean

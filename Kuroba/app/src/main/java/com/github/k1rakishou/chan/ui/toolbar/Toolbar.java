@@ -66,6 +66,8 @@ public class Toolbar
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
     private static final int MIN_SCROLL_SLOP = dp(64);
 
+    private static final Interpolator SLOWDOWN_INTERPOLATOR = new DecelerateInterpolator(2f);
+
     @Inject
     ThemeHelper themeHelper;
     @Inject
@@ -300,27 +302,31 @@ public class Toolbar
         scrollOffset = Math.max(0, Math.min(getHeight(), scrollOffset));
 
         if (animated) {
-            Interpolator slowdown = new DecelerateInterpolator(2f);
-            animate().translationY(-scrollOffset).setDuration(300).setInterpolator(slowdown).start();
+            animate().translationY(-scrollOffset)
+                    .setDuration(300)
+                    .setInterpolator(SLOWDOWN_INTERPOLATOR)
+                    .start();
 
             boolean collapse = scrollOffset > 0;
             for (ToolbarCollapseCallback c : collapseCallbacks) {
                 c.onCollapseAnimation(collapse);
             }
-        } else {
-            animate().cancel();
-            setTranslationY(-scrollOffset);
 
-            for (ToolbarCollapseCallback c : collapseCallbacks) {
-                float newScrollOffset = 0f;
-                int height = getHeight();
+            return;
+        }
 
-                if (height > 0) {
-                    newScrollOffset = scrollOffset / (float) height;
-                }
+        animate().cancel();
+        setTranslationY(-scrollOffset);
 
-                c.onCollapseTranslation(newScrollOffset);
+        for (ToolbarCollapseCallback c : collapseCallbacks) {
+            float newScrollOffset = 0f;
+            int height = getHeight();
+
+            if (height > 0) {
+                newScrollOffset = scrollOffset / (float) height;
             }
+
+            c.onCollapseTranslation(newScrollOffset);
         }
     }
 
