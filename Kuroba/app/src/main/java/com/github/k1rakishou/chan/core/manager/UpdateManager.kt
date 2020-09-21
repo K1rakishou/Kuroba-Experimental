@@ -113,6 +113,11 @@ class UpdateManager(
       return
     }
 
+    if (isFdroidBuild()) {
+      Logger.d(TAG, "Updater is disabled for fdroid builds!")
+      return
+    }
+
     if (
       PersistableChanState.previousVersion.get() < BuildConfig.VERSION_CODE
       && PersistableChanState.previousVersion.get() != 0
@@ -133,6 +138,11 @@ class UpdateManager(
   fun manualUpdateCheck() {
     if (isDevBuild()) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
+      return
+    }
+
+    if (isFdroidBuild()) {
+      Logger.d(TAG, "Updater is disabled for fdroid builds!")
       return
     }
 

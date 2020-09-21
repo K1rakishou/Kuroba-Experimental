@@ -194,6 +194,10 @@ public class AndroidUtils {
         return getFlavorType() == FlavorType.Beta;
     }
 
+    public static boolean isFdroidBuild() {
+        return getFlavorType() == FlavorType.Fdroid;
+    }
+
     public static FlavorType getFlavorType() {
         switch (BuildConfig.FLAVOR_TYPE) {
             case 0:
@@ -202,6 +206,8 @@ public class AndroidUtils {
                 return FlavorType.Beta;
             case 2:
                 return FlavorType.Dev;
+            case 3:
+                return FlavorType.Fdroid;
             default:
                 throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
         }
@@ -732,7 +738,8 @@ public class AndroidUtils {
     public enum FlavorType {
         Stable,
         Beta,
-        Dev
+        Dev,
+        Fdroid
     }
 
     public enum VerifiedBuildType {

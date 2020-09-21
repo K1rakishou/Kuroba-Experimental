@@ -104,6 +104,7 @@ android {
         // FLAVOR_TYPE 0 - release build
         // FLAVOR_TYPE 1 - beta build
         // FLAVOR_TYPE 2 - dev build
+        // FLAVOR_TYPE 3 - fdroid build
 
         stable {
             dimension "default"
@@ -154,6 +155,23 @@ android {
             manifestPlaceholders = [
                     appName              : "KurobaEx-dev",
                     iconLoc              : "@mipmap/ic_launcher_dev",
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+            ]
+        }
+        fdroid {
+            dimension "default"
+            // Different app ids for different flavors so that the users are able to install both
+            // of them without deleting anything
+            applicationIdSuffix ".fdroid"
+            apkVersionNameSuffix = "-fdroid"
+
+            buildConfigField "int", "FLAVOR_TYPE", "3"
+            // We never use updater for fdroid builds
+            buildConfigField "int", "UPDATE_DELAY", "99999999"
+
+            manifestPlaceholders = [
+                    appName              : "KurobaEx-fdroid",
+                    iconLoc              : "@mipmap/ic_launcher_release",
                     fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
             ]
         }

@@ -57,18 +57,20 @@ class MainSettingsScreen(
           identifier = MainScreen.AboutAppGroup.AppVersion,
           topDescriptionStringFunc = { createAppVersionString() },
           bottomDescriptionStringFunc = {
-            if (isDevBuild()) {
+            if (isDevBuild() || isFdroidBuild()) {
               context.getString(R.string.settings_updates_are_disabled)
             } else {
               context.getString(R.string.settings_update_check)
             }
           },
           callbackWithClickAction = {
-            if (isDevBuild()) {
-              SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
-            } else {
-              updateManager.manualUpdateCheck()
-              SettingClickAction.NoAction
+            when {
+              isDevBuild() -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
+              isFdroidBuild() -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_fdroid_builds)
+              else -> {
+                updateManager.manualUpdateCheck()
+                SettingClickAction.NoAction
+              }
             }
           },
           notificationType = SettingNotificationType.ApkUpdate
