@@ -229,7 +229,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
     else if (v === replyButton) {
       // Give some time for the keyboard to show up
-      replyButton.postDelayed({ openReplyInternal(true) }, 100L)
+      replyButton.postDelayed({ openReplyInternal(true) }, OPEN_REPLY_DELAY_MS)
     }
   }
 
@@ -540,7 +540,7 @@ class ThreadLayout @JvmOverloads constructor(
     postDelayed({
       openReplyInternal(true)
       threadListLayout.replyPresenter.quote(post, withText)
-    }, 100L)
+    }, OPEN_REPLY_DELAY_MS)
   }
 
   override fun quote(post: Post, text: CharSequence) {
@@ -560,7 +560,7 @@ class ThreadLayout @JvmOverloads constructor(
     postDelayed({
       openReplyInternal(true)
       threadListLayout.replyPresenter.quote(post, text)
-    }, 100L)
+    }, OPEN_REPLY_DELAY_MS)
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -961,5 +961,6 @@ class ThreadLayout @JvmOverloads constructor(
     const val TAG = "ThreadLayout"
 
     private const val SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS = 150L
+    private const val OPEN_REPLY_DELAY_MS = 100L
   }
 }
