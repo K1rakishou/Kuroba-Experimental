@@ -254,17 +254,25 @@ class BehaviourSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.CaptchaSetup,
-          topDescriptionIdFunc = { R.string.settings_captcha_setup },
-          bottomDescriptionIdFunc = { R.string.settings_captcha_setup_description },
+          topDescriptionIdFunc = { R.string.setting_captcha_setup },
+          bottomDescriptionIdFunc = { R.string.setting_captcha_setup_description },
           callback = { navigationController.pushController(SitesSetupController(context)) }
         )
 
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.JsCaptchaCookiesEditor,
-          topDescriptionIdFunc = { R.string.settings_js_captcha_cookies_title },
-          bottomDescriptionIdFunc = { R.string.settings_js_captcha_cookies_description },
+          topDescriptionIdFunc = { R.string.setting_js_captcha_cookies_title },
+          bottomDescriptionIdFunc = { R.string.setting_js_captcha_cookies_description },
           callback = { navigationController.pushController(JsCaptchaCookiesEditorController(context)) }
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = BehaviorScreen.GeneralGroup.LoadLastOpenedBoardUponAppStart,
+          topDescriptionIdFunc = { R.string.setting_load_last_opened_board_upon_app_start_title },
+          bottomDescriptionIdFunc = { R.string.setting_load_last_opened_board_upon_app_start_description },
+          setting = ChanSettings.loadLastOpenedBoardUponAppStart
         )
 
         group += LinkSettingV2.createBuilder(

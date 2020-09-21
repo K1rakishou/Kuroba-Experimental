@@ -6,8 +6,6 @@ import androidx.core.view.WindowInsetsCompat
 class GlobalWindowInsetsManager {
   private var initialized = false
 
-  var requestInsetsApplyFunc: (() -> Unit)? = null
-
   var isKeyboardOpened = false
     private set
   var keyboardHeight = 0
@@ -73,11 +71,6 @@ class GlobalWindowInsetsManager {
   fun fireCallbacks() {
     callbacksAwaitingInsetsDispatch.forEach { it.run() }
     callbacksAwaitingInsetsDispatch.clear()
-  }
-
-  fun requestInsetsDispatch(func: Runnable) {
-    callbacksAwaitingInsetsDispatch += func
-    requestInsetsApplyFunc!!.invoke()
   }
 
   fun runWhenKeyboardIsHidden(func: Runnable) {

@@ -113,6 +113,16 @@ class HistoryNavigationManager(
     }
   }
 
+  fun getFirstThreadNavElement(): NavHistoryElement? {
+    BackgroundUtils.ensureMainThread()
+
+    return lock.read {
+      return@read navigationStack.firstOrNull { navHistoryElement ->
+        navHistoryElement is NavHistoryElement.Thread
+      }
+    }
+  }
+
   fun listenForNavigationStackChanges(): Flowable<Unit> {
     BackgroundUtils.ensureMainThread()
 
