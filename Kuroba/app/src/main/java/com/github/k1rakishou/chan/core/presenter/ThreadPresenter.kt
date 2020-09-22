@@ -1324,8 +1324,8 @@ class ThreadPresenter @Inject constructor(
       savedReplyManager.savePost(post.postDescriptor)
     }
 
-    chanPostRepository.deletePostFromCache(post.postDescriptor)
-    chanLoader?.thread?.deletePost(post.postDescriptor)
+    chanPostRepository.deleteThreadsFromCache(listOf(post.postDescriptor.threadDescriptor()))
+    chanLoader?.thread?.clearPosts()
 
     // force reload for reply highlighting
     requestData()
