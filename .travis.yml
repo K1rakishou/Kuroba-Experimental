@@ -1,5 +1,7 @@
 sudo: false
 
+git:
+  depth: 150
 branches:
   only: 
     - beta
