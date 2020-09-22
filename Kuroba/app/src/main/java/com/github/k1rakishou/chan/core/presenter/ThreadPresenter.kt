@@ -111,10 +111,6 @@ class ThreadPresenter @Inject constructor(
 
   private lateinit var context: Context
 
-  override fun getChanDescriptor(): ChanDescriptor? {
-    return currentChanDescriptor
-  }
-
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadPresenter")
 
@@ -123,15 +119,15 @@ class ThreadPresenter @Inject constructor(
 
   val isPinned: Boolean
     get() {
-      if (!isBound) {
-        return false
-      }
-
       val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
         ?: return false
 
       return bookmarksManager.exists(threadDescriptor)
     }
+
+  override fun getChanDescriptor(): ChanDescriptor? {
+    return currentChanDescriptor
+  }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
     this.context = context
@@ -337,33 +333,30 @@ class ThreadPresenter @Inject constructor(
 
   @Synchronized
   fun pin(): Boolean {
-    if (!isBound) {
-      return false
-    }
-
     if (!bookmarksManager.isReady()) {
       return false
     }
-
-    val thread = chanLoader?.thread
-      ?: return false
-
-    val op = thread.op
-      ?: return false
 
     val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
       ?: return false
 
     if (bookmarksManager.exists(threadDescriptor)) {
       bookmarksManager.deleteBookmark(threadDescriptor)
-    } else {
+      return true
+    }
+
+    val op = chanLoader?.thread?.op
+    if (op != null) {
       bookmarksManager.createBookmark(
         threadDescriptor,
         PostHelper.getTitle(op, threadDescriptor),
         op.firstImage()?.thumbnailUrl
       )
+
+      return true
     }
 
+    bookmarksManager.createBookmark(threadDescriptor)
     return true
   }
 
