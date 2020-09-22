@@ -115,7 +115,10 @@ class SearchResultsController(
         thumbnail(searchPostInfo.thumbnail)
         postComment(searchPostInfo.postComment.spannedText)
         onBind { _, _, _ -> presenter.updateLastRecyclerViewScrollState(indexAndTop) }
-        onPostClickListener { postDescriptor -> onSearchPostClicked(postDescriptor) }
+        onPostClickListener { postDescriptor ->
+          presenter.updateLastRecyclerViewScrollState(indexAndTop)
+          onSearchPostClicked(postDescriptor)
+        }
       }
 
       val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.opInfo != null
