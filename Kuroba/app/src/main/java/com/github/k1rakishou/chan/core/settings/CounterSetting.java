@@ -24,7 +24,7 @@ public class CounterSetting
         super(settingProvider, key, 0);
     }
 
-    public int increase() {
+    public synchronized int increase() {
         set(get() + 1);
         return get();
     }

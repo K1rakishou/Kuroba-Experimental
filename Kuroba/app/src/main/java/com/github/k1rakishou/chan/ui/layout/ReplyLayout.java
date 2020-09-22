@@ -112,6 +112,7 @@ public class ReplyLayout
         CaptchaHolder.CaptchaValidationListener,
         KeyboardStateListener {
     private static final String TAG = "ReplyLayout";
+    private static final int ATTACH_IMAGE_BY_URL_HINT_OFFSET_X = dp(64f);
 
     @Inject
     ReplyPresenter presenter;
@@ -205,10 +206,7 @@ public class ReplyLayout
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
 
-        if (hintPopup != null) {
-            hintPopup.dismiss();
-            hintPopup = null;
-        }
+        dismissHint();
 
         EventBus.getDefault().unregister(this);
 
@@ -361,6 +359,33 @@ public class ReplyLayout
 
     public void onOpen(boolean open) {
         presenter.onOpen(open);
+
+        if (open && ChanSettings.replyOpenCounter.increase() == 1) {
+            showUrlImagePasteHint();
+        } else {
+            dismissHint();
+        }
+    }
+
+    private void showUrlImagePasteHint() {
+        postDelayed(() -> {
+            dismissHint();
+
+            hintPopup = HintPopup.show(
+                    getContext(),
+                    attach,
+                    AndroidUtils.getString(R.string.reply_attach_long_click_hint),
+                    ATTACH_IMAGE_BY_URL_HINT_OFFSET_X,
+                    0
+            );
+        }, 600);
+    }
+
+    private void dismissHint() {
+        if (hintPopup != null) {
+            hintPopup.dismiss();
+            hintPopup = null;
+        }
     }
 
     public void bindLoadable(ChanDescriptor chanDescriptor) {
@@ -1073,10 +1098,7 @@ public class ReplyLayout
         }
 
         String message = getString(R.string.click_image_for_extra_options);
-        if (hintPopup != null) {
-            hintPopup.dismiss();
-            hintPopup = null;
-        }
+        dismissHint();
 
         hintPopup = HintPopup.show(getContext(), preview, message, dp(-32), dp(16));
         hintPopup.wiggle();

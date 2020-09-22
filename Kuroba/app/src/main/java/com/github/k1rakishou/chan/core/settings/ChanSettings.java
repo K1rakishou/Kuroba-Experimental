@@ -310,6 +310,7 @@ public class ChanSettings {
     public static final CounterSetting threadOpenCounter;
     public static final IntegerSetting drawerAutoOpenCount;
     public static final BooleanSetting reencodeHintShown;
+    public static final CounterSetting replyOpenCounter;
     //endregion
     //endregion
 
@@ -480,6 +481,7 @@ public class ChanSettings {
             threadOpenCounter = new CounterSetting(p, "counter_thread_open");
             drawerAutoOpenCount = new IntegerSetting(p, "drawer_auto_open_count", 0);
             reencodeHintShown = new BooleanSetting(p, "preference_reencode_hint_already_shown", false);
+            replyOpenCounter = new CounterSetting(p, "reply_open_counter");
             //endregion
 
             scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);
