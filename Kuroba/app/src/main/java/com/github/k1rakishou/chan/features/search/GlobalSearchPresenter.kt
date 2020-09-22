@@ -15,7 +15,9 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
@@ -25,6 +27,7 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
 
   private val globalSearchControllerStateSubject =
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Loading)
+  private val searchResultsStateStorage = SearchResultsStateStorage
 
   private val queryEnterDebouncer = SuspendDebouncer(scope)
 
@@ -34,6 +37,20 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
     Chan.inject(this)
 
     scope.launch {
+      if (searchResultsStateStorage.searchInputState != null) {
+        val searchInputState = searchResultsStateStorage.searchInputState!!
+        setState(GlobalSearchControllerState.Data(searchInputState))
+        withViewNormal {
+          if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
+            restoreSearchResultsController(
+              searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
+              searchInputState.query
+            )
+          }
+        }
+        return@launch
+      }
+
       siteManager.awaitUntilInitialized()
       loadDefaultSearchState()
     }
@@ -48,6 +65,13 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
       }
       .onErrorReturn { error -> GlobalSearchControllerState.Error(error.errorMessageOrClassName()) }
       .hide()
+  }
+
+  fun resetSavedState() {
+    searchResultsStateStorage.resetSearchInputState()
+  }
+  fun resetSearchResultsSavedState() {
+    searchResultsStateStorage.resetSearchResultState()
   }
 
   fun reloadWithSelection(siteDescriptor: SiteDescriptor, sitesWithSearch: SitesWithSearch) {
@@ -81,6 +105,9 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
       )
 
       setState(GlobalSearchControllerState.Data(dataState))
+      searchResultsStateStorage.updateSearchInputState(dataState)
+
+      withView { withContext(Dispatchers.Main) { setNeedSetInitialQueryFlag() } }
     }
   }
 

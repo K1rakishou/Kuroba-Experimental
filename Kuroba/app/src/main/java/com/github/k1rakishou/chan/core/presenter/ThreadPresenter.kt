@@ -1538,7 +1538,7 @@ class ThreadPresenter @Inject constructor(
 
   interface ThreadPresenterCallback {
     val displayingPosts: List<Post>
-    val currentPosition: IntArray
+    val currentPosition: IntArray?
 
     suspend fun showPosts(thread: ChanThread?, filter: PostsFilter)
     fun postClicked(post: Post)

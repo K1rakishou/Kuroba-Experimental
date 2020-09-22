@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.core.widget.doAfterTextChanged
 import com.airbnb.epoxy.CallbackProp
+import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.google.android.material.textfield.TextInputEditText
@@ -23,6 +24,30 @@ class EpoxySearchInputView @JvmOverloads constructor(
     inflate(context, R.layout.epoxy_search_input_view, this)
 
     inputEditText = findViewById(R.id.input_edit_text)
+    inputEditText.text = null
+  }
+
+  @ModelProp(ModelProp.Option.DoNotHash)
+  fun setInitialQuery(query: String?) {
+    if (query == null) {
+      return
+    }
+
+    val editable = inputEditText.text
+      ?: return
+
+    if (editable.toString() == query) {
+      return
+    }
+
+    if (textWatcher == null) {
+      editable.replace(0, editable.length, query)
+      return
+    }
+
+    inputEditText.removeTextChangedListener(textWatcher)
+    editable.replace(0, editable.length, query)
+    inputEditText.addTextChangedListener(textWatcher)
   }
 
   @CallbackProp

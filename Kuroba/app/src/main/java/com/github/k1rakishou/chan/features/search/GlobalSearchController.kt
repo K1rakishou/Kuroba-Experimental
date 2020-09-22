@@ -26,6 +26,7 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private val presenter = GlobalSearchPresenter()
   private val inputViewRef = AtomicReference<View>(null)
+  private var needSetInitialQuery = true
 
   override fun onCreate() {
     super.onCreate()
@@ -50,9 +51,25 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
     presenter.onDestroy()
   }
 
+  override fun onBack(): Boolean {
+    needSetInitialQuery = false
+    presenter.resetSavedState()
+    return super.onBack()
+  }
+
+  override fun setNeedSetInitialQueryFlag() {
+    needSetInitialQuery = true
+  }
+
+  override fun restoreSearchResultsController(siteDescriptor: SiteDescriptor, query: String) {
+    inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
+    requireNavController().pushController(SearchResultsController(context, siteDescriptor, query), false)
+  }
+
   override fun openSearchResultsController(siteDescriptor: SiteDescriptor, query: String) {
     inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
 
+    presenter.resetSearchResultsSavedState()
     requireNavController().pushController(SearchResultsController(context, siteDescriptor, query))
   }
 
@@ -93,7 +110,7 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
     val selectedSite = dataState.sitesWithSearch.selectedSite
 
     when (selectedSite.siteGlobalSearchType) {
-      SiteGlobalSearchType.SimpleQuerySearch -> renderSimpleQuerySearch(dataState.sitesWithSearch)
+      SiteGlobalSearchType.SimpleQuerySearch -> renderSimpleQuerySearch(dataState)
       SiteGlobalSearchType.SearchNotSupported -> return
     }
 
@@ -121,9 +138,17 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
     }
   }
 
-  private fun EpoxyController.renderSimpleQuerySearch(sitesWithSearch: SitesWithSearch) {
+  private fun EpoxyController.renderSimpleQuerySearch(dataState: GlobalSearchControllerStateData) {
+    val sitesWithSearch = dataState.sitesWithSearch
+    var initialQuery = (dataState as? GlobalSearchControllerStateData.SearchQueryEntered)?.query
+
+    if (!needSetInitialQuery || dataState !is GlobalSearchControllerStateData.SearchQueryEntered) {
+      initialQuery = null
+    }
+
     epoxySearchInputView {
       id("global_search_input_view")
+      initialQuery(initialQuery)
       onTextEnteredListener { query -> presenter.reloadWithSearchQuery(query, sitesWithSearch) }
       onBind { _, view, _ -> inputViewRef.set(view) }
       onUnbind { _, _ -> inputViewRef.set(null) }

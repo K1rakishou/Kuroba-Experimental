@@ -157,7 +157,7 @@ class ThreadLayout @JvmOverloads constructor(
       threadListLayout.displayingPosts
     }
 
-  override val currentPosition: IntArray
+  override val currentPosition: IntArray?
     get() = threadListLayout.indexAndTop
 
   init {
