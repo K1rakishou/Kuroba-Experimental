@@ -182,16 +182,21 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   val displayingPosts: List<Post>
     get() = postAdapter.displayList
 
-  val indexAndTop: IntArray
+  val indexAndTop: IntArray?
     get() {
       var index = 0
       var top = 0
 
-      if (recyclerView.layoutManager?.childCount ?: -1 > 0) {
-        val topChild = recyclerView.layoutManager!!.getChildAt(0)
-        index = (topChild!!.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
+      val layoutManager = recyclerView.layoutManager
+        ?: return null
+
+      if (layoutManager.childCount > 0) {
+        val topChild = layoutManager.getChildAt(0)
+          ?: return null
+
+        index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
         val params = topChild.layoutParams as RecyclerView.LayoutParams
-        top = layoutManager!!.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
+        top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
       }
 
       return intArrayOf(index, top)
@@ -319,6 +324,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val chanDescriptor = currentChanDescriptorOrNull()
       ?: return
     val indexTop = indexAndTop
+      ?: return
 
     chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
       chanThreadViewableInfo.listViewIndex = indexTop[0]

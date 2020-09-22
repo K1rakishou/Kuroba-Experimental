@@ -36,6 +36,7 @@ internal class SearchResultsPresenter(
 
   private val searchResultsControllerStateSubject =
     BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.InitialLoading)
+  private val searchResultsStateStorage = SearchResultsStateStorage
 
   @get:Synchronized
   @set:Synchronized
@@ -48,6 +49,11 @@ internal class SearchResultsPresenter(
     require(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query length: \"$query\"" }
 
     scope.launch {
+      if (searchResultsStateStorage.searchResultsState != null) {
+        setState(SearchResultsControllerState.Data(searchResultsStateStorage.searchResultsState!!))
+        return@launch
+      }
+
       doSearch()
     }
   }
@@ -62,6 +68,26 @@ internal class SearchResultsPresenter(
       }
       .onErrorReturn { error -> SearchResultsControllerState.Data(errorState(error.errorMessageOrClassName())) }
       .hide()
+  }
+
+  fun resetSavedState() {
+    searchResultsStateStorage.resetSearchResultState()
+  }
+
+  fun resetLastRecyclerViewScrollState() {
+    searchResultsStateStorage.resetLastRecyclerViewScrollState()
+  }
+
+  fun updateLastRecyclerViewScrollState(indexAndTop: IntArray?) {
+    if (indexAndTop == null) {
+      return
+    }
+
+    searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
+  }
+
+  fun lastRecyclerViewScrollStateOrNull(): SearchResultsStateStorage.IndexAndTop? {
+    return searchResultsStateStorage.lastRecyclerViewScrollState
   }
 
   fun reloadCurrentPage() {
@@ -94,6 +120,7 @@ internal class SearchResultsPresenter(
   private suspend fun doSearch() {
     withContext(Dispatchers.Default) {
       BackgroundUtils.ensureBackgroundThread()
+      Logger.d(TAG, "doSearch() siteDescriptor=$siteDescriptor, query=$query, currentPage=$currentPage")
 
       val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
       val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
@@ -123,6 +150,7 @@ internal class SearchResultsPresenter(
       val newStateData = createNewDataState(prevStateData, searchResult)
 
       setState(SearchResultsControllerState.Data(newStateData))
+      searchResultsStateStorage.updateSearchResultsState(newStateData)
     }
   }
 
@@ -141,7 +169,8 @@ internal class SearchResultsPresenter(
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
         if (searchEntryPost.postDescriptor in postDescriptorsSet) {
-          Logger.e(TAG, "Removing duplicate searchEntryPost with descriptor: ${searchEntryPost.postDescriptor}")
+          // 4chan can show the same post multiple times so we need to filter out duplicates to avoid
+          // crashes
           return@forEach
         }
 

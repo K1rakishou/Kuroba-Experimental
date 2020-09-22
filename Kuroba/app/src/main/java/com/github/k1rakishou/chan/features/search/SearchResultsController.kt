@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.search
 
 import android.content.Context
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
@@ -15,6 +17,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -27,6 +30,26 @@ class SearchResultsController(
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private val presenter = SearchResultsPresenter(siteDescriptor, query)
+
+  val indexAndTop: IntArray?
+    get() {
+      var index = 0
+      var top = 0
+
+      val layoutManager = epoxyRecyclerView.layoutManager
+        ?: return null
+
+      if (layoutManager.childCount > 0) {
+        val topChild = layoutManager.getChildAt(0)
+          ?: return null
+
+        index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
+        val params = topChild.layoutParams as RecyclerView.LayoutParams
+        top = layoutManager.getDecoratedTop(topChild) - params.topMargin - epoxyRecyclerView.paddingTop
+      }
+
+      return intArrayOf(index, top)
+    }
 
   override fun onCreate() {
     super.onCreate()
@@ -49,6 +72,12 @@ class SearchResultsController(
     presenter.onDestroy()
   }
 
+  override fun onBack(): Boolean {
+    presenter.resetSavedState()
+    presenter.resetLastRecyclerViewScrollState()
+    return super.onBack()
+  }
+
   private fun onStateChanged(state: SearchResultsControllerState) {
     epoxyRecyclerView.withModels {
       when (state) {
@@ -69,6 +98,8 @@ class SearchResultsController(
   }
 
   private fun EpoxyController.renderDataState(data: SearchResultsControllerStateData) {
+    addOneshotModelBuildListener { tryRestorePreviousPosition() }
+
     data.searchPostInfoList.forEachIndexed { index, searchPostInfo ->
       if (index != 0 && searchPostInfo.opInfo != null) {
         epoxySearchPostGapView {
@@ -83,6 +114,7 @@ class SearchResultsController(
         postInfo(searchPostInfo.postInfo.spannedText)
         thumbnail(searchPostInfo.thumbnail)
         postComment(searchPostInfo.postComment.spannedText)
+        onBind { _, _, _ -> presenter.updateLastRecyclerViewScrollState(indexAndTop) }
         onPostClickListener { postDescriptor -> onSearchPostClicked(postDescriptor) }
       }
 
@@ -120,9 +152,19 @@ class SearchResultsController(
     updateTitle(data.currentQueryInfo?.totalFoundEntries)
   }
 
+  private fun tryRestorePreviousPosition() {
+    val indexAndTop = presenter.lastRecyclerViewScrollStateOrNull()
+    if (indexAndTop == null) {
+      return
+    }
+
+    (epoxyRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+      indexAndTop.index,
+      indexAndTop.top
+    )
+  }
+
   private fun onSearchPostClicked(postDescriptor: PostDescriptor) {
-    // TODO(KurobaEx): remember current state and restore it the next time GlobalSearchController
-    //  is opened
     (context as? StartActivity)?.loadThread(postDescriptor)
   }
 
