@@ -35,7 +35,6 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
 import com.github.k1rakishou.chan.ui.theme.Theme;
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -344,8 +343,8 @@ public class PostAdapter
 
         notifyDataSetChanged();
 
-        if (AndroidUtils.isDevBuild()) {
-            Logger.d(TAG, "setThread() notifyDataSetChanged called");
+        if (ChanSettings.verboseLogs.get()) {
+            Logger.d(TAG, "setThread() notifyDataSetChanged called, displayList.size=" + displayList.size());
         }
     }
 
