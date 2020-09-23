@@ -448,7 +448,7 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (loadLastOpenedThreadUponAppStart) {
-      return historyNavigationManager.getFirstThreadNavElement()?.descriptor()?.threadDescriptorOrNull()
+      return historyNavigationManager.getNavElementAtTop()?.descriptor()?.threadDescriptorOrNull()
     }
 
     return null
