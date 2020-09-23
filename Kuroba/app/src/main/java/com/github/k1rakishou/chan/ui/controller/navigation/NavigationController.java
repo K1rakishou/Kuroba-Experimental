@@ -107,11 +107,18 @@ public abstract class NavigationController extends Controller implements HasNavi
             String tag,
             Controller to,
             Controller from,
-            ControllerTransition controllerTransition
+            ControllerTransition newControllerTransition
     ) {
-        String debugInfo = tag + ": to=" + to.getClass().getSimpleName() + ", " +
-                "from=" + from.getClass().getSimpleName() + ", " +
-                "transition=" + controllerTransition.debugInfo();
+        String toDebugInfo = to != null ? to.getClass().getSimpleName() : null;
+        String fromDebugInfo = from != null ? from.getClass().getSimpleName() : null;
+        String newControllerTransitionDebugInfo = newControllerTransition != null ? newControllerTransition.debugInfo() : null;
+        String currentControllerTransitionDebugInfo = controllerTransition != null ? controllerTransition.debugInfo() : null;
+
+        String debugInfo = tag + ": " +
+                "to=" + toDebugInfo + ", " +
+                "from=" + fromDebugInfo + ", " +
+                "newControllerTransitionDebugInfo=" + newControllerTransitionDebugInfo + ", " +
+                "currentControllerTransitionDebugInfo=" + currentControllerTransitionDebugInfo;
 
         throw new IllegalStateException(debugInfo);
     }

@@ -44,9 +44,9 @@ abstract class ControllerTransition  {
   fun debugInfo(): String {
     return String.format(
       Locale.ENGLISH,
-      "callback=" + callback!!.javaClass.simpleName + ", " +
-        "from=" + from!!.javaClass.simpleName + ", " +
-        "to=" + to!!.javaClass.simpleName
+      "callback=" + callback?.javaClass?.simpleName + ", " +
+        "from=" + from?.javaClass?.simpleName + ", " +
+        "to=" + to?.javaClass?.simpleName
     )
   }
 
