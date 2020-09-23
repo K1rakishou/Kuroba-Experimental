@@ -95,9 +95,9 @@ public class FilesLayout
     public void setFiles(FileWatcher.FileItems fileItems) {
         // Save the associated list position
         if (currentFileItems != null) {
-            int[] indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
-            currentHistory.index = indexTop[0];
-            currentHistory.top = indexTop[1];
+            RecyclerUtils.IndexAndTop indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
+            currentHistory.index = indexTop.getIndex();
+            currentHistory.top = indexTop.getTop();
             history.put(currentFileItems.path.getAbsolutePath(), currentHistory);
         }
 

@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.Chan
@@ -18,6 +20,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.exhaustive
 import kotlinx.coroutines.FlowPreview
@@ -38,8 +41,15 @@ class MainSettingsControllerV2(context: Context)
   private var hasPendingRestart = false
   private var hasPendingUiRefresh = false
 
-  // TODO(KurobaEx): Implement Save/Restore recycler position.
-  //  See https://github.com/K1rakishou/MvRxTest/blob/master/app/src/main/java/com/kirakishou/mvrxtest/ui/MainFragment.kt#L58
+  private val scrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      super.onScrollStateChanged(recyclerView, newState)
+
+      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+        storeRecyclerPositionForCurrentScreen()
+      }
+    }
+  }
 
   @OptIn(FlowPreview::class)
   override fun onCreate() {
@@ -61,33 +71,16 @@ class MainSettingsControllerV2(context: Context)
     settingsCoordinator.onCreate()
     settingsCoordinator.rebuildScreen(defaultScreen, BuildOptions.Default)
 
+    recyclerView.addOnScrollListener(scrollListener)
+
     compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
       .subscribe { renderAction -> renderScreen(renderAction) }
-  }
-
-  private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {
-    recyclerView.withModels {
-      when (renderAction) {
-        is SettingsCoordinator.RenderAction.RenderScreen -> {
-          navigation.title = renderAction.settingsScreen.title
-          (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
-
-          renderScreen(renderAction.settingsScreen)
-        }
-        is SettingsCoordinator.RenderAction.RenderSearchScreen -> {
-          renderSearchScreen(
-            renderAction.topScreenIdentifier,
-            renderAction.graph,
-            renderAction.query
-          )
-        }
-      }
-    }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    recyclerView.removeOnScrollListener(scrollListener)
     settingsCoordinator.onDestroy()
     restartAppOrRefreshUiIfNecessary()
   }
@@ -104,6 +97,42 @@ class MainSettingsControllerV2(context: Context)
 
   override fun onBack(): Boolean {
     return settingsCoordinator.onBack()
+  }
+
+  private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {
+    recyclerView.withModels {
+      addOneshotModelBuildListener {
+        if (renderAction !is SettingsCoordinator.RenderAction.RenderScreen) {
+          return@addOneshotModelBuildListener
+        }
+
+        val indexAndTop = settingsCoordinator.getCurrentIndexAndTopOrNull()
+        if (indexAndTop == null) {
+          return@addOneshotModelBuildListener
+        }
+
+        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+          indexAndTop.index,
+          indexAndTop.top
+        )
+      }
+
+      when (renderAction) {
+        is SettingsCoordinator.RenderAction.RenderScreen -> {
+          navigation.title = renderAction.settingsScreen.title
+          (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
+
+          renderScreen(renderAction.settingsScreen)
+        }
+        is SettingsCoordinator.RenderAction.RenderSearchScreen -> {
+          renderSearchScreen(
+            renderAction.topScreenIdentifier,
+            renderAction.graph,
+            renderAction.query
+          )
+        }
+      }
+    }
   }
 
   private fun updateRestartRefreshButton(settingV2: SettingV2) {
@@ -234,6 +263,7 @@ class MainSettingsControllerV2(context: Context)
                   }
                 }
                 is SettingClickAction.OpenScreen -> {
+                  storeRecyclerPositionForCurrentScreen()
                   settingsCoordinator.rebuildScreen(clickAction.screenIdentifier, BuildOptions.Default)
                 }
                 is SettingClickAction.ShowToast -> {
@@ -347,6 +377,10 @@ class MainSettingsControllerV2(context: Context)
         id("epoxy_divider_${globalSettingIndex}")
       }
     }
+  }
+
+  private fun storeRecyclerPositionForCurrentScreen() {
+    settingsCoordinator.storeRecyclerPositionForCurrentScreen(recyclerView)
   }
 
   companion object {

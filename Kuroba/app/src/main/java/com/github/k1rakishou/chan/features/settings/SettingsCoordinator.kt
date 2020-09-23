@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -11,6 +12,7 @@ import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -158,6 +160,8 @@ class SettingsCoordinator(
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val renderSettingsSubject = PublishProcessor.create<RenderAction>()
 
+  private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, RecyclerUtils.IndexAndTop>()
+
   private val settingsGraphDelegate = lazy { buildSettingsGraph() }
   private val settingsGraph by settingsGraphDelegate
   private val screenStack = Stack<IScreenIdentifier>()
@@ -248,6 +252,34 @@ class SettingsCoordinator(
     renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))
   }
 
+  fun getCurrentIndexAndTopOrNull(): RecyclerUtils.IndexAndTop? {
+    val currentScreen = if (screenStack.isEmpty()) {
+      null
+    } else {
+      screenStack.peek()
+    }
+
+    if (currentScreen == null) {
+      return null
+    }
+
+    return scrollPositionsPerScreen[currentScreen]
+  }
+
+  fun storeRecyclerPositionForCurrentScreen(recyclerView: EpoxyRecyclerView) {
+    val currentScreen = if (screenStack.isEmpty()) {
+      null
+    } else {
+      screenStack.peek()
+    }
+
+    if (currentScreen == null) {
+      return
+    }
+
+    scrollPositionsPerScreen[currentScreen] = RecyclerUtils.getIndexAndTop(recyclerView)
+  }
+
   fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
     pushScreen(screenIdentifier)
     rebuildScreenInternal(screenIdentifier, buildOptions)
@@ -296,6 +328,9 @@ class SettingsCoordinator(
   }
 
   private fun popScreen(): IScreenIdentifier {
+    val currentScreen = screenStack.peek()
+    scrollPositionsPerScreen.remove(currentScreen)
+
     screenStack.pop()
     return screenStack.peek()
   }

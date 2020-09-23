@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.ui.theme.Theme
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
@@ -86,7 +87,7 @@ internal class SearchResultsPresenter(
     searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
   }
 
-  fun lastRecyclerViewScrollStateOrNull(): SearchResultsStateStorage.IndexAndTop? {
+  fun lastRecyclerViewScrollStateOrNull(): RecyclerUtils.IndexAndTop? {
     return searchResultsStateStorage.lastRecyclerViewScrollState
   }
 
