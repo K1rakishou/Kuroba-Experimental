@@ -13,6 +13,9 @@ abstract class MediaServiceLinkExtraContentDao {
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun insert(mediaServiceLinkExtraContentEntity: MediaServiceLinkExtraContentEntity)
 
+  // TODO(KurobaEx): This is incorrect, it should have two parameters: videoId and mediaServiceType
+  //  so that we are 100% sure there are no possible collisions between services.
+  //  MediaServiceLinkExtraContentEntity also needs a new Index for videoId + mediaServiceType
   @Query("""
         SELECT * 
         FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME} 

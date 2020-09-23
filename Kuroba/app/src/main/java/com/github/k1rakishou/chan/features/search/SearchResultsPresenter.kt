@@ -23,6 +23,10 @@ import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.ISODateTimeFormat
+import java.util.*
 import javax.inject.Inject
 
 internal class SearchResultsPresenter(
@@ -211,7 +215,7 @@ internal class SearchResultsPresenter(
 
   private fun createPostInfo(searchEntryPost: SearchEntryPost): CharSequenceMurMur {
     val name = searchEntryPost.name?.trim() ?: "Anonymous"
-    val date = searchEntryPost.dateTime.toString()
+    val date = POST_DATE_TIME_FORMATTER.print(searchEntryPost.dateTime)
     val postNo = searchEntryPost.postDescriptor.postNo
 
     val text = "$name $date No. $postNo"
@@ -279,5 +283,12 @@ internal class SearchResultsPresenter(
 
   companion object {
     private const val TAG = "SearchResultsPresenter"
+
+    private val POST_DATE_TIME_FORMATTER = DateTimeFormatterBuilder()
+      .append(ISODateTimeFormat.date())
+      .appendLiteral(' ')
+      .append(ISODateTimeFormat.hourMinuteSecond())
+      .toFormatter()
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
   }
 }
