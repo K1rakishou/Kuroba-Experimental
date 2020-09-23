@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -102,7 +103,8 @@ class BrowseController(context: Context) : ThreadController(context),
 
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
-      order = requireNotNull(PostsFilter.Order.find(boardOrder)) { "Unknown board order: ${boardOrder}" }
+      order = PostsFilter.Order.find(boardOrder) ?: PostsFilter.Order.BUMP
+
       threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
       threadLayout.presenter.setOrder(order)
     }
@@ -156,19 +158,23 @@ class BrowseController(context: Context) : ThreadController(context),
     // this controller is used for catalog views; displaying things on two rows for them middle
     // menu is how we want it done these need to be setup before the view is rendered,
     // otherwise the subtitle view is removed
-    navigation.title = "App Setup"
-    navigation.subtitle = "Tap for site/board setup"
+    navigation.title = getString(R.string.browse_controller_title_app_setup)
+    navigation.subtitle = getString(R.string.browse_controller_subtitle)
     buildMenu()
 
     initialized = true
   }
 
   suspend fun setBoard(descriptor: BoardDescriptor) {
+    Logger.d(TAG, "setBoard($descriptor)")
+
     presenter.loadBoard(descriptor)
     initialized = true
   }
 
   suspend fun loadWithDefaultBoard() {
+    Logger.d(TAG, "loadWithDefaultBoard()")
+
     presenter.loadWithDefaultBoard()
     initialized = true
   }
@@ -194,7 +200,7 @@ class BrowseController(context: Context) : ThreadController(context),
     // this controller is used for catalog views; displaying things on two rows for them middle
     // menu is how we want it done these need to be setup before the view is rendered,
     // otherwise the subtitle view is removed
-    navigation.title = "Loading..."
+    navigation.title = getString(R.string.browse_controller_title_loading)
     requireNavController().requireToolbar().updateTitle(navigation)
 
     // Presenter
@@ -584,7 +590,7 @@ class BrowseController(context: Context) : ThreadController(context),
       R.string.action_switch_board
     }
 
-    item.text = AndroidUtils.getString(viewModeText)
+    item.text = getString(viewModeText)
     threadLayout.setPostViewMode(postViewMode)
   }
 
@@ -635,18 +641,18 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  override suspend fun showBoard(descriptor: BoardDescriptor) {
+  override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
     mainScope.launch {
-      Logger.d(TAG, "showBoard($descriptor)")
+      Logger.d(TAG, "showBoard($descriptor, $animated)")
 
-      showBoardInternal(descriptor)
+      showBoardInternal(descriptor, animated)
       initialized = true
     }
   }
 
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
     mainScope.launch {
-      Logger.d(TAG, "showBoardAndSearch($descriptor, $searchQuery)")
+      Logger.d(TAG, "showBoardAndSearch($descriptor, $animated, $searchQuery)")
 
       // we don't actually need to do anything here because you can't tap board links in the browse
       // controller set the board just in case?
@@ -731,7 +737,9 @@ class BrowseController(context: Context) : ThreadController(context),
     initialized = true
   }
 
-  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor) {
+  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
+
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
     var splitNav: SplitNavigationController? = null
@@ -750,12 +758,12 @@ class BrowseController(context: Context) : ThreadController(context),
     // so we don't need to switch between left and right controllers
     if (splitNav == null) {
       if (slideNav != null) {
-        slideNav.switchToController(true)
+        slideNav.switchToController(true, animated)
       } else {
         if (navigationController != null) {
           // We wouldn't want to pop BrowseController when opening a board
           if (navigationController!!.top !is BrowseController) {
-            navigationController!!.popController(true)
+            navigationController!!.popController(animated)
           }
         }
       }

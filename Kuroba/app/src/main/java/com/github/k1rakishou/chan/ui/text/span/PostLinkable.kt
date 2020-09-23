@@ -129,6 +129,11 @@ class PostLinkable(
       && other.type == type
   }
 
+  override fun toString(): String {
+    return "PostLinkable(key=$key, linkableValue=$linkableValue, type=$type, " +
+      "isSpoilerVisible=$isSpoilerVisible, markedNo=$markedNo)"
+  }
+
   data class Link(
     val type: Type,
     var key: CharSequence,

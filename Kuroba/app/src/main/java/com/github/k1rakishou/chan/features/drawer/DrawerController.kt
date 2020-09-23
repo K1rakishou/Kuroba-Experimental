@@ -582,7 +582,7 @@ class DrawerController(
             currentTopThreadController.showThread(descriptor)
           }
           is ChanDescriptor.CatalogDescriptor -> {
-            currentTopThreadController.showBoard(descriptor.boardDescriptor)
+            currentTopThreadController.showBoard(descriptor.boardDescriptor, true)
           }
         }
       }

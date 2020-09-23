@@ -239,6 +239,7 @@ public class ChanSettings {
     public static final BooleanSetting imageViewerGestures;
     public static final StringSetting jsCaptchaCookies;
     public static final BooleanSetting loadLastOpenedBoardUponAppStart;
+    public static final BooleanSetting loadLastOpenedThreadUponAppStart;
 
     // Reply
     public static final BooleanSetting postPinThread;
@@ -387,6 +388,7 @@ public class ChanSettings {
             imageViewerGestures = new BooleanSetting(p, "image_viewer_gestures", true);
             jsCaptchaCookies = new StringSetting(p, "js_captcha_cookies", EMPTY_JSON);
             loadLastOpenedBoardUponAppStart = new BooleanSetting(p, "load_last_opened_board_upon_app_start", true);
+            loadLastOpenedThreadUponAppStart = new BooleanSetting(p, "load_last_opened_thread_upon_app_start", true);
 
             // Reply
             postPinThread = new BooleanSetting(p, "preference_pin_on_post", false);
