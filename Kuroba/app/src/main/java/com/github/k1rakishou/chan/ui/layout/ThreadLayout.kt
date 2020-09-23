@@ -405,16 +405,16 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showExternalThread(threadDescriptor)
   }
 
-  override suspend fun showBoard(boardDescriptor: BoardDescriptor) {
-    Logger.d(TAG, "showBoard($boardDescriptor)")
+  override suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showBoard($boardDescriptor, $animated)")
 
-    callback.showBoard(boardDescriptor)
+    callback.showBoard(boardDescriptor, animated)
   }
 
-  override suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?) {
-    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $searchQuery)")
+  override suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
+    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $animated, $searchQuery)")
 
-    callback.showBoardAndSearch(boardDescriptor, searchQuery)
+    callback.showBoardAndSearch(boardDescriptor, animated, searchQuery)
   }
 
   override fun showPostsPopup(forPost: Post, posts: List<Post>) {
@@ -943,8 +943,8 @@ class ThreadLayout @JvmOverloads constructor(
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
-    suspend fun showBoard(descriptor: BoardDescriptor)
-    suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?)
+    suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
+    suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?)
 
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)

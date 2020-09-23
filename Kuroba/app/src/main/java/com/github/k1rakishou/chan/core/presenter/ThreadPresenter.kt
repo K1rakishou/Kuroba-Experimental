@@ -1098,6 +1098,10 @@ class ThreadPresenter @Inject constructor(
       val siteName = currentChanDescriptor?.siteName()
         ?: return@post
 
+      if (ChanSettings.verboseLogs.get()) {
+        Logger.d(TAG, "onPostLinkableClicked, linkable=${linkable}")
+      }
+
       if (linkable.type == PostLinkable.Type.QUOTE && isBound) {
         val postId = linkable.linkableValue.extractLongOrNull()
         if (postId == null) {
@@ -1166,7 +1170,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.showBoard(boardDescriptor)
+        threadPresenterCallback?.showBoard(boardDescriptor, true)
         return@post
       }
 
@@ -1185,7 +1189,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.showBoardAndSearch(boardDescriptor, searchLink.search)
+        threadPresenterCallback?.showBoardAndSearch(boardDescriptor, true, searchLink.search)
       }
     }
   }
@@ -1543,8 +1547,8 @@ class ThreadPresenter @Inject constructor(
     fun clipboardPost(post: Post)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
-    suspend fun showBoard(boardDescriptor: BoardDescriptor)
-    suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, searchQuery: String?)
+    suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
+    suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?)
     fun openLink(link: String)
     fun openReportView(post: Post)
     fun showPostsPopup(forPost: Post, posts: List<Post>)

@@ -468,17 +468,17 @@ open class ViewThreadController(
       .show()
   }
 
-  override suspend fun showBoard(descriptor: BoardDescriptor) {
+  override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
     mainScope.launch {
-      Logger.d(TAG, "showBoard($descriptor)")
-      showBoardInternal(descriptor, null)
+      Logger.d(TAG, "showBoard($descriptor, $animated)")
+      showBoardInternal(descriptor, animated, null)
     }
   }
 
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, searchQuery: String?) {
+  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
     mainScope.launch {
-      Logger.d(TAG, "showBoardAndSearch($descriptor, $searchQuery)")
-      showBoardInternal(descriptor, searchQuery)
+      Logger.d(TAG, "showBoardAndSearch($descriptor, $animated, $searchQuery)")
+      showBoardInternal(descriptor, animated, searchQuery)
     }
   }
 
@@ -491,8 +491,8 @@ open class ViewThreadController(
     }
   }
 
-  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, searchQuery: String?) {
-    Logger.d(TAG, "showBoardInternal($boardDescriptor, $searchQuery)")
+  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
+    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated, $searchQuery)")
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
@@ -503,7 +503,7 @@ open class ViewThreadController(
       }
 
       // slide layout
-      doubleNavigationController!!.switchToController(true)
+      doubleNavigationController!!.switchToController(true, animated)
 
       return
     }
@@ -533,7 +533,7 @@ open class ViewThreadController(
 
     if (browseController != null) {
       browseController.setBoard(boardDescriptor)
-      requireNavController().popController(false)
+      requireNavController().popController(animated)
 
       // search after we're at the browse controller
       if (searchQuery != null) {

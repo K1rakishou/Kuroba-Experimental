@@ -55,7 +55,6 @@ import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -63,7 +62,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -428,70 +426,45 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    if (!ChanSettings.loadLastOpenedBoardUponAppStart.get()) {
-      Logger.d(TAG, "restoreFresh() loadLastOpenedBoardUponAppStart == false, restoreWithFirstActiveBoard()")
-      restoreWithFirstActiveBoard()
+    val boardToOpen = getBoardToOpen()
+    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}")
+
+    if (boardToOpen != null) {
+      browseController?.showBoard(boardToOpen, false)
     } else {
-      Logger.d(TAG, "restoreFresh() loadLastOpenedBoardUponAppStart == true, restoreWithLastViewedBoard()")
-      restoreWithLastViewedBoard()
-    }
-  }
-
-  private suspend fun restoreWithFirstActiveBoard() {
-    var hasBoardDescriptor = false
-
-    val firstSiteDescriptor = siteManager.firstSiteDescriptor()
-    if (firstSiteDescriptor != null) {
-      val firstBoardDescriptor = boardManager.firstBoardDescriptor(firstSiteDescriptor)
-      if (firstBoardDescriptor != null) {
-        Logger.d(TAG, "restoreWithFirstActiveBoard() firstBoardDescriptor != null, showBoard()")
-        browseController?.showBoard(firstBoardDescriptor)
-        hasBoardDescriptor = true
-      }
-    }
-
-    if (!hasBoardDescriptor) {
-      Logger.d(TAG, "restoreWithFirstActiveBoard() firstBoardDescriptor == null, loadWithDefaultBoard()")
       browseController?.loadWithDefaultBoard()
     }
 
-    val firstThreadNavElement = historyNavigationManager.getFirstThreadNavElement()
-    if (firstThreadNavElement is NavHistoryElement.Thread) {
-      Logger.d(TAG, "restoreWithFirstActiveBoard() firstThreadNavElement != null, loadThread()")
-      loadThread(firstThreadNavElement.descriptor)
+    val threadToOpen = getThreadToOpen()
+    Logger.d(TAG, "restoreFresh() getThreadToOpen returned ${threadToOpen}")
+
+    if (threadToOpen != null) {
+      loadThread(threadToOpen)
     }
   }
 
-  private suspend fun restoreWithLastViewedBoard() {
-    val topNavElement = historyNavigationManager.getNavElementAtTop()
-    if (topNavElement == null) {
-      Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement == null, loadWithDefaultBoard()")
-      browseController?.loadWithDefaultBoard()
-      return
+  private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
+    val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
+    Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
+
+    if (loadLastOpenedThreadUponAppStart) {
+      return historyNavigationManager.getFirstThreadNavElement()?.descriptor()?.threadDescriptorOrNull()
     }
 
-    when (topNavElement) {
-      is NavHistoryElement.Catalog -> {
-        Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement is Catalog, showBoard()")
-        browseController?.showBoard(topNavElement.descriptor.boardDescriptor)
-      }
-      is NavHistoryElement.Thread -> {
-        Logger.d(TAG, "restoreWithLastViewedBoard() topNavElement is Thread, loadThread()")
+    return null
+  }
 
-        val catalogNavElement = historyNavigationManager.getFirstCatalogNavElement()
-        if (catalogNavElement != null) {
-          require(catalogNavElement is NavHistoryElement.Catalog) {
-            "catalogNavElement is not catalog!"
-          }
+  private fun getBoardToOpen(): BoardDescriptor? {
+    val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
+    Logger.d(TAG, "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
-          browseController?.showBoard(catalogNavElement.descriptor.boardDescriptor)
-        } else {
-          browseController?.loadWithDefaultBoard()
-        }
+    if (loadLastOpenedBoardUponAppStart) {
+      return historyNavigationManager.getFirstCatalogNavElement()?.descriptor()?.boardDescriptor()
+    }
 
-        loadThread(topNavElement.descriptor)
-      }
-    }.exhaustive
+    return siteManager.firstSiteDescriptor()?.let { firstSiteDescriptor ->
+      return@let boardManager.firstBoardDescriptor(firstSiteDescriptor)
+    }
   }
 
   fun loadThread(postDescriptor: PostDescriptor) {
