@@ -30,6 +30,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.view.ViewCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
@@ -592,22 +594,37 @@ public class FastScroller
 
     private void verticalScrollTo(float y) {
         final int[] scrollbarRange = getVerticalRange();
-        y = Math.max(scrollbarRange[0], Math.min(scrollbarRange[1], y));
-        if (Math.abs(mVerticalThumbCenterY - y) < 2) {
-            return;
+        float touchFraction = calculateTouchFraction(y, scrollbarRange);
+
+        int scrollPosition = (int) (mRecyclerView.getAdapter().getItemCount() * touchFraction);
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+
+        if (layoutManager instanceof GridLayoutManager) {
+            ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(scrollPosition, 0);
+        } else if (layoutManager instanceof LinearLayoutManager) {
+            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(scrollPosition, 0);
         }
-        int scrollingBy = scrollTo(mVerticalDragY,
-                y,
-                scrollbarRange,
-                mRecyclerView.computeVerticalScrollRange(),
-                mRecyclerView.computeVerticalScrollOffset(),
-                mRecyclerViewHeight,
-                mVerticalDragThumbHeight
-        );
-        if (scrollingBy != 0) {
-            mRecyclerView.scrollBy(0, scrollingBy);
+    }
+
+    private float calculateTouchFraction(float y, int[] scrollbarRange) {
+        if (scrollbarRange[0] > scrollbarRange[1]) {
+            int tmp = scrollbarRange[1];
+            scrollbarRange[1] = scrollbarRange[0];
+            scrollbarRange[0] = tmp;
         }
-        mVerticalDragY = y;
+
+        if (y < scrollbarRange[0]) {
+            return 0f;
+        }
+
+        if (y > scrollbarRange[1]) {
+            return 1f;
+        }
+
+        float scrollbarHeight = scrollbarRange[1] - scrollbarRange[0];
+        float convertedY = y - ((float) scrollbarRange[0]);
+
+        return convertedY / scrollbarHeight;
     }
 
     private void horizontalScrollTo(float x) {
@@ -662,8 +679,10 @@ public class FastScroller
         boolean insideRTLorLTR = isLayoutRTL()
                 ? x <= mRecyclerViewLeftPadding + mTargetWidth / 2.0f
                 : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mTargetWidth;
-        return insideRTLorLTR && y >= mVerticalThumbCenterY - verticalThumbHeight / 2.0f - mTargetWidth
-                && y <= mVerticalThumbCenterY + verticalThumbHeight / 2.0f + mTargetWidth;
+        return insideRTLorLTR;
+
+//        return insideRTLorLTR && y >= mVerticalThumbCenterY - verticalThumbHeight / 2.0f - mTargetWidth
+//                && y <= mVerticalThumbCenterY + verticalThumbHeight / 2.0f + mTargetWidth;
     }
 
     @VisibleForTesting
