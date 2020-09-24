@@ -37,6 +37,7 @@ class AddBoardsController(
   private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var checkAll: MaterialButton
   private lateinit var cancel: MaterialButton
   private lateinit var addBoards: MaterialButton
   private lateinit var addBoardsExecutor: RendezvousCoroutineExecutor
@@ -51,6 +52,7 @@ class AddBoardsController(
 
     searchView = view.findViewById(R.id.search_view)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    checkAll = view.findViewById(R.id.check_uncheck_all_boards)
     cancel = view.findViewById(R.id.cancel_adding_boards)
     addBoards = view.findViewById(R.id.add_boards)
     outsideArea = view.findViewById(R.id.outside_area)
@@ -68,14 +70,19 @@ class AddBoardsController(
       pop()
     }
 
+    addBoardsExecutor = RendezvousCoroutineExecutor(mainScope)
+
+    checkAll.setOnClickListener {
+      addBoardsExecutor.post {
+        presenter.checkUncheckAll(searchView.text)
+      }
+    }
     addBoards.setOnClickListener {
       addBoardsExecutor.post {
         presenter.addSelectedBoards()
         pop()
       }
     }
-
-    addBoardsExecutor = RendezvousCoroutineExecutor(mainScope)
 
     compositeDisposable += presenter.listenForStateChanges()
       .subscribe { state -> onStateChanged(state) }

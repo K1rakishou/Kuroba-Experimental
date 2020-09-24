@@ -294,6 +294,29 @@ class BoardManager(
     currentBoardSubject.onNext(CurrentBoard.create(boardDescriptor))
   }
 
+  fun viewBoards(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Unit) {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    lock.read {
+      boardsMap[siteDescriptor]?.forEach { (_, chanBoard) ->
+        when (boardViewMode) {
+          BoardViewMode.AllBoards -> func(chanBoard)
+          BoardViewMode.OnlyActiveBoards -> {
+            if (chanBoard.active) {
+              func(chanBoard)
+            }
+          }
+          BoardViewMode.OnlyNonActiveBoards -> {
+            if (!chanBoard.active) {
+              func(chanBoard)
+            }
+          }
+        }
+      }
+    }
+  }
+
   fun viewAllActiveBoards(func: (ChanBoard) -> Unit) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
@@ -357,11 +380,19 @@ class BoardManager(
     }
   }
 
-  fun getTotalCount(): Int {
+  fun getTotalCount(onlyActive: Boolean = false): Int {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    return lock.read { boardsMap.values.sumBy { map -> map.size } }
+    return lock.read {
+      boardsMap.values.sumBy { innerMap ->
+        if (onlyActive) {
+          return@sumBy innerMap.values.count { chanBoard -> chanBoard.active }
+        } else {
+          return@sumBy innerMap.size
+        }
+      }
+    }
   }
 
   fun onBoardMoved(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
@@ -545,6 +576,12 @@ class BoardManager(
         return Board(boardDescriptor)
       }
     }
+  }
+
+  enum class BoardViewMode {
+    AllBoards,
+    OnlyActiveBoards,
+    OnlyNonActiveBoards
   }
 
   companion object {

@@ -99,19 +99,33 @@ class AddBoardsPresenter(
     showBoardsWithSearchQuery(query)
   }
 
-  private fun showBoardsWithSearchQuery(query: String = "") {
+  fun checkUncheckAll(query: String) {
+    val selectAll = selectedBoards.size != boardManager.getTotalCount(onlyActive = false)
+
+    if (selectAll) {
+      boardManager.viewBoards(siteDescriptor, BoardManager.BoardViewMode.OnlyNonActiveBoards) { chanBoard ->
+        selectedBoards.add(chanBoard.boardDescriptor)
+      }
+    } else {
+      selectedBoards.clear()
+    }
+
+    showBoardsWithSearchQuery(query, selectAllBoards = selectAll)
+  }
+
+  private fun showBoardsWithSearchQuery(query: String = "", selectAllBoards: Boolean = false) {
     val matchedBoards = mutableListWithCap<SelectableBoardCellData>(32)
 
-    boardManager.viewAllBoards(siteDescriptor) { chanBoard ->
-      if (chanBoard.active) {
-        return@viewAllBoards
+    boardManager.viewBoards(siteDescriptor, BoardManager.BoardViewMode.OnlyNonActiveBoards) { chanBoard ->
+      val isSelected = if (selectAllBoards) {
+        selectedBoards.isNotEmpty()
+      } else {
+        chanBoard.boardDescriptor in selectedBoards
       }
-
-      val isSelected = chanBoard.boardDescriptor in selectedBoards
 
       if (query.isNotEmpty()) {
         if (!chanBoard.boardCode().contains(query, ignoreCase = true)) {
-          return@viewAllBoards
+          return@viewBoards
         }
       }
 
