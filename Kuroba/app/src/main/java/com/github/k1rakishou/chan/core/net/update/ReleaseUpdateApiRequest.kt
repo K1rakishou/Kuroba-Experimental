@@ -107,10 +107,10 @@ class ReleaseUpdateApiRequest(
   private fun readVersionCode(responseRelease: ReleaseUpdateApiResponse, reader: JsonReader) {
     try {
       responseRelease.versionCodeString = reader.nextString()
-      val versionPattern = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})")
+      val versionPattern = VERSION_CODE_PATTERN
       val versionMatcher = versionPattern.matcher(responseRelease.versionCodeString)
       
-      if (versionMatcher.matches()) {
+      if (versionMatcher.find()) {
         responseRelease.versionCode = calculateVersionCode(versionMatcher)
       }
     } catch (e: Exception) {
@@ -139,5 +139,7 @@ class ReleaseUpdateApiRequest(
 
   companion object {
     private const val TAG = "ReleaseUpdateApiRequest"
+
+    private val VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release")
   }
 }
