@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.AppConstants;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -41,8 +42,6 @@ import okhttp3.ResponseBody;
 
 public class CaptchaNoJsPresenterV2 {
     private static final String TAG = "CaptchaNoJsPresenterV2";
-    private static final String userAgentHeader =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36";
     private static final String acceptHeader =
             "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3";
     private static final String acceptEncodingHeader = "deflate, br";
@@ -129,7 +128,7 @@ public class CaptchaNoJsPresenterV2 {
                     Request request = new Request.Builder().url(recaptchaUrl)
                             .post(body)
                             .header("Referer", recaptchaUrl)
-                            .header("User-Agent", userAgentHeader)
+                            .header("User-Agent", AppConstants.USER_AGENT)
                             .header("Accept", acceptHeader)
                             .header("Accept-Encoding", acceptEncodingHeader)
                             .header("Accept-Language", acceptLanguageHeader)
@@ -227,7 +226,7 @@ public class CaptchaNoJsPresenterV2 {
 
         Request request = new Request.Builder().url(recaptchaUrl)
                 .header("Referer", baseUrl)
-                .header("User-Agent", userAgentHeader)
+                .header("User-Agent", AppConstants.USER_AGENT)
                 .header("Accept", acceptHeader)
                 .header("Accept-Encoding", acceptEncodingHeader)
                 .header("Accept-Language", acceptLanguageHeader)
