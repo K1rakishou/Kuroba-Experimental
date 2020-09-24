@@ -29,25 +29,16 @@ class ForPlebs : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://archive.4plebs.org/favicon.ico".toHttpUrl()
+    val ROOT: String = "https://archive.4plebs.org/"
+    val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.ForPlebs.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("4plebs")
+    val CLASS: Class<out Site> = ForPlebs::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://archive.4plebs.org/favicon.ico".toHttpUrl()
-    override val ROOT: String
-      get() = "https://archive.4plebs.org/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.ForPlebs.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("4plebs")
-    override val CLASS: Class<out Site>
-      get() = ForPlebs::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }

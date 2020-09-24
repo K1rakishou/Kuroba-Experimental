@@ -29,25 +29,16 @@ class RebeccaBlackTech : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://archive.rebeccablacktech.com/favicon.ico".toHttpUrl()
+    val ROOT: String = "https://archive.rebeccablacktech.com/"
+    val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.RebeccaBlackTech.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("rebeccablacktech")
+    val CLASS: Class<out Site> = RebeccaBlackTech::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://archive.rebeccablacktech.com/favicon.ico".toHttpUrl()
-    override val ROOT: String
-      get() = "https://archive.rebeccablacktech.com/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.RebeccaBlackTech.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("rebeccablacktech")
-    override val CLASS: Class<out Site>
-      get() = RebeccaBlackTech::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }

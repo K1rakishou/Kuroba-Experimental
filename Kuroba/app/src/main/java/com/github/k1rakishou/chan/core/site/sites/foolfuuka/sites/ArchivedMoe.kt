@@ -29,25 +29,16 @@ class ArchivedMoe : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://archived.moe/favicon.ico".toHttpUrl()
+    val ROOT: String = "https://archived.moe/"
+    val ROOT_URL: HttpUrl = ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.ArchivedMoe.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("archived")
+    val CLASS: Class<out Site> = ArchivedMoe::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://archived.moe/favicon.ico".toHttpUrl()
-    override val ROOT: String
-      get() = "https://archived.moe/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.ArchivedMoe.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("archived")
-    override val CLASS: Class<out Site>
-      get() = ArchivedMoe::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }
