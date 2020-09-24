@@ -589,10 +589,17 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Media general group -->
     <string name="settings_group_saving">Media saving</string>
+
     <string name="setting_save_board_folder">Save images in board folders</string>
-    <string name="setting_save_board_folder_description">Create a folder for each board when saving</string>
+    <string name="setting_save_board_folder_description">Create a folder for each board when saving individual images</string>
     <string name="setting_save_thread_folder">Save images in thread folders</string>
-    <string name="setting_save_thread_folder_description">Create a folder for each thread when saving</string>
+    <string name="setting_save_thread_folder_description">Create a folder for each thread when saving individual images</string>
+
+    <string name="setting_save_album_board_folder">Save albums in board folders</string>
+    <string name="setting_save_album_board_folder_description">Create a folder for each board when saving albums</string>
+    <string name="setting_save_album_thread_folder">Save albums in thread folders</string>
+    <string name="setting_save_album_thread_folder_description">Create a folder for each thread when saving albums</string>
+
     <string name="setting_save_server_filename">Save server filename</string>
     <string name="setting_save_server_filename_description">Save the image with the filename the site assigned. If disabled, save the image with the filename the uploader assigned.</string>
     <string name="save_location_screen">Save location</string>

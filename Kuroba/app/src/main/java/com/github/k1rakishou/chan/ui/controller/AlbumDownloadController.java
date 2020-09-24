@@ -32,6 +32,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
@@ -43,6 +45,7 @@ import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -54,7 +57,6 @@ import java.util.Locale;
 import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
 import static com.github.k1rakishou.chan.Chan.inject;
@@ -65,7 +67,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
-        implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks {
+        implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks, WindowInsetsListener {
     private GridRecyclerView recyclerView;
     private FloatingActionButton download;
 
@@ -79,8 +81,9 @@ public class AlbumDownloadController
     ImageSaver imageSaver;
     @Inject
     ThemeHelper themeHelper;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
-    private CompositeDisposable compositeDisposable;
     private boolean allChecked = true;
 
     public AlbumDownloadController(Context context) {
@@ -111,13 +114,16 @@ public class AlbumDownloadController
         recyclerView.setAdapter(adapter);
 
         imageSaver.setBundledTaskCallback(this);
-        compositeDisposable = new CompositeDisposable();
+
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
+        onInsetsChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        compositeDisposable.dispose();
+
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
         imageSaver.removeBundleTaskCallback();
     }
 
@@ -129,6 +135,11 @@ public class AlbumDownloadController
             return true;
         }
         return super.onBack();
+    }
+
+    @Override
+    public void onInsetsChanged() {
+        KotlinExtensionsKt.updateMargins(download, null, null, null, null, null, globalWindowInsetsManager.bottom());
     }
 
     @Override
@@ -181,8 +192,8 @@ public class AlbumDownloadController
 
     @Nullable
     private String getSubFolder(String siteNameSafe) {
-        if (ChanSettings.saveBoardFolder.get()) {
-            if (ChanSettings.saveThreadFolder.get()) {
+        if (ChanSettings.saveAlbumBoardFolder.get()) {
+            if (ChanSettings.saveAlbumThreadFolder.get()) {
                 return appendAdditionalSubDirectories();
             } else {
                 return siteNameSafe + File.separator + chanDescriptor.boardCode();
@@ -200,7 +211,7 @@ public class AlbumDownloadController
                 .onErrorReturnItem(ImageSaver.BundledImageSaveResult.UnknownError)
                 .subscribe(this::onResultEvent);
 
-        compositeDisposable.add(disposable);
+        compositeDisposable().add(disposable);
     }
 
     private void onResultEvent(ImageSaver.BundledImageSaveResult result) {

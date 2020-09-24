@@ -267,6 +267,8 @@ public class ChanSettings {
     public static final SavedFilesBaseDirSetting saveLocation;
     public static final BooleanSetting saveBoardFolder;
     public static final BooleanSetting saveThreadFolder;
+    public static final BooleanSetting saveAlbumBoardFolder;
+    public static final BooleanSetting saveAlbumThreadFolder;
     public static final BooleanSetting saveServerFilename;
 
     // Video settings
@@ -422,6 +424,8 @@ public class ChanSettings {
             saveLocation = new SavedFilesBaseDirSetting(p);
             saveBoardFolder = new BooleanSetting(p, "preference_save_subboard", false);
             saveThreadFolder = new BooleanSetting(p, "preference_save_subthread", false);
+            saveAlbumBoardFolder = new BooleanSetting(p, "preference_save_album_subboard", false);
+            saveAlbumThreadFolder = new BooleanSetting(p, "preference_save_album_subthread", false);
             saveServerFilename = new BooleanSetting(p, "preference_image_save_original", false);
 
             // Video Settings

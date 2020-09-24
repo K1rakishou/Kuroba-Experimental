@@ -224,6 +224,7 @@ class MediaSettingsScreen(
           callback = { mediaSettingsDelegate.showUseSAFOrOldAPIForSaveLocationDialog() }
         )
 
+        // Individual images
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = MediaScreen.MediaSavingGroup.SaveBoardFolder,
@@ -240,6 +241,26 @@ class MediaSettingsScreen(
           setting = ChanSettings.saveThreadFolder,
           dependsOnSetting = ChanSettings.saveBoardFolder
         )
+        // =============
+
+        // Albums
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = MediaScreen.MediaSavingGroup.SaveAlbumBoardFolder,
+          topDescriptionIdFunc = { R.string.setting_save_album_board_folder },
+          bottomDescriptionIdFunc = { R.string.setting_save_album_board_folder_description },
+          setting = ChanSettings.saveAlbumBoardFolder
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = MediaScreen.MediaSavingGroup.SaveAlbumThreadFolder,
+          topDescriptionIdFunc = { R.string.setting_save_album_thread_folder },
+          bottomDescriptionIdFunc = { R.string.setting_save_album_thread_folder_description },
+          setting = ChanSettings.saveAlbumThreadFolder,
+          dependsOnSetting = ChanSettings.saveAlbumBoardFolder
+        )
+        // =============
 
         group += BooleanSettingV2.createBuilder(
           context = context,
