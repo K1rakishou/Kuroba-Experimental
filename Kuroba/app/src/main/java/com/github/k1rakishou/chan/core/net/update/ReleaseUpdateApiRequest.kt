@@ -140,6 +140,6 @@ class ReleaseUpdateApiRequest(
   companion object {
     private const val TAG = "ReleaseUpdateApiRequest"
 
-    private val VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release")
+    private val VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release$")
   }
 }
