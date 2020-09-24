@@ -29,25 +29,16 @@ class B4k : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://b4k.co/assets/favicons/luna-alt.png".toHttpUrl()
+    val ROOT: String = "https://arch.b4k.co/"
+    val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.B4k.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("b4k")
+    val CLASS: Class<out Site> = B4k::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://b4k.co/assets/favicons/luna-alt.png".toHttpUrl()
-    override val ROOT: String
-      get() = "https://arch.b4k.co/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.B4k.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("b4k")
-    override val CLASS: Class<out Site>
-      get() = B4k::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }

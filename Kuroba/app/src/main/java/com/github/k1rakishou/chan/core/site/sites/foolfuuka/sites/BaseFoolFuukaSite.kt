@@ -19,55 +19,31 @@ abstract class BaseFoolFuukaSite : CommonSite() {
   final override fun commentParserType(): CommentParserType = CommentParserType.FoolFuukaParser
   final override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties = chunkDownloaderSiteProperties
 
-  interface FoolFuukaSiteStatic {
-    val FAVICON_URL: HttpUrl
-    val ROOT: String
-    val ROOT_URL: HttpUrl
-    val SITE_NAME: String
-    val MEDIA_HOSTS: Array<String>
-    val NAMES: Array<String>
-    val CLASS: Class<out Site>
-  }
+  class BaseFoolFuukaUrlHandler(
+    override val url: HttpUrl,
+    override val mediaHosts: Array<String>,
+    override val names: Array<String>,
+    private val siteClass: Class<out Site>
+  ) : CommonSiteUrlHandler() {
 
-  companion object {
-    lateinit var foolFuukaSiteStatic: FoolFuukaSiteStatic
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+      // https://archived.moe/
+      val baseUrl = url.toString()
 
-    val URL_HANDLER = object : CommonSiteUrlHandler() {
-      override val url: HttpUrl
-        get() = foolFuukaSiteStatic.ROOT_URL
-      override val mediaHosts: Array<String>
-        get() = foolFuukaSiteStatic.MEDIA_HOSTS
-      override val names: Array<String>
-        get() = foolFuukaSiteStatic.NAMES
-
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
-        when (chanDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> {
-            return url.newBuilder()
-              .addPathSegment(chanDescriptor.boardCode())
-              .toString()
-          }
-          is ChanDescriptor.ThreadDescriptor -> {
-            if (postNo == null) {
-              // https://archived.moe/a/thread/208364509/
-              return url.newBuilder()
-                .addPathSegment(chanDescriptor.boardCode())
-                .addPathSegment("thread")
-                .addPathSegment(chanDescriptor.threadNo.toString())
-                .toString()
-            } else {
-              // https://archived.moe/a/thread/208364509#208364685
-              return url.newBuilder()
-                .addPathSegment(chanDescriptor.boardCode())
-                .addPathSegment("thread")
-                .addPathSegment("${chanDescriptor.threadNo}#${postNo}")
-                .toString()
-            }
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> return "${baseUrl}${chanDescriptor.boardCode()}"
+        is ChanDescriptor.ThreadDescriptor -> {
+          if (postNo == null) {
+            // https://archived.moe/a/thread/208364509/
+            return "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
+          } else {
+            // https://archived.moe/a/thread/208364509#208364685
+            return "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#${postNo}"
           }
         }
       }
-
-      override fun getSiteClass(): Class<out Site> = foolFuukaSiteStatic.CLASS
     }
+
+    override fun getSiteClass(): Class<out Site> = siteClass
   }
 }

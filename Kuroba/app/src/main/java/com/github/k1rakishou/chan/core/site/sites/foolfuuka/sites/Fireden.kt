@@ -29,25 +29,16 @@ class Fireden : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://boards.fireden.net/favicon.ico".toHttpUrl()
+    val ROOT: String = "https://boards.fireden.net/"
+    val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.Fireden.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("fireden")
+    val CLASS: Class<out Site> = Fireden::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://boards.fireden.net/favicon.ico".toHttpUrl()
-    override val ROOT: String
-      get() = "https://boards.fireden.net/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.Fireden.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("fireden")
-    override val CLASS: Class<out Site>
-      get() = Fireden::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }

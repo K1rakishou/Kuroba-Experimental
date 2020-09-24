@@ -29,25 +29,16 @@ class Nyafuu : BaseFoolFuukaSite() {
     setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
-  companion object : FoolFuukaSiteStatic {
-    init {
-      foolFuukaSiteStatic = this
-    }
+  companion object {
+    val FAVICON_URL: HttpUrl = "https://archive.nyafuu.org/favicon.ico".toHttpUrl()
+    val ROOT: String = "https://archive.nyafuu.org/"
+    val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
+    val SITE_NAME: String = ArchiveType.Nyafuu.domain
+    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val NAMES: Array<String> = arrayOf("nyafuu")
+    val CLASS: Class<out Site> = Nyafuu::class.java
 
-    override val FAVICON_URL: HttpUrl
-      get() = "https://archive.nyafuu.org/favicon.ico".toHttpUrl()
-    override val ROOT: String
-      get() = "https://archive.nyafuu.org/"
-    override val ROOT_URL: HttpUrl
-      get() =  ROOT.toHttpUrl()
-    override val SITE_NAME: String
-      get() = ArchiveType.Nyafuu.domain
-    override val MEDIA_HOSTS: Array<String>
-      get() = arrayOf(ROOT_URL.toString())
-    override val NAMES: Array<String>
-      get() = arrayOf("nyafuu")
-    override val CLASS: Class<out Site>
-      get() = Nyafuu::class.java
+    val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
 
 }
