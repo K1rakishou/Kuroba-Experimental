@@ -29,7 +29,7 @@ Latest beta version - https://kuroba.io:8443/latest_apk
 
 All beta versions - https://kuroba.io:8443/apks/0 (or here https://github.com/K1rakishou/Kuroba-Experimental/releases look for "Pre-release" versions)
 
-### New release version is available now (v0.2.1) - https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.1-release
+### New release version is available now (v0.2.2) - https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.2-release
 
 F-Droid version should be ready by September 25th.  (F-Droid status - https://gitlab.com/fdroid/fdroiddata/-/merge_requests/7450)
 
