@@ -20,8 +20,8 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
-
--keep,allowobfuscation @interface com.github.k1rakishou.common.DoNotStrip
+-dontobfuscate
+-keep @interface com.github.k1rakishou.common.DoNotStrip
 
 # Do not strip any method/class that is annotated with @DoNotStrip
 -keep @com.github.k1rakishou.common.DoNotStrip class *
@@ -38,7 +38,7 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Prevent R8 from leaving Data object members always null
--keepclassmembers,allowobfuscation class * {
+-keepclassmembers class * {
   @com.google.gson.annotations.SerializedName <fields>;
 }
 
