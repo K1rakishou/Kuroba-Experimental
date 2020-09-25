@@ -339,6 +339,8 @@ class DrawerController(
     bottomNavView.menu.findItem(R.id.action_search)?.isChecked = true
   }
 
+  // TODO(KurobaEx): Add "animated" flag and make sure we don't using animation when opening
+  //  boards/threads on app start
   suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false

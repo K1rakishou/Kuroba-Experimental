@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.ui.controller.settings.captcha
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.EMPTY_JSON

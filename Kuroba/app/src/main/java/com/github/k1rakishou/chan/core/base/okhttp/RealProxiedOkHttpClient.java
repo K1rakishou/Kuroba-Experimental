@@ -28,7 +28,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                     .connectTimeout(30, SECONDS)
                     .readTimeout(30, SECONDS)
                     .writeTimeout(30, SECONDS)
-                    .protocols(okHttpProtocols.protocols)
+                    .protocols(okHttpProtocols.getProtocols())
                     .dns(okHttpDns)
                     .build();
         }

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import android.content.Context
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -56,6 +57,8 @@ open class ArchivesManager(
   }
 
   fun initialize() {
+    Logger.d(TAG, "ArchivesManager.initialize()")
+
     applicationScope.launch(Dispatchers.Default) {
       initArchivesManager()
     }

@@ -237,7 +237,51 @@ class ThreadBookmark private constructor(
     return "ThreadBookmark(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
-      "stickyThread=$stickyThread, state=$state)"
+      "stickyThread=$stickyThread, state=${stateToString()})"
+  }
+
+  private fun stateToString(): String {
+    return buildString {
+      append("[")
+
+      if (state.get(BOOKMARK_STATE_WATCHING)) {
+        append("WATCHING ")
+      }
+
+      if (state.get(BOOKMARK_STATE_THREAD_DELETED)) {
+        append("DELETED ")
+      }
+
+      if (state.get(BOOKMARK_STATE_THREAD_ARCHIVED)) {
+        append("ARCHIVED ")
+      }
+
+      if (state.get(BOOKMARK_STATE_THREAD_CLOSED)) {
+        append("CLOSED ")
+      }
+
+      if (state.get(BOOKMARK_STATE_ERROR)) {
+        append("ERROR ")
+      }
+
+      if (state.get(BOOKMARK_STATE_THREAD_BUMP_LIMIT)) {
+        append("BUMP_LIMIT ")
+      }
+
+      if (state.get(BOOKMARK_STATE_THREAD_IMAGE_LIMIT)) {
+        append("IMAGE_LIMIT ")
+      }
+
+      if (state.get(BOOKMARK_STATE_FIRST_FETCH)) {
+        append("FIRST_FETCH ")
+      }
+
+      if (state.get(BOOKMARK_STATE_STICKY_NO_CAP)) {
+        append("STICKY_NO_CAP ")
+      }
+
+      append("]")
+    }
   }
 
   companion object {

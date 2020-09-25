@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.Logger
@@ -18,8 +17,6 @@ class BookmarkBackgroundWatcherWorker(
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
 

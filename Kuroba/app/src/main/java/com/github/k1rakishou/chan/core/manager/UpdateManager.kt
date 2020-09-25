@@ -30,7 +30,7 @@ import android.text.TextUtils
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient

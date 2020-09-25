@@ -3,6 +3,8 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -21,10 +23,17 @@ class SavedReplyManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val savedReplyMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>()
+  private val savedReplyMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>(128)
+  @GuardedBy("lock")
+  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    if (alreadyPreloaded) {
+      return
+    }
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
@@ -43,7 +52,10 @@ class SavedReplyManager(
         return
       }
 
-    lock.write { savedReplyMap[threadDescriptor] = savedReplies.toMutableList() }
+    lock.write {
+      savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
+      alreadyPreloadedSet.add(threadDescriptor)
+    }
   }
 
   fun isSaved(chanDescriptor: ChanDescriptor, postNo: Long, postSubNo: Long): Boolean {

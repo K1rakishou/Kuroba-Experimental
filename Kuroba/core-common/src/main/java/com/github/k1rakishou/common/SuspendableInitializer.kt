@@ -4,6 +4,8 @@ import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -75,7 +77,39 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     value.awaitSilently()
+
+    if (logStates) {
+      Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, done")
+    }
+
     return
+  }
+
+  fun awaitUntilInitializedBlocking() {
+    if (value.isCompleted) {
+      if (logStates) {
+        Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when already initialized")
+      }
+
+      // This will throw if it was initialized with an error
+      value.getCompleted()
+      return
+    }
+
+    if (logStates) {
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when not initialized, awaiting...")
+    }
+
+    val countDownLatch = CountDownLatch(1)
+    invokeAfterInitialized { countDownLatch.countDown() }
+
+    if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
+      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() DEADLOCK!!!")
+    }
+
+    if (logStates) {
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when not initialized, done")
+    }
   }
 
   fun isInitialized() = value.isCompleted

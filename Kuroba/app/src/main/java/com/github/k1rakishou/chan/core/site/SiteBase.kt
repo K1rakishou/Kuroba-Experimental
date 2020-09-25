@@ -17,7 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.SettingProvider
-import com.github.k1rakishou.chan.Chan.instance
+import com.github.k1rakishou.chan.Chan.Companion.instance
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager

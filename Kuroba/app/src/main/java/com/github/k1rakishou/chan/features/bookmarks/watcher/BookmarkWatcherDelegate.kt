@@ -225,7 +225,7 @@ class BookmarkWatcherDelegate(
     }
   }
 
-  private suspend fun processSuccessFetchResults(successFetchResults: List<ThreadBookmarkFetchResult.Success>) {
+  suspend fun processSuccessFetchResults(successFetchResults: List<ThreadBookmarkFetchResult.Success>) {
     val postsQuotingMe = parsePostRepliesUseCase.execute(successFetchResults)
 
     val fetchResultPairsList = successFetchResults.map { fetchResult ->
@@ -328,6 +328,10 @@ class BookmarkWatcherDelegate(
           deleted = false,
           stickyNoCap = originalPost.stickyThread is StickyThread.StickyUnlimited
         )
+
+        if (verboseLogsEnabled) {
+          Logger.d(TAG, "updateBookmark() threadBookmark=${threadBookmark}")
+        }
 
         threadBookmark.clearFirstFetchFlag()
       }

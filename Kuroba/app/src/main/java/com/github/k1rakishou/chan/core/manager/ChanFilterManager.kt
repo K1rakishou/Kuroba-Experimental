@@ -38,6 +38,7 @@ class ChanFilterManager(
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
+    Logger.d(TAG, "ChanFilterManager.initialize()")
     serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
     appScope.launch(Dispatchers.Default) {

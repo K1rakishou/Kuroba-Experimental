@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.FrameLayout
 import android.widget.ListView
 import androidx.appcompat.widget.AppCompatButton
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString

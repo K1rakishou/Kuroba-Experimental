@@ -82,8 +82,6 @@ class ParsePostRepliesUseCase(
               quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
               quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
             }
-
-            // TODO(KurobaEx): cross-thread quotes are not supported for now (do we even need them?)
           }
           is ReplyParser.ExtractedQuote.Quote -> {
             quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
@@ -100,6 +98,9 @@ class ParsePostRepliesUseCase(
     if (siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor()) == null) {
       return emptyMap()
     }
+
+    // Preload the saved replies (we need to do this manually every time).
+    savedReplyManager.preloadForThread(threadDescriptor)
 
     val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNoMap(
       quoteOwnerPostsMap,

@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.loader
 
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.model.ChanThread

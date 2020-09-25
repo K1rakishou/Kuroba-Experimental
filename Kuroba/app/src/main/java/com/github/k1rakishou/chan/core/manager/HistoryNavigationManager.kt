@@ -44,6 +44,7 @@ class HistoryNavigationManager(
   private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
 
   fun initialize() {
+    Logger.d(TAG, "HistoryNavigationManager.initialize()")
     serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
     appScope.launch {

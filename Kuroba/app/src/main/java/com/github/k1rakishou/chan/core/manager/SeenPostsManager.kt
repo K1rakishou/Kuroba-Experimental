@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -27,12 +28,23 @@ class SeenPostsManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val seenPostsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(32)
+  private val seenPostsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(128)
+  @GuardedBy("lock")
+  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (!isEnabled()) {
+      return
+    }
+
+    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    if (alreadyPreloaded) {
+      return
+    }
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
@@ -45,10 +57,6 @@ class SeenPostsManager(
   }
 
   private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (!isEnabled()) {
-      return
-    }
-
     val seenPosts = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)
       .safeUnwrap { error ->
         Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
@@ -57,7 +65,10 @@ class SeenPostsManager(
         return
       }
 
-    lock.write { seenPostsMap[threadDescriptor] = seenPosts.toMutableSet() }
+    lock.write {
+      seenPostsMap[threadDescriptor] = seenPosts.toMutableSet()
+      alreadyPreloadedSet.add(threadDescriptor)
+    }
   }
 
   fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {

@@ -4,6 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostHide
@@ -23,11 +24,20 @@ class PostHideManager(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val postHideMap = mutableMapOf<PostDescriptor, ChanPostHide>()
+  @GuardedBy("lock")
+  private val alreadyPreloadedForThreadsSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
+  @GuardedBy("lock")
+  private val alreadyPreloadedForCatalogsSet = hashSetWithCap<ChanDescriptor.CatalogDescriptor>(128)
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val alreadyPreloaded = lock.read { alreadyPreloadedForThreadsSet.contains(threadDescriptor) }
+    if (alreadyPreloaded) {
+      return
+    }
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
@@ -41,6 +51,11 @@ class PostHideManager(
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+    val alreadyPreloaded = lock.read { alreadyPreloadedForCatalogsSet.contains(catalogDescriptor) }
+    if (alreadyPreloaded) {
+      return
+    }
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForCatalog($catalogDescriptor) begin")
     }
@@ -63,6 +78,8 @@ class PostHideManager(
       chanPostHides.forEach { chanPostHide ->
         postHideMap[chanPostHide.postDescriptor] = chanPostHide
       }
+
+      alreadyPreloadedForThreadsSet.add(threadDescriptor)
     }
 
     Logger.d(TAG, "chanPostHideRepository.preloadForThreadInternal() " +
@@ -83,6 +100,8 @@ class PostHideManager(
       chanPostHides.forEach { chanPostHide ->
         postHideMap[chanPostHide.postDescriptor] = chanPostHide
       }
+
+      alreadyPreloadedForCatalogsSet.add(catalogDescriptor)
     }
 
     Logger.d(TAG, "chanPostHideRepository.preloadForCatalogInternal() " +

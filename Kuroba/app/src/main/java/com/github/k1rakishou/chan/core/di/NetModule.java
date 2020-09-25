@@ -114,7 +114,7 @@ public class NetModule {
         return new OkHttpClient.Builder()
                 .readTimeout(5, SECONDS)
                 .writeTimeout(5, SECONDS)
-                .protocols(okHttpProtocols.protocols)
+                .protocols(okHttpProtocols.getProtocols())
                 .dns(okHttpDns)
                 .build();
     }

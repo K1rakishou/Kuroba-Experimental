@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
@@ -23,12 +24,18 @@ class ChanThreadViewableInfoManager(
   private val suspendDebouncer = SuspendDebouncer(appScope)
 
   private val lock = ReentrantReadWriteLock()
-
   @GuardedBy("lock")
   private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
+  @GuardedBy("lock")
+  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    if (alreadyPreloaded) {
+      return
+    }
+
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
@@ -52,6 +59,8 @@ class ChanThreadViewableInfoManager(
         chanThreadViewableMap[threadDescriptor],
         chanThreadViewableInfo
       )
+
+      alreadyPreloadedSet.add(threadDescriptor)
     }
   }
 

@@ -45,6 +45,8 @@ open class SiteManager(
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
+    Logger.d(TAG, "SiteManager.initialize()")
+
     appScope.launch(Dispatchers.Default) {
       Logger.d(TAG, "loadSites() start")
       val time = measureTime { loadSitesInternal() }

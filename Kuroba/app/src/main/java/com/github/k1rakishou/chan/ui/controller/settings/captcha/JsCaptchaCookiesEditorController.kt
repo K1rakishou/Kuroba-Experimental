@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.ui.controller.settings.captcha
 
 import android.content.Context
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 

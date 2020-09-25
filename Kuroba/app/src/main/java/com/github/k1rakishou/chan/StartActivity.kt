@@ -41,7 +41,6 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.features.drawer.DrawerController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -96,8 +95,6 @@ class StartActivity : AppCompatActivity(),
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
-  lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
@@ -247,12 +244,6 @@ class StartActivity : AppCompatActivity(),
   }
 
   private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
-    bookmarksManager.initialize()
-    historyNavigationManager.initialize()
-    bookmarkWatcherCoordinator.initialize()
-    archivesManager.initialize()
-    chanFilterManager.initialize()
-
     updateManager.autoUpdateCheck()
 
     coroutineScope.launch {

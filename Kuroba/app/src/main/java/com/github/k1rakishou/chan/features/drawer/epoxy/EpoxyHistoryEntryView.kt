@@ -12,7 +12,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import com.airbnb.epoxy.*
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo

@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatCheckBox
-import com.github.k1rakishou.chan.Chan.inject
+import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
