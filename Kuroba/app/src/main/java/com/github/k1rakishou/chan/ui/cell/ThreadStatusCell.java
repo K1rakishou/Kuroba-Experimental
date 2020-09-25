@@ -232,7 +232,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             if (!callback.isWatching()) {
                 builder.append(getString(R.string.thread_refresh_bar_inactive));
             } else if (time <= 0) {
-                builder.append(getString(R.string.thread_refresh_now));
+                builder.append(getString(R.string.loading));
             } else {
                 builder.append(getString(R.string.thread_refresh_countdown, time));
             }

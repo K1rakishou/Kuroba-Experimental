@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
@@ -446,9 +447,9 @@ open class ViewThreadController(
     }
   }
 
-  override suspend fun showThread(descriptor: ThreadDescriptor) {
+  override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
     mainScope.launch {
-      Logger.d(TAG, "showThread($descriptor)")
+      Logger.d(TAG, "showThread($descriptor, $animated)")
       loadThread(descriptor)
     }
   }
@@ -577,7 +578,7 @@ open class ViewThreadController(
     if (chanThread != null && chanThread.chanDescriptor == threadDescriptor) {
       navigation.title = PostHelper.getTitle(chanThread.op, threadDescriptor)
     } else {
-      navigation.title = "Loading thread..."
+      navigation.title = getString(R.string.loading)
     }
   }
 

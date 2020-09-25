@@ -200,7 +200,7 @@ class BrowseController(context: Context) : ThreadController(context),
     // this controller is used for catalog views; displaying things on two rows for them middle
     // menu is how we want it done these need to be setup before the view is rendered,
     // otherwise the subtitle view is removed
-    navigation.title = getString(R.string.browse_controller_title_loading)
+    navigation.title = getString(R.string.loading)
     requireNavController().requireToolbar().updateTitle(navigation)
 
     // Presenter
@@ -625,20 +625,9 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  override suspend fun showThread(descriptor: ThreadDescriptor) {
-    mainScope.launch {
-      Logger.d(TAG, "showThread($descriptor)")
-
-      showThread(descriptor, true)
-    }
-  }
-
   override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
-    mainScope.launch {
-      Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
-
-      showThread(threadToOpenDescriptor)
-    }
+    Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
+    showThread(threadToOpenDescriptor, true)
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
@@ -663,78 +652,80 @@ class BrowseController(context: Context) : ThreadController(context),
   // Creates or updates the target ThreadViewController
   // This controller can be in various places depending on the layout
   // We dynamically search for it
-  suspend fun showThread(threadDescriptor: ThreadDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showThread($threadDescriptor, $animated)")
+  override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
+    mainScope.launch {
+      Logger.d(TAG, "showThread($descriptor, $animated)")
 
-    // The target ThreadViewController is in a split nav
-    // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
-    var splitNav: SplitNavigationController? = null
+      // The target ThreadViewController is in a split nav
+      // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
+      var splitNav: SplitNavigationController? = null
 
-    // The target ThreadViewController is in a slide nav
-    // (BrowseController -> SlideController -> ToolbarNavigationController)
-    var slideNav: ThreadSlideController? = null
-    if (doubleNavigationController is SplitNavigationController) {
-      splitNav = doubleNavigationController as SplitNavigationController?
-    }
-
-    if (doubleNavigationController is ThreadSlideController) {
-      slideNav = doubleNavigationController as ThreadSlideController?
-    }
-
-    when {
-      splitNav != null -> {
-        // Create a threadview inside a toolbarnav in the right part of the split layout
-        if (splitNav.getRightController() is StyledToolbarNavigationController) {
-          val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
-          if (navigationController.top is ViewThreadController) {
-            val viewThreadController = navigationController.top as ViewThreadController?
-            viewThreadController!!.drawerCallbacks = drawerCallbacks
-
-            viewThreadController.loadThread(threadDescriptor)
-            viewThreadController.onShow()
-          }
-        } else {
-          val navigationController = StyledToolbarNavigationController(context)
-          splitNav.setRightController(navigationController, animated)
-          val viewThreadController = ViewThreadController(context, threadDescriptor)
-          navigationController.pushController(viewThreadController, false)
-          viewThreadController.drawerCallbacks = drawerCallbacks
-        }
-        splitNav.switchToController(false, animated)
+      // The target ThreadViewController is in a slide nav
+      // (BrowseController -> SlideController -> ToolbarNavigationController)
+      var slideNav: ThreadSlideController? = null
+      if (doubleNavigationController is SplitNavigationController) {
+        splitNav = doubleNavigationController as SplitNavigationController?
       }
-      slideNav != null -> {
-        // Create a threadview in the right part of the slide nav *without* a toolbar
-        if (slideNav.getRightController() is ViewThreadController) {
-          (slideNav.getRightController() as ViewThreadController).loadThread(threadDescriptor)
-          (slideNav.getRightController() as ViewThreadController).onShow()
-        } else {
+
+      if (doubleNavigationController is ThreadSlideController) {
+        slideNav = doubleNavigationController as ThreadSlideController?
+      }
+
+      when {
+        splitNav != null -> {
+          // Create a threadview inside a toolbarnav in the right part of the split layout
+          if (splitNav.getRightController() is StyledToolbarNavigationController) {
+            val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
+            if (navigationController.top is ViewThreadController) {
+              val viewThreadController = navigationController.top as ViewThreadController?
+              viewThreadController!!.drawerCallbacks = drawerCallbacks
+
+              viewThreadController.loadThread(descriptor)
+              viewThreadController.onShow()
+            }
+          } else {
+            val navigationController = StyledToolbarNavigationController(context)
+            splitNav.setRightController(navigationController, animated)
+            val viewThreadController = ViewThreadController(context, descriptor)
+            navigationController.pushController(viewThreadController, false)
+            viewThreadController.drawerCallbacks = drawerCallbacks
+          }
+          splitNav.switchToController(false, animated)
+        }
+        slideNav != null -> {
+          // Create a threadview in the right part of the slide nav *without* a toolbar
+          if (slideNav.getRightController() is ViewThreadController) {
+            (slideNav.getRightController() as ViewThreadController).loadThread(descriptor)
+            (slideNav.getRightController() as ViewThreadController).onShow()
+          } else {
+            val viewThreadController = ViewThreadController(
+              context,
+              descriptor
+            )
+
+            slideNav.setRightController(viewThreadController, animated)
+            viewThreadController.drawerCallbacks = drawerCallbacks
+          }
+          slideNav.switchToController(false, animated)
+        }
+        else -> {
+          // the target ThreadNav must be pushed to the parent nav controller
+          // (BrowseController -> ToolbarNavigationController)
           val viewThreadController = ViewThreadController(
             context,
-            threadDescriptor
+            descriptor
           )
 
-          slideNav.setRightController(viewThreadController, animated)
+          Objects.requireNonNull(navigationController, "navigationController is null")
+          navigationController!!.pushController(viewThreadController, animated)
+
           viewThreadController.drawerCallbacks = drawerCallbacks
         }
-        slideNav.switchToController(false, animated)
       }
-      else -> {
-        // the target ThreadNav must be pushed to the parent nav controller
-        // (BrowseController -> ToolbarNavigationController)
-        val viewThreadController = ViewThreadController(
-          context,
-          threadDescriptor
-        )
 
-        Objects.requireNonNull(navigationController, "navigationController is null")
-        navigationController!!.pushController(viewThreadController, animated)
-
-        viewThreadController.drawerCallbacks = drawerCallbacks
-      }
+      historyNavigationManager.moveNavElementToTop(descriptor)
+      initialized = true
     }
-
-    historyNavigationManager.moveNavElementToTop(threadDescriptor)
-    initialized = true
   }
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {

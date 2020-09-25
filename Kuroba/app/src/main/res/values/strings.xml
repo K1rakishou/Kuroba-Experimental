@@ -109,6 +109,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="retry">Retry</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
+    <string name="loading">Loading…</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
     <string name="unmark_as_my_post">Unmark as my post</string>
@@ -213,7 +214,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_load_failed_server">Server error</string>
     <string name="thread_load_failed_not_found">404 not found</string>
     <string name="thread_refresh_bar_inactive">Tap to refresh</string>
-    <string name="thread_refresh_now">Loading…</string>
     <string name="thread_refresh_countdown">Loading in %1$ds</string>
     <string name="thread_load_failed_retry">Retry</string>
     <string name="thread_load_failed_open_in_archive">Open in archive</string>
@@ -707,7 +707,6 @@ Tap the toolbar menu to change its color."
     <string name="setting_pass_authenticated">Device authorized!</string>
     <string name="setting_pass_login">Submit</string>
     <string name="setting_pass_logout">Logout</string>
-    <string name="setting_pass_logging_in">Loading…</string>
     <string name="setting_pass_error">Connection error</string>
 
     <string name="setting_pass_bottom_description">"
@@ -802,7 +801,6 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
-    <string name="controller_bookmarks_bookmark_loading">Loading…</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
 
@@ -844,7 +842,6 @@ Don't have a 4chan Pass?<br>
     <string name="apply_to_saved">Apply to own posts</string>
 
     <string name="browse_controller_title_app_setup">App Setup</string>
-    <string name="browse_controller_title_loading">Loading…</string>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
     <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
     <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>

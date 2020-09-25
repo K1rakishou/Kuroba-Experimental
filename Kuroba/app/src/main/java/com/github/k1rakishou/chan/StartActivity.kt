@@ -430,7 +430,7 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "restoreFresh() getThreadToOpen returned ${threadToOpen}")
 
     if (threadToOpen != null) {
-      loadThread(threadToOpen)
+      loadThread(threadToOpen, animated = false)
     }
   }
 
@@ -472,8 +472,12 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    drawerController.loadThread(threadDescriptor, true)
+  suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
+    drawerController.loadThread(
+      threadDescriptor,
+      closeAllNonMainControllers = true,
+      animated = animated
+    )
   }
 
   override fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
@@ -631,7 +635,7 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}")
 
     if (threadDescriptors.size == 1) {
-      drawerController.loadThread(threadDescriptors.first(), true)
+      drawerController.loadThread(threadDescriptors.first(), closeAllNonMainControllers = true, animated = false)
     } else {
       drawerController.openBookmarksController(threadDescriptors)
     }
@@ -668,7 +672,7 @@ class StartActivity : AppCompatActivity(),
       "marking as seen ${threadDescriptors.size} bookmarks")
 
     if (threadDescriptors.size == 1) {
-      drawerController.loadThread(threadDescriptors.first(), true)
+      drawerController.loadThread(threadDescriptors.first(), closeAllNonMainControllers = true, animated = false)
     } else {
       drawerController.openBookmarksController(threadDescriptors)
     }

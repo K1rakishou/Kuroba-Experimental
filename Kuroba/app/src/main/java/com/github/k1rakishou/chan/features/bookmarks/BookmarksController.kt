@@ -308,7 +308,7 @@ class BookmarksController(
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     serializedCoroutineExecutor.post {
-      (context as? StartActivity)?.loadThread(threadDescriptor)
+      (context as? StartActivity)?.loadThread(threadDescriptor, true)
     }
   }
 

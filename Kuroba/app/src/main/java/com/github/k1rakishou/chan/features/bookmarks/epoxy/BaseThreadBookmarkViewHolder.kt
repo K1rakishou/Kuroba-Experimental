@@ -193,7 +193,7 @@ open class BaseThreadBookmarkViewHolder(
 
     bookmarkStats.text = buildString {
       if (threadBookmarkStats.isFirstFetch) {
-        append(context.getString(R.string.controller_bookmarks_bookmark_loading))
+        append(context.getString(R.string.loading))
         return@buildString
       }
 

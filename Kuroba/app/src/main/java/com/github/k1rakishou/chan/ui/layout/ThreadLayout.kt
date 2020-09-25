@@ -396,7 +396,7 @@ class ThreadLayout @JvmOverloads constructor(
   override suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     Logger.d(TAG, "showThread($threadDescriptor)")
 
-    callback.showThread(threadDescriptor)
+    callback.showThread(threadDescriptor, true)
   }
 
   override suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -941,7 +941,7 @@ class ThreadLayout @JvmOverloads constructor(
   interface ThreadLayoutCallback {
     val toolbar: Toolbar?
 
-    suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?)

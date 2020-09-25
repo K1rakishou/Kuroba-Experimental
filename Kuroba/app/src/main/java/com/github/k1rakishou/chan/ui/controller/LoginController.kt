@@ -143,7 +143,7 @@ class LoginController(
     inputToken.isEnabled = false
     inputPin.isEnabled = false
     button.isEnabled = false
-    button.setText(R.string.setting_pass_logging_in)
+    button.setText(R.string.loading)
     
     hideError()
 
@@ -185,7 +185,7 @@ class LoginController(
   }
   
   private fun onLoginError(errorMessage: String) {
-    authFail(null)
+    authFail(errorMessage)
     authAfter()
   }
   

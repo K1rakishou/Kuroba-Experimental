@@ -595,8 +595,6 @@ class ReplyPresenter @Inject constructor(
     callback.loadDraftIntoViews(draft)
     callback.onPosted()
 
-    // special case for new threads, check if we were on the catalog with the nonlocal
-    // loadable
     if (bound && chanDescriptor!!.isCatalogDescriptor()) {
       callback.showThread(newThreadDescriptor)
     }

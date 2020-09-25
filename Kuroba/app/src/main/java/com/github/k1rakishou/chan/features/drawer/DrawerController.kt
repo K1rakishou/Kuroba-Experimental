@@ -339,18 +339,17 @@ class DrawerController(
     bottomNavView.menu.findItem(R.id.action_search)?.isChecked = true
   }
 
-  // TODO(KurobaEx): Add "animated" flag and make sure we don't using animation when opening
-  //  boards/threads on app start
   suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
-    closeAllNonMainControllers: Boolean = false
+    closeAllNonMainControllers: Boolean = false,
+    animated: Boolean
   ) {
     mainScope.launch {
       if (closeAllNonMainControllers) {
         closeAllNonMainControllers()
       }
 
-      topThreadController?.showThread(descriptor)
+      topThreadController?.showThread(descriptor, animated)
     }
   }
 
@@ -581,7 +580,7 @@ class DrawerController(
       if (!isCurrentlyVisible) {
         when (val descriptor = navHistoryEntry.descriptor) {
           is ChanDescriptor.ThreadDescriptor -> {
-            currentTopThreadController.showThread(descriptor)
+            currentTopThreadController.showThread(descriptor, true)
           }
           is ChanDescriptor.CatalogDescriptor -> {
             currentTopThreadController.showBoard(descriptor.boardDescriptor, true)
