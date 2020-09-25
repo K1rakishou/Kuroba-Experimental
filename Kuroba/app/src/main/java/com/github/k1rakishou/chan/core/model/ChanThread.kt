@@ -56,7 +56,16 @@ class ChanThread(
 
   @get:Synchronized
   @set:Synchronized
+  var isDeleted = false
+
+  @get:Synchronized
+  @set:Synchronized
   var isArchived = false
+
+  @Synchronized
+  fun canUpdateThread(): Boolean {
+    return !isClosed && !isDeleted && !isArchived
+  }
 
   @Synchronized
   fun setNewPosts(newPosts: List<Post>) {
@@ -87,6 +96,7 @@ class ChanThread(
       "chanDescriptor=" + chanDescriptor +
       ", closed=" + isClosed +
       ", archived=" + isArchived +
+      ", deleted=" + isDeleted +
       '}'
   }
 

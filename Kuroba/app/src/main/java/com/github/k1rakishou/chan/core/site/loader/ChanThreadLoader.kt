@@ -354,10 +354,10 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
               threadLoadResult.chanLoaderResponse
             }
             is ThreadLoadResult.LoadedFromDatabaseCopy -> {
-              threadLoadResult.chanLoaderResponse
-            }
-            is ThreadLoadResult.LoadedFromArchive -> {
-              threadLoadResult.chanLoaderResponse.op.archived = true
+              if (threadLoadResult.deleted) {
+                threadLoadResult.chanLoaderResponse.op.deleted(true)
+              }
+
               threadLoadResult.chanLoaderResponse
             }
           }
@@ -455,12 +455,14 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       realOp.isClosed = fakeOp.closed
       realOp.isArchived = fakeOp.archived
       realOp.isSticky = fakeOp.sticky
+      realOp.deleted.set(fakeOp.deleted)
       realOp.totalRepliesCount = fakeOp.totalRepliesCount
       realOp.threadImagesCount = fakeOp.threadImagesCount
       realOp.uniqueIps = fakeOp.uniqueIps
       realOp.lastModified = fakeOp.lastModified
       localThread.isClosed = realOp.isClosed
       localThread.isArchived = realOp.isArchived
+      localThread.isDeleted = realOp.deleted.get()
     }
   }
 

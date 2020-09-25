@@ -219,6 +219,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_load_failed_open_in_archive">Open in archive</string>
     <string name="thread_archived">Archived</string>
     <string name="thread_closed">Closed</string>
+    <string name="thread_deleted">Deleted</string>
     <string name="thread_page_no">Page</string>
 
     <string name="thread_new_posts_goto">View</string>

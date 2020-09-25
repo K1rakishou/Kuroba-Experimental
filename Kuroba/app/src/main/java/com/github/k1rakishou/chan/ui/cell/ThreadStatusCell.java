@@ -129,7 +129,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         boolean update = false;
         SpannableStringBuilder builder = new SpannableStringBuilder();
 
-        if (!chanThread.isArchived() && !chanThread.isClosed()) {
+        if (chanThread.canUpdateThread()) {
             update = true;
         }
 
@@ -227,15 +227,17 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     }
 
     private void appendThreadRefreshPart(ChanThread chanThread, SpannableStringBuilder builder) {
-        if (!chanThread.isArchived() && !chanThread.isClosed()) {
-            long time = callback.getTimeUntilLoadMore() / 1000L;
-            if (!callback.isWatching()) {
-                builder.append(getString(R.string.thread_refresh_bar_inactive));
-            } else if (time <= 0) {
-                builder.append(getString(R.string.loading));
-            } else {
-                builder.append(getString(R.string.thread_refresh_countdown, time));
-            }
+        if (!chanThread.canUpdateThread()) {
+            return;
+        }
+
+        long time = callback.getTimeUntilLoadMore() / 1000L;
+        if (!callback.isWatching()) {
+            builder.append(getString(R.string.thread_refresh_bar_inactive));
+        } else if (time <= 0) {
+            builder.append(getString(R.string.loading));
+        } else {
+            builder.append(getString(R.string.thread_refresh_countdown, time));
         }
     }
 
@@ -244,6 +246,8 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             builder.append(getString(R.string.thread_archived));
         } else if (chanThread.isClosed()) {
             builder.append(getString(R.string.thread_closed));
+        } else if (chanThread.isDeleted()) {
+            builder.append(getString(R.string.thread_deleted));
         }
 
         return false;

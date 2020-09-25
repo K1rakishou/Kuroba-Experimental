@@ -148,7 +148,7 @@ class ChanThreadLoaderCoordinator(
         Logger.d(TAG, "loadThread from network took $time")
 
         if (!response.isSuccessful) {
-          throw ServerException(response.code)
+          return@Try fallbackPostLoadOnNetworkError(requestParams, ServerException(response.code))
         }
 
         val chanReaderProcessor = readPostsFromResponse(response, requestParams)
@@ -167,13 +167,15 @@ class ChanThreadLoaderCoordinator(
 
   private suspend fun fallbackPostLoadOnNetworkError(
     requestParams: ChanLoaderRequestParams,
-    error: IOException
+    error: Exception
   ): ThreadLoadResult {
     val chanLoaderResponse = databasePostLoader.loadPosts(requestParams)
       ?: throw error
 
+    val isThreadDeleted = error is ServerException && error.statusCode == 404
+
     Logger.d(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
-    return ThreadLoadResult.LoadedFromDatabaseCopy(chanLoaderResponse)
+    return ThreadLoadResult.LoadedFromDatabaseCopy(chanLoaderResponse, isThreadDeleted)
   }
 
   private suspend fun readPostsFromResponse(

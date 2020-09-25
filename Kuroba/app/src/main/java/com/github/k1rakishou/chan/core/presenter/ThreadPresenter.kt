@@ -1291,7 +1291,10 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (chanLoader?.thread?.isArchived == false) {
+    val canRequestMode = chanLoader?.thread
+      ?.let { thread -> !thread.isArchived && !thread.isDeleted } == true
+
+    if (canRequestMode) {
       chanLoader?.requestMoreDataAndResetTimer()
     }
 
