@@ -306,6 +306,6 @@ class HistoryNavigationManager(
 
   companion object {
     private const val TAG = "HistoryNavigationManager"
-    private const val MAX_NAV_HISTORY_ENTRIES = 64
+    private const val MAX_NAV_HISTORY_ENTRIES = 128
   }
 }

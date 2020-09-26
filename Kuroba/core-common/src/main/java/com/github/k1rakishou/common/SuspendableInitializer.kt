@@ -90,6 +90,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     return
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   fun awaitUntilInitializedBlocking() {
     if (value.isCompleted) {
       if (logStates) {
