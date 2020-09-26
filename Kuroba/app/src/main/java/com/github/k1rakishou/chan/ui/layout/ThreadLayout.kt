@@ -37,10 +37,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.model.ChanThread
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
@@ -70,6 +67,7 @@ import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -114,6 +112,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var postHideManager: PostHideManager
   @Inject
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -252,7 +252,7 @@ class ThreadLayout @JvmOverloads constructor(
     return true
   }
 
-  fun canOpenReplyLayout(): Boolean {
+  private fun canOpenReplyLayout(): Boolean {
     val supportsPosting = presenter.chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
       return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
     } ?: false
@@ -335,13 +335,38 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showError(error: ChanLoaderException) {
-    val errorMessage = AndroidUtils.getString(error.errorMessage)
+    if (hasSupportedActiveArchives()) {
+      openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
+    } else {
+      openThreadInArchiveButton.setVisibilityFast(View.GONE)
+    }
+
+    val errorMessage = error.cause?.message
+      ?: AndroidUtils.getString(error.errorMessage)
+
     if (visible == Visible.THREAD) {
       threadListLayout.showError(errorMessage)
     } else {
       switchVisible(Visible.ERROR)
       errorText.text = errorMessage
     }
+  }
+
+  private fun hasSupportedActiveArchives(): Boolean {
+    return presenterOrNull?.chanDescriptor?.threadDescriptorOrNull()
+      ?.let { threadDescriptor ->
+        val archiveSiteDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
+          .map { archiveDescriptor -> archiveDescriptor.siteDescriptor }
+
+        val hasActiveSites = archiveSiteDescriptors
+          .any { siteDescriptor -> siteManager.isSiteActive(siteDescriptor) }
+
+        if (!hasActiveSites) {
+          return@let false
+        }
+
+        return@let true
+      } ?: false
   }
 
   override fun showLoading() {
