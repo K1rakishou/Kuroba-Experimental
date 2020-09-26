@@ -53,6 +53,8 @@ import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.utils.*
+import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
+import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.fsaf.FileChooser
@@ -181,8 +183,8 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    FullScreenUtils.setupFullscreen(this)
-    FullScreenUtils.setupStatusAndNavBarColors(this)
+    window.setupFullscreen(themeHelper.theme)
+    window.setupStatusAndNavBarColors()
 
     // Setup base controllers, and decide if to use the split layout for tablets
     drawerController = DrawerController(this).apply {
