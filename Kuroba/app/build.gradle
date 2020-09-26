@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.undercouch.download'
+apply plugin: "de.jjohannes.missing-metadata-guava"
 
 android {
     // !!! IMPORTANT !!!
@@ -291,18 +292,19 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation "androidx.core:core-ktx:1.3.1"
+    implementation "androidx.core:core-ktx:${versions.core_ktx}"
     implementation "androidx.work:work-runtime-ktx:2.4.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
     implementation 'com.google.android.material:material:1.2.1'
-    implementation 'com.google.android.exoplayer:exoplayer:2.11.7'
+    implementation 'com.google.android.exoplayer:exoplayer:2.12.0'
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation 'org.jsoup:jsoup:1.13.1'
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.20'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
+    // noinspection GradleDependency we want to get rid of this dependency eventually.
     implementation 'com.vladsch.flexmark:flexmark:0.60.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
