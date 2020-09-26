@@ -3,6 +3,7 @@ package com.github.k1rakishou.common
 import android.util.Log
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -73,10 +74,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, awaiting...")
+      Log.d(tag, "SuspendableInitializer awaitUntilInitialized() " +
+        "called when not initialized, awaiting... stacktrace=${getStackTrace()}")
     }
 
-    value.awaitSilently()
+    val result = withTimeoutOrNull(TimeUnit.MINUTES.toMillis(MAX_WAIT_TIME_MINUTES)) { value.awaitSilently() }
+    if (result == null) {
+      throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!!")
+    }
 
     if (logStates) {
       Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, done")
@@ -97,14 +102,15 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when not initialized, awaiting...")
+      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() " +
+        "called when not initialized, awaiting... stacktrace=${getStackTrace()}")
     }
 
     val countDownLatch = CountDownLatch(1)
     invokeAfterInitialized { countDownLatch.countDown() }
 
-    if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
-      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() DEADLOCK!!!")
+    if (!countDownLatch.await(MAX_WAIT_TIME_MINUTES, TimeUnit.MINUTES)) {
+      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() TIMEOUT!!!")
     }
 
     if (logStates) {
@@ -198,5 +204,11 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     if (logStates) {
       Log.d(tag, "SuspendableInitializer invokeAllCallbacks() called, after copyOfCallbacks.forEach")
     }
+  }
+
+  private fun getStackTrace(): String = Throwable().stackTraceToString()
+
+  companion object {
+    private const val MAX_WAIT_TIME_MINUTES = 1L
   }
 }
