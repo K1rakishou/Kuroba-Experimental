@@ -20,7 +20,6 @@ import android.graphics.Typeface;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 /**
  * A Theme<br>
@@ -110,5 +109,4 @@ public abstract class Theme {
     }
 
     public abstract void resolveDrawables();
-    public abstract void applyFabColor(FloatingActionButton fab);
 }

@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.GridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
@@ -47,7 +48,6 @@ import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -69,7 +69,7 @@ public class AlbumDownloadController
         extends Controller
         implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks, WindowInsetsListener {
     private GridRecyclerView recyclerView;
-    private FloatingActionButton download;
+    private ColorizableFloatingActionButton download;
 
     private List<AlbumDownloadItem> items = new ArrayList<>();
     private ChanDescriptor chanDescriptor;
@@ -103,7 +103,6 @@ public class AlbumDownloadController
 
         download = view.findViewById(R.id.download);
         download.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(download);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);

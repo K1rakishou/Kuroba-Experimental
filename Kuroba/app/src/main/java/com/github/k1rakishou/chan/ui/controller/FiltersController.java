@@ -41,12 +41,12 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,8 +77,8 @@ public class FiltersController
     ThemeHelper themeHelper;
 
     private RecyclerView recyclerView;
-    private FloatingActionButton add;
-    private FloatingActionButton enable;
+    private ColorizableFloatingActionButton add;
+    private ColorizableFloatingActionButton enable;
     private FilterAdapter adapter;
     private boolean locked;
 
@@ -147,11 +147,9 @@ public class FiltersController
 
         add = view.findViewById(R.id.add);
         add.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(add);
 
         enable = view.findViewById(R.id.enable);
         enable.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(enable);
     }
 
     @Override
@@ -165,7 +163,7 @@ public class FiltersController
             ChanFilterMutable chanFilterMutable = new ChanFilterMutable();
             showFilterDialog(chanFilterMutable);
         } else if (v == enable && !locked) {
-            FloatingActionButton enableButton = (FloatingActionButton) v;
+            ColorizableFloatingActionButton enableButton = (ColorizableFloatingActionButton) v;
             locked = true;
 
             // if every filter is disabled, enable all of them and set the drawable to be an x
@@ -184,8 +182,6 @@ public class FiltersController
                 setFilters(enabledFilters, false);
                 enableButton.setImageResource(R.drawable.ic_done_white_24dp);
             }
-
-            themeHelper.getTheme().applyFabColor(enable);
         }
     }
 
@@ -227,7 +223,6 @@ public class FiltersController
                             enable.setImageResource(R.drawable.ic_clear_white_24dp);
                         }
 
-                        themeHelper.getTheme().applyFabColor(enable);
                         postToEventBus(new RefreshUIMessage("filters"));
                         adapter.reload();
 

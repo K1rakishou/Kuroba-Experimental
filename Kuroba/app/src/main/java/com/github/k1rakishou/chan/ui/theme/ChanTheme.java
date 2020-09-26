@@ -1,13 +1,11 @@
 package com.github.k1rakishou.chan.ui.theme;
 
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Typeface;
 
 import com.github.k1rakishou.chan.R;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
 
@@ -52,16 +50,10 @@ public class ChanTheme extends Theme {
         refreshDrawable.tint = Color.BLACK;
     }
 
-    @Override
-    public void applyFabColor(FloatingActionButton fab) {
-        fab.setBackgroundTintList(ColorStateList.valueOf(accentColor.color));
-        fab.getDrawable().setTint(Color.WHITE);
-    }
-
     @SuppressWarnings("ResourceType")
     private void resolveSpanColors() {
         Resources.Theme theme = getRes().newTheme();
-        theme.applyStyle(R.style.Chan_Theme, true);
+        theme.applyStyle(R.style.Chan_DefaultTheme, true);
         theme.applyStyle(resValue, true);
 
         TypedArray ta = theme.obtainStyledAttributes(new int[]{

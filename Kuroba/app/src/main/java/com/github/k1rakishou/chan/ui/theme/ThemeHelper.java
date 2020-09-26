@@ -39,10 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor.BLACK;
-import static com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor.DARK;
 import static com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor.GREEN;
-import static com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor.ORANGE;
-import static com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor.RED;
 
 @DoNotStrip
 public class ThemeHelper {
@@ -53,18 +50,7 @@ public class ThemeHelper {
     private AttributeCache attributeCache = new AttributeCache();
 
     public ThemeHelper() {
-        themes.add(new ChanTheme("Light", "light", R.style.Chan_Theme, GREEN));
-        themes.add(new DarkChanTheme("Dark", "dark", R.style.Chan_Theme_Dark, DARK));
-        themes.add(new DarkChanTheme("Black", "black", R.style.Chan_Theme_Black, BLACK));
-        themes.add(new DarkChanTheme("Tomorrow", "tomorrow", R.style.Chan_Theme_Tomorrow, DARK));
-        themes.add(new DarkChanTheme("Tomorrow Black", "tomorrow_black", R.style.Chan_Theme_TomorrowBlack, BLACK));
-        themes.add(new ChanTheme("Yotsuba", "yotsuba", R.style.Chan_Theme_Yotsuba, RED));
-        themes.add(new ChanTheme("Yotsuba B", "yotsuba_b", R.style.Chan_Theme_YotsubaB, RED));
-        themes.add(new ChanTheme("Photon", "photon", R.style.Chan_Theme_Photon, ORANGE));
-        themes.add(new DarkChanTheme("Insomnia", "insomnia", R.style.Chan_Theme_Insomnia, DARK));
-        themes.add(new DarkChanTheme("Gruvbox", "gruvbox", R.style.Chan_Theme_Gruvbox, DARK));
-        themes.add(new DarkChanTheme("Neon", "neon", R.style.Chan_Theme_Neon, DARK));
-        themes.add(new DarkChanTheme("Solarized Dark", "solarized_dark", R.style.Chan_Theme_SolarizedDark, ORANGE));
+        themes.add(new ChanTheme("Default", "default", R.style.Chan_DefaultTheme, GREEN));
 
         ChanSettings.ThemeColor settingTheme = ChanSettings.getThemeAndColor();
         for (Theme theme : themes) {

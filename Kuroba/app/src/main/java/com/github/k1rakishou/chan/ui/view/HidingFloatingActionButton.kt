@@ -28,16 +28,16 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar.SnackbarLayout
 import javax.inject.Inject
 
-class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
+class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
@@ -75,18 +75,20 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   }
 
   private fun init() {
-    Chan.inject(this)
+    if (!isInEditMode) {
+      Chan.inject(this)
 
-    // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
-    // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
-    // when in SPLIT mode.
-    bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      AndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
-    } else {
-      0
+      // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
+      // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
+      // when in SPLIT mode.
+      bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+        AndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+      } else {
+        0
+      }
+
+      startListeningForInsetsChangesIfNeeded()
     }
-
-    startListeningForInsetsChangesIfNeeded()
   }
 
   fun setToolbar(toolbar: Toolbar) {

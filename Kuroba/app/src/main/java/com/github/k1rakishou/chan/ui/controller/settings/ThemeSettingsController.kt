@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCallback
@@ -70,7 +71,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -136,7 +136,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   private val themes by lazy { themeHelper.themes!! }
 
   private lateinit var pager: ViewPager
-  private lateinit var done: FloatingActionButton
+  private lateinit var done: ColorizableFloatingActionButton
   private lateinit var textView: TextView
   private lateinit var selectedAccentColor: PrimaryColor
 

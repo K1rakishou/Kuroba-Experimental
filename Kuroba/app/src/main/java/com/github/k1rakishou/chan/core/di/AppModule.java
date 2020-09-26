@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.di;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Environment;
 
@@ -29,6 +30,8 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme_v2.MockChanThemeV2;
+import com.github.k1rakishou.chan.ui.theme_v2.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
@@ -190,6 +193,25 @@ public class AppModule {
     public ThemeHelper provideThemeHelper() {
         Logger.d(DI_TAG, "Theme helper");
         return new ThemeHelper();
+    }
+
+    @Provides
+    @Singleton
+    public ThemeEngine provideThemeEngine() {
+        Logger.d(DI_TAG, "Theme helper");
+
+        MockChanThemeV2 mockChanThemeV2 = new MockChanThemeV2(
+                "Test theme",
+                false,
+                0xFF03DAC6,
+                0xFF121212,
+                Color.RED,
+                Color.BLUE,
+                Color.GRAY,
+                Color.WHITE
+        );
+
+        return new ThemeEngine(mockChanThemeV2);
     }
 
     @Provides

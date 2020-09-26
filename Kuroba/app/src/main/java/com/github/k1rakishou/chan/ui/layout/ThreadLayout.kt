@@ -215,8 +215,6 @@ class ThreadLayout @JvmOverloads constructor(
     } else {
       replyButton.setOnClickListener(this)
       replyButton.setToolbar(callback.toolbar!!)
-
-      themeHelper.theme.applyFabColor(replyButton)
     }
   }
 

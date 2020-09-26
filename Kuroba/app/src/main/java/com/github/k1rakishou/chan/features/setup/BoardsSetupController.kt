@@ -17,10 +17,10 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,7 +35,7 @@ class BoardsSetupController(
   lateinit var themeHelper: ThemeHelper
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var fabAddBoards: FloatingActionButton
+  private lateinit var fabAddBoards: ColorizableFloatingActionButton
 
   override fun onCreate() {
     super.onCreate()
@@ -48,7 +48,6 @@ class BoardsSetupController(
     epoxyRecyclerView.setController(controller)
 
     fabAddBoards = view.findViewById(R.id.fab_add_boards)
-    themeHelper.theme.applyFabColor(fabAddBoards)
 
     fabAddBoards.setOnClickListener {
       val controller = AddBoardsController(context, siteDescriptor) {

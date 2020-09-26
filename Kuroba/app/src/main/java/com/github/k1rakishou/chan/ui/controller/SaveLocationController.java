@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.NewFolderLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
 
 import java.io.File;
 
@@ -45,8 +45,8 @@ public class SaveLocationController
         extends Controller
         implements FileWatcher.FileWatcherCallback, FilesAdapter.Callback, FilesLayout.Callback, View.OnClickListener {
     private FilesLayout filesLayout;
-    private FloatingActionButton setButton;
-    private FloatingActionButton addButton;
+    private ColorizableFloatingActionButton setButton;
+    private ColorizableFloatingActionButton addButton;
     private RuntimePermissionsHelper runtimePermissionsHelper;
     private FileWatcher fileWatcher;
     private SaveLocationControllerMode mode;

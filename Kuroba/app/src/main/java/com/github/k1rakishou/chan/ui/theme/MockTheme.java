@@ -3,8 +3,6 @@ package com.github.k1rakishou.chan.ui.theme;
 import android.graphics.Color;
 import android.graphics.Typeface;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-
 public class MockTheme extends Theme {
 
     public MockTheme() {
@@ -35,11 +33,6 @@ public class MockTheme extends Theme {
 
     @Override
     public void resolveDrawables() {
-
-    }
-
-    @Override
-    public void applyFabColor(FloatingActionButton fab) {
 
     }
 

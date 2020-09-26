@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -52,6 +53,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme_v2.ThemeEngine
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
@@ -66,6 +68,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -83,6 +86,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var themeHelper: ThemeHelper
+  @Inject
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
@@ -213,6 +218,13 @@ class StartActivity : AppCompatActivity(),
 
     browseController?.showLoading()
     showAppBetaVersionWarning()
+
+    // TODO(KurobaEx): Test code! Remove!!!
+    lifecycleScope.launch {
+      delay(15000)
+
+      themeEngine.updateTheme(themeEngine.chanTheme.copy(accentColor = Color.RED), drawerController.view)
+    }
   }
 
   private fun showAppBetaVersionWarning() {

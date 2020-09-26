@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
         android:id="@+id/fab_add_boards"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
