@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.Chan.ForegroundChangedMessage
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.manager.LocalSearchManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
@@ -57,6 +58,8 @@ abstract class ThreadController(
 
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var localSearchManager: LocalSearchManager
 
   protected lateinit var threadLayout: ThreadLayout
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -233,7 +236,11 @@ abstract class ThreadController(
 
   override fun onSearchEntered(entered: String) {
     serializedCoroutineExecutor.post {
-      threadLayout.presenter.onSearchEntered(entered)
+      val localSearchType = threadLayout.presenter.currentLocalSearchType
+        ?: return@post
+
+      localSearchManager.onSearchEntered(localSearchType, entered)
+      threadLayout.presenter.onSearchEntered()
     }
   }
 

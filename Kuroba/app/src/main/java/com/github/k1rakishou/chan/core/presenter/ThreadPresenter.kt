@@ -88,7 +88,8 @@ class ThreadPresenter @Inject constructor(
   private val postFilterManager: PostFilterManager,
   private val chanFilterManager: ChanFilterManager,
   private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
+  private val localSearchManager: LocalSearchManager
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -99,8 +100,6 @@ class ThreadPresenter @Inject constructor(
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var currentChanDescriptor: ChanDescriptor? = null
   private var chanLoader: ChanThreadLoader? = null
-  private var searchOpen = false
-  private var searchQuery: String? = null
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
   private val compositeDisposable = CompositeDisposable()
@@ -123,6 +122,19 @@ class ThreadPresenter @Inject constructor(
         ?: return false
 
       return bookmarksManager.exists(threadDescriptor)
+    }
+
+  val currentLocalSearchType: LocalSearchType?
+    get() {
+      if (currentChanDescriptor == null) {
+        return null
+      }
+
+      if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        return LocalSearchType.ThreadSearch
+      } else {
+        return LocalSearchType.CatalogSearch
+      }
     }
 
   override fun getChanDescriptor(): ChanDescriptor? {
@@ -361,11 +373,19 @@ class ThreadPresenter @Inject constructor(
   }
 
   suspend fun onSearchVisibilityChanged(visible: Boolean) {
-    searchOpen = visible
+    if (currentChanDescriptor == null) {
+      return
+    }
+
+    val localSearchType = currentLocalSearchType
+      ?: return
 
     threadPresenterCallback?.showSearch(visible)
-    if (!visible) {
-      searchQuery = null
+
+    if (visible) {
+      localSearchManager.onSearchEntered(localSearchType, "")
+    } else {
+      localSearchManager.clearSearch(localSearchType)
     }
 
     if (chanLoader != null && chanLoader!!.thread != null) {
@@ -373,25 +393,29 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  suspend fun onSearchEntered(entered: String?) {
-    searchQuery = entered
+  suspend fun onSearchEntered() {
+    if (chanLoader == null || chanLoader!!.thread == null) {
+      return
+    }
 
-    if (chanLoader != null && chanLoader!!.thread != null) {
-      showPosts()
+    val localSearchType = currentLocalSearchType
+      ?: return
 
-      if (TextUtils.isEmpty(entered)) {
-        threadPresenterCallback?.setSearchStatus(
-          query = null,
-          setEmptyText = true,
-          hideKeyboard = false
-        )
-      } else {
-        threadPresenterCallback?.setSearchStatus(
-          query = entered,
-          setEmptyText = false,
-          hideKeyboard = false
-        )
-      }
+    val query = localSearchManager.getSearchQuery(localSearchType)
+    showPosts()
+
+    if (TextUtils.isEmpty(query)) {
+      threadPresenterCallback?.setSearchStatus(
+        query = null,
+        setEmptyText = true,
+        hideKeyboard = false
+      )
+    } else {
+      threadPresenterCallback?.setSearchStatus(
+        query = query,
+        setEmptyText = false,
+        hideKeyboard = false
+      )
     }
   }
 
@@ -535,8 +559,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     // allow for search refreshes inside the catalog
-    if (result.chanDescriptor.isCatalogDescriptor() && !TextUtils.isEmpty(searchQuery)) {
-      onSearchEntered(searchQuery)
+    if (result.chanDescriptor.isCatalogDescriptor()) {
+      onSearchEntered()
     } else {
       showPosts()
     }
@@ -709,6 +733,10 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun scrollToImage(postImage: PostImage, smooth: Boolean) {
+    val localSearchType = currentLocalSearchType
+      ?: return
+
+    val searchOpen = localSearchManager.isSearchOpened(localSearchType)
     if (searchOpen) {
       return
     }
@@ -812,8 +840,12 @@ class ThreadPresenter @Inject constructor(
     }
 
     serializedCoroutineExecutor.post {
+      val localSearchType = currentLocalSearchType
+        ?: return@post
+
+      val searchOpen = localSearchManager.isSearchOpened(localSearchType)
       if (searchOpen) {
-        searchQuery = null
+        localSearchManager.clearSearch(localSearchType)
 
         showPosts()
         threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
@@ -1189,7 +1221,11 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.showBoardAndSearch(boardDescriptor, true, searchLink.search)
+        showToast(context, R.string.board_search_links_are_disabled)
+
+        // TODO(KurobaEx):
+//        localSearchManager.onSearchEntered(LocalSearchType.CatalogSearch, searchLink.search)
+//        threadPresenterCallback?.setBoard(boardDescriptor, true)
       }
     }
   }
@@ -1483,12 +1519,19 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun showPosts() {
-    if (chanLoader != null && chanLoader!!.thread != null) {
-      threadPresenterCallback?.showPosts(
-        chanLoader!!.thread,
-        PostsFilter(order, searchQuery)
-      )
+    if (chanLoader == null || chanLoader!!.thread == null) {
+      return
     }
+
+    val localSearchType = currentLocalSearchType
+      ?: return
+
+    val searchQuery = localSearchManager.getSearchQuery(localSearchType)
+
+    threadPresenterCallback?.showPosts(
+      chanLoader!!.thread,
+      PostsFilter(order, searchQuery)
+    )
   }
 
   fun showImageReencodingWindow(supportsReencode: Boolean) {
@@ -1551,7 +1594,7 @@ class ThreadPresenter @Inject constructor(
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
-    suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?)
+    suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)
     fun openReportView(post: Post)
     fun showPostsPopup(forPost: Post, posts: List<Post>)

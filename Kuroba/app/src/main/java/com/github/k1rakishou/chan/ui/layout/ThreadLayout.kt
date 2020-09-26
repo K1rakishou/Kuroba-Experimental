@@ -160,6 +160,15 @@ class ThreadLayout @JvmOverloads constructor(
   override val currentPosition: IntArray?
     get() = threadListLayout.indexAndTop
 
+  val presenterOrNull: ThreadPresenter?
+    get() {
+      if (!::presenter.isInitialized) {
+        return null
+      }
+
+      return presenter
+    }
+
   init {
     Chan.inject(this)
   }
@@ -411,10 +420,10 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showBoard(boardDescriptor, animated)
   }
 
-  override suspend fun showBoardAndSearch(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
-    Logger.d(TAG, "showBoardAndSearch($boardDescriptor, $animated, $searchQuery)")
+  override suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
+    Logger.d(TAG, "setBoard($boardDescriptor, $animated)")
 
-    callback.showBoardAndSearch(boardDescriptor, animated, searchQuery)
+    callback.setBoard(boardDescriptor, animated)
   }
 
   override fun showPostsPopup(forPost: Post, posts: List<Post>) {
@@ -944,7 +953,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
-    suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?)
+    suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
     fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)

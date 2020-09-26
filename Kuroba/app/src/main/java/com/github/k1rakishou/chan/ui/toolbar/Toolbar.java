@@ -343,8 +343,20 @@ public class Toolbar
     }
 
     private void processRecyclerViewScroll(RecyclerView recyclerView) {
-        View positionZero = recyclerView.getLayoutManager().findViewByPosition(0);
-        boolean allowHide = positionZero == null || positionZero.getTop() < 0;
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager == null) {
+            return;
+        }
+
+        RecyclerView.Adapter<?> adapter = recyclerView.getAdapter();
+        if (adapter == null) {
+            return;
+        }
+
+        View positionZero = layoutManager.findViewByPosition(0);
+        View lastPosition = layoutManager.findViewByPosition(adapter.getItemCount() - 1);
+
+        boolean allowHide = lastPosition == null && (positionZero == null || positionZero.getTop() < 0);
         if (allowHide || lastScrollDeltaOffset <= 0) {
             setCollapse(lastScrollDeltaOffset <= 0 ? TOOLBAR_COLLAPSE_SHOW : TOOLBAR_COLLAPSE_HIDE, true);
         } else {

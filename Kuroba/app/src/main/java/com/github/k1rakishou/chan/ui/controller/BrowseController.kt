@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
@@ -56,6 +57,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -80,10 +82,7 @@ class BrowseController(context: Context) : ThreadController(context),
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var hint: HintPopup? = null
   private var initialized = false
-  private var menuBuilt = false
-
-  @JvmField
-  var searchQuery: String? = null
+  private var menuBuiltOnce = false
 
   override fun onCreate() {
     super.onCreate()
@@ -224,7 +223,7 @@ class BrowseController(context: Context) : ThreadController(context),
             return
           }
 
-          mainScope.launch { loadBoard(boardDescriptor) }
+          mainScope.launch(Dispatchers.Main.immediate) { loadBoard(boardDescriptor) }
         }
       })
 
@@ -255,6 +254,26 @@ class BrowseController(context: Context) : ThreadController(context),
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun buildMenu() {
+    // We need to build menu here at least once ignoring the current search state, otherwise the
+    // menu will appear empty
+    if (menuBuiltOnce) {
+      val hasSearchQuery = localSearchManager.isSearchOpened(LocalSearchType.CatalogSearch)
+      if (navigation.search == hasSearchQuery) {
+        return
+      }
+
+      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
+      if (searchQuery != null) {
+        navigation.search = true
+        navigation.searchText = searchQuery
+      } else {
+        navigation.search = false
+        navigation.searchText = null
+      }
+    }
+
+    menuBuiltOnce = true
+
     val menuBuilder = navigation.buildMenu(ToolbarMenuType.CatalogListMenu)
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
@@ -504,7 +523,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   private fun openThreadByIdInternal(input: String) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       try {
         val threadDescriptor = ThreadDescriptor.create(
           chanDescriptor!!.siteName(),
@@ -595,7 +614,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "loadBoard($boardDescriptor)")
       boardManager.awaitUntilInitialized()
 
@@ -608,10 +627,7 @@ class BrowseController(context: Context) : ThreadController(context),
       navigation.title = "/" + boardDescriptor.boardCode + "/"
       navigation.subtitle = board.name
 
-      if (!menuBuilt) {
-        menuBuilt = true
-        buildMenu()
-      }
+      buildMenu()
 
       val catalogDescriptor = CatalogDescriptor.create(
         boardDescriptor.siteName(),
@@ -631,7 +647,7 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showBoard($descriptor, $animated)")
 
       showBoardInternal(descriptor, animated)
@@ -639,12 +655,10 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
-    mainScope.launch {
-      Logger.d(TAG, "showBoardAndSearch($descriptor, $animated, $searchQuery)")
+  override suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean) {
+    mainScope.launch(Dispatchers.Main.immediate) {
+      Logger.d(TAG, "setBoard($descriptor, $animated)")
 
-      // we don't actually need to do anything here because you can't tap board links in the browse
-      // controller set the board just in case?
       setBoard(descriptor)
     }
   }
@@ -653,7 +667,7 @@ class BrowseController(context: Context) : ThreadController(context),
   // This controller can be in various places depending on the layout
   // We dynamically search for it
   override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showThread($descriptor, $animated)")
 
       // The target ThreadViewController is in a split nav
@@ -766,10 +780,11 @@ class BrowseController(context: Context) : ThreadController(context),
   override fun onSlideChanged(leftOpen: Boolean) {
     super.onSlideChanged(leftOpen)
 
+    val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
     if (searchQuery != null) {
       toolbar!!.openSearchWithCallback {
         toolbar!!.searchInput(searchQuery)
-        searchQuery = null
+        localSearchManager.clearSearch(LocalSearchType.CatalogSearch)
       }
     }
 

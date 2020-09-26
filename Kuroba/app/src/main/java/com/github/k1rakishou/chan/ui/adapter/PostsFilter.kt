@@ -60,7 +60,7 @@ class PostsFilter(
     if (ChanSettings.verboseLogs.get()) {
       Logger.d(TAG, "originalPosts.size=${original.size}, " +
         "retainedPosts.size=${retainedPosts.size}, " +
-        "query.isNullOrEmpty=${query.isNullOrEmpty()}")
+        "query=\"$query\"")
     }
 
     val indexedPosts: MutableList<PostIndexed> = ArrayList(retainedPosts.size)

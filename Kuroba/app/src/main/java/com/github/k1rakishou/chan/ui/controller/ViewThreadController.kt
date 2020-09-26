@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -55,6 +56,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -99,7 +101,7 @@ open class ViewThreadController(
         { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
       )
 
-    mainScope.launch { loadThread(threadDescriptor) }
+    mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
   }
 
   private fun updatePinIconStateIfNeeded(bookmarkChange: BookmarkChange) {
@@ -448,7 +450,7 @@ open class ViewThreadController(
   }
 
   override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showThread($descriptor, $animated)")
       loadThread(descriptor)
     }
@@ -470,21 +472,21 @@ open class ViewThreadController(
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showBoard($descriptor, $animated)")
-      showBoardInternal(descriptor, animated, null)
+      showBoardInternal(descriptor, animated)
     }
   }
 
-  override suspend fun showBoardAndSearch(descriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
-    mainScope.launch {
-      Logger.d(TAG, "showBoardAndSearch($descriptor, $animated, $searchQuery)")
-      showBoardInternal(descriptor, animated, searchQuery)
+  override suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean) {
+    mainScope.launch(Dispatchers.Main.immediate){
+      Logger.d(TAG, "setBoard($descriptor, $animated)")
+      showBoardInternal(descriptor, animated)
     }
   }
 
   private fun showExternalThreadInternal(threadToOpenDescriptor: ThreadDescriptor) {
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showExternalThreadInternal($threadToOpenDescriptor)")
 
       threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
@@ -492,16 +494,13 @@ open class ViewThreadController(
     }
   }
 
-  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean, searchQuery: String?) {
-    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated, $searchQuery)")
+  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
       val browseController = doubleNavigationController!!.leftController as BrowseController
       browseController.setBoard(boardDescriptor)
-      if (searchQuery != null) {
-        browseController.searchQuery = searchQuery
-      }
 
       // slide layout
       doubleNavigationController!!.switchToController(true, animated)
@@ -514,6 +513,7 @@ open class ViewThreadController(
       val browseController = doubleNavigationController!!.leftController.childControllers[0] as BrowseController
       browseController.setBoard(boardDescriptor)
 
+      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
       if (searchQuery != null) {
         browseController.toolbar?.let { toolbar ->
           toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
@@ -537,6 +537,7 @@ open class ViewThreadController(
       requireNavController().popController(animated)
 
       // search after we're at the browse controller
+      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
       if (searchQuery != null) {
         browseController.toolbar?.let { toolbar ->
           toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
@@ -661,7 +662,7 @@ open class ViewThreadController(
   }
 
   private fun setPinIconState(animated: Boolean) {
-    val presenter = threadLayout.presenter
+    val presenter = threadLayout.presenterOrNull
     if (presenter != null) {
       setPinIconStateDrawable(presenter.isPinned, animated)
     }
@@ -699,7 +700,7 @@ open class ViewThreadController(
     val threadDescriptor = threadFollowerpool.removeFirst().first
       ?: return false
 
-    mainScope.launch { loadThread(threadDescriptor) }
+    mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
 
     return true
   }
