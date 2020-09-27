@@ -25,7 +25,7 @@ class SnackbarWrapper private constructor(
   init {
     Chan.inject(this)
 
-    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.secondaryColor)
   }
 
   fun dismiss() {
