@@ -2,11 +2,13 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
+import androidx.cardview.widget.CardView
 import androidx.core.graphics.component1
 import androidx.core.graphics.component2
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyRecyclerView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionView
@@ -16,6 +18,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -36,6 +40,10 @@ class BoardSelectionController(
   context: Context,
   private val callback: UserSelectionListener
 ) : BaseFloatingController(context), BoardSelectionView {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val presenter = BoardSelectionPresenter()
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
@@ -50,6 +58,7 @@ class BoardSelectionController(
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
@@ -58,6 +67,9 @@ class BoardSelectionController(
     searchView = view.findViewById(R.id.search_view)
     searchView.setAutoRequestFocus(false)
     openSitesButton = view.findViewById(R.id.open_all_sites_settings)
+
+    val cardView = view.findViewById<CardView>(R.id.card_view)
+    cardView.setCardBackgroundColor(themeEngine.chanTheme.primaryColor)
 
     val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
     val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()

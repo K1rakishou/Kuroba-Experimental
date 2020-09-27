@@ -5,9 +5,12 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.google.android.material.textview.MaterialTextView
+import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyBoardView @JvmOverloads constructor(
@@ -15,15 +18,23 @@ class EpoxyBoardView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   var descriptor: BoardDescriptor? = null
   private val boardName: MaterialTextView
   private val boardDescription: MaterialTextView
 
   init {
+    Chan.inject(this)
     inflate(context, R.layout.epoxy_board_view, this)
 
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)
+
+    boardName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    boardDescription.setTextColor(themeEngine.chanTheme.textSecondaryColor)
   }
 
   @ModelProp

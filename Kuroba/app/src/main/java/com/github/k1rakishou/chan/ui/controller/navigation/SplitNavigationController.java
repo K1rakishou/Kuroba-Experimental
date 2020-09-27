@@ -21,9 +21,11 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
@@ -32,17 +34,22 @@ import com.github.k1rakishou.chan.controller.transition.PushControllerTransition
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
+import javax.inject.Inject;
 
 public class SplitNavigationController
         extends Controller
         implements DoubleNavigationController {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     public Controller leftController;
     public Controller rightController;
 
@@ -66,6 +73,7 @@ public class SplitNavigationController
     @Override
     public void onCreate() {
         super.onCreate();
+        Chan.inject(this);
 
         doubleNavigationController = this;
 
@@ -73,7 +81,7 @@ public class SplitNavigationController
         view = container;
 
         View dividerView = new View(context);
-        dividerView.setBackgroundColor(getAttrColor(context, R.attr.divider_split_color));
+        dividerView.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
 
         leftControllerView = new FrameLayout(context);
         rightControllerView = new FrameLayout(context);
@@ -99,6 +107,11 @@ public class SplitNavigationController
     @Override
     public void setEmptyView(ViewGroup emptyView) {
         this.emptyView = emptyView;
+
+        TextView textView = emptyView.findViewById(R.id.select_thread_text);
+        if (textView != null) {
+            textView.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        }
     }
 
     @Override

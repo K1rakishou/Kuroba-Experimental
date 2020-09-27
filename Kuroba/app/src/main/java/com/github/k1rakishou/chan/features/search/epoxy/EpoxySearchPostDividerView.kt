@@ -8,7 +8,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.updateMargins
 import javax.inject.Inject
 
@@ -20,7 +20,7 @@ class EpoxySearchPostDividerView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private val divider: View
 
@@ -29,7 +29,7 @@ class EpoxySearchPostDividerView @JvmOverloads constructor(
     View.inflate(context, R.layout.epoxy_divider_view, this)
 
     divider = findViewById<View>(R.id.divider)
-    divider.setBackgroundColor(themeHelper.theme.dividerColor)
+    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
   }
 
   @JvmOverloads

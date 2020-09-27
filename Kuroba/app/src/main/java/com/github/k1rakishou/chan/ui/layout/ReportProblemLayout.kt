@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
@@ -22,6 +23,8 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
 
   @Inject
   lateinit var reportManager: ReportManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var callbacks: ReportProblemControllerCallbacks? = null
   private lateinit var compositeDisposable: CompositeDisposable
@@ -41,6 +44,8 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
       reportActivityAttachLogsButton = findViewById(R.id.report_controller_attach_logs_button)
       reportActivityLogsText = findViewById(R.id.report_controller_logs_text)
       reportActivitySendReport = findViewById(R.id.report_controller_send_report)
+
+      reportActivityAttachLogsButton.setTextColor(themeEngine.chanTheme.textPrimaryColor)
     }
   }
 

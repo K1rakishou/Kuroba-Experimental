@@ -58,7 +58,7 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallb
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -103,7 +103,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var presenter: ThreadPresenter
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -203,7 +203,7 @@ class ThreadLayout @JvmOverloads constructor(
     postPopupHelper = PostPopupHelper(context, presenter, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
-    errorText.typeface = themeHelper.theme.mainFont
+    errorText.typeface = themeEngine.chanTheme.mainFont
     errorRetryButton.setOnClickListener(this)
     openThreadInArchiveButton.setOnClickListener(this)
 
@@ -417,7 +417,7 @@ class ThreadLayout @JvmOverloads constructor(
     if (ChanSettings.openLinkBrowser.get()) {
       AndroidUtils.openLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeHelper.theme)
+      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 
@@ -601,8 +601,8 @@ class ThreadLayout @JvmOverloads constructor(
     val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
 
-    checkBox.buttonTintList = ColorStateList.valueOf(themeHelper.theme.textPrimary)
-    checkBox.setTextColor(ColorStateList.valueOf(themeHelper.theme.textPrimary))
+    checkBox.buttonTintList = ColorStateList.valueOf(themeEngine.chanTheme.textPrimaryColor)
+    checkBox.setTextColor(ColorStateList.valueOf(themeEngine.chanTheme.textPrimaryColor))
 
     AlertDialog.Builder(context)
       .setTitle(R.string.delete_confirm)
@@ -651,7 +651,7 @@ class ThreadLayout @JvmOverloads constructor(
         R.string.thread_removed
       }
 
-      SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(themeEngine.chanTheme, this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.undo, {
           serializedCoroutineExecutor.post {
             postFilterManager.remove(post.postDescriptor)
@@ -691,7 +691,7 @@ class ThreadLayout @JvmOverloads constructor(
         AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
       }
 
-      SnackbarWrapper.create(this, formattedString, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(themeEngine.chanTheme, this, formattedString, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
@@ -728,6 +728,7 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
 
       SnackbarWrapper.create(
+        themeEngine.chanTheme,
         this,
         AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
         Snackbar.LENGTH_LONG
@@ -783,7 +784,7 @@ class ThreadLayout @JvmOverloads constructor(
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 
-      newPostsNotification = SnackbarWrapper.create(this, text, Snackbar.LENGTH_LONG).apply {
+      newPostsNotification = SnackbarWrapper.create(themeEngine.chanTheme, this, text, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.thread_new_posts_goto) {
           presenter.onNewPostsViewClicked()
           dismissSnackbar()

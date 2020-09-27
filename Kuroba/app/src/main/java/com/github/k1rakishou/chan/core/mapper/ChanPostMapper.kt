@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.mapper
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -72,10 +72,10 @@ object ChanPostMapper {
 
     @JvmStatic
     fun toPost(
-            gson: Gson,
-            chanPost: ChanPost,
-            currentTheme: Theme,
-            archiveDescriptor: ArchiveDescriptor?
+      gson: Gson,
+      chanPost: ChanPost,
+      currentTheme: ChanTheme,
+      archiveDescriptor: ArchiveDescriptor?
     ): Post {
         val opId = chanPost.postDescriptor.getThreadNo()
 

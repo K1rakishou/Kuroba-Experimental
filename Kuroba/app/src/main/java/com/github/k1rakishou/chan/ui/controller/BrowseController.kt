@@ -47,7 +47,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
@@ -71,7 +71,7 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var presenter: BrowsePresenter
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
@@ -305,7 +305,7 @@ class BrowseController(context: Context) : ThreadController(context),
       false,
       true,
       navigation,
-      themeHelper.theme
+      themeEngine.chanTheme
     )
   }
 
@@ -588,7 +588,7 @@ class BrowseController(context: Context) : ThreadController(context),
     if (share) {
       AndroidUtils.shareLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeHelper.theme)
+      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 

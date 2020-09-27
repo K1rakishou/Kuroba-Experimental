@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyRecyclerView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
@@ -13,6 +15,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -33,6 +37,9 @@ class AddBoardsController(
   private val callback: RefreshBoardsCallback
 ) : BaseFloatingController(context), AddBoardsView {
   private val presenter = AddBoardsPresenter(siteDescriptor)
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
@@ -49,6 +56,7 @@ class AddBoardsController(
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
 
     searchView = view.findViewById(R.id.search_view)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -56,6 +64,9 @@ class AddBoardsController(
     cancel = view.findViewById(R.id.cancel_adding_boards)
     addBoards = view.findViewById(R.id.add_boards)
     outsideArea = view.findViewById(R.id.outside_area)
+
+    val cardView = view.findViewById<CardView>(R.id.card_view)
+    cardView.setCardBackgroundColor(themeEngine.chanTheme.primaryColor)
 
     mainScope.launch {
       startListeningForSearchQueries()

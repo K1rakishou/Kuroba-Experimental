@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.theme.Theme
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -20,7 +20,7 @@ import java.util.regex.Pattern
 
 class GlobalSearchUseCase(
   private val siteManager: SiteManager,
-  private val themeHelper: ThemeHelper,
+  private val themeEngine: ThemeEngine,
   private val chan4SearchPostParser: Chan4SearchPostParser
 ) : ISuspendUseCase<SearchParams, SearchResult> {
   override suspend fun execute(parameter: SearchParams): SearchResult {
@@ -78,7 +78,7 @@ class GlobalSearchUseCase(
 
     searchResult as SearchResult.Success
 
-    val theme = themeHelper.theme
+    val theme = themeEngine.chanTheme
 
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
@@ -98,11 +98,11 @@ class GlobalSearchUseCase(
     return searchResult
   }
 
-  private fun findAllQuotesAndMarkThem(spannedComment: SpannableString, theme: Theme) {
+  private fun findAllQuotesAndMarkThem(spannedComment: SpannableString, theme: ChanTheme) {
     val matcher = SIMPLE_QUOTE_PATTERN.matcher(spannedComment)
 
     while (matcher.find()) {
-      val span = ForegroundColorSpanHashed(theme.linkColor)
+      val span = ForegroundColorSpanHashed(theme.postLinkColor)
       spannedComment.setSpan(span, matcher.start(), matcher.end(), 0)
     }
   }
@@ -110,7 +110,7 @@ class GlobalSearchUseCase(
   private fun findAllQueryEntriesInsideCommentAndMarkThem(
     query: String,
     parsedComment: SpannableString,
-    theme: Theme
+    theme: ChanTheme
   ) {
     if (parsedComment.length < query.length) {
       return
@@ -123,7 +123,7 @@ class GlobalSearchUseCase(
       if (query[0].equals(parsedComment[offset], ignoreCase = true)) {
         val compared = compare(query, parsedComment, offset)
         if (compared == query.length) {
-          spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor.color))
+          spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor))
         }
 
         offset += compared

@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:id="@+id/recycler_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?backcolor"
     android:clipToPadding="false"
     android:padding="1dp"
     android:scrollbarStyle="outsideOverlay"

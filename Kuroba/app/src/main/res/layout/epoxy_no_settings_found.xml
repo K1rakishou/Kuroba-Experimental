@@ -9,7 +9,6 @@
         android:padding="16dp"
         android:textSize="18sp"
         android:gravity="center_horizontal"
-        android:textColor="?text_color_secondary"
-        tools:text="No settings were found by query &quot;Test awr awr awr awr awr awr 3t 2t6234yt 354y&quot;"/>
+        tools:text="No settings were found by query &quot;test&quot;"/>
 
 </merge>

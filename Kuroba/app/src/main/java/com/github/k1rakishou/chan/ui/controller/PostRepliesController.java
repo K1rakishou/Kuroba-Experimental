@@ -35,7 +35,8 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -53,7 +54,7 @@ public class PostRepliesController
     private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
@@ -148,11 +149,14 @@ public class PostRepliesController
         View repliesBack = dataView.findViewById(R.id.replies_back);
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());
 
+        PostRepliesContainer postRepliesContainer = dataView.findViewById(R.id.container);
+        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+
         View repliesClose = dataView.findViewById(R.id.replies_close);
         repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
 
-        Drawable backDrawable = themeHelper.getTheme().backDrawable.makeDrawable(context);
-        Drawable doneDrawable = themeHelper.getTheme().doneDrawable.makeDrawable(context);
+        Drawable backDrawable = themeEngine.getChanTheme().backDrawable.makeDrawable(context);
+        Drawable doneDrawable = themeEngine.getChanTheme().doneDrawable.makeDrawable(context);
 
         TextView repliesBackText = dataView.findViewById(R.id.replies_back_icon);
         TextView repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
@@ -163,7 +167,6 @@ public class PostRepliesController
         postPreloadedInfoHolder.preloadPostsInfo(data.posts);
 
         RepliesAdapter repliesAdapter = new RepliesAdapter(
-                themeHelper,
                 presenter,
                 postPreloadedInfoHolder,
                 chanDescriptor
@@ -228,19 +231,16 @@ public class PostRepliesController
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
         public static final int POST_REPLY_VIEW_TYPE = 0;
 
-        private ThemeHelper themeHelper;
         private ThreadPresenter presenter;
         private PostPreloadedInfoHolder postPreloadedInfoHolder;
         private ChanDescriptor chanDescriptor;
         private PostPopupHelper.RepliesData data;
 
         public RepliesAdapter(
-                ThemeHelper themeHelper,
                 ThreadPresenter presenter,
                 PostPreloadedInfoHolder postPreloadedInfoHolder,
                 ChanDescriptor chanDescriptor
         ) {
-            this.themeHelper = themeHelper;
             this.presenter = presenter;
             this.postPreloadedInfoHolder = postPreloadedInfoHolder;
             this.chanDescriptor = chanDescriptor;
@@ -251,7 +251,7 @@ public class PostRepliesController
         public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = inflate(parent.getContext(), R.layout.cell_post, parent, false);
 
-            return new ReplyViewHolder(view, themeHelper);
+            return new ReplyViewHolder(view);
         }
 
         @Override
@@ -304,13 +304,11 @@ public class PostRepliesController
 
     private static class ReplyViewHolder extends RecyclerView.ViewHolder {
         private PostCellInterface postCellInterface;
-        private ThemeHelper themeHelper;
 
-        public ReplyViewHolder(@NonNull View itemView, ThemeHelper themeHelper) {
+        public ReplyViewHolder(@NonNull View itemView) {
             super(itemView);
 
             this.postCellInterface = (PostCellInterface) itemView;
-            this.themeHelper = themeHelper;
         }
 
         public void onBind(
@@ -337,8 +335,7 @@ public class PostRepliesController
                     markedNo,
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
-                    false,
-                    themeHelper.getTheme()
+                    false
             );
         }
     }

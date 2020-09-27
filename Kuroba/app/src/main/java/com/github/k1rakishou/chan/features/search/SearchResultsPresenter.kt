@@ -10,8 +10,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.*
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.search.data.*
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.theme.Theme
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
@@ -37,7 +37,7 @@ internal class SearchResultsPresenter(
   @Inject
   lateinit var globalSearchUseCase: GlobalSearchUseCase
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private val searchResultsControllerStateSubject =
     BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.InitialLoading)
@@ -169,7 +169,7 @@ internal class SearchResultsPresenter(
       .map { searchPostInfo -> searchPostInfo.postDescriptor }
       .toSet()
 
-    val theme = themeHelper.theme
+    val theme = themeEngine.chanTheme
 
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
@@ -222,7 +222,7 @@ internal class SearchResultsPresenter(
     return CharSequenceMurMur.create(text)
   }
 
-  private fun createOpInfo(searchEntryPost: SearchEntryPost, theme: Theme): CharSequenceMurMur? {
+  private fun createOpInfo(searchEntryPost: SearchEntryPost, theme: ChanTheme): CharSequenceMurMur? {
     if (!searchEntryPost.isOp) {
       return null
     }
@@ -253,9 +253,9 @@ internal class SearchResultsPresenter(
     return spannedSubject
   }
 
-  private fun subjectSpanned(text: CharSequence, theme: Theme): SpannableString {
+  private fun subjectSpanned(text: CharSequence, theme: ChanTheme): SpannableString {
     val spannedSubject = SpannableString(text)
-    spannedSubject.setSpan(ForegroundColorSpanHashed(theme.subjectColor), 0, spannedSubject.length, 0)
+    spannedSubject.setSpan(ForegroundColorSpanHashed(theme.postSubjectColor), 0, spannedSubject.length, 0)
     return spannedSubject
   }
 

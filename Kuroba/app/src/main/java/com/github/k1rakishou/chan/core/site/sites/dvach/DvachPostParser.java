@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jsoup.Jsoup;
@@ -30,7 +30,7 @@ public class DvachPostParser extends DefaultPostParser {
     }
 
     @Override
-    public Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback) {
+    public Post parse(@NonNull ChanTheme theme, Post.Builder builder, Callback callback) {
         builder.name = Parser.unescapeEntities(builder.name, false);
         parseNameForColor(builder);
         return super.parse(theme, builder, callback);

@@ -50,7 +50,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:paddingBottom="8dp"
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
-                android:textColor="?text_color_secondary"
                 android:textSize="12sp" />
 
         </LinearLayout>
@@ -71,7 +70,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <View
         android:id="@+id/divider"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="?attr/divider_color" />
+        android:layout_height="1dp" />
 
 </LinearLayout>

@@ -25,7 +25,7 @@ import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
 
@@ -65,7 +65,7 @@ public class CommentParserHelper {
      * @param spannable Spannable to set the spans on.
      */
     public static void detectLinks(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             String text,
             SpannableString spannable

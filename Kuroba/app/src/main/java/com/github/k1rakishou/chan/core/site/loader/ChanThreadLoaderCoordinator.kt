@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUs
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
@@ -71,7 +71,7 @@ class ChanThreadLoaderCoordinator(
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
-  private val themeHelper: ThemeHelper,
+  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) : CoroutineScope {
   private val job = SupervisorJob()
@@ -83,7 +83,7 @@ class ChanThreadLoaderCoordinator(
     ReloadPostsFromDatabaseUseCase(
       gson,
       chanPostRepository,
-      themeHelper,
+      themeEngine,
       boardManager
     )
   }
@@ -96,7 +96,7 @@ class ChanThreadLoaderCoordinator(
       filterEngine,
       postFilterManager,
       savedReplyManager,
-      themeHelper,
+      themeEngine,
       boardManager
     )
   }

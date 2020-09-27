@@ -53,7 +53,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.*
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
@@ -76,7 +76,7 @@ class DrawerController(
   WindowInsetsListener {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
@@ -147,19 +147,22 @@ class DrawerController(
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
 
+    val divider = view.findViewById<View>(R.id.divider)
+    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
+
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
 
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
+      intArrayOf(Color.WHITE, themeEngine.chanTheme.textSecondaryColor)
     )
     bottomNavView.itemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
+      intArrayOf(Color.WHITE, themeEngine.chanTheme.textSecondaryColor)
     )
-    bottomNavView.setBackgroundColor(themeHelper.theme.primaryColor.color)
+    bottomNavView.setBackgroundColor(themeEngine.chanTheme.secondaryColor)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       if (bottomNavView.selectedItemId == menuItem.itemId) {
@@ -490,12 +493,12 @@ class DrawerController(
     badgeDrawable.number = state.totalUnseenPostsCount
 
     if (state.hasUnreadReplies) {
-      badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
+      badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
     } else {
-      badgeDrawable.backgroundColor = themeHelper.theme.backColor
+      badgeDrawable.backgroundColor = themeEngine.chanTheme.primaryColor
     }
 
-    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textPrimaryColor
   }
 
   private fun onSettingsNotificationChanged() {
@@ -514,8 +517,8 @@ class DrawerController(
     badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = notificationsCount
 
-    badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
-    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+    badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
+    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textPrimaryColor
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {

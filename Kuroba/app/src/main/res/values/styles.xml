@@ -15,9 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <resources>
-    <color name="primary">#4caf50</color>
-    <color name="primary_dark">#388e3c</color>
-    <color name="accent">#009688</color>
+    <color name="primary">#FF00FF</color>
+    <color name="primary_dark">#FF00FF</color>
+    <color name="accent">#FF00FF</color>
     
     <color name="gestures_zone_view_background">#5038FFB2</color>
     <color name="gestures_zone_view_added_zones">#50FFB55B</color>
@@ -32,50 +32,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="new_crash_log_icon_color">#E54545</color>
 
     <style name="Chan.DefaultTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:statusBarColor">#ff000000</item>
+        <item name="android:navigationBarColor">#ff000000</item>
         <item name="android:windowBackground">#1d1f21</item>
         <item name="windowActionModeOverlay">true</item>
 
-        <item name="dropdown_dark_color">#ffffff</item>
-        <item name="dropdown_dark_pressed_color">#88ffffff</item>
-
-        <item name="setting_description_top">@drawable/setting_description_top_dark</item>
-        <item name="setting_description_bottom">@drawable/setting_description_bottom_dark</item>
-
-        <item name="colorAccent">#009688</item>
-        <item name="backcolor">#282a2e</item>
-        <item name="backcolor_secondary">#1d1f21</item>
-
-        <item name="text_color_primary">#c5c8c6</item>
-        <item name="text_color_secondary">#89c5c8c6</item>
-        <item name="text_color_hint">#4cffffff</item>
-        <item name="text_color_reveal_spoiler">#ffffff</item>
-
-        <item name="divider_color">#1effffff</item>
-        <item name="divider_split_color">#3d3d3d</item>
-
-        <item name="post_saved_reply_color">#5C5C5C</item>
-        <item name="post_highlighted_color">#444444</item>
-        <item name="post_subject_color">#b294bb</item>
-        <item name="post_details_color">#c5c8c6</item>
-        <item name="post_link_color">#5F89AC</item>
-        <item name="post_spoiler_color">#000000</item>
-        <item name="post_id_background_light">#00000000</item>
-        <item name="post_id_background_dark">#C6C6C6</item>
-        <item name="post_name_color">#c5c8c6</item>
-        <item name="post_quote_color">#5F89AC</item>
-        <item name="post_highlight_quote_color">#2b435a</item>
-        <item name="post_inline_quote_color">#b5bd68</item>
-        <item name="post_capcode_color">#ff0000</item>
-        <item name="post_last_seen_color">#ff0000</item>
-        <item name="post_selected_color">#20000000</item>
-
-        <item name="dropdown_light_color">#ffffff</item>
-        <item name="dropdown_light_pressed_color">#88ffffff</item>
-
-        <item name="highlighted_pin_view_holder_color">#22000000</item>
-        <item name="pin_posts_not_watching_color">#898989</item>
-        <item name="pin_posts_has_replies_color">#ff4444</item>
-        <item name="pin_posts_normal_color">#33B5E5</item>
+        <item name="colorPrimary">#FF00FF</item>
+        <item name="colorPrimaryDark">#FF00FF</item>
+        <item name="colorSecondary">#FF00FF</item>
+        <item name="colorAccent">#FF00FF</item>
     </style>
 
 </resources>

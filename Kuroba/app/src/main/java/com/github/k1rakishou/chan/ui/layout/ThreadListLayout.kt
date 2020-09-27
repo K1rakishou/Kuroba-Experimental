@@ -57,7 +57,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.layout.ReplyLayout.ReplyLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -88,7 +88,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   CoroutineScope {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -123,7 +123,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
   private var postViewMode: PostViewMode? = null
   private var spanCount = 2
-  private var background = 0
   private var searchOpen = false
   private var onToolbarHeightKnownAlreadyCalled = false
   private var lastPostCount = 0
@@ -245,13 +244,18 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     searchStatus = findViewById(R.id.search_status)
     recyclerView = findViewById(R.id.recycler_view)
 
+    replyLayout.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    searchStatus.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+
     val params = replyLayout.layoutParams as LayoutParams
     params.gravity = Gravity.BOTTOM
     replyLayout.layoutParams = params
 
     // View setup
     replyLayout.setCallback(this)
-    searchStatus.typeface = themeHelper.theme.mainFont
+
+    searchStatus.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    searchStatus.typeface = themeEngine.chanTheme.mainFont
   }
 
   fun onCreate(
@@ -272,8 +276,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerView,
       postAdapterCallback,
       postCellCallback,
-      statusCellCallback,
-      themeHelper.theme
+      statusCellCallback
     )
 
     recyclerView.adapter = postAdapter
@@ -409,10 +412,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
 
-        if (background != R.attr.backcolor) {
-          background = R.attr.backcolor
-          setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor))
-        }
+        setBackgroundColor(themeEngine.chanTheme.primaryColor)
       }
       PostViewMode.CARD -> {
         val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(null, spanCount, VERTICAL, false) {
@@ -432,10 +432,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
 
-        if (background != R.attr.backcolor_secondary) {
-          background = R.attr.backcolor_secondary
-          setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor_secondary))
-        }
+        setBackgroundColor(themeEngine.chanTheme.secondaryColor)
       }
     }
 
@@ -922,7 +919,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
             globalWindowInsetsManager,
             recyclerView,
             postInfoMapItemDecoration,
-            themeHelper.theme
+            themeEngine.chanTheme
           )
         }
       }

@@ -37,8 +37,8 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 
@@ -69,7 +69,7 @@ public class Toolbar
     private static final Interpolator SLOWDOWN_INTERPOLATOR = new DecelerateInterpolator(2f);
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -148,7 +148,7 @@ public class Toolbar
         }
 
         inject(this);
-        presenter = new ToolbarPresenter(this, themeHelper);
+        presenter = new ToolbarPresenter(this, themeEngine);
 
         //initView
         FrameLayout leftButtonContainer = new FrameLayout(getContext());
@@ -388,7 +388,7 @@ public class Toolbar
             final boolean animate,
             final boolean pushing,
             final NavigationItem item,
-            Theme theme
+            ChanTheme theme
     )  {
         setNavigationItem(animate, pushing, item, theme, null);
     }
@@ -397,7 +397,7 @@ public class Toolbar
             final boolean animate,
             final boolean pushing,
             final NavigationItem item,
-            Theme theme,
+            ChanTheme theme,
             ToolbarContainer.ToolbarTransitionAnimationListener listener
     ) {
         ToolbarPresenter.AnimationStyle animationStyle;
@@ -450,14 +450,14 @@ public class Toolbar
     }
 
     @Override
-    public void showForNavigationItem(NavigationItem item, Theme theme, ToolbarPresenter.AnimationStyle animation) {
+    public void showForNavigationItem(NavigationItem item, ChanTheme theme, ToolbarPresenter.AnimationStyle animation) {
         showForNavigationItem(item, theme, animation, null);
     }
 
     @Override
     public void showForNavigationItem(
             NavigationItem item,
-            Theme theme,
+            ChanTheme theme,
             ToolbarPresenter.AnimationStyle animation,
             ToolbarContainer.ToolbarTransitionAnimationListener listener
     ) {

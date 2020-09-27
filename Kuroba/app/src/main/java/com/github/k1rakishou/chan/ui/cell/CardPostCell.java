@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.cell;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -33,8 +34,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -57,7 +57,7 @@ public class CardPostCell
     private static final int COMMENT_MAX_LENGTH = 200;
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     PostFilterManager postFilterManager;
 
@@ -74,6 +74,7 @@ public class CardPostCell
     private TextView replies;
     private ImageView options;
     private View filterMatchColor;
+    private CardView cardView;
 
     public CardPostCell(Context context) {
         super(context);
@@ -108,6 +109,10 @@ public class CardPostCell
         comment = findViewById(R.id.comment);
         replies = findViewById(R.id.replies);
         options = findViewById(R.id.options);
+
+        cardView = findViewById(R.id.card_view);
+        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+
         AndroidUtils.setBoundlessRoundRippleBackground(options);
         filterMatchColor = findViewById(R.id.filter_match_color);
 
@@ -159,8 +164,7 @@ public class CardPostCell
             long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            Theme theme
+            boolean compact
     ) {
         if (this.post == post) {
             return;
@@ -267,7 +271,7 @@ public class CardPostCell
         }
 
         comment.setText(commentText);
-        comment.setTextColor(themeHelper.getTheme().textPrimary);
+        comment.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
 
         String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
@@ -278,6 +282,7 @@ public class CardPostCell
         }
 
         replies.setText(status);
+        replies.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
 
         if (callback != null) {
             callback.onPostBind(post);
@@ -300,5 +305,6 @@ public class CardPostCell
 
         int optionsPadding = compact ? 0 : dp(5);
         options.setPadding(0, optionsPadding, optionsPadding, 0);
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
     }
 }

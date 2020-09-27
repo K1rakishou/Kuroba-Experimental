@@ -25,7 +25,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.k1rakishou.chan.ui.helper.PostHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.Logger
@@ -65,7 +65,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -98,7 +98,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       appConstants,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
-      themeHelper,
+      themeEngine,
       boardManager
     )
   }

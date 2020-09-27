@@ -43,9 +43,9 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
@@ -60,7 +60,6 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.updatePaddings;
 
@@ -86,7 +85,7 @@ public class ToolbarContainer extends FrameLayout {
     private static final int ANIMATION_DURATION = 250;
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private Callback callback;
     private ArrowMenuDrawable arrowMenu;
@@ -129,7 +128,7 @@ public class ToolbarContainer extends FrameLayout {
 
     public void set(
             NavigationItem item,
-            Theme theme,
+            ChanTheme theme,
             ToolbarPresenter.AnimationStyle animation
     ) {
         set(item, theme, animation, null);
@@ -137,7 +136,7 @@ public class ToolbarContainer extends FrameLayout {
 
     public void set(
             NavigationItem item,
-            Theme theme,
+            ChanTheme theme,
             ToolbarPresenter.AnimationStyle animation,
             @Nullable ToolbarTransitionAnimationListener listener
     ) {
@@ -572,7 +571,7 @@ public class ToolbarContainer extends FrameLayout {
         @Nullable
         private ToolbarMenuView menuView;
 
-        public ItemView(NavigationItem item, Theme theme) {
+        public ItemView(NavigationItem item, ChanTheme theme) {
             this.view = createNavigationItemView(item, theme);
             this.item = item;
         }
@@ -589,7 +588,7 @@ public class ToolbarContainer extends FrameLayout {
             }
         }
 
-        private LinearLayout createNavigationItemView(final NavigationItem item, Theme theme) {
+        private LinearLayout createNavigationItemView(final NavigationItem item, ChanTheme theme) {
             if (item.search) {
                 return createSearchLayout(item);
             } else {
@@ -598,7 +597,7 @@ public class ToolbarContainer extends FrameLayout {
         }
 
         @NonNull
-        private LinearLayout createNavigationLayout(NavigationItem item, Theme theme) {
+        private LinearLayout createNavigationLayout(NavigationItem item, ChanTheme theme) {
             @SuppressLint("InflateParams")
             LinearLayout menu = (LinearLayout) inflate(getContext(), R.layout.toolbar_menu, null);
             menu.setGravity(Gravity.CENTER_VERTICAL);
@@ -607,7 +606,7 @@ public class ToolbarContainer extends FrameLayout {
 
             // Title
             final TextView titleView = menu.findViewById(R.id.title);
-            titleView.setTypeface(theme != null ? theme.mainFont : themeHelper.getTheme().mainFont);
+            titleView.setTypeface(theme != null ? theme.getMainFont() : themeEngine.getChanTheme().getMainFont());
             titleView.setText(item.title);
             titleView.setTextColor(Color.WHITE);
 
@@ -620,9 +619,8 @@ public class ToolbarContainer extends FrameLayout {
 
             // Middle title with arrow and callback
             if (item.middleMenu != null) {
-                int arrowColor = getAttrColor(getContext(), R.attr.dropdown_light_color);
-                int arrowPressedColor = getAttrColor(getContext(), R.attr.dropdown_light_pressed_color);
-                final Drawable arrowDrawable = new DropdownArrowDrawable(dp(12), dp(12), true, arrowColor, arrowPressedColor);
+                final Drawable arrowDrawable = themeEngine.tintDrawable(new DropdownArrowDrawable(dp(12), dp(12), true));
+
                 arrowDrawable.setBounds(0, 0, arrowDrawable.getIntrinsicWidth(), arrowDrawable.getIntrinsicHeight());
                 ImageView dropdown = new ImageView(getContext());
                 dropdown.setImageDrawable(arrowDrawable);

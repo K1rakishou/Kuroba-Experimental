@@ -32,7 +32,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class SelectLayout<T>
         implements SearchLayout.SearchLayoutCallback, View.OnClickListener {
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private RecyclerView recyclerView;
     private Button checkAllButton;
@@ -161,14 +161,19 @@ public class SelectLayout<T>
         @Override
         public void onBindViewHolder(BoardSelectViewHolder holder, int position) {
             SelectItem item = displayList.get(position);
+
             holder.checkBox.setChecked(item.checked);
             holder.text.setText(item.name);
+
             if (item.description != null) {
                 holder.description.setVisibility(VISIBLE);
                 holder.description.setText(item.description);
             } else {
                 holder.description.setVisibility(GONE);
             }
+
+            holder.text.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+            holder.description.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
         }
 
         @Override
@@ -224,8 +229,8 @@ public class SelectLayout<T>
             description = itemView.findViewById(R.id.description);
 
             checkBox.setOnCheckedChangeListener(this);
-            checkBox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-            checkBox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+            checkBox.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+            checkBox.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
 
             itemView.setOnClickListener(this);
         }
@@ -233,7 +238,7 @@ public class SelectLayout<T>
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (buttonView == checkBox) {
-                SelectItem board = adapter.displayList.get(getAdapterPosition());
+                SelectItem<?> board = adapter.displayList.get(getAdapterPosition());
                 board.checked = isChecked;
                 updateAllSelected();
             }

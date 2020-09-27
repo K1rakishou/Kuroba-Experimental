@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -40,8 +41,8 @@ import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
@@ -59,7 +60,6 @@ import kotlin.Unit;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.github.k1rakishou.chan.Chan.inject;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
@@ -69,12 +69,13 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
 public class FiltersController
         extends Controller
         implements ToolbarNavigationController.ToolbarSearchCallback,
-        View.OnClickListener {
+        View.OnClickListener,
+        ThemeEngine.ThemeChangesListener {
 
     @Inject
     FilterEngine filterEngine;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private RecyclerView recyclerView;
     private ColorizableFloatingActionButton add;
@@ -150,11 +151,21 @@ public class FiltersController
 
         enable = view.findViewById(R.id.enable);
         enable.setOnClickListener(this);
+
+        themeEngine.addListener(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (adapter != null) {
+            adapter.reload();
+        }
     }
 
     @Override
@@ -274,8 +285,7 @@ public class FiltersController
         adapter.filter();
     }
 
-    private class FilterAdapter
-            extends RecyclerView.Adapter<FilterCell> {
+    private class FilterAdapter extends RecyclerView.Adapter<FilterCell> {
         private List<ChanFilter> sourceList = new ArrayList<>();
         private List<ChanFilter> displayList = new ArrayList<>();
         private String searchQuery;
@@ -295,12 +305,14 @@ public class FiltersController
         public void onBindViewHolder(FilterCell holder, int position) {
             ChanFilter filter = displayList.get(position);
             holder.text.setText(filter.getPattern());
-            holder.text.setTextColor(getAttrColor(context,
-                    filter.getEnabled() ? R.attr.text_color_primary : R.attr.text_color_hint
-            ));
-            holder.subtext.setTextColor(getAttrColor(context,
-                    filter.getEnabled() ? R.attr.text_color_secondary : R.attr.text_color_hint
-            ));
+
+            int textColor = filter.getEnabled()
+                    ? themeEngine.getChanTheme().getTextPrimaryColor()
+                    : themeEngine.getChanTheme().getTextColorHint();
+
+            holder.text.setTextColor(textColor);
+            holder.subtext.setTextColor(textColor);
+
 
             int types = FilterType.forFlags(filter.getType()).size();
             String subText = getQuantityString(R.plurals.type, types, types);
@@ -362,11 +374,10 @@ public class FiltersController
         }
     }
 
-    private class FilterCell
-            extends RecyclerView.ViewHolder
-            implements View.OnClickListener {
+    private class FilterCell extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView text;
         private TextView subtext;
+        private View divider;
 
         @SuppressLint("ClickableViewAccessibility")
         public FilterCell(View itemView) {
@@ -374,18 +385,21 @@ public class FiltersController
 
             text = itemView.findViewById(R.id.text);
             subtext = itemView.findViewById(R.id.subtext);
-            ImageView reorder = itemView.findViewById(R.id.reorder);
 
-            Drawable drawable = context.getDrawable(R.drawable.ic_reorder_black_24dp);
-            assert drawable != null;
+            divider = itemView.findViewById(R.id.divider);
+            divider.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
+
+            ImageView reorder = itemView.findViewById(R.id.reorder);
+            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_reorder_black_24dp);
             Drawable drawableMutable = DrawableCompat.wrap(drawable).mutate();
-            DrawableCompat.setTint(drawableMutable, getAttrColor(context, R.attr.text_color_hint));
+            DrawableCompat.setTint(drawableMutable, themeEngine.getChanTheme().getTextColorHint());
             reorder.setImageDrawable(drawableMutable);
 
             reorder.setOnTouchListener((v, event) -> {
                 if (!locked && event.getActionMasked() == MotionEvent.ACTION_DOWN && attached) {
                     itemTouchHelper.startDrag(FilterCell.this);
                 }
+
                 return false;
             });
 

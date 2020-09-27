@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
@@ -88,7 +88,7 @@ public class ImageViewerPresenter
     @Inject
     CacheHandler cacheHandler;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     BoardManager boardManager;
 
@@ -742,7 +742,7 @@ public class ImageViewerPresenter
                             openLinkInBrowser(
                                     context,
                                     imageSearch.getUrl(searchImageUrl.toString()),
-                                    themeHelper.getTheme()
+                                    themeEngine.getChanTheme()
                             );
 
                             break;

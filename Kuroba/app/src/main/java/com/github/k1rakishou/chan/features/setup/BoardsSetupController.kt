@@ -16,13 +16,11 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class BoardsSetupController(
   context: Context,
@@ -30,9 +28,6 @@ class BoardsSetupController(
 ) : Controller(context), BoardsSetupView {
   private val presenter = BoardsSetupPresenter(siteDescriptor)
   private val controller = BoardsEpoxyController()
-
-  @Inject
-  lateinit var themeHelper: ThemeHelper
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var fabAddBoards: ColorizableFloatingActionButton

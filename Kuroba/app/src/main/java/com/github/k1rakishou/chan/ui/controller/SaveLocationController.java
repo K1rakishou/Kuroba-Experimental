@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.NewFolderLayout;
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 
 import java.io.File;
 

@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
@@ -19,7 +20,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout
 import com.github.k1rakishou.common.resetClickListener
@@ -36,12 +37,13 @@ open class BaseThreadBookmarkViewHolder(
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
   private var requestDisposable: Disposable? = null
   private var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
 
+  private lateinit var viewRoot: FrameLayout
   private lateinit var viewHolder: LinearLayout
   private lateinit var bookmarkImage: AppCompatImageView
   private lateinit var bookmarkTitle: AppCompatTextView
@@ -55,6 +57,7 @@ open class BaseThreadBookmarkViewHolder(
   }
 
   override fun bindView(itemView: View) {
+    viewRoot = itemView.findViewById(R.id.thread_bookmark_view_root)
     viewHolder = itemView.findViewById(R.id.thread_bookmark_view_holder)
     bookmarkImage = itemView.findViewById(R.id.thread_bookmark_image)
     bookmarkTitle = itemView.findViewById(R.id.thread_bookmark_title)
@@ -64,7 +67,7 @@ open class BaseThreadBookmarkViewHolder(
   }
 
   fun unbind() {
-    this.viewHolder.resetClickListener()
+    this.viewRoot.resetClickListener()
     this.bookmarkStatsHolder?.resetClickListener()
     this.bookmarkStats.resetClickListener()
 
@@ -78,7 +81,7 @@ open class BaseThreadBookmarkViewHolder(
 
   fun highlightBookmark(highlight: Boolean) {
     if (highlight) {
-      val accent = ColorStateList.valueOf(themeHelper.theme.accentColor.color)
+      val accent = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
         .withAlpha(HIGHLIGHT_COLOR_ALPHA)
 
       viewHolder.setBackgroundColor(accent.defaultColor)
@@ -126,9 +129,9 @@ open class BaseThreadBookmarkViewHolder(
       bookmarkAdditionalStats!!.visibility = View.VISIBLE
 
       if (threadBookmarkStats.watching) {
-        bookmarkAdditionalStats!!.setTextColor(themeHelper.theme.pinPostsNormalColor)
+        bookmarkAdditionalStats!!.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
       } else {
-        bookmarkAdditionalStats!!.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+        bookmarkAdditionalStats!!.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
       }
 
       if (!setAdditionalBookmarkStats(threadBookmarkStats)) {
@@ -183,7 +186,7 @@ open class BaseThreadBookmarkViewHolder(
 
   private fun setArchiveBookmarksStats() {
     bookmarkStats.text = bookmarkStats.context.getString(R.string.controller_bookmarks_bookmark_of_archived_thread)
-    bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+    bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
     bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
     bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
   }
@@ -209,11 +212,11 @@ open class BaseThreadBookmarkViewHolder(
     }
 
     if (threadBookmarkStats.newQuotes > 0) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsHasRepliesColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterHasRepliesColor)
     } else if (!threadBookmarkStats.watching) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
     } else {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
     }
 
     bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
@@ -236,9 +239,9 @@ open class BaseThreadBookmarkViewHolder(
 
   fun bookmarkClickListener(func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
     if (func == null) {
-      viewHolder.resetClickListener()
+      viewRoot.resetClickListener()
     } else {
-      viewHolder.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
+      viewRoot.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
     }
   }
 

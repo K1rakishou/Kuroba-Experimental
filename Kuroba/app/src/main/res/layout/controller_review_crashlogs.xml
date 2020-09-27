@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/backcolor"
     android:orientation="vertical">
 
     <ListView
@@ -21,8 +20,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
-            android:text="@string/delete"
-            android:textColor="?attr/text_color_primary" />
+            android:text="@string/delete" />
 
         <View
             android:layout_width="0dp"
@@ -35,9 +33,8 @@
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="8dp"
-            android:text="@string/send"
-            android:textColor="?attr/text_color_primary" />
+            android:text="@string/send" />
 
     </LinearLayout>
 
-</LinearLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>

@@ -5,13 +5,13 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.jsoup.nodes.Element;
 
 public class StyleRulesParams {
     @NonNull
-    private Theme theme;
+    private ChanTheme theme;
     @NonNull
     private CharSequence text;
     @NonNull
@@ -22,7 +22,7 @@ public class StyleRulesParams {
     private Post.Builder post = null;
 
     public StyleRulesParams(
-            @NonNull Theme theme,
+            @NonNull ChanTheme theme,
             @NonNull CharSequence text,
             @NonNull Element element,
             @Nullable PostParser.Callback callback,
@@ -36,7 +36,7 @@ public class StyleRulesParams {
     }
 
     @NonNull
-    public Theme getTheme() {
+    public ChanTheme getTheme() {
         return theme;
     }
 

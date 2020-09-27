@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.Color
 import android.os.Bundle
 import android.text.SpannableString
 import android.text.method.LinkMovementMethod
@@ -52,8 +51,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
-import com.github.k1rakishou.chan.ui.theme_v2.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
@@ -68,7 +66,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -84,8 +81,6 @@ class StartActivity : AppCompatActivity(),
   lateinit var siteResolver: SiteResolver
   @Inject
   lateinit var fileChooser: FileChooser
-  @Inject
-  lateinit var themeHelper: ThemeHelper
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -180,7 +175,7 @@ class StartActivity : AppCompatActivity(),
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 
-    themeHelper.setupContext(this)
+    themeEngine.setupContext(this)
     fileChooser.setCallbacks(this)
     imagePickDelegate = ImagePickDelegate(this)
     runtimePermissionsHelper = RuntimePermissionsHelper(this)
@@ -188,7 +183,7 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    window.setupFullscreen(themeHelper.theme)
+    window.setupFullscreen(themeEngine.chanTheme)
     window.setupStatusAndNavBarColors()
 
     // Setup base controllers, and decide if to use the split layout for tablets
@@ -218,13 +213,6 @@ class StartActivity : AppCompatActivity(),
 
     browseController?.showLoading()
     showAppBetaVersionWarning()
-
-    // TODO(KurobaEx): Test code! Remove!!!
-    lifecycleScope.launch {
-      delay(15000)
-
-      themeEngine.updateTheme(themeEngine.chanTheme.copy(accentColor = Color.RED), drawerController.view)
-    }
   }
 
   private fun showAppBetaVersionWarning() {

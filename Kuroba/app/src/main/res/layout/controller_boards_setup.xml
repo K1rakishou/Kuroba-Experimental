@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/backcolor">
+    android:layout_height="match_parent">
 
     <com.airbnb.epoxy.EpoxyRecyclerView
         android:id="@+id/epoxy_recycler_view"
@@ -12,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
         android:id="@+id/fab_add_boards"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -21,4 +20,4 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"/>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout>

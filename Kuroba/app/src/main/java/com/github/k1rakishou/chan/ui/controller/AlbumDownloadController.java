@@ -38,8 +38,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.GridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
@@ -80,8 +79,6 @@ public class AlbumDownloadController
     @Inject
     ImageSaver imageSaver;
     @Inject
-    ThemeHelper themeHelper;
-    @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private boolean allChecked = true;
@@ -99,7 +96,9 @@ public class AlbumDownloadController
         view = inflate(context, R.layout.controller_album_download);
 
         updateTitle();
-        navigation.buildMenu().withItem(R.drawable.ic_select_all_white_24dp, this::onCheckAllClicked).build();
+        navigation.buildMenu()
+                .withItem(R.drawable.ic_select_all_white_24dp, this::onCheckAllClicked)
+                .build();
 
         download = view.findViewById(R.id.download);
         download.setOnClickListener(this);

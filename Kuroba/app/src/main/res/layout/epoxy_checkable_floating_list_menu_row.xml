@@ -24,7 +24,6 @@
             android:maxLines="2"
             android:gravity="center_vertical"
             android:ellipsize="end"
-            android:textColor="?setting_description_top"
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum"/>
 

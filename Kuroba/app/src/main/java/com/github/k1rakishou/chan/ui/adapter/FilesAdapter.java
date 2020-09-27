@@ -23,27 +23,34 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+
+import javax.inject.Inject;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
-public class FilesAdapter
-        extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int ITEM_TYPE_FOLDER = 0;
     private static final int ITEM_TYPE_FILE = 1;
+
+    @Inject
+    ThemeEngine themeEngine;
 
     private FileWatcher.FileItem highlightedItem;
     private FileWatcher.FileItems fileItems;
     private Callback callback;
 
     public FilesAdapter(Callback callback) {
+        Chan.inject(this);
         this.callback = callback;
     }
 
@@ -79,8 +86,8 @@ public class FilesAdapter
                     fileViewHolder.image.setVisibility(GONE);
                 } else {
                     fileViewHolder.image.setVisibility(VISIBLE);
-                    Drawable drawable = DrawableCompat.wrap(context.getDrawable(R.drawable.ic_folder_black_24dp));
-                    DrawableCompat.setTint(drawable, getAttrColor(context, R.attr.text_color_secondary));
+                    Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_folder_black_24dp));
+                    DrawableCompat.setTint(drawable, themeEngine.getChanTheme().getTextSecondaryColor());
                     fileViewHolder.image.setImageDrawable(drawable);
                 }
 

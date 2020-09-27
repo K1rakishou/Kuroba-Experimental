@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.cell;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -26,12 +27,13 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -40,12 +42,17 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
 public class PostStubCell
         extends RelativeLayout
         implements PostCellInterface, View.OnClickListener {
     private static final int TITLE_MAX_LENGTH = 100;
+
+    @Inject
+    ThemeEngine themeEngine;
 
     private Post post;
     private ChanSettings.PostViewMode postViewMode;
@@ -60,14 +67,21 @@ public class PostStubCell
 
     public PostStubCell(Context context) {
         super(context);
+        init();
     }
 
     public PostStubCell(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public PostStubCell(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        Chan.inject(this);
     }
 
     @Override
@@ -77,7 +91,9 @@ public class PostStubCell
         title = findViewById(R.id.title);
         ImageView options = findViewById(R.id.options);
         AndroidUtils.setBoundlessRoundRippleBackground(options);
+
         divider = findViewById(R.id.divider);
+        divider.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
 
         int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get());
         title.setTextSize(textSizeSp);
@@ -91,6 +107,7 @@ public class PostStubCell
         divider.setLayoutParams(dividerParams);
 
         setOnClickListener(this);
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
 
         options.setOnClickListener(v -> {
             List<FloatingListMenuItem> items = new ArrayList<>();
@@ -140,8 +157,7 @@ public class PostStubCell
             long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            Theme theme
+            boolean compact
     ) {
         if (this.post == post) {
             return;
@@ -184,8 +200,11 @@ public class PostStubCell
             } else {
                 titleText = post.getComment();
             }
+
             title.setText(titleText);
         }
+
+        title.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
 
         divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD
                 ? GONE :

@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.site.Site
@@ -34,14 +35,19 @@ import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class LoginController(
   context: Context,
   private val site: Site
 ) : Controller(context), View.OnClickListener {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
   
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView
@@ -52,6 +58,8 @@ class LoginController(
   
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
+
     navigation.setTitle(R.string.settings_screen_pass)
     
     view = AndroidUtils.inflate(context, R.layout.controller_pass).also { view ->
@@ -62,6 +70,9 @@ class LoginController(
       inputPin = view.findViewById(R.id.input_pin)
       authenticated = view.findViewById(R.id.authenticated)
       errors.visibility = View.GONE
+
+      authenticated.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      crossfadeView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
       showBottomDescription(view)
 
@@ -114,6 +125,7 @@ class LoginController(
 
   private fun showBottomDescription(view: ViewGroup) {
     val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
+    bottomDescription.setTextColor(themeEngine.chanTheme.textPrimaryColor)
 
     if (site is Chan4) {
       bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))

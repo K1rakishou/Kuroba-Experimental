@@ -37,7 +37,7 @@ import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.CustomTypefaceSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.jsoup.nodes.Element;
 
@@ -206,7 +206,7 @@ public class StyleRule {
             return justText;
         }
 
-        @NonNull Theme theme = styleRulesParams.getTheme();
+        @NonNull ChanTheme theme = styleRulesParams.getTheme();
         @NonNull CharSequence resultText = styleRulesParams.getText();
         @NonNull Element element = styleRulesParams.getElement();
 
@@ -285,12 +285,12 @@ public class StyleRule {
         return resultText;
     }
 
-    private int getForegroundColor(Theme theme, ForegroundColor foregroundColor) {
+    private int getForegroundColor(ChanTheme theme, ForegroundColor foregroundColor) {
         switch (foregroundColor) {
             case INLINE_QUOTE:
-                return theme.inlineQuoteColor;
+                return theme.getPostInlineQuoteColor();
             case QUOTE:
-                return theme.quoteColor;
+                return theme.getPostQuoteColor();
             case RED:
                 return Color.RED;
             default:
@@ -298,9 +298,9 @@ public class StyleRule {
         }
     }
 
-    private int getBackgroundColor(Theme theme, BackgroundColor backgroundColor) {
+    private int getBackgroundColor(ChanTheme theme, BackgroundColor backgroundColor) {
         if (backgroundColor == BackgroundColor.CODE) {
-            return theme.backColorSecondary;
+            return theme.getSecondaryColor();
         }
         return 0;
     }
@@ -326,7 +326,7 @@ public class StyleRule {
 
     public interface Action {
         CharSequence execute(
-                Theme theme,
+                ChanTheme theme,
                 PostParser.Callback callback,
                 Post.Builder post,
                 CharSequence text,

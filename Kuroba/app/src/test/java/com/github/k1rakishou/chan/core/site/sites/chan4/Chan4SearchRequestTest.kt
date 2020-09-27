@@ -17,8 +17,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.ui.theme.MockTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.MockChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -51,7 +51,7 @@ class Chan4SearchRequestTest {
   private val testModule = TestModule()
   private lateinit var globalSearchUseCase: GlobalSearchUseCase
   private lateinit var siteManager: SiteManager
-  private lateinit var themeHelper: ThemeHelper
+  private lateinit var themeEngine: ThemeEngine
   private lateinit var chan4SearchPostParser: Chan4SearchPostParser
 
   @Before
@@ -60,9 +60,9 @@ class Chan4SearchRequestTest {
     ShadowLog.stream = System.out
 
     siteManager = Mockito.mock(SiteManager::class.java)
-    themeHelper = Mockito.mock(ThemeHelper::class.java)
+    themeEngine = Mockito.mock(ThemeEngine::class.java)
     chan4SearchPostParser = Mockito.mock(Chan4SearchPostParser::class.java)
-    globalSearchUseCase = GlobalSearchUseCase(siteManager, themeHelper, chan4SearchPostParser)
+    globalSearchUseCase = GlobalSearchUseCase(siteManager, themeEngine, chan4SearchPostParser)
   }
 
   @Test
@@ -78,12 +78,12 @@ class Chan4SearchRequestTest {
     val chan4 = Mockito.mock(Site::class.java)
     val testSiteActions = TestSiteActions(testModule.provideProxiedOkHttpClient(), mockUrl)
 
-    val theme = MockTheme()
+    val theme = MockChanTheme()
 
     whenever(siteManager.bySiteDescriptor(siteDescriptor)).thenReturn(chan4)
     whenever(siteManager.awaitUntilInitialized()).thenReturn(Unit)
     whenever(chan4.actions()).thenReturn(testSiteActions)
-    whenever(themeHelper.theme).thenReturn(theme)
+    whenever(themeEngine.chanTheme).thenReturn(theme)
     whenever(chan4SearchPostParser.parseComment(eq(theme), any()))
       .then { answer -> answer.getArgument(1, CharSequence::class.java) }
 

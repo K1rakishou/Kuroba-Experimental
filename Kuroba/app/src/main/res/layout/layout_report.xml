@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/report_controller_root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/backcolor"
     android:orientation="vertical">
 
     <ScrollView
@@ -88,7 +87,6 @@
                     android:paddingStart="4dp"
                     android:paddingEnd="4dp"
                     android:text="@string/report_controller_attach_logs"
-                    android:textColor="?attr/text_color_primary"
                     android:textSize="18sp" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -137,4 +135,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>

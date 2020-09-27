@@ -56,7 +56,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -120,7 +120,7 @@ public class ImageViewerController
     @Inject
     ImageSaver imageSaver;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -322,7 +322,7 @@ public class ImageViewerController
         if (ChanSettings.openLinkBrowser.get()) {
             openLink(postImage.imageUrl.toString());
         } else {
-            openLinkInBrowser(context, postImage.imageUrl.toString(), themeHelper.getTheme());
+            openLinkInBrowser(context, postImage.imageUrl.toString(), themeEngine.getChanTheme());
         }
     }
 

@@ -30,7 +30,7 @@ import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorMan
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
@@ -50,7 +50,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     @Inject
     PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private PostImage postImage;
     private float ratio = 0f;
@@ -82,7 +82,7 @@ public class PostImageThumbnailView extends ThumbnailView {
 
         if (showPrefetchLoadingIndicator) {
             segmentedCircleDrawable = new SegmentedCircleDrawable();
-            segmentedCircleDrawable.setColor(themeHelper.getTheme().accentColor.color);
+            segmentedCircleDrawable.setColor(themeEngine.getChanTheme().getAccentColor());
             segmentedCircleDrawable.setAlpha(192);
             segmentedCircleDrawable.percentage(.0f);
 

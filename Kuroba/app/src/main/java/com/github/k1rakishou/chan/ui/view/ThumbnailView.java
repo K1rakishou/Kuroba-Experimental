@@ -44,7 +44,7 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     @Inject
     ImageLoaderV2 imageLoaderV2;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     public ThumbnailView(Context context) {
         super(context);
@@ -111,7 +111,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private void init() {
         inject(this);
 
-        textPaint.setColor(themeHelper.getTheme().textPrimary);
+        textPaint.setColor(themeEngine.getChanTheme().getTextPrimaryColor());
         textPaint.setTextSize(sp(14));
     }
 

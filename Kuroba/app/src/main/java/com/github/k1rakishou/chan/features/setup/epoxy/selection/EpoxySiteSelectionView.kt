@@ -13,7 +13,7 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -28,7 +28,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
@@ -46,7 +46,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    siteName.setTextColor(themeHelper.theme.textPrimary)
+    siteName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
   }
 
   @ModelProp

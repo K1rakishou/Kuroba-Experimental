@@ -5,7 +5,7 @@ import android.text.TextUtils
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.DoNotStrip
@@ -50,7 +50,7 @@ open class Chan4SearchPostParser {
   }
 
   open fun parseComment(
-    theme: Theme,
+    theme: ChanTheme,
     commentRaw: CharSequence
   ): CharSequence? {
     var total: CharSequence? = SpannableString("")
@@ -77,7 +77,7 @@ open class Chan4SearchPostParser {
   }
 
   private fun parseNode(
-    theme: Theme,
+    theme: ChanTheme,
     node: Node
   ): CharSequence? {
     if (node is TextNode) {
@@ -119,7 +119,7 @@ open class Chan4SearchPostParser {
   }
 
   private fun handleTag(
-    theme: Theme,
+    theme: ChanTheme,
     tag: String,
     text: CharSequence,
     element: Element

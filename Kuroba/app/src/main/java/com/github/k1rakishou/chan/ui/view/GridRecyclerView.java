@@ -22,31 +22,56 @@ import android.util.AttributeSet;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+
+import javax.inject.Inject;
+
 /**
  * A RecyclerView with a GridLayoutManager that manages the span count by dividing the width of the
  * view with the value set by {@link #setSpanWidth(int)}.
  */
 public class GridRecyclerView
         extends RecyclerView {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private GridLayoutManager gridLayoutManager;
     private int spanWidth;
     private int realSpanWidth;
 
     public GridRecyclerView(Context context) {
         super(context);
+        init();
     }
 
     public GridRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public GridRecyclerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        if (!isInEditMode()) {
+            Chan.inject(this);
+        }
     }
 
     public void setLayoutManager(GridLayoutManager gridLayoutManager) {
         this.gridLayoutManager = gridLayoutManager;
         super.setLayoutManager(gridLayoutManager);
+    }
+
+    @Override
+    protected void onFinishInflate() {
+        super.onFinishInflate();
+
+        setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
     }
 
     /**

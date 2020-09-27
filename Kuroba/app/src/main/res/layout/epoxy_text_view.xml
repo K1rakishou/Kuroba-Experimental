@@ -9,7 +9,6 @@
         android:gravity="center"
         android:layout_margin="16dp"
         android:textSize="20sp"
-        android:textColor="?text_color_primary"
         android:ellipsize="end"
         tools:text="@string/lorem_ipsum"/>
 

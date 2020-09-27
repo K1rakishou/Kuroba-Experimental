@@ -35,6 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
@@ -43,6 +44,7 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 
@@ -76,6 +78,8 @@ public class CaptchaNoJsLayoutV2
     CaptchaHolder captchaHolder;
     @Inject
     ProxiedOkHttpClient okHttpClient;
+    @Inject
+    ThemeEngine themeEngine;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
         this(context, null, 0);
@@ -102,6 +106,16 @@ public class CaptchaNoJsLayoutV2
         captchaVerifyButton = view.findViewById(R.id.captcha_layout_v2_verify_button);
         AppCompatButton useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
         AppCompatButton reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
+        ConstraintLayout captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
+
+        captchaButtonsHolder.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+
+        captchaChallengeTitle.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        captchaChallengeTitle.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+
+        captchaVerifyButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        useOldCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        reloadCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
 
         captchaVerifyButton.setOnClickListener(v -> sendVerificationResponse());
         useOldCaptchaButton.setOnClickListener(v -> callback.onFallbackToV1CaptchaView(isAutoReply));

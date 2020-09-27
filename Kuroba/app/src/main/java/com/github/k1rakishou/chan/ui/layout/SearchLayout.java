@@ -28,31 +28,47 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+
+import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.requestKeyboardFocus;
 
 public class SearchLayout
         extends LinearLayout {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private EditText searchView;
     private ImageView clearButton;
     private boolean autoRequestFocus = true;
 
     public SearchLayout(Context context) {
         super(context);
+        init();
     }
 
     public SearchLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public SearchLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        if (!isInEditMode()) {
+            Chan.inject(this);
+        }
     }
 
     public void setAutoRequestFocus(boolean request) {
@@ -64,8 +80,8 @@ public class SearchLayout
         searchView.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_ACTION_DONE);
         searchView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         searchView.setHint(getString(R.string.search_hint));
-        searchView.setHintTextColor(getAttrColor(getContext(), R.attr.text_color_hint));
-        searchView.setTextColor(getAttrColor(getContext(), R.attr.text_color_primary));
+        searchView.setHintTextColor(themeEngine.getChanTheme().getTextColorHint());
+        searchView.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
         searchView.setSingleLine(true);
         searchView.setBackgroundResource(0);
         searchView.setPadding(0, 0, 0, 0);
@@ -111,7 +127,7 @@ public class SearchLayout
 
         clearButton.setAlpha(0f);
         clearButton.setImageResource(R.drawable.ic_clear_white_24dp);
-        clearButton.getDrawable().setTint(getAttrColor(getContext(), R.attr.text_color_primary));
+        clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextPrimaryColor());
         clearButton.setScaleType(ImageView.ScaleType.CENTER);
         clearButton.setOnClickListener(v -> {
             searchView.setText("");

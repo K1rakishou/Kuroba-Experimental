@@ -17,8 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <com.github.k1rakishou.chan.ui.view.CrossfadeView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/crossfade"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?backcolor">
+    android:layout_height="match_parent">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"

@@ -45,7 +45,7 @@ import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
@@ -64,7 +64,6 @@ import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
 public class FilterLayout
@@ -90,7 +89,7 @@ public class FilterLayout
     @Inject
     FilterEngine filterEngine;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private FilterLayoutCallback callback;
     private ChanFilterMutable chanFilterMutable;
@@ -151,8 +150,13 @@ public class FilterLayout
         enabled = findViewById(R.id.enabled);
 
         help = findViewById(R.id.help);
-        themeHelper.getTheme().helpDrawable.apply(help);
+        themeEngine.getChanTheme().helpDrawable.apply(help);
         help.setOnClickListener(this);
+
+        TextView filterLabelText = findViewById(R.id.filter_label_text);
+        TextView actionLabelText = findViewById(R.id.action_label_text);
+        TextView patternLabelText = findViewById(R.id.pattern_label_text);
+        TextView testPatternLabelText = findViewById(R.id.test_pattern_label_text);
 
         colorContainer = findViewById(R.id.color_container);
         colorContainer.setOnClickListener(this);
@@ -161,41 +165,46 @@ public class FilterLayout
         onlyOnOP = findViewById(R.id.only_on_op_checkbox);
         applyToSaved = findViewById(R.id.apply_to_saved_checkbox);
 
+        filterLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        actionLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        patternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        testPatternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        applyToReplies.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        onlyOnOP.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        applyToSaved.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+
         typeText.setOnClickListener(this);
-        typeText.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
+        typeText.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
 
         boardsSelector.setOnClickListener(this);
-        boardsSelector.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
+        boardsSelector.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
 
         actionText.setOnClickListener(this);
-        actionText.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
+        actionText.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
 
-        enabled.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        enabled.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToReplies.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToReplies.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        onlyOnOP.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        onlyOnOP.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToSaved.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToSaved.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        enabled.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        enabled.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        applyToReplies.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        applyToReplies.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        onlyOnOP.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        onlyOnOP.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        applyToSaved.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        applyToSaved.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
     }
 
     public void setFilter(ChanFilterMutable chanFilterMutable) {

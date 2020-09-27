@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.settings.epoxy
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.PorterDuff
 import android.util.AttributeSet
 import android.view.View
@@ -11,10 +12,13 @@ import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyLinkSetting @JvmOverloads constructor(
@@ -22,18 +26,49 @@ class EpoxyLinkSetting @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val topDescriptor: TextView
   private val bottomDescription: TextView
   private val settingViewHolder: LinearLayout
   private val notificationIcon: AppCompatImageView
 
   init {
+    Chan.inject(this)
     inflate(context, R.layout.epoxy_setting_link, this)
 
     topDescriptor = findViewById(R.id.top)
     bottomDescription = findViewById(R.id.bottom)
     settingViewHolder = findViewById(R.id.preference_item)
     notificationIcon = findViewById(R.id.setting_notification_icon)
+
+    topDescriptor.setTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(android.R.attr.state_enabled),
+          intArrayOf(-android.R.attr.state_enabled)
+        ),
+        intArrayOf(
+          themeEngine.chanTheme.textPrimaryColor,
+          themeEngine.chanTheme.textSecondaryColor
+        )
+      )
+    )
+
+    bottomDescription.setTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(android.R.attr.state_enabled),
+          intArrayOf(-android.R.attr.state_enabled)
+        ),
+        intArrayOf(
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .7f),
+          themeEngine.chanTheme.textSecondaryColor
+        )
+      )
+    )
   }
 
   @ModelProp

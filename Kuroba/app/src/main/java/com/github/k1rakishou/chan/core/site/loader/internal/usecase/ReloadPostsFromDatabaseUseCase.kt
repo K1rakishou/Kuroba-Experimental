@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.mapper.ChanPostMapper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -14,7 +14,7 @@ import com.google.gson.Gson
 class ReloadPostsFromDatabaseUseCase(
   private val gson: Gson,
   private val chanPostRepository: ChanPostRepository,
-  private val themeHelper: ThemeHelper,
+  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) {
 
@@ -50,7 +50,7 @@ class ReloadPostsFromDatabaseUseCase(
       return@map ChanPostMapper.toPost(
         gson,
         post,
-        themeHelper.theme,
+        themeEngine.chanTheme,
         null
       )
     }
@@ -88,7 +88,7 @@ class ReloadPostsFromDatabaseUseCase(
       return@map ChanPostMapper.toPost(
         gson,
         post,
-        themeHelper.theme,
+        themeEngine.chanTheme,
         null
       )
     }

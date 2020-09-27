@@ -4,13 +4,13 @@ import android.os.Build
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 
 
 object FullScreenUtils {
   private var isLightTheme = false
 
-  fun Window.setupFullscreen(theme: Theme) {
+  fun Window.setupFullscreen(theme: ChanTheme) {
     this@FullScreenUtils.isLightTheme = theme.isLightTheme
 
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)

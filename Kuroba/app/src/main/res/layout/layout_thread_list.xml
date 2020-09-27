@@ -31,7 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/reply"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?backcolor"
         android:elevation="4dp"
         android:visibility="gone"
         tools:ignore="UnusedAttribute" />
@@ -40,12 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/search_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?backcolor"
         android:elevation="4dp"
         android:gravity="center"
         android:padding="8dp"
         android:singleLine="true"
-        android:textColor="?text_color_secondary"
         android:visibility="gone"
         tools:ignore="UnusedAttribute" />
 

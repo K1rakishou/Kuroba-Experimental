@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.controller.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.text.SpannableString
 import android.text.TextUtils
 import android.text.method.LinkMovementMethod
@@ -30,7 +29,6 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.view.ContextThemeWrapper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
@@ -56,9 +54,8 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper.PrimaryColor
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCallback
@@ -79,7 +76,7 @@ import javax.inject.Inject
 class ThemeSettingsController(context: Context) : Controller(context), View.OnClickListener {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -132,13 +129,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     }
   }
 
-  private val selectedPrimaryColors = ArrayList<PrimaryColor>()
-  private val themes by lazy { themeHelper.themes!! }
-
   private lateinit var pager: ViewPager
   private lateinit var done: ColorizableFloatingActionButton
   private lateinit var textView: TextView
-  private lateinit var selectedAccentColor: PrimaryColor
+  private var selectedAccentColor: Int = 0
 
   override fun onCreate() {
     super.onCreate()
@@ -173,18 +167,16 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
     val currentSettingsTheme = ChanSettings.getThemeAndColor()
 
-    for (i in themes.indices) {
-      val theme = themes.get(i)
-      val primaryColor = theme.primaryColor
-      if (theme.name == currentSettingsTheme.theme) {
-        // Current theme
-        pager.setCurrentItem(i, false)
-      }
-      selectedPrimaryColors.add(primaryColor)
-    }
+//    val primaryColor = theme.primaryColor
+//    if (theme.name == currentSettingsTheme.theme) {
+//      // Current theme
+//      pager.setCurrentItem(i, false)
+//    }
+//
+//    selectedPrimaryColors.add(primaryColor)
 
-    selectedAccentColor = themeHelper.theme.accentColor
-    done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor.color)
+    selectedAccentColor = themeEngine.chanTheme.accentColor
+    done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor)
   }
 
   override fun onClick(v: View) {
@@ -194,11 +186,12 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   }
 
   private fun saveTheme() {
-    val currentItem = pager.currentItem
-    val selectedTheme = themes[currentItem]
-    val selectedColor = selectedPrimaryColors[currentItem]
+//    val currentItem = pager.currentItem
+//    val selectedTheme = themeEngine.chanTheme
+//    val selectedColor = selectedPrimaryColors[currentItem]
 
-    themeHelper.changeTheme(selectedTheme, selectedColor, selectedAccentColor)
+    // TODO(KurobaEx):
+//    themeHelper.changeTheme(selectedTheme, selectedColor, selectedAccentColor)
     (context as StartActivity).restartApp()
   }
 
@@ -206,24 +199,25 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     val items: MutableList<FloatingMenuItem> = ArrayList()
     var selected: FloatingMenuItem? = null
 
-    for (color in themeHelper.colors) {
-      val floatingMenuItem = FloatingMenuItem(
-        ColorsAdapterItem(color, color.color),
-        color.displayName
-      )
-
-      items.add(floatingMenuItem)
-      if (color == selectedAccentColor) {
-        selected = floatingMenuItem
-      }
-    }
+//    for (color in themeHelper.colors) {
+//      val floatingMenuItem = FloatingMenuItem(
+//        ColorsAdapterItem(color, color.color),
+//        color.displayName
+//      )
+//
+//      items.add(floatingMenuItem)
+//      if (color == selectedAccentColor) {
+//        selected = floatingMenuItem
+//      }
+//    }
 
     val menu = getColorsMenu(items, selected, textView)
     menu.setCallback(object : FloatingMenuCallback {
       override fun onFloatingMenuItemClicked(menu: FloatingMenu, item: FloatingMenuItem) {
-        val colorItem = item.id as ColorsAdapterItem
-        selectedAccentColor = colorItem.color
-        done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor.color)
+        // TODO(KurobaEx):
+//        val colorItem = item.id as ColorsAdapterItem
+//        selectedAccentColor = colorItem.color
+//        done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor.color)
       }
 
       override fun onFloatingMenuDismissed(menu: FloatingMenu) {}
@@ -253,8 +247,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     }
 
     override fun getView(position: Int, parent: ViewGroup): View {
-      val theme = themes[position]
-      val themeContext: Context = ContextThemeWrapper(context, theme.resValue)
+      val theme = themeEngine.chanTheme
       val parser = CommentParser(mockReplyManager).addDefaultRules()
 
       val postParser = DefaultPostParser(parser, postFilterManager)
@@ -299,13 +292,13 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       posts.add(post1)
       posts.add(post2)
 
-      val linearLayout = LinearLayout(themeContext)
+      val linearLayout = LinearLayout(context)
       linearLayout.orientation = LinearLayout.VERTICAL
-      linearLayout.setBackgroundColor(theme.backColor)
+      linearLayout.setBackgroundColor(theme.primaryColor)
 
-      val postsView = RecyclerView(themeContext)
+      val postsView = RecyclerView(context)
 
-      val layoutManager = LinearLayoutManager(themeContext)
+      val layoutManager = LinearLayoutManager(context)
       layoutManager.orientation = RecyclerView.VERTICAL
       postsView.layoutManager = layoutManager
 
@@ -338,8 +331,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
           }
 
           override fun onListStatusClicked() {}
-        },
-        theme
+        }
       )
 
       val postPreloadedInfoHolder = PostPreloadedInfoHolder()
@@ -348,27 +340,28 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
       postsView.adapter = adapter
 
-      val toolbar = Toolbar(themeContext)
+      val toolbar = Toolbar(context)
 
       val colorClick = View.OnClickListener {
         val items: MutableList<FloatingMenuItem> = ArrayList()
         var selected: FloatingMenuItem? = null
 
-        for (color in themeHelper.colors) {
-          val floatingMenuItem = FloatingMenuItem(ColorsAdapterItem(color, color.color500), color.displayName)
-          items.add(floatingMenuItem)
-          if (color == selectedPrimaryColors[position]) {
-            selected = floatingMenuItem
-          }
-        }
+        // TODO(KurobaEx):
+//        for (color in themeHelper.colors) {
+//          val floatingMenuItem = FloatingMenuItem(ColorsAdapterItem(color, color.color500), color.displayName)
+//          items.add(floatingMenuItem)
+//          if (color == selectedPrimaryColors[position]) {
+//            selected = floatingMenuItem
+//          }
+//        }
 
         val menu = getColorsMenu(items, selected, toolbar)
 
         menu.setCallback(object : FloatingMenuCallback {
           override fun onFloatingMenuItemClicked(menu: FloatingMenu, item: FloatingMenuItem) {
-            val colorItem = item.id as ColorsAdapterItem
-            selectedPrimaryColors[position] = colorItem.color
-            toolbar.setBackgroundColor(colorItem.color.color)
+//            val colorItem = item.id as ColorsAdapterItem
+//            selectedPrimaryColors[position] = colorItem.color
+//            toolbar.setBackgroundColor(colorItem.color.color)
           }
 
           override fun onFloatingMenuDismissed(menu: FloatingMenu) {}
@@ -385,10 +378,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
         override fun onSearchEntered(item: NavigationItem, entered: String) {}
       })
 
-      toolbar.setBackgroundColor(theme.primaryColor.color)
+      toolbar.setBackgroundColor(theme.primaryColor)
 
       val item = NavigationItem()
-      item.title = theme.displayName
+      item.title = theme.name
       item.hasBack = false
 
       toolbar.setNavigationItem(false, true, item, theme)
@@ -417,7 +410,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     }
 
     override fun getCount(): Int {
-      return themes.size
+      return 1
     }
   }
 
@@ -433,15 +426,15 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       ) as TextView
 
       textView.text = getItem(position)
-      textView.typeface = themeHelper.theme.mainFont
+      textView.typeface = themeEngine.chanTheme.mainFont
 
-      val color = items[position].id as ColorsAdapterItem
-      textView.setBackgroundColor(color.bg)
-
-      val lightColor =
-        (Color.red(color.bg) * 0.299f + Color.green(color.bg) * 0.587f + Color.blue(color.bg) * 0.114f > 125f)
-
-      textView.setTextColor(if (lightColor) Color.BLACK else Color.WHITE)
+//      val color = items[position].id as ColorsAdapterItem
+//      textView.setBackgroundColor(color.bg)
+//
+//      val lightColor =
+//        (Color.red(color.bg) * 0.299f + Color.green(color.bg) * 0.587f + Color.blue(color.bg) * 0.114f > 125f)
+//
+//      textView.setTextColor(if (lightColor) Color.BLACK else Color.WHITE)
       return textView
     }
 
@@ -459,6 +452,6 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
   }
 
-  private class ColorsAdapterItem(var color: PrimaryColor, var bg: Int)
+//  private class ColorsAdapterItem(var color: PrimaryColor, var bg: Int)
 
 }

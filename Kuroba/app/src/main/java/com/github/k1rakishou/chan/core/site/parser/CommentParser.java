@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 
@@ -141,7 +141,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     @Nullable
     public CharSequence handleTag(
             PostParser.Callback callback,
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             String tag,
             CharSequence text,
@@ -166,7 +166,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleDeadlink(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             CharSequence text,
@@ -219,7 +219,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleAnchor(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             CharSequence text,
@@ -249,7 +249,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private void addReply(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             PostLinkable.Link handlerLink,
@@ -343,7 +343,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private void addMockReply(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             SpannableStringBuilder spannableStringBuilder,
             long mockReplyPostNo
@@ -374,7 +374,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleFortune(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder builder,
             CharSequence text,
@@ -402,7 +402,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     public CharSequence handleTable(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder builder,
             CharSequence text,
@@ -454,7 +454,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         // Overrides the text (possibly) parsed by child nodes.
         return span(
                 TextUtils.concat(parts.toArray(new CharSequence[0])),
-                new ForegroundColorSpanHashed(theme.inlineQuoteColor),
+                new ForegroundColorSpanHashed(theme.getPostInlineQuoteColor()),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }

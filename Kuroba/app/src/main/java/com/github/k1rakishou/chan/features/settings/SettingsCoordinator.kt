@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.AppConstants
@@ -55,8 +55,6 @@ class SettingsCoordinator(
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
-  lateinit var themeHelper: ThemeHelper
-  @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
   @Inject
   lateinit var fileChooser: FileChooser
@@ -72,6 +70,8 @@ class SettingsCoordinator(
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
   lateinit var chanPostRepository: ChanPostRepository
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -95,7 +95,7 @@ class SettingsCoordinator(
     AppearanceSettingsScreen(
       context,
       navigationController,
-      themeHelper
+      themeEngine
     )
   }
 

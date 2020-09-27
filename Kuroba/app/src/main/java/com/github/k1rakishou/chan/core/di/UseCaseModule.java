@@ -15,7 +15,7 @@ import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.feather2.Provides;
@@ -109,13 +109,13 @@ public class UseCaseModule {
     @Provides
     public GlobalSearchUseCase provideGlobalSearchUseCase(
             SiteManager siteManager,
-            ThemeHelper themeHelper
+            ThemeEngine themeEngine
     ) {
         Logger.d(AppModule.DI_TAG, "GlobalSearchUseCase");
 
         return new GlobalSearchUseCase(
                 siteManager,
-                themeHelper,
+                themeEngine,
                 new Chan4SearchPostParser()
         );
     }

@@ -22,8 +22,7 @@ import android.widget.LinearLayout;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
-public class PostRepliesContainer
-        extends LinearLayout {
+public class PostRepliesContainer extends LinearLayout {
     public PostRepliesContainer(Context context) {
         super(context);
     }

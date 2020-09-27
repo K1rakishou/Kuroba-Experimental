@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.settings;
 
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.text.TextUtils;
 
 import com.github.k1rakishou.SettingProvider;
 import com.github.k1rakishou.chan.BuildConfig;
@@ -201,7 +200,6 @@ public class ChanSettings {
 
     //Post
     public static final StringSetting fontSize;
-    public static final BooleanSetting fontAlternate;
     public static final BooleanSetting postFullDate;
     public static final BooleanSetting postFileInfo;
     public static final BooleanSetting postFilename;
@@ -351,7 +349,6 @@ public class ChanSettings {
 
             // Post
             fontSize = new StringSetting(p, "preference_font", getRes().getBoolean(R.bool.is_tablet) ? "16" : "14");
-            fontAlternate = new BooleanSetting(p, "preference_font_alternate", false);
             postFullDate = new BooleanSetting(p, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(p, "preference_post_file_info", true);
             postFilename = new BooleanSetting(p, "preference_post_filename", true);
@@ -525,13 +522,6 @@ public class ChanSettings {
         }
 
         return new ThemeColor(theme, color, accentColor);
-    }
-
-    public static void setThemeAndColor(ThemeColor themeColor) {
-        if (TextUtils.isEmpty(themeColor.color) || TextUtils.isEmpty(themeColor.accentColor)) {
-            throw new IllegalArgumentException();
-        }
-        ChanSettings.theme.setSync(themeColor.theme + "," + themeColor.color + "," + themeColor.accentColor);
     }
 
     /**

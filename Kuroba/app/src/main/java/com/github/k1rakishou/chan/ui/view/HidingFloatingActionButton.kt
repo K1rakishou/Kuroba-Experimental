@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
-import com.github.k1rakishou.chan.ui.theme_v2.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener

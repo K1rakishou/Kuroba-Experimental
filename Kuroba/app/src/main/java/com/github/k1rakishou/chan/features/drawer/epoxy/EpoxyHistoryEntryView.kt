@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -32,7 +32,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
   private var threadImageRequestDisposable: Disposable? = null
@@ -90,11 +90,11 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     bookmarkStats.text = additionalInfo.newPosts.toString()
 
     if (additionalInfo.newQuotes > 0) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsHasRepliesColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterHasRepliesColor)
     } else if (!additionalInfo.watching) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
     } else {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
     }
 
     bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)

@@ -41,7 +41,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -67,7 +67,7 @@ open class ViewThreadController(
   private var threadDescriptor: ThreadDescriptor
 ) : ThreadController(context), ThreadLayoutCallback, ToobarThreedotMenuCallback, ReplyAutoCloseListener {
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
@@ -86,7 +86,7 @@ open class ViewThreadController(
     Chan.inject(this)
 
     threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST)
-    view.setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor))
+    view.setBackgroundColor(themeEngine.chanTheme.primaryColor)
     navigation.hasDrawer = true
     navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get()
 
@@ -351,7 +351,7 @@ open class ViewThreadController(
       return
     }
 
-    AndroidUtils.openLinkInBrowser(context, url, themeHelper.theme)
+    AndroidUtils.openLinkInBrowser(context, url, themeEngine.chanTheme)
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {

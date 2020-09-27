@@ -23,7 +23,8 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -51,7 +52,7 @@ public class RemovedPostsController
     @Inject
     ImageLoaderV2 imageLoaderV2;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private RemovedPostsHelper removedPostsHelper;
 
@@ -79,12 +80,15 @@ public class RemovedPostsController
         selectAllButton = view.findViewById(R.id.removed_posts_select_all);
         postsListView = view.findViewById(R.id.removed_posts_posts_list);
 
+        PostRepliesContainer postRepliesContainer = view.findViewById(R.id.container);
+        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+
         viewHolder.setOnClickListener(this);
         restorePostsButton.setOnClickListener(this);
         selectAllButton.setOnClickListener(this);
 
-        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeHelper.getTheme().textPrimary, 32));
-        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeHelper.getTheme().textPrimary, 32));
+        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextPrimaryColor(), 32));
+        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextPrimaryColor(), 32));
     }
 
     @Override
@@ -118,7 +122,7 @@ public class RemovedPostsController
             adapter = new RemovedPostAdapter(
                     context,
                     imageLoaderV2,
-                    themeHelper,
+                    themeEngine,
                     R.layout.layout_removed_posts
             );
 
@@ -190,19 +194,19 @@ public class RemovedPostsController
 
     public static class RemovedPostAdapter extends ArrayAdapter<RemovedPost> {
         private ImageLoaderV2 imageLoaderV2;
-        private ThemeHelper themeHelper;
+        private ThemeEngine themeEngine;
         private List<RemovedPost> removedPostsCopy = new ArrayList<>();
 
         public RemovedPostAdapter(
                 @NonNull Context context,
                 ImageLoaderV2 imageLoaderV2,
-                ThemeHelper themeHelper,
+                ThemeEngine themeEngine,
                 int resource
         ) {
             super(context, resource);
 
             this.imageLoaderV2 = imageLoaderV2;
-            this.themeHelper = themeHelper;
+            this.themeEngine = themeEngine;
         }
 
         @NonNull
@@ -228,8 +232,8 @@ public class RemovedPostsController
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
-            checkbox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-            checkbox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+            checkbox.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+            checkbox.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
 
             if (removedPost.images.size() > 0) {
                 // load only the first image

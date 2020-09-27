@@ -19,9 +19,11 @@ package com.github.k1rakishou.chan.ui.controller;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.slidingpanelayout.widget.SlidingPaneLayout;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
@@ -29,6 +31,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -38,8 +41,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 
+import javax.inject.Inject;
+
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class ThreadSlideController
@@ -47,6 +51,9 @@ public class ThreadSlideController
         implements DoubleNavigationController, SlidingPaneLayout.PanelSlideListener,
         ToolbarNavigationController.ToolbarSearchCallback {
     private static final String TAG = "ThreadSlideController";
+
+    @Inject
+    ThemeEngine themeEngine;
 
     public Controller leftController;
     public Controller rightController;
@@ -59,6 +66,7 @@ public class ThreadSlideController
 
     public ThreadSlideController(Context context) {
         super(context);
+        Chan.inject(this);
     }
 
     public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
@@ -82,7 +90,8 @@ public class ThreadSlideController
         slidingPaneLayout.setPanelSlideListener(this);
         slidingPaneLayout.setParallaxDistance(dp(100));
         slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
-        int fadeColor = (getAttrColor(context, R.attr.backcolor) & 0xffffff) + 0xCC000000;
+
+        int fadeColor = (themeEngine.getChanTheme().getPrimaryColor() & 0xffffff) + 0xCC000000;
         slidingPaneLayout.setSliderFadeColor(fadeColor);
         slidingPaneLayout.openPane();
 
@@ -171,6 +180,11 @@ public class ThreadSlideController
     @Override
     public void setEmptyView(ViewGroup emptyView) {
         this.emptyView = emptyView;
+
+        TextView textView = emptyView.findViewById(R.id.select_thread_text);
+        if (textView != null) {
+            textView.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        }
     }
 
     public void setLeftController(Controller leftController, boolean animated) {

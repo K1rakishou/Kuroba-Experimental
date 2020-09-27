@@ -34,6 +34,10 @@ public class DropdownArrowDrawable extends Drawable {
     private int color;
     private int pressedColor;
 
+    public DropdownArrowDrawable(int width, int height, boolean down) {
+        this(width, height, down, 0xffffffff, 0x88ffffff);
+    }
+
     public DropdownArrowDrawable(int width, int height, boolean down, int color, int pressedColor) {
         this.width = width;
         this.height = height;

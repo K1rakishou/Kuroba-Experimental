@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatRadioButton;
 import androidx.appcompat.widget.AppCompatSeekBar;
+import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
@@ -18,7 +19,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 
 import javax.inject.Inject;
 
@@ -33,7 +34,7 @@ public class ImageReencodeOptionsController
     private final static String TAG = "ImageReencodeOptionsController";
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private ImageReencodeOptionsCallbacks callbacks;
     private ImageOptionsHelper imageReencodingHelper;
@@ -121,10 +122,14 @@ public class ImageReencodeOptionsController
         currentImageQuality = view.findViewById(R.id.reecode_image_current_quality);
         currentImageReduce = view.findViewById(R.id.reecode_image_current_reduce);
         reencodeImageAsIs = view.findViewById(R.id.reencode_image_as_is);
-        AppCompatRadioButton reencodeImageAsJpeg = view.findViewById(R.id.reencode_image_as_jpeg);
-        AppCompatRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
         cancel = view.findViewById(R.id.reencode_image_cancel);
         ok = view.findViewById(R.id.reencode_image_ok);
+
+        AppCompatRadioButton reencodeImageAsJpeg = view.findViewById(R.id.reencode_image_as_jpeg);
+        AppCompatRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
+
+        CardView cardView = view.findViewById(R.id.card_view);
+        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
 
         viewHolder.setOnClickListener(this);
         cancel.setOnClickListener(this);
@@ -139,12 +144,12 @@ public class ImageReencodeOptionsController
         if (imageFormat == Bitmap.CompressFormat.PNG) {
             quality.setEnabled(false);
             reencodeImageAsPng.setEnabled(false);
-            reencodeImageAsPng.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
-            reencodeImageAsPng.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            reencodeImageAsPng.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
+            reencodeImageAsPng.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         } else if (imageFormat == Bitmap.CompressFormat.JPEG) {
             reencodeImageAsJpeg.setEnabled(false);
-            reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
-            reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textSecondary));
+            reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
+            reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         }
 
         currentImageReduce.setText(getString(R.string.scale_reduce,

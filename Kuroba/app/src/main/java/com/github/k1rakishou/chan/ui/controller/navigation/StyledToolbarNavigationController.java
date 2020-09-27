@@ -25,7 +25,7 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.drawer.DrawerController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 
 import javax.inject.Inject;
 
@@ -35,7 +35,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 public class StyledToolbarNavigationController extends ToolbarNavigationController {
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     public StyledToolbarNavigationController(Context context) {
         super(context);
@@ -56,7 +56,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         );
 
         setToolbar(view.findViewById(R.id.toolbar));
-        requireToolbar().setBackgroundColor(themeHelper.getTheme().primaryColor.color);
+        requireToolbar().setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
         requireToolbar().setCallback(this);
     }
 

@@ -20,7 +20,7 @@ import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.view.View
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.common.DoNotStrip
 
 /**
@@ -30,7 +30,7 @@ import com.github.k1rakishou.common.DoNotStrip
  */
 @DoNotStrip
 class PostLinkable(
-  val theme: Theme,
+  val theme: ChanTheme,
   val key: CharSequence,
   val linkableValue: Value,
   val type: Type
@@ -77,14 +77,14 @@ class PostLinkable(
           }
 
           if (value == markedNo) {
-            ds.color = theme.highlightQuoteColor
+            ds.color = theme.postHighlightQuoteColor
           } else {
-            ds.color = theme.quoteColor
+            ds.color = theme.postQuoteColor
           }
         } else if (type == Type.LINK) {
-          ds.color = theme.linkColor
+          ds.color = theme.postLinkColor
         } else {
-          ds.color = theme.quoteColor
+          ds.color = theme.postQuoteColor
         }
 
         if (type == Type.DEAD) {
@@ -94,13 +94,13 @@ class PostLinkable(
         }
       }
       Type.SPOILER -> {
-        ds.bgColor = theme.spoilerColor
+        ds.bgColor = theme.postSpoilerColor
         ds.isUnderlineText = false
 
         if (!isSpoilerVisible) {
-          ds.color = theme.spoilerColor
+          ds.color = theme.postSpoilerColor
         } else {
-          ds.color = theme.textColorRevealSpoiler
+          ds.color = theme.postSpoilerRevealTextColor
         }
       }
     }

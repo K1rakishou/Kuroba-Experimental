@@ -7,7 +7,7 @@ import android.widget.FrameLayout
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -18,14 +18,14 @@ class EpoxyDividerView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   init {
     Chan.inject(this)
     View.inflate(context, R.layout.epoxy_divider_view, this)
 
     val divider = findViewById<View>(R.id.divider)
-    divider.setBackgroundColor(themeHelper.theme.dividerColor)
+    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
   }
 
 }

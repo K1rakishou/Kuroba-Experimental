@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="wrap_content"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:textColor="?setting_description_top"
         android:textSize="16sp" />
 
     <TextView
@@ -31,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="wrap_content"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:textColor="?setting_description_bottom"
         android:textSize="14sp" />
 
 </merge>

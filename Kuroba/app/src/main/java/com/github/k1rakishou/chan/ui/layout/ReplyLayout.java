@@ -72,7 +72,7 @@ import com.github.k1rakishou.chan.ui.helper.HintPopup;
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -94,7 +94,6 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.requestViewAndKeyboardFocus;
@@ -119,7 +118,7 @@ public class ReplyLayout
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     SiteManager siteManager;
     @Inject
@@ -269,8 +268,10 @@ public class ReplyLayout
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
 
-        spoiler.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        spoiler.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        spoiler.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+        spoiler.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
+
+        commentCounter.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
 
         // Setup reply layout views
         fileName.setOnLongClickListener(v -> presenter.fileNameLongClicked());
@@ -296,15 +297,14 @@ public class ReplyLayout
         moreDropdown = new DropdownArrowDrawable(
                 dp(16),
                 dp(16),
-                false,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
+                false
         );
+
         more.setImageDrawable(moreDropdown);
         AndroidUtils.setBoundlessRoundRippleBackground(more);
         more.setOnClickListener(this);
 
-        themeHelper.getTheme().imageDrawable.apply(attach);
+        themeEngine.getChanTheme().imageDrawable.apply(attach);
         AndroidUtils.setBoundlessRoundRippleBackground(attach);
         attach.setOnClickListener(this);
         attach.setOnLongClickListener(v -> {
@@ -318,7 +318,7 @@ public class ReplyLayout
         AndroidUtils.setBoundlessRoundRippleBackground(captchaImage);
         captcha.setOnClickListener(this);
 
-        themeHelper.getTheme().sendDrawable.apply(submit);
+        themeEngine.getChanTheme().sendDrawable.apply(submit);
         AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
         submit.setOnLongClickListener(v -> {
@@ -339,7 +339,7 @@ public class ReplyLayout
         // Setup captcha layout views
         captchaContainer.setLayoutParams(new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-        themeHelper.getTheme().refreshDrawable.apply(captchaHardReset);
+        themeEngine.getChanTheme().refreshDrawable.apply(captchaHardReset);
         AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset);
         captchaHardReset.setOnClickListener(this);
 
@@ -844,8 +844,8 @@ public class ReplyLayout
         commentCounter.setText(count + "/" + maxCount);
 
         int textColor = over
-                ? 0xffff0000
-                : getAttrColor(getContext(), R.attr.text_color_secondary);
+                ? themeEngine.getChanTheme().getAccentColor()
+                : themeEngine.getChanTheme().getTextSecondaryColor();
 
         commentCounter.setTextColor(textColor);
     }
@@ -869,13 +869,13 @@ public class ReplyLayout
 
         if (show) {
             ImageDecoder.decodeFileOnBackgroundThread(previewFile, dp(400), dp(300), this);
-            themeHelper.getTheme().clearDrawable.apply(attach);
+            themeEngine.getChanTheme().clearDrawable.apply(attach);
         } else {
             spoiler.setVisibility(GONE);
             previewHolder.setVisibility(GONE);
             previewMessage.setVisibility(GONE);
             callback.updatePadding();
-            themeHelper.getTheme().imageDrawable.apply(attach);
+            themeEngine.getChanTheme().imageDrawable.apply(attach);
         }
 
         // the delay is taken from LayoutTransition, as this class is set to automatically animate

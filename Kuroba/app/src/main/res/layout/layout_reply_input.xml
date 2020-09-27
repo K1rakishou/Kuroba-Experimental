@@ -126,7 +126,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_alignParentTop="true"
                     android:layout_alignParentRight="true"
                     android:paddingRight="8dp"
-                    android:textColor="?text_color_secondary"
                     android:textSize="12sp"
                     tools:ignore="RelativeOverlap" />
 

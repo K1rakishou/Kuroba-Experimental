@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/captcha_layout_v2_top_level"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/backcolor"
     android:orientation="vertical">
 
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/captcha_layout_v2_title"
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="?attr/backcolor_secondary"
         android:ellipsize="middle"
         android:gravity="center"
         android:padding="4dp"
         android:singleLine="true"
         android:text=""
-        android:textColor="?attr/text_color_primary"
         android:textSize="18sp"
         tools:text="Select all images with something" />
 
@@ -40,7 +37,6 @@
         android:id="@+id/captcha_layout_v2_buttons"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        android:background="?attr/backcolor_secondary"
         tools:layout_editor_absoluteY="40dp">
 
         <androidx.appcompat.widget.AppCompatButton
@@ -51,7 +47,6 @@
             android:clickable="true"
             android:focusable="true"
             android:text="@string/captcha_layout_v2_use_old_captcha"
-            android:textColor="?attr/text_color_primary"
             app:layout_constraintBottom_toBottomOf="@+id/captcha_layout_v2_verify_button"
             app:layout_constraintEnd_toStartOf="@+id/captcha_layout_v2_reload_button"
             app:layout_constraintStart_toStartOf="parent"
@@ -65,7 +60,6 @@
             android:clickable="true"
             android:focusable="true"
             android:text="@string/action_reload"
-            android:textColor="?attr/text_color_primary"
             app:layout_constraintBottom_toBottomOf="@+id/captcha_layout_v2_verify_button"
             app:layout_constraintEnd_toStartOf="@+id/captcha_layout_v2_verify_button"
             app:layout_constraintStart_toEndOf="@+id/captcha_layout_v2_use_old_captcha_button"
@@ -80,7 +74,6 @@
             android:enabled="false"
             android:focusable="true"
             android:text="@string/captcha_layout_v2_verify_button_text"
-            android:textColor="?attr/text_color_primary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/captcha_layout_v2_reload_button"
@@ -88,4 +81,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</LinearLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>

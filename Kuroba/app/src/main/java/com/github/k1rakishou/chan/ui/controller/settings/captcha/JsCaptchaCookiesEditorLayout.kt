@@ -2,11 +2,13 @@ package com.github.k1rakishou.chan.ui.controller.settings.captcha
 
 import android.content.Context
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.EMPTY_JSON
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.google.android.material.textfield.TextInputEditText
@@ -17,9 +19,13 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
 
   @Inject
   lateinit var gson: Gson
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var callbacks: JsCaptchaCookiesEditorControllerCallbacks? = null
 
+  private val cookiesEditorWarning: TextView
+  private val cookiesEditorTitle: TextView
   private val hsidCookieEditText: TextInputEditText
   private val ssidCookieEditText: TextInputEditText
   private val sidCookieEditText: TextInputEditText
@@ -31,12 +37,17 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
     inject(this)
 
     inflate(context, R.layout.js_captcha_cookies_editor, this).apply {
+      cookiesEditorWarning = findViewById(R.id.js_captcha_cookies_editor_warning)
+      cookiesEditorTitle = findViewById(R.id.js_captcha_cookies_editor_title)
       hsidCookieEditText = findViewById(R.id.js_captcha_cookies_editor_hsid_cookie)
       ssidCookieEditText = findViewById(R.id.js_captcha_cookies_editor_ssid_cookie)
       sidCookieEditText = findViewById(R.id.js_captcha_cookies_editor_sid_cookie)
       nidCookieEditText = findViewById(R.id.js_captcha_cookies_editor_nid_cookie)
       saveAndApplyButton = findViewById(R.id.js_captcha_cookies_editor_save_and_apply)
       resetButton = findViewById(R.id.js_captcha_cookies_editor_reset)
+
+      cookiesEditorWarning.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      cookiesEditorTitle.setTextColor(themeEngine.chanTheme.textPrimaryColor)
 
       var prevCookiesJar = JsCaptchaCookiesJar.empty()
       try {

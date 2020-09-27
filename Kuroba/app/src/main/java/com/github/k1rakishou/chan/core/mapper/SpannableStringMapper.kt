@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.model.data.serializable.spans.*
 import com.github.k1rakishou.model.data.serializable.spans.SerializablePostLinkableSpan.PostLinkableType
 import com.github.k1rakishou.model.data.serializable.spans.SerializableSpannableString.SpanInfo
@@ -252,7 +252,7 @@ object SpannableStringMapper {
     fun deserializeSpannableString(
             gson: Gson,
             serializableSpannableString: SerializableSpannableString?,
-            currentTheme: Theme
+            currentTheme: ChanTheme
     ): CharSequence {
         if (serializableSpannableString == null || serializableSpannableString.text.isEmpty()) {
             return ""
@@ -341,7 +341,7 @@ object SpannableStringMapper {
             gson: Gson,
             spannableString: SpannableString,
             spanInfo: SpanInfo,
-            currentTheme: Theme
+            currentTheme: ChanTheme
     ) {
         val serializablePostLinkableSpan = gson.fromJson(
                 spanInfo.spanData,
@@ -391,7 +391,7 @@ object SpannableStringMapper {
             PostLinkableType.Spoiler -> PostLinkable(
                     currentTheme,
                     serializablePostLinkableSpan.key,
-                    PostLinkable.Value.IntegerValue(currentTheme.spoilerColor),
+                    PostLinkable.Value.IntegerValue(currentTheme.postSpoilerColor),
                     PostLinkable.Type.SPOILER
             )
             PostLinkableType.Thread -> {

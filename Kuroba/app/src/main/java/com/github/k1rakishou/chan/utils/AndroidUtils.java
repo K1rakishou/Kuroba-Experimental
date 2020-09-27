@@ -34,6 +34,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -63,7 +64,7 @@ import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -260,7 +261,7 @@ public class AndroidUtils {
         }
     }
 
-    public static void openLinkInBrowser(Context context, String link, Theme theme) {
+    public static void openLinkInBrowser(Context context, String link, ChanTheme theme) {
         if (TextUtils.isEmpty(link)) {
             showToast(context, R.string.open_link_failed);
             return;
@@ -279,19 +280,20 @@ public class AndroidUtils {
             openWithCustomTabs = !resolvedActivity.getPackageName().equals(application.getPackageName());
         }
 
-        if (openWithCustomTabs) {
-            CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().setToolbarColor(
-                    theme.primaryColor.color
-            ).build();
-
-            try {
-                tabsIntent.launchUrl(context, Uri.parse(link));
-            } catch (ActivityNotFoundException e) {
-                // Can't check it beforehand so catch the exception
-                showToast(context, R.string.open_link_failed, Toast.LENGTH_LONG);
-            }
-        } else {
+        if (!openWithCustomTabs) {
             openLink(link);
+            return;
+        }
+
+        CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
+                .setToolbarColor(theme.getPrimaryColor())
+                .build();
+
+        try {
+            tabsIntent.launchUrl(context, Uri.parse(link));
+        } catch (ActivityNotFoundException e) {
+            // Can't check it beforehand so catch the exception
+            showToast(context, R.string.open_link_failed, Toast.LENGTH_LONG);
         }
     }
 
@@ -733,6 +735,15 @@ public class AndroidUtils {
         availableSpace = stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
 
         return availableSpace;
+    }
+
+    public static int manipulateColor(int color, float factor) {
+        int a = Color.alpha(color);
+        int r = Math.round(Color.red(color) * factor);
+        int g = Math.round(Color.green(color) * factor);
+        int b = Math.round(Color.blue(color) * factor);
+
+        return Color.argb(a, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
     }
 
     public enum FlavorType {

@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
+import android.graphics.Color;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.BackgroundColorSpan;
@@ -31,7 +32,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
 
@@ -78,7 +79,7 @@ public class DefaultPostParser implements PostParser {
     }
 
     @Override
-    public Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback) {
+    public Post parse(@NonNull ChanTheme theme, Post.Builder builder, Callback callback) {
         if (!TextUtils.isEmpty(builder.name)) {
             builder.name = Parser.unescapeEntities(builder.name, false);
         }
@@ -115,7 +116,7 @@ public class DefaultPostParser implements PostParser {
      * @param theme   Theme to use for parsing
      * @param builder Post builder to get data from
      */
-    private void parseSpans(Theme theme, Post.Builder builder) {
+    private void parseSpans(ChanTheme theme, Post.Builder builder) {
         boolean anonymize = ChanSettings.anonymize.get();
         boolean anonymizeIds = ChanSettings.anonymizeIds.get();
 
@@ -141,7 +142,7 @@ public class DefaultPostParser implements PostParser {
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
             if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
                 subjectSpan.setSpan(
-                        new ForegroundColorSpanHashed(theme.subjectColor),
+                        new ForegroundColorSpanHashed(theme.getPostSubjectColor()),
                         0,
                         subjectSpan.length(),
                         0
@@ -157,7 +158,7 @@ public class DefaultPostParser implements PostParser {
         ) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.nameColor),
+                    new ForegroundColorSpanHashed(theme.getPostNameColor()),
                     0,
                     nameSpan.length(),
                     0
@@ -167,7 +168,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.tripcode)) {
             tripcodeSpan = new SpannableString(builder.tripcode);
             tripcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.nameColor),
+                    new ForegroundColorSpanHashed(theme.getPostNameColor()),
                     0,
                     tripcodeSpan.length(),
                     0
@@ -184,7 +185,9 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.posterId)) {
             idSpan = new SpannableString("  ID: " + builder.posterId + "  ");
 
-            int idBgColor = builder.isLightColor ? theme.idBackgroundLight : theme.idBackgroundDark;
+            int idBgColor = builder.isLightColor
+                    ? Color.LTGRAY
+                    : Color.DKGRAY;
 
             idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
             idSpan.setSpan(new BackgroundColorSpan(idBgColor), 0, idSpan.length(), 0);
@@ -194,7 +197,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
             capcodeSpan = new SpannableString("Capcode: " + builder.moderatorCapcode);
             capcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.capcodeColor),
+                    new ForegroundColorSpanHashed(theme.getAccentColor()),
                     0,
                     capcodeSpan.length(),
                     0
@@ -229,7 +232,7 @@ public class DefaultPostParser implements PostParser {
 
     @Override
     public CharSequence parseComment(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             CharSequence commentRaw,
             boolean addPostImages,
@@ -264,7 +267,7 @@ public class DefaultPostParser implements PostParser {
     }
 
     private CharSequence parseNode(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             Callback callback,
             Node node

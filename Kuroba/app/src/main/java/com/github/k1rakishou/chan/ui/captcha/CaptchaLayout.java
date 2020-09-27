@@ -38,7 +38,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -77,7 +77,7 @@ public class CaptchaLayout
     @Inject
     Gson gson;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -174,7 +174,7 @@ public class CaptchaLayout
     public void hardReset() {
         String html = IOUtils.assetAsString(getContext(), "html/captcha2.html");
         html = html.replace("__site_key__", siteKey);
-        html = html.replace("__theme__", themeHelper.getTheme().isLightTheme ? "light" : "dark");
+        html = html.replace("__theme__", themeEngine.getChanTheme().isLightTheme() ? "light" : "dark");
 
         Point displaySize = getDisplaySize();
         boolean isSplitMode = ChanSettings.layoutMode.get() == SPLIT

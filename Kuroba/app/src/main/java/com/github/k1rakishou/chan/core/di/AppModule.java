@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.core.di;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Environment;
 
@@ -29,9 +28,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
-import com.github.k1rakishou.chan.ui.theme_v2.MockChanThemeV2;
-import com.github.k1rakishou.chan.ui.theme_v2.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
@@ -179,39 +176,21 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeHelper themeHelper) {
+    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeEngine themeEngine) {
         Logger.d(DI_TAG, "Image loader v2");
         return new ImageLoaderV2(
                 coilImageLoader,
                 ChanSettings.verboseLogs.get(),
-                themeHelper
+                themeEngine
         );
-    }
-
-    @Provides
-    @Singleton
-    public ThemeHelper provideThemeHelper() {
-        Logger.d(DI_TAG, "Theme helper");
-        return new ThemeHelper();
     }
 
     @Provides
     @Singleton
     public ThemeEngine provideThemeEngine() {
-        Logger.d(DI_TAG, "Theme helper");
+        Logger.d(DI_TAG, "ThemeEngine");
 
-        MockChanThemeV2 mockChanThemeV2 = new MockChanThemeV2(
-                "Test theme",
-                false,
-                0xFF03DAC6,
-                0xFF121212,
-                Color.RED,
-                Color.BLUE,
-                Color.GRAY,
-                Color.WHITE
-        );
-
-        return new ThemeEngine(mockChanThemeV2);
+        return new ThemeEngine();
     }
 
     @Provides
