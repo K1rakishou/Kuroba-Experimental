@@ -746,6 +746,10 @@ public class AndroidUtils {
         return Color.argb(a, Math.min(r, 255), Math.min(g, 255), Math.min(b, 255));
     }
 
+    public static int getComplementaryColor(int color) {
+        return Color.rgb(255 - Color.red(color), 255 - Color.green(color), 255 - Color.blue(color));
+    }
+
     public enum FlavorType {
         Stable,
         Beta,

@@ -16,10 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
-import android.graphics.Color;
 import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.BackgroundColorSpan;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
@@ -31,8 +29,10 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
 
@@ -185,12 +185,8 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.posterId)) {
             idSpan = new SpannableString("  ID: " + builder.posterId + "  ");
 
-            int idBgColor = builder.isLightColor
-                    ? Color.LTGRAY
-                    : Color.DKGRAY;
-
             idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
-            idSpan.setSpan(new BackgroundColorSpan(idBgColor), 0, idSpan.length(), 0);
+            idSpan.setSpan(new BackgroundColorSpanHashed(AndroidUtils.getComplementaryColor(builder.idColor)), 0, idSpan.length(), 0);
             idSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, idSpan.length(), 0);
         }
 

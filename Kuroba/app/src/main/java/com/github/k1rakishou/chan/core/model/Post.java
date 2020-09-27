@@ -452,7 +452,6 @@ public class Post implements Comparable<Post> {
         public String posterId = "";
         public String moderatorCapcode = "";
         public int idColor;
-        public boolean isLightColor;
         public boolean isSavedReply;
         public Set<Long> repliesToIds = new HashSet<>();
 
@@ -624,8 +623,6 @@ public class Post implements Comparable<Post> {
             int b = (hash >> 8) & 0xff;
 
             this.idColor = (0xff << 24) + (r << 16) + (g << 8) + b;
-            this.isLightColor = (r * 0.299f) + (g * 0.587f) + (b * 0.114f) > 125f;
-
             return this;
         }
 
