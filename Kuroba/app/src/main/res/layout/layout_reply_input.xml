@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:singleLine="true"
                     android:textSize="16sp" />
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/flag"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -82,7 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/options"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -93,7 +93,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <EditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/subject"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -262,7 +262,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <EditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/file_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

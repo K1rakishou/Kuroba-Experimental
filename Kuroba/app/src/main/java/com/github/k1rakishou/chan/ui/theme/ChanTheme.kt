@@ -11,6 +11,7 @@ abstract class ChanTheme {
   abstract val accentColor: Int
   abstract val primaryColor: Int
   abstract val secondaryColor: Int
+  abstract val errorColor: Int
   abstract val textPrimaryColor: Int
   abstract val textSecondaryColor: Int
   abstract val textColorHint: Int
@@ -89,6 +90,7 @@ abstract class ChanTheme {
     accentColor: Int = this.accentColor,
     primaryColor: Int = this.primaryColor,
     secondaryColor: Int = this.secondaryColor,
+    errorColor: Int = this.errorColor,
     textPrimaryColor: Int = this.textPrimaryColor,
     textSecondaryColor: Int = this.textSecondaryColor,
     textColorHint: Int = this.textColorHint,

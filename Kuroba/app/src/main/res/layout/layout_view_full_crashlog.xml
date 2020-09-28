@@ -10,7 +10,7 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <androidx.appcompat.widget.AppCompatEditText
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
             android:id="@+id/view_full_crashlog_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

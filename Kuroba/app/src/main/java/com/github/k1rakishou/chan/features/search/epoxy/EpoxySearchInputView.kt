@@ -9,7 +9,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.google.android.material.textfield.TextInputEditText
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxySearchInputView @JvmOverloads constructor(
@@ -17,7 +17,7 @@ class EpoxySearchInputView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val inputEditText: TextInputEditText
+  private val inputEditText: ColorizableEditText
   private var textWatcher: TextWatcher? = null
 
   init {

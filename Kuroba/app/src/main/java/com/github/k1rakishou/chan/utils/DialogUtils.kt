@@ -6,10 +6,10 @@ import android.text.InputType
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
-import android.widget.EditText
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 
 object DialogUtils {
 
@@ -90,12 +90,12 @@ object DialogUtils {
     val container = LinearLayout(context)
     container.setPadding(AndroidUtils.dp(24f), AndroidUtils.dp(8f), AndroidUtils.dp(24f), 0)
 
-    val editText = EditText(context)
+    val editText = ColorizableEditText(context)
     editText.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
     editText.setText(defaultValue ?: "")
     editText.isSingleLine = true
     editText.inputType = inputType
-    editText.setSelection(editText.text.length)
+    editText.setSelection(editText.text?.length ?: 0)
 
     container.addView(
       editText,

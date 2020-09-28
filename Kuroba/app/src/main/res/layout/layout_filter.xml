@@ -153,7 +153,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:text="@string/filter_pattern"
         android:textSize="16sp" />
 
-    <EditText
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
         android:id="@+id/pattern"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -177,7 +177,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:paddingLeft="4dp"
         android:paddingTop="8dp" />
 
-    <EditText
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
         android:id="@+id/pattern_preview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

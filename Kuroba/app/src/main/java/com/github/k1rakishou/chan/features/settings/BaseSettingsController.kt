@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.common.exhaustive
@@ -52,7 +53,7 @@ abstract class BaseSettingsController(context: Context) : Controller(context) {
     val container = LinearLayout(view.context)
     container.setPadding(AndroidUtils.dp(24f), AndroidUtils.dp(8f), AndroidUtils.dp(24f), 0)
 
-    val editText = EditText(view.context).apply {
+    val editText = ColorizableEditText(view.context).apply {
       imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
       isSingleLine = true
       setText(inputSettingV2.getCurrent().toString())
@@ -63,7 +64,7 @@ abstract class BaseSettingsController(context: Context) : Controller(context) {
         null -> throw IllegalStateException("InputType is null")
       }.exhaustive
 
-      setSelection(text.length)
+      setSelection(text?.length ?: 0)
       requestFocus()
     }
 

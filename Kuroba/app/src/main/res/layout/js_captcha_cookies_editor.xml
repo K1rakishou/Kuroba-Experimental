@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.ColorizableScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -26,12 +26,12 @@
             android:text="@string/js_captcha_cookies_editor_format_hint_message"
             android:layout_marginTop="16dp"/>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/js_captcha_cookies_editor_hsid_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -39,14 +39,14 @@
                 android:importantForAutofill="no"
                 android:maxLines="4" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/js_captcha_cookies_editor_ssid_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -54,14 +54,14 @@
                 android:importantForAutofill="no"
                 android:maxLines="4" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/js_captcha_cookies_editor_sid_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -69,14 +69,14 @@
                 android:importantForAutofill="no"
                 android:maxLines="4" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp">
 
-            <com.google.android.material.textfield.TextInputEditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/js_captcha_cookies_editor_nid_cookie"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -84,7 +84,7 @@
                 android:importantForAutofill="no"
                 android:maxLines="4" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -117,4 +117,4 @@
 
     </LinearLayout>
 
-</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingScrollView>
+</com.github.k1rakishou.chan.ui.theme.widget.ColorizableScrollView>

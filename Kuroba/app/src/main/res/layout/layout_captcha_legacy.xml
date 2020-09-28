@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <EditText
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
             android:id="@+id/input"
             android:layout_width="0dp"
             android:layout_height="match_parent"

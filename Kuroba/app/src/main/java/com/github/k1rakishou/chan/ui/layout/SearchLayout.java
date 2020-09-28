@@ -24,13 +24,13 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
 import javax.inject.Inject;
 
@@ -46,7 +46,7 @@ public class SearchLayout
     @Inject
     ThemeEngine themeEngine;
 
-    private EditText searchView;
+    private ColorizableEditText searchView;
     private ImageView clearButton;
     private boolean autoRequestFocus = true;
 
@@ -76,7 +76,7 @@ public class SearchLayout
     }
 
     public void setCallback(final SearchLayoutCallback callback) {
-        searchView = new EditText(getContext());
+        searchView = new ColorizableEditText(getContext());
         searchView.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_ACTION_DONE);
         searchView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         searchView.setHint(getString(R.string.search_hint));

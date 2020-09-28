@@ -21,13 +21,12 @@ import android.content.Context;
 import android.text.Spanned;
 import android.util.AttributeSet;
 
-import androidx.appcompat.widget.AppCompatEditText;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getClipboardManager;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.isAndroid10;
 
-public class SelectionListeningEditText
-        extends AppCompatEditText {
+public class SelectionListeningEditText extends ColorizableEditText {
     private SelectionChangedListener listener;
     private boolean plainTextPaste = false;
 

@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatEditText
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -18,7 +18,7 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
 
   private var callbacks: ViewFullCrashLogLayoutCallbacks? = null
 
-  private val crashLogText: AppCompatEditText
+  private val crashLogText: ColorizableEditText
   private val save: AppCompatButton
 
   init {

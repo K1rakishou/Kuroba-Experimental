@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.google.android.material.R
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import javax.inject.Inject
 

@@ -2,16 +2,15 @@ package com.github.k1rakishou.chan.ui.layout;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel;
 
-public class NewFolderLayout
-        extends LinearLayout {
-    private EditText folderName;
+public class NewFolderLayout extends LinearLayout {
+    private ColorizableEditText folderName;
 
     public NewFolderLayout(Context context) {
         this(context, null);

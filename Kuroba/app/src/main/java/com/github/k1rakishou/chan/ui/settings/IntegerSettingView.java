@@ -20,7 +20,6 @@ import android.text.InputType;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
@@ -28,6 +27,7 @@ import androidx.appcompat.app.AlertDialog;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -71,7 +71,7 @@ public class IntegerSettingView
         LinearLayout container = new LinearLayout(v.getContext());
         container.setPadding(dp(24), dp(8), dp(24), 0);
 
-        final EditText editText = new EditText(v.getContext());
+        final ColorizableEditText editText = new ColorizableEditText(v.getContext());
         editText.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
         editText.setText(setting.get().toString());
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);

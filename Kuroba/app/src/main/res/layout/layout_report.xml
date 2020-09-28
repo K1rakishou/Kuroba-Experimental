@@ -26,13 +26,13 @@
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:counterEnabled="true"
                     app:counterMaxLength="512">
 
-                    <com.google.android.material.textfield.TextInputEditText
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                         android:id="@+id/report_controller_problem_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -41,7 +41,7 @@
                         android:textSize="16sp"
                         tools:text="@string/lorem_ipsum" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+                </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
             </LinearLayout>
 
@@ -52,13 +52,13 @@
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical">
 
-                <com.google.android.material.textfield.TextInputLayout
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:counterEnabled="true"
                     app:counterMaxLength="8192">
 
-                    <com.google.android.material.textfield.TextInputEditText
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                         android:id="@+id/report_controller_problem_description"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -68,7 +68,7 @@
                         android:textSize="16sp"
                         tools:text="@string/lorem_ipsum" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+                </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
             </LinearLayout>
 
@@ -89,13 +89,13 @@
                     android:text="@string/report_controller_attach_logs"
                     android:textSize="18sp" />
 
-                <com.google.android.material.textfield.TextInputLayout
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:counterEnabled="true"
                     app:counterMaxLength="65535">
 
-                    <com.google.android.material.textfield.TextInputEditText
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                         android:id="@+id/report_controller_logs_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -106,7 +106,7 @@
                         android:textSize="14sp"
                         tools:text="@string/lorem_ipsum" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+                </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
             </LinearLayout>
 

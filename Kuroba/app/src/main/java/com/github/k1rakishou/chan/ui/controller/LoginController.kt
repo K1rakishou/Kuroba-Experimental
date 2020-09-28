@@ -22,7 +22,6 @@ import android.text.method.LinkMovementMethod
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -36,6 +35,7 @@ import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import kotlinx.coroutines.launch
@@ -52,8 +52,8 @@ class LoginController(
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView
   private lateinit var button: Button
-  private lateinit var inputToken: EditText
-  private lateinit var inputPin: EditText
+  private lateinit var inputToken: ColorizableEditText
+  private lateinit var inputPin: ColorizableEditText
   private lateinit var authenticated: TextView
   
   override fun onCreate() {
