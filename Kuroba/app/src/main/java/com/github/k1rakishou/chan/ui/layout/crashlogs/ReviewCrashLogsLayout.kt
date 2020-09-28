@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.ui.layout.crashlogs
 import android.content.Context
 import android.widget.FrameLayout
 import android.widget.ListView
-import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
@@ -27,8 +27,8 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
   private lateinit var compositeDisposable: CompositeDisposable
   private var callbacks: ReviewCrashLogsLayoutCallbacks? = null
   private val crashLogsList: ListView
-  private val deleteCrashLogsButton: AppCompatButton
-  private val sendCrashLogsButton: AppCompatButton
+  private val deleteCrashLogsButton: ColorizableBarButton
+  private val sendCrashLogsButton: ColorizableBarButton
 
   init {
     inject(this)

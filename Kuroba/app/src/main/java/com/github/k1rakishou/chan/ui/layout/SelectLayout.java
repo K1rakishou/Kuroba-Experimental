@@ -22,7 +22,6 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
@@ -33,6 +32,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class SelectLayout<T>
     ThemeEngine themeEngine;
 
     private RecyclerView recyclerView;
-    private Button checkAllButton;
+    private ColorizableBarButton checkAllButton;
 
     private List<SelectItem<T>> items = new ArrayList<>();
     private SelectAdapter adapter;

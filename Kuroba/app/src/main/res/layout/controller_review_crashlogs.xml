@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="64dp">
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/review_crashlogs_controller_delete_crashlogs_button"
             android:layout_width="128dp"
             android:layout_height="48dp"
@@ -27,7 +27,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/review_crashlogs_controller_send_crashlogs_button"
             android:layout_width="128dp"
             android:layout_height="48dp"

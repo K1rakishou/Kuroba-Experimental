@@ -26,7 +26,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -39,6 +38,7 @@ import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
@@ -77,8 +77,8 @@ public class ImageOptionsController
     private AppCompatCheckBox removeFilename;
     private AppCompatCheckBox changeImageChecksum;
     private AppCompatCheckBox reencode;
-    private AppCompatButton cancel;
-    private AppCompatButton ok;
+    private ColorizableBarButton cancel;
+    private ColorizableBarButton ok;
 
     private ImageReencodingPresenter.ImageOptions lastSettings;
     private boolean ignoreSetup;

@@ -78,7 +78,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </com.github.k1rakishou.chan.ui.view.CrossfadeView>
 
-        <com.google.android.material.button.MaterialButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
             android:id="@+id/button"
             android:layout_width="130dp"
             android:layout_height="wrap_content" />

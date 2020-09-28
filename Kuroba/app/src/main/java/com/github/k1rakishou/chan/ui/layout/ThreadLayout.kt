@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -122,8 +123,8 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var threadListLayout: ThreadListLayout
   private lateinit var errorLayout: LinearLayout
   private lateinit var errorText: TextView
-  private lateinit var errorRetryButton: Button
-  private lateinit var openThreadInArchiveButton: Button
+  private lateinit var errorRetryButton: ColorizableButton
+  private lateinit var openThreadInArchiveButton: ColorizableButton
   private lateinit var postPopupHelper: PostPopupHelper
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
@@ -170,7 +171,9 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
   init {
-    Chan.inject(this)
+    if (!isInEditMode) {
+      Chan.inject(this)
+    }
   }
 
   fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {

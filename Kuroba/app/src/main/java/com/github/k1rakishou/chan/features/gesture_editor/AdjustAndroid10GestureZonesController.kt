@@ -9,9 +9,9 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.RelativeLayout
 import androidx.annotation.RequiresApi
-import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 
 
@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.utils.AndroidUtils.*
 class AdjustAndroid10GestureZonesController(context: Context) : Controller(context) {
   private lateinit var viewRoot: RelativeLayout
   private lateinit var adjustZonesView: AdjustAndroid10GestureZonesView
-  private lateinit var addZoneButton: AppCompatButton
+  private lateinit var addZoneButton: ColorizableButton
 
   private var presenting = false
   private var attachSide: AttachSide? = null

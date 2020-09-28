@@ -47,7 +47,7 @@
                 android:paddingEnd="8dp"
                 android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/check_uncheck_all_boards"
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
@@ -64,7 +64,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <com.google.android.material.button.MaterialButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/cancel_adding_boards"
                         style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="84dp"
@@ -72,7 +72,7 @@
                         android:layout_marginEnd="16dp"
                         android:text="@string/cancel" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/add_boards"
                         style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="50dp"

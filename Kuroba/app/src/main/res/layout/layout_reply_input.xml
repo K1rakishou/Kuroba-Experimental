@@ -139,9 +139,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:orientation="horizontal"
                 tools:ignore="SpUsage">
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_quote"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -152,9 +151,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_spoiler"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -165,9 +163,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_code"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -178,9 +175,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_eqn"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -191,9 +187,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_math"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="50dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -204,9 +199,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_sjis"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="50dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"

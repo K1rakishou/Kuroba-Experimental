@@ -3,12 +3,12 @@ package com.github.k1rakishou.chan.ui.controller.settings.captcha
 import android.content.Context
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.EMPTY_JSON
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
@@ -30,8 +30,8 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
   private val ssidCookieEditText: ColorizableEditText
   private val sidCookieEditText: ColorizableEditText
   private val nidCookieEditText: ColorizableEditText
-  private val saveAndApplyButton: AppCompatButton
-  private val resetButton: AppCompatButton
+  private val saveAndApplyButton: ColorizableBarButton
+  private val resetButton: ColorizableBarButton
 
   init {
     inject(this)

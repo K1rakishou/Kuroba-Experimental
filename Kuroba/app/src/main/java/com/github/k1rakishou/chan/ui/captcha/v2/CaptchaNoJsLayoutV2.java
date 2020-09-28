@@ -33,7 +33,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
@@ -45,6 +44,7 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 
@@ -66,7 +66,7 @@ public class CaptchaNoJsLayoutV2
 
     private AppCompatTextView captchaChallengeTitle;
     private GridView captchaImagesGrid;
-    private AppCompatButton captchaVerifyButton;
+    private ColorizableBarButton captchaVerifyButton;
 
     private CaptchaNoJsV2Adapter adapter;
     private CaptchaNoJsPresenterV2 presenter;
@@ -104,8 +104,8 @@ public class CaptchaNoJsLayoutV2
         captchaChallengeTitle = view.findViewById(R.id.captcha_layout_v2_title);
         captchaImagesGrid = view.findViewById(R.id.captcha_layout_v2_images_grid);
         captchaVerifyButton = view.findViewById(R.id.captcha_layout_v2_verify_button);
-        AppCompatButton useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
-        AppCompatButton reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
+        ColorizableBarButton useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
+        ColorizableBarButton reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
         ConstraintLayout captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
 
         captchaButtonsHolder.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());

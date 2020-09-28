@@ -9,7 +9,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.google.android.material.button.MaterialButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -25,7 +25,7 @@ class EpoxySearchErrorView @JvmOverloads constructor(
 
   private val errorTitle: MaterialTextView
   private val errorText: MaterialTextView
-  private val retryButton: MaterialButton
+  private val retryButton: ColorizableButton
 
   init {
     Chan.inject(this)

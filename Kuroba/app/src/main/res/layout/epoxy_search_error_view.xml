@@ -29,7 +29,7 @@
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum" />
 
-        <com.google.android.material.button.MaterialButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
             android:id="@+id/search_post_error_retry_button"
             android:layout_width="160dp"
             android:layout_height="wrap_content"

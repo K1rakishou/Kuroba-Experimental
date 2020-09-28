@@ -94,7 +94,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginTop="32dp">
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/js_captcha_cookies_editor_reset"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -106,7 +106,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"/>
 
-            <androidx.appcompat.widget.AppCompatButton
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/js_captcha_cookies_editor_save_and_apply"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

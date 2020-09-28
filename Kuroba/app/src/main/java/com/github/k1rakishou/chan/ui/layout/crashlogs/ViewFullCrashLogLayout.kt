@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.ui.layout.crashlogs
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import javax.inject.Inject
 
@@ -19,7 +19,7 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
   private var callbacks: ViewFullCrashLogLayoutCallbacks? = null
 
   private val crashLogText: ColorizableEditText
-  private val save: AppCompatButton
+  private val save: ColorizableBarButton
 
   init {
     Chan.inject(this)

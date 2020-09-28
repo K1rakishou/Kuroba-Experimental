@@ -29,7 +29,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"/>
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/view_full_crashlog_save"
             android:layout_width="128dp"
             android:layout_gravity="center_vertical"

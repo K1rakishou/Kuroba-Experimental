@@ -38,7 +38,7 @@
                         android:layout_weight="1"
                         android:layout_height="match_parent"/>
 
-                    <com.google.android.material.button.MaterialButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/open_all_sites_settings"
                         style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="wrap_content"

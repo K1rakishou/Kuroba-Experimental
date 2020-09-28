@@ -39,11 +39,10 @@
         android:layout_height="64dp"
         tools:layout_editor_absoluteY="40dp">
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/captcha_layout_v2_use_old_captcha_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
             android:text="@string/captcha_layout_v2_use_old_captcha"
@@ -52,11 +51,10 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="@+id/captcha_layout_v2_verify_button" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/captcha_layout_v2_reload_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:focusable="true"
             android:text="@string/action_reload"
@@ -65,11 +63,10 @@
             app:layout_constraintStart_toEndOf="@+id/captcha_layout_v2_use_old_captcha_button"
             app:layout_constraintTop_toTopOf="@+id/captcha_layout_v2_verify_button" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/captcha_layout_v2_verify_button"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="?android:attr/selectableItemBackground"
             android:clickable="true"
             android:enabled="false"
             android:focusable="true"

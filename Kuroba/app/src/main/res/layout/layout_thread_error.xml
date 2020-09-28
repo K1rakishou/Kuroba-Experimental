@@ -30,14 +30,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_marginBottom="16dp"
         android:textSize="24sp" />
 
-    <Button
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/thread_load_failed_retry" />
 
-    <Button
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
         android:id="@+id/open_in_archive_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

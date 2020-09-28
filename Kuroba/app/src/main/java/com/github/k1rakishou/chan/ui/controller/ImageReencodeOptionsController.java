@@ -8,7 +8,6 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatRadioButton;
 import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.cardview.widget.CardView;
@@ -20,6 +19,7 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 
 import javax.inject.Inject;
 
@@ -47,8 +47,8 @@ public class ImageReencodeOptionsController
     private AppCompatSeekBar reduce;
     private TextView currentImageQuality;
     private TextView currentImageReduce;
-    private AppCompatButton cancel;
-    private AppCompatButton ok;
+    private ColorizableBarButton cancel;
+    private ColorizableBarButton ok;
     private AppCompatRadioButton reencodeImageAsIs;
 
     private ImageReencodingPresenter.ReencodeSettings lastSettings;

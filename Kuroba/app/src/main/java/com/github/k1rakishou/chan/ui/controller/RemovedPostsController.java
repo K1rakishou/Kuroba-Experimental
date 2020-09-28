@@ -11,7 +11,6 @@ import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -25,6 +24,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -58,8 +58,8 @@ public class RemovedPostsController
 
     private ConstraintLayout viewHolder;
     private ListView postsListView;
-    private AppCompatButton restorePostsButton;
-    private AppCompatButton selectAllButton;
+    private ColorizableButton restorePostsButton;
+    private ColorizableButton selectAllButton;
 
     @Nullable
     private RemovedPostAdapter adapter;

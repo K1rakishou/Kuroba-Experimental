@@ -16,10 +16,10 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -44,9 +44,9 @@ class AddBoardsController(
   private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var checkAll: MaterialButton
-  private lateinit var cancel: MaterialButton
-  private lateinit var addBoards: MaterialButton
+  private lateinit var checkAll: ColorizableBarButton
+  private lateinit var cancel: ColorizableBarButton
+  private lateinit var addBoards: ColorizableBarButton
   private lateinit var addBoardsExecutor: RendezvousCoroutineExecutor
 
   private var presenting = true

@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.ui.layout
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatCheckBox
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
@@ -33,7 +33,7 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
   private val reportActivityProblemDescription: ColorizableEditText
   private val reportActivityAttachLogsButton: AppCompatCheckBox
   private val reportActivityLogsText: ColorizableEditText
-  private val reportActivitySendReport: AppCompatButton
+  private val reportActivitySendReport: ColorizableBarButton
 
   init {
     inject(this)

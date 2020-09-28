@@ -7,7 +7,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.google.android.material.button.MaterialButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxySearchButtonView @JvmOverloads constructor(
@@ -15,7 +15,7 @@ class EpoxySearchButtonView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val searchButton: MaterialButton
+  private val searchButton: ColorizableButton
 
   private var currentQuery: String? = null
 
