@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.airbnb.epoxy.EpoxyRecyclerView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
         android:id="@+id/floating_list_menu_recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

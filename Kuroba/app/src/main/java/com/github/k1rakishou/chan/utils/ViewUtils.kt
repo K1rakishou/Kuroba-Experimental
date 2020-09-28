@@ -1,12 +1,16 @@
 package com.github.k1rakishou.chan.utils
 
+import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.widget.AbsListView
+import android.widget.EdgeEffect
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import java.lang.reflect.Field
 
 
 object ViewUtils {
@@ -111,6 +115,32 @@ object ViewUtils {
       }
     } catch (error: Exception) {
       Logger.e(TAG, "setHandlesColors() failure", error)
+    }
+  }
+
+  @SuppressLint("UseCompatLoadingForDrawables")
+  fun AbsListView.changeEdgeEffect(themeEngine: ThemeEngine) {
+    if (AndroidUtils.isAndroid10()) {
+      bottomEdgeEffectColor = themeEngine.chanTheme.accentColor
+      topEdgeEffectColor = themeEngine.chanTheme.accentColor
+      return
+    }
+
+    val edgeEffectTop = EdgeEffect(context)
+    edgeEffectTop.color = themeEngine.chanTheme.accentColor
+    val edgeEffectBottom = EdgeEffect(context)
+    edgeEffectBottom.color = themeEngine.chanTheme.accentColor
+
+    try {
+      val f1: Field = AbsListView::class.java.getDeclaredField("mEdgeGlowTop")
+      f1.isAccessible = true
+      f1.set(this, edgeEffectTop)
+
+      val f2: Field = AbsListView::class.java.getDeclaredField("mEdgeGlowBottom")
+      f2.isAccessible = true
+      f2.set(this, edgeEffectBottom)
+    } catch (error: Exception) {
+      Logger.e(TAG, "changeEdgeEffect() failure", error)
     }
   }
 

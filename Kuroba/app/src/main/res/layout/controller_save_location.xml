@@ -58,7 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
             android:id="@+id/recycler"
             android:layout_width="match_parent"
             android:layout_height="0dp"

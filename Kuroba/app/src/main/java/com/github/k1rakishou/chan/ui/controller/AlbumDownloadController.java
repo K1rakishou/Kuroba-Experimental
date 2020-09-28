@@ -39,8 +39,8 @@ import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.k1rakishou.chan.ui.view.GridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
@@ -67,7 +67,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 public class AlbumDownloadController
         extends Controller
         implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks, WindowInsetsListener {
-    private GridRecyclerView recyclerView;
+    private ColorizableGridRecyclerView recyclerView;
     private ColorizableFloatingActionButton download;
 
     private List<AlbumDownloadItem> items = new ArrayList<>();

@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 
 import java.util.HashMap;
@@ -51,7 +52,7 @@ public class FilesLayout
     private ViewGroup backLayout;
     private ImageView backImage;
     private TextView backText;
-    private RecyclerView recyclerView;
+    private ColorizableRecyclerView recyclerView;
 
     private LinearLayoutManager layoutManager;
     private FilesAdapter filesAdapter;

@@ -57,6 +57,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -352,9 +353,12 @@ public class ImageViewerController
     private void rotateImage(ToolbarMenuSubItem item) {
         String[] rotateOptions = {"Clockwise", "Flip", "Counterclockwise"};
         Integer[] rotateInts = {90, 180, -90};
-        ListView rotateImageList = new ListView(context);
+        ListView rotateImageList = new ColorizedListView(context);
 
-        AlertDialog dialog = new AlertDialog.Builder(context).setView(rotateImageList).create();
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(rotateImageList)
+                .create();
+
         dialog.setCanceledOnTouchOutside(true);
 
         rotateImageList.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, rotateOptions));

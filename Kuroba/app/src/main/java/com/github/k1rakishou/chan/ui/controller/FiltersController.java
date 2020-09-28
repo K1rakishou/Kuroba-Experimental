@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
@@ -77,7 +78,7 @@ public class FiltersController
     @Inject
     ThemeEngine themeEngine;
 
-    private RecyclerView recyclerView;
+    private ColorizableRecyclerView recyclerView;
     private ColorizableFloatingActionButton add;
     private ColorizableFloatingActionButton enable;
     private FilterAdapter adapter;

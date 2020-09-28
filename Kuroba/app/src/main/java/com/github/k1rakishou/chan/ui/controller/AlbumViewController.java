@@ -34,8 +34,8 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.k1rakishou.chan.ui.view.GridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -51,7 +51,7 @@ public class AlbumViewController
         implements ImageViewerController.ImageViewerCallback,
         ImageViewerController.GoPostCallback,
         RequiresNoBottomNavBar {
-    private GridRecyclerView recyclerView;
+    private ColorizableGridRecyclerView recyclerView;
 
     private List<PostImage> postImages;
     private int targetIndex = -1;

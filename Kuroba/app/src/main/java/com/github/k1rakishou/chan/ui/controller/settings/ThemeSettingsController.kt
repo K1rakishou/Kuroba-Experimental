@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCallback
@@ -296,7 +297,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       linearLayout.orientation = LinearLayout.VERTICAL
       linearLayout.setBackgroundColor(theme.primaryColor)
 
-      val postsView = RecyclerView(context)
+      val postsView = ColorizableRecyclerView(context)
 
       val layoutManager = LinearLayoutManager(context)
       layoutManager.orientation = RecyclerView.VERTICAL

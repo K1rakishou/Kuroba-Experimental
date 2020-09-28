@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
@@ -15,6 +14,7 @@ import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,7 @@ class SiteSettingsController(
 ) : BaseSettingsController(context), SiteSettingsView {
   private val presenter = SiteSettingsPresenter()
 
-  private lateinit var recyclerView: EpoxyRecyclerView
+  private lateinit var recyclerView: ColorizableEpoxyRecyclerView
 
   override fun onCreate() {
     super.onCreate()

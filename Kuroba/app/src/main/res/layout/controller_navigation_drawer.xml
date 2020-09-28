@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:clipToPadding="false"
             android:orientation="vertical">
 
-            <com.airbnb.epoxy.EpoxyRecyclerView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
                 android:id="@+id/drawer_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"

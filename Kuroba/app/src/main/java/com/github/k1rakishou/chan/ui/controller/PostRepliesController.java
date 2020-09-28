@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -59,7 +60,7 @@ public class PostRepliesController
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
     private LoadView loadView;
-    private RecyclerView repliesView;
+    private ColorizableRecyclerView repliesView;
     private PostPopupHelper.RepliesData displayingData;
     private boolean first = true;
 
@@ -95,7 +96,7 @@ public class PostRepliesController
     }
 
     private void forceRecycleAllReplyViews() {
-        RecyclerView.Adapter adapter = repliesView.getAdapter();
+        RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
         if (adapter instanceof RepliesAdapter) {
             repliesView.getRecycledViewPool().clear();
             ((RepliesAdapter) adapter).clear();

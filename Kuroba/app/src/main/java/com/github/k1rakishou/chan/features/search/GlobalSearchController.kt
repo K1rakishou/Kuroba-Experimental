@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.features.search
 import android.content.Context
 import android.view.View
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
@@ -16,6 +15,7 @@ import com.github.k1rakishou.chan.features.search.epoxy.epoxySiteSelectorSpinner
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class GlobalSearchController(context: Context) : Controller(context), GlobalSearchView {
 
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private val presenter = GlobalSearchPresenter()
   private val inputViewRef = AtomicReference<View>(null)
   private var needSetInitialQuery = true

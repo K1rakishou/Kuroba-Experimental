@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,6 +24,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -57,7 +57,7 @@ public class RemovedPostsController
     private RemovedPostsHelper removedPostsHelper;
 
     private ConstraintLayout viewHolder;
-    private ListView postsListView;
+    private ColorizedListView postsListView;
     private ColorizableButton restorePostsButton;
     private ColorizableButton selectAllButton;
 

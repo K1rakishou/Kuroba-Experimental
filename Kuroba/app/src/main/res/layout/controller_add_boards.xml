@@ -30,7 +30,7 @@
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp" />
 
-            <com.airbnb.epoxy.EpoxyRecyclerView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
                 android:id="@+id/epoxy_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

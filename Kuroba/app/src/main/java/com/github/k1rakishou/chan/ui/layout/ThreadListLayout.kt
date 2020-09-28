@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.layout.ReplyLayout.ReplyLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -104,7 +105,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private lateinit var replyLayout: ReplyLayout
   private lateinit var searchStatus: TextView
-  private lateinit var recyclerView: RecyclerView
+  private lateinit var recyclerView: ColorizableRecyclerView
   private lateinit var postAdapter: PostAdapter
 
   private val compositeDisposable = CompositeDisposable()

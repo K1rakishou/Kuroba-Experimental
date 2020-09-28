@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.k1rakishou.chan.ui.view.GridRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/recycler_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -23,4 +23,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:scrollbarStyle="outsideOverlay"
     android:scrollbars="vertical">
 
-</com.github.k1rakishou.chan.ui.view.GridRecyclerView>
+</com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView>

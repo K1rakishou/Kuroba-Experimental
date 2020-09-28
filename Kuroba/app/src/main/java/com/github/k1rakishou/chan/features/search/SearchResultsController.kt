@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.features.search
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
@@ -13,6 +12,7 @@ import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerSt
 import com.github.k1rakishou.chan.features.search.epoxy.*
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
@@ -28,7 +28,7 @@ class SearchResultsController(
   private val query: String
 ) : Controller(context), SearchResultsView {
 
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private val presenter = SearchResultsPresenter(siteDescriptor, query)
 
   override fun onCreate() {

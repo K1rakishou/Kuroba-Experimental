@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class SelectLayout<T>
     @Inject
     ThemeEngine themeEngine;
 
-    private RecyclerView recyclerView;
+    private ColorizableRecyclerView recyclerView;
     private ColorizableBarButton checkAllButton;
 
     private List<SelectItem<T>> items = new ArrayList<>();
