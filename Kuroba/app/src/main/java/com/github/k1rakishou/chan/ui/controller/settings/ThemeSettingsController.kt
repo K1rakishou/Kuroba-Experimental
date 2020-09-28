@@ -280,9 +280,9 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
         .postImages(listOf(
           PostImage.Builder()
             .serverFilename("123123123123.jpg")
-            .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png").toHttpUrl())
-            .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "new_icon_512.png").toHttpUrl())
-            .filename("new_icon_512")
+            .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .filename("icon")
             .extension("png")
             .build()))
 

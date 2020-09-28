@@ -18,7 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="primary">#FF00FF</color>
     <color name="primary_dark">#FF00FF</color>
     <color name="accent">#FF00FF</color>
-    
+    <color name="secondary">#FF00FF</color>
+    <color name="error">#FF00FF</color>
+
     <color name="gestures_zone_view_background">#5038FFB2</color>
     <color name="gestures_zone_view_added_zones">#50FFB55B</color>
     <color name="gestures_zone_view_current_zone">#50FF4C82</color>
@@ -32,15 +34,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="new_crash_log_icon_color">#E54545</color>
 
     <style name="Chan.DefaultTheme" parent="Theme.MaterialComponents.NoActionBar">
+<!--        These colors define how the window will look like before the main activity is created. -->
+<!--        Unfortunately we can\'t change these colors in runtime so it will always be like this.-->
         <item name="android:statusBarColor">#ff000000</item>
         <item name="android:navigationBarColor">#ff000000</item>
         <item name="android:windowBackground">#1d1f21</item>
         <item name="windowActionModeOverlay">true</item>
 
+<!--    These must use the Magenta color so it's easy for us to see what UI elements we forgot to apply colors to-->
         <item name="colorPrimary">#FF00FF</item>
         <item name="colorPrimaryDark">#FF00FF</item>
-        <item name="colorSecondary">#FF00FF</item>
         <item name="colorAccent">#FF00FF</item>
+        <item name="colorSecondary">#FF00FF</item>
+        <item name="colorError">#FF00FF</item>
     </style>
 
 </resources>

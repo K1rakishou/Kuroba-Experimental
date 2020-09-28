@@ -23,15 +23,20 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+
+import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
@@ -40,21 +45,9 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread;
 
 public class HintPopup {
-    public static HintPopup show(Context context, View anchor, int text) {
-        return show(context, anchor, getString(text));
-    }
 
-    public static HintPopup show(final Context context, final View anchor, final String text) {
-        return show(context, anchor, text, 0, 0);
-    }
-
-    public static HintPopup show(
-            final Context context, final View anchor, final String text, final int offsetX, final int offsetY
-    ) {
-        HintPopup hintPopup = new HintPopup(context, anchor, text, offsetX, offsetY, false);
-        hintPopup.show();
-        return hintPopup;
-    }
+    @Inject
+    ThemeEngine themeEngine;
 
     private PopupWindow popupWindow;
     @Nullable
@@ -77,6 +70,8 @@ public class HintPopup {
             final int offsetY,
             final boolean top
     ) {
+        Chan.inject(this);
+
         this.context = context;
         this.anchor = anchor;
         this.offsetX = offsetX;
@@ -90,6 +85,12 @@ public class HintPopup {
     private void createView(Context context, String text) {
         popupView = inflate(context, top ? R.layout.popup_hint_top : R.layout.popup_hint);
         popupView.setOnClickListener((view) -> dismiss());
+
+        FrameLayout arrow = popupView.findViewById(R.id.arrow);
+        FrameLayout content = popupView.findViewById(R.id.content);
+
+        arrow.setBackgroundColor(themeEngine.getChanTheme().getAccentColor());
+        content.setBackgroundColor(themeEngine.getChanTheme().getAccentColor());
 
         TextView textView = popupView.findViewById(R.id.text);
         textView.setText(text);
@@ -139,5 +140,21 @@ public class HintPopup {
         popupWindow.dismiss();
         dismissed = true;
         context = null;
+    }
+
+    public static HintPopup show(Context context, View anchor, int text) {
+        return show(context, anchor, getString(text));
+    }
+
+    public static HintPopup show(final Context context, final View anchor, final String text) {
+        return show(context, anchor, text, 0, 0);
+    }
+
+    public static HintPopup show(
+            final Context context, final View anchor, final String text, final int offsetX, final int offsetY
+    ) {
+        HintPopup hintPopup = new HintPopup(context, anchor, text, offsetX, offsetY, false);
+        hintPopup.show();
+        return hintPopup;
     }
 }

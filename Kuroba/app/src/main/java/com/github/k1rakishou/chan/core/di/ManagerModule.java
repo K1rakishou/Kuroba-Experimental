@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundW
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
@@ -455,7 +456,8 @@ public class ManagerModule {
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
             ChanPostRepository chanPostRepository,
-            ImageLoaderV2 imageLoaderV2
+            ImageLoaderV2 imageLoaderV2,
+            ThemeEngine themeEngine
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
@@ -468,7 +470,8 @@ public class ManagerModule {
                 getNotificationManager(),
                 bookmarksManager,
                 chanPostRepository,
-                imageLoaderV2
+                imageLoaderV2,
+                themeEngine
         );
     }
 
@@ -477,7 +480,8 @@ public class ManagerModule {
     public LastPageNotificationsHelper provideLastPageNotificationsHelper(
             Context appContext,
             PageRequestManager pageRequestManager,
-            BookmarksManager bookmarksManager
+            BookmarksManager bookmarksManager,
+            ThemeEngine themeEngine
     ) {
         Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
 
@@ -486,7 +490,8 @@ public class ManagerModule {
                 appContext,
                 getNotificationManagerCompat(),
                 pageRequestManager,
-                bookmarksManager
+                bookmarksManager,
+                themeEngine
         );
     }
 
