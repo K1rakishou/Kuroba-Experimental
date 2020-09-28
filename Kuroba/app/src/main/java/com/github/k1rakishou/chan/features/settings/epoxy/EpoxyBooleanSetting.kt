@@ -9,7 +9,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.appcompat.widget.SwitchCompat
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
@@ -17,6 +16,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import javax.inject.Inject
@@ -34,7 +34,7 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
   private val topDescriptor: TextView
   private val bottomDescription: TextView
   private val settingViewHolder: LinearLayout
-  private val switcher: SwitchCompat
+  private val switcher: ColorizableSwitchMaterial
   private val notificationIcon: AppCompatImageView
 
   init {

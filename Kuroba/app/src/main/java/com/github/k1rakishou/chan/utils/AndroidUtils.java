@@ -737,6 +737,9 @@ public class AndroidUtils {
         return availableSpace;
     }
 
+    /**
+     * Makes color brighter if factor > 1.0f or darker if factor < 1.0f
+     * */
     public static int manipulateColor(int color, float factor) {
         int a = Color.alpha(color);
         int r = Math.round(Color.red(color) * factor);

@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class EpoxySiteView @JvmOverloads constructor(
 
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
-  private val siteSwitch: SwitchMaterial
+  private val siteSwitch: ColorizableSwitchMaterial
   private val siteSettings: AppCompatImageView
 
   private var descriptor: SiteDescriptor? = null

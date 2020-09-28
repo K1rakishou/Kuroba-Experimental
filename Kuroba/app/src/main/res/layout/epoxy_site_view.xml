@@ -29,7 +29,7 @@
         android:textSize="18sp"
         tools:text="4chan.org" />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
         android:id="@+id/site_switch"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
