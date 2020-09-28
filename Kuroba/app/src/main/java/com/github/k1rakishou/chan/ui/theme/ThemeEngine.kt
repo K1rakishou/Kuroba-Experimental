@@ -20,8 +20,12 @@ open class ThemeEngine() {
   private val listeners = hashSetOf<ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
-  // TODO(KurobaEx):
+  // TODO(KurobaEx): replace with actual themes
   open var chanTheme: ChanTheme = MockChanTheme()
+
+  fun initialize() {
+    // TODO(KurobaEx): load themes from the disk
+  }
 
   fun addListener(listener: ThemeChangesListener) {
     listeners += listener

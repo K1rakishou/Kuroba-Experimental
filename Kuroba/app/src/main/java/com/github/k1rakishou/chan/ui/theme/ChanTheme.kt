@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import com.github.k1rakishou.chan.R
 
 abstract class ChanTheme {
+  abstract val version: Int
   abstract val name: String
   abstract val isLightTheme: Boolean
   abstract val accentColor: Int
@@ -27,6 +28,7 @@ abstract class ChanTheme {
   abstract val postLinkColor: Int
   abstract val postSpoilerColor: Int
   abstract val postSpoilerRevealTextColor: Int
+  abstract val postUnseenLabelColor: Int
 
   abstract val dividerColor: Int
 
@@ -38,23 +40,23 @@ abstract class ChanTheme {
   abstract val altFont: Typeface
 
   @JvmField
-  val settingsDrawable = ThemeDrawable(R.drawable.ic_settings_white_24dp, 0.54f)
+  val settingsDrawable = SETTINGS_DRAWABLE
   @JvmField
-  val imageDrawable = ThemeDrawable(R.drawable.ic_image_white_24dp, 0.54f)
+  val imageDrawable = IMAGE_DRAWABLE
   @JvmField
-  val sendDrawable = ThemeDrawable(R.drawable.ic_send_white_24dp, 0.54f)
+  val sendDrawable = SEND_DRAWABLE
   @JvmField
-  val clearDrawable = ThemeDrawable(R.drawable.ic_clear_white_24dp, 0.54f)
+  val clearDrawable = CLEAR_DRAWABLE
   @JvmField
-  val backDrawable = ThemeDrawable(R.drawable.ic_arrow_back_white_24dp, 0.54f)
+  val backDrawable = BACK_DRAWABLE
   @JvmField
-  val doneDrawable = ThemeDrawable(R.drawable.ic_done_white_24dp, 0.54f)
+  val doneDrawable = DONE_DRAWABLE
   @JvmField
-  val historyDrawable = ThemeDrawable(R.drawable.ic_history_white_24dp, 0.54f)
+  val historyDrawable = HISTORY_DRAWABLE
   @JvmField
-  val helpDrawable = ThemeDrawable(R.drawable.ic_help_outline_white_24dp, 0.54f)
+  val helpDrawable = HELP_DRAWABLE
   @JvmField
-  val refreshDrawable = ThemeDrawable(R.drawable.ic_refresh_white_24dp, 0.54f)
+  val refreshDrawable = REFRESH_DRAWABLE
 
   init {
     if (isLightTheme) {
@@ -81,6 +83,7 @@ abstract class ChanTheme {
   }
 
   abstract fun <T : ChanTheme> copy(
+    version: Int = this.version,
     name: String = this.name,
     isLightTheme: Boolean = this.isLightTheme,
     accentColor: Int = this.accentColor,
@@ -102,9 +105,33 @@ abstract class ChanTheme {
     postLinkColor: Int = this.postLinkColor,
     postSpoilerColor: Int = this.postSpoilerColor,
     postSpoilerRevealTextColor: Int = this.postSpoilerRevealTextColor,
+    postUnseenLabelColor: Int = this.postUnseenLabelColor,
     dividerColor: Int = this.dividerColor,
     bookmarkCounterNotWatchingColor: Int = this.bookmarkCounterNotWatchingColor,
     bookmarkCounterHasRepliesColor: Int = this.bookmarkCounterHasRepliesColor,
     bookmarkCounterNormalColor: Int = this.bookmarkCounterNormalColor,
   ): T
+
+  companion object {
+    const val CURRENT_THEME_SCHEMA_VERSION = 1
+
+    @JvmField
+    val SETTINGS_DRAWABLE = ThemeDrawable(R.drawable.ic_settings_white_24dp, 0.54f)
+    @JvmField
+    val IMAGE_DRAWABLE = ThemeDrawable(R.drawable.ic_image_white_24dp, 0.54f)
+    @JvmField
+    val SEND_DRAWABLE = ThemeDrawable(R.drawable.ic_send_white_24dp, 0.54f)
+    @JvmField
+    val CLEAR_DRAWABLE = ThemeDrawable(R.drawable.ic_clear_white_24dp, 0.54f)
+    @JvmField
+    val BACK_DRAWABLE = ThemeDrawable(R.drawable.ic_arrow_back_white_24dp, 0.54f)
+    @JvmField
+    val DONE_DRAWABLE = ThemeDrawable(R.drawable.ic_done_white_24dp, 0.54f)
+    @JvmField
+    val HISTORY_DRAWABLE = ThemeDrawable(R.drawable.ic_history_white_24dp, 0.54f)
+    @JvmField
+    val HELP_DRAWABLE = ThemeDrawable(R.drawable.ic_help_outline_white_24dp, 0.54f)
+    @JvmField
+    val REFRESH_DRAWABLE = ThemeDrawable(R.drawable.ic_refresh_white_24dp, 0.54f)
+  }
 }

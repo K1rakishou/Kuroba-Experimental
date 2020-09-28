@@ -428,7 +428,7 @@ class PostCell : LinearLayout, PostCellInterface {
     if (ChanSettings.markUnseenPosts.get()) {
       if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
         postAttentionLabel.setVisibilityFast(View.VISIBLE)
-        postAttentionLabel.setBackgroundColorFast(theme.postSubjectColor)
+        postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
         return
       }
     }

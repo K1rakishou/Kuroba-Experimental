@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.theme
 import android.graphics.Typeface
 
 class MockChanTheme(
+  override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Test theme",
   override val isLightTheme: Boolean = false,
   override val accentColor: Int = 0xff008080L.toInt(),
@@ -24,6 +25,7 @@ class MockChanTheme(
   override val postLinkColor: Int = 0xff5F89ACL.toInt(),
   override val postSpoilerColor: Int = 0xff000000L.toInt(),
   override val postSpoilerRevealTextColor: Int = 0xffffffffL.toInt(),
+  override val postUnseenLabelColor: Int = 0xffff0000L.toInt(),
   override val dividerColor: Int = 0x1effffffL.toInt(),
   override val bookmarkCounterNotWatchingColor: Int = 0xff33B5E5L.toInt(),
   override val bookmarkCounterHasRepliesColor: Int = 0xffff4444L.toInt(),
@@ -36,6 +38,7 @@ class MockChanTheme(
     get() = ROBOTO_CONDENSED
 
   override fun <T : ChanTheme> copy(
+    version: Int,
     name: String,
     isLightTheme: Boolean,
     accentColor: Int,
@@ -57,12 +60,14 @@ class MockChanTheme(
     postLinkColor: Int,
     postSpoilerColor: Int,
     postSpoilerRevealTextColor: Int,
+    postUnseenLabelColor: Int,
     dividerColor: Int,
     bookmarkCounterNotWatchingColor: Int,
     bookmarkCounterHasRepliesColor: Int,
     bookmarkCounterNormalColor: Int,
   ): T {
     return MockChanTheme(
+      version = version,
       name = name,
       isLightTheme = isLightTheme,
       accentColor = accentColor,
@@ -84,6 +89,7 @@ class MockChanTheme(
       postLinkColor = postLinkColor,
       postSpoilerColor = postSpoilerColor,
       postSpoilerRevealTextColor = postSpoilerRevealTextColor,
+      postUnseenLabelColor = postUnseenLabelColor,
       dividerColor = dividerColor,
       bookmarkCounterNotWatchingColor = bookmarkCounterNotWatchingColor,
       bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor,

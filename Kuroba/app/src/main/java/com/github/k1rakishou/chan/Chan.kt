@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.ui.service.SavingNotification
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
@@ -72,6 +73,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val okHttpDns: Dns
     get() {
@@ -177,6 +180,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     feather.injectFields(this)
 
+    themeEngine.initialize()
     siteManager.initialize()
     boardManager.initialize()
     bookmarksManager.initialize()

@@ -134,9 +134,15 @@ open class SiteResolver @Inject constructor(
     return httpUrl
   }
 
-  class SiteResolverResult(var match: Match, var builtinResult: Class<out Site>?, var externalResult: HttpUrl?) {
+  class SiteResolverResult(
+    val match: Match,
+    val builtinResult: Class<out Site>?,
+    val externalResult: HttpUrl?
+  ) {
     enum class Match {
-      NONE, BUILTIN, EXTERNAL
+      NONE,
+      BUILTIN,
+      EXTERNAL
     }
   }
 
