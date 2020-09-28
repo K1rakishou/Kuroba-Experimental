@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -57,7 +57,7 @@ public class RemovedPostsController
     private RemovedPostsHelper removedPostsHelper;
 
     private ConstraintLayout viewHolder;
-    private ColorizedListView postsListView;
+    private ColorizableListView postsListView;
     private ColorizableButton restorePostsButton;
     private ColorizableButton selectAllButton;
 

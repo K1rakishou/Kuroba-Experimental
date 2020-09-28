@@ -56,7 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:focusable="true"
                 android:orientation="vertical">
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
                     android:id="@+id/removed_posts_posts_list"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"

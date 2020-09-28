@@ -1,18 +1,18 @@
 package com.github.k1rakishou.chan.ui.theme.widget
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
-import android.widget.ListView
+import android.widget.ProgressBar
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import javax.inject.Inject
 
-class ColorizedListView @JvmOverloads constructor(
+class ColorizableProgressBar @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  val defStyleAttr: Int = android.R.attr.listViewStyle
-) : ListView(context, attrs, defStyleAttr), IColorizableWidget {
+  val defStyleAttr: Int = android.R.attr.progressBarStyle
+) : ProgressBar(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject
   protected lateinit var themeEngine: ThemeEngine
@@ -30,7 +30,8 @@ class ColorizedListView @JvmOverloads constructor(
   }
 
   override fun applyColors() {
-    changeEdgeEffect(themeEngine)
+    progressTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
+    indeterminateTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
   }
 
 }

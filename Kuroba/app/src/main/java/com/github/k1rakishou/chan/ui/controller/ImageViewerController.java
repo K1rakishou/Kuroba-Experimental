@@ -57,7 +57,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -353,7 +353,7 @@ public class ImageViewerController
     private void rotateImage(ToolbarMenuSubItem item) {
         String[] rotateOptions = {"Clockwise", "Flip", "Counterclockwise"};
         Integer[] rotateInts = {90, 180, -90};
-        ListView rotateImageList = new ColorizedListView(context);
+        ListView rotateImageList = new ColorizableListView(context);
 
         AlertDialog dialog = new AlertDialog.Builder(context)
                 .setView(rotateImageList)

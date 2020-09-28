@@ -63,7 +63,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallb
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -527,7 +527,7 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    val hashList = ColorizedListView(context)
+    val hashList = ColorizableListView(context)
     val dialog = AlertDialog.Builder(context).setTitle("Select an image to filter.")
       .setView(hashList)
       .create()

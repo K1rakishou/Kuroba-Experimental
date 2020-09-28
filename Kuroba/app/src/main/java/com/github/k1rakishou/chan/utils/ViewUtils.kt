@@ -42,7 +42,8 @@ object ViewUtils {
       DrawableCompat.setTint(drawable!!, themeEngine.chanTheme.accentColor)
 
       // Set the drawables
-      if (Build.VERSION.SDK_INT >= 28) { //set differently in Android P (API 28)
+      if (Build.VERSION.SDK_INT >= 28) {
+        //set differently in Android P (API 28)
         field = editor.javaClass.getDeclaredField("mDrawableForCursor")
         field.isAccessible = true
         field[editor] = drawable

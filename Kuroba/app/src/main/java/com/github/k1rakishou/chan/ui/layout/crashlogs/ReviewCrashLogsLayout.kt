@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizedListView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
@@ -26,7 +26,7 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
 
   private lateinit var compositeDisposable: CompositeDisposable
   private var callbacks: ReviewCrashLogsLayoutCallbacks? = null
-  private val crashLogsList: ColorizedListView
+  private val crashLogsList: ColorizableListView
   private val deleteCrashLogsButton: ColorizableBarButton
   private val sendCrashLogsButton: ColorizableBarButton
 
