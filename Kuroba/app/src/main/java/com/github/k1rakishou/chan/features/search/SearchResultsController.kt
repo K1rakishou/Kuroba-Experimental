@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.search
 
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
@@ -17,6 +16,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -30,26 +30,6 @@ class SearchResultsController(
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private val presenter = SearchResultsPresenter(siteDescriptor, query)
-
-  val indexAndTop: IntArray?
-    get() {
-      var index = 0
-      var top = 0
-
-      val layoutManager = epoxyRecyclerView.layoutManager
-        ?: return null
-
-      if (layoutManager.childCount > 0) {
-        val topChild = layoutManager.getChildAt(0)
-          ?: return null
-
-        index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
-        val params = topChild.layoutParams as RecyclerView.LayoutParams
-        top = layoutManager.getDecoratedTop(topChild) - params.topMargin - epoxyRecyclerView.paddingTop
-      }
-
-      return intArrayOf(index, top)
-    }
 
   override fun onCreate() {
     super.onCreate()
@@ -114,9 +94,11 @@ class SearchResultsController(
         postInfo(searchPostInfo.postInfo.spannedText)
         thumbnail(searchPostInfo.thumbnail)
         postComment(searchPostInfo.postComment.spannedText)
-        onBind { _, _, _ -> presenter.updateLastRecyclerViewScrollState(indexAndTop) }
+        onBind { _, _, _ ->
+          presenter.updateLastRecyclerViewScrollState(RecyclerUtils.getIndexAndTop(epoxyRecyclerView))
+        }
         onPostClickListener { postDescriptor ->
-          presenter.updateLastRecyclerViewScrollState(indexAndTop)
+          presenter.updateLastRecyclerViewScrollState(RecyclerUtils.getIndexAndTop(epoxyRecyclerView))
           onSearchPostClicked(postDescriptor)
         }
       }

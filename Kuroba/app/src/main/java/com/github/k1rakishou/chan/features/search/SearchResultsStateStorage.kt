@@ -24,13 +24,13 @@ internal object SearchResultsStateStorage {
     this.searchResultsState = searchResultsState
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: IntArray) {
+  fun updateLastRecyclerViewScrollState(indexAndTop: RecyclerUtils.IndexAndTop) {
     if (lastRecyclerViewScrollState == null) {
       lastRecyclerViewScrollState = RecyclerUtils.IndexAndTop()
     }
 
-    lastRecyclerViewScrollState!!.index = indexAndTop[0]
-    lastRecyclerViewScrollState!!.top = indexAndTop[1]
+    lastRecyclerViewScrollState!!.index = indexAndTop.index
+    lastRecyclerViewScrollState!!.top = indexAndTop.top
   }
 
   fun updateSearchInputState(searchInputState: GlobalSearchControllerStateData) {

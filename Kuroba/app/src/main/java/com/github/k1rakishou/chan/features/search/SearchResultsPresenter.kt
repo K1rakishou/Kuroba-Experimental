@@ -83,11 +83,7 @@ internal class SearchResultsPresenter(
     searchResultsStateStorage.resetLastRecyclerViewScrollState()
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: IntArray?) {
-    if (indexAndTop == null) {
-      return
-    }
-
+  fun updateLastRecyclerViewScrollState(indexAndTop: RecyclerUtils.IndexAndTop) {
     searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
   }
 
