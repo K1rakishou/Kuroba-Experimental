@@ -297,8 +297,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
     implementation "com.google.android.material:material:${versions.material}"
 
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.12.0'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.12.0'
+    implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
+    implementation "com.google.android.exoplayer:exoplayer-ui:${versions.exoplayer}"
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
