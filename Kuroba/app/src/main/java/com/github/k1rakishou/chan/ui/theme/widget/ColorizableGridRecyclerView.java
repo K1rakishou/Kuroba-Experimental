@@ -66,10 +66,12 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
     }
 
     @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
 
-        setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        if (!isInEditMode()) {
+            setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        }
     }
 
     /**

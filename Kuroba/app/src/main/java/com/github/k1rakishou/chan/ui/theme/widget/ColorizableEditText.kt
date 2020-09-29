@@ -29,19 +29,35 @@ open class ColorizableEditText @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
-    setHintTextColor(themeEngine.chanTheme.textColorHint)
+    if (isInEditMode) {
+      return
+    }
+
     highlightColor = themeEngine.chanTheme.accentColor
     setLinkTextColor(themeEngine.chanTheme.postLinkColor)
 
     setEditTextCursorColor(themeEngine)
     setHandlesColors(themeEngine)
+
+    setHintTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(-android.R.attr.state_focused),
+          intArrayOf()
+        ),
+        intArrayOf(
+          themeEngine.chanTheme.textColorHint,
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorHint, 1.2f),
+        )
+      )
+    )
 
     setTextColor(
       ColorStateList(

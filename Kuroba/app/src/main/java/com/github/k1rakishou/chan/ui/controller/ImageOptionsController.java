@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.view.View;
@@ -26,29 +25,24 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
-import androidx.core.view.ViewCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-
-import javax.inject.Inject;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getDisplaySize;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
@@ -61,9 +55,6 @@ public class ImageOptionsController
         RequiresNoBottomNavBar {
     private final static String TAG = "ImageOptionsController";
 
-    @Inject
-    ThemeEngine themeEngine;
-
     private ImageReencodingPresenter presenter;
     private ImageOptionsHelper imageReencodingHelper;
     private ImageOptionsControllerCallbacks callbacks;
@@ -72,11 +63,11 @@ public class ImageOptionsController
     private CardView container;
     private LinearLayout optionsHolder;
     private ImageView preview;
-    private AppCompatCheckBox fixExif;
-    private AppCompatCheckBox removeMetadata;
-    private AppCompatCheckBox removeFilename;
-    private AppCompatCheckBox changeImageChecksum;
-    private AppCompatCheckBox reencode;
+    private ColorizableCheckBox fixExif;
+    private ColorizableCheckBox removeMetadata;
+    private ColorizableCheckBox removeFilename;
+    private ColorizableCheckBox changeImageChecksum;
+    private ColorizableCheckBox reencode;
     private ColorizableBarButton cancel;
     private ColorizableBarButton ok;
 
@@ -93,7 +84,6 @@ public class ImageOptionsController
             boolean supportsReencode
     ) {
         super(context);
-        inject(this);
 
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;
@@ -124,9 +114,6 @@ public class ImageOptionsController
         cancel = view.findViewById(R.id.image_options_cancel);
         ok = view.findViewById(R.id.image_options_ok);
 
-        ViewCompat.setBackgroundTintList(cancel, ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        ViewCompat.setBackgroundTintList(ok, ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-
         fixExif.setOnCheckedChangeListener(this);
         removeMetadata.setOnCheckedChangeListener(this);
         removeFilename.setOnCheckedChangeListener(this);
@@ -139,6 +126,7 @@ public class ImageOptionsController
             removeFilename.setChecked(lastSettings.getRemoveFilename());
             changeImageChecksum.setChecked(lastSettings.getChangeImageChecksum());
             fixExif.setChecked(lastSettings.getFixExif());
+
             ImageReencodingPresenter.ReencodeSettings lastReencode = lastSettings.getReencodeSettings();
             if (lastReencode != null && presenter.hasAttachedFile()) {
                 removeMetadata.setChecked(!lastReencode.isDefault());
@@ -148,36 +136,28 @@ public class ImageOptionsController
             } else {
                 removeMetadata.setChecked(lastSettings.getRemoveMetadata());
             }
+
             ignoreSetup = false;
         }
 
         if (presenter.getImageFormat() != Bitmap.CompressFormat.JPEG) {
             fixExif.setChecked(false);
             fixExif.setEnabled(false);
-            fixExif.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            fixExif.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         }
 
         if (!reencodeEnabled) {
             changeImageChecksum.setChecked(false);
             changeImageChecksum.setEnabled(false);
-            changeImageChecksum.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            changeImageChecksum.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
             fixExif.setChecked(false);
             fixExif.setEnabled(false);
-            fixExif.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            fixExif.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
             removeMetadata.setChecked(false);
             removeMetadata.setEnabled(false);
-            removeMetadata.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            removeMetadata.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
             reencode.setChecked(false);
             reencode.setEnabled(false);
-            reencode.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            reencode.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         }
 
         viewHolder.setOnClickListener(this);
+
         preview.setOnClickListener(v -> {
             boolean isCurrentlyVisible = optionsHolder.getVisibility() == VISIBLE;
             optionsHolder.setVisibility(isCurrentlyVisible ? GONE : VISIBLE);
@@ -190,6 +170,7 @@ public class ImageOptionsController
             params.height = WRAP_CONTENT;
             container.setLayoutParams(params);
         });
+
         cancel.setOnClickListener(this);
         ok.setOnClickListener(this);
 
@@ -225,7 +206,8 @@ public class ImageOptionsController
             presenter.removeFilename(isChecked);
         } else if (buttonView == reencode) {
             //isChecked here means whether the current click has made the button checked
-            if (!ignoreSetup) { //this variable is to ignore any side effects of checking boxes when last settings are being put in
+            if (!ignoreSetup) {
+                //this variable is to ignore any side effects of checking boxes when last settings are being put in
                 if (!isChecked) {
                     onReencodingCanceled();
                 } else {
@@ -238,10 +220,8 @@ public class ImageOptionsController
     public void onReencodingCanceled() {
         removeMetadata.setChecked(false);
         removeMetadata.setEnabled(true);
-        removeMetadata.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        removeMetadata.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        reencode.setChecked(false);
 
+        reencode.setChecked(false);
         reencode.setText(getString(R.string.image_options_re_encode));
 
         presenter.setReencode(null);
@@ -250,11 +230,8 @@ public class ImageOptionsController
     public void onReencodeOptionsSet(ImageReencodingPresenter.ReencodeSettings reencodeSettings) {
         removeMetadata.setChecked(true);
         removeMetadata.setEnabled(false);
-        removeMetadata.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-        removeMetadata.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
 
         reencode.setText(String.format("Re-encode %s", reencodeSettings.prettyPrint(presenter.getImageFormat())));
-
         presenter.setReencode(reencodeSettings);
     }
 

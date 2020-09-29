@@ -102,7 +102,7 @@ android {
     flavorDimensions "default"
 
     productFlavors {
-        // FLAVOR_TYPE 0 - release build
+        // FLAVOR_TYPE 0 - release (stable) build
         // FLAVOR_TYPE 1 - beta build
         // FLAVOR_TYPE 2 - dev build
         // FLAVOR_TYPE 3 - fdroid build

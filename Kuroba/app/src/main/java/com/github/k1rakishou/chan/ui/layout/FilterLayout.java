@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.ui.layout;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.Html;
@@ -31,13 +30,11 @@ import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.AppCompatCheckBox;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -46,6 +43,7 @@ import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
@@ -66,23 +64,21 @@ import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
-public class FilterLayout
-        extends LinearLayout
-        implements View.OnClickListener {
+public class FilterLayout extends LinearLayout implements View.OnClickListener {
     private TextView typeText;
     private TextView boardsSelector;
     private boolean patternContainerErrorShowing = false;
     private TextView pattern;
     private TextView patternPreview;
     private TextView patternPreviewStatus;
-    private CheckBox enabled;
+    private ColorizableCheckBox enabled;
     private ImageView help;
     private TextView actionText;
     private LinearLayout colorContainer;
     private View colorPreview;
-    private AppCompatCheckBox applyToReplies;
-    private AppCompatCheckBox onlyOnOP;
-    private AppCompatCheckBox applyToSaved;
+    private ColorizableCheckBox applyToReplies;
+    private ColorizableCheckBox onlyOnOP;
+    private ColorizableCheckBox applyToSaved;
 
     @Inject
     BoardManager boardManager;
@@ -196,15 +192,6 @@ public class FilterLayout
                 new DropdownArrowDrawable(dp(12), dp(12), true),
                 null
         );
-
-        enabled.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        enabled.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        applyToReplies.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        applyToReplies.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        onlyOnOP.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        onlyOnOP.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        applyToSaved.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        applyToSaved.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
     }
 
     public void setFilter(ChanFilterMutable chanFilterMutable) {

@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.Animator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -133,6 +134,14 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     }
 
     startListeningForInsetsChangesIfNeeded()
+  }
+
+  override fun onTouchEvent(ev: MotionEvent): Boolean {
+    if (this.visibility != View.VISIBLE || animating) {
+      return false
+    }
+
+    return super.onTouchEvent(ev)
   }
 
   override fun setOnClickListener(listener: OnClickListener?) {

@@ -26,13 +26,17 @@ class ColorizableButton @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     ViewCompat.setBackgroundTintList(
       this,
       ColorStateList(

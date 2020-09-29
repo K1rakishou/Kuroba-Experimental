@@ -13,7 +13,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.google.android.material.checkbox.MaterialCheckBox
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -28,7 +28,7 @@ class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
 
   private val holder: LinearLayout
   private val title: TextView
-  private val checkbox: MaterialCheckBox
+  private val checkbox: ColorizableCheckBox
 
   init {
     Chan.inject(this)

@@ -46,7 +46,7 @@
 
     </LinearLayout>
 
-    <androidx.appcompat.widget.AppCompatCheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/removed_post_checkbox"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -24,6 +22,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -226,14 +225,12 @@ public class RemovedPostsController
             LinearLayout viewHolder = convertView.findViewById(R.id.removed_post_view_holder);
             AppCompatTextView postNo = convertView.findViewById(R.id.removed_post_no);
             AppCompatTextView postComment = convertView.findViewById(R.id.removed_post_comment);
-            AppCompatCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
+            ColorizableCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
 
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
-            checkbox.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-            checkbox.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
 
             if (removedPost.images.size() > 0) {
                 // load only the first image

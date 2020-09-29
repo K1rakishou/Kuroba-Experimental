@@ -80,8 +80,6 @@ public class SearchLayout
         searchView.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_ACTION_DONE);
         searchView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         searchView.setHint(getString(R.string.search_hint));
-        searchView.setHintTextColor(themeEngine.getChanTheme().getTextColorHint());
-        searchView.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
         searchView.setSingleLine(true);
         searchView.setBackgroundResource(0);
         searchView.setPadding(0, 0, 0, 0);

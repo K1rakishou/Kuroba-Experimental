@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:background="?attr/selectableItemBackground"
     android:orientation="horizontal">
 
-    <CheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/checkbox"
         android:layout_width="wrap_content"
         android:layout_height="match_parent" />

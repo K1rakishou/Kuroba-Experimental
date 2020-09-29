@@ -9,7 +9,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.google.android.material.checkbox.MaterialCheckBox
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -26,7 +26,7 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
   private val clickableArea: LinearLayout
   private val boardName: MaterialTextView
   private val boardDescription: MaterialTextView
-  private val boardCheckbox: MaterialCheckBox
+  private val boardCheckbox: ColorizableCheckBox
 
   init {
     Chan.inject(this)

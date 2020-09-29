@@ -17,12 +17,10 @@
 package com.github.k1rakishou.chan.ui.layout;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
@@ -219,7 +218,7 @@ public class SelectLayout<T>
     private class BoardSelectViewHolder
             extends RecyclerView.ViewHolder
             implements CompoundButton.OnCheckedChangeListener, OnClickListener {
-        private CheckBox checkBox;
+        private ColorizableCheckBox checkBox;
         private TextView text;
         private TextView description;
 
@@ -228,10 +227,7 @@ public class SelectLayout<T>
             checkBox = itemView.findViewById(R.id.checkbox);
             text = itemView.findViewById(R.id.text);
             description = itemView.findViewById(R.id.description);
-
             checkBox.setOnCheckedChangeListener(this);
-            checkBox.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-            checkBox.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
 
             itemView.setOnClickListener(this);
         }

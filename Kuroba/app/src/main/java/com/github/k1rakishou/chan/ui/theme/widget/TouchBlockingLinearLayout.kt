@@ -43,13 +43,17 @@ class TouchBlockingLinearLayout @JvmOverloads constructor(
     return true
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     setBackgroundColor(themeEngine.chanTheme.primaryColor)
   }
 

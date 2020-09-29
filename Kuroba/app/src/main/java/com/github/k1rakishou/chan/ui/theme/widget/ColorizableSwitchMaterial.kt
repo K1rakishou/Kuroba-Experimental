@@ -25,13 +25,17 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     thumbTintList = ColorStateList(
       arrayOf(
         intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),

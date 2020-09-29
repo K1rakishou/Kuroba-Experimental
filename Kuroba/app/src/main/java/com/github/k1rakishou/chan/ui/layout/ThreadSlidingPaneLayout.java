@@ -70,8 +70,6 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayout implements IColor
         super.onFinishInflate();
         leftPane = findViewById(R.id.left_pane);
         rightPane = findViewById(R.id.right_pane);
-
-        applyColors();
     }
 
     @Override
@@ -84,6 +82,8 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayout implements IColor
             requestLayout();
             return false;
         });
+
+        applyColors();
     }
 
     public void setThreadSlideController(ThreadSlideController threadSlideController) {

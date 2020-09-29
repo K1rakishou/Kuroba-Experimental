@@ -79,7 +79,7 @@
                 android:layout_marginBottom="8dp"
                 android:orientation="vertical">
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/report_controller_attach_logs_button"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

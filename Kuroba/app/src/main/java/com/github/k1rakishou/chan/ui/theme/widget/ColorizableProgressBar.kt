@@ -23,13 +23,17 @@ class ColorizableProgressBar @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     progressTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
     indeterminateTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
   }

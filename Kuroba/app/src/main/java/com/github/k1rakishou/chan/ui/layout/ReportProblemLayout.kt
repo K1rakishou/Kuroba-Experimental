@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.ui.layout
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatCheckBox
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
@@ -31,7 +31,7 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
 
   private val reportActivityProblemTitle: ColorizableEditText
   private val reportActivityProblemDescription: ColorizableEditText
-  private val reportActivityAttachLogsButton: AppCompatCheckBox
+  private val reportActivityAttachLogsButton: ColorizableCheckBox
   private val reportActivityLogsText: ColorizableEditText
   private val reportActivitySendReport: ColorizableBarButton
 
@@ -44,8 +44,6 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
       reportActivityAttachLogsButton = findViewById(R.id.report_controller_attach_logs_button)
       reportActivityLogsText = findViewById(R.id.report_controller_logs_text)
       reportActivitySendReport = findViewById(R.id.report_controller_send_report)
-
-      reportActivityAttachLogsButton.setTextColor(themeEngine.chanTheme.textPrimaryColor)
     }
   }
 

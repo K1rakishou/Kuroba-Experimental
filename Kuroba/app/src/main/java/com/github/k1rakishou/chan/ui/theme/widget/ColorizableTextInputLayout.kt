@@ -28,13 +28,17 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
     boxBackgroundMode = BOX_BACKGROUND_OUTLINE
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     boxStrokeErrorColor = ColorStateList(
       arrayOf(
         intArrayOf(-android.R.attr.state_enabled),

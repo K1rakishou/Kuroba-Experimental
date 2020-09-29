@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.layout;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -36,7 +35,6 @@ import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -72,6 +70,7 @@ import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
@@ -152,7 +151,7 @@ public class ReplyLayout
     private ColorizableBarButton commentSJISButton;
     private SelectionListeningEditText comment;
     private TextView commentCounter;
-    private CheckBox spoiler;
+    private ColorizableCheckBox spoiler;
     private LinearLayout previewHolder;
     private ImageView preview;
     private TextView previewMessage;
@@ -267,9 +266,6 @@ public class ReplyLayout
 
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
-
-        spoiler.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
-        spoiler.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextPrimaryColor()));
 
         commentCounter.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
 
@@ -844,7 +840,7 @@ public class ReplyLayout
         commentCounter.setText(count + "/" + maxCount);
 
         int textColor = over
-                ? themeEngine.getChanTheme().getAccentColor()
+                ? themeEngine.getChanTheme().getErrorColor()
                 : themeEngine.getChanTheme().getTextSecondaryColor();
 
         commentCounter.setTextColor(textColor);

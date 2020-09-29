@@ -213,7 +213,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <CheckBox
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                 android:id="@+id/spoiler"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

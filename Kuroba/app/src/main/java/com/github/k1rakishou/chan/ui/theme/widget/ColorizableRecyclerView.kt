@@ -24,13 +24,17 @@ open class ColorizableRecyclerView @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
       override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
         return EdgeEffect(view.context).apply { color = themeEngine.chanTheme.accentColor }

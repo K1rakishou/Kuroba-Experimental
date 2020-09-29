@@ -25,13 +25,17 @@ open class ColorizableFloatingActionButton @JvmOverloads constructor(
     }
   }
 
-  override fun onFinishInflate() {
-    super.onFinishInflate()
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
 
     applyColors()
   }
 
   override fun applyColors() {
+    if (isInEditMode) {
+      return
+    }
+
     backgroundTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
     drawable.setTint(themeEngine.chanTheme.drawableTintColor)
   }

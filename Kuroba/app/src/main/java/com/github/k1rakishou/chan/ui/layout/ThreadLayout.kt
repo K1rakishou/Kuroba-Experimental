@@ -22,7 +22,6 @@ import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
-import android.content.res.ColorStateList
 import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -607,9 +606,6 @@ class ThreadLayout @JvmOverloads constructor(
     @SuppressLint("InflateParams")
     val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
-
-    checkBox.buttonTintList = ColorStateList.valueOf(themeEngine.chanTheme.textPrimaryColor)
-    checkBox.setTextColor(ColorStateList.valueOf(themeEngine.chanTheme.textPrimaryColor))
 
     AlertDialog.Builder(context)
       .setTitle(R.string.delete_confirm)

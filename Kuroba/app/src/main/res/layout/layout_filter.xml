@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <CheckBox
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
             android:id="@+id/enabled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -123,21 +123,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     </LinearLayout>
 
-    <androidx.appcompat.widget.AppCompatCheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/apply_to_replies_checkbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/apply_to_replies"
         android:textSize="16sp" />
 
-    <androidx.appcompat.widget.AppCompatCheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/only_on_op_checkbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/only_on_op"
         android:textSize="16sp" />
 
-    <androidx.appcompat.widget.AppCompatCheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/apply_to_saved_checkbox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

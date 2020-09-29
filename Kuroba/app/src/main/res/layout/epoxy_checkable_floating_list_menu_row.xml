@@ -27,7 +27,7 @@
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum"/>
 
-        <com.google.android.material.checkbox.MaterialCheckBox
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
             android:id="@+id/checkbox"
             android:clickable="false"
             android:focusable="false"

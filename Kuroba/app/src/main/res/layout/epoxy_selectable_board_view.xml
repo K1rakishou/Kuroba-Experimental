@@ -32,7 +32,7 @@
             tools:text="/a/ - Anime and Manga is 4chan's imageboard dedicated to the discussion of Japanese animation and manga." />
     </LinearLayout>
 
-    <com.google.android.material.checkbox.MaterialCheckBox
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
         android:id="@+id/board_selection_checkbox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
