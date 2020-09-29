@@ -1,14 +1,12 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.view.View;
 import android.widget.RadioGroup;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatSeekBar;
+import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
@@ -20,6 +18,8 @@ import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider;
+import com.google.android.material.slider.Slider;
 
 import javax.inject.Inject;
 
@@ -43,8 +43,8 @@ public class ImageReencodeOptionsController
 
     private ConstraintLayout viewHolder;
     private RadioGroup radioGroup;
-    private AppCompatSeekBar quality;
-    private AppCompatSeekBar reduce;
+    private ColorizableSlider quality;
+    private ColorizableSlider reduce;
     private TextView currentImageQuality;
     private TextView currentImageReduce;
     private ColorizableBarButton cancel;
@@ -54,37 +54,28 @@ public class ImageReencodeOptionsController
     private ImageReencodingPresenter.ReencodeSettings lastSettings;
     private boolean ignoreSetup;
 
-    private SeekBar.OnSeekBarChangeListener listener = new SeekBar.OnSeekBarChangeListener() {
+    private Slider.OnChangeListener listener = new Slider.OnChangeListener() {
         @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (!ignoreSetup) { //this variable is to ignore any side effects of setting progress while loading last options
-                if (seekBar == quality) {
-                    if (progress < 1) {
-                        //for API <26; the quality can't be lower than 1
-                        seekBar.setProgress(1);
-                        progress = 1;
+        public void onValueChange(@NonNull Slider slider, float value, boolean fromUser) {
+            if (!ignoreSetup) {
+                // this variable is to ignore any side effects of setting progress while loading last options
+                if (slider == quality) {
+                    if (value < 1) {
+                        // for API <26; the quality can't be lower than 1
+                        slider.setValue(1);
+                        value = 1;
                     }
-                    currentImageQuality.setText(getString(R.string.image_quality, progress));
-                } else if (seekBar == reduce) {
+                    currentImageQuality.setText(getString(R.string.image_quality, (int) value));
+                } else if (slider == reduce) {
                     currentImageReduce.setText(getString(R.string.scale_reduce,
                             dims.first,
                             dims.second,
-                            (int) (dims.first * ((100f - (float) progress) / 100f)),
-                            (int) (dims.second * ((100f - (float) progress) / 100f)),
-                            100 - progress
+                            (int) (dims.first * ((100f - (float) value) / 100f)),
+                            (int) (dims.second * ((100f - (float) value) / 100f)),
+                            100 - (int) value
                     ));
                 }
             }
-        }
-
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            //do nothing
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            //do nothing
         }
     };
 
@@ -129,27 +120,23 @@ public class ImageReencodeOptionsController
         ColorizableRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
 
         CardView cardView = view.findViewById(R.id.card_view);
-        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
 
         viewHolder.setOnClickListener(this);
         cancel.setOnClickListener(this);
         ok.setOnClickListener(this);
         radioGroup.setOnCheckedChangeListener(this);
 
-        quality.setOnSeekBarChangeListener(listener);
-        reduce.setOnSeekBarChangeListener(listener);
+        quality.addOnChangeListener(listener);
+        reduce.addOnChangeListener(listener);
 
         setReencodeImageAsIsText();
 
         if (imageFormat == Bitmap.CompressFormat.PNG) {
             quality.setEnabled(false);
             reencodeImageAsPng.setEnabled(false);
-            reencodeImageAsPng.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            reencodeImageAsPng.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         } else if (imageFormat == Bitmap.CompressFormat.JPEG) {
             reencodeImageAsJpeg.setEnabled(false);
-            reencodeImageAsJpeg.setButtonTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
-            reencodeImageAsJpeg.setTextColor(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
         }
 
         currentImageReduce.setText(getString(R.string.scale_reduce,
@@ -157,14 +144,14 @@ public class ImageReencodeOptionsController
                 dims.second,
                 dims.first,
                 dims.second,
-                100 - reduce.getProgress()
+                100 - (int) reduce.getValue()
         ));
 
         if (lastSettings != null) {
             //this variable is to ignore any side effects of checking/setting progress on these views
             ignoreSetup = true;
-            quality.setProgress(lastSettings.getReencodeQuality());
-            reduce.setProgress(lastSettings.getReducePercent());
+            quality.setValue(lastSettings.getReencodeQuality());
+            reduce.setValue(lastSettings.getReducePercent());
             switch (lastSettings.getReencodeType()) {
                 case AS_JPEG:
                     reencodeImageAsJpeg.setChecked(true);
@@ -178,6 +165,14 @@ public class ImageReencodeOptionsController
             }
             ignoreSetup = false;
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        quality.removeOnChangeListener(listener);
+        reduce.removeOnChangeListener(listener);
     }
 
     private void setReencodeImageAsIsText() {
@@ -222,7 +217,7 @@ public class ImageReencodeOptionsController
             // when re-encoding image as png it ignores the compress quality option so we can just
             // disable the quality seekbar
             if (index == 2 || (index == 0 && imageFormat == Bitmap.CompressFormat.PNG)) {
-                quality.setProgress(100);
+                quality.setValue(100);
                 quality.setEnabled(false);
             } else {
                 quality.setEnabled(true);
@@ -234,7 +229,11 @@ public class ImageReencodeOptionsController
         int index = radioGroup.indexOfChild(radioGroup.findViewById(radioGroup.getCheckedRadioButtonId()));
         ImageReencodingPresenter.ReencodeType reencodeType = ImageReencodingPresenter.ReencodeType.fromInt(index);
 
-        return new ImageReencodingPresenter.ReencodeSettings(reencodeType, quality.getProgress(), reduce.getProgress());
+        return new ImageReencodingPresenter.ReencodeSettings(
+                reencodeType,
+                (int) quality.getValue(),
+                (int) reduce.getValue()
+        );
     }
 
     public interface ImageReencodeOptionsCallbacks {

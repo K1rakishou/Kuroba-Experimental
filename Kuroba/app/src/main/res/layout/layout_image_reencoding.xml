@@ -109,16 +109,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:text="1"
                         tools:ignore="HardcodedText" />
 
-                    <androidx.appcompat.widget.AppCompatSeekBar
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
                         android:id="@+id/reecode_image_quality"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="4dp"
                         android:layout_weight="1"
-                        android:max="100"
-                        android:min="1"
-                        android:progress="100" />
+                        android:valueFrom="1"
+                        android:valueTo="100"
+                        android:value="100" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -155,20 +155,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:text="0%"
                         tools:ignore="HardcodedText" />
 
-                    <androidx.appcompat.widget.AppCompatSeekBar
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
                         android:id="@+id/reecode_image_reduce"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="4dp"
                         android:layout_weight="1"
-                        android:progress="0" />
+                        android:valueFrom="0"
+                        android:valueTo="99"
+                        android:value="0" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
-                        android:text="100%"
+                        android:text="99%"
                         tools:ignore="HardcodedText" />
 
                 </LinearLayout>
