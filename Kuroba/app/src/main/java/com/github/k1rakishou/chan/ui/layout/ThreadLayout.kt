@@ -330,6 +330,10 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.showPosts(thread, filter, visible != Visible.THREAD)
     switchVisible(Visible.THREAD)
     callback.onShowPosts()
+
+    replyButton.setIsCatalogFloatingActionButton(
+      thread.chanDescriptor is ChanDescriptor.CatalogDescriptor
+    )
   }
 
   override fun postClicked(post: Post) {
@@ -819,6 +823,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
+  fun isCatalogReplyLayout(): Boolean? = threadListLayout.replyPresenter.isCatalogReplyLayout()
 
   fun getThumbnail(postImage: PostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {

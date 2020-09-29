@@ -47,6 +47,7 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
   private var bottomNavViewHeight = 0
   private var listeningForInsetsChanges = false
   private var animating = false
+  private var isCatalogFloatingActionButton: Boolean? = null
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -102,23 +103,16 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     }
   }
 
+  fun setIsCatalogFloatingActionButton(isCatalog: Boolean) {
+    isCatalogFloatingActionButton = isCatalog
+  }
+
   override fun show() {
-    val isReplyLayoutOpen = findThreadLayout()?.isReplyLayoutOpen() ?: false
-    if (isReplyLayoutOpen) {
+    if (isCurrentReplyLayoutOpened()) {
       return
     }
 
     super.show()
-  }
-
-  private fun findThreadLayout(): ThreadLayout? {
-    var parent = this.parent
-
-    while (parent != null && parent !is ThreadLayout) {
-      parent = parent.parent
-    }
-
-    return parent as? ThreadLayout
   }
 
   override fun onAttachedToWindow() {
@@ -144,23 +138,6 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     return super.onTouchEvent(ev)
   }
 
-  override fun setOnClickListener(listener: OnClickListener?) {
-    super.setOnClickListener { view ->
-      if (this.visibility == View.VISIBLE && !animating) {
-        listener?.onClick(view)
-      }
-    }
-  }
-
-  private fun startListeningForInsetsChangesIfNeeded() {
-    if (listeningForInsetsChanges) {
-      return
-    }
-
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
-    listeningForInsetsChanges = true
-  }
-
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
 
@@ -174,23 +151,16 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     coordinatorLayout = null
   }
 
-  private fun stopListeningForInsetsChanges() {
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    listeningForInsetsChanges = false
-  }
-
   override fun onInsetsChanged() {
     updatePaddings()
   }
 
-  private fun updatePaddings() {
-    val fabBottomMargin = AndroidUtils.getDimen(R.dimen.hiding_fab_margin)
-
-    updateMargins(bottom = fabBottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom())
-  }
-
   override fun onCollapseTranslation(offset: Float) {
     if (isSnackbarShowing) {
+      return
+    }
+
+    if (offset >= 1f && isCurrentReplyLayoutOpened()) {
       return
     }
 
@@ -217,8 +187,10 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
       return
     }
 
-    isClickable = !collapse
-    isFocusable = !collapse
+    if (!collapse && isCurrentReplyLayoutOpened()) {
+      // Prevent showing FAB when the reply layout is opened
+      return
+    }
 
     val scale = if (collapse) {
       0f
@@ -250,6 +222,51 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
         .setInterpolator(SLOWDOWN)
         .start()
     }
+  }
+
+  private fun stopListeningForInsetsChanges() {
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    listeningForInsetsChanges = false
+  }
+
+  private fun startListeningForInsetsChangesIfNeeded() {
+    if (listeningForInsetsChanges) {
+      return
+    }
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    listeningForInsetsChanges = true
+  }
+
+  private fun updatePaddings() {
+    val fabBottomMargin = AndroidUtils.getDimen(R.dimen.hiding_fab_margin)
+
+    updateMargins(bottom = fabBottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom())
+  }
+
+  private fun isCurrentReplyLayoutOpened(): Boolean {
+    val threadLayout = findThreadLayout()
+      ?: return true
+    val isCatalogButton = isCatalogFloatingActionButton
+      ?: return true
+    val isCatalogReplyLayout = threadLayout.isCatalogReplyLayout()
+      ?: return true
+
+    if (isCatalogButton == isCatalogReplyLayout && threadLayout.isReplyLayoutOpen()) {
+      return true
+    }
+
+    return false
+  }
+
+  private fun findThreadLayout(): ThreadLayout? {
+    var parent = this.parent
+
+    while (parent != null && parent !is ThreadLayout) {
+      parent = parent.parent
+    }
+
+    return parent as? ThreadLayout
   }
 
   companion object {

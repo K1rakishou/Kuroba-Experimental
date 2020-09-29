@@ -165,6 +165,14 @@ class ReplyPresenter @Inject constructor(
     closeAll()
   }
 
+  fun isCatalogReplyLayout(): Boolean? {
+    if (chanDescriptor == null) {
+      return null
+    }
+
+    return chanDescriptor is ChanDescriptor.CatalogDescriptor
+  }
+
   fun onOpen(open: Boolean) {
     if (open) {
       callback.focusComment()
