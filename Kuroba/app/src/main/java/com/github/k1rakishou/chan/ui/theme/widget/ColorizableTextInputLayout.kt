@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.Chan
@@ -77,7 +78,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
     hintTextColor = colorStateList
     defaultHintTextColor = colorStateList
     counterTextColor = colorStateList
-    setBoxBackgroundColorStateList(colorStateList)
+    setBoxBackgroundColorStateList(ColorStateList.valueOf(Color.TRANSPARENT))
     setBoxStrokeColorStateList(colorStateList)
 
     editText?.let { et ->
