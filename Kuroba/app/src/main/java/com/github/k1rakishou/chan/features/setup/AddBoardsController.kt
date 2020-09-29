@@ -66,7 +66,7 @@ class AddBoardsController(
     outsideArea = view.findViewById(R.id.outside_area)
 
     val cardView = view.findViewById<CardView>(R.id.card_view)
-    cardView.setCardBackgroundColor(themeEngine.chanTheme.primaryColor)
+    cardView.setCardBackgroundColor(themeEngine.chanTheme.backColor)
 
     mainScope.launch {
       startListeningForSearchQueries()

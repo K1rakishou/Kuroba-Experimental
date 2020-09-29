@@ -29,7 +29,7 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
     inflate(context, R.layout.epoxy_board_selection_view, this)
 
     boardName = findViewById(R.id.board_name)
-    boardName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

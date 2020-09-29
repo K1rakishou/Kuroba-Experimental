@@ -70,7 +70,7 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
         super.onAttachedToWindow();
 
         if (!isInEditMode()) {
-            setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+            setBackgroundColor(themeEngine.getChanTheme().getBackColor());
         }
     }
 

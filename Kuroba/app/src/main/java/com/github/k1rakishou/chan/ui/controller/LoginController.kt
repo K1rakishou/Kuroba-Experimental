@@ -71,8 +71,8 @@ class LoginController(
       authenticated = view.findViewById(R.id.authenticated)
       errors.visibility = View.GONE
 
-      authenticated.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-      crossfadeView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+      authenticated.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      crossfadeView.setBackgroundColor(themeEngine.chanTheme.backColor)
 
       showBottomDescription(view)
 
@@ -125,7 +125,7 @@ class LoginController(
 
   private fun showBottomDescription(view: ViewGroup) {
     val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
-    bottomDescription.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    bottomDescription.setTextColor(themeEngine.chanTheme.textColorPrimary)
     bottomDescription.setLinkTextColor(themeEngine.chanTheme.postLinkColor)
 
     if (site is Chan4) {

@@ -29,7 +29,7 @@ class EpoxySettingsGroupTitle  @JvmOverloads constructor(
     View.inflate(context, R.layout.epoxy_settings_group_title, this)
 
     groupTitle = findViewById(R.id.group_title)
-    groupTitle.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    groupTitle.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   @ModelProp

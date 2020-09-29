@@ -46,8 +46,8 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
       saveAndApplyButton = findViewById(R.id.js_captcha_cookies_editor_save_and_apply)
       resetButton = findViewById(R.id.js_captcha_cookies_editor_reset)
 
-      cookiesEditorWarning.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-      cookiesEditorTitle.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      cookiesEditorWarning.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      cookiesEditorTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       var prevCookiesJar = JsCaptchaCookiesJar.empty()
       try {

@@ -206,7 +206,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
 
   private fun requestMoreDataInternal(): Disposable {
     return Single.fromCallable {
-      return@fromCallable Try { getData() }
+      return@fromCallable Try { reloadFromNetwork() }
         .peekError { requestJob = null }
     }
       .subscribeOn(backgroundScheduler)
@@ -223,6 +223,34 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       }, { error ->
         notifyAboutError(ChanLoaderException(error))
       })
+  }
+
+  fun reloadFromDatabase() {
+    BackgroundUtils.ensureMainThread()
+
+    launch(Dispatchers.IO) {
+      when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor -> {
+          Logger.d(TAG, "reloadFromDatabase() Requested thread /${chanDescriptor}/")
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          Logger.d(TAG, "reloadFromDatabase() Requested catalog /${chanDescriptor}/")
+        }
+      }
+
+      val chanLoaderResponse = chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+      if (chanLoaderResponse == null) {
+        Logger.e(TAG, "reloadFromDatabase() reloadThreadFromDatabase returned null for ${chanDescriptor}")
+        return@launch
+      }
+
+      synchronized(this) {
+        thread?.clearPosts()
+        thread = null
+      }
+
+      onResponse(chanLoaderResponse)
+    }
   }
 
   fun quickLoad() {
@@ -303,20 +331,20 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   }
 
   @Synchronized
-  private fun getData() {
+  private fun reloadFromNetwork() {
     BackgroundUtils.ensureBackgroundThread()
 
     if (requestJob != null) {
-      Logger.d(TAG, "getData() requestJob is not null!")
+      Logger.d(TAG, "reloadFromNetwork() requestJob is not null!")
       return
     }
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        Logger.d(TAG, "Requested thread /${chanDescriptor}/")
+        Logger.d(TAG, "reloadFromNetwork() Requested thread /${chanDescriptor}/")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        Logger.d(TAG, "Requested catalog /${chanDescriptor}/")
+        Logger.d(TAG, "reloadFromNetwork() Requested catalog /${chanDescriptor}/")
       }
     }
 

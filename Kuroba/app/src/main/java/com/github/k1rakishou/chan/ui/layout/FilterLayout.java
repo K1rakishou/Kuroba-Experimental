@@ -169,14 +169,14 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         onlyOnOP = findViewById(R.id.only_on_op_checkbox);
         applyToSaved = findViewById(R.id.apply_to_saved_checkbox);
 
-        filterLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
-        actionLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
-        patternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
-        testPatternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        filterLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        actionLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        patternLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        testPatternLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
-        applyToReplies.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
-        onlyOnOP.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
-        applyToSaved.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        applyToReplies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        onlyOnOP.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        applyToSaved.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         typeText.setOnClickListener(this);
         typeText.setCompoundDrawablesWithIntrinsicBounds(

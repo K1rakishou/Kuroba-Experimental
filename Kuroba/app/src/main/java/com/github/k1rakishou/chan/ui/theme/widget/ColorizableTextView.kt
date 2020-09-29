@@ -47,7 +47,7 @@ class ColorizableTextView @JvmOverloads constructor(
         ),
         intArrayOf(
           themeEngine.chanTheme.textColorHint,
-          themeEngine.chanTheme.textPrimaryColor,
+          themeEngine.chanTheme.textColorPrimary,
         )
       )
     )

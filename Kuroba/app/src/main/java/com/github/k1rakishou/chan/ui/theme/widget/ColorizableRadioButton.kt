@@ -46,9 +46,9 @@ class ColorizableRadioButton @JvmOverloads constructor(
       ),
       intArrayOf(
         themeEngine.chanTheme.accentColor,
-        themeEngine.chanTheme.textPrimaryColor,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
+        themeEngine.chanTheme.textColorPrimary,
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .5f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .5f),
         themeEngine.chanTheme.accentColor
       )
     )
@@ -63,11 +63,11 @@ class ColorizableRadioButton @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, 1.2f),
-          themeEngine.chanTheme.textPrimaryColor,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
-          themeEngine.chanTheme.textPrimaryColor
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, 1.2f),
+          themeEngine.chanTheme.textColorPrimary,
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .5f),
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .5f),
+          themeEngine.chanTheme.textColorPrimary
         )
       )
     )

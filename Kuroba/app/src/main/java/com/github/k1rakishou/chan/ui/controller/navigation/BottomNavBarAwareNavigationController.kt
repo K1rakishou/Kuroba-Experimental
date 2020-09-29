@@ -37,8 +37,6 @@ class BottomNavBarAwareNavigationController(
 
     val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
     setToolbar(toolbar)
-
-    requireToolbar().setBackgroundColor(themeEngine.chanTheme.secondaryColor)
     requireToolbar().setCallback(this)
 
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can

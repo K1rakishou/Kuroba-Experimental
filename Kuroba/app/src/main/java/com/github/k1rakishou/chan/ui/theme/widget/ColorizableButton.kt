@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.Chan
@@ -55,17 +56,28 @@ class ColorizableButton @JvmOverloads constructor(
       )
     )
 
+    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.accentColor)
+    val textColorEnabled = if (isDarkColor) {
+      Color.WHITE
+    } else {
+      Color.BLACK
+    }
+
+    val textColorDisabled = if (isDarkColor) {
+      Color.LTGRAY
+    } else {
+      Color.DKGRAY
+    }
+
     setTextColor(
       ColorStateList(
         arrayOf(
-          intArrayOf(android.R.attr.state_pressed),
           intArrayOf(-android.R.attr.state_enabled),
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, 1.2f),
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
-          themeEngine.chanTheme.textPrimaryColor
+          textColorDisabled,
+          textColorEnabled
         )
       )
     )

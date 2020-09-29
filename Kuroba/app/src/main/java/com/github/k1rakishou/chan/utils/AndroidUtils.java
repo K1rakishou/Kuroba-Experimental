@@ -61,6 +61,7 @@ import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
@@ -286,7 +287,7 @@ public class AndroidUtils {
         }
 
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
-                .setToolbarColor(theme.getPrimaryColor())
+                .setToolbarColor(theme.getBackColor())
                 .build();
 
         try {
@@ -751,6 +752,10 @@ public class AndroidUtils {
 
     public static int getComplementaryColor(int color) {
         return Color.rgb(255 - Color.red(color), 255 - Color.green(color), 255 - Color.blue(color));
+    }
+
+    public static boolean isDarkColor(int color) {
+        return ColorUtils.calculateLuminance(color) < 0.5f;
     }
 
     public enum FlavorType {

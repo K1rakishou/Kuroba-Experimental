@@ -51,6 +51,8 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
+import com.github.k1rakishou.chan.ui.theme.MockDarkChanTheme
+import com.github.k1rakishou.chan.ui.theme.MockLightChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
@@ -64,9 +66,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -75,7 +75,8 @@ import kotlin.time.measureTime
 @DoNotStrip
 class StartActivity : AppCompatActivity(),
   FSAFActivityCallbacks,
-  StartActivityCallbacks {
+  StartActivityCallbacks,
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var siteResolver: SiteResolver
@@ -139,6 +140,19 @@ class StartActivity : AppCompatActivity(),
       val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
+
+    // TODO(KurobaEx-themes): remove me !!!!!!!!!!!!!!
+    lifecycleScope.launch {
+      while (isActive) {
+        delay(10000)
+        themeEngine.updateTheme(MockDarkChanTheme(), drawerController.view)
+
+        delay(10000)
+        themeEngine.updateTheme(MockLightChanTheme(), drawerController.view)
+      }
+    }
+
+    themeEngine.addListener(this)
   }
 
   override fun onDestroy() {
@@ -146,6 +160,7 @@ class StartActivity : AppCompatActivity(),
 
     compositeDisposable.clear()
     job.cancel()
+    themeEngine.removeListener(this)
 
     if (::updateManager.isInitialized) {
       updateManager.onDestroy()
@@ -166,6 +181,10 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
+  override fun onThemeChanged() {
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
+  }
+
   @OptIn(ExperimentalTime::class)
   private fun createUi() {
     val injectTime = measureTime { Chan.inject(this) }
@@ -183,8 +202,8 @@ class StartActivity : AppCompatActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    window.setupFullscreen(themeEngine.chanTheme)
-    window.setupStatusAndNavBarColors()
+    window.setupFullscreen()
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     // Setup base controllers, and decide if to use the split layout for tablets
     drawerController = DrawerController(this).apply {

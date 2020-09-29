@@ -27,7 +27,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -38,6 +38,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   private var threadImageRequestDisposable: Disposable? = null
   private var siteImageRequestDisposable: Disposable? = null
   private var descriptor: ChanDescriptor? = null
+  private var additionalInfo: NavHistoryBookmarkAdditionalInfo? = null
 
   private val viewHolder: LinearLayout
   private val threadThumbnailImage: AppCompatImageView
@@ -62,8 +63,37 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
     threadThumbnailImage.visibility = View.GONE
     siteThumbnailImage.visibility = View.GONE
+  }
 
-    title.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+
+    themeEngine.removeListener(this)
+  }
+
+  @OnViewRecycled
+  fun onRecycled() {
+    threadImageRequestDisposable?.dispose()
+    threadImageRequestDisposable = null
+
+    siteImageRequestDisposable?.dispose()
+    siteImageRequestDisposable = null
+
+    imagesLoaderRequestData = null
+
+    threadThumbnailImage.setImageBitmap(null)
+    siteThumbnailImage.setImageBitmap(null)
+  }
+
+  override fun onThemeChanged() {
+    title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    bindNavHistoryBookmarkAdditionalInfo(additionalInfo)
   }
 
   @ModelProp(ModelProp.Option.DoNotHash)
@@ -74,6 +104,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @ModelProp
   fun setTitle(titleText: String) {
     title.text = titleText
+    title.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp(options = [ModelProp.Option.DoNotHash])
@@ -83,6 +114,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   @ModelProp
   fun bindNavHistoryBookmarkAdditionalInfo(additionalInfo: NavHistoryBookmarkAdditionalInfo?) {
+    this.additionalInfo = additionalInfo
+
     if (additionalInfo == null) {
       bookmarkStats.visibility = View.GONE
       return
@@ -122,20 +155,6 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     } else {
       viewHolder.setOnClickListener { listener.invoke() }
     }
-  }
-
-  @OnViewRecycled
-  fun onRecycled() {
-    threadImageRequestDisposable?.dispose()
-    threadImageRequestDisposable = null
-
-    siteImageRequestDisposable?.dispose()
-    siteImageRequestDisposable = null
-
-    imagesLoaderRequestData = null
-
-    threadThumbnailImage.setImageBitmap(null)
-    siteThumbnailImage.setImageBitmap(null)
   }
 
   @AfterPropsSet

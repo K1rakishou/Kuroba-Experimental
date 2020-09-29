@@ -51,8 +51,8 @@ class EpoxyLinkSetting @JvmOverloads constructor(
           intArrayOf(-android.R.attr.state_enabled)
         ),
         intArrayOf(
-          themeEngine.chanTheme.textPrimaryColor,
-          themeEngine.chanTheme.textSecondaryColor
+          themeEngine.chanTheme.textColorPrimary,
+          themeEngine.chanTheme.textColorSecondary
         )
       )
     )
@@ -64,8 +64,8 @@ class EpoxyLinkSetting @JvmOverloads constructor(
           intArrayOf(-android.R.attr.state_enabled)
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .7f),
-          themeEngine.chanTheme.textSecondaryColor
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .7f),
+          themeEngine.chanTheme.textColorSecondary
         )
       )
     )

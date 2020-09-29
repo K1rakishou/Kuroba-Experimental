@@ -108,14 +108,14 @@ public class CaptchaNoJsLayoutV2
         ColorizableBarButton reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
         ConstraintLayout captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
 
-        captchaButtonsHolder.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+        captchaButtonsHolder.setBackgroundColor(themeEngine.getChanTheme().getBackColorSecondary());
 
-        captchaChallengeTitle.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
-        captchaChallengeTitle.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+        captchaChallengeTitle.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+        captchaChallengeTitle.setBackgroundColor(themeEngine.getChanTheme().getBackColorSecondary());
 
-        captchaVerifyButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
-        useOldCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
-        reloadCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        captchaVerifyButton.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+        useOldCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+        reloadCaptchaButton.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
         captchaVerifyButton.setOnClickListener(v -> sendVerificationResponse());
         useOldCaptchaButton.setOnClickListener(v -> callback.onFallbackToV1CaptchaView(isAutoReply));

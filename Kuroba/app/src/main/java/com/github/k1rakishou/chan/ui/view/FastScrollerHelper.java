@@ -70,7 +70,7 @@ public class FastScrollerHelper {
     private static StateListDrawable getThumb(ChanTheme curTheme) {
         StateListDrawable list = new StateListDrawable();
         list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.getAccentColor()));
-        list.addState(new int[]{}, new ColorDrawable(curTheme.getTextSecondaryColor()));
+        list.addState(new int[]{}, new ColorDrawable(curTheme.getTextColorSecondary()));
         return list;
     }
 

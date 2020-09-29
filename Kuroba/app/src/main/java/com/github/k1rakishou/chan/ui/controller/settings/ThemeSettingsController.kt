@@ -295,7 +295,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       val linearLayout = LinearLayout(context)
       linearLayout.orientation = LinearLayout.VERTICAL
-      linearLayout.setBackgroundColor(theme.primaryColor)
+      linearLayout.setBackgroundColor(theme.backColor)
 
       val postsView = ColorizableRecyclerView(context)
 
@@ -379,7 +379,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
         override fun onSearchEntered(item: NavigationItem, entered: String) {}
       })
 
-      toolbar.setBackgroundColor(theme.primaryColor)
+      toolbar.setBackgroundColor(theme.backColor)
 
       val item = NavigationItem()
       item.title = theme.name

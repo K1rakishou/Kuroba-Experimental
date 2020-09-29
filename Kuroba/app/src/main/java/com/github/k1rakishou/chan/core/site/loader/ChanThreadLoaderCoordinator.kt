@@ -128,7 +128,7 @@ class ChanThreadLoaderCoordinator(
   ): Job {
     Logger.d(TAG, "loadThread($url, $requestParams)")
 
-    return launch {
+    return launch(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
 
@@ -165,11 +165,21 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
+  suspend fun reloadThreadFromDatabase(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
+    Logger.d(TAG, "reloadThreadFromDatabase($chanDescriptor)")
+    BackgroundUtils.ensureBackgroundThread()
+
+    return databasePostLoader.loadPosts(chanDescriptor)
+  }
+
   private suspend fun fallbackPostLoadOnNetworkError(
     requestParams: ChanLoaderRequestParams,
     error: Exception
   ): ThreadLoadResult {
-    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams)
+    BackgroundUtils.ensureBackgroundThread()
+
+    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams.chanDescriptor)
       ?: throw error
 
     val isThreadDeleted = error is ServerException && error.statusCode == 404

@@ -33,8 +33,8 @@ class EpoxyBoardView @JvmOverloads constructor(
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)
 
-    boardName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-    boardDescription.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   @ModelProp

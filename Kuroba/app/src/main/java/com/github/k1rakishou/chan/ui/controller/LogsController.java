@@ -73,7 +73,7 @@ public class LogsController extends Controller {
                 .build();
 
         ScrollView container = new ScrollView(context);
-        container.setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        container.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
         logTextView = new TextView(context);
         container.addView(logTextView, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 

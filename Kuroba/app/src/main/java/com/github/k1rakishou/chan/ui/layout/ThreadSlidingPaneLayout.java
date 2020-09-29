@@ -92,7 +92,7 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayout implements IColor
 
     @Override
     public void applyColors() {
-        setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        setBackgroundColor(themeEngine.getChanTheme().getBackColor());
     }
 
     @Override

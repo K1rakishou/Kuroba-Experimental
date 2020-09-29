@@ -110,7 +110,7 @@ public class SplitNavigationController
 
         TextView textView = emptyView.findViewById(R.id.select_thread_text);
         if (textView != null) {
-            textView.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+            textView.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
     }
 

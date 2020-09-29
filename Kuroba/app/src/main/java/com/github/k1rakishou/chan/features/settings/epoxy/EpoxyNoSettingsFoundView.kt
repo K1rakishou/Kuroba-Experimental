@@ -29,7 +29,7 @@ class EpoxyNoSettingsFoundView @JvmOverloads constructor(
     View.inflate(context, R.layout.epoxy_no_settings_found, this)
 
     messageView = findViewById(R.id.message_view)
-    messageView.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    messageView.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   @ModelProp

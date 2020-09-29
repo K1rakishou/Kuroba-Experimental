@@ -120,7 +120,7 @@ public class ImageReencodeOptionsController
         ColorizableRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
 
         CardView cardView = view.findViewById(R.id.card_view);
-        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getBackColor());
 
         viewHolder.setOnClickListener(this);
         cancel.setOnClickListener(this);

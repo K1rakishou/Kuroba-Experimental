@@ -58,9 +58,9 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostCommentContainer = findViewById(R.id.search_post_comment_container)
     searchPostComment = findViewById(R.id.search_post_comment)
 
-    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-    searchPostInfo.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-    searchPostComment.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    searchPostInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    searchPostComment.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
     searchPostThumbnailSize = context.resources.getDimension(R.dimen.search_post_thumbnail_size).toInt()
   }

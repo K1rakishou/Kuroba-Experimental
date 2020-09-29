@@ -45,7 +45,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
         intArrayOf(android.R.attr.state_enabled),
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .8f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
         themeEngine.chanTheme.errorColor
       )
     )
@@ -56,7 +56,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
         intArrayOf(android.R.attr.state_enabled),
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .8f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
         themeEngine.chanTheme.errorColor
       )
     )
@@ -70,7 +70,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
       intArrayOf(
         themeEngine.chanTheme.textColorHint,
         themeEngine.chanTheme.accentColor,
-        themeEngine.chanTheme.textSecondaryColor,
+        themeEngine.chanTheme.textColorSecondary,
       )
     )
 

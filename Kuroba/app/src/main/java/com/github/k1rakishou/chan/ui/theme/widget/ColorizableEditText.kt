@@ -68,9 +68,9 @@ open class ColorizableEditText @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, 1.2f),
-          themeEngine.chanTheme.textPrimaryColor,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .8f),
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, 1.2f),
+          themeEngine.chanTheme.textColorPrimary,
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
           themeEngine.chanTheme.textColorHint
         )
       )
@@ -87,8 +87,8 @@ open class ColorizableEditText @JvmOverloads constructor(
         ),
         intArrayOf(
           AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
-          themeEngine.chanTheme.textPrimaryColor,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .8f),
+          themeEngine.chanTheme.textColorPrimary,
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
           themeEngine.chanTheme.textColorHint
         )
       )

@@ -21,7 +21,7 @@ open class ThemeEngine() {
   private val attributeCache = AttributeCache()
 
   // TODO(KurobaEx): replace with actual themes
-  open var chanTheme: ChanTheme = MockChanTheme()
+  open var chanTheme: ChanTheme = MockLightChanTheme()
 
   fun initialize() {
     // TODO(KurobaEx): load themes from the disk
@@ -88,7 +88,7 @@ open class ThemeEngine() {
       TaskDescription(
         null,
         R.drawable.ic_stat_notify,
-        chanTheme.secondaryColor
+        chanTheme.backColorSecondary
       )
     } else {
       val taskDescriptionBitmap = BitmapFactory.decodeResource(
@@ -99,7 +99,7 @@ open class ThemeEngine() {
       TaskDescription(
         null,
         taskDescriptionBitmap,
-        chanTheme.secondaryColor
+        chanTheme.backColorSecondary
       )
     }
 

@@ -111,7 +111,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private void init() {
         inject(this);
 
-        textPaint.setColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        textPaint.setColor(themeEngine.getChanTheme().getTextColorPrimary());
         textPaint.setTextSize(sp(14));
     }
 

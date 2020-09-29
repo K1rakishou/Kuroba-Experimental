@@ -37,8 +37,8 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
     boardDescription = findViewById(R.id.board_description)
     boardCheckbox = findViewById(R.id.board_selection_checkbox)
 
-    boardName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-    boardDescription.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   @ModelProp

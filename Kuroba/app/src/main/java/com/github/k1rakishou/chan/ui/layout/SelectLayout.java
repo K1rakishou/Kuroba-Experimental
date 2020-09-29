@@ -172,8 +172,8 @@ public class SelectLayout<T>
                 holder.description.setVisibility(GONE);
             }
 
-            holder.text.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
-            holder.description.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+            holder.text.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+            holder.description.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
 
         @Override

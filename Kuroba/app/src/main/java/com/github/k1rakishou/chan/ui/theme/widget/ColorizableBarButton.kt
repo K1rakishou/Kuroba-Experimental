@@ -67,9 +67,9 @@ class ColorizableBarButton @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, 1.2f),
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .5f),
-          themeEngine.chanTheme.textPrimaryColor
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, 1.2f),
+          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .5f),
+          themeEngine.chanTheme.textColorPrimary
         )
       )
     )

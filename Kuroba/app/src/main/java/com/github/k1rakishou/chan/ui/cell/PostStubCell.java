@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -107,7 +108,7 @@ public class PostStubCell
         divider.setLayoutParams(dividerParams);
 
         setOnClickListener(this);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
 
         options.setOnClickListener(v -> {
             List<FloatingListMenuItem> items = new ArrayList<>();
@@ -157,7 +158,8 @@ public class PostStubCell
             long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
-            boolean compact
+            boolean compact,
+            ChanTheme theme
     ) {
         if (this.post == post) {
             return;
@@ -204,7 +206,7 @@ public class PostStubCell
             title.setText(titleText);
         }
 
-        title.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD
                 ? GONE :

@@ -267,7 +267,7 @@ public class ReplyLayout
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
 
-        commentCounter.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        commentCounter.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         // Setup reply layout views
         fileName.setOnLongClickListener(v -> presenter.fileNameLongClicked());
@@ -842,7 +842,7 @@ public class ReplyLayout
 
         int textColor = over
                 ? themeEngine.getChanTheme().getErrorColor()
-                : themeEngine.getChanTheme().getTextSecondaryColor();
+                : themeEngine.getChanTheme().getTextColorSecondary();
 
         commentCounter.setTextColor(textColor);
     }

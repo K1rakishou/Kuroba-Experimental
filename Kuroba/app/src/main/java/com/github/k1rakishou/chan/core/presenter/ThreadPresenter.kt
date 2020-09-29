@@ -303,6 +303,42 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
+  fun fullReload() {
+    if (!isBound) {
+      return
+    }
+
+    val thread = chanLoader?.thread
+      ?: return
+
+    when (val descriptor = thread.chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        launch {
+          chanPostRepository.deleteThreadsFromCache(listOf(descriptor))
+          thread.clearPosts()
+
+          chanLoader!!.reloadFromDatabase()
+        }
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        launch {
+          val catalogThreads = thread.getPosts()
+            .map { post ->
+              require(post.isOP) { "Not OP post!" }
+              return@map ChanDescriptor.ThreadDescriptor.create(descriptor, post.no)
+            }
+
+          chanPostRepository.deleteThreadsFromCache(catalogThreads)
+          thread.clearPosts()
+
+          // TODO(KurobaEx-themes): reload from the database, we have all the necessary info, what's left
+          //  is the SQL query
+          chanLoader!!.requestData()
+        }
+      }
+    }
+  }
+
   fun openThreadInArchive(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     archiveDescriptor: ArchiveDescriptor

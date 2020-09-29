@@ -45,9 +45,9 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
       ),
       intArrayOf(
         themeEngine.chanTheme.accentColor,
-        themeEngine.chanTheme.textPrimaryColor,
+        themeEngine.chanTheme.textColorPrimary,
         AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
       )
     )
 
@@ -60,9 +60,9 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
       ),
       intArrayOf(
         AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
         AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .3f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .3f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .3f),
       )
     )
   }

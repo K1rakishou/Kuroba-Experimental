@@ -98,7 +98,8 @@ class ThreadLayout @JvmOverloads constructor(
   RemovedPostsCallbacks,
   View.OnClickListener,
   ThreadListLayoutCallback,
-  CoroutineScope {
+  CoroutineScope,
+  ThemeEngine.ThemeChangesListener {
 
   private enum class Visible {
     EMPTY, LOADING, THREAD, ERROR
@@ -222,13 +223,24 @@ class ThreadLayout @JvmOverloads constructor(
       replyButton.setOnClickListener(this)
       replyButton.setToolbar(callback.toolbar!!)
     }
+
+    themeEngine.addListener(this)
   }
 
   fun destroy() {
     drawerCallbacks = null
+    themeEngine.removeListener(this)
     presenter.unbindChanDescriptor(true)
     threadListLayout.onDestroy()
     job.cancelChildren()
+  }
+
+  override fun onThemeChanged() {
+    if (!presenter.isBound) {
+      return
+    }
+
+    presenter.fullReload()
   }
 
   override fun onClick(v: View) {

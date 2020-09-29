@@ -86,7 +86,7 @@ open class ViewThreadController(
     Chan.inject(this)
 
     threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST)
-    view.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    view.setBackgroundColor(themeEngine.chanTheme.backColor)
     navigation.hasDrawer = true
     navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get()
 

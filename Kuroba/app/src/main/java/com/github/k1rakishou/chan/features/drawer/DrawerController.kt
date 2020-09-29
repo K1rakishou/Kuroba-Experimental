@@ -73,7 +73,8 @@ class DrawerController(
   DrawerView,
   DrawerCallbacks,
   View.OnClickListener,
-  WindowInsetsListener {
+  WindowInsetsListener,
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -88,6 +89,7 @@ class DrawerController(
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
+  private lateinit var divider: View
 
   private val drawerPresenter = DrawerPresenter(isDevBuild())
   private val childControllersStack = Stack<Controller>()
@@ -146,23 +148,11 @@ class DrawerController(
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
-
-    val divider = view.findViewById<View>(R.id.divider)
-    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
-
+    divider = view.findViewById<View>(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
+
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
-
-    bottomNavView.itemIconTintList = ColorStateList(
-      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeEngine.chanTheme.textSecondaryColor)
-    )
-    bottomNavView.itemTextColor = ColorStateList(
-      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeEngine.chanTheme.textSecondaryColor)
-    )
-    bottomNavView.setBackgroundColor(themeEngine.chanTheme.secondaryColor)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       if (bottomNavView.selectedItemId == menuItem.itemId) {
@@ -213,11 +203,30 @@ class DrawerController(
     // state as well as other states
     drawerPresenter.onCreate(this)
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
+
+    themeEngine.addListener(this)
+    onThemeChanged()
+  }
+
+  override fun onThemeChanged() {
+    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
+    bottomNavView.itemIconTintList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, themeEngine.chanTheme.textColorSecondary)
+    )
+
+    bottomNavView.itemTextColor = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, themeEngine.chanTheme.textColorSecondary)
+    )
+
+    bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()
     compositeDisposable.clear()
@@ -495,10 +504,10 @@ class DrawerController(
     if (state.hasUnreadReplies) {
       badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
     } else {
-      badgeDrawable.backgroundColor = themeEngine.chanTheme.primaryColor
+      badgeDrawable.backgroundColor = themeEngine.chanTheme.backColor
     }
 
-    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textPrimaryColor
+    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textColorPrimary
   }
 
   private fun onSettingsNotificationChanged() {
@@ -518,7 +527,7 @@ class DrawerController(
     badgeDrawable.number = notificationsCount
 
     badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
-    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textPrimaryColor
+    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textColorPrimary
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {

@@ -25,7 +25,7 @@ class SnackbarWrapper private constructor(
   init {
     Chan.inject(this)
 
-    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.secondaryColor)
+    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.backColorSecondary)
   }
 
   fun dismiss() {
@@ -169,7 +169,7 @@ class SnackbarWrapper private constructor(
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {
-      snackbar.setTextColor(theme.textPrimaryColor)
+      snackbar.setTextColor(theme.textColorPrimary)
       snackbar.setActionTextColor(theme.accentColor)
     }
   }

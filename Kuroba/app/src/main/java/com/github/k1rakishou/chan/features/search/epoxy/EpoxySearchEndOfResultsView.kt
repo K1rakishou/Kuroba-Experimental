@@ -28,7 +28,7 @@ class EpoxySearchEndOfResultsView @JvmOverloads constructor(
     inflate(context, R.layout.epoxy_search_end_of_results_view, this)
 
     textView = findViewById(R.id.text_view)
-    textView.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    textView.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

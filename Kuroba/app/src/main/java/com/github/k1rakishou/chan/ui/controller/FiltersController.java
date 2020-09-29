@@ -308,7 +308,7 @@ public class FiltersController
             holder.text.setText(filter.getPattern());
 
             int textColor = filter.getEnabled()
-                    ? themeEngine.getChanTheme().getTextPrimaryColor()
+                    ? themeEngine.getChanTheme().getTextColorPrimary()
                     : themeEngine.getChanTheme().getTextColorHint();
 
             holder.text.setTextColor(textColor);

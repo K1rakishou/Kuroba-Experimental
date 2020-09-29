@@ -28,10 +28,10 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
       crashLogText = findViewById(R.id.view_full_crashlog_text)
       save = findViewById(R.id.view_full_crashlog_save)
 
-      save.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      save.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       crashLogText.setText(crashLog.file.readText())
-      crashLogText.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      crashLogText.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       save.setOnClickListener {
         val text = crashLogText.text.toString()

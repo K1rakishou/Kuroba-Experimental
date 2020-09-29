@@ -125,7 +125,7 @@ public class SearchLayout
 
         clearButton.setAlpha(0f);
         clearButton.setImageResource(R.drawable.ic_clear_white_24dp);
-        clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextPrimaryColor());
+        clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextColorPrimary());
         clearButton.setScaleType(ImageView.ScaleType.CENTER);
         clearButton.setOnClickListener(v -> {
             searchView.setText("");

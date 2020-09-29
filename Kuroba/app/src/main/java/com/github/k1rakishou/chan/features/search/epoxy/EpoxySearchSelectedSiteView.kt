@@ -52,7 +52,7 @@ internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    siteName.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

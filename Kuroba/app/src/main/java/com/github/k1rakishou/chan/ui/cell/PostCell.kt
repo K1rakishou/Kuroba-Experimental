@@ -92,6 +92,7 @@ class PostCell : LinearLayout, PostCellInterface {
   private lateinit var gestureDetector: GestureDetector
   private lateinit var chanDescriptor: ChanDescriptor
   private lateinit var linkClickSpan: BackgroundColorSpanHashed
+  private lateinit var theme: ChanTheme
 
   private var post: Post? = null
   private var callback: PostCellCallback? = null
@@ -159,13 +160,11 @@ class PostCell : LinearLayout, PostCellInterface {
 
     replies.textSize = textSizeSp.toFloat()
     replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
-    replies.setTextColor(themeEngine.chanTheme.textSecondaryColor)
 
     val dividerParams = divider.layoutParams as RelativeLayout.LayoutParams
     dividerParams.leftMargin = paddingPx
     dividerParams.rightMargin = paddingPx
     divider.layoutParams = dividerParams
-    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
 
     val repliesClickListener = OnClickListener {
       if (replies.visibility == View.VISIBLE && threadMode) {
@@ -230,7 +229,8 @@ class PostCell : LinearLayout, PostCellInterface {
     markedNo: Long,
     showDivider: Boolean,
     postViewMode: PostViewMode,
-    compact: Boolean
+    compact: Boolean,
+    theme: ChanTheme
   ) {
 
     val filterHash = postFilterManager.getFilterHash(post.postDescriptor)
@@ -243,6 +243,7 @@ class PostCell : LinearLayout, PostCellInterface {
       && this.markedNo == markedNo
       && this.showDivider == showDivider
       && this.filterHash == filterHash
+      && this.theme == theme
     ) {
       return
     }
@@ -259,6 +260,7 @@ class PostCell : LinearLayout, PostCellInterface {
     this.markedNo = markedNo
     this.showDivider = showDivider
     this.filterHash = filterHash
+    this.theme = theme
 
     hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
     bindPost(post)
@@ -335,7 +337,7 @@ class PostCell : LinearLayout, PostCellInterface {
     setPostLinkableListener(post, true)
 
     repliesAdditionalArea.isClickable = threadMode
-    options.setColorFilter(theme.textSecondaryColor)
+    options.setColorFilter(theme.textColorSecondary)
     replies.isClickable = threadMode
 
     val selectableItemBackgroundBorderless =
@@ -343,6 +345,9 @@ class PostCell : LinearLayout, PostCellInterface {
 
     replies.setBackgroundResource(selectableItemBackgroundBorderless)
     options.setBackgroundResource(selectableItemBackgroundBorderless)
+
+    replies.setTextColor(theme.textColorSecondary)
+    divider.setBackgroundColor(theme.dividerColor)
 
     if (!threadMode) {
       replies.setBackgroundResource(0)
@@ -562,7 +567,7 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     comment.typeface = Typeface.DEFAULT
-    comment.setTextColor(theme.textPrimaryColor)
+    comment.setTextColor(theme.textColorPrimary)
 
     val newVisibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
       View.GONE

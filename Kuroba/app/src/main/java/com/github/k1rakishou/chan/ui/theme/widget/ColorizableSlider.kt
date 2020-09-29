@@ -36,7 +36,7 @@ class ColorizableSlider @JvmOverloads constructor(
       return
     }
 
-    haloTintList = ColorStateList.valueOf(themeEngine.chanTheme.textPrimaryColor)
+    haloTintList = ColorStateList.valueOf(themeEngine.chanTheme.textColorPrimary)
 
     thumbTintList = ColorStateList(
       arrayOf(
@@ -48,7 +48,7 @@ class ColorizableSlider @JvmOverloads constructor(
       intArrayOf(
         AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
         themeEngine.chanTheme.accentColor,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
         themeEngine.chanTheme.accentColor
       )
     )
@@ -62,9 +62,9 @@ class ColorizableSlider @JvmOverloads constructor(
       ),
       intArrayOf(
         themeEngine.chanTheme.accentColor,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .3f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f)
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .3f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f)
       )
     )
   }

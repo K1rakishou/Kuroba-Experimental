@@ -136,7 +136,7 @@ public class FilesLayout
         backImage.setImageDrawable(wrapped);
 
         int color = enabled
-                ? themeEngine.getChanTheme().getTextPrimaryColor()
+                ? themeEngine.getChanTheme().getTextColorPrimary()
                 : themeEngine.getChanTheme().getTextColorHint();
 
         DrawableCompat.setTint(wrapped, color);

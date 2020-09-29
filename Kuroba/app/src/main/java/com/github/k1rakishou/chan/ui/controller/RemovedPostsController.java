@@ -80,14 +80,14 @@ public class RemovedPostsController
         postsListView = view.findViewById(R.id.removed_posts_posts_list);
 
         PostRepliesContainer postRepliesContainer = view.findViewById(R.id.container);
-        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
 
         viewHolder.setOnClickListener(this);
         restorePostsButton.setOnClickListener(this);
         selectAllButton.setOnClickListener(this);
 
-        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextPrimaryColor(), 32));
-        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextPrimaryColor(), 32));
+        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextColorPrimary(), 32));
+        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextColorPrimary(), 32));
     }
 
     @Override

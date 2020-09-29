@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
@@ -111,7 +112,7 @@ public class CardPostCell
         options = findViewById(R.id.options);
 
         cardView = findViewById(R.id.card_view);
-        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getBackColor());
 
         AndroidUtils.setBoundlessRoundRippleBackground(options);
         filterMatchColor = findViewById(R.id.filter_match_color);
@@ -164,7 +165,8 @@ public class CardPostCell
             long markedNo,
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
-            boolean compact
+            boolean compact,
+            ChanTheme theme
     ) {
         if (this.post == post) {
             return;
@@ -271,7 +273,7 @@ public class CardPostCell
         }
 
         comment.setText(commentText);
-        comment.setTextColor(themeEngine.getChanTheme().getTextPrimaryColor());
+        comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
         String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
@@ -282,7 +284,7 @@ public class CardPostCell
         }
 
         replies.setText(status);
-        replies.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         if (callback != null) {
             callback.onPostBind(post);
@@ -305,6 +307,6 @@ public class CardPostCell
 
         int optionsPadding = compact ? 0 : dp(5);
         options.setPadding(0, optionsPadding, optionsPadding, 0);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextSecondaryColor()));
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
     }
 }

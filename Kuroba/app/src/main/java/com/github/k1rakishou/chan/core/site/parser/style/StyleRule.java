@@ -300,7 +300,7 @@ public class StyleRule {
 
     private int getBackgroundColor(ChanTheme theme, BackgroundColor backgroundColor) {
         if (backgroundColor == BackgroundColor.CODE) {
-            return theme.getSecondaryColor();
+            return theme.getBackColorSecondary();
         }
         return 0;
     }

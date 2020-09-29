@@ -201,7 +201,8 @@ public class PostAdapter
                         -1,
                         true,
                         postViewMode,
-                        compact
+                        compact,
+                        themeEngine.getChanTheme()
                 );
 
                 if (itemViewType == TYPE_POST_STUB) {
@@ -212,6 +213,7 @@ public class PostAdapter
                 ((ThreadStatusCell) holder.itemView).update();
                 break;
             case TYPE_LAST_SEEN:
+                ((LastSeenViewHolder) holder).updateLabelColor();
                 break;
         }
     }
@@ -542,9 +544,16 @@ public class PostAdapter
     }
 
     public static class LastSeenViewHolder extends RecyclerView.ViewHolder {
+        private final ThemeEngine themeEngine;
+
         public LastSeenViewHolder(ThemeEngine themeEngine, View itemView) {
             super(itemView);
 
+            this.themeEngine = themeEngine;
+            updateLabelColor();
+        }
+
+        public void updateLabelColor() {
             itemView.setBackgroundColor(themeEngine.getChanTheme().getAccentColor());
         }
     }

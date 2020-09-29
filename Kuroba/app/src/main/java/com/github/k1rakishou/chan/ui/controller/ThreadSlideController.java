@@ -91,7 +91,8 @@ public class ThreadSlideController
         slidingPaneLayout.setParallaxDistance(dp(100));
         slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
 
-        int fadeColor = (themeEngine.getChanTheme().getPrimaryColor() & 0xffffff) + 0xCC000000;
+        // TODO(KurobaEx-themes): we need to update this whenever the theme changes
+        int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
         slidingPaneLayout.setSliderFadeColor(fadeColor);
         slidingPaneLayout.openPane();
 
@@ -183,7 +184,7 @@ public class ThreadSlideController
 
         TextView textView = emptyView.findViewById(R.id.select_thread_text);
         if (textView != null) {
-            textView.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+            textView.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
     }
 

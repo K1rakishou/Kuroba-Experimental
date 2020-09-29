@@ -151,7 +151,7 @@ public class PostRepliesController
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());
 
         PostRepliesContainer postRepliesContainer = dataView.findViewById(R.id.container);
-        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());
+        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getBackColorSecondary());
 
         View repliesClose = dataView.findViewById(R.id.replies_close);
         repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
@@ -170,7 +170,8 @@ public class PostRepliesController
         RepliesAdapter repliesAdapter = new RepliesAdapter(
                 presenter,
                 postPreloadedInfoHolder,
-                chanDescriptor
+                chanDescriptor,
+                themeEngine
         );
 
         repliesAdapter.setHasStableIds(true);
@@ -236,15 +237,18 @@ public class PostRepliesController
         private PostPreloadedInfoHolder postPreloadedInfoHolder;
         private ChanDescriptor chanDescriptor;
         private PostPopupHelper.RepliesData data;
+        private ThemeEngine themeEngine;
 
         public RepliesAdapter(
                 ThreadPresenter presenter,
                 PostPreloadedInfoHolder postPreloadedInfoHolder,
-                ChanDescriptor chanDescriptor
+                ChanDescriptor chanDescriptor,
+                ThemeEngine themeEngine
         ) {
             this.presenter = presenter;
             this.postPreloadedInfoHolder = postPreloadedInfoHolder;
             this.chanDescriptor = chanDescriptor;
+            this.themeEngine = themeEngine;
         }
 
         @NonNull
@@ -264,7 +268,8 @@ public class PostRepliesController
                     data.posts.get(position),
                     data.forPost.no,
                     position,
-                    getItemCount()
+                    getItemCount(),
+                    themeEngine
             );
         }
 
@@ -319,7 +324,8 @@ public class PostRepliesController
                 Post post,
                 long markedNo,
                 int position,
-                int itemCount
+                int itemCount,
+                ThemeEngine themeEngine
         ) {
             boolean showDivider = position < itemCount - 1;
 
@@ -336,7 +342,8 @@ public class PostRepliesController
                     markedNo,
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
-                    false
+                    false,
+                    themeEngine.getChanTheme()
             );
         }
     }

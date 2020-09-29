@@ -23,7 +23,7 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   init {
     Chan.inject(this)
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
-    setBackgroundColor(AndroidUtils.manipulateColor(themeEngine.chanTheme.primaryColor, .8f))
+    setBackgroundColor(AndroidUtils.manipulateColor(themeEngine.chanTheme.backColor, .8f))
   }
 
 }

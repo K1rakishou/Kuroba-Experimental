@@ -87,7 +87,7 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 } else {
                     fileViewHolder.image.setVisibility(VISIBLE);
                     Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_folder_black_24dp));
-                    DrawableCompat.setTint(drawable, themeEngine.getChanTheme().getTextSecondaryColor());
+                    DrawableCompat.setTint(drawable, themeEngine.getChanTheme().getTextColorSecondary());
                     fileViewHolder.image.setImageDrawable(drawable);
                 }
 

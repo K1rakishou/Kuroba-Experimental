@@ -37,7 +37,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
     val colorStateList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf(-android.R.attr.state_enabled)),
-      intArrayOf(themeEngine.chanTheme.textPrimaryColor, themeEngine.chanTheme.textSecondaryColor)
+      intArrayOf(themeEngine.chanTheme.textColorPrimary, themeEngine.chanTheme.textColorSecondary)
     )
 
     title.setTextColor(colorStateList)

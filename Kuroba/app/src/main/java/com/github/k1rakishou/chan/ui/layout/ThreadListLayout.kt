@@ -86,7 +86,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   : FrameLayout(context, attrs),
   ReplyLayoutCallback,
   Toolbar.ToolbarHeightUpdatesCallback,
-  CoroutineScope {
+  CoroutineScope,
+  ThemeEngine.ThemeChangesListener{
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -236,6 +237,22 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    setBackgroundColor(themeEngine.chanTheme.backColor)
+  }
+
   override fun onFinishInflate() {
     super.onFinishInflate()
     Chan.inject(this)
@@ -245,8 +262,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     searchStatus = findViewById(R.id.search_status)
     recyclerView = findViewById(R.id.recycler_view)
 
-    replyLayout.setBackgroundColor(themeEngine.chanTheme.primaryColor)
-    searchStatus.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    setBackgroundColor(themeEngine.chanTheme.backColor)
+    replyLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
+    searchStatus.setBackgroundColor(themeEngine.chanTheme.backColor)
 
     val params = replyLayout.layoutParams as LayoutParams
     params.gravity = Gravity.BOTTOM
@@ -255,7 +273,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     // View setup
     replyLayout.setCallback(this)
 
-    searchStatus.setTextColor(themeEngine.chanTheme.textSecondaryColor)
+    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
     searchStatus.typeface = themeEngine.chanTheme.mainFont
   }
 
@@ -413,7 +431,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
 
-        setBackgroundColor(themeEngine.chanTheme.primaryColor)
+        setBackgroundColor(themeEngine.chanTheme.backColor)
       }
       PostViewMode.CARD -> {
         val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(null, spanCount, VERTICAL, false) {
@@ -433,7 +451,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
 
-        setBackgroundColor(themeEngine.chanTheme.secondaryColor)
+        setBackgroundColor(themeEngine.chanTheme.backColorSecondary)
       }
     }
 

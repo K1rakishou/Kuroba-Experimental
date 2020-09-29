@@ -29,10 +29,10 @@ class EpoxyErrorView @JvmOverloads constructor(
     inflate(context, R.layout.epoxy_error_view, this)
 
     errorTitleView = findViewById(R.id.error_title)
-    errorTitleView.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    errorTitleView.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
     errorTextView = findViewById(R.id.error_text)
-    errorTextView.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    errorTextView.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

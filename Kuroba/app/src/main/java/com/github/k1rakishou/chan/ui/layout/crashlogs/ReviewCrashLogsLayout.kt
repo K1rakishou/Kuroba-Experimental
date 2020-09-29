@@ -38,8 +38,8 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
       deleteCrashLogsButton = findViewById(R.id.review_crashlogs_controller_delete_crashlogs_button)
       sendCrashLogsButton = findViewById(R.id.review_crashlogs_controller_send_crashlogs_button)
 
-      deleteCrashLogsButton.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-      sendCrashLogsButton.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+      deleteCrashLogsButton.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      sendCrashLogsButton.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       val crashLogs = reportManager.getCrashLogs()
         .map { crashLogFile -> CrashLog(crashLogFile, crashLogFile.name, false) }

@@ -85,7 +85,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
 
         text = findViewById(R.id.text);
         text.setTypeface(themeEngine.getChanTheme().getMainFont());
-        text.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+        text.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         setOnClickListener(this);
     }

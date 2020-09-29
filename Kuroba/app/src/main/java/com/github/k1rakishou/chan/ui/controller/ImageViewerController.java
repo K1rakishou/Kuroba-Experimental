@@ -836,11 +836,11 @@ public class ImageViewerController
         isInImmersiveMode = true;
 
         Window window = getWindow(context);
-        FullScreenUtils.INSTANCE.hideSystemUI(window);
+        FullScreenUtils.INSTANCE.hideSystemUI(window, themeEngine.getChanTheme());
 
         window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
             if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
-                FullScreenUtils.INSTANCE.showSystemUI(window);
+                FullScreenUtils.INSTANCE.showSystemUI(window, themeEngine.getChanTheme());
                 mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
             }
         });
@@ -863,7 +863,7 @@ public class ImageViewerController
 
         Window window = getWindow(context);
         window.getDecorView().setOnSystemUiVisibilityChangeListener(null);
-        FullScreenUtils.INSTANCE.showSystemUI(window);
+        FullScreenUtils.INSTANCE.showSystemUI(window, themeEngine.getChanTheme());
 
         // setting this to the toolbar height because VISIBLE doesn't seem to work?
         showToolbar();

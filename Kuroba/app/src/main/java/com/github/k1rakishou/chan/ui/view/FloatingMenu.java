@@ -305,7 +305,7 @@ public class FloatingMenu {
 
             textView.setTextColor(
                     item.isEnabled()
-                            ? themeEngine.getChanTheme().getTextPrimaryColor()
+                            ? themeEngine.getChanTheme().getTextColorPrimary()
                             : themeEngine.getChanTheme().getTextColorHint()
             );
             textView.setTypeface(themeEngine.getChanTheme().getMainFont());

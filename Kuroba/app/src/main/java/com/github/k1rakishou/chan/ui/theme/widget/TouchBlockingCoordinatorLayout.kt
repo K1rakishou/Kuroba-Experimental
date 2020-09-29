@@ -38,7 +38,7 @@ class TouchBlockingCoordinatorLayout @JvmOverloads constructor(
       return
     }
 
-    setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    setBackgroundColor(themeEngine.chanTheme.backColor)
   }
 
 }

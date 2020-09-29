@@ -35,8 +35,8 @@ class EpoxySearchErrorView @JvmOverloads constructor(
     errorText = findViewById(R.id.search_post_error_text)
     retryButton = findViewById(R.id.search_post_error_retry_button)
 
-    errorTitle.setTextColor(themeEngine.chanTheme.textPrimaryColor)
-    errorText.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    errorTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    errorText.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

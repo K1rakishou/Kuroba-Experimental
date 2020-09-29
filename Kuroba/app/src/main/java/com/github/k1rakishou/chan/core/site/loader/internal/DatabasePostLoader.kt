@@ -1,19 +1,19 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
-import com.github.k1rakishou.chan.core.site.loader.ChanLoaderRequestParams
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderResponse
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 internal class DatabasePostLoader(
   private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase
 ) : AbstractPostLoader() {
 
-  suspend fun loadPosts(requestParams: ChanLoaderRequestParams): ChanLoaderResponse? {
+  suspend fun loadPosts(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(requestParams.chanDescriptor)
+    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(chanDescriptor)
     if (reloadedPosts.isEmpty()) {
       Logger.d(TAG, "tryLoadFromDiskCache() returned empty list")
       return null

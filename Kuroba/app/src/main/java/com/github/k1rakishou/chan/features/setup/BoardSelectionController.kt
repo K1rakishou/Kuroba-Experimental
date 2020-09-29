@@ -69,7 +69,7 @@ class BoardSelectionController(
     openSitesButton = view.findViewById(R.id.open_all_sites_settings)
 
     val cardView = view.findViewById<CardView>(R.id.card_view)
-    cardView.setCardBackgroundColor(themeEngine.chanTheme.primaryColor)
+    cardView.setCardBackgroundColor(themeEngine.chanTheme.backColor)
 
     val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
     val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()

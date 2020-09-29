@@ -59,7 +59,8 @@ public class Toolbar
         implements View.OnClickListener,
         ToolbarPresenter.Callback,
         ToolbarContainer.Callback,
-        WindowInsetsListener {
+        WindowInsetsListener,
+        ThemeEngine.ThemeChangesListener {
     private final static String TAG = "Toolbar";
 
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
@@ -178,6 +179,7 @@ public class Toolbar
         navigationItemContainer.setArrowMenu(arrowMenuDrawable);
 
         setElevation(dp(4f));
+        onThemeChanged();
     }
 
     @Override
@@ -188,6 +190,7 @@ public class Toolbar
 
         updateToolbarTopPaddingAndHeight();
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
+        themeEngine.addListener(this);
     }
 
     @Override
@@ -201,6 +204,20 @@ public class Toolbar
         for (ToolbarHeightUpdatesCallback heightUpdatesCallback : heightUpdatesCallbacks) {
             heightUpdatesCallback.onToolbarHeightKnown(heightChanged);
         }
+    }
+
+    @Override
+    public void onThemeChanged() {
+        setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        themeEngine.removeListener(this);
+        presenter.onDetached();
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
     }
 
     private boolean updateToolbarTopPaddingAndHeight() {
@@ -223,14 +240,6 @@ public class Toolbar
         );
 
         return true;
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-
-        presenter.onDetached();
-        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
     }
 
     public void setInImmersiveMode(boolean inImmersiveMode) {

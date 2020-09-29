@@ -17,7 +17,7 @@
         android:layout_marginEnd="8dp"
         android:gravity="center_vertical" />
 
-    <com.google.android.material.textview.MaterialTextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/site_name"
         android:layout_width="0dp"
         android:layout_height="match_parent"
