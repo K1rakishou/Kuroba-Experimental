@@ -8,7 +8,6 @@ import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatRadioButton;
 import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -20,6 +19,7 @@ import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
 
 import javax.inject.Inject;
 
@@ -49,7 +49,7 @@ public class ImageReencodeOptionsController
     private TextView currentImageReduce;
     private ColorizableBarButton cancel;
     private ColorizableBarButton ok;
-    private AppCompatRadioButton reencodeImageAsIs;
+    private ColorizableRadioButton reencodeImageAsIs;
 
     private ImageReencodingPresenter.ReencodeSettings lastSettings;
     private boolean ignoreSetup;
@@ -125,8 +125,8 @@ public class ImageReencodeOptionsController
         cancel = view.findViewById(R.id.reencode_image_cancel);
         ok = view.findViewById(R.id.reencode_image_ok);
 
-        AppCompatRadioButton reencodeImageAsJpeg = view.findViewById(R.id.reencode_image_as_jpeg);
-        AppCompatRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
+        ColorizableRadioButton reencodeImageAsJpeg = view.findViewById(R.id.reencode_image_as_jpeg);
+        ColorizableRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
 
         CardView cardView = view.findViewById(R.id.card_view);
         cardView.setCardBackgroundColor(themeEngine.getChanTheme().getSecondaryColor());

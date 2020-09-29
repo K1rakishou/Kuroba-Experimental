@@ -64,20 +64,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:checkedButton="@id/reencode_image_as_is">
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_is"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="AS IS"
                     tools:ignore="HardcodedText" />
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_jpeg"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/reencode_image_as_jpeg" />
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_png"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
