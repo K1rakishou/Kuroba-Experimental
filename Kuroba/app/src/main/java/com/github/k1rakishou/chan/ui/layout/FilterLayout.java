@@ -44,6 +44,8 @@ import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
@@ -51,6 +53,7 @@ import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
+import com.google.android.material.textview.MaterialTextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,12 +68,12 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
 public class FilterLayout extends LinearLayout implements View.OnClickListener {
-    private TextView typeText;
-    private TextView boardsSelector;
+    private ColorizableTextView typeText;
+    private ColorizableTextView boardsSelector;
     private boolean patternContainerErrorShowing = false;
-    private TextView pattern;
-    private TextView patternPreview;
-    private TextView patternPreviewStatus;
+    private ColorizableEditText pattern;
+    private ColorizableEditText patternPreview;
+    private ColorizableTextView patternPreviewStatus;
     private ColorizableCheckBox enabled;
     private ImageView help;
     private TextView actionText;
@@ -105,12 +108,17 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        inject(this);
+
+        if (!isInEditMode()) {
+            inject(this);
+        }
 
         typeText = findViewById(R.id.type);
         boardsSelector = findViewById(R.id.boards);
         actionText = findViewById(R.id.action);
+
         pattern = findViewById(R.id.pattern);
+
         pattern.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -149,10 +157,10 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         themeEngine.getChanTheme().helpDrawable.apply(help);
         help.setOnClickListener(this);
 
-        TextView filterLabelText = findViewById(R.id.filter_label_text);
-        TextView actionLabelText = findViewById(R.id.action_label_text);
-        TextView patternLabelText = findViewById(R.id.pattern_label_text);
-        TextView testPatternLabelText = findViewById(R.id.test_pattern_label_text);
+        MaterialTextView filterLabelText = findViewById(R.id.filter_label_text);
+        MaterialTextView actionLabelText = findViewById(R.id.action_label_text);
+        MaterialTextView patternLabelText = findViewById(R.id.pattern_label_text);
+        MaterialTextView testPatternLabelText = findViewById(R.id.test_pattern_label_text);
 
         colorContainer = findViewById(R.id.color_container);
         colorContainer.setOnClickListener(this);
@@ -165,6 +173,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         actionLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
         patternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
         testPatternLabelText.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
+
         applyToReplies.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
         onlyOnOP.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());
         applyToSaved.setTextColor(themeEngine.getChanTheme().getTextSecondaryColor());

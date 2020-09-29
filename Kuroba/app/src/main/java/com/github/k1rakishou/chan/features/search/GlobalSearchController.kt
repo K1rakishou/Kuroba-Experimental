@@ -11,7 +11,7 @@ import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerSta
 import com.github.k1rakishou.chan.features.search.data.SitesWithSearch
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchButtonView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchInputView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySiteSelectorSpinner
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSelectedSiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
@@ -99,11 +99,12 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
   }
 
   private fun EpoxyController.onDataStateChanged(dataState: GlobalSearchControllerStateData) {
-    epoxySiteSelectorSpinner {
-      id("global_search_site_selector_spinner")
-      sites(dataState.sitesWithSearch)
-      onSiteSelectedListener { siteDescriptor ->
-        presenter.reloadWithSelection(siteDescriptor, dataState.sitesWithSearch)
+    epoxySearchSelectedSiteView {
+      id("global_search_epoxy_selected_site")
+      bindSiteName(dataState.sitesWithSearch.selectedSite.siteDescriptor.siteName)
+      bindIcon(dataState.sitesWithSearch.selectedSite.siteIconUrl)
+      bindClickCallback {
+        // TODO(KurobaEx): show FloatingListMenu here when there are more sites supporting global search
       }
     }
 

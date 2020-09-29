@@ -126,6 +126,7 @@ class LoginController(
   private fun showBottomDescription(view: ViewGroup) {
     val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
     bottomDescription.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    bottomDescription.setLinkTextColor(themeEngine.chanTheme.postLinkColor)
 
     if (site is Chan4) {
       bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))

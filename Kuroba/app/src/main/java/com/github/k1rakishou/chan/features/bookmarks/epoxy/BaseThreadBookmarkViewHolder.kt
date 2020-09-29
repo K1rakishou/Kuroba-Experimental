@@ -100,6 +100,7 @@ open class BaseThreadBookmarkViewHolder(
 
   fun setTitle(titleText: String?) {
     bookmarkTitle.text = titleText
+    bookmarkTitle.setTextColor(themeEngine.chanTheme.textPrimaryColor)
   }
 
   fun setThreadBookmarkStats(isGridMode: Boolean, threadBookmarkStats: ThreadBookmarkStats?) {

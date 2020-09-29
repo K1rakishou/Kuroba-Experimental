@@ -47,6 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="colorAccent">#FF00FF</item>
         <item name="colorSecondary">#FF00FF</item>
         <item name="colorError">#FF00FF</item>
+        <item name="android:textColor">#FF00FF</item>
     </style>
 
 </resources>

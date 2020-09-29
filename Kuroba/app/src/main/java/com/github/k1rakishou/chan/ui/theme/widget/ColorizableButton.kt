@@ -42,11 +42,13 @@ class ColorizableButton @JvmOverloads constructor(
       ColorStateList(
         arrayOf(
           intArrayOf(android.R.attr.state_pressed),
+          intArrayOf(-android.R.attr.state_pressed),
           intArrayOf(-android.R.attr.state_enabled),
           intArrayOf()
         ),
         intArrayOf(
           AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+          themeEngine.chanTheme.accentColor,
           AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .5f),
           themeEngine.chanTheme.accentColor
         )

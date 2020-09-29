@@ -12,6 +12,7 @@ internal sealed class GlobalSearchControllerState {
 
 internal data class SelectedSite(
   val siteDescriptor: SiteDescriptor,
+  val siteIconUrl: String,
   val siteGlobalSearchType: SiteGlobalSearchType
 )
 

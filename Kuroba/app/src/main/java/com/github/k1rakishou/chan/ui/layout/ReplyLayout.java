@@ -340,6 +340,7 @@ public class ReplyLayout
         captchaHardReset.setOnClickListener(this);
 
         setView(replyInputLayout);
+        setElevation(dp(4));
 
         // Presenter
         presenter.create(this);

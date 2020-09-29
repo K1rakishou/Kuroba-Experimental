@@ -62,6 +62,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
     threadThumbnailImage.visibility = View.GONE
     siteThumbnailImage.visibility = View.GONE
+
+    title.setTextColor(themeEngine.chanTheme.textPrimaryColor)
   }
 
   @ModelProp(ModelProp.Option.DoNotHash)

@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
-import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
@@ -69,26 +68,18 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
         intArrayOf()
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textPrimaryColor, .6f),
+        themeEngine.chanTheme.textColorHint,
         themeEngine.chanTheme.accentColor,
-        themeEngine.chanTheme.textPrimaryColor
+        themeEngine.chanTheme.textSecondaryColor,
       )
     )
 
     hintTextColor = colorStateList
     defaultHintTextColor = colorStateList
     counterTextColor = colorStateList
-    setBoxBackgroundColorStateList(ColorStateList.valueOf(Color.TRANSPARENT))
     setBoxStrokeColorStateList(colorStateList)
 
-    editText?.let { et ->
-      (et as? IColorizableWidget)?.applyColors()
-
-      ViewCompat.setBackgroundTintList(
-        et,
-        ColorStateList(arrayOf(intArrayOf()), intArrayOf(themeEngine.chanTheme.primaryColor))
-      )
-    }
+    setBoxBackgroundColorStateList(ColorStateList.valueOf(Color.TRANSPARENT))
   }
 
 }

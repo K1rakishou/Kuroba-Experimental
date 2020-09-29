@@ -242,7 +242,11 @@ class StartActivity : AppCompatActivity(),
       .create()
 
     dialog.show()
-    (dialog.findViewById<TextView>(android.R.id.message))?.movementMethod = LinkMovementMethod.getInstance()
+
+    (dialog.findViewById<TextView>(android.R.id.message))?.apply {
+      setLinkTextColor(themeEngine.chanTheme.postLinkColor)
+      movementMethod = LinkMovementMethod.getInstance()
+    }
   }
 
   private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {

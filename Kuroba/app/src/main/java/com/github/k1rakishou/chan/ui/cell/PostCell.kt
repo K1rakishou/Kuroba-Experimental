@@ -25,7 +25,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.text.*
 import android.text.method.LinkMovementMethod
-import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.text.style.UnderlineSpan
 import android.util.AttributeSet
@@ -51,10 +50,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
-import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed
-import com.github.k1rakishou.chan.ui.text.span.ClearableSpan
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
+import com.github.k1rakishou.chan.ui.text.span.*
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
@@ -95,6 +91,7 @@ class PostCell : LinearLayout, PostCellInterface {
   private lateinit var postAttentionLabel: View
   private lateinit var gestureDetector: GestureDetector
   private lateinit var chanDescriptor: ChanDescriptor
+  private lateinit var linkClickSpan: BackgroundColorSpanHashed
 
   private var post: Post? = null
   private var callback: PostCellCallback? = null
@@ -207,6 +204,10 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
+
+    linkClickSpan = BackgroundColorSpanHashed(
+      AndroidUtils.manipulateColor(themeEngine.chanTheme.postLinkColor, 1.2f)
+    )
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -810,7 +811,7 @@ class PostCell : LinearLayout, PostCellInterface {
 
     if (!bind) {
       if (commentSpanned is Spannable) {
-        commentSpanned.removeSpan(BACKGROUND_SPAN)
+        commentSpanned.removeSpan(linkClickSpan)
       }
     }
   }
@@ -868,7 +869,7 @@ class PostCell : LinearLayout, PostCellInterface {
         return true
       }
 
-      buffer.removeSpan(BACKGROUND_SPAN)
+      buffer.removeSpan(linkClickSpan)
       return true
     }
 
@@ -905,7 +906,7 @@ class PostCell : LinearLayout, PostCellInterface {
 
       if (action == MotionEvent.ACTION_DOWN && clickableSpan1 is PostLinkable) {
         buffer.setSpan(
-          BACKGROUND_SPAN,
+          linkClickSpan,
           buffer.getSpanStart(clickableSpan1),
           buffer.getSpanEnd(clickableSpan1),
           0
@@ -914,7 +915,7 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       if (action == MotionEvent.ACTION_CANCEL) {
-        buffer.removeSpan(BACKGROUND_SPAN)
+        buffer.removeSpan(linkClickSpan)
       }
     }
 
@@ -977,7 +978,7 @@ class PostCell : LinearLayout, PostCellInterface {
         }
       }
 
-      buffer.removeSpan(BACKGROUND_SPAN)
+      buffer.removeSpan(linkClickSpan)
     }
   }
 
@@ -1313,7 +1314,6 @@ class PostCell : LinearLayout, PostCellInterface {
       BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.error_icon)
     )
 
-    private val BACKGROUND_SPAN = BackgroundColorSpan(0x6633B5E5)
     private val CELL_POST_THUMBNAIL_SIZE = AndroidUtils.getDimen(R.dimen.cell_post_thumbnail_size)
     private val THUMBNAIL_ROUNDING = AndroidUtils.dp(2f)
     private val THUMBNAIL_BOTTOM_MARGIN = AndroidUtils.dp(5f)

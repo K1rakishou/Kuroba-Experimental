@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.textview.MaterialTextView
@@ -29,6 +30,8 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val searchPostRootContainer: ConstraintLayout
   private val searchPostOpInfo: MaterialTextView
@@ -54,6 +57,10 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostThumbnail = findViewById(R.id.search_post_thumbnail)
     searchPostCommentContainer = findViewById(R.id.search_post_comment_container)
     searchPostComment = findViewById(R.id.search_post_comment)
+
+    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    searchPostInfo.setTextColor(themeEngine.chanTheme.textPrimaryColor)
+    searchPostComment.setTextColor(themeEngine.chanTheme.textPrimaryColor)
 
     searchPostThumbnailSize = context.resources.getDimension(R.dimen.search_post_thumbnail_size).toInt()
   }

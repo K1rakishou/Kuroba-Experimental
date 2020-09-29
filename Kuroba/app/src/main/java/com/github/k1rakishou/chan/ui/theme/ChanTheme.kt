@@ -16,7 +16,6 @@ abstract class ChanTheme {
   abstract val textSecondaryColor: Int
   abstract val textColorHint: Int
   abstract val drawableTintColor: Int
-
   abstract val postHighlightedColor: Int
   abstract val postSavedReplyColor: Int
   abstract val postSelectedColor: Int
@@ -30,13 +29,10 @@ abstract class ChanTheme {
   abstract val postSpoilerColor: Int
   abstract val postSpoilerRevealTextColor: Int
   abstract val postUnseenLabelColor: Int
-
   abstract val dividerColor: Int
-
   abstract val bookmarkCounterNotWatchingColor: Int
   abstract val bookmarkCounterHasRepliesColor: Int
   abstract val bookmarkCounterNormalColor: Int
-
   abstract val mainFont: Typeface
   abstract val altFont: Typeface
 

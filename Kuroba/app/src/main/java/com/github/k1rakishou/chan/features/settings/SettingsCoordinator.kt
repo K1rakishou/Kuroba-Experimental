@@ -87,7 +87,8 @@ class SettingsCoordinator(
   private val threadWatcherSettingsScreen by lazy {
     ThreadWatcherSettingsScreen(
       context,
-      applicationVisibilityManager
+      applicationVisibilityManager,
+      themeEngine
     )
   }
 

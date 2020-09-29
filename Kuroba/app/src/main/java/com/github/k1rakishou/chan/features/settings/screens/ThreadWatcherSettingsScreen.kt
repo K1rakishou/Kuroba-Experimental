@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
 import java.util.concurrent.TimeUnit
@@ -21,7 +22,8 @@ import java.util.concurrent.TimeUnit
 
 class ThreadWatcherSettingsScreen(
   context: Context,
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val applicationVisibilityManager: ApplicationVisibilityManager,
+  private val themeEngine: ThemeEngine
 ) : BaseSettingsScreen(
   context,
   ThreadWatcherScreen,
@@ -167,7 +169,11 @@ class ThreadWatcherSettingsScreen(
       .create()
 
     dialog.show()
-    (dialog.findViewById<TextView>(android.R.id.message))?.movementMethod = LinkMovementMethod.getInstance()
+
+    (dialog.findViewById<TextView>(android.R.id.message))?.apply {
+      setLinkTextColor(themeEngine.chanTheme.postLinkColor)
+      movementMethod = LinkMovementMethod.getInstance()
+    }
   }
 
   companion object {
