@@ -158,17 +158,17 @@ class LoginController(
   }
 
   private fun createLoginRequest(): AbstractLoginRequest {
-    when (site) {
+    return when (site) {
       is Chan4 -> {
         val user = inputToken.text.toString()
         val pass = inputPin.text.toString()
 
-        return Chan4LoginRequest(user, pass)
+        Chan4LoginRequest(user, pass)
       }
       is Dvach -> {
         val passcode = inputToken.text.toString()
 
-        return DvachLoginRequest(passcode)
+        DvachLoginRequest(passcode)
       }
       else -> throw NotImplementedError("Not supported")
     }

@@ -15,17 +15,17 @@ sealed class ChanDescriptor {
 
   @JvmOverloads
   fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
-    when (this) {
+    return when (this) {
       is ThreadDescriptor -> {
         check(this.threadNo == threadNo) {
           "Attempt to convert thread descriptor (${this.threadNo}) " +
-            "into another thread descriptor (${threadNo})"
+                  "into another thread descriptor (${threadNo})"
         }
 
-        return this
+        this
       }
       is CatalogDescriptor -> {
-        return ThreadDescriptor(boardDescriptor, threadNo!!)
+        ThreadDescriptor(boardDescriptor, threadNo!!)
       }
     }
   }

@@ -64,7 +64,7 @@ class SaveLocationSetupDelegate(
 
     val saveLocationController = SaveLocationController(context,
       SaveLocationController.SaveLocationControllerMode.ImageSaveLocation,
-      { dirPath -> presenter.onSaveLocationChosen(dirPath) }
+      presenter::onSaveLocationChosen
     )
 
     callbacks.pushController(saveLocationController)

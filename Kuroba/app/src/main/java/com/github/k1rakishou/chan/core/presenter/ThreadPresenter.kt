@@ -133,10 +133,10 @@ class ThreadPresenter @Inject constructor(
         return null
       }
 
-      if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        return LocalSearchType.ThreadSearch
+      return if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        LocalSearchType.ThreadSearch
       } else {
-        return LocalSearchType.CatalogSearch
+        LocalSearchType.CatalogSearch
       }
     }
 

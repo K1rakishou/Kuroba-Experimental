@@ -720,15 +720,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (searchOpen) {
       val searchExtraHeight = findViewById<View>(R.id.search_status).height
 
-      if (postViewMode == PostViewMode.LIST) {
-        return top.top != searchExtraHeight
+      return if (postViewMode == PostViewMode.LIST) {
+        top.top != searchExtraHeight
       } else {
-        return if (top is PostStubCell) {
+        if (top is PostStubCell) {
           // PostStubCell does not have grid_card_margin
           top.getTop() != searchExtraHeight + dp(1f)
-        } else {
+          } else {
           top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
-        }
+          }
       }
     }
 
@@ -959,10 +959,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop - bottomPadding)
     } else {
-      if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-        recyclerBottom += globalWindowInsetsManager.bottom()
+      recyclerBottom += if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+        globalWindowInsetsManager.bottom()
       } else {
-        recyclerBottom += globalWindowInsetsManager.bottom() + getDimen(R.dimen.bottom_nav_view_height)
+        globalWindowInsetsManager.bottom() + getDimen(R.dimen.bottom_nav_view_height)
       }
     }
 

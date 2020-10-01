@@ -140,10 +140,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
 
   private fun onCollapseAnimationInternal(collapse: Boolean, isFromToolbarCallbacks: Boolean) {
     if (isFromToolbarCallbacks) {
-      if (collapse) {
-        lastCollapseTranslationOffset = 1f
+      lastCollapseTranslationOffset = if (collapse) {
+        1f
       } else {
-        lastCollapseTranslationOffset = 0f
+        0f
       }
     }
 

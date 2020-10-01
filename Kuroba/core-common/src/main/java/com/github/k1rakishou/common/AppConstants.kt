@@ -14,16 +14,16 @@ class AppConstants(
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
-    if (!isDev) {
-      maxAmountOfPostsInDatabase = 125_000
+    maxAmountOfPostsInDatabase = if (!isDev) {
+      125_000
     } else {
-      maxAmountOfPostsInDatabase = 5000
+      5000
     }
 
-    if (!isDev) {
-      maxAmountOfThreadsInDatabase = 12_500
+    maxAmountOfThreadsInDatabase = if (!isDev) {
+      12_500
     } else {
-      maxAmountOfThreadsInDatabase = 500
+      500
     }
 
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)

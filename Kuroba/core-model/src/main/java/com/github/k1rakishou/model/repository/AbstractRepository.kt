@@ -68,17 +68,17 @@ abstract class AbstractRepository(
         return ModularResult.error(remoteSourceResult.error)
       }
       is ModularResult.Value -> {
-        when (val storeResult = storeIntoLocalSourceFunc(remoteSourceResult.value)) {
+        return when (val storeResult = storeIntoLocalSourceFunc(remoteSourceResult.value)) {
           is ModularResult.Error -> {
-            logger.logError(tag,
-              "Error while trying to store ${T::class.java.simpleName} in the " +
-                "local source: error = ${storeResult.error.errorMessageOrClassName()}"
-            )
-            return ModularResult.error(storeResult.error)
+                logger.logError(tag,
+                  "Error while trying to store ${T::class.java.simpleName} in the " +
+                          "local source: error = ${storeResult.error.errorMessageOrClassName()}"
+                )
+            ModularResult.error(storeResult.error)
           }
           is ModularResult.Value -> {
-            storeIntoCacheFunc(remoteSourceResult.value)
-            return ModularResult.value(remoteSourceResult.value)
+                storeIntoCacheFunc(remoteSourceResult.value)
+            ModularResult.value(remoteSourceResult.value)
           }
         }
       }

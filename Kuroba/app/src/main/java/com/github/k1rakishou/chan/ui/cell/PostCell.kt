@@ -277,10 +277,10 @@ class PostCell : LinearLayout, PostCellInterface {
         continue
       }
 
-      if (isTextOnly) {
-        return null
+      return if (isTextOnly) {
+        null
       } else {
-        return thumbnailViews[i]
+        thumbnailViews[i]
       }
     }
 

@@ -340,10 +340,10 @@ fun String.ellipsizeEnd(maxLength: Int): String {
 }
 
 suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
-  try {
-    return await()
+  return try {
+    await()
   } catch (ignored: CancellationException) {
-    return defaultValue
+    defaultValue
   }
 }
 
