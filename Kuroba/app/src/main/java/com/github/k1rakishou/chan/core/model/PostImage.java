@@ -131,6 +131,18 @@ public class PostImage {
         this.size = size;
     }
 
+    public boolean canBeUsedForCloudflarePreloading() {
+        if (isInlined) {
+            return false;
+        }
+
+        if (imageUrl == null) {
+            return false;
+        }
+
+        return true;
+    }
+
     public boolean canBeUsedForPrefetch() {
         if (isInlined) {
             return false;

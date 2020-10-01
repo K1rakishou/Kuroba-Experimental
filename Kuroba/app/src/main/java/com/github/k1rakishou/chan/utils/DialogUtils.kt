@@ -32,6 +32,7 @@ object DialogUtils {
       .setPositiveButton(positiveButtonTextId) { _, _ ->
         onPositiveButtonClickListener.invoke()
       }
+      .setCancelable(false)
 
     if (descriptionTextId != null) {
       builder.setMessage(descriptionTextId)
@@ -64,6 +65,7 @@ object DialogUtils {
         onPositiveButtonClickListener.invoke()
       }
       .setNegativeButton(negativeButtonTextId) { _, _ -> onNegativeButtonClickListener.invoke() }
+      .setCancelable(false)
 
     if (descriptionTextId != null) {
       builder.setMessage(descriptionTextId)
@@ -111,6 +113,7 @@ object DialogUtils {
       .setTitle(dialogTitleTextId)
       .setMessageEx(messageTextId)
       .setView(container)
+      .setCancelable(false)
       .create()
 
     dialog.window!!

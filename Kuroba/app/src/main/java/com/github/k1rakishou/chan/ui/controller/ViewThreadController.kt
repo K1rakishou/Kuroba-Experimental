@@ -24,15 +24,13 @@ import androidx.core.util.Pair
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -47,6 +45,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuC
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.DialogUtils
 import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
@@ -74,6 +73,8 @@ open class ViewThreadController(
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
   private var pinItemPinned = false
 
@@ -174,6 +175,10 @@ open class ViewThreadController(
         R.string.action_force_reload,
         AndroidUtils.isDevBuild()
       ) { item -> forceReloadClicked(item) }
+      .withSubItem(
+        ACTION_CLOUDFLARE_PRELOAD,
+        R.string.action_cloudflare_preload,
+      ) { item -> cloudflareForcePreload(item) }
       .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
         R.string.action_view_removed_posts
@@ -289,6 +294,24 @@ open class ViewThreadController(
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
     threadLayout.presenter.forceRequestData()
+  }
+
+  private fun cloudflareForcePreload(item: ToolbarMenuSubItem) {
+    if (!PersistableChanState.cloudflarePreloadingExplanationShown.get()) {
+      PersistableChanState.cloudflarePreloadingExplanationShown.set(true)
+
+      DialogUtils.createSimpleInformationDialog(
+        context,
+        applicationVisibilityManager.isAppInForeground(),
+        R.string.thread_presenter_cloudflare_preloading_dialog_title,
+        R.string.thread_presenter_cloudflare_preloading_dialog_description,
+        { threadLayout.presenter.cloudFlareForcePreload() }
+      )
+
+      return
+    }
+
+    threadLayout.presenter.cloudFlareForcePreload()
   }
 
   private fun showAvailableArchives(descriptor: ThreadDescriptor) {
@@ -584,13 +607,13 @@ open class ViewThreadController(
   }
 
   private fun updateMenuItems() {
-    updateRetrievePostsFromArchivesMenuItem()
-  }
+    navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
+      retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+    }
 
-  private fun updateRetrievePostsFromArchivesMenuItem() {
-    val retrieveDeletedPostsItem = navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)
-      ?: return
-    retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+    navigation.findSubItem(ACTION_CLOUDFLARE_PRELOAD)?.let { cloudflarePreload ->
+      cloudflarePreload.visible = threadDescriptor.siteDescriptor().is4chan()
+    }
   }
 
   private fun showHints() {
@@ -744,9 +767,12 @@ open class ViewThreadController(
     private const val ACTION_THREAD_VIEW_OPTIONS = 9010
     private const val ACTION_SCROLL_TO_TOP = 9011
     private const val ACTION_SCROLL_TO_BOTTOM = 9012
+    private const val ACTION_CLOUDFLARE_PRELOAD = 9013
+
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102
+
     private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9200
   }
 }
