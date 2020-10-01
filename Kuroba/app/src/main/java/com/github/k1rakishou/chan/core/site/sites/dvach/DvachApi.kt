@@ -58,8 +58,7 @@ class DvachApi internal constructor(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      val key = reader.nextName()
-      when (key) {
+      when (reader.nextName()) {
         "name" -> builder.name(reader.nextStringWithoutBOM())
         "subject" -> builder.subject(reader.nextStringWithoutBOM())
         "comment" -> builder.comment(reader.nextStringWithoutBOM())

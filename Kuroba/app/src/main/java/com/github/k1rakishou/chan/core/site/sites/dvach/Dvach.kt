@@ -79,7 +79,7 @@ class Dvach : CommonSite() {
       SiteOptionsSetting(
         "Captcha type",
         captchaType!!,
-        Arrays.asList("Javascript", "Noscript")
+        mutableListOf("Javascript", "Noscript")
       )
     )
   }

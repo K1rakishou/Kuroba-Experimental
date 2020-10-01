@@ -75,8 +75,7 @@ class TaimabaApi(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      val key = reader.nextName()
-      when (key) {
+      when (reader.nextName()) {
         "no" -> builder.id(reader.nextInt().toLong())
         "resto" -> {
           opId = reader.nextInt()

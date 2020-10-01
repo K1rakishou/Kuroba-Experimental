@@ -320,7 +320,7 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     val moved = lock.write {
-      if (orders.get(from) != siteDescriptor) {
+      if (orders[from] != siteDescriptor) {
         return@write false
       }
 

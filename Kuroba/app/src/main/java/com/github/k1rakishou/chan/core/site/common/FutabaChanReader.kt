@@ -106,8 +106,7 @@ class FutabaChanReader(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      val key = reader.nextName()
-      when (key) {
+      when (reader.nextName()) {
         "no" -> builder.id(reader.nextInt().toLong())
         "sub" -> builder.subject(reader.nextString())
         "name" -> builder.name(reader.nextString())

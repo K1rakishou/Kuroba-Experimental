@@ -358,7 +358,7 @@ task increaseBuildNumber {
     def travisFlag = System.getenv("TRAVIS_CI_FLAG")
     if (travisFlag == null) {
         File f = file('buildnumber.property')
-        def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8").get(0))
+        def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8")[0])
         def newBuildNumber = prevBuildNumber + 1
         println("Increasing the build number: " + prevBuildNumber + " -> " + newBuildNumber)
 
@@ -369,7 +369,7 @@ preBuild.dependsOn increaseBuildNumber
 
 def getCurrentBuildNumber() {
     File f = file('buildnumber.property')
-    return Integer.valueOf(f.readLines("UTF-8").get(0))
+    return Integer.valueOf(f.readLines("UTF-8")[0])
 }
 
 //====================================================================

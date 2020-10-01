@@ -84,7 +84,7 @@ class BoardManager(
 
         loadBoardsResult.value.forEach { (siteDescriptor, chanBoards) ->
           chanBoards.forEach { chanBoard ->
-            boardsMap[siteDescriptor]!!.put(chanBoard.boardDescriptor, chanBoard)
+            boardsMap[siteDescriptor]!![chanBoard.boardDescriptor] = chanBoard
           }
 
           val sortedActiveBoards = chanBoards
@@ -212,7 +212,7 @@ class BoardManager(
         val innerMap = boardsMap[boardDescriptor.siteDescriptor]
           ?: return@forEach
 
-        val board = innerMap.get(boardDescriptor)
+        val board = innerMap[boardDescriptor]
           ?: return@forEach
 
         if (board.active == activate) {
@@ -405,7 +405,7 @@ class BoardManager(
       val orders = ordersMap[boardDescriptor.siteDescriptor]
         ?: return@write false
 
-      if (orders.get(from) != boardDescriptor) {
+      if (orders[from] != boardDescriptor) {
         return@write false
       }
 
@@ -475,7 +475,7 @@ class BoardManager(
 
         boardsMap.forEach { (siteDescriptor, innerMap) ->
           val innerBoardsMapCount = innerMap.values.count { chanBoard -> chanBoard.active }
-          val innerOrdersMapCount = ordersMap[siteDescriptor]?.count() ?: 0
+          val innerOrdersMapCount = ordersMap[siteDescriptor]?.size ?: 0
 
           check(innerBoardsMapCount == innerOrdersMapCount) {
             "Inconsistency detected! innerBoardsMapCount (${innerBoardsMapCount}) != " +
@@ -495,7 +495,7 @@ class BoardManager(
         val boards = boardsMap[siteDescriptor]?.values
           ?: return@forEach
 
-        resultMap.put(siteDescriptor, mutableListWithCap(boards))
+        resultMap[siteDescriptor] = mutableListWithCap(boards)
         resultMap[siteDescriptor]!!.addAll(boards)
       }
     }
@@ -510,7 +510,7 @@ class BoardManager(
     lock.read {
       ordersMap.forEach { (siteDescriptor, boardDescriptorsOrdered) ->
         if (!resultMap.containsKey(siteDescriptor)) {
-          resultMap.put(siteDescriptor, mutableListWithCap(boardDescriptorsOrdered))
+          resultMap[siteDescriptor] = mutableListWithCap(boardDescriptorsOrdered)
         }
 
         boardDescriptorsOrdered.forEach { boardDescriptor ->

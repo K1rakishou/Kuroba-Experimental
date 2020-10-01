@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.common.updatePaddings
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.math.abs
+import kotlin.math.max
 
 class HidingBottomNavigationView @JvmOverloads constructor(
   context: Context,
@@ -29,7 +30,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   fun updateMaxViewHeight(height: Int) {
-    maxViewHeight = Math.max(height, maxViewHeight)
+    maxViewHeight = max(height, maxViewHeight)
   }
 
   fun updateBottomPadding(padding: Int) {

@@ -77,6 +77,8 @@ import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 /**
  * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
@@ -372,7 +374,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       spanCount = gridCountSetting
       compactMode = measuredWidth / spanCount < dp(120f)
     } else {
-      spanCount = Math.max(1, Math.round(measuredWidth.toFloat() / cardWidth))
+      spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
       compactMode = false
     }
 

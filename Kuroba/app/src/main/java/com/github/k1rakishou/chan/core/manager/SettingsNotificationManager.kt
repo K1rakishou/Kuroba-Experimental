@@ -46,7 +46,7 @@ class SettingsNotificationManager {
 
 
   @Synchronized
-  fun notificationsCount(): Int = notifications.count()
+  fun notificationsCount(): Int = notifications.size
 
   @Synchronized
   fun getOrDefault(notificationType: SettingNotificationType): SettingNotificationType {

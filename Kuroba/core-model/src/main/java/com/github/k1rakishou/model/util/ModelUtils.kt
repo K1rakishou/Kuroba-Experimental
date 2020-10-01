@@ -3,7 +3,7 @@ package com.github.k1rakishou.model.util
 import android.os.Looper
 
 internal fun isMainThread(): Boolean {
-  return Thread.currentThread() === Looper.getMainLooper().getThread()
+  return Thread.currentThread() === Looper.getMainLooper().thread
 }
 
 internal fun ensureMainThread() {

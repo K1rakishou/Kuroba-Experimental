@@ -31,7 +31,7 @@ class ChanDescriptorCache(
   suspend fun putManyBoardDescriptors(boardIdMap: Map<BoardDescriptor, Long>) {
     mutex.withLock {
        boardIdMap.forEach { (boardDescriptor, boardId) ->
-         boardIdCache.put(boardDescriptor, boardId)
+         boardIdCache[boardDescriptor] = boardId
        }
     }
   }

@@ -174,7 +174,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     val currentSettingsTheme = ChanSettings.getThemeAndColor()
 
     for (i in themes.indices) {
-      val theme = themes.get(i)
+      val theme = themes[i]
       val primaryColor = theme.primaryColor
       if (theme.name == currentSettingsTheme.theme) {
         // Current theme

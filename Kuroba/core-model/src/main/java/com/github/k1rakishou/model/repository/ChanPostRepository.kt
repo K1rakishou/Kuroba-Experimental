@@ -28,7 +28,7 @@ class ChanPostRepository(
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
-  private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache, loggerTag, logger,)
+  private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache, loggerTag, logger)
 
   init {
     applicationScope.launch(Dispatchers.Default) {
