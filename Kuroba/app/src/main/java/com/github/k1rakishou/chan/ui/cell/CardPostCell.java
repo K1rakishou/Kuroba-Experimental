@@ -61,6 +61,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     @Inject
     PostFilterManager postFilterManager;
 
+    private ChanTheme theme;
     private Post post;
     private ChanDescriptor chanDescriptor;
     private PostCellInterface.PostCellCallback callback;
@@ -163,13 +164,14 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             boolean compact,
             ChanTheme theme
     ) {
-        if (this.post == post) {
+        if (this.post.equals(post) && this.theme.equals(theme)) {
             return;
         }
 
         this.inPopup = inPopup;
         this.chanDescriptor = chanDescriptor;
         this.post = post;
+        this.theme = theme;
         this.callback = callback;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 

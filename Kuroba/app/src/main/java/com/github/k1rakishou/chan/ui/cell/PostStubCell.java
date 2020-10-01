@@ -56,6 +56,7 @@ public class PostStubCell
     @Inject
     ThemeEngine themeEngine;
 
+    private ChanTheme theme;
     private Post post;
     private ChanSettings.PostViewMode postViewMode;
     private boolean showDivider;
@@ -161,10 +162,11 @@ public class PostStubCell
             boolean compact,
             ChanTheme theme
     ) {
-        if (this.post == post) {
+        if (this.post.equals(post) && this.theme.equals(theme)) {
             return;
         }
 
+        this.theme = theme;
         this.post = post;
         this.inPopup = inPopup;
         this.callback = callback;
@@ -208,9 +210,11 @@ public class PostStubCell
 
         title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
-        divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD
-                ? GONE :
-                (showDivider ? VISIBLE : GONE));
+        divider.setVisibility(
+                postViewMode == ChanSettings.PostViewMode.CARD
+                        ? GONE
+                        : (showDivider ? VISIBLE : GONE)
+        );
 
         if (callback != null) {
             callback.onPostBind(post);

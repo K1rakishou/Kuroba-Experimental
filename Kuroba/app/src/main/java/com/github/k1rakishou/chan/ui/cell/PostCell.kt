@@ -58,6 +58,8 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
+import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
+import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.io.IOException
@@ -655,6 +657,9 @@ class PostCell : LinearLayout, PostCellInterface {
   private fun bindThreadPost(post: Post, commentText: CharSequence) {
     comment.setTextIsSelectable(true)
     comment.setText(commentText, TextView.BufferType.SPANNABLE)
+
+    comment.setHandlesColors(themeEngine)
+    comment.setEditTextCursorColor(themeEngine)
 
     comment.customSelectionActionModeCallback = object : ActionMode.Callback {
       private var quoteMenuItem: MenuItem? = null

@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.widget.AbsListView
 import android.widget.EdgeEffect
-import android.widget.EditText
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -16,7 +15,7 @@ import java.lang.reflect.Field
 object ViewUtils {
   private const val TAG = "ViewUtils"
 
-  fun EditText.setEditTextCursorColor(themeEngine: ThemeEngine) {
+  fun TextView.setEditTextCursorColor(themeEngine: ThemeEngine) {
     try {
       if (AndroidUtils.isAndroid10()) {
         textCursorDrawable?.mutate()?.let { cursor ->
@@ -24,6 +23,7 @@ object ViewUtils {
           textCursorDrawable = cursor
         }
 
+        highlightColor = themeEngine.chanTheme.accentColor
         return
       }
 

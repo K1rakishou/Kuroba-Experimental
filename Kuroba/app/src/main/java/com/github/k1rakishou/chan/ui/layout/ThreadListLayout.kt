@@ -251,6 +251,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   override fun onThemeChanged() {
     setBackgroundColor(themeEngine.chanTheme.backColor)
+    replyLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
+    searchStatus.setBackgroundColor(themeEngine.chanTheme.backColor)
+
+    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
+    searchStatus.typeface = themeEngine.chanTheme.mainFont
   }
 
   override fun onFinishInflate() {
@@ -262,10 +267,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     searchStatus = findViewById(R.id.search_status)
     recyclerView = findViewById(R.id.recycler_view)
 
-    setBackgroundColor(themeEngine.chanTheme.backColor)
-    replyLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
-    searchStatus.setBackgroundColor(themeEngine.chanTheme.backColor)
-
     val params = replyLayout.layoutParams as LayoutParams
     params.gravity = Gravity.BOTTOM
     replyLayout.layoutParams = params
@@ -273,8 +274,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     // View setup
     replyLayout.setCallback(this)
 
-    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    searchStatus.typeface = themeEngine.chanTheme.mainFont
+    onThemeChanged()
   }
 
   fun onCreate(

@@ -26,4 +26,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="reply_selection_action_sjis" type="id" />
 
     <item name="swipe_refresh_layout" type="id"/>
+    <item name="post_replies_data_view_id" type="id"/>
 </resources>

@@ -35,11 +35,11 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
-import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
-        extends BaseFloatingController {
+        extends BaseFloatingController implements ThemeEngine.ThemeChangesListener {
     private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
 
     @Inject
@@ -63,6 +63,14 @@ public class PostRepliesController
     private ColorizableRecyclerView repliesView;
     private PostPopupHelper.RepliesData displayingData;
     private boolean first = true;
+
+    private TextView repliesBackText;
+    private TextView repliesCloseText;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.layout_post_replies_container;
+    }
 
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
         super(context);
@@ -80,19 +88,52 @@ public class PostRepliesController
         view.setOnClickListener(v -> postPopupHelper.pop());
 
         loadView = view.findViewById(R.id.loadview);
+        themeEngine.addListener(this);
     }
 
     @Override
-    protected int getLayoutId() {
-        return R.layout.layout_post_replies_container;
+    public void onShow() {
+        super.onShow();
+
+        onThemeChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        themeEngine.removeListener(this);
         forceRecycleAllReplyViews();
         repliesView.setAdapter(null);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (themeEngine == null) {
+            return;
+        }
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColorSecondary());
+
+        Drawable backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
+        Drawable doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);
+
+        if (repliesBackText != null) {
+            repliesBackText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
+        }
+
+        if (repliesCloseText != null) {
+            repliesCloseText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
+        }
+
+        if (repliesView != null) {
+            RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
+            if (adapter instanceof RepliesAdapter) {
+                ((RepliesAdapter) adapter).refresh();
+            }
+        }
     }
 
     private void forceRecycleAllReplyViews() {
@@ -146,23 +187,17 @@ public class PostRepliesController
         displayingData = data;
 
         View dataView = inflate(context, R.layout.layout_post_replies_bottombuttons);
+        dataView.setId(R.id.post_replies_data_view_id);
+
         repliesView = dataView.findViewById(R.id.post_list);
         View repliesBack = dataView.findViewById(R.id.replies_back);
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());
 
-        PostRepliesContainer postRepliesContainer = dataView.findViewById(R.id.container);
-        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getBackColorSecondary());
-
         View repliesClose = dataView.findViewById(R.id.replies_close);
         repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
 
-        Drawable backDrawable = themeEngine.getChanTheme().backDrawable.makeDrawable(context);
-        Drawable doneDrawable = themeEngine.getChanTheme().doneDrawable.makeDrawable(context);
-
-        TextView repliesBackText = dataView.findViewById(R.id.replies_back_icon);
-        TextView repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
-        repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
-        repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
+        repliesBackText = dataView.findViewById(R.id.replies_back_icon);
+        repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
 
         PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
         postPreloadedInfoHolder.preloadPostsInfo(data.posts);
@@ -185,6 +220,8 @@ public class PostRepliesController
 
         first = false;
         restoreScrollPosition(data.forPost.no);
+
+        onThemeChanged();
     }
 
     private void storeScrollPosition() {
@@ -299,6 +336,10 @@ public class PostRepliesController
 
         public void setData(PostPopupHelper.RepliesData data) {
             this.data = new PostPopupHelper.RepliesData(data.forPost, new ArrayList<>(data.posts));
+            notifyDataSetChanged();
+        }
+
+        public void refresh() {
             notifyDataSetChanged();
         }
 

@@ -142,6 +142,8 @@ class StartActivity : AppCompatActivity(),
     }
 
     // TODO(KurobaEx-themes): remove me !!!!!!!!!!!!!!
+    // TODO(KurobaEx): always call updateTheme at least once! Because some views may not get colored
+    //  otherwise.
     lifecycleScope.launch {
       val darkTheme = MockDarkChanTheme(this@StartActivity)
       val lightTheme = MockLightChanTheme(this@StartActivity)

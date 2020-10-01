@@ -20,19 +20,54 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+
+import javax.inject.Inject;
+
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
-public class PostRepliesContainer extends LinearLayout {
+public class PostRepliesContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     public PostRepliesContainer(Context context) {
         super(context);
+        init();
     }
 
     public PostRepliesContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public PostRepliesContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        Chan.inject(this);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+
+        onThemeChanged();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        setBackgroundColor(themeEngine.chanTheme.getBackColorSecondary());
     }
 
     @Override

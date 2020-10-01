@@ -6,22 +6,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
@@ -45,7 +44,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class RemovedPostsController
         extends BaseFloatingController
-        implements View.OnClickListener {
+        implements View.OnClickListener, ThemeEngine.ThemeChangesListener {
     private static final String TAG = "RemovedPostsController";
 
     @Inject
@@ -57,8 +56,13 @@ public class RemovedPostsController
 
     private ConstraintLayout viewHolder;
     private ColorizableListView postsListView;
-    private ColorizableButton restorePostsButton;
-    private ColorizableButton selectAllButton;
+    private ColorizableBarButton restorePostsButton;
+    private ColorizableBarButton selectAllButton;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.layout_removed_posts;
+    }
 
     @Nullable
     private RemovedPostAdapter adapter;
@@ -79,20 +83,26 @@ public class RemovedPostsController
         selectAllButton = view.findViewById(R.id.removed_posts_select_all);
         postsListView = view.findViewById(R.id.removed_posts_posts_list);
 
-        PostRepliesContainer postRepliesContainer = view.findViewById(R.id.container);
-        postRepliesContainer.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
-
         viewHolder.setOnClickListener(this);
         restorePostsButton.setOnClickListener(this);
         selectAllButton.setOnClickListener(this);
 
-        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextColorPrimary(), 32));
-        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeEngine.getChanTheme().getTextColorPrimary(), 32));
+        themeEngine.addListener(this);
     }
 
     @Override
-    protected int getLayoutId() {
-        return R.layout.layout_removed_posts;
+    public void onDestroy() {
+        super.onDestroy();
+
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        ListAdapter adapter = postsListView.getAdapter();
+        if (adapter instanceof RemovedPostAdapter) {
+            ((RemovedPostAdapter) adapter).refresh();
+        }
     }
 
     @Override
@@ -228,6 +238,9 @@ public class RemovedPostsController
             ColorizableCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
 
+            postNo.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            postComment.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
@@ -323,6 +336,10 @@ public class RemovedPostsController
                 removedPostsCopy.get(i).setChecked(select);
             }
 
+            notifyDataSetChanged();
+        }
+
+        public void refresh() {
             notifyDataSetChanged();
         }
     }

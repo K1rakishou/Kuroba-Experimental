@@ -21,6 +21,8 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
     val call = newCall(request)
 
     continuation.invokeOnCancellation {
+      // TODO(KurobaEx): this might now work because request cancellation must occur on a
+      //  background thread and there is a possibility that it doesn't sometimes
       Try { call.cancel() }.ignore()
     }
 

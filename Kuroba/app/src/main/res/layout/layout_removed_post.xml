@@ -23,14 +23,14 @@
                 android:id="@+id/post_image"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
                 android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/removed_post_no"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginEnd="8dp"
                 tools:text="No. 123" />
 
         </LinearLayout>

@@ -163,6 +163,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     private DropdownArrowDrawable moreDropdown;
     @Nullable
     private HintPopup hintPopup = null;
+    private boolean isCounterOverflowed = false;
 
     // Captcha views:
     private FrameLayout captchaContainer;
@@ -227,6 +228,12 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         if (submit.getDrawable() != null) {
             submit.setImageDrawable(themeEngine.tintDrawable(submit.getDrawable(), isDarkColor));
         }
+
+        int textColor = isCounterOverflowed
+                ? themeEngine.getChanTheme().getErrorColor()
+                : themeEngine.getChanTheme().getTextColorSecondary();
+
+        commentCounter.setTextColor(textColor);
     }
 
     private void updateWrappingMode() {
@@ -864,6 +871,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     @SuppressLint("SetTextI18n")
     @Override
     public void updateCommentCount(int count, int maxCount, boolean over) {
+        this.isCounterOverflowed = over;
         commentCounter.setText(count + "/" + maxCount);
 
         int textColor = over
