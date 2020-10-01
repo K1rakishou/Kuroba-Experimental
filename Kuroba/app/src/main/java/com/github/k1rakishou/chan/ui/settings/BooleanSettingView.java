@@ -111,9 +111,7 @@ public class BooleanSettingView
                                 }
 
                                 setEnabled(enabled);
-                            }, (error) -> {
-                                Logger.e(TAG, "Unknown error while listening to parent setting", error);
-                            }
+                            }, (error) -> Logger.e(TAG, "Unknown error while listening to parent setting", error)
                     );
         }
     }

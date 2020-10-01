@@ -217,7 +217,7 @@ public class FiltersController
 
         final AlertDialog alertDialog = new AlertDialog.Builder(context)
                 .setView(filterLayout)
-                .setPositiveButton("Save", (dialog, which) -> {
+                .setPositiveButton("Save", (dialog, which) ->
                     filterEngine.createOrUpdateFilter(filterLayout.getFilter(), () -> {
                         BackgroundUtils.ensureMainThread();
 
@@ -232,8 +232,8 @@ public class FiltersController
                         adapter.reload();
 
                         return Unit.INSTANCE;
-                    });
-                }).show();
+                    })
+                ).show();
 
         filterLayout
                 .setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
