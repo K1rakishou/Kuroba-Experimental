@@ -49,7 +49,6 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
@@ -71,6 +70,7 @@ import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +125,6 @@ public class ImageViewerController
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
-    private int statusBarColorPrevious;
     private AnimatorSet startAnimation;
     private AnimatorSet endAnimation;
 
@@ -629,7 +628,6 @@ public class ImageViewerController
 
     @Override
     public void onMenuHidden() {
-        hideSystemUI();
     }
 
     @Override
@@ -645,7 +643,6 @@ public class ImageViewerController
             return;
         }
 
-        statusBarColorPrevious = getWindow(context).getStatusBarColor();
         setBackgroundAlpha(0f);
         startAnimation = new AnimatorSet();
 
@@ -780,15 +777,8 @@ public class ImageViewerController
 
     private void setBackgroundAlpha(float alpha) {
         int color = Color.argb((int) (alpha * TRANSITION_FINAL_ALPHA * 255f), 0, 0, 0);
-        navigationController.view.setBackgroundColor(color);
-
-        if (alpha == 0f) {
-            getWindow(context).setStatusBarColor(statusBarColorPrevious);
-        } else {
-            int r = (int) ((1f - alpha) * Color.red(statusBarColorPrevious));
-            int g = (int) ((1f - alpha) * Color.green(statusBarColorPrevious));
-            int b = (int) ((1f - alpha) * Color.blue(statusBarColorPrevious));
-            getWindow(context).setStatusBarColor(Color.argb(255, r, g, b));
+        if (navigationController != null) {
+            navigationController.view.setBackgroundColor(color);
         }
 
         toolbar.setAlpha(alpha);
@@ -883,6 +873,10 @@ public class ImageViewerController
         params.height = 0;
         toolbar.setInImmersiveMode(true);
         toolbar.setLayoutParams(params);
+
+        if (loadingBar != null) {
+            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height, null);
+        }
     }
 
     private void showToolbar() {
@@ -896,14 +890,16 @@ public class ImageViewerController
         params.height = getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top();
         toolbar.setInImmersiveMode(false);
         toolbar.setLayoutParams(params);
+
+        if (loadingBar != null) {
+            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height + toolbar.getPaddingTop(), null);
+        }
     }
 
     public interface ImageViewerCallback {
         @Nullable
         ThumbnailView getPreviewImageTransitionView(PostImage postImage);
         void scrollToImage(PostImage postImage);
-        @Nullable
-        Post getPostForPostImage(PostImage postImage);
     }
 
     public interface GoPostCallback {

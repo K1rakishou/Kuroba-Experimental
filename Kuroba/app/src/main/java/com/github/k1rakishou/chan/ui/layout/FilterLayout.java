@@ -35,6 +35,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -154,7 +155,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         enabled = findViewById(R.id.enabled);
 
         help = findViewById(R.id.help);
-        themeEngine.getChanTheme().helpDrawable.apply(help);
+        help.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_help_outline_white_24dp));
         help.setOnClickListener(this);
 
         MaterialTextView filterLabelText = findViewById(R.id.filter_label_text);

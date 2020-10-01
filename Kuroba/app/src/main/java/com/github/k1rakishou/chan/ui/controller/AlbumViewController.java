@@ -28,7 +28,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
@@ -154,11 +153,6 @@ public class AlbumViewController
         } else {
             return null;
         }
-    }
-
-    @Override
-    public Post getPostForPostImage(PostImage postImage) {
-        throw new UnsupportedOperationException();
     }
 
     private void openImage(AlbumItemCellHolder albumItemCellHolder, PostImage postImage) {

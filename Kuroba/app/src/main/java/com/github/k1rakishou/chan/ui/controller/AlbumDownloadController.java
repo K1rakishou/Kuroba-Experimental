@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -449,9 +450,11 @@ public class AlbumDownloadController
             cell.thumbnailView.setScaleY(scale);
         }
 
-        Drawable drawable = context.getDrawable(checked
+        int drawableId = checked
                 ? R.drawable.ic_blue_checkmark_24dp
-                : R.drawable.ic_radio_button_unchecked_white_24dp);
+                : R.drawable.ic_radio_button_unchecked_white_24dp;
+
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
         cell.checkbox.setImageDrawable(drawable);
     }
 }

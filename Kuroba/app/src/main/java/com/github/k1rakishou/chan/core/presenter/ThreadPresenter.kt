@@ -812,21 +812,6 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun getPostFromPostImage(postImage: PostImage): Post? {
-    val posts = threadPresenterCallback?.displayingPosts
-      ?: return null
-
-    for (post in posts) {
-      for (image in post.postImages) {
-        if (image === postImage) {
-          return post
-        }
-      }
-    }
-
-    return null
-  }
-
   override fun onPostClicked(post: Post) {
     if (!isBound || currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       return

@@ -29,6 +29,8 @@ import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.core.content.ContextCompat;
+
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
@@ -99,7 +101,8 @@ public class LegacyCaptchaLayout
         });
 
         submit = findViewById(R.id.submit);
-        themeEngine.getChanTheme().sendDrawable.apply(submit);
+        submit.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_send_white_24dp));
+
         AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
 

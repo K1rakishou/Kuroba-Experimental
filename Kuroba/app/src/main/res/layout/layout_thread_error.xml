@@ -14,13 +14,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical">
 
-    <TextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,4 +45,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_gravity="center"
         android:text="@string/thread_load_failed_open_in_archive" />
 
-</LinearLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>

@@ -358,17 +358,13 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
                 false
         );
 
-        attach.setImageDrawable(
-                ContextCompat.getDrawable(getContext(), themeEngine.getChanTheme().imageDrawable.getDrawable())
-        );
-
-        submit.setImageDrawable(
-                ContextCompat.getDrawable(getContext(), themeEngine.getChanTheme().sendDrawable.getDrawable())
-        );
+        attach.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_image_white_24dp));
+        submit.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_send_white_24dp));
 
         more.setImageDrawable(moreDropdown);
-
-        themeEngine.getChanTheme().refreshDrawable.apply(captchaHardReset);
+        captchaHardReset.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), R.drawable.ic_refresh_white_24dp)
+        );
 
         setView(replyInputLayout);
         setElevation(dp(4));

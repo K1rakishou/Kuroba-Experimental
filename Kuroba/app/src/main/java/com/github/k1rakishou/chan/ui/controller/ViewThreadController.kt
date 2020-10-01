@@ -27,8 +27,6 @@ import com.github.k1rakishou.chan.R.string.action_reload
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
@@ -730,10 +728,6 @@ open class ViewThreadController(
 
   override fun showAvailableArchivesList(descriptor: ThreadDescriptor) {
     showAvailableArchives(descriptor)
-  }
-
-  override fun getPostForPostImage(postImage: PostImage): Post? {
-    return threadLayout.presenter.getPostFromPostImage(postImage)
   }
 
   override fun onMenuShown() {

@@ -31,8 +31,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
@@ -791,10 +789,6 @@ class BrowseController(context: Context) : ThreadController(context),
     if (chanDescriptor != null) {
       historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
     }
-  }
-
-  override fun getPostForPostImage(postImage: PostImage): Post? {
-    return threadLayout.presenter.getPostFromPostImage(postImage)
   }
 
   companion object {

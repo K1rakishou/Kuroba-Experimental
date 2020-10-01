@@ -162,7 +162,7 @@ public class PostStubCell
             boolean compact,
             ChanTheme theme
     ) {
-        if (this.post.equals(post) && this.theme.equals(theme)) {
+        if (post.equals(this.post) && theme.equals(this.theme)) {
             return;
         }
 

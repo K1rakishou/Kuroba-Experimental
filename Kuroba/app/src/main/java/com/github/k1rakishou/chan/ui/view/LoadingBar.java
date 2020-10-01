@@ -22,16 +22,20 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
+import javax.inject.Inject;
 
-public class LoadingBar
-        extends View {
+public class LoadingBar extends View implements ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private int chunksCount = -1;
     private List<Float> chunkLoadingProgress = new ArrayList<>();
     private Paint paint;
@@ -49,6 +53,32 @@ public class LoadingBar
     public LoadingBar(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
+    }
+
+    private void init() {
+        Chan.inject(this);
+
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        onThemeChanged();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (paint != null) {
+            paint.setColor(themeEngine.chanTheme.getAccentColor());
+        }
     }
 
     public void setProgress(List<Float> updatedProgress) {
@@ -77,7 +107,7 @@ public class LoadingBar
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        float width = getWidth() / chunksCount;
+        float width = (float) getWidth() / chunksCount;
         float offset = 0f;
 
         for (int i = 0; i < chunkLoadingProgress.size(); i++) {
@@ -90,8 +120,4 @@ public class LoadingBar
         }
     }
 
-    private void init() {
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(getAttrColor(getContext(), R.attr.colorAccent));
-    }
 }
