@@ -515,12 +515,8 @@ class ChanPostRepository(
     val fromCache = postCache.getPostFromCache(
       chanPost.postDescriptor,
       chanPost.isOp
-    )
-
-    if (fromCache == null) {
-      // Post is not cached yet - update
+    ) ?: // Post is not cached yet - update
       return true
-    }
 
     if (fromCache.isOp) {
       // Cached post is an original post - always update

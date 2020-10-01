@@ -157,9 +157,7 @@ class SearchResultsController(
 
   private fun tryRestorePreviousPosition() {
     val indexAndTop = presenter.lastRecyclerViewScrollStateOrNull()
-    if (indexAndTop == null) {
-      return
-    }
+      ?: return
 
     (epoxyRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
       indexAndTop.index,

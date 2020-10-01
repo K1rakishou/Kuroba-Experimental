@@ -115,10 +115,7 @@ open class Chan4SearchPostParser {
     element: Element
   ): CharSequence? {
     val rules = rules[tag]
-
-    if (rules == null) {
-      return text
-    }
+      ?: return text
 
     for (i in 0..1) {
       val highPriority = i == 0

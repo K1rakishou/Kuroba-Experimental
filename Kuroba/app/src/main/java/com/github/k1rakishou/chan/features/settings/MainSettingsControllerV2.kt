@@ -107,9 +107,7 @@ class MainSettingsControllerV2(context: Context)
         }
 
         val indexAndTop = settingsCoordinator.getCurrentIndexAndTopOrNull()
-        if (indexAndTop == null) {
-          return@addOneshotModelBuildListener
-        }
+          ?: return@addOneshotModelBuildListener
 
         (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
           indexAndTop.index,

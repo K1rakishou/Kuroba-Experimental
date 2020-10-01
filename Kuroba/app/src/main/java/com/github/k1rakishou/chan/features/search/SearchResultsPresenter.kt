@@ -113,9 +113,7 @@ internal class SearchResultsPresenter(
   fun loadNewPage(data: SearchResultsControllerStateData) {
     scope.launch {
       val nextPage = (data.nextPageCursor as? PageCursor.Page)?.value
-      if (nextPage == null) {
-        return@launch
-      }
+        ?: return@launch
 
       currentPage = nextPage
       doSearch()

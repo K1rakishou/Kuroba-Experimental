@@ -253,10 +253,7 @@ class TaimabaApi(
       val originalPost = postObjects.firstOrNull { postObject ->
         postObject is ThreadBookmarkInfoPostObject.OriginalPost
       } as? ThreadBookmarkInfoPostObject.OriginalPost
-
-      if (originalPost == null) {
-        throw IllegalStateException("Thread $threadDescriptor has no OP")
-      }
+        ?: throw IllegalStateException("Thread $threadDescriptor has no OP")
 
       check(threadDescriptor.threadNo == originalPost.postNo) {
         "Original post has incorrect postNo, " +

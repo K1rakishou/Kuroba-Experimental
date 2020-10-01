@@ -84,9 +84,7 @@ open class VichanActions(
     val siteDescriptor = reply.chanDescriptor!!.siteDescriptor()
 
     val site = siteManager.bySiteDescriptor(siteDescriptor)
-    if (site == null) {
-      return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
-    }
+      ?: return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
 
     val antispam = VichanAntispam(
       okHttpClient,

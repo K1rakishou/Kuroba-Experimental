@@ -38,9 +38,7 @@ class PreloadAllImagesInThreadUseCase(
 
     val isTheSameJob = mutex.withLock {
       val localActiveJob = activeJob
-      if (localActiveJob == null) {
-        return@withLock false
-      }
+        ?: return@withLock false
 
       if (localActiveJob.threadDescriptor == threadDescriptor) {
         return@withLock true
