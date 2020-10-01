@@ -193,13 +193,13 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
   sealed class SiteSettingsScreen(
     groupIdentifier: GroupIdentifier,
     settingsIdentifier: SettingIdentifier,
-    screenIdentifier: ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
+    screenIdentifier: ScreenIdentifier = getScreenIdentifier()
   ) : IScreen,
     SettingsIdentifier(screenIdentifier, groupIdentifier, settingsIdentifier) {
 
     sealed class GeneralGroup(
       settingsId: String,
-      groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+      groupIdentifier: GroupIdentifier = getGroupIdentifier()
     ) : IGroup,
       SiteSettingsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -213,7 +213,7 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
 
     sealed class AuthenticationGroup(
       settingsId: String,
-      groupIdentifier: GroupIdentifier = AuthenticationGroup.getGroupIdentifier()
+      groupIdentifier: GroupIdentifier = getGroupIdentifier()
     ) : IGroup,
       SiteSettingsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 

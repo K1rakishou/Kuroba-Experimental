@@ -100,7 +100,7 @@ open class ArchivesManager(
         allArchiveDescriptors.addAll(archiveDescriptors)
       }
 
-      return@Try Unit
+      return@Try
     }
 
     suspendableInitializer.initWithModularResult(result)

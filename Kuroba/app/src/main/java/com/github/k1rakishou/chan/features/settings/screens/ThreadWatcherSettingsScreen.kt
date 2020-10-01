@@ -156,7 +156,7 @@ class ThreadWatcherSettingsScreen(
       )
     )
 
-    Linkify.addLinks(descriptionText, Linkify.WEB_URLS);
+    Linkify.addLinks(descriptionText, Linkify.WEB_URLS)
 
     val dialog = AlertDialog.Builder(context)
       .setTitle(R.string.setting_watch_background_limitations_dialog_title)

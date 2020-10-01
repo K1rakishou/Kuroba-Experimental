@@ -88,11 +88,11 @@ inline fun <T> JsonReader.jsonArray(next: JsonReader.() -> T): T {
   }
 }
 
-public inline fun <T, R> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R>?): List<R> {
+inline fun <T, R> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R>?): List<R> {
   return flatMapNotNullTo(ArrayList<R>(), transform)
 }
 
-public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(destination: C, transform: (T) -> Iterable<R>?): C {
+inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(destination: C, transform: (T) -> Iterable<R>?): C {
   for (element in this) {
     val list = transform(element)
 
@@ -103,7 +103,7 @@ public inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNull
   return destination
 }
 
-public inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Collection<R>): List<R> {
+inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Collection<R>): List<R> {
   val destination = mutableListOf<R>()
 
   for ((index, element) in this.withIndex()) {
@@ -116,20 +116,20 @@ public inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Col
 }
 
 @Suppress("RedundantAsync")
-public suspend fun <T> CoroutineScope.myAsyncSafe(func: suspend () -> T): ModularResult<T> {
+suspend fun <T> CoroutineScope.myAsyncSafe(func: suspend () -> T): ModularResult<T> {
   return supervisorScope {
     Try { async { func() }.await() }
   }
 }
 
 @Suppress("RedundantAsync")
-public suspend fun <T> CoroutineScope.myAsync(func: suspend () -> T): T {
+suspend fun <T> CoroutineScope.myAsync(func: suspend () -> T): T {
   return supervisorScope {
     async { func() }.await()
   }
 }
 
-public inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T) -> Unit): Unit {
+inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T) -> Unit): Unit {
   if (this.isEmpty()) {
     return
   }
@@ -141,12 +141,12 @@ public inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T
   }
 }
 
-public inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(destination: C, transform: (index: Int, T) -> R?): C {
+inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(destination: C, transform: (index: Int, T) -> R?): C {
   forEachReverseIndexed { index, element -> transform(index, element)?.let { destination.add(it) } }
   return destination
 }
 
-public inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index: Int, T) -> R?): List<R> {
+inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index: Int, T) -> R?): List<R> {
   return mapReverseIndexedNotNullTo(ArrayList<R>(), transform)
 }
 
@@ -375,26 +375,26 @@ fun safeCapacity(initialCapacity: Int): Int {
   }
 }
 
-public inline fun <T> mutableListWithCap(initialCapacity: Int): MutableList<T> {
+fun <T> mutableListWithCap(initialCapacity: Int): MutableList<T> {
   return ArrayList(safeCapacity(initialCapacity))
 }
 
-public inline fun <T> mutableListWithCap(collection: Collection<*>): MutableList<T> {
+fun <T> mutableListWithCap(collection: Collection<*>): MutableList<T> {
   return ArrayList(safeCapacity(collection.size))
 }
 
-public inline fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, V> {
+fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, V> {
   return HashMap(safeCapacity(initialCapacity))
 }
 
-public inline fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
+fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
   return HashMap(safeCapacity(collection.size))
 }
 
-public inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
+fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
   return HashSet(safeCapacity(initialCapacity))
 }
 
-public inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
+fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
   return HashSet(safeCapacity(collection.size))
 }

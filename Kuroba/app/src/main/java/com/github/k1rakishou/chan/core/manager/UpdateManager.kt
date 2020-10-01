@@ -634,7 +634,7 @@ class UpdateManager(
         updateDownloadDialog = ProgressDialog(context).apply {
           setCanceledOnTouchOutside(true)
 
-          setOnDismissListener {_ ->
+          setOnDismissListener {
             showToast(context, "Download will continue in background.")
             updateDownloadDialog = null
           }

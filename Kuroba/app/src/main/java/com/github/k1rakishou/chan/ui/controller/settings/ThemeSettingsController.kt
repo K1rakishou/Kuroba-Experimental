@@ -248,10 +248,6 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
   private inner class Adapter : ViewPagerAdapter() {
 
-    override fun getPageTitle(position: Int): CharSequence? {
-      return super.getPageTitle(position)
-    }
-
     override fun getView(position: Int, parent: ViewGroup): View {
       val theme = themes[position]
       val themeContext: Context = ContextThemeWrapper(context, theme.resValue)

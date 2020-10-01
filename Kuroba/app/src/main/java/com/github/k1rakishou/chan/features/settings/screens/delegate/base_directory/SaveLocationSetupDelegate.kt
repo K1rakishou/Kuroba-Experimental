@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController
-import com.github.k1rakishou.chan.ui.controller.SaveLocationController.SaveLocationControllerCallback
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import java.io.File
 
@@ -29,7 +28,7 @@ class SaveLocationSetupDelegate(
   fun showUseSAFOrOldAPIForSaveLocationDialog() {
     BackgroundUtils.ensureMainThread()
 
-    callbacks.runWithWritePermissionsOrShowErrorToast(Runnable {
+    callbacks.runWithWritePermissionsOrShowErrorToast {
       val dialog = AlertDialog.Builder(context)
         .setTitle(R.string.media_settings_use_saf_for_save_location_dialog_title)
         .setMessage(R.string.media_settings_use_saf_for_save_location_dialog_message)
@@ -54,7 +53,7 @@ class SaveLocationSetupDelegate(
         .create()
 
       dialog.show()
-    })
+    }
   }
 
   /**
@@ -65,7 +64,7 @@ class SaveLocationSetupDelegate(
 
     val saveLocationController = SaveLocationController(context,
       SaveLocationController.SaveLocationControllerMode.ImageSaveLocation,
-      SaveLocationControllerCallback { dirPath -> presenter.onSaveLocationChosen(dirPath) }
+      { dirPath -> presenter.onSaveLocationChosen(dirPath) }
     )
 
     callbacks.pushController(saveLocationController)

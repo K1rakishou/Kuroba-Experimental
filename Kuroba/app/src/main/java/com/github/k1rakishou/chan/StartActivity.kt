@@ -233,7 +233,7 @@ class StartActivity : AppCompatActivity(),
       "Don't forget to report all the bugs on github: https://github.com/K1rakishou/Kuroba-Experimental/issues\n\n"
 
     val messageText = SpannableString(message)
-    Linkify.addLinks(messageText, Linkify.WEB_URLS);
+    Linkify.addLinks(messageText, Linkify.WEB_URLS)
 
     val dialog = AlertDialog.Builder(this)
       .setTitle("Beta version")

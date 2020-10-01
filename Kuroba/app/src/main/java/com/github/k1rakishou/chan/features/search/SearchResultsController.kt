@@ -179,7 +179,7 @@ class SearchResultsController(
         query
       )
     } else {
-      navigation.title = AndroidUtils.getString(
+      navigation.title = getString(
         R.string.controller_search_results,
         siteDescriptor.siteName,
         query,
