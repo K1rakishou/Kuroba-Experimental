@@ -53,6 +53,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
@@ -89,7 +90,7 @@ class DrawerController(
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
-  private lateinit var divider: View
+  private lateinit var divider: ColorizableDivider
 
   private val drawerPresenter = DrawerPresenter(isDevBuild())
   private val childControllersStack = Stack<Controller>()
@@ -148,7 +149,7 @@ class DrawerController(
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
-    divider = view.findViewById<View>(R.id.divider)
+    divider = view.findViewById(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
 
     bottomNavView.selectedItemId = R.id.action_browse
@@ -209,18 +210,29 @@ class DrawerController(
   }
 
   override fun onThemeChanged() {
+    drawerPresenter.onThemeChanged()
+    settingsNotificationManager.onThemeChanged()
+
     divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
+    bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+
+    val uncheckedColorNormal = if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
+      Color.LTGRAY
+    } else {
+      Color.DKGRAY
+    }
+
+    val uncheckedColorDarkened = manipulateColor(uncheckedColorNormal, .7f)
+
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeEngine.chanTheme.textColorSecondary)
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
     )
 
     bottomNavView.itemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeEngine.chanTheme.textColorSecondary)
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
     )
-
-    bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
   }
 
   override fun onDestroy() {
@@ -501,13 +513,18 @@ class DrawerController(
     badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = state.totalUnseenPostsCount
 
-    if (state.hasUnreadReplies) {
-      badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
+    val backgroundColor = if (state.hasUnreadReplies) {
+      themeEngine.chanTheme.accentColor
     } else {
-      badgeDrawable.backgroundColor = themeEngine.chanTheme.backColor
+      themeEngine.chanTheme.backColorSecondary
     }
 
-    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textColorPrimary
+    badgeDrawable.backgroundColor = backgroundColor
+    badgeDrawable.badgeTextColor = if (isDarkColor(backgroundColor)) {
+      Color.WHITE
+    } else {
+      Color.BLACK
+    }
   }
 
   private fun onSettingsNotificationChanged() {
@@ -527,7 +544,11 @@ class DrawerController(
     badgeDrawable.number = notificationsCount
 
     badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
-    badgeDrawable.badgeTextColor = themeEngine.chanTheme.textColorPrimary
+    badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {
+      Color.WHITE
+    } else {
+      Color.BLACK
+    }
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {

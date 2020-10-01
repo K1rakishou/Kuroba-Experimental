@@ -17,7 +17,7 @@ class EpoxySettingsGroupTitle  @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -29,17 +29,37 @@ class EpoxySettingsGroupTitle  @JvmOverloads constructor(
     View.inflate(context, R.layout.epoxy_settings_group_title, this)
 
     groupTitle = findViewById(R.id.group_title)
-    groupTitle.setTextColor(themeEngine.chanTheme.textColorSecondary)
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateGroupTitleTextColor()
   }
 
   @ModelProp
   fun setGroupTitle(title: String?) {
-    if (title != null) {
-      groupTitle.visibility = View.VISIBLE
-      groupTitle.text = title
-    } else {
+    groupTitle.text = title
+
+    if (title == null) {
       groupTitle.visibility = View.GONE
+      return
     }
+
+    groupTitle.visibility = View.VISIBLE
+    updateGroupTitleTextColor()
+  }
+
+  private fun updateGroupTitleTextColor() {
+    groupTitle.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
 }

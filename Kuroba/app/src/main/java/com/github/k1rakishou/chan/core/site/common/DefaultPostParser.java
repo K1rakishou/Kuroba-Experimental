@@ -30,11 +30,13 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -142,7 +144,7 @@ public class DefaultPostParser implements PostParser {
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
             if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
                 subjectSpan.setSpan(
-                        new ForegroundColorSpanHashed(theme.getPostSubjectColor()),
+                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
                         0,
                         subjectSpan.length(),
                         0
@@ -158,7 +160,7 @@ public class DefaultPostParser implements PostParser {
         ) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.getPostNameColor()),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
                     0,
                     nameSpan.length(),
                     0
@@ -168,7 +170,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.tripcode)) {
             tripcodeSpan = new SpannableString(builder.tripcode);
             tripcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.getPostNameColor()),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
                     0,
                     tripcodeSpan.length(),
                     0
@@ -193,7 +195,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
             capcodeSpan = new SpannableString("Capcode: " + builder.moderatorCapcode);
             capcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.getAccentColor()),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
                     0,
                     capcodeSpan.length(),
                     0
@@ -272,7 +274,7 @@ public class DefaultPostParser implements PostParser {
             String text = ((TextNode) node).text();
 
             SpannableString spannable = new SpannableString(text);
-            CommentParserHelper.detectLinks(theme, post, text, spannable);
+            CommentParserHelper.detectLinks(post, text, spannable);
 
             return spannable;
         } else if (node instanceof Element) {

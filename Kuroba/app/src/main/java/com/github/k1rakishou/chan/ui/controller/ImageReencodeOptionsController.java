@@ -7,7 +7,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
@@ -118,9 +117,6 @@ public class ImageReencodeOptionsController
 
         ColorizableRadioButton reencodeImageAsJpeg = view.findViewById(R.id.reencode_image_as_jpeg);
         ColorizableRadioButton reencodeImageAsPng = view.findViewById(R.id.reencode_image_as_png);
-
-        CardView cardView = view.findViewById(R.id.card_view);
-        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getBackColor());
 
         viewHolder.setOnClickListener(this);
         cancel.setOnClickListener(this);

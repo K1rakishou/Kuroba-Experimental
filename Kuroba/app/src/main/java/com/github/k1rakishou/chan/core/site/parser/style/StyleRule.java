@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site.parser.style;
 
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -33,11 +32,12 @@ import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
-import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.ColorizableBackgroundColorSpan;
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.CustomTypefaceSpan;
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import org.jsoup.nodes.Element;
 
@@ -46,16 +46,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class StyleRule {
-    public enum ForegroundColor {
-        INLINE_QUOTE,
-        QUOTE,
-        RED
-    }
-
-    public enum BackgroundColor {
-        CODE
-    }
-
     private final List<String> blockElements = Arrays.asList("p", "div");
 
     public static StyleRule tagRule(String tag) {
@@ -67,8 +57,8 @@ public class StyleRule {
 
     private List<Action> actions = new ArrayList<>();
 
-    private ForegroundColor foregroundColor = null;
-    private BackgroundColor backgroundColor = null;
+    private ChanThemeColorId foregroundChanThemeColorId = null;
+    private ChanThemeColorId backgroundChanThemeColorId = null;
     private boolean strikeThrough;
     private boolean underline;
     private boolean bold;
@@ -114,13 +104,13 @@ public class StyleRule {
         return this;
     }
 
-    public StyleRule foregroundColor(ForegroundColor foregroundColor) {
-        this.foregroundColor = foregroundColor;
+    public StyleRule foregroundColorId(ChanThemeColorId foregroundChanThemeColorId) {
+        this.foregroundChanThemeColorId = foregroundChanThemeColorId;
         return this;
     }
 
-    public StyleRule backgroundColor(BackgroundColor backgroundColor) {
-        this.backgroundColor = backgroundColor;
+    public StyleRule backgroundColorId(ChanThemeColorId backgroundChanThemeColorId) {
+        this.backgroundChanThemeColorId = backgroundChanThemeColorId;
         return this;
     }
 
@@ -221,12 +211,12 @@ public class StyleRule {
 
         List<Object> spansToApply = new ArrayList<>(2);
 
-        if (foregroundColor != null) {
-            spansToApply.add(new ForegroundColorSpanHashed(getForegroundColor(theme, foregroundColor)));
+        if (foregroundChanThemeColorId != null) {
+            spansToApply.add(new ColorizableForegroundColorSpan(foregroundChanThemeColorId));
         }
 
-        if (backgroundColor != null) {
-            spansToApply.add(new BackgroundColorSpanHashed(getBackgroundColor(theme, backgroundColor)));
+        if (backgroundChanThemeColorId != null) {
+            spansToApply.add(new ColorizableBackgroundColorSpan(backgroundChanThemeColorId));
         }
 
         if (strikeThrough) {
@@ -259,7 +249,6 @@ public class StyleRule {
 
         if (link != null && post != null) {
             PostLinkable pl = new PostLinkable(
-                    theme,
                     resultText,
                     new PostLinkable.Value.StringValue(resultText),
                     link
@@ -279,30 +268,10 @@ public class StyleRule {
         }
 
         if (linkify && post != null) {
-            CommentParserHelper.detectLinks(theme, post, resultText.toString(), new SpannableString(resultText));
+            CommentParserHelper.detectLinks(post, resultText.toString(), new SpannableString(resultText));
         }
 
         return resultText;
-    }
-
-    private int getForegroundColor(ChanTheme theme, ForegroundColor foregroundColor) {
-        switch (foregroundColor) {
-            case INLINE_QUOTE:
-                return theme.getPostInlineQuoteColor();
-            case QUOTE:
-                return theme.getPostQuoteColor();
-            case RED:
-                return Color.RED;
-            default:
-                return 0;
-        }
-    }
-
-    private int getBackgroundColor(ChanTheme theme, BackgroundColor backgroundColor) {
-        if (backgroundColor == BackgroundColor.CODE) {
-            return theme.getBackColorSecondary();
-        }
-        return 0;
     }
 
     private SpannableString applySpan(CharSequence text, List<Object> spans) {

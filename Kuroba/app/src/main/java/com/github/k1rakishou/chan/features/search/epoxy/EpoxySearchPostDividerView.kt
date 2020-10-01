@@ -9,6 +9,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.common.updateMargins
 import javax.inject.Inject
 
@@ -22,14 +23,13 @@ class EpoxySearchPostDividerView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val divider: View
+  private val divider: ColorizableDivider
 
   init {
     Chan.inject(this)
     View.inflate(context, R.layout.epoxy_divider_view, this)
 
-    divider = findViewById<View>(R.id.divider)
-    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
+    divider = findViewById(R.id.divider)
   }
 
   @JvmOverloads

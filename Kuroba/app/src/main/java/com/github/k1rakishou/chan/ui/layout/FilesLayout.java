@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 
 import java.util.HashMap;
@@ -44,7 +45,7 @@ import javax.inject.Inject;
 
 public class FilesLayout
         extends LinearLayout
-        implements FilesAdapter.Callback, View.OnClickListener {
+        implements FilesAdapter.Callback, View.OnClickListener, ThemeEngine.ThemeChangesListener {
 
     @Inject
     ThemeEngine themeEngine;
@@ -85,15 +86,39 @@ public class FilesLayout
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        backText.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+
+        if (filesAdapter != null) {
+            filesAdapter.refresh();
+        }
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+        backImage.setImageDrawable(themeEngine.tintDrawable(backImage.getDrawable(), isDarkColor));
+    }
+
+    @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
         backLayout = findViewById(R.id.back_layout);
         backImage = backLayout.findViewById(R.id.back_image);
-        backImage.setImageDrawable(DrawableCompat.wrap(backImage.getDrawable()));
         backText = backLayout.findViewById(R.id.back_text);
         recyclerView = findViewById(R.id.recycler);
 
         backLayout.setOnClickListener(this);
+        onThemeChanged();
     }
 
     public void initialize() {

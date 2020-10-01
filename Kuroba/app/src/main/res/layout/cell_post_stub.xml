@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:src="@drawable/ic_overflow"
         tools:ignore="ContentDescription,RtlHardcoded" />
 
-    <View
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"

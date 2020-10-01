@@ -143,12 +143,15 @@ class StartActivity : AppCompatActivity(),
 
     // TODO(KurobaEx-themes): remove me !!!!!!!!!!!!!!
     lifecycleScope.launch {
-      while (isActive) {
-        delay(10000)
-        themeEngine.updateTheme(MockDarkChanTheme(), drawerController.view)
+      val darkTheme = MockDarkChanTheme(this@StartActivity)
+      val lightTheme = MockLightChanTheme(this@StartActivity)
 
-        delay(10000)
-        themeEngine.updateTheme(MockLightChanTheme(), drawerController.view)
+      while (isActive) {
+        delay(5000)
+        themeEngine.updateTheme(darkTheme, drawerController.view)
+
+        delay(5000)
+        themeEngine.updateTheme(lightTheme, drawerController.view)
       }
     }
 

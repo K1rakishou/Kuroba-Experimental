@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -63,7 +64,7 @@ public class PostStubCell
     PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private TextView title;
-    private View divider;
+    private ColorizableDivider divider;
     private boolean inPopup;
 
     public PostStubCell(Context context) {
@@ -94,7 +95,6 @@ public class PostStubCell
         AndroidUtils.setBoundlessRoundRippleBackground(options);
 
         divider = findViewById(R.id.divider);
-        divider.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
 
         int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get());
         title.setTextSize(textSizeSp);

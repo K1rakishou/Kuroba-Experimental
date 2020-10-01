@@ -23,14 +23,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
-import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -63,9 +62,16 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         this.highlightedItem = highlightedItem;
     }
 
+    public void refresh() {
+        notifyDataSetChanged();
+    }
+
     @Override
     public FileViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return new FileViewHolder(inflate(parent.getContext(), R.layout.cell_file, parent, false));
+        return new FileViewHolder(
+                themeEngine,
+                inflate(parent.getContext(), R.layout.cell_file, parent, false)
+        );
     }
 
     @Override
@@ -86,8 +92,13 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     fileViewHolder.image.setVisibility(GONE);
                 } else {
                     fileViewHolder.image.setVisibility(VISIBLE);
-                    Drawable drawable = DrawableCompat.wrap(ContextCompat.getDrawable(context, R.drawable.ic_folder_black_24dp));
-                    DrawableCompat.setTint(drawable, themeEngine.getChanTheme().getTextColorSecondary());
+
+                    Drawable drawable = themeEngine.getDrawableTinted(
+                            context,
+                            R.drawable.ic_folder_black_24dp,
+                            AndroidUtils.isDarkColor(themeEngine.getChanTheme().getBackColor())
+                    );
+
                     fileViewHolder.image.setImageDrawable(drawable);
                 }
 
@@ -98,6 +109,7 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     fileViewHolder.itemView.setBackgroundResource(R.drawable.item_background);
                 }
 
+                fileViewHolder.updateColors();
                 break;
             }
         }
@@ -128,17 +140,24 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         callback.onFileItemClicked(fileItem);
     }
 
-    public class FileViewHolder
-            extends RecyclerView.ViewHolder
-            implements View.OnClickListener {
+    public class FileViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private ThemeEngine themeEngine;
         private ImageView image;
         private TextView text;
 
-        public FileViewHolder(View itemView) {
+        public FileViewHolder(ThemeEngine themeEngine, View itemView) {
             super(itemView);
+            this.themeEngine = themeEngine;
+
             image = itemView.findViewById(R.id.image);
             text = itemView.findViewById(R.id.text);
             itemView.setOnClickListener(this);
+
+            updateColors();
+        }
+
+        public void updateColors() {
+            text.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
         }
 
         @Override

@@ -152,7 +152,9 @@ public class SerializableSpannableString {
         StyleSpanType(3),
         TypefaceSpanType(4),
         AbsoluteSizeSpanHashed(5),
-        PostLinkable(6);
+        PostLinkable(6),
+        ColorizableBackgroundColorSpan(7),
+        ColorizableForegroundColorSpan(8);
 
         private int spanTypeValue;
 
@@ -181,6 +183,10 @@ public class SerializableSpannableString {
                     return AbsoluteSizeSpanHashed;
                 case 6:
                     return PostLinkable;
+                case 7:
+                    return ColorizableBackgroundColorSpan;
+                case 8:
+                    return ColorizableForegroundColorSpan;
                 default:
                     throw new IllegalArgumentException("Not implemented for value = " + value);
             }

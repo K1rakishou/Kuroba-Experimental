@@ -1,25 +1,25 @@
 package com.github.k1rakishou.chan.ui.theme
 
+import android.content.Context
 import android.graphics.Color
 
 class MockLightChanTheme(
+  override val context: Context,
   override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Test light theme",
   override val isLightTheme: Boolean = true,
   override val lightStatusBar: Boolean = true,
   override val lightNavBar: Boolean = true,
-  override val accentColor: Int = Color.parseColor("#0D47A1"),
+  override val accentColor: Int = Color.parseColor("#00a0a0"),
   override val primaryColor: Int = Color.parseColor("#0D47A1"),
   override val backColor: Int = Color.parseColor("#d6daf0"),
   override val backColorSecondary: Int = Color.parseColor("#eef2ff"),
   override val errorColor: Int = Color.parseColor("#ff4444"),
   override val textColorPrimary: Int = Color.parseColor("#000000"),
-  override val textColorSecondary: Int = Color.parseColor("#4d4d4d"),
-  override val textColorHint: Int = Color.parseColor("#333333"),
-  override val drawableTintColor: Int = Color.parseColor("#FFFFFF"),
-  override val postHighlightedColor: Int = Color.parseColor("#444444"),
-  override val postSavedReplyColor: Int = Color.parseColor("#5C5C5C"),
-  override val postSelectedColor: Int = Color.parseColor("#5C5C5C"),
+  override val textColorSecondary: Int = Color.parseColor("#6b6b6b"),
+  override val textColorHint: Int = Color.parseColor("#8c8c8c"),
+  override val postHighlightedColor: Int = Color.parseColor("#a3a6b5"),
+  override val postSavedReplyColor: Int = Color.parseColor("#a3b2ff"),
   override val postSubjectColor: Int = Color.parseColor("#0F0C5D"),
   override val postDetailsColor: Int = Color.parseColor("#656565"),
   override val postNameColor: Int = Color.parseColor("#117743"),

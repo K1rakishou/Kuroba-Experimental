@@ -378,7 +378,6 @@ public class FiltersController
     private class FilterCell extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView text;
         private TextView subtext;
-        private View divider;
 
         @SuppressLint("ClickableViewAccessibility")
         public FilterCell(View itemView) {
@@ -386,9 +385,6 @@ public class FiltersController
 
             text = itemView.findViewById(R.id.text);
             subtext = itemView.findViewById(R.id.subtext);
-
-            divider = itemView.findViewById(R.id.divider);
-            divider.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
 
             ImageView reorder = itemView.findViewById(R.id.reorder);
             Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_reorder_black_24dp);

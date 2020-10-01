@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.cardview.widget.CardView
 import androidx.core.graphics.component1
 import androidx.core.graphics.component2
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -67,9 +66,6 @@ class BoardSelectionController(
     searchView = view.findViewById(R.id.search_view)
     searchView.setAutoRequestFocus(false)
     openSitesButton = view.findViewById(R.id.open_all_sites_settings)
-
-    val cardView = view.findViewById<CardView>(R.id.card_view)
-    cardView.setCardBackgroundColor(themeEngine.chanTheme.backColor)
 
     val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
     val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()

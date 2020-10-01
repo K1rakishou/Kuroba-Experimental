@@ -20,7 +20,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -34,18 +34,26 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
     holder = findViewById(R.id.holder)
     title = findViewById(R.id.title)
+  }
 
-    val colorStateList = ColorStateList(
-      arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf(-android.R.attr.state_enabled)),
-      intArrayOf(themeEngine.chanTheme.textColorPrimary, themeEngine.chanTheme.textColorSecondary)
-    )
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
 
-    title.setTextColor(colorStateList)
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateTitleColor()
   }
 
   @ModelProp
   fun setTitle(text: String) {
     title.text = text
+    updateTitleColor()
   }
 
   @ModelProp
@@ -73,6 +81,15 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
     }
 
     holder.setOnClickListener { callback.invoke() }
+  }
+
+  private fun updateTitleColor() {
+    val colorStateList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf(-android.R.attr.state_enabled)),
+      intArrayOf(themeEngine.chanTheme.textColorPrimary, themeEngine.chanTheme.textColorSecondary)
+    )
+
+    title.setTextColor(colorStateList)
   }
 
 }

@@ -23,9 +23,6 @@ class EpoxyDividerView @JvmOverloads constructor(
   init {
     Chan.inject(this)
     View.inflate(context, R.layout.epoxy_divider_view, this)
-
-    val divider = findViewById<View>(R.id.divider)
-    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
   }
 
 }

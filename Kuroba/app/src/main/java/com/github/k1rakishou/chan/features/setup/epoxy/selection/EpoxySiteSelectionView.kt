@@ -23,7 +23,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -43,10 +43,24 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
     siteName = findViewById(R.id.site_name)
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateSiteNameColor()
+  }
+
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    updateSiteNameColor()
   }
 
   @ModelProp
@@ -88,4 +102,9 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
     this.requestDisposable?.dispose()
     this.requestDisposable = null
   }
+
+  private fun updateSiteNameColor() {
+    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+  }
+
 }

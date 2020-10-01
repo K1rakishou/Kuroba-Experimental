@@ -240,7 +240,7 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    presenter.fullReload()
+    presenter.quickReload(showLoading = false, requestNewPosts = false)
   }
 
   override fun onClick(v: View) {
@@ -882,50 +882,52 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun switchVisible(visible: Visible) {
-    if (this.visible != visible) {
-      if (this.visible != null) {
-        if (this.visible == Visible.THREAD) {
-          threadListLayout.cleanup()
-          postPopupHelper.popAll()
+    if (this.visible == visible) {
+      return
+    }
 
-          if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
-            showSearch(false)
-          }
+    if (this.visible != null) {
+      if (this.visible == Visible.THREAD) {
+        threadListLayout.cleanup()
+        postPopupHelper.popAll()
 
-          showReplyButton(false)
-          dismissSnackbar()
+        if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
+          showSearch(false)
         }
+
+        showReplyButton(false)
+        dismissSnackbar()
       }
+    }
 
-      this.visible = visible
+    this.visible = visible
 
-      when (visible) {
-        Visible.EMPTY -> {
-          loadView.setView(inflateEmptyView())
-          showReplyButton(false)
-        }
-        Visible.LOADING -> {
-          val view = loadView.setView(progressLayout)
+    when (visible) {
+      Visible.EMPTY -> {
+        loadView.setView(inflateEmptyView())
+        showReplyButton(false)
+      }
+      Visible.LOADING -> {
+        val view = loadView.setView(progressLayout)
 
-          if (refreshedFromSwipe) {
-            refreshedFromSwipe = false
-            view.visibility = View.GONE
-          } else {
-            view.visibility = View.VISIBLE
-          }
+        if (refreshedFromSwipe) {
+          refreshedFromSwipe = false
+          view.visibility = View.GONE
+        } else {
+          view.visibility = View.VISIBLE
+        }
 
-          showReplyButton(false)
-        }
-        Visible.THREAD -> {
-          callback.hideSwipeRefreshLayout()
-          loadView.setView(threadListLayout)
-          showReplyButton(true)
-        }
-        Visible.ERROR -> {
-          callback.hideSwipeRefreshLayout()
-          loadView.setView(errorLayout)
-          showReplyButton(false)
-        }
+        showReplyButton(false)
+      }
+      Visible.THREAD -> {
+        callback.hideSwipeRefreshLayout()
+        loadView.setView(threadListLayout)
+        showReplyButton(true)
+      }
+      Visible.ERROR -> {
+        callback.hideSwipeRefreshLayout()
+        loadView.setView(errorLayout)
+        showReplyButton(false)
       }
     }
   }

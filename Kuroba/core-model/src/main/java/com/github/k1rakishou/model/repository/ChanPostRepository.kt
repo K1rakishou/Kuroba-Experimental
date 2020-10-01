@@ -192,9 +192,12 @@ class ChanPostRepository(
     }
   }
 
+  /**
+   * Returns LinkedHashMap of OP posts associated with thread descriptors sorted in the order of [threadDescriptors]
+   * */
   suspend fun getCatalogOriginalPosts(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
-  ): ModularResult<Map<ChanDescriptor.ThreadDescriptor, ChanPost>> {
+  ): ModularResult<LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.myAsync {
@@ -220,20 +223,26 @@ class ChanPostRepository(
           postCache.putManyIntoCache(originalPostsFromDatabase.values)
         }
 
-        val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
+        val tempMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
           originalPostsFromCache.size + originalPostsFromDatabase.size
         )
 
         logger.log(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
           "the cache and the rest (${originalPostsFromDatabase.size}) taken from the database")
 
-        resultMap.putAll(originalPostsFromCache)
-        resultMap.putAll(originalPostsFromDatabase)
+        tempMap.putAll(originalPostsFromCache)
+        tempMap.putAll(originalPostsFromDatabase)
 
         if (isDevFlavor) {
-          resultMap.values.forEach { chanPost ->
+          tempMap.values.forEach { chanPost ->
             check(chanPost.isOp) { "getCatalogOriginalPosts() is returning a non-OP post!" }
           }
+        }
+
+        val resultMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(tempMap.size)
+
+        threadDescriptors.forEach { threadDescriptor ->
+          resultMap[threadDescriptor] = requireNotNull(tempMap[threadDescriptor])
         }
 
         return@tryWithTransaction resultMap

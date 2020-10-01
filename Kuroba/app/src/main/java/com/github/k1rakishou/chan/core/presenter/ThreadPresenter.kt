@@ -297,48 +297,15 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun quickReload() {
+  fun quickReload(showLoading: Boolean = true, requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
 
     if (isBound) {
-      threadPresenterCallback?.showLoading()
-      chanLoader?.quickLoad()
-    }
-  }
-
-  fun fullReload() {
-    if (!isBound) {
-      return
-    }
-
-    val thread = chanLoader?.thread
-      ?: return
-
-    when (val descriptor = thread.chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> {
-        launch {
-          chanPostRepository.deleteThreadsFromCache(listOf(descriptor))
-          thread.clearPosts()
-
-          chanLoader!!.reloadFromDatabase()
-        }
+      if (showLoading) {
+        threadPresenterCallback?.showLoading()
       }
-      is ChanDescriptor.CatalogDescriptor -> {
-        launch {
-          val catalogThreads = thread.getPosts()
-            .map { post ->
-              require(post.isOP) { "Not OP post!" }
-              return@map ChanDescriptor.ThreadDescriptor.create(descriptor, post.no)
-            }
 
-          chanPostRepository.deleteThreadsFromCache(catalogThreads)
-          thread.clearPosts()
-
-          // TODO(KurobaEx-themes): reload from the database, we have all the necessary info, what's left
-          //  is the SQL query
-          chanLoader!!.requestData()
-        }
-      }
+      chanLoader?.quickLoad(requestNewPosts)
     }
   }
 

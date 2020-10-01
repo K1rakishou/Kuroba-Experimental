@@ -70,6 +70,10 @@ class DrawerPresenter(
     }
   }
 
+  fun onThemeChanged() {
+    updateBadge()
+  }
+
   private fun reloadNavigationHistory(bookmarkChange: BookmarksManager.BookmarkChange) {
     val bookmarkThreadDescriptors = bookmarkChange.threadDescriptorsOrNull()?.toSet()
 
@@ -100,7 +104,6 @@ class DrawerPresenter(
     return bookmarksBadgeStateSubject
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
-      .distinctUntilChanged()
       .hide()
   }
 
@@ -188,6 +191,10 @@ class DrawerPresenter(
   }
 
   private fun updateBadge() {
+    if (!bookmarksManager.isReady()) {
+      return
+    }
+
     val totalUnseenPostsCount = bookmarksManager.getTotalUnseenPostsCount()
     val hasUnreadReplies = bookmarksManager.hasUnreadReplies()
 

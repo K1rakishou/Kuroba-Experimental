@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <View
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp" />

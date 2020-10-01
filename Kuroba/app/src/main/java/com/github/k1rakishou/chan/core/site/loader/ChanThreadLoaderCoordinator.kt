@@ -83,7 +83,6 @@ class ChanThreadLoaderCoordinator(
     ReloadPostsFromDatabaseUseCase(
       gson,
       chanPostRepository,
-      themeEngine,
       boardManager
     )
   }
@@ -165,12 +164,18 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
-  suspend fun reloadThreadFromDatabase(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
-    Logger.d(TAG, "reloadThreadFromDatabase($chanDescriptor)")
+  suspend fun reloadThreadFromDatabase(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanLoaderResponse? {
+    Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
     BackgroundUtils.ensureBackgroundThread()
 
-    return databasePostLoader.loadPosts(chanDescriptor)
+    return databasePostLoader.loadPosts(threadDescriptor)
+  }
+
+  suspend fun reloadCatalogFromDatabase(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): ChanLoaderResponse? {
+    Logger.d(TAG, "reloadThreadFromDatabase(${threadDescriptors.size})")
+    BackgroundUtils.ensureBackgroundThread()
+
+    return databasePostLoader.loadCatalog(threadDescriptors)
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(

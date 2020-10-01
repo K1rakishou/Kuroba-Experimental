@@ -87,8 +87,8 @@ open class ColorizableEditText @JvmOverloads constructor(
         ),
         intArrayOf(
           AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
-          themeEngine.chanTheme.textColorPrimary,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
+          themeEngine.chanTheme.defaultColors.controlNormalColor,
+          themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
           themeEngine.chanTheme.textColorHint
         )
       )

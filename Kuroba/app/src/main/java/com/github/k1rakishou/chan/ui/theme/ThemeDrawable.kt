@@ -5,7 +5,7 @@ import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
 
-class ThemeDrawable(var drawable: Int, alpha: Float) {
+class ThemeDrawable(val drawable: Int, alpha: Float) {
   var intAlpha = 0
   var tint = -1
 

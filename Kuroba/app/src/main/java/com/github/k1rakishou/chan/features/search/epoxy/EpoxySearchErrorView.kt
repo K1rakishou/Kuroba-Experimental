@@ -18,7 +18,7 @@ class EpoxySearchErrorView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -35,13 +35,29 @@ class EpoxySearchErrorView @JvmOverloads constructor(
     errorText = findViewById(R.id.search_post_error_text)
     retryButton = findViewById(R.id.search_post_error_retry_button)
 
-    errorTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    errorText.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    updateTitleColor()
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateTextColor()
+    updateTitleColor()
   }
 
   @ModelProp
   fun setErrorText(text: String) {
     errorText.text = text
+
+    updateTextColor()
   }
 
   @CallbackProp
@@ -52,6 +68,14 @@ class EpoxySearchErrorView @JvmOverloads constructor(
     }
 
     retryButton.setOnClickListener { listener.invoke() }
+  }
+
+  private fun updateTitleColor() {
+    errorTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
+  }
+
+  private fun updateTextColor() {
+    errorText.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

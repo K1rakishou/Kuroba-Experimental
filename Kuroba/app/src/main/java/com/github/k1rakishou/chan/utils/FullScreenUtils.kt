@@ -23,18 +23,24 @@ object FullScreenUtils {
     var newSystemUiVisibility = decorView.systemUiVisibility
 
     if (AndroidUtils.isAndroidM()) {
-      newSystemUiVisibility = if (theme.lightStatusBar) {
-        newSystemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-      } else {
-        newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+      newSystemUiVisibility = when {
+        theme.lightStatusBar -> {
+          newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+        }
+        else -> {
+          newSystemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        }
       }
     }
 
     if (AndroidUtils.isAndroidO()) {
-      newSystemUiVisibility = if (theme.lightNavBar) {
-        newSystemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-      } else {
-        newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+      newSystemUiVisibility = when {
+        theme.lightNavBar -> {
+          newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+        }
+        else -> {
+          newSystemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }
       }
     }
 

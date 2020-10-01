@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import java.util.regex.Pattern;
 
@@ -35,7 +36,7 @@ public class VichanCommentParser extends CommentParser implements ICommentParser
 
         rule(StyleRule.tagRule("p")
                 .cssClass("quote")
-                .foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE)
+                .foregroundColorId(ChanThemeColorId.PostInlineQuoteColor)
                 .linkify());
     }
 

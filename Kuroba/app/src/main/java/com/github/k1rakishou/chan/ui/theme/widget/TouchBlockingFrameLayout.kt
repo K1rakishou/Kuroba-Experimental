@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import javax.inject.Inject
 
-class TouchBlockingFrameLayout @JvmOverloads constructor(
+open class TouchBlockingFrameLayout @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defStyle: Int = 0

@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
 
@@ -59,13 +58,11 @@ public class CommentParserHelper {
      * <p>
      * The links are detected with the autolink-java library.
      *
-     * @param theme     The theme to style the links with
      * @param post      The post where the linkables get added to.
      * @param text      Text to find links in
      * @param spannable Spannable to set the spans on.
      */
     public static void detectLinks(
-            ChanTheme theme,
             Post.Builder post,
             String text,
             SpannableString spannable
@@ -75,7 +72,6 @@ public class CommentParserHelper {
         for (final LinkSpan link : links) {
             final String linkText = text.substring(link.getBeginIndex(), link.getEndIndex());
             final PostLinkable pl = new PostLinkable(
-                    theme,
                     linkText,
                     new PostLinkable.Value.StringValue(linkText),
                     PostLinkable.Type.LINK

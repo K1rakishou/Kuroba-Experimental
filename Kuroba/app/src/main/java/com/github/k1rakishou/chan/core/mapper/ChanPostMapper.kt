@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.mapper
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -74,27 +73,23 @@ object ChanPostMapper {
     fun toPost(
       gson: Gson,
       chanPost: ChanPost,
-      currentTheme: ChanTheme,
       archiveDescriptor: ArchiveDescriptor?
     ): Post {
         val opId = chanPost.postDescriptor.getThreadNo()
 
         val postComment = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.postComment,
-                currentTheme
+                chanPost.postComment
         )
 
         val subject = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.subject,
-                currentTheme
+                chanPost.subject
         )
 
         val tripcode = SpannableStringMapper.deserializeSpannableString(
                 gson,
-                chanPost.tripcode,
-                currentTheme
+                chanPost.tripcode
         )
 
         // We store both - the normal images and the archives images in the database together

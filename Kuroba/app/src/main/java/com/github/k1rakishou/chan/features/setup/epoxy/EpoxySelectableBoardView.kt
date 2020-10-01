@@ -18,7 +18,7 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -36,19 +36,33 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)
     boardCheckbox = findViewById(R.id.board_selection_checkbox)
+  }
 
-    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateBoardDescriptionColor()
+    updateBoardNameColor()
   }
 
   @ModelProp
   fun setBoardName(boardName: String) {
     this.boardName.text = boardName
+    updateBoardNameColor()
   }
 
   @ModelProp
   fun setBoardDescription(boardDescription: String) {
     this.boardDescription.text = boardDescription
+    updateBoardDescriptionColor()
   }
 
   @ModelProp
@@ -71,6 +85,14 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
       boardCheckbox.isChecked = !boardCheckbox.isChecked
       callback.invoke(boardCheckbox.isChecked)
     }
+  }
+
+  private fun updateBoardDescriptionColor() {
+    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
+  }
+
+  private fun updateBoardNameColor() {
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

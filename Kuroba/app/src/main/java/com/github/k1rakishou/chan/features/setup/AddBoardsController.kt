@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -64,9 +63,6 @@ class AddBoardsController(
     cancel = view.findViewById(R.id.cancel_adding_boards)
     addBoards = view.findViewById(R.id.add_boards)
     outsideArea = view.findViewById(R.id.outside_area)
-
-    val cardView = view.findViewById<CardView>(R.id.card_view)
-    cardView.setCardBackgroundColor(themeEngine.chanTheme.backColor)
 
     mainScope.launch {
       startListeningForSearchQueries()

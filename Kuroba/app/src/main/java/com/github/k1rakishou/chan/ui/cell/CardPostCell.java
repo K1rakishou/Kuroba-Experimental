@@ -24,8 +24,6 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.cardview.widget.CardView;
-
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
@@ -36,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -52,9 +51,9 @@ import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpO
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
-public class CardPostCell
-        extends CardView
-        implements PostCellInterface, View.OnClickListener, View.OnLongClickListener {
+public class CardPostCell extends ColorizableCardView implements PostCellInterface,
+        View.OnClickListener, View.OnLongClickListener {
+
     private static final int COMMENT_MAX_LENGTH = 200;
 
     @Inject
@@ -75,7 +74,6 @@ public class CardPostCell
     private TextView replies;
     private ImageView options;
     private View filterMatchColor;
-    private CardView cardView;
 
     public CardPostCell(Context context) {
         super(context);
@@ -110,9 +108,6 @@ public class CardPostCell
         comment = findViewById(R.id.comment);
         replies = findViewById(R.id.replies);
         options = findViewById(R.id.options);
-
-        cardView = findViewById(R.id.card_view);
-        cardView.setCardBackgroundColor(themeEngine.getChanTheme().getBackColor());
 
         AndroidUtils.setBoundlessRoundRippleBackground(options);
         filterMatchColor = findViewById(R.id.filter_match_color);

@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="UselessParent">
 
-        <androidx.cardview.widget.CardView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -87,7 +87,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
     </com.github.k1rakishou.chan.ui.layout.PostRepliesContainer>
 

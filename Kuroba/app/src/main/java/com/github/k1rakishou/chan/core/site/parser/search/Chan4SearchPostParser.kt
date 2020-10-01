@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -34,7 +35,7 @@ open class Chan4SearchPostParser {
       .cssClass("prettyprint")
       .monospace()
       .size(AndroidUtils.sp(12f))
-      .backgroundColor(StyleRule.BackgroundColor.CODE)
+      .backgroundColorId(ChanThemeColorId.BackColorSecondary)
     )
 
     rule(StyleRule.tagRule("span")
@@ -43,10 +44,10 @@ open class Chan4SearchPostParser {
     )
 
     rule(StyleRule.tagRule("span").cssClass("abbr").nullify())
-    rule(StyleRule.tagRule("span").foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE).linkify())
+    rule(StyleRule.tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor).linkify())
 
     rule(StyleRule.tagRule("strong").bold())
-    rule(StyleRule.tagRule("strong-red;").bold().foregroundColor(StyleRule.ForegroundColor.RED))
+    rule(StyleRule.tagRule("strong-red;").bold().foregroundColorId(ChanThemeColorId.AccentColor))
   }
 
   open fun parseComment(

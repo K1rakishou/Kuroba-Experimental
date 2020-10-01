@@ -127,16 +127,16 @@ open class BaseThreadBookmarkViewHolder(
     setRegularBookmarksStats(isGridMode, threadBookmarkStats)
 
     if (isGridMode && !threadBookmarkStats.isFirstFetch) {
-      bookmarkAdditionalStats!!.visibility = View.VISIBLE
+      bookmarkAdditionalStats?.visibility = View.VISIBLE
 
       if (threadBookmarkStats.watching) {
-        bookmarkAdditionalStats!!.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
+        bookmarkAdditionalStats?.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
       } else {
-        bookmarkAdditionalStats!!.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
+        bookmarkAdditionalStats?.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
       }
 
       if (!setAdditionalBookmarkStats(threadBookmarkStats)) {
-        bookmarkAdditionalStats!!.visibility = View.GONE
+        bookmarkAdditionalStats?.visibility = View.GONE
       }
     } else {
       bookmarkAdditionalStats?.visibility = View.GONE
@@ -181,7 +181,7 @@ open class BaseThreadBookmarkViewHolder(
       return false
     }
 
-    bookmarkAdditionalStats!!.text = additionalStats
+    bookmarkAdditionalStats?.text = additionalStats
     return true
   }
 

@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     app:layout_constraintRight_toRightOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.cardview.widget.CardView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:id="@+id/card_view"
         android:layout_width="340dp"
         android:layout_height="wrap_content"
@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:focusable="true"
             android:orientation="vertical">
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/reencode_image_re_encode_image_text"
@@ -91,7 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                     android:id="@+id/reecode_image_current_quality"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -102,7 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -120,7 +120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:valueTo="100"
                         android:value="100" />
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -137,7 +137,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                     android:id="@+id/reecode_image_current_reduce"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -148,7 +148,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -166,7 +166,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:valueTo="99"
                         android:value="0" />
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -209,6 +209,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

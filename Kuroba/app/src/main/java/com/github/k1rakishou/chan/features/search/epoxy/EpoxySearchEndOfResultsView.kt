@@ -16,7 +16,7 @@ class EpoxySearchEndOfResultsView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : ConstraintLayout(context, attrs, defStyleAttr) {
+) : ConstraintLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -28,12 +28,30 @@ class EpoxySearchEndOfResultsView @JvmOverloads constructor(
     inflate(context, R.layout.epoxy_search_end_of_results_view, this)
 
     textView = findViewById(R.id.text_view)
-    textView.setTextColor(themeEngine.chanTheme.textColorPrimary)
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateTextColor()
   }
 
   @ModelProp
   fun setText(text: String) {
     textView.text = text
+    updateTextColor()
+  }
+
+  private fun updateTextColor() {
+    textView.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

@@ -16,15 +16,15 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget
 import com.github.k1rakishou.chan.utils.AndroidUtils
 
-open class ThemeEngine() {
+open class ThemeEngine {
   private val listeners = hashSetOf<ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
   // TODO(KurobaEx): replace with actual themes
-  open var chanTheme: ChanTheme = MockLightChanTheme()
+  open lateinit var chanTheme: ChanTheme
 
-  fun initialize() {
-    // TODO(KurobaEx): load themes from the disk
+  fun initialize(context: Context) {
+    chanTheme = MockLightChanTheme(context)
   }
 
   fun addListener(listener: ThemeChangesListener) {
@@ -35,19 +35,27 @@ open class ThemeEngine() {
     listeners -= listener
   }
 
-  fun updateTheme(newTheme: ChanTheme, rootView: ViewGroup) {
+  fun updateTheme(newTheme: ChanTheme, view: ViewGroup) {
     if (chanTheme == newTheme) {
       return
     }
 
     chanTheme = newTheme
-    updateViews(rootView)
+    updateViews(view.rootView)
 
     listeners.forEach { listener -> listener.onThemeChanged() }
   }
 
-  fun updateViews(rootView: ViewGroup) {
-    updateViewsInternal(rootView)
+  private fun updateViews(view: View) {
+    if (view is IColorizableWidget) {
+      (view as IColorizableWidget).applyColors()
+    }
+
+    if (view is ViewGroup) {
+      for (i in 0 until view.childCount) {
+        updateViews(view.getChildAt(i))
+      }
+    }
   }
 
   fun preloadAttributeResource(context: Context, @AttrRes attrId: Int) {
@@ -58,26 +66,38 @@ open class ThemeEngine() {
     return attributeCache.getAttribute(attrId)
   }
 
-  fun tintDrawable(drawable: Drawable): Drawable? {
+  fun getDrawableTinted(context: Context, @DrawableRes drawableId: Int, isCurrentColorDark: Boolean): Drawable {
+    val drawable = ContextCompat.getDrawable(context, drawableId)
+      ?: throw IllegalStateException("Couldn't find drawable ${drawableId}")
+
+    DrawableCompat.setTint(drawable, resolveTintColor(isCurrentColorDark))
+    return drawable
+  }
+
+  fun tintDrawable(drawable: Drawable, isCurrentColorDark: Boolean): Drawable {
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
-    if (chanTheme.isLightTheme) {
-      DrawableCompat.setTint(drawableMutable, LIGHT_THEME_DRAWABLE_TINT)
-    } else {
-      DrawableCompat.setTint(drawableMutable, DARK_THEME_DRAWABLE_TINT)
-    }
+    DrawableCompat.setTint(drawableMutable, resolveTintColor(isCurrentColorDark))
 
     return drawableMutable
   }
 
-  fun tintDrawable(context: Context, @DrawableRes drawableId: Int): Drawable? {
+  fun resolveTintColor(isCurrentColorDark: Boolean): Int {
+    return if (isCurrentColorDark) {
+      LIGHT_DRAWABLE_TINT
+    } else {
+      DARK_DRAWABLE_TINT
+    }
+  }
+
+  fun tintDrawable(context: Context, @DrawableRes drawableId: Int): Drawable {
     val drawable = ContextCompat.getDrawable(context, drawableId)
       ?: throw IllegalArgumentException("Couldn't find drawable with drawableId: $drawableId")
 
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
     if (chanTheme.isLightTheme) {
-      DrawableCompat.setTint(drawableMutable, LIGHT_THEME_DRAWABLE_TINT)
+      DrawableCompat.setTint(drawableMutable, LIGHT_DRAWABLE_TINT)
     } else {
-      DrawableCompat.setTint(drawableMutable, DARK_THEME_DRAWABLE_TINT)
+      DrawableCompat.setTint(drawableMutable, DARK_DRAWABLE_TINT)
     }
 
     return drawableMutable
@@ -106,24 +126,12 @@ open class ThemeEngine() {
     context.setTaskDescription(taskDescription)
   }
 
-  private fun updateViewsInternal(view: View) {
-    if (view is IColorizableWidget) {
-      (view as IColorizableWidget).applyColors()
-    }
-
-    if (view is ViewGroup) {
-      for (i in 0 until view.childCount) {
-        updateViewsInternal(view.getChildAt(i))
-      }
-    }
-  }
-
   interface ThemeChangesListener {
     fun onThemeChanged()
   }
 
   companion object {
-    private val LIGHT_THEME_DRAWABLE_TINT = Color.parseColor("#9E9E9E")
-    private val DARK_THEME_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
+    private val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
+    private val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
   }
 }

@@ -17,24 +17,42 @@ class EpoxyNoSettingsFoundView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
 
   private val messageView: TextView
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateMessageTextColor()
+  }
+
   init {
     Chan.inject(this)
     View.inflate(context, R.layout.epoxy_no_settings_found, this)
 
     messageView = findViewById(R.id.message_view)
-    messageView.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   @ModelProp
   fun setQuery(query: String) {
     messageView.text = context.getString(R.string.epoxy_no_settings_found_by_query, query)
+    updateMessageTextColor()
+  }
+
+  private fun updateMessageTextColor() {
+    messageView.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
 }

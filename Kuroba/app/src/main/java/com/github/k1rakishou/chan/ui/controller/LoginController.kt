@@ -20,7 +20,6 @@ import android.content.Context
 import android.text.Html
 import android.text.method.LinkMovementMethod
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -44,7 +43,7 @@ import javax.inject.Inject
 class LoginController(
   context: Context,
   private val site: Site
-) : Controller(context), View.OnClickListener {
+) : Controller(context), View.OnClickListener, ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -55,6 +54,7 @@ class LoginController(
   private lateinit var inputToken: ColorizableEditText
   private lateinit var inputPin: ColorizableEditText
   private lateinit var authenticated: TextView
+  private lateinit var bottomDescription: TextView
   
   override fun onCreate() {
     super.onCreate()
@@ -69,35 +69,50 @@ class LoginController(
       inputToken = view.findViewById(R.id.input_token)
       inputPin = view.findViewById(R.id.input_pin)
       authenticated = view.findViewById(R.id.authenticated)
-      errors.visibility = View.GONE
-
-      authenticated.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      crossfadeView.setBackgroundColor(themeEngine.chanTheme.backColor)
-
-      showBottomDescription(view)
-
-      val loggedIn = loggedIn()
-      val loggedInText = if (loggedIn) {
-        R.string.setting_pass_logout
-      } else {
-        R.string.setting_pass_login
-      }
-
-      applyLoginDetails()
-
-      button.setText(loggedInText)
-      button.setOnClickListener(this)
-  
-      // Sanity check
-      requireNotNull(parentController?.view?.windowToken) { "parentController.view not attached" }
-  
-      AndroidUtils.waitForLayout(view.viewTreeObserver, view) {
-        crossfadeView.layoutParams.height = crossfadeView.height
-        crossfadeView.requestLayout()
-        crossfadeView.toggle(!loggedIn, false)
-        false
-      }
+      bottomDescription = view.findViewById(R.id.bottom_description)
     }
+
+    errors.visibility = View.GONE
+    showBottomDescription()
+
+    val loggedIn = loggedIn()
+    val loggedInText = if (loggedIn) {
+      R.string.setting_pass_logout
+    } else {
+      R.string.setting_pass_login
+    }
+
+    applyLoginDetails()
+
+    button.setText(loggedInText)
+    button.setOnClickListener(this)
+
+    // Sanity check
+    requireNotNull(parentController?.view?.windowToken) { "parentController.view not attached" }
+
+    AndroidUtils.waitForLayout(view.viewTreeObserver, view) {
+      crossfadeView.layoutParams.height = crossfadeView.height
+      crossfadeView.requestLayout()
+      crossfadeView.toggle(!loggedIn, false)
+      false
+    }
+
+    themeEngine.addListener(this)
+    onThemeChanged()
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    authenticated.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    crossfadeView.setBackgroundColor(themeEngine.chanTheme.backColor)
+
+    bottomDescription.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    bottomDescription.setLinkTextColor(themeEngine.chanTheme.postLinkColor)
   }
 
   private fun applyLoginDetails() {
@@ -123,11 +138,7 @@ class LoginController(
     }
   }
 
-  private fun showBottomDescription(view: ViewGroup) {
-    val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
-    bottomDescription.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    bottomDescription.setLinkTextColor(themeEngine.chanTheme.postLinkColor)
-
+  private fun showBottomDescription() {
     if (site is Chan4) {
       bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))
       bottomDescription.movementMethod = LinkMovementMethod.getInstance()

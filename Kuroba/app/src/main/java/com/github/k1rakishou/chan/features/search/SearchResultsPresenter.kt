@@ -32,7 +32,7 @@ import javax.inject.Inject
 internal class SearchResultsPresenter(
   private val siteDescriptor: SiteDescriptor,
   private val query: String
-) : BasePresenter<SearchResultsView>() {
+) : BasePresenter<SearchResultsView>(), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var globalSearchUseCase: GlobalSearchUseCase
@@ -61,12 +61,22 @@ internal class SearchResultsPresenter(
 
       doSearch()
     }
+
+    themeEngine.addListener(this)
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    scope.launch { doSearch() }
   }
 
   fun listenForStateChanges(): Flowable<SearchResultsControllerState> {
     return searchResultsControllerStateSubject
       .onBackpressureLatest()
-      .distinctUntilChanged()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error ->
         Logger.e(TAG, "Unknown error subscribed to searchResultsPresenter.listenForStateChanges()", error)

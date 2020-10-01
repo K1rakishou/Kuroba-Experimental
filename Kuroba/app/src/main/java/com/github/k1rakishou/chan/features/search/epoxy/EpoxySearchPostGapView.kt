@@ -15,7 +15,7 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -23,6 +23,19 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   init {
     Chan.inject(this)
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
     setBackgroundColor(AndroidUtils.manipulateColor(themeEngine.chanTheme.backColor, .8f))
   }
 

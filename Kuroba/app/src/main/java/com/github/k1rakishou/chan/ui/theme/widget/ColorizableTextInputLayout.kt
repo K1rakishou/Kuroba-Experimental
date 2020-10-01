@@ -7,7 +7,6 @@ import android.util.AttributeSet
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textfield.TextInputLayout
 import javax.inject.Inject
 
@@ -45,7 +44,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
         intArrayOf(android.R.attr.state_enabled),
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
+        themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
         themeEngine.chanTheme.errorColor
       )
     )
@@ -56,7 +55,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
         intArrayOf(android.R.attr.state_enabled),
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
+        themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.textColorPrimary),
         themeEngine.chanTheme.errorColor
       )
     )
@@ -77,7 +76,21 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
     hintTextColor = colorStateList
     defaultHintTextColor = colorStateList
     counterTextColor = colorStateList
-    setBoxStrokeColorStateList(colorStateList)
+
+    setBoxStrokeColorStateList(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(-android.R.attr.state_enabled),
+          intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled),
+          intArrayOf()
+        ),
+        intArrayOf(
+          themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
+          themeEngine.chanTheme.accentColor,
+          themeEngine.chanTheme.defaultColors.controlNormalColor,
+        )
+      )
+    )
 
     setBoxBackgroundColorStateList(ColorStateList.valueOf(Color.TRANSPARENT))
   }

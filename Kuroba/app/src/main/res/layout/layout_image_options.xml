@@ -23,12 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:clickable="true"
     android:focusable="true">
 
-    <androidx.cardview.widget.CardView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:id="@+id/container"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#00000000"
-        app:cardElevation="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -128,6 +126,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

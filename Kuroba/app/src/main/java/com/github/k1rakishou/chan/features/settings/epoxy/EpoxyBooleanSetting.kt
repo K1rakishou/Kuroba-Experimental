@@ -26,7 +26,7 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -49,47 +49,45 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
 
     switcher.isClickable = false
     switcher.isFocusable = false
+  }
 
-    topDescriptor.setTextColor(
-      ColorStateList(
-        arrayOf(
-          intArrayOf(android.R.attr.state_enabled),
-          intArrayOf(-android.R.attr.state_enabled)
-        ),
-        intArrayOf(
-          themeEngine.chanTheme.textColorPrimary,
-          themeEngine.chanTheme.textColorSecondary
-        )
-      )
-    )
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
 
-    bottomDescription.setTextColor(
-      ColorStateList(
-        arrayOf(
-          intArrayOf(android.R.attr.state_enabled),
-          intArrayOf(-android.R.attr.state_enabled)
-        ),
-        intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .7f),
-          themeEngine.chanTheme.textColorSecondary
-        )
-      )
-    )
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateTopDescriptionTextColor()
+    updateBottomDescriptionTextColor()
   }
 
   @ModelProp
-  fun setTopDescription(description: String) {
+  fun setTopDescription(description: String?) {
     topDescriptor.text = description
+
+    if (description == null) {
+      return
+    }
+
+    updateTopDescriptionTextColor()
   }
 
   @ModelProp
   fun setBottomDescription(description: String?) {
-    if (description != null) {
-      bottomDescription.visibility = View.VISIBLE
-      bottomDescription.text = description
-    } else {
+    bottomDescription.text = description
+
+    if (description == null) {
       bottomDescription.visibility = View.GONE
+      return
     }
+
+    bottomDescription.visibility = View.VISIBLE
+    updateBottomDescriptionTextColor()
   }
 
   @ModelProp
@@ -139,6 +137,36 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
     }
 
     settingViewHolder.setOnClickListener { callback.invoke() }
+  }
+
+  private fun updateTopDescriptionTextColor() {
+    topDescriptor.setTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(android.R.attr.state_enabled),
+          intArrayOf(-android.R.attr.state_enabled)
+        ),
+        intArrayOf(
+          themeEngine.chanTheme.textColorPrimary,
+          themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.textColorPrimary)
+        )
+      )
+    )
+  }
+
+  private fun updateBottomDescriptionTextColor() {
+    bottomDescription.setTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(android.R.attr.state_enabled),
+          intArrayOf(-android.R.attr.state_enabled)
+        ),
+        intArrayOf(
+          themeEngine.chanTheme.textColorSecondary,
+          themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.textColorSecondary)
+        )
+      )
+    )
   }
 
 }

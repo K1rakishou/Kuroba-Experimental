@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.source.cache
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -124,13 +125,13 @@ class PostsCache(
 
   suspend fun getOriginalPostsFromCache(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
-  ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
+  ): LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanPost> {
     return mutex.withLock {
       threadDescriptors.forEach { threadDescriptor ->
         accessTimes[threadDescriptor] = System.currentTimeMillis()
       }
 
-      val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(threadDescriptors.size)
+      val resultMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(threadDescriptors.size)
 
       threadDescriptors.forEach { threadDescriptor ->
         val post = postsCache[threadDescriptor]?.values?.firstOrNull { post -> post.isOp }

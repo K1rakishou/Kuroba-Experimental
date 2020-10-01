@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.widget
 
+import android.graphics.Color
 import android.view.View
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
@@ -8,6 +9,7 @@ import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.findChild
@@ -25,7 +27,7 @@ class SnackbarWrapper private constructor(
   init {
     Chan.inject(this)
 
-    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.backColorSecondary)
+    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.primaryColor)
   }
 
   fun dismiss() {
@@ -169,7 +171,13 @@ class SnackbarWrapper private constructor(
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {
-      snackbar.setTextColor(theme.textColorPrimary)
+      val isDarkColor = AndroidUtils.isDarkColor(theme.primaryColor)
+      if (isDarkColor) {
+        snackbar.setTextColor(Color.WHITE)
+      } else {
+        snackbar.setTextColor(Color.BLACK)
+      }
+
       snackbar.setActionTextColor(theme.accentColor)
     }
   }

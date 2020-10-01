@@ -17,7 +17,7 @@ class EpoxyBoardView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -33,23 +33,48 @@ class EpoxyBoardView @JvmOverloads constructor(
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)
 
-    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
+    updateBoardNameColor()
+    updateBoardDescriptionColor()
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateBoardDescriptionColor()
+    updateBoardNameColor()
   }
 
   @ModelProp
   fun setBoardName(boardName: String) {
     this.boardName.text = boardName
+    updateBoardNameColor()
   }
 
   @ModelProp
   fun setBoardDescription(boardDescription: String) {
     this.boardDescription.text = boardDescription
+    updateBoardDescriptionColor()
   }
 
   @ModelProp(options = [ModelProp.Option.DoNotHash, ModelProp.Option.NullOnRecycle])
   fun setBoardDescriptor(boardDescriptor: BoardDescriptor?) {
     this.descriptor = boardDescriptor
+  }
+
+  private fun updateBoardDescriptionColor() {
+    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
+  }
+
+  private fun updateBoardNameColor() {
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

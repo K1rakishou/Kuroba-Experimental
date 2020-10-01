@@ -19,9 +19,11 @@ package com.github.k1rakishou.chan.ui.text.span
 import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.view.View
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
+import javax.inject.Inject
 
 /**
  * A Clickable span that handles post clicks. These are created in PostParser for post quotes,
@@ -30,20 +32,16 @@ import com.github.k1rakishou.common.DoNotStrip
  */
 @DoNotStrip
 class PostLinkable(
-  val theme: ChanTheme,
   val key: CharSequence,
   val linkableValue: Value,
   val type: Type
 ) : ClickableSpan() {
 
-  enum class Type {
-    QUOTE,
-    LINK,
-    SPOILER,
-    THREAD,
-    BOARD,
-    SEARCH,
-    DEAD
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
+  init {
+    Chan.inject(this)
   }
 
   var isSpoilerVisible: Boolean = ChanSettings.revealTextSpoilers.get()
@@ -60,6 +58,8 @@ class PostLinkable(
   }
 
   override fun updateDrawState(ds: TextPaint) {
+    val theme = themeEngine.chanTheme
+
     when (type) {
       Type.QUOTE,
       Type.LINK,
@@ -140,6 +140,16 @@ class PostLinkable(
     val linkValue: Value
   )
 
+  enum class Type {
+    QUOTE,
+    LINK,
+    SPOILER,
+    THREAD,
+    BOARD,
+    SEARCH,
+    DEAD
+  }
+
   sealed class Value {
 
     fun extractLongOrNull(): Long? {
@@ -149,9 +159,11 @@ class PostLinkable(
         is StringValue,
         is ThreadLink,
         is SearchLink -> null
+        NoValue -> null
       }
     }
 
+    object NoValue : Value()
     data class IntegerValue(val value: Int) : Value()
     data class LongValue(val value: Long) : Value()
     data class StringValue(val value: CharSequence) : Value()

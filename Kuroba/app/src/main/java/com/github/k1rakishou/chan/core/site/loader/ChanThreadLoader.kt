@@ -225,22 +225,17 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       })
   }
 
-  fun reloadFromDatabase() {
+  fun reloadThreadFromDatabase() {
     BackgroundUtils.ensureMainThread()
+    require(chanDescriptor is ChanDescriptor.ThreadDescriptor) { "$chanDescriptor is not a thread descriptor!" }
 
     launch(Dispatchers.IO) {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> {
-          Logger.d(TAG, "reloadFromDatabase() Requested thread /${chanDescriptor}/")
-        }
-        is ChanDescriptor.CatalogDescriptor -> {
-          Logger.d(TAG, "reloadFromDatabase() Requested catalog /${chanDescriptor}/")
-        }
-      }
+      Logger.d(TAG, "reloadThreadFromDatabase() Requested thread /${chanDescriptor}/")
+      chanPostRepository.awaitUntilInitialized()
 
       val chanLoaderResponse = chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
       if (chanLoaderResponse == null) {
-        Logger.e(TAG, "reloadFromDatabase() reloadThreadFromDatabase returned null for ${chanDescriptor}")
+        Logger.e(TAG, "reloadThreadFromDatabase() reloadThreadFromDatabase returned null for ${chanDescriptor}")
         return@launch
       }
 
@@ -249,22 +244,54 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
         thread = null
       }
 
+      chanPostRepository.deleteThreadsFromCache(listOf(chanDescriptor))
       onResponse(chanLoaderResponse)
     }
   }
 
-  fun quickLoad() {
+  fun reloadCatalogFromDatabase(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+    require(chanDescriptor is ChanDescriptor.CatalogDescriptor) { "$chanDescriptor is not a catalog descriptor!" }
+
+    launch(Dispatchers.IO) {
+      Logger.d(TAG, "reloadCatalogFromDatabase() Requested catalog /${chanDescriptor}/")
+      chanPostRepository.awaitUntilInitialized()
+
+      val chanLoaderResponse = chanThreadLoaderCoordinator.reloadCatalogFromDatabase(threadDescriptors)
+      if (chanLoaderResponse == null) {
+        Logger.e(TAG, "reloadCatalogFromDatabase() reloadCatalogFromDatabase returned null for ${chanDescriptor}")
+        return@launch
+      }
+
+      synchronized(this) {
+        thread?.clearPosts()
+        thread = null
+      }
+
+      chanPostRepository.deleteThreadsFromCache(threadDescriptors)
+      onResponse(chanLoaderResponse)
+    }
+  }
+
+  fun quickLoad(requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
 
-    val localThread = synchronized(this) {
-      checkNotNull(thread) { "Cannot quick load without already loaded thread" }
+    val hasThread = synchronized(this) { thread != null }
+    if (!hasThread) {
+      return
     }
 
     launch {
       BackgroundUtils.ensureMainThread()
 
-      listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
-      requestMoreData()
+      val currentThread = synchronized(this) { thread }
+        ?: return@launch
+
+      listeners.forEach { listener -> listener.onChanLoaderData(currentThread) }
+
+      if (requestNewPosts) {
+        requestMoreData()
+      }
     }
   }
 

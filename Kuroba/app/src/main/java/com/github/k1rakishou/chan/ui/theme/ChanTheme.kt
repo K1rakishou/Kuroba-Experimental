@@ -1,10 +1,17 @@
 package com.github.k1rakishou.chan.ui.theme
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 
+@SuppressLint("ResourceType")
 abstract class ChanTheme {
+  abstract val context: Context
   abstract val version: Int
   abstract val name: String
   abstract val isLightTheme: Boolean
@@ -18,10 +25,8 @@ abstract class ChanTheme {
   abstract val textColorPrimary: Int
   abstract val textColorSecondary: Int
   abstract val textColorHint: Int
-  abstract val drawableTintColor: Int
   abstract val postHighlightedColor: Int
   abstract val postSavedReplyColor: Int
-  abstract val postSelectedColor: Int
   abstract val postSubjectColor: Int
   abstract val postDetailsColor: Int
   abstract val postNameColor: Int
@@ -39,6 +44,8 @@ abstract class ChanTheme {
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
   open val altFont: Typeface = ROBOTO_CONDENSED
+
+  val defaultColors by lazy { loadDefaultColors() }
 
   @JvmField
   val settingsDrawable = SETTINGS_DRAWABLE
@@ -58,6 +65,8 @@ abstract class ChanTheme {
   val helpDrawable = HELP_DRAWABLE
   @JvmField
   val refreshDrawable = REFRESH_DRAWABLE
+  @JvmField
+  val addDrawable = ADD_DRAWABLE
 
   init {
     if (isLightTheme) {
@@ -83,6 +92,18 @@ abstract class ChanTheme {
     }
   }
 
+  private fun loadDefaultColors(): DefaultColors {
+    val controlNormalColor = if (isLightTheme) {
+      Color.parseColor("#FFAAAAAA")
+    } else {
+      Color.parseColor("#FFCCCCCC")
+    }
+
+    val disabledControlAlpha = (255f * .4f).toInt()
+
+    return DefaultColors(disabledControlAlpha, controlNormalColor)
+  }
+
   fun <T : ChanTheme> copy(
     version: Int,
     name: String,
@@ -97,10 +118,8 @@ abstract class ChanTheme {
     textPrimaryColor: Int,
     textSecondaryColor: Int,
     textColorHint: Int,
-    drawableTintColor: Int,
     postHighlightedColor: Int,
     postSavedReplyColor: Int,
-    postSelectedColor: Int,
     postSubjectColor: Int,
     postDetailsColor: Int,
     postNameColor: Int,
@@ -117,6 +136,7 @@ abstract class ChanTheme {
     bookmarkCounterNormalColor: Int,
   ): T {
     return MockDarkChanTheme(
+      context = context,
       version = version,
       name = name,
       isLightTheme = isLightTheme,
@@ -130,10 +150,8 @@ abstract class ChanTheme {
       textColorPrimary = textPrimaryColor,
       textColorSecondary = textSecondaryColor,
       textColorHint = textColorHint,
-      drawableTintColor = drawableTintColor,
       postHighlightedColor = postHighlightedColor,
       postSavedReplyColor = postSavedReplyColor,
-      postSelectedColor = postSelectedColor,
       postSubjectColor = postSubjectColor,
       postDetailsColor = postDetailsColor,
       postNameColor = postNameColor,
@@ -149,6 +167,41 @@ abstract class ChanTheme {
       bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor,
       bookmarkCounterNormalColor = bookmarkCounterNormalColor,
     ) as T
+  }
+
+  fun getDisabledTextColor(color: Int): Int {
+    return if (isLightTheme) {
+      AndroidUtils.manipulateColor(color, 1.3f)
+    } else {
+      AndroidUtils.manipulateColor(color, .7f)
+    }
+  }
+
+  fun getControlDisabledColor(color: Int): Int {
+    return ColorStateList.valueOf(color)
+      .withAlpha(defaultColors.disabledControlAlpha)
+      .defaultColor
+  }
+
+  fun getColorByColorId(chanThemeColorId: ChanThemeColorId): Int {
+    return when (chanThemeColorId) {
+      ChanThemeColorId.PostSubjectColor -> postSubjectColor
+      ChanThemeColorId.PostNameColor -> postNameColor
+      ChanThemeColorId.AccentColor -> accentColor
+      ChanThemeColorId.PostInlineQuoteColor -> postInlineQuoteColor
+      ChanThemeColorId.PostQuoteColor -> postQuoteColor
+      ChanThemeColorId.BackColorSecondary -> backColorSecondary
+    }
+  }
+
+  data class DefaultColors(
+    val disabledControlAlpha: Int,
+    val controlNormalColor: Int
+  ) {
+
+    val disabledControlAlphaFloat: Float
+      get() = disabledControlAlpha.toFloat() / MAX_ALPHA_FLOAT
+
   }
 
   companion object {
@@ -172,8 +225,12 @@ abstract class ChanTheme {
     val HELP_DRAWABLE = ThemeDrawable(R.drawable.ic_help_outline_white_24dp, 0.54f)
     @JvmField
     val REFRESH_DRAWABLE = ThemeDrawable(R.drawable.ic_refresh_white_24dp, 0.54f)
+    @JvmField
+    val ADD_DRAWABLE = ThemeDrawable(R.drawable.ic_add_white_24dp, 0.54f)
 
     private val ROBOTO_MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val ROBOTO_CONDENSED = Typeface.create("sans-serif-condensed", Typeface.NORMAL)
+
+    private const val MAX_ALPHA_FLOAT = 255f
   }
 }

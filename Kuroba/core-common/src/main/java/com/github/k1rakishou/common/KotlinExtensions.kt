@@ -12,6 +12,7 @@ import java.util.*
 import java.util.regex.Matcher
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -389,6 +390,14 @@ public inline fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, 
 
 public inline fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
   return HashMap(safeCapacity(collection.size))
+}
+
+public inline fun <K, V> linkedMapWithCap(initialCapacity: Int): LinkedHashMap<K, V> {
+  return LinkedHashMap(safeCapacity(initialCapacity))
+}
+
+public inline fun <K, V> linkedMapWithCap(collection: Collection<*>): LinkedHashMap<K, V> {
+  return LinkedHashMap(safeCapacity(collection.size))
 }
 
 public inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {

@@ -619,7 +619,10 @@ public class ToolbarContainer extends FrameLayout {
 
             // Middle title with arrow and callback
             if (item.middleMenu != null) {
-                final Drawable arrowDrawable = themeEngine.tintDrawable(new DropdownArrowDrawable(dp(12), dp(12), true));
+                final Drawable arrowDrawable = themeEngine.tintDrawable(
+                        new DropdownArrowDrawable(dp(12), dp(12), true),
+                        true
+                );
 
                 arrowDrawable.setBounds(0, 0, arrowDrawable.getIntrinsicWidth(), arrowDrawable.getIntrinsicHeight());
                 ImageView dropdown = new ImageView(getContext());

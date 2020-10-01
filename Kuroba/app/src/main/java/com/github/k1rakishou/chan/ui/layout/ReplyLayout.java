@@ -43,6 +43,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
@@ -100,15 +101,14 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
 
 // TODO(KurobaEx): When catalog reply is opened and we open any thread via "tabs" the opened thread
 //  will be glitched, it won't have the bottomNavBar because we have a replyLayout opened.
-public class ReplyLayout
-        extends LoadView
-        implements View.OnClickListener,
+public class ReplyLayout extends LoadView implements View.OnClickListener,
         ReplyPresenter.ReplyPresenterCallback,
         TextWatcher,
         ImageDecoder.ImageDecoderCallback,
         SelectionListeningEditText.SelectionChangedListener,
         CaptchaHolder.CaptchaValidationListener,
-        KeyboardStateListener {
+        KeyboardStateListener,
+        ThemeEngine.ThemeChangesListener {
     private static final String TAG = "ReplyLayout";
     private static final int ATTACH_IMAGE_BY_URL_HINT_OFFSET_X = dp(64f);
 
@@ -193,6 +193,7 @@ public class ReplyLayout
 
         EventBus.getDefault().register(this);
         globalWindowInsetsManager.addKeyboardUpdatesListener(this);
+        themeEngine.addListener(this);
     }
 
     @Override
@@ -206,9 +207,26 @@ public class ReplyLayout
 
         dismissHint();
 
+        themeEngine.removeListener(this);
         EventBus.getDefault().unregister(this);
-
         globalWindowInsetsManager.removeKeyboardUpdatesListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        commentCounter.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+
+        if (attach.getDrawable() != null) {
+            attach.setImageDrawable(themeEngine.tintDrawable(attach.getDrawable(), isDarkColor));
+        }
+
+        moreDropdown.updateColor(themeEngine.resolveTintColor(isDarkColor));
+
+        if (submit.getDrawable() != null) {
+            submit.setImageDrawable(themeEngine.tintDrawable(submit.getDrawable(), isDarkColor));
+        }
     }
 
     private void updateWrappingMode() {
@@ -267,8 +285,6 @@ public class ReplyLayout
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
 
-        commentCounter.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-
         // Setup reply layout views
         fileName.setOnLongClickListener(v -> presenter.fileNameLongClicked());
         commentQuoteButton.setOnClickListener(this);
@@ -290,17 +306,9 @@ public class ReplyLayout
 
         previewHolder.setOnClickListener(this);
 
-        moreDropdown = new DropdownArrowDrawable(
-                dp(16),
-                dp(16),
-                false
-        );
-
-        more.setImageDrawable(moreDropdown);
         AndroidUtils.setBoundlessRoundRippleBackground(more);
         more.setOnClickListener(this);
 
-        themeEngine.getChanTheme().imageDrawable.apply(attach);
         AndroidUtils.setBoundlessRoundRippleBackground(attach);
         attach.setOnClickListener(this);
         attach.setOnLongClickListener(v -> {
@@ -314,7 +322,6 @@ public class ReplyLayout
         AndroidUtils.setBoundlessRoundRippleBackground(captchaImage);
         captcha.setOnClickListener(this);
 
-        themeEngine.getChanTheme().sendDrawable.apply(submit);
         AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
         submit.setOnLongClickListener(v -> {
@@ -335,15 +342,33 @@ public class ReplyLayout
         // Setup captcha layout views
         captchaContainer.setLayoutParams(new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-        themeEngine.getChanTheme().refreshDrawable.apply(captchaHardReset);
         AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset);
         captchaHardReset.setOnClickListener(this);
+
+        moreDropdown = new DropdownArrowDrawable(
+                dp(16),
+                dp(16),
+                false
+        );
+
+        attach.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), themeEngine.getChanTheme().imageDrawable.getDrawable())
+        );
+
+        submit.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), themeEngine.getChanTheme().sendDrawable.getDrawable())
+        );
+
+        more.setImageDrawable(moreDropdown);
+
+        themeEngine.getChanTheme().refreshDrawable.apply(captchaHardReset);
 
         setView(replyInputLayout);
         setElevation(dp(4));
 
         // Presenter
         presenter.create(this);
+        onThemeChanged();
     }
 
     public void setCallback(ReplyLayoutCallback callback) {
@@ -777,6 +802,7 @@ public class ReplyLayout
             moreDropdown.setRotation((float) animation.getAnimatedValue());
         });
 
+        more.setImageDrawable(moreDropdown);
         animator.start();
     }
 
@@ -863,16 +889,36 @@ public class ReplyLayout
     @Override
     public void openPreview(boolean show, File previewFile) {
         previewHolder.setClickable(false);
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
 
         if (show) {
-            ImageDecoder.decodeFileOnBackgroundThread(previewFile, dp(400), dp(300), this);
-            themeEngine.getChanTheme().clearDrawable.apply(attach);
+            ImageDecoder.decodeFileOnBackgroundThread(
+                    previewFile,
+                    dp(400),
+                    dp(300),
+                    this
+            );
+
+            attach.setImageDrawable(
+                    themeEngine.getDrawableTinted(
+                            getContext(),
+                            R.drawable.ic_clear_white_24dp,
+                            isDarkColor
+                    )
+            );
         } else {
             spoiler.setVisibility(GONE);
             previewHolder.setVisibility(GONE);
             previewMessage.setVisibility(GONE);
             callback.updatePadding();
-            themeEngine.getChanTheme().imageDrawable.apply(attach);
+
+            attach.setImageDrawable(
+                    themeEngine.getDrawableTinted(
+                            getContext(),
+                            R.drawable.ic_image_white_24dp,
+                            isDarkColor
+                    )
+            );
         }
 
         // the delay is taken from LayoutTransition, as this class is set to automatically animate

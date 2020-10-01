@@ -445,9 +445,8 @@ class PostCell : LinearLayout, PostCellInterface {
 
   private fun bindBackgroundColor(theme: ChanTheme, post: Post) {
     when {
-      highlighted -> setBackgroundColorFast(theme.postHighlightedColor)
+      postSelected || highlighted -> setBackgroundColorFast(theme.postHighlightedColor)
       post.isSavedReply -> setBackgroundColorFast(theme.postSavedReplyColor)
-      postSelected -> setBackgroundColorFast(theme.postSelectedColor)
       threadMode -> setBackgroundResource(0)
       else -> setBackgroundResource(R.drawable.item_background)
     }

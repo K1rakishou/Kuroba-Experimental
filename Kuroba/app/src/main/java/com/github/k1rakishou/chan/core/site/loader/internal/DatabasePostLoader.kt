@@ -15,13 +15,36 @@ internal class DatabasePostLoader(
 
     val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(chanDescriptor)
     if (reloadedPosts.isEmpty()) {
-      Logger.d(TAG, "tryLoadFromDiskCache() returned empty list")
+      Logger.d(TAG, "loadPosts() returned empty list")
       return null
     }
 
     val originalPost = reloadedPosts.firstOrNull { post -> post.isOP }
     if (originalPost == null) {
-      Logger.e(TAG, "tryLoadFromDiskCache() Reloaded from the database posts have no OP")
+      Logger.e(TAG, "loadPosts() Reloaded from the database posts have no OP")
+      return null
+    }
+
+    fillInReplies(reloadedPosts)
+
+    return ChanLoaderResponse(originalPost.toPostBuilder(null), reloadedPosts).apply {
+      preloadPostsInfo()
+    }
+  }
+
+  suspend fun loadCatalog(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): ChanLoaderResponse? {
+    BackgroundUtils.ensureBackgroundThread()
+
+    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadCatalogThreads(threadDescriptors)
+    if (reloadedPosts.isEmpty()) {
+      Logger.d(TAG, "loadCatalog() reloadCatalogThreads() returned empty list")
+      return null
+    }
+
+    check(reloadedPosts.all { post -> post.isOP }) { "Not all posts are OP!" }
+
+    val originalPost = reloadedPosts.firstOrNull { post -> post.isOP }
+    if (originalPost == null) {
       return null
     }
 

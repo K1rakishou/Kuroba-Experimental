@@ -48,8 +48,10 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class ThreadSlideController
         extends Controller
-        implements DoubleNavigationController, SlidingPaneLayout.PanelSlideListener,
-        ToolbarNavigationController.ToolbarSearchCallback {
+        implements DoubleNavigationController,
+        SlidingPaneLayout.PanelSlideListener,
+        ToolbarNavigationController.ToolbarSearchCallback,
+        ThemeEngine.ThemeChangesListener {
     private static final String TAG = "ThreadSlideController";
 
     @Inject
@@ -90,21 +92,30 @@ public class ThreadSlideController
         slidingPaneLayout.setPanelSlideListener(this);
         slidingPaneLayout.setParallaxDistance(dp(100));
         slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
-
-        // TODO(KurobaEx-themes): we need to update this whenever the theme changes
-        int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
-        slidingPaneLayout.setSliderFadeColor(fadeColor);
         slidingPaneLayout.openPane();
-
         setLeftController(null, false);
         setRightController(null, false);
+
+        themeEngine.addListener(this);
+
+        onThemeChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        themeEngine.removeListener(this);
         drawerCallbacks = null;
+    }
+
+    @Override
+    public void onThemeChanged() {
+        int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
+        slidingPaneLayout.setSliderFadeColor(fadeColor);
+
+        // TODO(KurobaEx): figure out a way to redraw the slidingPaneLayout. Right now the color
+        //  will stay until the user touches it.
     }
 
     @Override
@@ -121,6 +132,7 @@ public class ThreadSlideController
         // tells us if the restored state was open or closed
         // We need to use reflection to get the private field that stores this correct state
         boolean restoredOpen = false;
+
         try {
             Field field = SlidingPaneLayout.class.getDeclaredField("mPreservedOpenState");
             field.setAccessible(true);
@@ -128,6 +140,7 @@ public class ThreadSlideController
         } catch (Exception e) {
             Logger.e(TAG, "Error getting restored open state with reflection", e);
         }
+
         if (restoredOpen != leftOpen) {
             leftOpen = restoredOpen;
             slideStateChanged(false);

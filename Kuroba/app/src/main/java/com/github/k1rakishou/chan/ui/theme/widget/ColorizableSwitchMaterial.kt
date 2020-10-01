@@ -45,9 +45,9 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
       ),
       intArrayOf(
         themeEngine.chanTheme.accentColor,
-        themeEngine.chanTheme.textColorPrimary,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, 1.2f),
+        themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.accentColor),
+        themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
       )
     )
 
@@ -60,9 +60,9 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
       ),
       intArrayOf(
         AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .6f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .3f),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .3f),
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, .6f),
+        themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.accentColor),
+        themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
       )
     )
   }

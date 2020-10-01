@@ -180,7 +180,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     feather.injectFields(this)
 
-    themeEngine.initialize()
+    themeEngine.initialize(this)
     siteManager.initialize()
     boardManager.initialize()
     bookmarksManager.initialize()
