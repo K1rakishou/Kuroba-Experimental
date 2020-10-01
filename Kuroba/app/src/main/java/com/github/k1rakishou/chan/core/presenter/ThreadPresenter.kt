@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
+import com.github.k1rakishou.chan.core.usecase.PreloadAllImagesInThreadUseCase
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
@@ -49,6 +50,7 @@ import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
@@ -89,7 +91,8 @@ class ThreadPresenter @Inject constructor(
   private val chanFilterManager: ChanFilterManager,
   private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val localSearchManager: LocalSearchManager
+  private val localSearchManager: LocalSearchManager,
+  private val preloadAllImagesInThreadUseCase: PreloadAllImagesInThreadUseCase
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -1577,6 +1580,61 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.onRestoreRemovedPostsClicked(currentChanDescriptor!!, selectedPosts)
+  }
+
+  fun cloudFlareForcePreload() {
+    if (!isBound) {
+      return
+    }
+
+    val descriptor = chanLoader?.chanDescriptor
+      ?: return
+
+    if (descriptor !is ChanDescriptor.ThreadDescriptor) {
+      return
+    }
+
+    if (!descriptor.siteDescriptor().is4chan()) {
+      return
+    }
+
+    val threadPosts = chanLoader?.thread?.getPosts()
+      ?: return
+
+    launch {
+      val preloadCallback = object : PreloadAllImagesInThreadUseCase.PreloadCallback {
+        override fun onPreloadStarted(toPreload: Int) {
+          BackgroundUtils.ensureMainThread()
+
+          if (toPreload > 0) {
+            showToast(context, getString(R.string.thread_presenter_started_preloading_images, toPreload))
+          } else {
+            showToast(context, getString(R.string.thread_presenter_all_images_already_preloaded))
+          }
+        }
+
+        override fun onPreloadEnded(preloadResult: PreloadAllImagesInThreadUseCase.PreloadResult) {
+          BackgroundUtils.ensureMainThread()
+
+          showToast(context, getString(R.string.thread_presenter_done_preloading, preloadResult.preloaded, preloadResult.failed))
+        }
+
+        override fun onPreloadingTheSameThread() {
+          BackgroundUtils.ensureMainThread()
+
+          showToast(context, getString(R.string.thread_presenter_already_in_progress))
+        }
+      }
+
+      val params = PreloadAllImagesInThreadUseCase.PreloadAllImagesParams(
+        descriptor,
+        threadPosts,
+        preloadCallback
+      )
+
+      // Hack to force Cloudflare to preload all images in a thread on 4chan
+      preloadAllImagesInThreadUseCase.execute(params)
+    }
   }
 
   interface ThreadPresenterCallback {
