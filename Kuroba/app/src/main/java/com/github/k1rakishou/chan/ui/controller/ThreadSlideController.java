@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
+import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 public class ThreadSlideController
         extends Controller
         implements DoubleNavigationController,
-        SlidingPaneLayout.PanelSlideListener,
+        SlidingPaneLayoutEx.PanelSlideListener,
         ToolbarNavigationController.ToolbarSearchCallback,
         ThemeEngine.ThemeChangesListener {
     private static final String TAG = "ThreadSlideController";
@@ -113,9 +114,7 @@ public class ThreadSlideController
     public void onThemeChanged() {
         int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
         slidingPaneLayout.setSliderFadeColor(fadeColor);
-
-        // TODO(KurobaEx): figure out a way to redraw the slidingPaneLayout. Right now the color
-        //  will stay until the user touches it.
+        slidingPaneLayout.requestLayout();
     }
 
     @Override

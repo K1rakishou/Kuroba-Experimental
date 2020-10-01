@@ -21,20 +21,19 @@ import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 
-import androidx.slidingpanelayout.widget.SlidingPaneLayout;
-
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget;
+import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
 
 import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout;
 
-public class ThreadSlidingPaneLayout extends SlidingPaneLayout implements IColorizableWidget {
+public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
 
     @Inject
     ThemeEngine themeEngine;
