@@ -728,11 +728,9 @@ public class AndroidUtils {
     }
 
     public static long getAvailableSpaceInBytes(File file) {
-        long availableSpace = -1L;
         StatFs stat = new StatFs(file.getPath());
-        availableSpace = stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
 
-        return availableSpace;
+        return stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
     }
 
     public enum FlavorType {

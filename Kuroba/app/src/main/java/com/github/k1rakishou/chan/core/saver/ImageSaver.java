@@ -520,7 +520,7 @@ public class ImageSaver {
 
         // filteredName.length() == 0 will only be true when "name" parameter does not have an
         // extension
-        if (filteredName.length() == 0 || isOnlyExtensionLeft) {
+        if (filteredName.isEmpty() || isOnlyExtensionLeft) {
             String appendExtension;
 
             if (extension != null) {

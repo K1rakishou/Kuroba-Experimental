@@ -54,10 +54,9 @@ public class ProgressRequestBody
     @Override
     public void writeTo(BufferedSink sink)
             throws IOException {
-        BufferedSink bufferedSink;
 
         progressSink = new ProgressSink(sink);
-        bufferedSink = Okio.buffer(progressSink);
+        BufferedSink bufferedSink = Okio.buffer(progressSink);
 
         delegate.writeTo(bufferedSink);
         bufferedSink.flush();
