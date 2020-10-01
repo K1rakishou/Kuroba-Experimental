@@ -399,7 +399,7 @@ class FileCacheV2(
             result.chunkSize
           }
 
-          if (ChanSettings.verboseLogs.get()) {
+          if (SHOW_PROGRESS_LOGS) {
             val percents = (result.downloaded.toFloat() / chunkSize.toFloat()) * 100f
             val downloadedString = PostUtils.getReadableFileSize(result.downloaded)
             val totalString = PostUtils.getReadableFileSize(chunkSize)
@@ -632,5 +632,7 @@ class FileCacheV2(
     private const val MAX_TIMEOUT_MS = 1000L
 
     const val MIN_CHUNK_SIZE = 1024L * 8L // 8 KB
+
+    private const val SHOW_PROGRESS_LOGS = false
   }
 }

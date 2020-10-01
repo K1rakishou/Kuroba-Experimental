@@ -71,6 +71,7 @@ import com.github.k1rakishou.common.*
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.audio.AudioListener
@@ -689,7 +690,8 @@ class MultiImageView @JvmOverloads constructor(
       val userAgent = Util.getUserAgent(AndroidUtils.getAppContext(), AppConstants.USER_AGENT)
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
-      val videoSource = progressiveFactory.createMediaSource(Uri.fromFile(file))
+      val videoSource = progressiveFactory.createMediaSource(
+              MediaItem.Builder().setUri(Uri.fromFile(file)).build())
 
       exoPlayer = createExoPlayer(videoSource)
 
@@ -819,7 +821,8 @@ class MultiImageView @JvmOverloads constructor(
 
   private fun createExoPlayer(source: MediaSource): SimpleExoPlayer {
     return SimpleExoPlayer.Builder(context).build().apply {
-      prepare(source)
+      setMediaSource(source)
+      prepare()
 
       repeatMode = if (ChanSettings.videoAutoLoop.get()) {
         Player.REPEAT_MODE_ALL

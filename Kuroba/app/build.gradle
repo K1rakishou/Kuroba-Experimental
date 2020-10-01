@@ -46,7 +46,7 @@ android {
         // bump the PATCH (ZZ) version otherwise, for anything small
         int major = 0
         int minor = 2
-        int patch = 4
+        int patch = 5
 
         /**
          * ------------------------------------------------------------
@@ -295,8 +295,10 @@ dependencies {
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
     implementation "androidx.work:work-runtime-ktx:2.4.0"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-    implementation 'com.google.android.material:material:1.2.1'
-    implementation 'com.google.android.exoplayer:exoplayer:2.12.0'
+    implementation "com.google.android.material:material:${versions.material}"
+
+    implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
+    implementation "com.google.android.exoplayer:exoplayer-ui:${versions.exoplayer}"
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
@@ -308,7 +310,7 @@ dependencies {
     implementation 'com.vladsch.flexmark:flexmark:0.60.2'
     implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin_version}"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
     implementation "joda-time:joda-time:${versions.joda_time}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
