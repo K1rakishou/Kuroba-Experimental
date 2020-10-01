@@ -536,13 +536,8 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun needUpdatePost(batchResult: LoaderBatchResult): Boolean {
-    for (loaderResult in batchResult.results) {
-      if (loaderResult is Succeeded && loaderResult.needUpdateView) {
-        return true
-      }
-    }
 
-    return false
+    return batchResult.results.any { it is Succeeded && it.needUpdateView }
   }
 
   override suspend fun onChanLoaderData(result: ChanThread) {

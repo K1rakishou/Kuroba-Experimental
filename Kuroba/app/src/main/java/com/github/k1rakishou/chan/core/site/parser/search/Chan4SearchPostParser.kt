@@ -61,12 +61,7 @@ open class Chan4SearchPostParser {
       val nodes = document.body().childNodes()
       val texts = ArrayList<CharSequence>(nodes.size)
 
-      for (node in nodes) {
-        val nodeParsed = parseNode(theme, node)
-        if (nodeParsed != null) {
-          texts.add(nodeParsed)
-        }
-      }
+      nodes.mapNotNullTo(texts) { parseNode(theme, it) }
 
       total = TextUtils.concat(*texts.toTypedArray())
     } catch (e: Exception) {
@@ -95,12 +90,7 @@ open class Chan4SearchPostParser {
       val innerNodes = node.childNodes()
       val texts: MutableList<CharSequence> = ArrayList(innerNodes.size + 1)
 
-      for (innerNode in innerNodes) {
-        val nodeParsed = parseNode(theme, innerNode)
-        if (nodeParsed != null) {
-          texts.add(nodeParsed)
-        }
-      }
+      innerNodes.mapNotNullTo(texts) { parseNode(theme, it) }
 
       val allInnerText = TextUtils.concat(*texts.toTypedArray())
 

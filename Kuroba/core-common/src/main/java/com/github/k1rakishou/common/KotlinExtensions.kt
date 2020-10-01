@@ -93,13 +93,9 @@ inline fun <T, R> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R>?): Li
 }
 
 inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(destination: C, transform: (T) -> Iterable<R>?): C {
-  for (element in this) {
-    val list = transform(element)
-
-    if (list != null) {
-      destination.addAll(list)
-    }
-  }
+  this
+    .mapNotNull { transform(it) }
+    .forEach { destination.addAll(it) }
   return destination
 }
 

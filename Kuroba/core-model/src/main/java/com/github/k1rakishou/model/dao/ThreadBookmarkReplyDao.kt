@@ -29,30 +29,18 @@ abstract class ThreadBookmarkReplyDao {
       val alreadyInsertedEntities = alreadyInsertedEntitiesMap[replyEntity.ownerThreadBookmarkId]
         ?: return@filter false
 
-      for (alreadyInsertedEntity in alreadyInsertedEntities) {
-        if (alreadyInsertedEntity.replyPostNo == replyEntity.replyPostNo) {
-          if (alreadyInsertedEntity.repliesToPostNo == replyEntity.repliesToPostNo) {
-            return@filter true
-          }
-        }
+      return@filter alreadyInsertedEntities.any {
+        it.replyPostNo == replyEntity.replyPostNo && it.repliesToPostNo == replyEntity.repliesToPostNo
       }
-
-      return@filter false
     }
 
     val toInsert = replyEntities.filter { replyEntity ->
       val alreadyInsertedEntities = alreadyInsertedEntitiesMap[replyEntity.ownerThreadBookmarkId]
         ?: return@filter true
 
-      for (alreadyInsertedEntity in alreadyInsertedEntities) {
-        if (alreadyInsertedEntity.replyPostNo == replyEntity.replyPostNo) {
-          if (alreadyInsertedEntity.repliesToPostNo == replyEntity.repliesToPostNo) {
-            return@filter false
-          }
-        }
+      return@filter alreadyInsertedEntities.none {
+        it.replyPostNo == replyEntity.replyPostNo && it.repliesToPostNo == replyEntity.repliesToPostNo
       }
-
-      return@filter true
     }
 
     if (toUpdate.size + toInsert.size != replyEntities.size) {
