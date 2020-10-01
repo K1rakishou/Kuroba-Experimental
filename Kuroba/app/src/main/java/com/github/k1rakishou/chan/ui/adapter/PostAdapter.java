@@ -269,7 +269,7 @@ public class PostAdapter
         } else {
             Post post = displayList.get(getPostPosition(position));
             int repliesFromSize = post.getRepliesFromCount();
-            return ((long) repliesFromSize << 32L) + (long) post.no + (compact ? 1L : 0L);
+            return ((long) repliesFromSize << 32L) + post.no + (compact ? 1L : 0L);
         }
     }
 

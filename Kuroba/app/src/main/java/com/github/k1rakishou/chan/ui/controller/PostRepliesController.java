@@ -281,7 +281,7 @@ public class PostRepliesController
         public long getItemId(int position) {
             Post post = data.posts.get(position);
             int repliesFromSize = post.getRepliesFromCount();
-            return ((long) repliesFromSize << 32L) + (long) post.no;
+            return ((long) repliesFromSize << 32L) + post.no;
         }
 
         @Override

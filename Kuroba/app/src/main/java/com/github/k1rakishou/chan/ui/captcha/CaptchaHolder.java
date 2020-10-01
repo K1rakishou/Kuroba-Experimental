@@ -229,7 +229,7 @@ public class CaptchaHolder {
             }
 
             CaptchaInfo otherCaptchaInfo = (CaptchaInfo) other;
-            return token.equals(otherCaptchaInfo.token) && validUntil == otherCaptchaInfo.getValidUntil();
+            return token.equals(otherCaptchaInfo.token) && validUntil == otherCaptchaInfo.validUntil;
         }
 
         @NonNull

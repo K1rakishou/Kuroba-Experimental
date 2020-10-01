@@ -373,7 +373,7 @@ public class Post implements Comparable<Post> {
 
         // Post.comment can now be mutated so it's not safe to use it in equals()
         return this.no == otherPost.no
-                && this.boardDescriptor.equals(((Post) other).getBoardDescriptor())
+                && this.boardDescriptor.equals(((Post) other).boardDescriptor)
                 && this.deleted.get() == otherPost.deleted.get();
     }
 
@@ -686,7 +686,7 @@ public class Post implements Comparable<Post> {
         }
 
         public Builder addReplyTo(long postId) {
-            repliesToIds.add((long) postId);
+            repliesToIds.add(postId);
             return this;
         }
 
