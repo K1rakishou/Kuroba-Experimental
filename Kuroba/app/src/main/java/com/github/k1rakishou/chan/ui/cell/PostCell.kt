@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 import okhttp3.HttpUrl
 import java.io.IOException
 import java.text.BreakIterator
@@ -93,7 +94,8 @@ class PostCell : LinearLayout, PostCellInterface {
   private lateinit var postAttentionLabel: View
   private lateinit var gestureDetector: GestureDetector
   private lateinit var chanDescriptor: ChanDescriptor
-  private lateinit var linkClickSpan: BackgroundColorSpanHashed
+  private lateinit var linkClickSpan: ColorizableBackgroundColorSpan
+  private lateinit var quoteClickSpan: ColorizableBackgroundColorSpan
   private lateinit var theme: ChanTheme
 
   private var post: Post? = null
@@ -206,9 +208,10 @@ class PostCell : LinearLayout, PostCellInterface {
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
 
-    linkClickSpan = BackgroundColorSpanHashed(
-      AndroidUtils.manipulateColor(themeEngine.chanTheme.postLinkColor, 1.2f)
-    )
+    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor)
+      .apply { withColorModification(1.3f) }
+    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor)
+      .apply { withColorModification(1.3f) }
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -821,6 +824,7 @@ class PostCell : LinearLayout, PostCellInterface {
     if (!bind) {
       if (commentSpanned is Spannable) {
         commentSpanned.removeSpan(linkClickSpan)
+        commentSpanned.removeSpan(quoteClickSpan)
       }
     }
   }
@@ -879,6 +883,7 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       buffer.removeSpan(linkClickSpan)
+      buffer.removeSpan(quoteClickSpan)
       return true
     }
 
@@ -914,8 +919,14 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       if (action == MotionEvent.ACTION_DOWN && clickableSpan1 is PostLinkable) {
+        val span = if (clickableSpan1.type == PostLinkable.Type.LINK) {
+          linkClickSpan
+        } else {
+          quoteClickSpan
+        }
+
         buffer.setSpan(
-          linkClickSpan,
+          span,
           buffer.getSpanStart(clickableSpan1),
           buffer.getSpanEnd(clickableSpan1),
           0
@@ -925,6 +936,7 @@ class PostCell : LinearLayout, PostCellInterface {
 
       if (action == MotionEvent.ACTION_CANCEL) {
         buffer.removeSpan(linkClickSpan)
+        buffer.removeSpan(quoteClickSpan)
       }
     }
 
@@ -988,6 +1000,7 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       buffer.removeSpan(linkClickSpan)
+      buffer.removeSpan(quoteClickSpan)
     }
   }
 
