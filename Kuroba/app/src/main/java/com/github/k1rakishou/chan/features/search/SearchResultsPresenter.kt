@@ -9,14 +9,14 @@ import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.site.sites.search.*
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.search.data.*
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -36,6 +36,7 @@ internal class SearchResultsPresenter(
 
   @Inject
   lateinit var globalSearchUseCase: GlobalSearchUseCase
+
   @Inject
   lateinit var themeEngine: ThemeEngine
 
@@ -71,7 +72,22 @@ internal class SearchResultsPresenter(
   }
 
   override fun onThemeChanged() {
-    scope.launch { doSearch() }
+    scope.launch {
+      val dataState = (searchResultsControllerStateSubject.value as? SearchResultsControllerState.Data)?.data
+      if (dataState == null) {
+        return@launch
+      }
+
+      val themeHash = themeEngine.chanTheme.hashCode()
+
+      // Update the post hash so redraw everything with new theme colors
+      dataState.searchPostInfoList.forEach { searchPostInfo ->
+        searchPostInfo.themeHash = themeHash
+      }
+
+      setState(SearchResultsControllerState.Data(dataState))
+      searchResultsStateStorage.updateSearchResultsState(dataState)
+    }
   }
 
   fun listenForStateChanges(): Flowable<SearchResultsControllerState> {
@@ -171,11 +187,12 @@ internal class SearchResultsPresenter(
   ): SearchResultsControllerStateData {
     val combinedSearchPostInfoList = prevStateData?.searchPostInfoList?.toMutableList()
       ?: mutableListOf()
+
     val postDescriptorsSet = combinedSearchPostInfoList
       .map { searchPostInfo -> searchPostInfo.postDescriptor }
       .toSet()
 
-    val theme = themeEngine.chanTheme
+    val themeHash = themeEngine.chanTheme.hashCode()
 
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
@@ -187,10 +204,11 @@ internal class SearchResultsPresenter(
 
         combinedSearchPostInfoList += SearchPostInfo(
           postDescriptor = searchEntryPost.postDescriptor,
-          opInfo = createOpInfo(searchEntryPost, theme),
+          opInfo = createOpInfo(searchEntryPost),
           postInfo = createPostInfo(searchEntryPost),
           thumbnail = createThumbnailInfo(searchEntryPost),
-          postComment = createPostComment(searchEntryPost)
+          postComment = createPostComment(searchEntryPost),
+          themeHash = themeHash
         )
       }
     }
@@ -228,7 +246,7 @@ internal class SearchResultsPresenter(
     return CharSequenceMurMur.create(text)
   }
 
-  private fun createOpInfo(searchEntryPost: SearchEntryPost, theme: ChanTheme): CharSequenceMurMur? {
+  private fun createOpInfo(searchEntryPost: SearchEntryPost): CharSequenceMurMur? {
     if (!searchEntryPost.isOp) {
       return null
     }
@@ -246,7 +264,7 @@ internal class SearchResultsPresenter(
 
       if (subject != null) {
         append(" ")
-        append(subjectSpanned(subject, theme))
+        append(subjectSpanned(subject))
       }
     }
 
@@ -259,9 +277,9 @@ internal class SearchResultsPresenter(
     return spannedSubject
   }
 
-  private fun subjectSpanned(text: CharSequence, theme: ChanTheme): SpannableString {
+  private fun subjectSpanned(text: CharSequence): SpannableString {
     val spannedSubject = SpannableString(text)
-    spannedSubject.setSpan(ForegroundColorSpanHashed(theme.postSubjectColor), 0, spannedSubject.length, 0)
+    spannedSubject.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor), 0, spannedSubject.length, 0)
     return spannedSubject
   }
 

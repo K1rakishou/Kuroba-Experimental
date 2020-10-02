@@ -58,10 +58,6 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostCommentContainer = findViewById(R.id.search_post_comment_container)
     searchPostComment = findViewById(R.id.search_post_comment)
 
-    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    searchPostInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    searchPostComment.setTextColor(themeEngine.chanTheme.textColorPrimary)
-
     searchPostThumbnailSize = context.resources.getDimension(R.dimen.search_post_thumbnail_size).toInt()
   }
 
@@ -103,6 +99,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostOpInfo.text = postOpInfo
     searchPostOpInfo.setVisibilityFast(View.VISIBLE)
+    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp
@@ -115,8 +112,8 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostInfo.text = postInfo
     searchPostInfo.setVisibilityFast(View.VISIBLE)
+    searchPostInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
-
 
   @ModelProp
   fun setPostComment(comment: CharSequence) {
@@ -128,6 +125,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostComment.text = comment
     searchPostCommentContainer.setVisibilityFast(View.VISIBLE)
+    searchPostComment.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

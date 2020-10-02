@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.ui.theme
 import android.content.Context
 import android.graphics.Color
 
-class MockLightChanTheme(
+data class MockLightChanTheme(
   override val context: Context,
   override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Test light theme",

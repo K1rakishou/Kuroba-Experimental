@@ -32,12 +32,15 @@ internal class SearchPostInfo(
   val opInfo: CharSequenceMurMur?,
   val postInfo: CharSequenceMurMur,
   val thumbnail: ThumbnailInfo?,
-  val postComment: CharSequenceMurMur
+  val postComment: CharSequenceMurMur,
+  @get:Synchronized
+  @set:Synchronized
+  var themeHash: Int,
 ) {
 
   fun combinedHash(): String {
     return "${postDescriptor.hashCode()}_${opInfo?.hashString()}" +
-      "_${postInfo.hashString()}_${thumbnail.hashCode()}_${postInfo.hashString()}"
+      "_${postInfo.hashString()}_${thumbnail.hashCode()}_${postComment.hashString()}_${themeHash}"
   }
 
   override fun equals(other: Any?): Boolean {
