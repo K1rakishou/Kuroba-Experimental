@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController
-import com.github.k1rakishou.chan.ui.controller.SaveLocationController.SaveLocationControllerCallback
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import java.io.File
@@ -63,9 +62,10 @@ class SaveLocationSetupDelegate(
   private fun onSaveLocationUseOldApiClicked() {
     BackgroundUtils.ensureMainThread()
 
-    val saveLocationController = SaveLocationController(context,
+    val saveLocationController = SaveLocationController(
+      context,
       SaveLocationController.SaveLocationControllerMode.ImageSaveLocation,
-      SaveLocationControllerCallback { dirPath -> presenter.onSaveLocationChosen(dirPath) }
+      { dirPath -> presenter.onSaveLocationChosen(dirPath) }
     )
 
     callbacks.pushController(saveLocationController)

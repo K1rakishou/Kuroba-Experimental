@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import android.content.Context
 import android.content.DialogInterface
+import android.graphics.drawable.ColorDrawable
 import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
@@ -9,15 +10,19 @@ import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.LinearLayout
 import android.widget.ListAdapter
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.common.exhaustive
 
+
 class DialogFactory(
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val applicationVisibilityManager: ApplicationVisibilityManager,
+  private val themeEngine: ThemeEngine
 ) {
 
   @JvmOverloads
@@ -37,7 +42,7 @@ class DialogFactory(
       .setPositiveButton(positiveButtonTextId) { _, _ ->
         onPositiveButtonClickListener.invoke()
       }
-      .setCancelable(false)
+      .setCancelable(true)
 
     if (descriptionTextId != null) {
       builder.setMessage(descriptionTextId)
@@ -45,6 +50,7 @@ class DialogFactory(
 
     builder
       .create()
+      .apply { setOnShowListener { dialogInterface -> dialogInterface.applyColors() } }
       .show()
   }
 
@@ -58,7 +64,7 @@ class DialogFactory(
     adapter: ListAdapter? = null,
     listener: ((DialogInterface, Int) -> Unit)? = null,
     customView: View? = null,
-    cancelable: Boolean = false,
+    cancelable: Boolean = true,
     onPositiveButtonClickListener: ((DialogInterface) -> Unit) = { },
     positiveButtonText: String = getString(R.string.ok),
     onNeutralButtonClickListener: ((DialogInterface) -> Unit) = { },
@@ -88,7 +94,11 @@ class DialogFactory(
     val dialog = builder
       .create()
 
-    dialog.apply { dialogModifier(this) }
+    dialog
+      .apply {
+        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
+        dialogModifier(this)
+      }
       .show()
 
     return dialog
@@ -105,12 +115,19 @@ class DialogFactory(
     descriptionText: CharSequence? = null,
     dialogModifier: (AlertDialog) -> Unit = { }
   ) {
+    if (!applicationVisibilityManager.isAppInForeground()) {
+      return
+    }
+
     AlertDialog.Builder(context)
       .setTitleInternal(titleTextId, titleText)
       .setDescriptionInternal(descriptionTextId, descriptionText)
       .setAdapter(adapter, { dialog, selectedIndex -> clickListener(dialog, selectedIndex) })
       .create()
-      .apply { dialogModifier(this) }
+      .apply {
+        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
+        dialogModifier(this)
+      }
       .show()
   }
 
@@ -160,9 +177,12 @@ class DialogFactory(
       .setTitleInternal(titleTextId, titleText)
       .setDescriptionInternal(descriptionTextId, descriptionText)
       .setView(container)
-      .setCancelable(false)
+      .setCancelable(true)
       .create()
-      .apply { dialogModifier(this) }
+      .apply {
+        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
+        dialogModifier(this)
+      }
 
     dialog.window!!
       .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
@@ -173,17 +193,33 @@ class DialogFactory(
       .show()
   }
 
+  fun createWithStringArray(
+    context: Context,
+    keys: Array<String?>,
+    onClickListener: (Int) -> Unit
+  ) {
+    if (!applicationVisibilityManager.isAppInForeground()) {
+      return
+    }
+
+    AlertDialog.Builder(context)
+      .setItems(keys, { _, which -> onClickListener.invoke(which) })
+      .create()
+      .apply { setOnShowListener { dialogInterface -> dialogInterface.applyColors() } }
+      .show()
+  }
+
   private fun AlertDialog.Builder.setDescriptionInternal(
     descriptionTextId: Int?,
     descriptionText: CharSequence?
   ): AlertDialog.Builder {
     if (descriptionText != null) {
-      setTitle(descriptionText)
+      setMessage(descriptionText)
       return this
     }
 
     if (descriptionTextId != null) {
-      setTitle(descriptionTextId)
+      setMessage(descriptionTextId)
       return this
     }
 
@@ -226,7 +262,10 @@ class DialogFactory(
     return this
   }
 
-  private fun AlertDialog.Builder.setAdapterInternal(adapter: ListAdapter?, listener: ((DialogInterface, Int) -> Unit)?): AlertDialog.Builder {
+  private fun AlertDialog.Builder.setAdapterInternal(
+    adapter: ListAdapter?,
+    listener: ((DialogInterface, Int) -> Unit)?
+  ): AlertDialog.Builder {
     if (adapter != null) {
       setAdapter(adapter) { dialog, index -> listener!!.invoke(dialog, index) }
     }
@@ -234,31 +273,51 @@ class DialogFactory(
     return this
   }
 
-  fun createWithStringArray(
-    context: Context,
-    keys: Array<String?>,
-    onClickListener: (Int) -> Unit
-  ) {
-    AlertDialog.Builder(context)
-      .setItems(keys, { _, which -> onClickListener.invoke(which) })
-      .show()
-  }
+  private fun DialogInterface.applyColors(): AlertDialog {
+    this as AlertDialog
 
+    val view = window
+      ?: return this
+
+    view.setBackgroundDrawable(ColorDrawable(themeEngine.chanTheme.backColor))
+
+    getButton(DialogInterface.BUTTON_POSITIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    getButton(DialogInterface.BUTTON_NEGATIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    getButton(DialogInterface.BUTTON_NEUTRAL)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    findViewById<TextView>(R.id.alertTitle)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    findViewById<TextView>(android.R.id.message)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    return this
+  }
 
   enum class DialogInputType {
     String,
     Integer
   }
 
-  class Builder(
-    private val context: Context,
-    private val dialogFactory: DialogFactory
-  ) {
+  class Builder(private val context: Context, private val dialogFactory: DialogFactory) {
     private var titleTextId: Int? = null
     private var titleText: CharSequence? = null
     private var descriptionTextId: Int? = null
     private var descriptionText: CharSequence? = null
-    private var cancelable: Boolean = false
+    private var cancelable: Boolean = true
     private var adapter: ListAdapter? = null
     private var adapterListener: ((DialogInterface, Int) -> Unit)? = null
     private var customView: View? = null

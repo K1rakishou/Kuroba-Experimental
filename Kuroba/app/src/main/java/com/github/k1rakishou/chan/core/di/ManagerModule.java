@@ -580,8 +580,14 @@ public class ManagerModule {
 
     @Singleton
     @Provides
-    public DialogFactory provideDialogFactory(ApplicationVisibilityManager applicationVisibilityManager) {
-        return new DialogFactory(applicationVisibilityManager);
+    public DialogFactory provideDialogFactory(
+            ApplicationVisibilityManager applicationVisibilityManager,
+            ThemeEngine themeEngine
+    ) {
+        return new DialogFactory(
+                applicationVisibilityManager,
+                themeEngine
+        );
     }
 
 }
