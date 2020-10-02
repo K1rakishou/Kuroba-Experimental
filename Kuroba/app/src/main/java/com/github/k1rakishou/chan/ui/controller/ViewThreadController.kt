@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -61,8 +62,13 @@ import javax.inject.Inject
 
 open class ViewThreadController(
   context: Context,
+  drawerCallbacks: DrawerCallbacks?,
   private var threadDescriptor: ThreadDescriptor
-) : ThreadController(context), ThreadLayoutCallback, ToobarThreedotMenuCallback, ReplyAutoCloseListener {
+) : ThreadController(context, drawerCallbacks),
+  ThreadLayoutCallback,
+  ToobarThreedotMenuCallback,
+  ReplyAutoCloseListener {
+
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject

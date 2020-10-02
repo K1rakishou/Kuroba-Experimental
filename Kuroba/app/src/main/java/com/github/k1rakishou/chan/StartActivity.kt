@@ -615,11 +615,13 @@ class StartActivity : AppCompatActivity(),
 
     when (layoutMode) {
       ChanSettings.LayoutMode.SPLIT -> {
-        val split = SplitNavigationController(this)
-        split.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
-        drawerController.pushChildController(split)
+        val split = SplitNavigationController(
+          this,
+          AndroidUtils.inflate(this, R.layout.layout_split_empty),
+          drawerController
+        )
 
-        split.setDrawerCallbacks(drawerController)
+        drawerController.pushChildController(split)
         split.setLeftController(mainNavigationController, false)
       }
       ChanSettings.LayoutMode.PHONE,
@@ -629,20 +631,20 @@ class StartActivity : AppCompatActivity(),
       ChanSettings.LayoutMode.AUTO -> throw IllegalStateException("Shouldn't happen")
     }
 
-    browseController = BrowseController(this)
+    browseController = BrowseController(this, drawerController)
 
     if (layoutMode == ChanSettings.LayoutMode.SLIDE) {
-      val slideController = ThreadSlideController(this)
-      slideController.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
-      mainNavigationController.pushController(slideController, false)
+      val slideController = ThreadSlideController(
+        this,
+        AndroidUtils.inflate(this, R.layout.layout_split_empty),
+        drawerController
+      )
 
-      slideController.setDrawerCallbacks(drawerController)
+      mainNavigationController.pushController(slideController, false)
       slideController.setLeftController(browseController, false)
     } else {
       mainNavigationController.pushController(browseController, false)
     }
-
-    browseController!!.drawerCallbacks = drawerController
   }
 
   private fun isKnownAction(action: String): Boolean {

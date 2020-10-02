@@ -295,6 +295,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
         return mParallaxBy;
     }
 
+    public boolean getPreservedOpenState() {
+        return mPreservedOpenState;
+    }
+
     /**
      * Set the color used to fade the sliding pane out when it is slid most of the way offscreen.
      *

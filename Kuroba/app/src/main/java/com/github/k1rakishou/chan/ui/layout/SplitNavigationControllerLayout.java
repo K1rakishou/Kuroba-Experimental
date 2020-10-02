@@ -22,11 +22,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+
+import javax.inject.Inject;
+
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
-public class SplitNavigationControllerLayout
-        extends LinearLayout {
+public class SplitNavigationControllerLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private final int dividerWidth;
     private final int minimumLeftWidth;
     private final double ratio;
@@ -45,12 +53,32 @@ public class SplitNavigationControllerLayout
 
     public SplitNavigationControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        Chan.inject(this);
 
         setOrientation(LinearLayout.HORIZONTAL);
 
         dividerWidth = dp(1);
         minimumLeftWidth = dp(300);
         ratio = 0.35;
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (divider != null) {
+            divider.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
+        }
     }
 
     public void setLeftView(ViewGroup leftView) {

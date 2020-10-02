@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -60,7 +61,10 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
-class BrowseController(context: Context) : ThreadController(context),
+class BrowseController(
+  context: Context,
+  drawerCallbacks: DrawerCallbacks?
+) : ThreadController(context, drawerCallbacks),
   ThreadLayoutCallback,
   BrowsePresenter.Callback,
   SlideChangeListener,
@@ -698,9 +702,8 @@ class BrowseController(context: Context) : ThreadController(context),
           } else {
             val navigationController = StyledToolbarNavigationController(context)
             splitNav.setRightController(navigationController, animated)
-            val viewThreadController = ViewThreadController(context, descriptor)
+            val viewThreadController = ViewThreadController(context, drawerCallbacks, descriptor)
             navigationController.pushController(viewThreadController, false)
-            viewThreadController.drawerCallbacks = drawerCallbacks
           }
           splitNav.switchToController(false, animated)
         }
@@ -712,11 +715,11 @@ class BrowseController(context: Context) : ThreadController(context),
           } else {
             val viewThreadController = ViewThreadController(
               context,
+              drawerCallbacks,
               descriptor
             )
 
             slideNav.setRightController(viewThreadController, animated)
-            viewThreadController.drawerCallbacks = drawerCallbacks
           }
           slideNav.switchToController(false, animated)
         }
@@ -725,13 +728,12 @@ class BrowseController(context: Context) : ThreadController(context),
           // (BrowseController -> ToolbarNavigationController)
           val viewThreadController = ViewThreadController(
             context,
+            drawerCallbacks,
             descriptor
           )
 
           Objects.requireNonNull(navigationController, "navigationController is null")
           navigationController!!.pushController(viewThreadController, animated)
-
-          viewThreadController.drawerCallbacks = drawerCallbacks
         }
       }
 

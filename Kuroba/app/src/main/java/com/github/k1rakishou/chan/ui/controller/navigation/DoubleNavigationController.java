@@ -16,15 +16,11 @@
  */
 package com.github.k1rakishou.chan.ui.controller.navigation;
 
-import android.view.ViewGroup;
-
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.core.navigation.HasNavigation;
 
 public interface DoubleNavigationController extends HasNavigation {
-    void setEmptyView(ViewGroup emptyView);
-
     void setLeftController(Controller leftController, boolean animated);
 
     void setRightController(Controller rightController, boolean animated);

@@ -45,7 +45,7 @@ import javax.inject.Inject;
 
 public class SplitNavigationController
         extends Controller
-        implements DoubleNavigationController {
+        implements DoubleNavigationController, ThemeEngine.ThemeChangesListener {
 
     @Inject
     ThemeEngine themeEngine;
@@ -58,30 +58,27 @@ public class SplitNavigationController
     private FrameLayout leftControllerView;
     private FrameLayout rightControllerView;
     private ViewGroup emptyView;
+    private TextView selectThreadText;
 
     private PopupController popup;
     private StyledToolbarNavigationController popupChild;
 
-    public SplitNavigationController(Context context) {
+    public SplitNavigationController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
         super(context);
-    }
+        Chan.inject(this);
 
-    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.emptyView = emptyView;
         this.drawerCallbacks = drawerCallbacks;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Chan.inject(this);
 
         doubleNavigationController = this;
 
         SplitNavigationControllerLayout container = new SplitNavigationControllerLayout(context);
         view = container;
-
-        View dividerView = new View(context);
-        dividerView.setBackgroundColor(themeEngine.getChanTheme().getDividerColor());
 
         leftControllerView = new FrameLayout(context);
         rightControllerView = new FrameLayout(context);
@@ -91,26 +88,29 @@ public class SplitNavigationController
 
         container.setLeftView(leftControllerView);
         container.setRightView(rightControllerView);
-        container.setDivider(dividerView);
+        container.setDivider(new View(context));
         container.build();
 
+        selectThreadText = emptyView.findViewById(R.id.select_thread_text);
+
         setRightController(null, false);
+        themeEngine.addListener(this);
+
+        onThemeChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        themeEngine.removeListener(this);
         drawerCallbacks = null;
     }
 
     @Override
-    public void setEmptyView(ViewGroup emptyView) {
-        this.emptyView = emptyView;
-
-        TextView textView = emptyView.findViewById(R.id.select_thread_text);
-        if (textView != null) {
-            textView.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+    public void onThemeChanged() {
+        if (selectThreadText != null) {
+            selectThreadText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
     }
 
@@ -162,7 +162,7 @@ public class SplitNavigationController
 
     @Override
     public void switchToController(boolean leftController, boolean animated) {
-
+        // both are always visible
     }
 
     @Override

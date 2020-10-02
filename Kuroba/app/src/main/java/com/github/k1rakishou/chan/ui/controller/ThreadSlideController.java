@@ -21,8 +21,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.slidingpanelayout.widget.SlidingPaneLayout;
-
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
@@ -35,12 +33,9 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
-import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Field;
 
 import javax.inject.Inject;
 
@@ -67,12 +62,11 @@ public class ThreadSlideController
     private ViewGroup emptyView;
     private ThreadSlidingPaneLayout slidingPaneLayout;
 
-    public ThreadSlideController(Context context) {
+    public ThreadSlideController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
         super(context);
         Chan.inject(this);
-    }
 
-    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.emptyView = emptyView;
         this.drawerCallbacks = drawerCallbacks;
     }
 
@@ -97,8 +91,12 @@ public class ThreadSlideController
         setLeftController(null, false);
         setRightController(null, false);
 
-        themeEngine.addListener(this);
+        TextView textView = emptyView.findViewById(R.id.select_thread_text);
+        if (textView != null) {
+            textView.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        }
 
+        themeEngine.addListener(this);
         onThemeChanged();
     }
 
@@ -112,9 +110,11 @@ public class ThreadSlideController
 
     @Override
     public void onThemeChanged() {
-        int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
-        slidingPaneLayout.setSliderFadeColor(fadeColor);
-        slidingPaneLayout.requestLayout();
+        if (slidingPaneLayout != null) {
+            int fadeColor = (themeEngine.getChanTheme().getBackColor() & 0xffffff) + 0xCC000000;
+            slidingPaneLayout.setSliderFadeColor(fadeColor);
+            slidingPaneLayout.requestLayout();
+        }
     }
 
     @Override
@@ -127,18 +127,7 @@ public class ThreadSlideController
     }
 
     public void onSlidingPaneLayoutStateRestored() {
-        // SlidingPaneLayout does some annoying things for state restoring and incorrectly
-        // tells us if the restored state was open or closed
-        // We need to use reflection to get the private field that stores this correct state
-        boolean restoredOpen = false;
-
-        try {
-            Field field = SlidingPaneLayout.class.getDeclaredField("mPreservedOpenState");
-            field.setAccessible(true);
-            restoredOpen = field.getBoolean(slidingPaneLayout);
-        } catch (Exception e) {
-            Logger.e(TAG, "Error getting restored open state with reflection", e);
-        }
+        boolean restoredOpen = slidingPaneLayout.getPreservedOpenState();
 
         if (restoredOpen != leftOpen) {
             leftOpen = restoredOpen;
@@ -187,16 +176,6 @@ public class ThreadSlideController
 
             leftOpen = leftController;
             slideStateChanged(animated);
-        }
-    }
-
-    @Override
-    public void setEmptyView(ViewGroup emptyView) {
-        this.emptyView = emptyView;
-
-        TextView textView = emptyView.findViewById(R.id.select_thread_text);
-        if (textView != null) {
-            textView.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
     }
 
