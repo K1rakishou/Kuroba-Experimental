@@ -47,6 +47,7 @@ import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.model.PostImage;
@@ -124,6 +125,8 @@ public class ImageViewerController
     ThemeEngine themeEngine;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    DialogFactory dialogFactory;
 
     private AnimatorSet startAnimation;
     private AnimatorSet endAnimation;
@@ -354,21 +357,24 @@ public class ImageViewerController
         Integer[] rotateInts = {90, 180, -90};
         ListView rotateImageList = new ColorizableListView(context);
 
-        AlertDialog dialog = new AlertDialog.Builder(context)
-                .setView(rotateImageList)
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
+                .withCustomView(rotateImageList)
+                .withCancelable(true)
                 .create();
 
-        dialog.setCanceledOnTouchOutside(true);
+        if (dialog == null) {
+            return;
+        }
 
         rotateImageList.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, rotateOptions));
         rotateImageList.setOnItemClickListener((parent, view, position, id) -> {
-            ((ImageViewerAdapter) pager.getAdapter()).rotateImage(presenter.getCurrentPostImage(),
-                    rotateInts[position]
-            );
+            ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
+            if (adapter != null) {
+                adapter.rotateImage(presenter.getCurrentPostImage(), rotateInts[position]);
+            }
+
             dialog.dismiss();
         });
-
-        dialog.show();
     }
 
     private void forceReload(ToolbarMenuSubItem item) {

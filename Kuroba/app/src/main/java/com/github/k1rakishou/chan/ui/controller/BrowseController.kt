@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.controller
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.text.InputType
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
@@ -29,6 +28,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
@@ -50,7 +50,6 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -78,6 +77,8 @@ class BrowseController(
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -515,13 +516,13 @@ class BrowseController(
       return
     }
 
-    createSimpleDialogWithInput(
-      context,
-      R.string.browse_controller_enter_thread_id,
-      R.string.browse_controller_enter_thread_id_msg,
-      { input: String -> openThreadByIdInternal(input) },
-      InputType.TYPE_CLASS_NUMBER
-    ).show()
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.browse_controller_enter_thread_id,
+      descriptionTextId = R.string.browse_controller_enter_thread_id_msg,
+      onValueEntered = { input: String -> openThreadByIdInternal(input) },
+      inputType = DialogFactory.DialogInputType.Integer
+    )
   }
 
   private fun openThreadByIdInternal(input: String) {

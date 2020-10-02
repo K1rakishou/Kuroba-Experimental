@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.features.settings.ImportExportScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ImportExportSettingsDelegate
@@ -14,7 +15,8 @@ class ImportExportSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
-  private val fileManager: FileManager
+  private val fileManager: FileManager,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   ImportExportScreen,
@@ -25,7 +27,8 @@ class ImportExportSettingsScreen(
       context,
       navigationController,
       fileChooser,
-      fileManager
+      fileManager,
+      dialogFactory
     )
   }
 

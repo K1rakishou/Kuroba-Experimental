@@ -27,8 +27,7 @@ import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
 class MainSettingsControllerV2(context: Context)
-  : BaseSettingsController(context),
-  ToolbarSearchCallback {
+  : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
@@ -352,7 +351,7 @@ class MainSettingsControllerV2(context: Context)
             clickListener { view ->
               val prev = settingV2.getCurrent()
 
-              showInputDialog(view, settingV2) { curr ->
+              showInputDialog(settingV2) { curr ->
                 if (prev != curr) {
                   updateRestartRefreshButton(settingV2)
                 }

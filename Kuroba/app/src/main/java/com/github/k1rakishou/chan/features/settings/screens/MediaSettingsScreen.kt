@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinatorCallbacks
@@ -21,7 +22,8 @@ class MediaSettingsScreen(
   private val navigationController: NavigationController,
   private val fileManager: FileManager,
   private val fileChooser: FileChooser,
-  private val runtimePermissionsHelper: RuntimePermissionsHelper
+  private val runtimePermissionsHelper: RuntimePermissionsHelper,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   MediaScreen,
@@ -34,7 +36,8 @@ class MediaSettingsScreen(
       navigationController,
       fileManager,
       fileChooser,
-      runtimePermissionsHelper
+      runtimePermissionsHelper,
+      dialogFactory
     )
   }
 

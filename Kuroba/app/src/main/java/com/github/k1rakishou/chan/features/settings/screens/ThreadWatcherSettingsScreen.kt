@@ -5,9 +5,9 @@ import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -23,7 +23,8 @@ import java.util.concurrent.TimeUnit
 class ThreadWatcherSettingsScreen(
   context: Context,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: ThemeEngine,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   ThreadWatcherScreen,
@@ -158,22 +159,21 @@ class ThreadWatcherSettingsScreen(
       )
     )
 
-    Linkify.addLinks(descriptionText, Linkify.WEB_URLS);
+    Linkify.addLinks(descriptionText, Linkify.WEB_URLS)
 
-    val dialog = AlertDialog.Builder(context)
-      .setTitle(R.string.setting_watch_background_limitations_dialog_title)
-      .setPositiveButton(R.string.ok) { _, _ ->
-        PersistableChanState.shittyPhonesBackgroundLimitationsExplanationDialogShown.set(true)
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.setting_watch_background_limitations_dialog_title,
+      descriptionText = descriptionText,
+      dialogModifier = { dialog ->
+        (dialog.findViewById<TextView>(android.R.id.message))?.apply {
+          setLinkTextColor(themeEngine.chanTheme.postLinkColor)
+          movementMethod = LinkMovementMethod.getInstance()
+        }
       }
-      .setMessage(descriptionText)
-      .create()
+    )
 
-    dialog.show()
-
-    (dialog.findViewById<TextView>(android.R.id.message))?.apply {
-      setLinkTextColor(themeEngine.chanTheme.postLinkColor)
-      movementMethod = LinkMovementMethod.getInstance()
-    }
+    PersistableChanState.shittyPhonesBackgroundLimitationsExplanationDialogShown.set(true)
   }
 
   companion object {

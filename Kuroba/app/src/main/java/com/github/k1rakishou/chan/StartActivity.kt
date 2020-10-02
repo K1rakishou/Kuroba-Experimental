@@ -20,14 +20,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
 import android.view.KeyEvent
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
@@ -39,7 +34,6 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
@@ -104,6 +98,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -202,7 +198,7 @@ class StartActivity : AppCompatActivity(),
     themeEngine.setupContext(this)
     fileChooser.setCallbacks(this)
     imagePickDelegate = ImagePickDelegate(this)
-    runtimePermissionsHelper = RuntimePermissionsHelper(this)
+    runtimePermissionsHelper = RuntimePermissionsHelper(this, dialogFactory)
     updateManager = UpdateManager(this)
 
     contentView = findViewById(android.R.id.content)
@@ -236,41 +232,6 @@ class StartActivity : AppCompatActivity(),
     }
 
     browseController?.showLoading()
-    showAppBetaVersionWarning()
-  }
-
-  private fun showAppBetaVersionWarning() {
-    if (!AndroidUtils.isBetaBuild()) {
-      return
-    }
-
-    if (PersistableChanState.appBetaVersionWarningShown.get()) {
-      return
-    }
-
-    PersistableChanState.appBetaVersionWarningShown.set(true)
-
-    val message = "This application is in early beta version.\n" +
-      "Auto-updater doesn't work yet, so you will have to download new versions manually.\n" +
-      "You can find them here: https://github.com/K1rakishou/Kuroba-Experimental/releases\n" +
-      "Expect lots of crashes and other bugs.\n" +
-      "Don't forget to report all the bugs on github: https://github.com/K1rakishou/Kuroba-Experimental/issues\n\n"
-
-    val messageText = SpannableString(message)
-    Linkify.addLinks(messageText, Linkify.WEB_URLS);
-
-    val dialog = AlertDialog.Builder(this)
-      .setTitle("Beta version")
-      .setMessage(messageText)
-      .setPositiveButton(R.string.ok) { dialog, _ -> dialog.dismiss() }
-      .create()
-
-    dialog.show()
-
-    (dialog.findViewById<TextView>(android.R.id.message))?.apply {
-      setLinkTextColor(themeEngine.chanTheme.postLinkColor)
-      movementMethod = LinkMovementMethod.getInstance()
-    }
   }
 
   private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {

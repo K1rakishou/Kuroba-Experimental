@@ -17,9 +17,7 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.text.InputType
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.core.util.Pair
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -44,8 +42,6 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuC
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.DialogUtils
-import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -78,7 +74,7 @@ open class ViewThreadController(
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
-  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  lateinit var dialogFactory: DialogFactory
 
   private var pinItemPinned = false
 
@@ -304,12 +300,11 @@ open class ViewThreadController(
     if (!PersistableChanState.cloudflarePreloadingExplanationShown.get()) {
       PersistableChanState.cloudflarePreloadingExplanationShown.set(true)
 
-      DialogUtils.createSimpleInformationDialog(
-        context,
-        applicationVisibilityManager.isAppInForeground(),
-        R.string.thread_presenter_cloudflare_preloading_dialog_title,
-        R.string.thread_presenter_cloudflare_preloading_dialog_description,
-        { threadLayout.presenter.cloudFlareForcePreload() }
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleTextId = R.string.thread_presenter_cloudflare_preloading_dialog_title,
+        descriptionTextId = R.string.thread_presenter_cloudflare_preloading_dialog_description,
+        onPositiveButtonClickListener = { threadLayout.presenter.cloudFlareForcePreload() }
       )
 
       return
@@ -397,11 +392,10 @@ open class ViewThreadController(
   }
 
   private fun onGoToPostClicked(item: ToolbarMenuSubItem) {
-    createSimpleDialogWithInput(
-      context,
-      R.string.view_thread_controller_enter_post_id,
-      null,
-      { input: String ->
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.view_thread_controller_enter_post_id,
+      onValueEntered = { input: String ->
         try {
           val postNo = input.toInt()
           threadLayout.presenter.scrollToPostByPostNo(postNo.toLong())
@@ -409,8 +403,8 @@ open class ViewThreadController(
           //ignored
         }
       },
-      InputType.TYPE_CLASS_NUMBER
-    ).show()
+      inputType = DialogFactory.DialogInputType.Integer
+    )
   }
 
   private fun onThreadViewOptionClicked(item: ToolbarMenuSubItem) {
@@ -490,12 +484,13 @@ open class ViewThreadController(
       threadToOpenDescriptor.boardCode() + "/" +
       threadToOpenDescriptor.threadNo
 
-    AlertDialog.Builder(context)
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ -> showExternalThreadInternal(threadToOpenDescriptor) }
-      .setTitle(R.string.open_thread_confirmation)
-      .setMessage(fullThreadName)
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      descriptionText = fullThreadName,
+      negativeButtonText = getString(R.string.cancel),
+      positiveButtonText = getString(R.string.ok),
+      onPositiveButtonClickListener = { showExternalThreadInternal(threadToOpenDescriptor) }
+    )
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {

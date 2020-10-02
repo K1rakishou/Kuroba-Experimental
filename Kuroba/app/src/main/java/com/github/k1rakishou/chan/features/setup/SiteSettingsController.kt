@@ -134,7 +134,7 @@ class SiteSettingsController(
           clickListener { view ->
             val prev = settingV2.getCurrent()
 
-            showInputDialog(view, settingV2) { curr ->
+            showInputDialog(settingV2) { curr ->
               if (prev == curr) {
                 return@showInputDialog
               }

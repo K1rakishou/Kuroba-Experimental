@@ -208,10 +208,8 @@ class PostCell : LinearLayout, PostCellInterface {
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
 
-    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor)
-      .apply { withColorModification(1.3f) }
-    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor)
-      .apply { withColorModification(1.3f) }
+    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
+    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {

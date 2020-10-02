@@ -174,8 +174,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       RepositoryModule(),
       SiteModule(),
       LoaderModule(),
-      ManagerModule(),
-      HelperModule()
+      ManagerModule()
     )
 
     feather.injectFields(this)

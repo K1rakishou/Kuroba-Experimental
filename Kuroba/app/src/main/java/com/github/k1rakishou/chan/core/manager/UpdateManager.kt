@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.core.manager
 import android.Manifest
 import android.app.ProgressDialog
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
 import android.os.StrictMode
@@ -27,7 +26,6 @@ import android.os.StrictMode.VmPolicy
 import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan.Companion.inject
@@ -83,6 +81,8 @@ class UpdateManager(
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var okHttpClient: ProxiedOkHttpClient
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private var updateDownloadDialog: ProgressDialog? = null
   private var cancelableDownload: CancelableDownload? = null
@@ -236,11 +236,11 @@ class UpdateManager(
 
       if (commitHash == BuildConfig.COMMIT_HASH) {
         // Same version and commit, no update needed
-        if (manual && BackgroundUtils.isInForeground()) {
-          AlertDialog.Builder(context)
-            .setTitle(getString(R.string.update_none, getApplicationLabel()))
-            .setPositiveButton(R.string.ok, null)
-            .show()
+        if (manual) {
+          dialogFactory.createSimpleConfirmationDialog(
+            context = context,
+            titleText = getString(R.string.update_none, getApplicationLabel())
+          )
         }
 
         cancelApkUpdateNotification()
@@ -280,15 +280,11 @@ class UpdateManager(
           is JsonReaderRequest.JsonReaderResponse.Success -> {
             Logger.d(TAG, "ReleaseUpdateApiRequest success")
 
-            if (
-              !processUpdateApiResponse(response.result, manual)
-              && manual
-              && BackgroundUtils.isInForeground()
-            ) {
-              AlertDialog.Builder(context)
-                .setTitle(getString(R.string.update_none, getApplicationLabel()))
-                .setPositiveButton(R.string.ok, null)
-                .show()
+            if (!processUpdateApiResponse(response.result, manual) && manual) {
+              dialogFactory.createSimpleConfirmationDialog(
+                context = context,
+                titleText = getString(R.string.update_none, getApplicationLabel()),
+              )
             }
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
@@ -330,15 +326,14 @@ class UpdateManager(
         val dialogTitle = getApplicationLabel().toString() + " " +
           responseRelease.versionCodeString + " available"
 
-        val dialog = AlertDialog.Builder(context)
-          .setTitle(dialogTitle)
-          .setMessage(updateMessage)
-          .setNegativeButton(R.string.update_later, null)
-          .setPositiveButton(R.string.update_install) { _, _ -> updateInstallRequested(responseRelease) }
-          .create()
-
-        dialog.setCanceledOnTouchOutside(false)
-        dialog.show()
+        dialogFactory.createSimpleConfirmationDialog(
+          context = context,
+          titleText = dialogTitle,
+          descriptionText = updateMessage,
+          negativeButtonText = getString(R.string.update_later),
+          positiveButtonText = getString(R.string.update_install),
+          onPositiveButtonClickListener = { updateInstallRequested(responseRelease) }
+        )
       }
 
       // There is an update, show the notification.
@@ -375,21 +370,11 @@ class UpdateManager(
       "<h3>" + getApplicationLabel() + " was updated to " + BuildConfig.VERSION_NAME + "</h3>"
     )
 
-    val dialog = AlertDialog.Builder(context)
-      .setMessage(text)
-      .setPositiveButton(R.string.ok, null)
-      .create()
-
-    dialog.setCanceledOnTouchOutside(false)
-    dialog.show()
-
-    val button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
-    button.isEnabled = false
-
-    runOnMainThread({
-      dialog.setCanceledOnTouchOutside(true)
-      button.isEnabled = true
-    }, 1500)
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.update_already_updated,
+      descriptionText = text
+    )
 
     // Also set the new app version to not show this message again
     PersistableChanState.previousVersion.setSync(BuildConfig.VERSION_CODE)
@@ -419,10 +404,11 @@ class UpdateManager(
     Logger.e(TAG, "Failed to process $buildTag API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
-      AlertDialog.Builder(context)
-        .setTitle(R.string.update_check_failed)
-        .setPositiveButton(R.string.ok, null)
-        .show()
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleTextId = R.string.update_check_failed,
+        descriptionTextId = R.string.update_install_download_failed_see_logs
+      )
     }
   }
 
@@ -491,10 +477,11 @@ class UpdateManager(
             updateDownloadDialog = null
           }
 
-          AlertDialog.Builder(context).setTitle(R.string.update_install_download_failed)
-            .setMessage(description)
-            .setPositiveButton(R.string.ok, null)
-            .show()
+          dialogFactory.createSimpleConfirmationDialog(
+            context = context,
+            titleTextId = R.string.update_install_download_failed,
+            descriptionText = description
+          )
         }
 
         override fun onCancel() {
@@ -511,10 +498,11 @@ class UpdateManager(
             updateDownloadDialog = null
           }
 
-          AlertDialog.Builder(context)
-            .setTitle(R.string.update_install_download_failed)
-            .setPositiveButton(R.string.ok, null)
-            .show()
+          dialogFactory.createSimpleConfirmationDialog(
+            context = context,
+            titleTextId = R.string.update_install_download_failed,
+            descriptionTextId = R.string.update_install_download_failed_canceled
+          )
         }
       })
   }
@@ -529,11 +517,14 @@ class UpdateManager(
       return
     }
 
-    val alertDialog = AlertDialog.Builder(context)
-      .setTitle(R.string.update_manager_copy_apk_title)
-      .setMessage(R.string.update_manager_copy_apk_message)
-      .setNegativeButton(R.string.no) { _, _ -> onDone.invoke() }
-      .setPositiveButton(R.string.yes) { _, _ ->
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.update_manager_copy_apk_title,
+      descriptionTextId = R.string.update_manager_copy_apk_message,
+      negativeButtonText = getString(R.string.no),
+      onNegativeButtonClickListener = { onDone.invoke() },
+      positiveButtonText = getString(R.string.yes),
+      onPositiveButtonClickListener = {
         fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
           override fun onResult(uri: Uri) {
             onApkFilePathSelected(file, uri)
@@ -545,9 +536,9 @@ class UpdateManager(
             onDone.invoke()
           }
         })
-      }.create()
+      }
+    )
 
-    alertDialog.show()
   }
 
   private fun onApkFilePathSelected(downloadedFile: RawFile, uri: Uri) {
@@ -601,12 +592,14 @@ class UpdateManager(
     cancelApkUpdateNotification()
 
     // First open the dialog that asks to retry and calls this method again.
-    AlertDialog.Builder(context)
-      .setTitle(R.string.update_retry_title)
-      .setMessage(getString(R.string.update_retry, getApplicationLabel()))
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.update_retry_button) { _, _ -> installApk(apk) }
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.update_retry_title,
+      descriptionText = getString(R.string.update_retry, getApplicationLabel()),
+      negativeButtonText = getString(R.string.cancel),
+      positiveButtonText = getString(R.string.update_retry_button),
+      onPositiveButtonClickListener = { installApk(apk) }
+    )
 
     // Then launch the APK install intent.
     val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {

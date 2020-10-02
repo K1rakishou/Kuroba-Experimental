@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -77,6 +78,8 @@ public class FiltersController
     FilterEngine filterEngine;
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    DialogFactory dialogFactory;
 
     private ColorizableRecyclerView recyclerView;
     private ColorizableFloatingActionButton add;
@@ -211,21 +214,26 @@ public class FiltersController
     }
 
     private void helpClicked(ToolbarMenuItem item) {
-        final AlertDialog dialog = new AlertDialog.Builder(context)
-                .setTitle(R.string.help)
-                .setMessage(Html.fromHtml(getString(R.string.filters_controller_help_message)))
-                .setPositiveButton(R.string.close, null)
-                .setNegativeButton("Open Regex101", (dialog1, which) -> openLink("https://regex101.com/"))
-                .show();
-        dialog.setCanceledOnTouchOutside(true);
+        DialogFactory.Builder
+                .newBuilder(context, dialogFactory)
+                .withTitle(R.string.help)
+                .withDescription(Html.fromHtml(getString(R.string.filters_controller_help_message)))
+                .withCancelable(true)
+                .withNegativeButtonTextId(R.string.filters_controller_open_regex101)
+                .withOnNegativeButtonClickListener(dialog -> {
+                    openLink("https://regex101.com/");
+                    return Unit.INSTANCE;
+                })
+                .create();
     }
 
     public void showFilterDialog(final ChanFilterMutable chanFilterMutable) {
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
-        final AlertDialog alertDialog = new AlertDialog.Builder(context)
-                .setView(filterLayout)
-                .setPositiveButton("Save", (dialog, which) -> {
+        AlertDialog alertDialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
+                .withCustomView(filterLayout)
+                .withPositiveButtonTextId(R.string.save)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     filterEngine.createOrUpdateFilter(filterLayout.getFilter(), () -> {
                         BackgroundUtils.ensureMainThread();
 
@@ -240,11 +248,22 @@ public class FiltersController
 
                         return Unit.INSTANCE;
                     });
-                }).show();
+
+                    return Unit.INSTANCE;
+                })
+                .create();
+
+        if (alertDialog == null) {
+            // App is in background
+            return;
+        }
 
         filterLayout
-                .setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                .setEnabled(enabled));
+                .setCallback(enabled -> {
+                    alertDialog
+                            .getButton(AlertDialog.BUTTON_POSITIVE)
+                            .setEnabled(enabled);
+                });
 
         filterLayout.setFilter(chanFilterMutable);
     }

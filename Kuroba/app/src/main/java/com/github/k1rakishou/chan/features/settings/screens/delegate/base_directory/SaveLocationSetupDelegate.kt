@@ -1,19 +1,21 @@
 package com.github.k1rakishou.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController.SaveLocationControllerCallback
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import java.io.File
 
 class SaveLocationSetupDelegate(
   private val context: Context,
   private val callbacks: MediaControllerCallbacks,
-  private val presenter: MediaSettingsControllerPresenter
+  private val presenter: MediaSettingsControllerPresenter,
+  private val dialogFactory: DialogFactory
 ) {
 
   fun getSaveLocation(): String {
@@ -29,31 +31,29 @@ class SaveLocationSetupDelegate(
   fun showUseSAFOrOldAPIForSaveLocationDialog() {
     BackgroundUtils.ensureMainThread()
 
-    callbacks.runWithWritePermissionsOrShowErrorToast(Runnable {
-      val dialog = AlertDialog.Builder(context)
-        .setTitle(R.string.media_settings_use_saf_for_save_location_dialog_title)
-        .setMessage(R.string.media_settings_use_saf_for_save_location_dialog_message)
-        .setPositiveButton(R.string.media_settings_use_saf_dialog_positive_button_text) { _, _ ->
-          presenter.onSaveLocationUseSAFClicked()
-        }
-        .setNeutralButton(R.string.reset) { _, _ ->
+    callbacks.runWithWritePermissionsOrShowErrorToast({
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleTextId = R.string.media_settings_use_saf_for_save_location_dialog_title,
+        descriptionTextId = R.string.media_settings_use_saf_for_save_location_dialog_message,
+        positiveButtonText = getString(R.string.media_settings_use_saf_dialog_positive_button_text),
+        onPositiveButtonClickListener = { presenter.onSaveLocationUseSAFClicked() },
+        neutralButtonText = getString(R.string.reset),
+        onNeutralButtonClickListener = {
           presenter.resetSaveLocationBaseDir()
 
           val defaultBaseDirFile = File(ChanSettings.saveLocation.fileApiBaseDir.get())
           if (!defaultBaseDirFile.exists() && !defaultBaseDirFile.mkdirs()) {
             callbacks.onCouldNotCreateDefaultBaseDir(defaultBaseDirFile.absolutePath)
-            return@setNeutralButton
+            return@createSimpleConfirmationDialog
           }
 
           callbacks.updateSaveLocationViewText(ChanSettings.saveLocation.fileApiBaseDir.get())
           callbacks.onFilesBaseDirectoryReset()
-        }
-        .setNegativeButton(R.string.media_settings_use_saf_dialog_negative_button_text) { _, _ ->
-          onSaveLocationUseOldApiClicked()
-        }
-        .create()
-
-      dialog.show()
+        },
+        negativeButtonText = getString(R.string.media_settings_use_saf_dialog_negative_button_text),
+        onNegativeButtonClickListener = { onSaveLocationUseOldApiClicked() }
+      )
     })
   }
 

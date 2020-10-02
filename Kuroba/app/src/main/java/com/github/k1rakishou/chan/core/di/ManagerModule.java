@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanLoaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
@@ -42,6 +43,7 @@ import com.github.k1rakishou.chan.core.manager.LocalSearchManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
+import com.github.k1rakishou.chan.core.manager.PostHideHelper;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
@@ -561,4 +563,25 @@ public class ManagerModule {
 
         return new LocalSearchManager();
     }
+
+    @Singleton
+    @Provides
+    public PostHideHelper providePostHideHelper(
+            PostHideManager postHideManager,
+            PostFilterManager postFilterManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "PostHideHelper");
+
+        return new PostHideHelper(
+                postHideManager,
+                postFilterManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public DialogFactory provideDialogFactory(ApplicationVisibilityManager applicationVisibilityManager) {
+        return new DialogFactory(applicationVisibilityManager);
+    }
+
 }

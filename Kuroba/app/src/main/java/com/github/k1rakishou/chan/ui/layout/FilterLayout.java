@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
@@ -90,6 +91,8 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
     FilterEngine filterEngine;
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    DialogFactory dialogFactory;
 
     private FilterLayoutCallback callback;
     private ChanFilterMutable chanFilterMutable;
@@ -248,17 +251,23 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         final ColorPickerView colorPickerView = new ColorPickerView(getContext());
         colorPickerView.setColor(chanFilterMutable.getColor());
 
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setTitle(R.string.filter_color_pick)
-                .setView(colorPickerView)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok, (dialog1, which) -> {
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withTitle(R.string.filter_color_pick)
+                .withCustomView(colorPickerView)
+                .withNegativeButtonTextId(R.string.cancel)
+                .withPositiveButtonTextId(R.string.ok)
+                .withOnPositiveButtonClickListener((dialog1) -> {
                     chanFilterMutable.setColor(colorPickerView.getColor());
                     updateFilterAction();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
 
-        dialog.getWindow().setLayout(dp(300), dp(300));
+        if (dialog != null) {
+            dialog
+                    .getWindow()
+                    .setLayout(dp(300), dp(300));
+        }
     }
 
     private void onHelpClicked() {
@@ -283,11 +292,10 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
             }
         }
 
-        new AlertDialog.Builder(getContext())
-                .setTitle(R.string.filter_help_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.ok, null)
-                .show();
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withTitle(R.string.filter_help_title)
+                .withDescription(message)
+                .create();
     }
 
     private void onActionTextClicked(View v) {
@@ -349,9 +357,9 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
 
         selectLayout.setItems(items);
 
-        new AlertDialog.Builder(getContext())
-                .setView(selectLayout)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withCustomView(selectLayout)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
                     List<ChanBoard> boardList = new ArrayList<>(items1.size());
 
@@ -364,8 +372,9 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
                     filterEngine.saveBoardsToFilter(chanFilterMutable, boardList);
 
                     updateBoardsSummary();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
     }
 
     private void onTypeTextClicked() {
@@ -383,8 +392,9 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
 
         selectLayout.setItems(items);
 
-        new AlertDialog.Builder(getContext()).setView(selectLayout)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withCustomView(selectLayout)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     List<SelectLayout.SelectItem<FilterType>> items12 = selectLayout.getItems();
                     int flags = 0;
                     for (SelectLayout.SelectItem<FilterType> item : items12) {
@@ -396,8 +406,9 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
                     chanFilterMutable.setType(flags);
                     updateFilterType();
                     updatePatternPreview();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
     }
 
     private void updateFilterValidity() {

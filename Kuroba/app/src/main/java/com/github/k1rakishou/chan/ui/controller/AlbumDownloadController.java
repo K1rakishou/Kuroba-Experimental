@@ -26,13 +26,13 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.model.PostImage;
@@ -58,6 +58,7 @@ import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
@@ -81,6 +82,8 @@ public class AlbumDownloadController
     ImageSaver imageSaver;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    DialogFactory dialogFactory;
 
     private boolean allChecked = true;
 
@@ -182,11 +185,16 @@ public class AlbumDownloadController
             }
         }
 
-        new AlertDialog.Builder(context)
-                .setMessage(message)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok, (dialog, which) -> startAlbumDownloadTask(tasks))
-                .show();
+        DialogFactory.Builder
+                .newBuilder(context, dialogFactory)
+                .withDescription(message)
+                .withCancelable(false)
+                .withPositiveButtonTextId(R.string.ok)
+                .withOnPositiveButtonClickListener(dialog -> {
+                    startAlbumDownloadTask(tasks);
+                    return Unit.INSTANCE;
+                })
+                .create();
     }
 
     @Nullable

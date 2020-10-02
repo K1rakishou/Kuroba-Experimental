@@ -21,7 +21,6 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Context
-import android.content.DialogInterface
 import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
@@ -32,7 +31,6 @@ import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -119,6 +117,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -398,10 +398,11 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showPostInfo(info: String) {
-    AlertDialog.Builder(context).setTitle(R.string.post_info_title)
-      .setMessage(info)
-      .setPositiveButton(R.string.ok, null)
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.post_info_title,
+      descriptionText = info
+    )
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -413,9 +414,10 @@ class ThreadLayout @JvmOverloads constructor(
       keys[i] = linkables[i].key.toString()
     }
 
-    AlertDialog.Builder(context)
-      .setItems(keys, { _, which -> presenter.onPostLinkableClicked(post, linkables[which]) })
-      .show()
+    dialogFactory.createWithStringArray(
+      context = context,
+      keys
+    ) { which -> presenter.onPostLinkableClicked(post, linkables[which]) }
   }
 
   override fun clipboardPost(post: Post) {
@@ -424,15 +426,17 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun openLink(link: String) {
-    if (ChanSettings.openLinkConfirmation.get()) {
-      AlertDialog.Builder(context).setNegativeButton(R.string.cancel, null)
-        .setPositiveButton(R.string.ok) { dialog: DialogInterface?, which: Int -> openLinkConfirmed(link) }
-        .setTitle(R.string.open_link_confirmation)
-        .setMessage(link)
-        .show()
-    } else {
+    if (!ChanSettings.openLinkConfirmation.get()) {
       openLinkConfirmed(link)
+      return
     }
+
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.open_link_confirmation,
+      descriptionText = link,
+      onPositiveButtonClickListener = { openLinkConfirmed(link) }
+    )
   }
 
   private fun openLinkConfirmed(link: String) {
@@ -543,11 +547,17 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val hashList = ColorizableListView(context)
-    val dialog = AlertDialog.Builder(context).setTitle("Select an image to filter.")
-      .setView(hashList)
-      .create()
 
-    dialog.setCanceledOnTouchOutside(true)
+    val dialog = dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleText = "Select an image to filter.",
+      customView = hashList,
+      cancelable = true,
+    )
+
+    if (dialog == null) {
+      return
+    }
 
     val hashes: MutableList<String> = ArrayList()
     for (image in post.postImages) {
@@ -561,8 +571,6 @@ class ThreadLayout @JvmOverloads constructor(
       callback.openFilterForType(FilterType.IMAGE, hashes[position])
       dialog.dismiss()
     }
-
-    dialog.show()
   }
 
   override fun selectPost(post: Long) {
@@ -623,12 +631,12 @@ class ThreadLayout @JvmOverloads constructor(
     val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
 
-    AlertDialog.Builder(context)
-      .setTitle(R.string.delete_confirm)
-      .setView(view)
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.delete, { _, _ -> presenter.deletePostConfirmed(post, checkBox.isChecked) })
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.delete_confirm,
+      customView = view,
+      onPositiveButtonClickListener = { presenter.deletePostConfirmed(post, checkBox.isChecked) }
+    )
   }
 
   override fun showDeleting() {
@@ -642,10 +650,10 @@ class ThreadLayout @JvmOverloads constructor(
       deletingDialog!!.dismiss()
       deletingDialog = null
 
-      AlertDialog.Builder(context)
-        .setMessage(message)
-        .setPositiveButton(R.string.ok, null)
-        .show()
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        descriptionText = message
+      )
     }
   }
 
@@ -985,12 +993,13 @@ class ThreadLayout @JvmOverloads constructor(
       AndroidUtils.getString(R.string.thread_layout_remove_whole_chain_as_well)
     }
 
-    val alertDialog = AlertDialog.Builder(context).setMessage(message)
-      .setPositiveButton(positiveButtonText, { _, _ -> presenter.hideOrRemovePosts(hide, true, post, threadNo) })
-      .setNegativeButton(negativeButtonText, { _, _ -> presenter.hideOrRemovePosts(hide, false, post, threadNo) })
-      .create()
-
-    alertDialog.show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      negativeButtonText = negativeButtonText,
+      onNegativeButtonClickListener = { presenter.hideOrRemovePosts(hide, false, post, threadNo) },
+      positiveButtonText = positiveButtonText,
+      onPositiveButtonClickListener = { presenter.hideOrRemovePosts(hide, true, post, threadNo) }
+    )
   }
 
   interface ThreadLayoutCallback {

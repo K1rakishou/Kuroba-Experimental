@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.settings.OptionSettingItem
 import com.github.k1rakishou.chan.core.settings.Setting
@@ -115,7 +116,7 @@ class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
                 context = context,
                 identifier = identifier,
                 setting = siteSetting.setting,
-                inputType = InputSettingV2.InputType.String,
+                inputType = DialogFactory.DialogInputType.String,
                 topDescriptionStringFunc = { siteSetting.name },
                 bottomDescriptionStringFunc = { siteSetting.setting.get() }
               )

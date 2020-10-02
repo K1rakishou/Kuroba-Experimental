@@ -1,13 +1,9 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
-import com.github.k1rakishou.chan.core.manager.ReportManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.settings.*
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
@@ -27,7 +23,8 @@ class MainSettingsScreen(
   private val siteManager: SiteManager,
   private val updateManager: UpdateManager,
   private val reportManager: ReportManager,
-  private val navigationController: NavigationController
+  private val navigationController: NavigationController,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   MainScreen,
@@ -263,21 +260,24 @@ class MainSettingsScreen(
 
     val crashLogsCount: Int = reportManager.countCrashLogs()
     if (crashLogsCount > 0) {
-      AlertDialog.Builder(context)
-        .setTitle(getString(R.string.settings_report_suggest_sending_logs_title, crashLogsCount))
-        .setMessage(R.string.settings_report_suggest_sending_logs_message)
-        .setPositiveButton(R.string.settings_report_review_button_text) { _, _ ->
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleText = getString(R.string.settings_report_suggest_sending_logs_title, crashLogsCount),
+        descriptionTextId = R.string.settings_report_suggest_sending_logs_message,
+        positiveButtonText = getString(R.string.settings_report_review_button_text),
+        onPositiveButtonClickListener = {
           navigationController.pushController(ReviewCrashLogsController(context))
-        }
-        .setNeutralButton(R.string.settings_report_review_later_button_text) { _, _ ->
+        },
+        neutralButtonText = getString(R.string.settings_report_review_later_button_text),
+        onNeutralButtonClickListener = {
           openReportProblemController()
-        }
-        .setNegativeButton(R.string.settings_report_delete_all_crash_logs) { _, _ ->
+        },
+        negativeButtonText = getString(R.string.settings_report_delete_all_crash_logs),
+        onNegativeButtonClickListener = {
           reportManager.deleteAllCrashLogs()
           openReportProblemController()
         }
-        .create()
-        .show()
+      )
 
       return
     }

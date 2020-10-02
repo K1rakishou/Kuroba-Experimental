@@ -1,8 +1,6 @@
-package com.github.k1rakishou.chan.core.helper
+package com.github.k1rakishou.chan.core.manager
 
 import android.annotation.SuppressLint
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostFilter
 import com.github.k1rakishou.chan.utils.Logger

@@ -72,6 +72,8 @@ class SettingsCoordinator(
   lateinit var chanPostRepository: ChanPostRepository
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -80,7 +82,8 @@ class SettingsCoordinator(
       siteManager,
       (context as StartActivity).updateManager,
       reportManager,
-      navigationController
+      navigationController,
+      dialogFactory
     )
   }
 
@@ -88,7 +91,8 @@ class SettingsCoordinator(
     ThreadWatcherSettingsScreen(
       context,
       applicationVisibilityManager,
-      themeEngine
+      themeEngine,
+      dialogFactory
     )
   }
 
@@ -112,7 +116,8 @@ class SettingsCoordinator(
     ExperimentalSettingsScreen(
       context,
       navigationController,
-      exclusionZonesHolder
+      exclusionZonesHolder,
+      dialogFactory
     )
   }
 
@@ -141,7 +146,8 @@ class SettingsCoordinator(
       context,
       navigationController,
       fileChooser,
-      fileManager
+      fileManager,
+      dialogFactory
     )
   }
 
@@ -154,7 +160,8 @@ class SettingsCoordinator(
       navigationController,
       fileManager,
       fileChooser,
-      runtimePermissionsHelper
+      runtimePermissionsHelper,
+      dialogFactory
     )
   }
 

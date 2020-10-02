@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate.base_direc
 
 import android.content.Context
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
@@ -16,7 +16,8 @@ class SharedLocationSetupDelegate(
   private val context: Context,
   private val callbacks: SaveLocationSetupDelegate.MediaControllerCallbacks,
   private val presenter: MediaSettingsControllerPresenter,
-  private val fileManager: FileManager
+  private val fileManager: FileManager,
+  private val dialogFactory: DialogFactory
 ) : SharedLocationSetupDelegateCallbacks {
   private var loadingViewController: LoadingViewController? = null
 
@@ -59,16 +60,17 @@ class SharedLocationSetupDelegate(
       newBaseDirectory.getFullPath()
     )
 
-    val alertDialog = AlertDialog.Builder(context)
-      .setTitle(R.string.media_settings_move_saved_files_to_new_dir)
-      .setMessage(moveFilesDescription)
-      .setPositiveButton(R.string.move) { _, _ ->
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.media_settings_move_saved_files_to_new_dir,
+      descriptionText = moveFilesDescription,
+      positiveButtonText = getString(R.string.move),
+      onPositiveButtonClickListener = {
         presenter.moveOldFilesToTheNewDirectory(oldBaseDirectory, newBaseDirectory)
-      }
-      .setNegativeButton(R.string.do_not) { dialog, _ -> dialog.dismiss() }
-      .create()
-
-    alertDialog.show()
+      },
+      negativeButtonText = getString(R.string.do_not),
+      onNegativeButtonClickListener = { dialog -> dialog.dismiss() }
+    )
   }
 
   override fun updateLoadingViewText(text: String) {
@@ -93,20 +95,21 @@ class SharedLocationSetupDelegate(
       loadingViewController = null
     }
 
-    val alertDialog = AlertDialog.Builder(context)
-      .setTitle(getString(R.string.media_settings_copy_files))
-      .setMessage(getString(R.string.media_settings_do_you_want_to_copy_files, filesCount))
-      .setPositiveButton(R.string.media_settings_copy_files) { _, _ ->
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.media_settings_copy_files,
+      descriptionText = getString(R.string.media_settings_do_you_want_to_copy_files, filesCount),
+      positiveButtonText = getString(R.string.media_settings_copy_files),
+      onPositiveButtonClickListener = {
         loadingViewController = LoadingViewController(context, false).apply {
           callbacks.presentController(this)
         }
 
         presenter.moveFilesInternal(oldBaseDirectory, newBaseDirectory)
-      }
-      .setNegativeButton(R.string.do_not) { dialog, _ -> dialog.dismiss() }
-      .create()
-
-    alertDialog.show()
+      },
+      negativeButtonText = getString(R.string.do_not),
+      onNegativeButtonClickListener = { dialog -> dialog.dismiss() }
+    )
   }
 
   override fun onCopyDirectoryEnded(
@@ -130,19 +133,15 @@ class SharedLocationSetupDelegate(
   }
 
   private fun showDeleteOldFilesDialog(oldBaseDirectory: AbstractFile) {
-    val alertDialog = AlertDialog.Builder(context)
-      .setTitle(getString(R.string.media_settings_would_you_like_to_delete_file_in_old_dir))
-      .setMessage(getString(
-        R.string.media_settings_file_have_been_copied,
-        oldBaseDirectory.getFullPath()
-      ))
-      .setPositiveButton(R.string.delete) { _, _ -> onDeleteOldFilesClicked(oldBaseDirectory) }
-      .setNegativeButton(R.string.do_not) { dialog, _ ->
-        dialog.dismiss()
-      }
-      .create()
-
-    alertDialog.show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.media_settings_would_you_like_to_delete_file_in_old_dir,
+      descriptionText = getString(R.string.media_settings_file_have_been_copied, oldBaseDirectory.getFullPath()),
+      positiveButtonText = getString(R.string.delete),
+      onPositiveButtonClickListener = { onDeleteOldFilesClicked(oldBaseDirectory) },
+      negativeButtonText = getString(R.string.do_not),
+      onNegativeButtonClickListener = { dialog -> dialog.dismiss() }
+    )
   }
 
   private fun onDeleteOldFilesClicked(oldBaseDirectory: AbstractFile) {

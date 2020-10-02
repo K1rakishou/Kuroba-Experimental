@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
-import com.github.k1rakishou.chan.utils.DialogUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -43,7 +42,7 @@ class BookmarksController(
   ToolbarNavigationController.ToolbarSearchCallback {
 
   @Inject
-  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
@@ -121,11 +120,10 @@ class BookmarksController(
       return
     }
 
-    DialogUtils.createSimpleConfirmationDialog(
-      context,
-      applicationVisibilityManager.isAppInForeground(),
-      R.string.controller_bookmarks_clear_all_bookmarks_confirmation_message,
-      positiveButtonTextId = R.string.controller_bookmarks_clear,
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.controller_bookmarks_clear_all_bookmarks_confirmation_message,
+      positiveButtonText = getString(R.string.controller_bookmarks_clear),
       onPositiveButtonClickListener = {
         bookmarksPresenter.clearAllBookmarks()
       }
@@ -133,11 +131,10 @@ class BookmarksController(
   }
 
   private fun onPruneNonActiveBookmarksClicked(subItem: ToolbarMenuSubItem) {
-    DialogUtils.createSimpleConfirmationDialog(
-      context,
-      applicationVisibilityManager.isAppInForeground(),
-      R.string.controller_bookmarks_prune_confirmation_message,
-      positiveButtonTextId = R.string.controller_bookmarks_prune,
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.controller_bookmarks_prune_confirmation_message,
+      positiveButtonText = getString(R.string.controller_bookmarks_prune),
       onPositiveButtonClickListener = {
         bookmarksPresenter.pruneNonActive()
       }

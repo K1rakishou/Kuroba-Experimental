@@ -3,15 +3,16 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.presenter.ImportExportSettingsPresenter
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
@@ -24,7 +25,8 @@ class ImportExportSettingsDelegate(
   private val context: Context,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
-  private val fileManager: FileManager
+  private val fileManager: FileManager,
+  private val dialogFactory: DialogFactory
 ) : ImportExportSettingsPresenter.ImportExportSettingsCallbacks {
   private val loadingViewController = LoadingViewController(context, true)
   private val presenter: ImportExportSettingsPresenter = ImportExportSettingsPresenter(this)
@@ -88,16 +90,15 @@ class ImportExportSettingsDelegate(
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun showDirectoriesWillBeResetToDefaultDialog() {
-    val alertDialog = AlertDialog.Builder(context)
-      .setTitle(context.getString(R.string.import_or_export_warning))
-      .setMessage(R.string.import_or_export_saf_location_warning)
-      .setPositiveButton(R.string.ok, { dialog, _ ->
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.import_or_export_warning,
+      descriptionTextId = R.string.import_or_export_saf_location_warning,
+      onPositiveButtonClickListener = { dialog ->
         dialog.dismiss()
         showCreateNewOrOverwriteDialog()
-      })
-      .create()
-
-    alertDialog.show()
+      }
+    )
   }
 
   /**
@@ -108,16 +109,14 @@ class ImportExportSettingsDelegate(
    */
   @Suppress("MoveLambdaOutsideParentheses")
   private fun showCreateNewOrOverwriteDialog() {
-    val positiveButtonId = R.string.import_or_export_dialog_positive_button_text
-    val negativeButtonId = R.string.import_or_export_dialog_negative_button_text
-
-    val alertDialog: AlertDialog = AlertDialog.Builder(context)
-      .setTitle(R.string.import_or_export_dialog_title)
-      .setPositiveButton(positiveButtonId, { _, _ -> overwriteExisting() })
-      .setNegativeButton(negativeButtonId, { _, _ -> createNew() })
-      .create()
-
-    alertDialog.show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.import_or_export_dialog_title,
+      positiveButtonText = getString(R.string.import_or_export_dialog_positive_button_text),
+      onPositiveButtonClickListener = { overwriteExisting() },
+      negativeButtonText = getString(R.string.import_or_export_dialog_negative_button_text),
+      onNegativeButtonClickListener = { createNew() }
+    )
   }
 
   /**

@@ -18,7 +18,7 @@ package com.github.k1rakishou.chan.ui.adapter
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.core.helper.PostHideHelper
+import com.github.k1rakishou.chan.core.manager.PostHideHelper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostIndexed
 import com.github.k1rakishou.chan.core.settings.ChanSettings

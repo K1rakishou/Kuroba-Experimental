@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 import android.content.Context
 import android.widget.Toast
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
@@ -64,7 +65,7 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.proxyAddress,
           dependsOnSetting = ChanSettings.proxyEnabled,
           requiresRestart = true,
-          inputType = InputSettingV2.InputType.String
+          inputType = DialogFactory.DialogInputType.String
         )
 
         group += InputSettingV2.createBuilder<Int>(
@@ -75,7 +76,7 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.proxyPort,
           dependsOnSetting = ChanSettings.proxyEnabled,
           requiresRestart = true,
-          inputType = InputSettingV2.InputType.Integer
+          inputType = DialogFactory.DialogInputType.Integer
         )
 
         return group
@@ -100,7 +101,7 @@ class BehaviourSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_youtube_api_key },
           bottomDescriptionStringFunc = { ChanSettings.parseYoutubeAPIKey.get() },
           setting = ChanSettings.parseYoutubeAPIKey,
-          inputType = InputSettingV2.InputType.String
+          inputType = DialogFactory.DialogInputType.String
         )
 
         group += BooleanSettingV2.createBuilder(
@@ -195,7 +196,7 @@ class BehaviourSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_post_default_name },
           bottomDescriptionStringFunc = { ChanSettings.postDefaultName.get() },
           setting = ChanSettings.postDefaultName,
-          inputType = InputSettingV2.InputType.String
+          inputType = DialogFactory.DialogInputType.String
         )
 
         return group
