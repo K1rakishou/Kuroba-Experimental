@@ -13,6 +13,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget
 import com.github.k1rakishou.chan.utils.AndroidUtils
 
@@ -20,11 +21,31 @@ open class ThemeEngine {
   private val listeners = hashSetOf<ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
-  // TODO(KurobaEx): replace with actual themes
+  private var rootView: View? = null
+
+  private lateinit var defaultDarkTheme: ChanTheme
+  private lateinit var defaultLightTheme: ChanTheme
+
   open lateinit var chanTheme: ChanTheme
 
   fun initialize(context: Context) {
-    chanTheme = MockLightChanTheme(context)
+    // TODO(KurobaEx-themes): add theme parsing
+    defaultDarkTheme = DefaultDarkChanTheme(context)
+    defaultLightTheme = DefaultLightChanTheme(context)
+
+    chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
+      defaultDarkTheme
+    } else {
+      defaultLightTheme
+    }
+  }
+
+  fun setRootView(view: View) {
+    this.rootView = view.rootView
+  }
+
+  fun removeRootView() {
+    this.rootView = null
   }
 
   fun addListener(listener: ThemeChangesListener) {
@@ -35,14 +56,57 @@ open class ThemeEngine {
     listeners -= listener
   }
 
-  fun updateTheme(newTheme: ChanTheme, view: ViewGroup) {
+  fun toggleTheme() {
+    val isNextThemeDark = !ChanSettings.isCurrentThemeDark.get()
+    ChanSettings.isCurrentThemeDark.setSync(isNextThemeDark)
+
+    chanTheme = if (isNextThemeDark) {
+      defaultDarkTheme
+    } else {
+      defaultLightTheme
+    }
+
+    refreshViews()
+  }
+
+  fun switchTheme(switchToDarkTheme: Boolean) {
+    val isCurrentThemeDark = !chanTheme.isLightTheme
+    ChanSettings.isCurrentThemeDark.set(switchToDarkTheme)
+
+    if (isCurrentThemeDark == switchToDarkTheme) {
+      return
+    }
+
+    chanTheme = if (switchToDarkTheme) {
+      defaultDarkTheme
+    } else {
+      defaultLightTheme
+    }
+
+    refreshViews()
+  }
+
+  /**
+   * Updates the current theme with the new theme which may have different colors. If the new and old
+   * theme are the same (all colors are the same) then nothing will change.
+   * */
+  fun updateTheme(newTheme: ChanTheme) {
     if (chanTheme == newTheme) {
       return
     }
 
     chanTheme = newTheme
-    updateViews(view.rootView)
+    ChanSettings.isCurrentThemeDark.setSync(!newTheme.isLightTheme)
 
+    refreshViews()
+  }
+
+  fun refreshViews() {
+    if (rootView == null) {
+      return
+    }
+
+    updateViews(rootView!!)
     listeners.forEach { listener -> listener.onThemeChanged() }
   }
 

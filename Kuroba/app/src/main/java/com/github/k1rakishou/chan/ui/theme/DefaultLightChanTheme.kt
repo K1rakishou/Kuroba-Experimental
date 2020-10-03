@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.ui.theme
 import android.content.Context
 import android.graphics.Color
 
-data class MockLightChanTheme(
+data class DefaultLightChanTheme(
   override val context: Context,
   override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
-  override val name: String = "Test light theme",
+  override val name: String = "Default light theme",
   override val isLightTheme: Boolean = true,
   override val lightStatusBar: Boolean = true,
   override val lightNavBar: Boolean = true,

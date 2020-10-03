@@ -21,18 +21,13 @@ class EpoxyErrorView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val errorTitleView: TextView
   private val errorTextView: TextView
 
   init {
     Chan.inject(this)
     inflate(context, R.layout.epoxy_error_view, this)
 
-    errorTitleView = findViewById(R.id.error_title)
-    errorTitleView.setTextColor(themeEngine.chanTheme.textColorPrimary)
-
     errorTextView = findViewById(R.id.error_text)
-    errorTextView.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

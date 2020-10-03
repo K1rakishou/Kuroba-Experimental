@@ -8,7 +8,7 @@
         android:gravity="center"
         android:orientation="vertical">
 
-        <TextView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
             android:id="@+id/error_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -18,7 +18,7 @@
             android:gravity="center_horizontal"
             android:text="@string/unhandled_error"/>
 
-        <TextView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
             android:id="@+id/error_text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

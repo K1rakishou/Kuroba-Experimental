@@ -3,12 +3,12 @@ package com.github.k1rakishou.chan.ui.epoxy
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import android.widget.TextView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_MATCH_HEIGHT)
@@ -21,14 +21,13 @@ class EpoxyTextView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val textView: TextView
+  private val textView: ColorizableTextView
 
   init {
     Chan.inject(this)
     inflate(context, R.layout.epoxy_text_view, this)
 
     textView = findViewById(R.id.text_view)
-    textView.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

@@ -189,6 +189,7 @@ public class ChanSettings {
     // Theme
     private static final StringSetting theme;
     public static final BooleanSetting imageViewerFullscreenMode;
+    public static final BooleanSetting isCurrentThemeDark;
 
     // Layout
     public static final OptionsSetting<LayoutMode> layoutMode;
@@ -338,6 +339,7 @@ public class ChanSettings {
             // Theme
             theme = new StringSetting(p, "preference_theme", "tomorrow");
             imageViewerFullscreenMode = new BooleanSetting(p, "image_viewer_fullscreen_mode", true);
+            isCurrentThemeDark = new BooleanSetting(p, "is_current_theme_dark", true);
 
             //Layout
             layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);

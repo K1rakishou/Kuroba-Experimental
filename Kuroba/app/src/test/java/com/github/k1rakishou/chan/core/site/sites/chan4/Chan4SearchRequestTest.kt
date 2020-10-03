@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.ui.theme.MockDarkChanTheme
+import com.github.k1rakishou.chan.ui.theme.DefaultDarkChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -78,7 +78,7 @@ class Chan4SearchRequestTest {
     val chan4 = Mockito.mock(Site::class.java)
     val testSiteActions = TestSiteActions(testModule.provideProxiedOkHttpClient(), mockUrl)
 
-    val theme = MockDarkChanTheme()
+    val theme = DefaultDarkChanTheme(testModule.provideContext())
 
     whenever(siteManager.bySiteDescriptor(siteDescriptor)).thenReturn(chan4)
     whenever(siteManager.awaitUntilInitialized()).thenReturn(Unit)

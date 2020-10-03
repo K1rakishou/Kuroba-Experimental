@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.controller
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
+import android.content.res.Configuration
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
@@ -126,6 +127,14 @@ class BrowseController(
       if (chanDescriptor != null) {
         historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
       }
+    }
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    if (AndroidUtils.isAndroid10()) {
+      handleDayNightModeChange(newConfig)
     }
   }
 
@@ -292,8 +301,15 @@ class BrowseController(
       R.string.action_switch_board
     }
 
+    val currentThemeStringId = if (ChanSettings.isCurrentThemeDark.get()) {
+      R.string.action_switch_to_light_theme
+    } else {
+      R.string.action_switch_to_dark_theme
+    }
+
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
+      .withSubItem(ACTION_TOGGLE_THEME, currentThemeStringId) { item -> themeToggleClicked(item) }
       .addSortMenu()
       .addDevMenu()
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
@@ -504,7 +520,56 @@ class BrowseController(
   }
 
   private fun viewModeClicked(item: ToolbarMenuSubItem) {
-    handleViewMode(item)
+    var postViewMode = ChanSettings.boardViewMode.get()
+
+    postViewMode = if (postViewMode == PostViewMode.LIST) {
+      PostViewMode.CARD
+    } else {
+      PostViewMode.LIST
+    }
+
+    ChanSettings.boardViewMode.set(postViewMode)
+
+    val viewModeText = if (postViewMode == PostViewMode.LIST) {
+      R.string.action_switch_catalog
+    } else {
+      R.string.action_switch_board
+    }
+
+    item.text = getString(viewModeText)
+    threadLayout.setPostViewMode(postViewMode)
+  }
+
+  private fun themeToggleClicked(item: ToolbarMenuSubItem) {
+    themeEngine.toggleTheme()
+
+    val isCurrentThemeDark = ChanSettings.isCurrentThemeDark.get()
+
+    val themeStringId = if (isCurrentThemeDark) {
+      R.string.action_switch_to_light_theme
+    } else {
+      R.string.action_switch_to_dark_theme
+    }
+
+    item.text = getString(themeStringId)
+  }
+
+  private fun handleDayNightModeChange(newConfig: Configuration) {
+    val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
+      return
+    }
+
+    navigation.findSubItem(ACTION_TOGGLE_THEME)?.let { subItem ->
+      val isDarkTheme = nightModeFlags == Configuration.UI_MODE_NIGHT_YES
+      val themeStringId = if (isDarkTheme) {
+        R.string.action_switch_to_light_theme
+      } else {
+        R.string.action_switch_to_dark_theme
+      }
+
+      subItem.text = getString(themeStringId)
+    }
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {
@@ -593,27 +658,6 @@ class BrowseController(
     } else {
       AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
-  }
-
-  private fun handleViewMode(item: ToolbarMenuSubItem) {
-    var postViewMode = ChanSettings.boardViewMode.get()
-
-    postViewMode = if (postViewMode == PostViewMode.LIST) {
-      PostViewMode.CARD
-    } else {
-      PostViewMode.LIST
-    }
-
-    ChanSettings.boardViewMode.set(postViewMode)
-
-    val viewModeText = if (postViewMode == PostViewMode.LIST) {
-      R.string.action_switch_catalog
-    } else {
-      R.string.action_switch_board
-    }
-
-    item.text = getString(viewModeText)
-    threadLayout.setPostViewMode(postViewMode)
   }
 
   override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
@@ -806,6 +850,7 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
+    private const val ACTION_TOGGLE_THEME = 910
     // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000

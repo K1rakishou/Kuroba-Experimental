@@ -45,8 +45,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.chan.ui.theme.MockDarkChanTheme
-import com.github.k1rakishou.chan.ui.theme.MockLightChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
@@ -60,7 +58,9 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -137,23 +137,8 @@ class StartActivity : AppCompatActivity(),
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
 
-    // TODO(KurobaEx-themes): remove me !!!!!!!!!!!!!!
-    // TODO(KurobaEx): always call updateTheme at least once! Because some views may not get colored
-    //  otherwise.
-    lifecycleScope.launch {
-      val darkTheme = MockDarkChanTheme(this@StartActivity)
-      val lightTheme = MockLightChanTheme(this@StartActivity)
-
-      while (isActive) {
-        delay(5000)
-        themeEngine.updateTheme(darkTheme, drawerController.view)
-
-        delay(5000)
-        themeEngine.updateTheme(lightTheme, drawerController.view)
-      }
-    }
-
     themeEngine.addListener(this)
+    themeEngine.refreshViews()
   }
 
   override fun onDestroy() {
@@ -161,6 +146,8 @@ class StartActivity : AppCompatActivity(),
 
     compositeDisposable.clear()
     job.cancel()
+
+    themeEngine.removeRootView()
     themeEngine.removeListener(this)
 
     if (::updateManager.isInitialized) {
@@ -218,6 +205,7 @@ class StartActivity : AppCompatActivity(),
     setupLayout()
 
     setContentView(drawerController.view)
+    themeEngine.setRootView(drawerController.view)
     pushController(drawerController)
 
     drawerController.attachBottomNavViewToToolbar()
@@ -762,6 +750,22 @@ class StartActivity : AppCompatActivity(),
 
     for (controller in stack) {
       controller.onConfigurationChanged(newConfig)
+    }
+
+    if (AndroidUtils.isAndroid10()) {
+      applyLightDarkThemeIfNeeded(newConfig)
+    }
+  }
+
+  private fun applyLightDarkThemeIfNeeded(newConfig: Configuration) {
+    val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
+      return
+    }
+
+    when (nightModeFlags) {
+      Configuration.UI_MODE_NIGHT_YES -> themeEngine.switchTheme(switchToDarkTheme = true)
+      Configuration.UI_MODE_NIGHT_NO -> themeEngine.switchTheme(switchToDarkTheme = false)
     }
   }
 

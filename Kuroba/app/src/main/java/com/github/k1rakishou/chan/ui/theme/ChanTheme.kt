@@ -89,7 +89,7 @@ abstract class ChanTheme {
     bookmarkCounterHasRepliesColor: Int,
     bookmarkCounterNormalColor: Int,
   ): T {
-    return MockDarkChanTheme(
+    return DefaultDarkChanTheme(
       context = context,
       version = version,
       name = name,

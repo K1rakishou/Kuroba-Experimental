@@ -165,6 +165,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_search_image">Image search</string>
     <string name="action_switch_catalog">Catalog mode</string>
     <string name="action_switch_board">Board mode</string>
+    <string name="action_switch_to_light_theme">Switch to light theme</string>
+    <string name="action_switch_to_dark_theme">Switch to dark theme</string>
 
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
