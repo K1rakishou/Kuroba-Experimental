@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.ui.controller
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.text.InputType
+import android.content.res.Configuration
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
@@ -29,13 +29,13 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -47,11 +47,10 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -62,7 +61,10 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
-class BrowseController(context: Context) : ThreadController(context),
+class BrowseController(
+  context: Context,
+  drawerCallbacks: DrawerCallbacks?
+) : ThreadController(context, drawerCallbacks),
   ThreadLayoutCallback,
   BrowsePresenter.Callback,
   SlideChangeListener,
@@ -71,11 +73,13 @@ class BrowseController(context: Context) : ThreadController(context),
   @Inject
   lateinit var presenter: BrowsePresenter
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -123,6 +127,14 @@ class BrowseController(context: Context) : ThreadController(context),
       if (chanDescriptor != null) {
         historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
       }
+    }
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    if (AndroidUtils.isAndroid10()) {
+      handleDayNightModeChange(newConfig)
     }
   }
 
@@ -289,8 +301,15 @@ class BrowseController(context: Context) : ThreadController(context),
       R.string.action_switch_board
     }
 
+    val currentThemeStringId = if (ChanSettings.isCurrentThemeDark.get()) {
+      R.string.action_switch_to_light_theme
+    } else {
+      R.string.action_switch_to_dark_theme
+    }
+
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
+      .withSubItem(ACTION_TOGGLE_THEME, currentThemeStringId) { item -> themeToggleClicked(item) }
       .addSortMenu()
       .addDevMenu()
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
@@ -305,7 +324,7 @@ class BrowseController(context: Context) : ThreadController(context),
       false,
       true,
       navigation,
-      themeHelper.theme
+      themeEngine.chanTheme
     )
   }
 
@@ -501,7 +520,56 @@ class BrowseController(context: Context) : ThreadController(context),
   }
 
   private fun viewModeClicked(item: ToolbarMenuSubItem) {
-    handleViewMode(item)
+    var postViewMode = ChanSettings.boardViewMode.get()
+
+    postViewMode = if (postViewMode == PostViewMode.LIST) {
+      PostViewMode.CARD
+    } else {
+      PostViewMode.LIST
+    }
+
+    ChanSettings.boardViewMode.set(postViewMode)
+
+    val viewModeText = if (postViewMode == PostViewMode.LIST) {
+      R.string.action_switch_catalog
+    } else {
+      R.string.action_switch_board
+    }
+
+    item.text = getString(viewModeText)
+    threadLayout.setPostViewMode(postViewMode)
+  }
+
+  private fun themeToggleClicked(item: ToolbarMenuSubItem) {
+    themeEngine.toggleTheme()
+
+    val isCurrentThemeDark = ChanSettings.isCurrentThemeDark.get()
+
+    val themeStringId = if (isCurrentThemeDark) {
+      R.string.action_switch_to_light_theme
+    } else {
+      R.string.action_switch_to_dark_theme
+    }
+
+    item.text = getString(themeStringId)
+  }
+
+  private fun handleDayNightModeChange(newConfig: Configuration) {
+    val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
+      return
+    }
+
+    navigation.findSubItem(ACTION_TOGGLE_THEME)?.let { subItem ->
+      val isDarkTheme = nightModeFlags == Configuration.UI_MODE_NIGHT_YES
+      val themeStringId = if (isDarkTheme) {
+        R.string.action_switch_to_light_theme
+      } else {
+        R.string.action_switch_to_dark_theme
+      }
+
+      subItem.text = getString(themeStringId)
+    }
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {
@@ -513,13 +581,13 @@ class BrowseController(context: Context) : ThreadController(context),
       return
     }
 
-    createSimpleDialogWithInput(
-      context,
-      R.string.browse_controller_enter_thread_id,
-      R.string.browse_controller_enter_thread_id_msg,
-      { input: String -> openThreadByIdInternal(input) },
-      InputType.TYPE_CLASS_NUMBER
-    ).show()
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.browse_controller_enter_thread_id,
+      descriptionTextId = R.string.browse_controller_enter_thread_id_msg,
+      onValueEntered = { input: String -> openThreadByIdInternal(input) },
+      inputType = DialogFactory.DialogInputType.Integer
+    )
   }
 
   private fun openThreadByIdInternal(input: String) {
@@ -588,29 +656,8 @@ class BrowseController(context: Context) : ThreadController(context),
     if (share) {
       AndroidUtils.shareLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeHelper.theme)
+      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
-  }
-
-  private fun handleViewMode(item: ToolbarMenuSubItem) {
-    var postViewMode = ChanSettings.boardViewMode.get()
-
-    postViewMode = if (postViewMode == PostViewMode.LIST) {
-      PostViewMode.CARD
-    } else {
-      PostViewMode.LIST
-    }
-
-    ChanSettings.boardViewMode.set(postViewMode)
-
-    val viewModeText = if (postViewMode == PostViewMode.LIST) {
-      R.string.action_switch_catalog
-    } else {
-      R.string.action_switch_board
-    }
-
-    item.text = getString(viewModeText)
-    threadLayout.setPostViewMode(postViewMode)
   }
 
   override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
@@ -700,9 +747,8 @@ class BrowseController(context: Context) : ThreadController(context),
           } else {
             val navigationController = StyledToolbarNavigationController(context)
             splitNav.setRightController(navigationController, animated)
-            val viewThreadController = ViewThreadController(context, descriptor)
+            val viewThreadController = ViewThreadController(context, drawerCallbacks, descriptor)
             navigationController.pushController(viewThreadController, false)
-            viewThreadController.drawerCallbacks = drawerCallbacks
           }
           splitNav.switchToController(false, animated)
         }
@@ -714,11 +760,11 @@ class BrowseController(context: Context) : ThreadController(context),
           } else {
             val viewThreadController = ViewThreadController(
               context,
+              drawerCallbacks,
               descriptor
             )
 
             slideNav.setRightController(viewThreadController, animated)
-            viewThreadController.drawerCallbacks = drawerCallbacks
           }
           slideNav.switchToController(false, animated)
         }
@@ -727,13 +773,12 @@ class BrowseController(context: Context) : ThreadController(context),
           // (BrowseController -> ToolbarNavigationController)
           val viewThreadController = ViewThreadController(
             context,
+            drawerCallbacks,
             descriptor
           )
 
           Objects.requireNonNull(navigationController, "navigationController is null")
           navigationController!!.pushController(viewThreadController, animated)
-
-          viewThreadController.drawerCallbacks = drawerCallbacks
         }
       }
 
@@ -793,10 +838,6 @@ class BrowseController(context: Context) : ThreadController(context),
     }
   }
 
-  override fun getPostForPostImage(postImage: PostImage): Post? {
-    return threadLayout.presenter.getPostFromPostImage(postImage)
-  }
-
   companion object {
     private const val TAG = "BrowseController"
 
@@ -809,6 +850,7 @@ class BrowseController(context: Context) : ThreadController(context),
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
+    private const val ACTION_TOGGLE_THEME = 910
     // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000

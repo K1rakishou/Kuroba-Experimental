@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.settings;
 
 import android.net.ConnectivityManager;
 import android.net.Uri;
-import android.text.TextUtils;
 
 import com.github.k1rakishou.SettingProvider;
 import com.github.k1rakishou.chan.BuildConfig;
@@ -188,8 +187,8 @@ public class ChanSettings {
 
     //region APPEARANCE
     // Theme
-    private static final StringSetting theme;
     public static final BooleanSetting imageViewerFullscreenMode;
+    public static final BooleanSetting isCurrentThemeDark;
 
     // Layout
     public static final OptionsSetting<LayoutMode> layoutMode;
@@ -201,7 +200,6 @@ public class ChanSettings {
 
     //Post
     public static final StringSetting fontSize;
-    public static final BooleanSetting fontAlternate;
     public static final BooleanSetting postFullDate;
     public static final BooleanSetting postFileInfo;
     public static final BooleanSetting postFilename;
@@ -338,8 +336,8 @@ public class ChanSettings {
 
             //region APPEARANCE
             // Theme
-            theme = new StringSetting(p, "preference_theme", "tomorrow");
             imageViewerFullscreenMode = new BooleanSetting(p, "image_viewer_fullscreen_mode", true);
+            isCurrentThemeDark = new BooleanSetting(p, "is_current_theme_dark", true);
 
             //Layout
             layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
@@ -351,7 +349,6 @@ public class ChanSettings {
 
             // Post
             fontSize = new StringSetting(p, "preference_font", getRes().getBoolean(R.bool.is_tablet) ? "16" : "14");
-            fontAlternate = new BooleanSetting(p, "preference_font_alternate", false);
             postFullDate = new BooleanSetting(p, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(p, "preference_post_file_info", true);
             postFilename = new BooleanSetting(p, "preference_post_filename", true);
@@ -506,32 +503,6 @@ public class ChanSettings {
             Logger.e(TAG, "Error while trying to deserialize JsCaptchaCookiesJar", error);
             return JsCaptchaCookiesJar.empty();
         }
-    }
-
-    public static ThemeColor getThemeAndColor() {
-        String themeRaw = ChanSettings.theme.get();
-
-        String theme = themeRaw;
-        String color = null;
-        String accentColor = null;
-
-        String[] splitted = themeRaw.split(",");
-        if (splitted.length >= 2) {
-            theme = splitted[0];
-            color = splitted[1];
-            if (splitted.length == 3) {
-                accentColor = splitted[2];
-            }
-        }
-
-        return new ThemeColor(theme, color, accentColor);
-    }
-
-    public static void setThemeAndColor(ThemeColor themeColor) {
-        if (TextUtils.isEmpty(themeColor.color) || TextUtils.isEmpty(themeColor.accentColor)) {
-            throw new IllegalArgumentException();
-        }
-        ChanSettings.theme.setSync(themeColor.theme + "," + themeColor.color + "," + themeColor.accentColor);
     }
 
     /**

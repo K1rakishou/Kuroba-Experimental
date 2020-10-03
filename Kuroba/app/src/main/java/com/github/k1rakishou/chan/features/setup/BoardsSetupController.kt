@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.View
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -16,13 +15,12 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class BoardsSetupController(
   context: Context,
@@ -31,11 +29,8 @@ class BoardsSetupController(
   private val presenter = BoardsSetupPresenter(siteDescriptor)
   private val controller = BoardsEpoxyController()
 
-  @Inject
-  lateinit var themeHelper: ThemeHelper
-
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var fabAddBoards: FloatingActionButton
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var fabAddBoards: ColorizableFloatingActionButton
 
   override fun onCreate() {
     super.onCreate()
@@ -48,7 +43,6 @@ class BoardsSetupController(
     epoxyRecyclerView.setController(controller)
 
     fabAddBoards = view.findViewById(R.id.fab_add_boards)
-    themeHelper.theme.applyFabColor(fabAddBoards)
 
     fabAddBoards.setOnClickListener {
       val controller = AddBoardsController(context, siteDescriptor) {

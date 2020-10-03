@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/backcolor"
     android:orientation="vertical">
 
-    <ListView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
         android:id="@+id/review_crashlogs_controller_crashlogs_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -15,29 +14,27 @@
         android:layout_width="match_parent"
         android:layout_height="64dp">
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/review_crashlogs_controller_delete_crashlogs_button"
             android:layout_width="128dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="8dp"
-            android:text="@string/delete"
-            android:textColor="?attr/text_color_primary" />
+            android:text="@string/delete" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
-        <androidx.appcompat.widget.AppCompatButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/review_crashlogs_controller_send_crashlogs_button"
             android:layout_width="128dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="8dp"
-            android:text="@string/send"
-            android:textColor="?attr/text_color_primary" />
+            android:text="@string/send" />
 
     </LinearLayout>
 
-</LinearLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>

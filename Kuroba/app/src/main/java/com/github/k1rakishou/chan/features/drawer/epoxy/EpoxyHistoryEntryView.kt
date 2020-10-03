@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -27,17 +27,18 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
   private var threadImageRequestDisposable: Disposable? = null
   private var siteImageRequestDisposable: Disposable? = null
   private var descriptor: ChanDescriptor? = null
+  private var additionalInfo: NavHistoryBookmarkAdditionalInfo? = null
 
   private val viewHolder: LinearLayout
   private val threadThumbnailImage: AppCompatImageView
@@ -64,6 +65,37 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     siteThumbnailImage.visibility = View.GONE
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+
+    themeEngine.removeListener(this)
+  }
+
+  @OnViewRecycled
+  fun onRecycled() {
+    threadImageRequestDisposable?.dispose()
+    threadImageRequestDisposable = null
+
+    siteImageRequestDisposable?.dispose()
+    siteImageRequestDisposable = null
+
+    imagesLoaderRequestData = null
+
+    threadThumbnailImage.setImageBitmap(null)
+    siteThumbnailImage.setImageBitmap(null)
+  }
+
+  override fun onThemeChanged() {
+    title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    bindNavHistoryBookmarkAdditionalInfo(additionalInfo)
+  }
+
   @ModelProp(ModelProp.Option.DoNotHash)
   fun setImageLoaderRequestData(imagesLoaderRequestData: ImagesLoaderRequestData?) {
     this.imagesLoaderRequestData = imagesLoaderRequestData
@@ -72,6 +104,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @ModelProp
   fun setTitle(titleText: String) {
     title.text = titleText
+    title.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp(options = [ModelProp.Option.DoNotHash])
@@ -81,6 +114,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   @ModelProp
   fun bindNavHistoryBookmarkAdditionalInfo(additionalInfo: NavHistoryBookmarkAdditionalInfo?) {
+    this.additionalInfo = additionalInfo
+
     if (additionalInfo == null) {
       bookmarkStats.visibility = View.GONE
       return
@@ -90,11 +125,11 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     bookmarkStats.text = additionalInfo.newPosts.toString()
 
     if (additionalInfo.newQuotes > 0) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsHasRepliesColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterHasRepliesColor)
     } else if (!additionalInfo.watching) {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNotWatchingColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
     } else {
-      bookmarkStats.setTextColor(themeHelper.theme.pinPostsNormalColor)
+      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
     }
 
     bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
@@ -120,20 +155,6 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     } else {
       viewHolder.setOnClickListener { listener.invoke() }
     }
-  }
-
-  @OnViewRecycled
-  fun onRecycled() {
-    threadImageRequestDisposable?.dispose()
-    threadImageRequestDisposable = null
-
-    siteImageRequestDisposable?.dispose()
-    siteImageRequestDisposable = null
-
-    imagesLoaderRequestData = null
-
-    threadThumbnailImage.setImageBitmap(null)
-    siteThumbnailImage.setImageBitmap(null)
   }
 
   @AfterPropsSet

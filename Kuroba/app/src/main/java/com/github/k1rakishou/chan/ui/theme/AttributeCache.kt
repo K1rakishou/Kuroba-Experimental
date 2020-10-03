@@ -23,5 +23,4 @@ class AttributeCache {
     return requireNotNull(cache[attrRes]) { "Attribute resource with id ($attrRes) not found in the cache!" }
   }
 
-
 }

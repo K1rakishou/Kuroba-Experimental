@@ -47,16 +47,17 @@ import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -70,6 +71,7 @@ import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -120,11 +122,12 @@ public class ImageViewerController
     @Inject
     ImageSaver imageSaver;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    DialogFactory dialogFactory;
 
-    private int statusBarColorPrevious;
     private AnimatorSet startAnimation;
     private AnimatorSet endAnimation;
 
@@ -322,7 +325,7 @@ public class ImageViewerController
         if (ChanSettings.openLinkBrowser.get()) {
             openLink(postImage.imageUrl.toString());
         } else {
-            openLinkInBrowser(context, postImage.imageUrl.toString(), themeHelper.getTheme());
+            openLinkInBrowser(context, postImage.imageUrl.toString(), themeEngine.getChanTheme());
         }
     }
 
@@ -352,20 +355,26 @@ public class ImageViewerController
     private void rotateImage(ToolbarMenuSubItem item) {
         String[] rotateOptions = {"Clockwise", "Flip", "Counterclockwise"};
         Integer[] rotateInts = {90, 180, -90};
-        ListView rotateImageList = new ListView(context);
+        ListView rotateImageList = new ColorizableListView(context);
 
-        AlertDialog dialog = new AlertDialog.Builder(context).setView(rotateImageList).create();
-        dialog.setCanceledOnTouchOutside(true);
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
+                .withCustomView(rotateImageList)
+                .withCancelable(true)
+                .create();
+
+        if (dialog == null) {
+            return;
+        }
 
         rotateImageList.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, rotateOptions));
         rotateImageList.setOnItemClickListener((parent, view, position, id) -> {
-            ((ImageViewerAdapter) pager.getAdapter()).rotateImage(presenter.getCurrentPostImage(),
-                    rotateInts[position]
-            );
+            ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
+            if (adapter != null) {
+                adapter.rotateImage(presenter.getCurrentPostImage(), rotateInts[position]);
+            }
+
             dialog.dismiss();
         });
-
-        dialog.show();
     }
 
     private void forceReload(ToolbarMenuSubItem item) {
@@ -625,7 +634,6 @@ public class ImageViewerController
 
     @Override
     public void onMenuHidden() {
-        hideSystemUI();
     }
 
     @Override
@@ -641,7 +649,6 @@ public class ImageViewerController
             return;
         }
 
-        statusBarColorPrevious = getWindow(context).getStatusBarColor();
         setBackgroundAlpha(0f);
         startAnimation = new AnimatorSet();
 
@@ -776,15 +783,8 @@ public class ImageViewerController
 
     private void setBackgroundAlpha(float alpha) {
         int color = Color.argb((int) (alpha * TRANSITION_FINAL_ALPHA * 255f), 0, 0, 0);
-        navigationController.view.setBackgroundColor(color);
-
-        if (alpha == 0f) {
-            getWindow(context).setStatusBarColor(statusBarColorPrevious);
-        } else {
-            int r = (int) ((1f - alpha) * Color.red(statusBarColorPrevious));
-            int g = (int) ((1f - alpha) * Color.green(statusBarColorPrevious));
-            int b = (int) ((1f - alpha) * Color.blue(statusBarColorPrevious));
-            getWindow(context).setStatusBarColor(Color.argb(255, r, g, b));
+        if (navigationController != null) {
+            navigationController.view.setBackgroundColor(color);
         }
 
         toolbar.setAlpha(alpha);
@@ -832,11 +832,11 @@ public class ImageViewerController
         isInImmersiveMode = true;
 
         Window window = getWindow(context);
-        FullScreenUtils.INSTANCE.hideSystemUI(window);
+        FullScreenUtils.INSTANCE.hideSystemUI(window, themeEngine.getChanTheme());
 
         window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
             if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
-                FullScreenUtils.INSTANCE.showSystemUI(window);
+                FullScreenUtils.INSTANCE.showSystemUI(window, themeEngine.getChanTheme());
                 mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
             }
         });
@@ -859,7 +859,7 @@ public class ImageViewerController
 
         Window window = getWindow(context);
         window.getDecorView().setOnSystemUiVisibilityChangeListener(null);
-        FullScreenUtils.INSTANCE.showSystemUI(window);
+        FullScreenUtils.INSTANCE.showSystemUI(window, themeEngine.getChanTheme());
 
         // setting this to the toolbar height because VISIBLE doesn't seem to work?
         showToolbar();
@@ -879,6 +879,10 @@ public class ImageViewerController
         params.height = 0;
         toolbar.setInImmersiveMode(true);
         toolbar.setLayoutParams(params);
+
+        if (loadingBar != null) {
+            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height, null);
+        }
     }
 
     private void showToolbar() {
@@ -892,14 +896,16 @@ public class ImageViewerController
         params.height = getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top();
         toolbar.setInImmersiveMode(false);
         toolbar.setLayoutParams(params);
+
+        if (loadingBar != null) {
+            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height + toolbar.getPaddingTop(), null);
+        }
     }
 
     public interface ImageViewerCallback {
         @Nullable
         ThumbnailView getPreviewImageTransitionView(PostImage postImage);
         void scrollToImage(PostImage postImage);
-        @Nullable
-        Post getPostForPostImage(PostImage postImage);
     }
 
     public interface GoPostCallback {

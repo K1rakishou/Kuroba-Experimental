@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.View
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -15,12 +14,13 @@ import com.github.k1rakishou.chan.features.setup.epoxy.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
 
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
   private val controller = SitesEpoxyController()
   private val sitesPresenter = SitesSetupPresenter()

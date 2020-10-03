@@ -13,7 +13,7 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -23,12 +23,12 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
@@ -43,10 +43,24 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
     siteName = findViewById(R.id.site_name)
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateSiteNameColor()
+  }
+
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    siteName.setTextColor(themeHelper.theme.textPrimary)
+    updateSiteNameColor()
   }
 
   @ModelProp
@@ -88,4 +102,9 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
     this.requestDisposable?.dispose()
     this.requestDisposable = null
   }
+
+  private fun updateSiteNameColor() {
+    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+  }
+
 }

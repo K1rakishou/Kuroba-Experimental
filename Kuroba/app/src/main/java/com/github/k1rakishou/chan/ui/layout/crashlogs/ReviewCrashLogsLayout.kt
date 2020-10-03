@@ -2,11 +2,12 @@ package com.github.k1rakishou.chan.ui.layout.crashlogs
 
 import android.content.Context
 import android.widget.FrameLayout
-import android.widget.ListView
-import androidx.appcompat.widget.AppCompatButton
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
@@ -20,12 +21,14 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
 
   @Inject
   lateinit var reportManager: ReportManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var compositeDisposable: CompositeDisposable
   private var callbacks: ReviewCrashLogsLayoutCallbacks? = null
-  private val crashLogsList: ListView
-  private val deleteCrashLogsButton: AppCompatButton
-  private val sendCrashLogsButton: AppCompatButton
+  private val crashLogsList: ColorizableListView
+  private val deleteCrashLogsButton: ColorizableBarButton
+  private val sendCrashLogsButton: ColorizableBarButton
 
   init {
     inject(this)
@@ -34,6 +37,9 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
       crashLogsList = findViewById(R.id.review_crashlogs_controller_crashlogs_list)
       deleteCrashLogsButton = findViewById(R.id.review_crashlogs_controller_delete_crashlogs_button)
       sendCrashLogsButton = findViewById(R.id.review_crashlogs_controller_send_crashlogs_button)
+
+      deleteCrashLogsButton.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      sendCrashLogsButton.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       val crashLogs = reportManager.getCrashLogs()
         .map { crashLogFile -> CrashLog(crashLogFile, crashLogFile.name, false) }

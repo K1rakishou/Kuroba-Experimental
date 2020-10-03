@@ -8,7 +8,8 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
@@ -20,7 +21,7 @@ class BottomNavBarAwareNavigationController(
 ) : ToolbarNavigationController(context), OnMeasuredCallback, WindowInsetsListener {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -34,8 +35,8 @@ class BottomNavBarAwareNavigationController(
 
     bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
 
-    setToolbar(view.findViewById(R.id.toolbar))
-    requireToolbar().setBackgroundColor(themeHelper.theme.primaryColor.color)
+    val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
+    setToolbar(toolbar)
     requireToolbar().setCallback(this)
 
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can

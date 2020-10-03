@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -42,7 +42,7 @@ interface PostCellInterface {
     showDivider: Boolean,
     postViewMode: PostViewMode,
     compact: Boolean,
-    theme: Theme
+    theme: ChanTheme
   )
 
   /**

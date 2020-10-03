@@ -4,9 +4,9 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.mapper.ChanPostMapper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.google.gson.Gson
@@ -14,7 +14,6 @@ import com.google.gson.Gson
 class ReloadPostsFromDatabaseUseCase(
   private val gson: Gson,
   private val chanPostRepository: ChanPostRepository,
-  private val themeHelper: ThemeHelper,
   private val boardManager: BoardManager
 ) {
 
@@ -50,7 +49,6 @@ class ReloadPostsFromDatabaseUseCase(
       return@map ChanPostMapper.toPost(
         gson,
         post,
-        themeHelper.theme,
         null
       )
     }
@@ -69,7 +67,7 @@ class ReloadPostsFromDatabaseUseCase(
     return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         chanPostRepository.preloadForThread(chanDescriptor).safeUnwrap { error ->
-          Logger.e(TAG, "Failed to preload posts for thread ${chanDescriptor}", error)
+          Logger.e(TAG, "reloadPosts() Failed to preload posts for thread ${chanDescriptor}", error)
           return emptyList()
         }
 
@@ -88,10 +86,22 @@ class ReloadPostsFromDatabaseUseCase(
       return@map ChanPostMapper.toPost(
         gson,
         post,
-        themeHelper.theme,
         null
       )
     }
+  }
+
+  suspend fun reloadCatalogThreads(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): List<Post> {
+    BackgroundUtils.ensureBackgroundThread()
+    chanPostRepository.awaitUntilInitialized()
+
+    val mapOfPosts = chanPostRepository.getCatalogOriginalPosts(threadDescriptors)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "reloadCatalogThreads() reloadCatalogThreads failure", error)
+        return emptyList()
+      }
+
+    return mutableListWithCap(mapOfPosts.values)
   }
 
   companion object {

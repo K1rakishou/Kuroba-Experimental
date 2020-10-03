@@ -6,7 +6,7 @@ import androidx.core.graphics.component1
 import androidx.core.graphics.component2
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.airbnb.epoxy.EpoxyRecyclerView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionView
@@ -16,12 +16,14 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -36,12 +39,16 @@ class BoardSelectionController(
   context: Context,
   private val callback: UserSelectionListener
 ) : BaseFloatingController(context), BoardSelectionView {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val presenter = BoardSelectionPresenter()
 
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var searchView: SearchLayout
   private lateinit var outsideArea: FrameLayout
-  private lateinit var openSitesButton: MaterialButton
+  private lateinit var openSitesButton: ColorizableBarButton
 
   private var presenting = true
 
@@ -50,6 +57,7 @@ class BoardSelectionController(
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)

@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -35,18 +36,20 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +62,6 @@ import kotlin.Unit;
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static com.github.k1rakishou.chan.Chan.inject;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
@@ -69,16 +71,19 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
 public class FiltersController
         extends Controller
         implements ToolbarNavigationController.ToolbarSearchCallback,
-        View.OnClickListener {
+        View.OnClickListener,
+        ThemeEngine.ThemeChangesListener {
 
     @Inject
     FilterEngine filterEngine;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
+    @Inject
+    DialogFactory dialogFactory;
 
-    private RecyclerView recyclerView;
-    private FloatingActionButton add;
-    private FloatingActionButton enable;
+    private ColorizableRecyclerView recyclerView;
+    private ColorizableFloatingActionButton add;
+    private ColorizableFloatingActionButton enable;
     private FilterAdapter adapter;
     private boolean locked;
 
@@ -147,16 +152,24 @@ public class FiltersController
 
         add = view.findViewById(R.id.add);
         add.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(add);
 
         enable = view.findViewById(R.id.enable);
         enable.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(enable);
+
+        themeEngine.addListener(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (adapter != null) {
+            adapter.reload();
+        }
     }
 
     @Override
@@ -165,7 +178,7 @@ public class FiltersController
             ChanFilterMutable chanFilterMutable = new ChanFilterMutable();
             showFilterDialog(chanFilterMutable);
         } else if (v == enable && !locked) {
-            FloatingActionButton enableButton = (FloatingActionButton) v;
+            ColorizableFloatingActionButton enableButton = (ColorizableFloatingActionButton) v;
             locked = true;
 
             // if every filter is disabled, enable all of them and set the drawable to be an x
@@ -184,8 +197,6 @@ public class FiltersController
                 setFilters(enabledFilters, false);
                 enableButton.setImageResource(R.drawable.ic_done_white_24dp);
             }
-
-            themeHelper.getTheme().applyFabColor(enable);
         }
     }
 
@@ -203,21 +214,26 @@ public class FiltersController
     }
 
     private void helpClicked(ToolbarMenuItem item) {
-        final AlertDialog dialog = new AlertDialog.Builder(context)
-                .setTitle(R.string.help)
-                .setMessage(Html.fromHtml(getString(R.string.filters_controller_help_message)))
-                .setPositiveButton(R.string.close, null)
-                .setNegativeButton("Open Regex101", (dialog1, which) -> openLink("https://regex101.com/"))
-                .show();
-        dialog.setCanceledOnTouchOutside(true);
+        DialogFactory.Builder
+                .newBuilder(context, dialogFactory)
+                .withTitle(R.string.help)
+                .withDescription(Html.fromHtml(getString(R.string.filters_controller_help_message)))
+                .withCancelable(true)
+                .withNegativeButtonTextId(R.string.filters_controller_open_regex101)
+                .withOnNegativeButtonClickListener(dialog -> {
+                    openLink("https://regex101.com/");
+                    return Unit.INSTANCE;
+                })
+                .create();
     }
 
     public void showFilterDialog(final ChanFilterMutable chanFilterMutable) {
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
-        final AlertDialog alertDialog = new AlertDialog.Builder(context)
-                .setView(filterLayout)
-                .setPositiveButton("Save", (dialog, which) ->
+        AlertDialog alertDialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
+                .withCustomView(filterLayout)
+                .withPositiveButtonTextId(R.string.save)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     filterEngine.createOrUpdateFilter(filterLayout.getFilter(), () -> {
                         BackgroundUtils.ensureMainThread();
 
@@ -227,17 +243,27 @@ public class FiltersController
                             enable.setImageResource(R.drawable.ic_clear_white_24dp);
                         }
 
-                        themeHelper.getTheme().applyFabColor(enable);
                         postToEventBus(new RefreshUIMessage("filters"));
                         adapter.reload();
 
                         return Unit.INSTANCE;
-                    })
-                ).show();
+                    });
+
+                    return Unit.INSTANCE;
+                })
+                .create();
+
+        if (alertDialog == null) {
+            // App is in background
+            return;
+        }
 
         filterLayout
-                .setCallback(enabled -> alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)
-                .setEnabled(enabled));
+                .setCallback(enabled -> {
+                    alertDialog
+                            .getButton(AlertDialog.BUTTON_POSITIVE)
+                            .setEnabled(enabled);
+                });
 
         filterLayout.setFilter(chanFilterMutable);
     }
@@ -279,8 +305,7 @@ public class FiltersController
         adapter.filter();
     }
 
-    private class FilterAdapter
-            extends RecyclerView.Adapter<FilterCell> {
+    private class FilterAdapter extends RecyclerView.Adapter<FilterCell> {
         private List<ChanFilter> sourceList = new ArrayList<>();
         private List<ChanFilter> displayList = new ArrayList<>();
         private String searchQuery;
@@ -300,12 +325,14 @@ public class FiltersController
         public void onBindViewHolder(FilterCell holder, int position) {
             ChanFilter filter = displayList.get(position);
             holder.text.setText(filter.getPattern());
-            holder.text.setTextColor(getAttrColor(context,
-                    filter.getEnabled() ? R.attr.text_color_primary : R.attr.text_color_hint
-            ));
-            holder.subtext.setTextColor(getAttrColor(context,
-                    filter.getEnabled() ? R.attr.text_color_secondary : R.attr.text_color_hint
-            ));
+
+            int textColor = filter.getEnabled()
+                    ? themeEngine.getChanTheme().getTextColorPrimary()
+                    : themeEngine.getChanTheme().getTextColorHint();
+
+            holder.text.setTextColor(textColor);
+            holder.subtext.setTextColor(textColor);
+
 
             int types = FilterType.forFlags(filter.getType()).size();
             String subText = getQuantityString(R.plurals.type, types, types);
@@ -367,9 +394,7 @@ public class FiltersController
         }
     }
 
-    private class FilterCell
-            extends RecyclerView.ViewHolder
-            implements View.OnClickListener {
+    private class FilterCell extends RecyclerView.ViewHolder implements View.OnClickListener {
         private TextView text;
         private TextView subtext;
 
@@ -379,18 +404,18 @@ public class FiltersController
 
             text = itemView.findViewById(R.id.text);
             subtext = itemView.findViewById(R.id.subtext);
-            ImageView reorder = itemView.findViewById(R.id.reorder);
 
-            Drawable drawable = context.getDrawable(R.drawable.ic_reorder_black_24dp);
-            assert drawable != null;
+            ImageView reorder = itemView.findViewById(R.id.reorder);
+            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_reorder_black_24dp);
             Drawable drawableMutable = DrawableCompat.wrap(drawable).mutate();
-            DrawableCompat.setTint(drawableMutable, getAttrColor(context, R.attr.text_color_hint));
+            DrawableCompat.setTint(drawableMutable, themeEngine.getChanTheme().getTextColorHint());
             reorder.setImageDrawable(drawableMutable);
 
             reorder.setOnTouchListener((v, event) -> {
                 if (!locked && event.getActionMasked() == MotionEvent.ACTION_DOWN && attached) {
                     itemTouchHelper.startDrag(FilterCell.this);
                 }
+
                 return false;
             });
 

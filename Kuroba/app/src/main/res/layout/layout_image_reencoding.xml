@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     app:layout_constraintRight_toRightOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.cardview.widget.CardView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+        android:id="@+id/card_view"
         android:layout_width="340dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -37,7 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginBottom="8dp"
-        android:background="?backcolor_secondary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:focusable="true"
             android:orientation="vertical">
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/reencode_image_re_encode_image_text"
@@ -64,20 +64,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:checkedButton="@id/reencode_image_as_is">
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_is"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="AS IS"
                     tools:ignore="HardcodedText" />
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_jpeg"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/reencode_image_as_jpeg" />
 
-                <androidx.appcompat.widget.AppCompatRadioButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                     android:id="@+id/reencode_image_as_png"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -91,7 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                     android:id="@+id/reecode_image_current_quality"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -102,25 +102,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:text="1"
                         tools:ignore="HardcodedText" />
 
-                    <androidx.appcompat.widget.AppCompatSeekBar
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
                         android:id="@+id/reecode_image_quality"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="4dp"
                         android:layout_weight="1"
-                        android:max="100"
-                        android:min="1"
-                        android:progress="100" />
+                        android:valueFrom="1"
+                        android:valueTo="100"
+                        android:value="100" />
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
@@ -137,7 +137,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="16dp"
                 android:orientation="vertical">
 
-                <TextView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                     android:id="@+id/reecode_image_current_reduce"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -148,27 +148,29 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:text="0%"
                         tools:ignore="HardcodedText" />
 
-                    <androidx.appcompat.widget.AppCompatSeekBar
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
                         android:id="@+id/reecode_image_reduce"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="4dp"
                         android:layout_weight="1"
-                        android:progress="0" />
+                        android:valueFrom="0"
+                        android:valueTo="99"
+                        android:value="0" />
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
-                        android:text="100%"
+                        android:text="99%"
                         tools:ignore="HardcodedText" />
 
                 </LinearLayout>
@@ -180,7 +182,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_height="match_parent"
                 android:layout_marginTop="16dp">
 
-                <androidx.appcompat.widget.AppCompatButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/reencode_image_cancel"
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
@@ -192,7 +194,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     app:layout_constraintEnd_toStartOf="@+id/reencode_image_ok"
                     app:layout_constraintTop_toTopOf="@+id/reencode_image_ok" />
 
-                <androidx.appcompat.widget.AppCompatButton
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/reencode_image_ok"
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
@@ -207,6 +209,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.ui.layout;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.Html;
@@ -31,21 +30,24 @@ import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.AppCompatCheckBox;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
@@ -53,6 +55,7 @@ import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
+import com.google.android.material.textview.MaterialTextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,33 +67,32 @@ import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
-public class FilterLayout
-        extends LinearLayout
-        implements View.OnClickListener {
-    private TextView typeText;
-    private TextView boardsSelector;
+public class FilterLayout extends LinearLayout implements View.OnClickListener {
+    private ColorizableTextView typeText;
+    private ColorizableTextView boardsSelector;
     private boolean patternContainerErrorShowing = false;
-    private TextView pattern;
-    private TextView patternPreview;
-    private TextView patternPreviewStatus;
-    private CheckBox enabled;
+    private ColorizableEditText pattern;
+    private ColorizableEditText patternPreview;
+    private ColorizableTextView patternPreviewStatus;
+    private ColorizableCheckBox enabled;
     private ImageView help;
     private TextView actionText;
     private LinearLayout colorContainer;
     private View colorPreview;
-    private AppCompatCheckBox applyToReplies;
-    private AppCompatCheckBox onlyOnOP;
-    private AppCompatCheckBox applyToSaved;
+    private ColorizableCheckBox applyToReplies;
+    private ColorizableCheckBox onlyOnOP;
+    private ColorizableCheckBox applyToSaved;
 
     @Inject
     BoardManager boardManager;
     @Inject
     FilterEngine filterEngine;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
+    @Inject
+    DialogFactory dialogFactory;
 
     private FilterLayoutCallback callback;
     private ChanFilterMutable chanFilterMutable;
@@ -110,12 +112,17 @@ public class FilterLayout
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        inject(this);
+
+        if (!isInEditMode()) {
+            inject(this);
+        }
 
         typeText = findViewById(R.id.type);
         boardsSelector = findViewById(R.id.boards);
         actionText = findViewById(R.id.action);
+
         pattern = findViewById(R.id.pattern);
+
         pattern.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -151,8 +158,13 @@ public class FilterLayout
         enabled = findViewById(R.id.enabled);
 
         help = findViewById(R.id.help);
-        themeHelper.getTheme().helpDrawable.apply(help);
+        help.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_help_outline_white_24dp));
         help.setOnClickListener(this);
+
+        MaterialTextView filterLabelText = findViewById(R.id.filter_label_text);
+        MaterialTextView actionLabelText = findViewById(R.id.action_label_text);
+        MaterialTextView patternLabelText = findViewById(R.id.pattern_label_text);
+        MaterialTextView testPatternLabelText = findViewById(R.id.test_pattern_label_text);
 
         colorContainer = findViewById(R.id.color_container);
         colorContainer.setOnClickListener(this);
@@ -161,41 +173,38 @@ public class FilterLayout
         onlyOnOP = findViewById(R.id.only_on_op_checkbox);
         applyToSaved = findViewById(R.id.apply_to_saved_checkbox);
 
+        filterLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        actionLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        patternLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        testPatternLabelText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+
+        applyToReplies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        onlyOnOP.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        applyToSaved.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+
         typeText.setOnClickListener(this);
-        typeText.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
+        typeText.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
 
         boardsSelector.setOnClickListener(this);
-        boardsSelector.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
+        boardsSelector.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
 
         actionText.setOnClickListener(this);
-        actionText.setCompoundDrawablesWithIntrinsicBounds(null, null, new DropdownArrowDrawable(
-                dp(12),
-                dp(12),
-                true,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        ), null);
-
-        enabled.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        enabled.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToReplies.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToReplies.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        onlyOnOP.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        onlyOnOP.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToSaved.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        applyToSaved.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
+        actionText.setCompoundDrawablesWithIntrinsicBounds(
+                null,
+                null,
+                new DropdownArrowDrawable(dp(12), dp(12), true),
+                null
+        );
     }
 
     public void setFilter(ChanFilterMutable chanFilterMutable) {
@@ -242,17 +251,23 @@ public class FilterLayout
         final ColorPickerView colorPickerView = new ColorPickerView(getContext());
         colorPickerView.setColor(chanFilterMutable.getColor());
 
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
-                .setTitle(R.string.filter_color_pick)
-                .setView(colorPickerView)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok, (dialog1, which) -> {
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withTitle(R.string.filter_color_pick)
+                .withCustomView(colorPickerView)
+                .withNegativeButtonTextId(R.string.cancel)
+                .withPositiveButtonTextId(R.string.ok)
+                .withOnPositiveButtonClickListener((dialog1) -> {
                     chanFilterMutable.setColor(colorPickerView.getColor());
                     updateFilterAction();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
 
-        dialog.getWindow().setLayout(dp(300), dp(300));
+        if (dialog != null) {
+            dialog
+                    .getWindow()
+                    .setLayout(dp(300), dp(300));
+        }
     }
 
     private void onHelpClicked() {
@@ -277,11 +292,10 @@ public class FilterLayout
             }
         }
 
-        new AlertDialog.Builder(getContext())
-                .setTitle(R.string.filter_help_title)
-                .setMessage(message)
-                .setPositiveButton(R.string.ok, null)
-                .show();
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withTitle(R.string.filter_help_title)
+                .withDescription(message)
+                .create();
     }
 
     private void onActionTextClicked(View v) {
@@ -343,9 +357,9 @@ public class FilterLayout
 
         selectLayout.setItems(items);
 
-        new AlertDialog.Builder(getContext())
-                .setView(selectLayout)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withCustomView(selectLayout)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
                     List<ChanBoard> boardList = new ArrayList<>(items1.size());
 
@@ -358,8 +372,9 @@ public class FilterLayout
                     filterEngine.saveBoardsToFilter(chanFilterMutable, boardList);
 
                     updateBoardsSummary();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
     }
 
     private void onTypeTextClicked() {
@@ -377,8 +392,9 @@ public class FilterLayout
 
         selectLayout.setItems(items);
 
-        new AlertDialog.Builder(getContext()).setView(selectLayout)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+                .withCustomView(selectLayout)
+                .withOnPositiveButtonClickListener((dialog) -> {
                     List<SelectLayout.SelectItem<FilterType>> items12 = selectLayout.getItems();
                     int flags = 0;
                     for (SelectLayout.SelectItem<FilterType> item : items12) {
@@ -390,8 +406,9 @@ public class FilterLayout
                     chanFilterMutable.setType(flags);
                     updateFilterType();
                     updatePatternPreview();
+                    return Unit.INSTANCE;
                 })
-                .show();
+                .create();
     }
 
     private void updateFilterValidity() {

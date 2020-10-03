@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.captcha.v2;
 
 import android.content.Context;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -26,15 +27,14 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.AppCompatTextView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
@@ -43,6 +43,10 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 
@@ -57,18 +61,21 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
 
 public class CaptchaNoJsLayoutV2
-        extends FrameLayout
-        implements AuthenticationLayoutInterface, CaptchaNoJsPresenterV2.AuthenticationCallbacks {
+        extends TouchBlockingFrameLayout
+        implements AuthenticationLayoutInterface, CaptchaNoJsPresenterV2.AuthenticationCallbacks, ThemeEngine.ThemeChangesListener {
     private static final String TAG = "CaptchaNoJsLayoutV2";
     private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     private AppCompatTextView captchaChallengeTitle;
     private GridView captchaImagesGrid;
-    private AppCompatButton captchaVerifyButton;
+    private ColorizableBarButton captchaVerifyButton;
 
     private CaptchaNoJsV2Adapter adapter;
     private CaptchaNoJsPresenterV2 presenter;
     private AuthenticationLayoutCallback callback;
+    private ConstraintLayout captchaButtonsHolder;
+    private ColorizableBarButton useOldCaptchaButton;
+    private ColorizableBarButton reloadCaptchaButton;
 
     private boolean isAutoReply = true;
 
@@ -76,6 +83,8 @@ public class CaptchaNoJsLayoutV2
     CaptchaHolder captchaHolder;
     @Inject
     ProxiedOkHttpClient okHttpClient;
+    @Inject
+    ThemeEngine themeEngine;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
         this(context, null, 0);
@@ -100,12 +109,45 @@ public class CaptchaNoJsLayoutV2
         captchaChallengeTitle = view.findViewById(R.id.captcha_layout_v2_title);
         captchaImagesGrid = view.findViewById(R.id.captcha_layout_v2_images_grid);
         captchaVerifyButton = view.findViewById(R.id.captcha_layout_v2_verify_button);
-        AppCompatButton useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
-        AppCompatButton reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
+        useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
+        reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
+        captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
 
         captchaVerifyButton.setOnClickListener(v -> sendVerificationResponse());
         useOldCaptchaButton.setOnClickListener(v -> callback.onFallbackToV1CaptchaView(isAutoReply));
         reloadCaptchaButton.setOnClickListener(v -> reset());
+
+        onThemeChanged();
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        int primaryColor = themeEngine.getChanTheme().getPrimaryColor();
+
+        captchaButtonsHolder.setBackgroundColor(primaryColor);
+        captchaChallengeTitle.setBackgroundColor(primaryColor);
+
+        int textColor = Color.LTGRAY;
+        if (!AndroidUtils.isDarkColor(primaryColor)) {
+            textColor = Color.DKGRAY;
+        }
+
+        captchaChallengeTitle.setTextColor(textColor);
+        captchaVerifyButton.setTextColor(textColor);
+        useOldCaptchaButton.setTextColor(textColor);
+        reloadCaptchaButton.setTextColor(textColor);
     }
 
     @Override

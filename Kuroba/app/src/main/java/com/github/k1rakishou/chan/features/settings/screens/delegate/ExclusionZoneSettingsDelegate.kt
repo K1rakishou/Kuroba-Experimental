@@ -1,25 +1,26 @@
 package com.github.k1rakishou.chan.features.settings.screens.delegate
 
 import android.content.Context
-import android.content.DialogInterface
 import android.content.res.Configuration
 import android.os.Build
 import android.widget.ArrayAdapter
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.AttachSide
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 
 class ExclusionZoneSettingsDelegate(
   private val context: Context,
   private val navigationController: NavigationController,
-  private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder
+  private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder,
+  private val dialogFactory: DialogFactory
 ) {
   private val arrayAdapter = ArrayAdapter<String>(context, android.R.layout.simple_list_item_1)
 
@@ -40,14 +41,15 @@ class ExclusionZoneSettingsDelegate(
       return
     }
 
-    AlertDialog.Builder(context)
-      .setTitle(R.string.setting_exclusion_zones_actions_dialog_title)
-      .setAdapter(arrayAdapter, { dialog: DialogInterface, selectedIndex: Int ->
+    dialogFactory.createDialogWithAdapter(
+      context = context,
+      titleTextId = R.string.setting_exclusion_zones_actions_dialog_title,
+      adapter = arrayAdapter,
+      clickListener = { dialog, selectedIndex ->
         onOptionClicked(selectedIndex)
         dialog.dismiss()
-      })
-      .create()
-      .show()
+      }
+    )
   }
 
   @RequiresApi(Build.VERSION_CODES.Q)
@@ -83,22 +85,24 @@ class ExclusionZoneSettingsDelegate(
   @Suppress("MoveLambdaOutsideParentheses")
   @RequiresApi(Build.VERSION_CODES.Q)
   private fun showEditOrRemoveZoneDialog(orientation: Int, attachSide: AttachSide) {
-    AlertDialog.Builder(context)
-      .setTitle(R.string.setting_exclusion_zones_edit_or_remove_zone_title)
-      .setPositiveButton(R.string.edit, { dialog, _ ->
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.setting_exclusion_zones_edit_or_remove_zone_title,
+      positiveButtonText = getString(R.string.edit),
+      onPositiveButtonClickListener = { dialog ->
         val skipZone: ExclusionZone = exclusionZonesHolder.getZoneOrNull(orientation, attachSide)
           ?: throw IllegalStateException("skipZone is null! (orientation = $orientation, attachSide = $attachSide)")
 
         showZoneEditorController(attachSide, skipZone)
         dialog.dismiss()
-      })
-      .setNegativeButton(R.string.remove, { dialog, _ ->
+      },
+      negativeButtonText = getString(R.string.remove),
+      onNegativeButtonClickListener = { dialog ->
         exclusionZonesHolder.removeZone(orientation, attachSide)
         showToast(context, R.string.setting_exclusion_zones_zone_remove_message)
         dialog.dismiss()
-      })
-      .create()
-      .show()
+      }
+    )
   }
 
   @RequiresApi(Build.VERSION_CODES.Q)

@@ -74,21 +74,25 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
     searchResultsStateStorage.resetSearchResultState()
   }
 
-  fun reloadWithSelection(siteDescriptor: SiteDescriptor, sitesWithSearch: SitesWithSearch) {
-    val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
-    if (selectedSiteDescriptor == siteDescriptor) {
-      return
-    }
-
-    val searchType = siteManager.bySiteDescriptor(selectedSiteDescriptor)?.siteGlobalSearchType()
-      ?: SiteGlobalSearchType.SearchNotSupported
-
-    val dataState = GlobalSearchControllerStateData.SitesSupportingSearchLoaded(
-      sitesWithSearch.copy(selectedSite = SelectedSite(selectedSiteDescriptor, searchType))
-    )
-
-    setState(GlobalSearchControllerState.Data(dataState))
-  }
+  // TODO(KurobaEx):
+//  fun reloadWithSelection(siteDescriptor: SiteDescriptor, sitesWithSearch: SitesWithSearch) {
+//    val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
+//    if (selectedSiteDescriptor == siteDescriptor) {
+//      return
+//    }
+//
+//    val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)
+//      ?: return
+//
+//    val siteIcon = site.icon().url.toString()
+//    val searchType = site.siteGlobalSearchType()
+//
+//    val dataState = GlobalSearchControllerStateData.SitesSupportingSearchLoaded(
+//      sitesWithSearch.copy(selectedSite = SelectedSite(selectedSiteDescriptor, siteIcon, searchType))
+//    )
+//
+//    setState(GlobalSearchControllerState.Data(dataState))
+//  }
 
   fun reloadWithSearchQuery(query: String, sitesWithSearch: SitesWithSearch) {
     val prevDataState = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
@@ -129,13 +133,14 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
 
     val selectedSiteDescriptor = sitesSupportingSearch.first()
 
-    val searchType = siteManager.bySiteDescriptor(selectedSiteDescriptor)?.siteGlobalSearchType()
-      ?: SiteGlobalSearchType.SearchNotSupported
+    val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)!!
+    val siteIcon = site.icon().url.toString()
+    val searchType = site.siteGlobalSearchType()
 
     val dataState = GlobalSearchControllerStateData.SitesSupportingSearchLoaded(
       SitesWithSearch(
         sitesSupportingSearch,
-        SelectedSite(selectedSiteDescriptor, searchType)
+        SelectedSite(selectedSiteDescriptor, siteIcon, searchType)
       )
     )
 

@@ -17,10 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <com.github.k1rakishou.chan.ui.cell.CardPostCell xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/grid_card_margin"
-    card_view:cardBackgroundColor="?backcolor"
     card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
     card_view:cardElevation="2dp">
 
@@ -48,8 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:paddingTop="5dp"
                 android:paddingRight="5dp"
                 android:src="@drawable/ic_overflow"
-                tools:ignore="ContentDescription,RtlHardcoded"
-                card_view:tint="?attr/text_color_secondary" />
+                tools:ignore="ContentDescription,RtlHardcoded" />
 
         </FrameLayout>
 
@@ -76,8 +75,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_weight="1"
             android:paddingLeft="8dp"
             android:paddingTop="8dp"
-            android:paddingRight="8dp"
-            android:textColor="?attr/text_color_primary" />
+            android:paddingRight="8dp" />
 
         <TextView
             android:id="@+id/replies"
@@ -87,8 +85,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:paddingTop="4dp"
             android:paddingRight="8dp"
             android:paddingBottom="8dp"
-            android:singleLine="true"
-            android:textColor="?attr/text_color_secondary" />
+            android:singleLine="true" />
 
     </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>
 

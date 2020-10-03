@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanLoaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
@@ -42,6 +43,7 @@ import com.github.k1rakishou.chan.core.manager.LocalSearchManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
+import com.github.k1rakishou.chan.core.manager.PostHideHelper;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
@@ -51,6 +53,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
@@ -62,6 +65,7 @@ import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundW
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
@@ -455,7 +459,8 @@ public class ManagerModule {
             CoroutineScope appScope,
             BookmarksManager bookmarksManager,
             ChanPostRepository chanPostRepository,
-            ImageLoaderV2 imageLoaderV2
+            ImageLoaderV2 imageLoaderV2,
+            ThemeEngine themeEngine
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
@@ -468,7 +473,8 @@ public class ManagerModule {
                 getNotificationManager(),
                 bookmarksManager,
                 chanPostRepository,
-                imageLoaderV2
+                imageLoaderV2,
+                themeEngine
         );
     }
 
@@ -477,7 +483,8 @@ public class ManagerModule {
     public LastPageNotificationsHelper provideLastPageNotificationsHelper(
             Context appContext,
             PageRequestManager pageRequestManager,
-            BookmarksManager bookmarksManager
+            BookmarksManager bookmarksManager,
+            ThemeEngine themeEngine
     ) {
         Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
 
@@ -486,7 +493,8 @@ public class ManagerModule {
                 appContext,
                 getNotificationManagerCompat(),
                 pageRequestManager,
-                bookmarksManager
+                bookmarksManager,
+                themeEngine
         );
     }
 
@@ -556,4 +564,44 @@ public class ManagerModule {
 
         return new LocalSearchManager();
     }
+
+    @Singleton
+    @Provides
+    public PostHideHelper providePostHideHelper(
+            PostHideManager postHideManager,
+            PostFilterManager postFilterManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "PostHideHelper");
+
+        return new PostHideHelper(
+                postHideManager,
+                postFilterManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public DialogFactory provideDialogFactory(
+            ApplicationVisibilityManager applicationVisibilityManager,
+            ThemeEngine themeEngine
+    ) {
+        Logger.d(AppModule.DI_TAG, "DialogFactory");
+
+        return new DialogFactory(
+                applicationVisibilityManager,
+                themeEngine
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThemeParser provideThemeParser(Context appContext, FileManager fileManager) {
+        Logger.d(AppModule.DI_TAG, "ThemeParser");
+
+        return new ThemeParser(
+                appContext,
+                fileManager
+        );
+    }
+
 }

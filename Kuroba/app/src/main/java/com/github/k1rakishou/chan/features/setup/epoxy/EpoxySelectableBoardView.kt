@@ -6,22 +6,30 @@ import android.widget.LinearLayout
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.google.android.material.checkbox.MaterialCheckBox
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.google.android.material.textview.MaterialTextView
+import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxySelectableBoardView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val clickableArea: LinearLayout
   private val boardName: MaterialTextView
   private val boardDescription: MaterialTextView
-  private val boardCheckbox: MaterialCheckBox
+  private val boardCheckbox: ColorizableCheckBox
 
   init {
+    Chan.inject(this)
     inflate(context, R.layout.epoxy_selectable_board_view, this)
 
     clickableArea = findViewById(R.id.clickable_area)
@@ -30,14 +38,31 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
     boardCheckbox = findViewById(R.id.board_selection_checkbox)
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateBoardDescriptionColor()
+    updateBoardNameColor()
+  }
+
   @ModelProp
   fun setBoardName(boardName: String) {
     this.boardName.text = boardName
+    updateBoardNameColor()
   }
 
   @ModelProp
   fun setBoardDescription(boardDescription: String) {
     this.boardDescription.text = boardDescription
+    updateBoardDescriptionColor()
   }
 
   @ModelProp
@@ -60,6 +85,14 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
       boardCheckbox.isChecked = !boardCheckbox.isChecked
       callback.invoke(boardCheckbox.isChecked)
     }
+  }
+
+  private fun updateBoardDescriptionColor() {
+    boardDescription.setTextColor(themeEngine.chanTheme.textColorSecondary)
+  }
+
+  private fun updateBoardNameColor() {
+    boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

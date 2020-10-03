@@ -131,7 +131,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="update_install_downloading">Downloading update…</string>
     <string name="update_install_download_failed">Download failed</string>
     <string name="update_install_download_failed_description">Reason: %1$s</string>
+    <string name="update_install_download_failed_canceled">Reason: canceled</string>
+    <string name="update_install_download_failed_see_logs">See logs for more info</string>
     <string name="update_retry_title">Retry update</string>
+    <string name="update_already_updated">Already updated</string>
     <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>
     <string name="update_retry_button">Retry</string>
     <string name="update_storage_permission_required_title">Storage permission required</string>
@@ -162,6 +165,15 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_search_image">Image search</string>
     <string name="action_switch_catalog">Catalog mode</string>
     <string name="action_switch_board">Board mode</string>
+    <string name="action_switch_to_light_theme">Switch to light theme</string>
+    <string name="action_switch_to_dark_theme">Switch to dark theme</string>
+
+    <string name="action_import_light_theme">Import Light theme</string>
+    <string name="action_import_dark_theme">Import Dark theme</string>
+    <string name="action_export_light_theme">Export Light theme</string>
+    <string name="action_export_dark_theme">Export Dark theme</string>
+    <string name="action_reset_light_theme">Reset Light theme</string>
+    <string name="action_reset_dark_theme">Reset Dark theme</string>
 
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
@@ -317,6 +329,7 @@ Note that for country code filtering, troll country codes should be prepended wi
             9) Country Code<br>
             10) Filename"]]>
     </string>
+    <string name="filters_controller_open_regex101">Open regex101</string>
 
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>
@@ -506,8 +519,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
 
     <!-- Appearance post group -->
-    <string name="setting_font_alt">Use alternative font</string>
-    <string name="setting_font_alt_description">Use the theme\'s alt font for posts</string>
     <string name="setting_post_full_date">Show the full date on posts</string>
     <string name="setting_post_file_info">Show file info on posts</string>
     <string name="setting_post_filename">Show filename on posts</string>
@@ -640,11 +651,6 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_folder_navigate_up">Up</string>
     <string name="save_new_folder">Add a new folder</string>
     <string name="new_folder_hint">Folder name</string>
-    <string name="setting_theme_explanation">
-"Swipe to change the theme.
-Tap the toolbar menu to change its color."
-    </string>
-    <string name="setting_theme_accent">Tap here to change the FAB color.</string>
 
     <!-- Database summary settings -->
     <string name="settings_database_summary">Database summary</string>

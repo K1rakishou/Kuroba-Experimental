@@ -18,6 +18,12 @@ class JsCaptchaCookiesEditorController(context: Context) :
     }
   }
 
+  override fun onDestroy() {
+    super.onDestroy()
+
+    (view as? JsCaptchaCookiesEditorLayout)?.destroy()
+  }
+
   override fun onFinished() {
     navigationController!!.popController()
   }

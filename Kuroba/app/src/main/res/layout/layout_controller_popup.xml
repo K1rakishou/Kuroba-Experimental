@@ -20,12 +20,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:background="#88000000">
 
-    <FrameLayout
+    <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
         android:id="@+id/container"
         android:layout_width="600dp"
         android:layout_height="600dp"
         android:layout_gravity="center"
-        android:background="?backcolor"
         android:elevation="4dp" />
 
 </com.github.k1rakishou.chan.ui.layout.PopupControllerContainer>

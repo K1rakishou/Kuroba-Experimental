@@ -23,39 +23,53 @@ import android.content.DialogInterface;
 import android.os.Environment;
 import android.view.View;
 
-import androidx.appcompat.app.AlertDialog;
-
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.NewFolderLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 
 import java.io.File;
+
+import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class SaveLocationController
         extends Controller
-        implements FileWatcher.FileWatcherCallback, FilesAdapter.Callback, FilesLayout.Callback, View.OnClickListener {
+        implements FileWatcher.FileWatcherCallback,
+        FilesAdapter.Callback,
+        FilesLayout.Callback,
+        View.OnClickListener {
+
+    @Inject
+    DialogFactory dialogFactory;
+
     private FilesLayout filesLayout;
-    private FloatingActionButton setButton;
-    private FloatingActionButton addButton;
+    private ColorizableFloatingActionButton setButton;
+    private ColorizableFloatingActionButton addButton;
     private RuntimePermissionsHelper runtimePermissionsHelper;
     private FileWatcher fileWatcher;
     private SaveLocationControllerMode mode;
     private SaveLocationControllerCallback callback;
 
     public SaveLocationController(
-            Context context, SaveLocationControllerMode mode, SaveLocationControllerCallback callback
+            Context context,
+            SaveLocationControllerMode mode,
+            SaveLocationControllerCallback callback
     ) {
         super(context);
+        Chan.inject(this);
 
         this.callback = callback;
         this.mode = mode;
@@ -92,12 +106,15 @@ public class SaveLocationController
             @SuppressLint("InflateParams")
             final NewFolderLayout dialogView = (NewFolderLayout) inflate(context, R.layout.layout_folder_add, null);
 
-            new AlertDialog.Builder(context).setView(dialogView)
-                    .setTitle(R.string.save_new_folder)
-                    .setPositiveButton(R.string.add, (dialog, which) -> onPositionButtonClick(dialogView, dialog))
-                    .setNegativeButton(R.string.cancel, null)
-                    .create()
-                    .show();
+            DialogFactory.Builder.newBuilder(context, dialogFactory)
+                    .withCustomView(dialogView)
+                    .withTitle(R.string.save_new_folder)
+                    .withPositiveButtonTextId(R.string.add)
+                    .withOnPositiveButtonClickListener((dialog) -> {
+                        onPositionButtonClick(dialogView, dialog);
+                        return Unit.INSTANCE;
+                    })
+                    .create();
         }
     }
 

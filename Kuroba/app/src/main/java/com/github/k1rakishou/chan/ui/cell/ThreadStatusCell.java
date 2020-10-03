@@ -36,7 +36,7 @@ import com.github.k1rakishou.chan.core.model.ChanThread;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
@@ -51,7 +51,7 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     private static final int MESSAGE_INVALIDATE = 1;
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     BoardManager boardManager;
 
@@ -84,7 +84,8 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
         inject(this);
 
         text = findViewById(R.id.text);
-        text.setTypeface(themeHelper.getTheme().mainFont);
+        text.setTypeface(themeEngine.getChanTheme().getMainFont());
+        text.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         setOnClickListener(this);
     }

@@ -26,28 +26,28 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.k1rakishou.chan.ui.view.GridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,6 +58,7 @@ import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
@@ -68,8 +69,8 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 public class AlbumDownloadController
         extends Controller
         implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks, WindowInsetsListener {
-    private GridRecyclerView recyclerView;
-    private FloatingActionButton download;
+    private ColorizableGridRecyclerView recyclerView;
+    private ColorizableFloatingActionButton download;
 
     private List<AlbumDownloadItem> items = new ArrayList<>();
     private ChanDescriptor chanDescriptor;
@@ -80,9 +81,9 @@ public class AlbumDownloadController
     @Inject
     ImageSaver imageSaver;
     @Inject
-    ThemeHelper themeHelper;
-    @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    DialogFactory dialogFactory;
 
     private boolean allChecked = true;
 
@@ -99,11 +100,12 @@ public class AlbumDownloadController
         view = inflate(context, R.layout.controller_album_download);
 
         updateTitle();
-        navigation.buildMenu().withItem(R.drawable.ic_select_all_white_24dp, this::onCheckAllClicked).build();
+        navigation.buildMenu()
+                .withItem(R.drawable.ic_select_all_white_24dp, this::onCheckAllClicked)
+                .build();
 
         download = view.findViewById(R.id.download);
         download.setOnClickListener(this);
-        themeHelper.getTheme().applyFabColor(download);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
@@ -183,11 +185,16 @@ public class AlbumDownloadController
             }
         }
 
-        new AlertDialog.Builder(context)
-                .setMessage(message)
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.ok, (dialog, which) -> startAlbumDownloadTask(tasks))
-                .show();
+        DialogFactory.Builder
+                .newBuilder(context, dialogFactory)
+                .withDescription(message)
+                .withCancelable(false)
+                .withPositiveButtonTextId(R.string.ok)
+                .withOnPositiveButtonClickListener(dialog -> {
+                    startAlbumDownloadTask(tasks);
+                    return Unit.INSTANCE;
+                })
+                .create();
     }
 
     @Nullable
@@ -451,9 +458,11 @@ public class AlbumDownloadController
             cell.thumbnailView.setScaleY(scale);
         }
 
-        Drawable drawable = context.getDrawable(checked
+        int drawableId = checked
                 ? R.drawable.ic_blue_checkmark_24dp
-                : R.drawable.ic_radio_button_unchecked_white_24dp);
+                : R.drawable.ic_radio_button_unchecked_white_24dp;
+
+        Drawable drawable = ContextCompat.getDrawable(context, drawableId);
         cell.checkbox.setImageDrawable(drawable);
     }
 }

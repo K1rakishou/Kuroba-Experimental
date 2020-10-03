@@ -25,7 +25,6 @@ public class PersistableChanState {
     public static StringSetting previousDevHash;
     public static BooleanSetting viewThreadBookmarksGridMode;
     public static final BooleanSetting shittyPhonesBackgroundLimitationsExplanationDialogShown;
-    public static BooleanSetting appBetaVersionWarningShown;
     public static BooleanSetting cloudflarePreloadingExplanationShown;
 
     static {
@@ -39,7 +38,6 @@ public class PersistableChanState {
             previousDevHash = new StringSetting(p, "previous_dev_hash", BuildConfig.COMMIT_HASH);
             viewThreadBookmarksGridMode = new BooleanSetting(p, "view_thread_bookmarks_grid_mode", true);
             shittyPhonesBackgroundLimitationsExplanationDialogShown = new BooleanSetting(p, "shitty_phones_background_limitations_explanation_dialog_shown", false);
-            appBetaVersionWarningShown = new BooleanSetting(p, "app_beta_version_warning_shown", false);
             cloudflarePreloadingExplanationShown = new BooleanSetting(p, "cloudflare_preloading_explanation_shown", false);
         } catch (Exception e) {
             Logger.e(TAG, "Error while initializing the state", e);

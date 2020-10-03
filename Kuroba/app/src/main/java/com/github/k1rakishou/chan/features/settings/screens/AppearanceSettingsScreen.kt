@@ -10,12 +10,12 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 
 class AppearanceSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val themeHelper: ThemeHelper
+  private val themeEngine: ThemeEngine
 ) : BaseSettingsScreen(
   context,
   AppearanceScreen,
@@ -133,15 +133,6 @@ class AppearanceSettingsScreen(
             }
           },
           setting = ChanSettings.fontSize,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.PostGroup.FontAlternate,
-          topDescriptionIdFunc = { R.string.setting_font_alt },
-          bottomDescriptionIdFunc = { R.string.setting_font_alt_description },
-          setting = ChanSettings.fontAlternate,
           requiresUiRefresh = true
         )
 
@@ -337,7 +328,7 @@ class AppearanceSettingsScreen(
           context = context,
           identifier = AppearanceScreen.MainGroup.ThemeCustomization,
           topDescriptionIdFunc = { R.string.setting_theme },
-          bottomDescriptionStringFunc = { themeHelper.theme.displayName },
+          bottomDescriptionStringFunc = { themeEngine.chanTheme.name },
           callback = { navigationController.pushController(ThemeSettingsController(context)) }
         )
 

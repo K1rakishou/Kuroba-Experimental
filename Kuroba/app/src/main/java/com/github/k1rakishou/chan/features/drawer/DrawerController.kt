@@ -27,7 +27,6 @@ import android.widget.LinearLayout
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -53,7 +52,9 @@ import com.github.k1rakishou.chan.ui.controller.navigation.*
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
@@ -73,10 +74,11 @@ class DrawerController(
   DrawerView,
   DrawerCallbacks,
   View.OnClickListener,
-  WindowInsetsListener {
+  WindowInsetsListener,
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
@@ -86,8 +88,9 @@ class DrawerController(
   private lateinit var container: FrameLayout
   private lateinit var drawerLayout: DrawerLayout
   private lateinit var drawer: LinearLayout
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
+  private lateinit var divider: ColorizableDivider
 
   private val drawerPresenter = DrawerPresenter(isDevBuild())
   private val childControllersStack = Stack<Controller>()
@@ -146,20 +149,11 @@ class DrawerController(
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
-
+    divider = view.findViewById(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
+
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
-
-    bottomNavView.itemIconTintList = ColorStateList(
-      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
-    )
-    bottomNavView.itemTextColor = ColorStateList(
-      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, themeHelper.theme.textSecondary)
-    )
-    bottomNavView.setBackgroundColor(themeHelper.theme.primaryColor.color)
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       if (bottomNavView.selectedItemId == menuItem.itemId) {
@@ -210,11 +204,47 @@ class DrawerController(
     // state as well as other states
     drawerPresenter.onCreate(this)
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
+
+    themeEngine.addListener(this)
+    onThemeChanged()
+  }
+
+  override fun onShow() {
+    super.onShow()
+
+    drawerPresenter.updateBadge()
+  }
+
+  override fun onThemeChanged() {
+    drawerPresenter.onThemeChanged()
+    settingsNotificationManager.onThemeChanged()
+
+    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
+    bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+
+    val uncheckedColorNormal = if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
+      Color.LTGRAY
+    } else {
+      Color.DKGRAY
+    }
+
+    val uncheckedColorDarkened = manipulateColor(uncheckedColorNormal, .7f)
+
+    bottomNavView.itemIconTintList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+    )
+
+    bottomNavView.itemTextColor = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+    )
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()
     compositeDisposable.clear()
@@ -489,13 +519,22 @@ class DrawerController(
     badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = state.totalUnseenPostsCount
 
-    if (state.hasUnreadReplies) {
-      badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
+    val backgroundColor = if (state.hasUnreadReplies) {
+      themeEngine.chanTheme.accentColor
     } else {
-      badgeDrawable.backgroundColor = themeHelper.theme.backColor
+      if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
+        Color.LTGRAY
+      } else {
+        Color.DKGRAY
+      }
     }
 
-    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+    badgeDrawable.backgroundColor = backgroundColor
+    badgeDrawable.badgeTextColor = if (isDarkColor(backgroundColor)) {
+      Color.WHITE
+    } else {
+      Color.BLACK
+    }
   }
 
   private fun onSettingsNotificationChanged() {
@@ -514,8 +553,12 @@ class DrawerController(
     badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = notificationsCount
 
-    badgeDrawable.backgroundColor = themeHelper.theme.accentColor.color
-    badgeDrawable.badgeTextColor = themeHelper.theme.textPrimary
+    badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
+    badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {
+      Color.WHITE
+    } else {
+      Color.BLACK
+    }
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {

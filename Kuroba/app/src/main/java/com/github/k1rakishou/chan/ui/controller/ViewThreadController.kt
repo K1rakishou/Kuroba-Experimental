@@ -17,9 +17,7 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.text.InputType
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.core.util.Pair
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -27,10 +25,9 @@ import com.github.k1rakishou.chan.R.string.action_reload
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -39,14 +36,12 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.DialogUtils
-import com.github.k1rakishou.chan.utils.DialogUtils.createSimpleDialogWithInput
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -63,10 +58,15 @@ import javax.inject.Inject
 
 open class ViewThreadController(
   context: Context,
+  drawerCallbacks: DrawerCallbacks?,
   private var threadDescriptor: ThreadDescriptor
-) : ThreadController(context), ThreadLayoutCallback, ToobarThreedotMenuCallback, ReplyAutoCloseListener {
+) : ThreadController(context, drawerCallbacks),
+  ThreadLayoutCallback,
+  ToobarThreedotMenuCallback,
+  ReplyAutoCloseListener {
+
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
@@ -74,7 +74,7 @@ open class ViewThreadController(
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
-  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  lateinit var dialogFactory: DialogFactory
 
   private var pinItemPinned = false
 
@@ -87,7 +87,7 @@ open class ViewThreadController(
     Chan.inject(this)
 
     threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST)
-    view.setBackgroundColor(AndroidUtils.getAttrColor(context, R.attr.backcolor))
+    view.setBackgroundColor(themeEngine.chanTheme.backColor)
     navigation.hasDrawer = true
     navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get()
 
@@ -300,12 +300,11 @@ open class ViewThreadController(
     if (!PersistableChanState.cloudflarePreloadingExplanationShown.get()) {
       PersistableChanState.cloudflarePreloadingExplanationShown.set(true)
 
-      DialogUtils.createSimpleInformationDialog(
-        context,
-        applicationVisibilityManager.isAppInForeground(),
-        R.string.thread_presenter_cloudflare_preloading_dialog_title,
-        R.string.thread_presenter_cloudflare_preloading_dialog_description,
-        { threadLayout.presenter.cloudFlareForcePreload() }
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleTextId = R.string.thread_presenter_cloudflare_preloading_dialog_title,
+        descriptionTextId = R.string.thread_presenter_cloudflare_preloading_dialog_description,
+        onPositiveButtonClickListener = { threadLayout.presenter.cloudFlareForcePreload() }
       )
 
       return
@@ -374,7 +373,7 @@ open class ViewThreadController(
       return
     }
 
-    AndroidUtils.openLinkInBrowser(context, url, themeHelper.theme)
+    AndroidUtils.openLinkInBrowser(context, url, themeEngine.chanTheme)
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {
@@ -393,11 +392,10 @@ open class ViewThreadController(
   }
 
   private fun onGoToPostClicked(item: ToolbarMenuSubItem) {
-    createSimpleDialogWithInput(
-      context,
-      R.string.view_thread_controller_enter_post_id,
-      null,
-      { input: String ->
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.view_thread_controller_enter_post_id,
+      onValueEntered = { input: String ->
         try {
           val postNo = input.toInt()
           threadLayout.presenter.scrollToPostByPostNo(postNo.toLong())
@@ -405,8 +403,8 @@ open class ViewThreadController(
           //ignored
         }
       },
-      InputType.TYPE_CLASS_NUMBER
-    ).show()
+      inputType = DialogFactory.DialogInputType.Integer
+    )
   }
 
   private fun onThreadViewOptionClicked(item: ToolbarMenuSubItem) {
@@ -486,12 +484,13 @@ open class ViewThreadController(
       threadToOpenDescriptor.boardCode() + "/" +
       threadToOpenDescriptor.threadNo
 
-    AlertDialog.Builder(context)
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.ok) { _, _ -> showExternalThreadInternal(threadToOpenDescriptor) }
-      .setTitle(R.string.open_thread_confirmation)
-      .setMessage(fullThreadName)
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      descriptionText = fullThreadName,
+      negativeButtonText = getString(R.string.cancel),
+      positiveButtonText = getString(R.string.ok),
+      onPositiveButtonClickListener = { showExternalThreadInternal(threadToOpenDescriptor) }
+    )
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
@@ -730,10 +729,6 @@ open class ViewThreadController(
 
   override fun showAvailableArchivesList(descriptor: ThreadDescriptor) {
     showAvailableArchives(descriptor)
-  }
-
-  override fun getPostForPostImage(postImage: PostImage): Post? {
-    return threadLayout.presenter.getPostFromPostImage(postImage)
   }
 
   override fun onMenuShown() {

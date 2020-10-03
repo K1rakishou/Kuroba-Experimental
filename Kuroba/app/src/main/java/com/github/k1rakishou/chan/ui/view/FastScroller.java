@@ -83,7 +83,7 @@ public class FastScroller
     private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
     private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
     private static final int HIDE_DURATION_MS = 500;
-    private static final int SCROLLBAR_FULL_OPAQUE = 255;
+    private static final int SCROLLBAR_ALPHA = 192;
 
     private static final int[] PRESSED_STATE_SET = {android.R.attr.state_pressed};
     private static final int[] EMPTY_STATE_SET = {};
@@ -199,8 +199,8 @@ public class FastScroller
         this.toolbarHeight = toolbarHeight;
         this.toolbarPaddingTop = toolbarPaddingTop;
 
-        mVerticalThumbDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
-        mVerticalTrackDrawable.setAlpha(SCROLLBAR_FULL_OPAQUE);
+        mVerticalThumbDrawable.setAlpha(SCROLLBAR_ALPHA);
+        mVerticalTrackDrawable.setAlpha(SCROLLBAR_ALPHA);
 
         mShowHideAnimator.addListener(new AnimatorListener());
         mShowHideAnimator.addUpdateListener(new AnimatorUpdater());
@@ -737,12 +737,10 @@ public class FastScroller
         }
     }
 
-    private class AnimatorUpdater
-            implements AnimatorUpdateListener {
-
+    private class AnimatorUpdater implements AnimatorUpdateListener {
         @Override
         public void onAnimationUpdate(ValueAnimator valueAnimator) {
-            int alpha = (int) (SCROLLBAR_FULL_OPAQUE * ((float) valueAnimator.getAnimatedValue()));
+            int alpha = (int) (SCROLLBAR_ALPHA * ((float) valueAnimator.getAnimatedValue()));
             mVerticalThumbDrawable.setAlpha(alpha);
             mVerticalTrackDrawable.setAlpha(alpha);
             requestRedraw();

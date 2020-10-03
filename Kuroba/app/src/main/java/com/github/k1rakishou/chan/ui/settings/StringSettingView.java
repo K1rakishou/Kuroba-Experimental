@@ -19,14 +19,19 @@ package com.github.k1rakishou.chan.ui.settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+
+import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -34,6 +39,10 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
 public class StringSettingView extends SettingView implements View.OnClickListener {
+
+    @Inject
+    DialogFactory dialogFactory;
+
     private final Setting<String> setting;
     private final String dialogTitle;
 
@@ -53,6 +62,8 @@ public class StringSettingView extends SettingView implements View.OnClickListen
             String dialogTitle
     ) {
         super(settingsController, name);
+        Chan.inject(this);
+
         this.setting = setting;
         this.dialogTitle = dialogTitle;
     }
@@ -73,28 +84,28 @@ public class StringSettingView extends SettingView implements View.OnClickListen
         LinearLayout container = new LinearLayout(v.getContext());
         container.setPadding(dp(24), dp(8), dp(24), 0);
 
-        final EditText editText = new EditText(v.getContext());
+        final ColorizableEditText editText = new ColorizableEditText(v.getContext());
         editText.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
         editText.setText(setting.get());
         editText.setSingleLine(true);
         editText.setSelection(editText.getText().length());
-
         container.addView(editText, MATCH_PARENT, WRAP_CONTENT);
 
-        AlertDialog dialog = new AlertDialog.Builder(v.getContext())
-                .setPositiveButton(R.string.ok, (d, which) -> {
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(v.getContext(), dialogFactory)
+                .withTitle(dialogTitle)
+                .withCustomView(container)
+                .withOnPositiveButtonClickListener((dialog1) -> {
                     String input = editText.getText().toString();
                     setting.set(input.length() > 0 ? input : setting.getDefault());
                     settingsController.onPreferenceChange(StringSettingView.this);
+
+                    return Unit.INSTANCE;
                 })
-                .setNegativeButton(R.string.cancel, null)
-                .setTitle(dialogTitle)
-                .setView(container)
                 .create();
 
-        dialog.getWindow()
-                .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-
-        dialog.show();
+        if (dialog != null) {
+            dialog.getWindow()
+                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
     }
 }

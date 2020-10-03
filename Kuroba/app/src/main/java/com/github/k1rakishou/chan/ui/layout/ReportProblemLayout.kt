@@ -2,18 +2,19 @@ package com.github.k1rakishou.chan.ui.layout
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatCheckBox
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
-import com.google.android.material.textfield.TextInputEditText
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
@@ -22,15 +23,17 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
 
   @Inject
   lateinit var reportManager: ReportManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var callbacks: ReportProblemControllerCallbacks? = null
   private lateinit var compositeDisposable: CompositeDisposable
 
-  private val reportActivityProblemTitle: TextInputEditText
-  private val reportActivityProblemDescription: TextInputEditText
-  private val reportActivityAttachLogsButton: AppCompatCheckBox
-  private val reportActivityLogsText: TextInputEditText
-  private val reportActivitySendReport: AppCompatButton
+  private val reportActivityProblemTitle: ColorizableEditText
+  private val reportActivityProblemDescription: ColorizableEditText
+  private val reportActivityAttachLogsButton: ColorizableCheckBox
+  private val reportActivityLogsText: ColorizableEditText
+  private val reportActivitySendReport: ColorizableBarButton
 
   init {
     inject(this)

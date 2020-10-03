@@ -16,9 +16,10 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
+import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.text.style.BackgroundColorSpan;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
@@ -30,10 +31,14 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -78,7 +83,7 @@ public class DefaultPostParser implements PostParser {
     }
 
     @Override
-    public Post parse(@NonNull Theme theme, Post.Builder builder, Callback callback) {
+    public Post parse(@NonNull ChanTheme theme, Post.Builder builder, Callback callback) {
         if (!TextUtils.isEmpty(builder.name)) {
             builder.name = Parser.unescapeEntities(builder.name, false);
         }
@@ -90,7 +95,7 @@ public class DefaultPostParser implements PostParser {
         parseSpans(theme, builder);
 
         if (builder.postCommentBuilder.hasComment()) {
-            CharSequence parsedComment = parseComment(
+            Spannable parsedComment = parseComment(
                     theme,
                     builder,
                     builder.postCommentBuilder.getComment(),
@@ -115,7 +120,7 @@ public class DefaultPostParser implements PostParser {
      * @param theme   Theme to use for parsing
      * @param builder Post builder to get data from
      */
-    private void parseSpans(Theme theme, Post.Builder builder) {
+    private void parseSpans(ChanTheme theme, Post.Builder builder) {
         boolean anonymize = ChanSettings.anonymize.get();
         boolean anonymizeIds = ChanSettings.anonymizeIds.get();
 
@@ -141,7 +146,7 @@ public class DefaultPostParser implements PostParser {
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
             if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
                 subjectSpan.setSpan(
-                        new ForegroundColorSpanHashed(theme.subjectColor),
+                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
                         0,
                         subjectSpan.length(),
                         0
@@ -151,13 +156,10 @@ public class DefaultPostParser implements PostParser {
             builder.subject = subjectSpan;
         }
 
-        if (!TextUtils.isEmpty(builder.name)
-                && (!builder.name.equals(defaultName)
-                || ChanSettings.showAnonymousName.get())
-        ) {
+        if (!TextUtils.isEmpty(builder.name) && (!builder.name.equals(defaultName) || ChanSettings.showAnonymousName.get())) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.nameColor),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
                     0,
                     nameSpan.length(),
                     0
@@ -167,7 +169,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.tripcode)) {
             tripcodeSpan = new SpannableString(builder.tripcode);
             tripcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.nameColor),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
                     0,
                     tripcodeSpan.length(),
                     0
@@ -184,17 +186,15 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.posterId)) {
             idSpan = new SpannableString("  ID: " + builder.posterId + "  ");
 
-            int idBgColor = builder.isLightColor ? theme.idBackgroundLight : theme.idBackgroundDark;
-
             idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
-            idSpan.setSpan(new BackgroundColorSpan(idBgColor), 0, idSpan.length(), 0);
+            idSpan.setSpan(new BackgroundColorSpanHashed(AndroidUtils.getComplementaryColor(builder.idColor)), 0, idSpan.length(), 0);
             idSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, idSpan.length(), 0);
         }
 
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
             capcodeSpan = new SpannableString("Capcode: " + builder.moderatorCapcode);
             capcodeSpan.setSpan(
-                    new ForegroundColorSpanHashed(theme.capcodeColor),
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
                     0,
                     capcodeSpan.length(),
                     0
@@ -207,35 +207,43 @@ public class DefaultPostParser implements PostParser {
             );
         }
 
-        CharSequence nameTripcodeIdCapcodeSpan = new SpannableString("");
+        SpannableStringBuilder nameTripcodeIdCapcodeSpan = new SpannableStringBuilder("");
         if (nameSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, nameSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(nameSpan)
+                    .append(" ");
         }
 
         if (tripcodeSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, tripcodeSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(tripcodeSpan)
+                    .append(" ");
         }
 
         if (idSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, idSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(idSpan)
+                    .append(" ");
         }
 
         if (capcodeSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, capcodeSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(capcodeSpan)
+                    .append(" ");
         }
 
-        builder.tripcode = nameTripcodeIdCapcodeSpan;
+        builder.tripcode = SpannableString.valueOf(nameTripcodeIdCapcodeSpan);
     }
 
     @Override
-    public CharSequence parseComment(
-            Theme theme,
+    public Spannable parseComment(
+            ChanTheme theme,
             Post.Builder post,
             CharSequence commentRaw,
             boolean addPostImages,
             Callback callback
     ) {
-        CharSequence total = new SpannableString("");
+        SpannableStringBuilder total = new SpannableStringBuilder("");
 
         try {
             String comment = commentRaw.toString().replace("<wbr>", "");
@@ -251,7 +259,9 @@ public class DefaultPostParser implements PostParser {
                 }
             }
 
-            total = TextUtils.concat(texts.toArray(new CharSequence[0]));
+            for (CharSequence text : texts) {
+                total.append(text);
+            }
         } catch (Exception e) {
             Logger.e(TAG, "Error parsing comment html", e);
         }
@@ -260,11 +270,11 @@ public class DefaultPostParser implements PostParser {
             CommentParserHelper.addPostImages(post);
         }
 
-        return total;
+        return SpannableString.valueOf(total);
     }
 
     private CharSequence parseNode(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             Callback callback,
             Node node
@@ -273,7 +283,7 @@ public class DefaultPostParser implements PostParser {
             String text = ((TextNode) node).text();
 
             SpannableString spannable = new SpannableString(text);
-            CommentParserHelper.detectLinks(theme, post, text, spannable);
+            CommentParserHelper.detectLinks(post, text, spannable);
 
             return spannable;
         } else if (node instanceof Element) {

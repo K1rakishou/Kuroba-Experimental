@@ -15,9 +15,10 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -27,16 +28,16 @@ class EpoxySiteView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : LinearLayout(context, attrs, defStyleAttr) {
+) : LinearLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
-  private val siteSwitch: SwitchMaterial
+  private val siteSwitch: ColorizableSwitchMaterial
   private val siteSettings: AppCompatImageView
 
   private var descriptor: SiteDescriptor? = null
@@ -54,18 +55,34 @@ class EpoxySiteView @JvmOverloads constructor(
     siteSwitch.isClickable = false
     siteSwitch.isFocusable = false
 
-    val tintedDrawable = themeHelper.tintDrawable(
+    val tintedDrawable = themeEngine.getDrawableTinted(
       context,
-      R.drawable.ic_settings_white_24dp
+      R.drawable.ic_settings_white_24dp,
+      AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
     )
 
     siteSettings.setImageDrawable(tintedDrawable)
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateSiteNameTextColor()
+    updateSettingsTint()
+  }
+
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    siteName.setTextColor(themeHelper.theme.textPrimary)
+    updateSiteNameTextColor()
   }
 
   @ModelProp
@@ -103,7 +120,7 @@ class EpoxySiteView @JvmOverloads constructor(
     if (siteEnableState == null) {
       siteSwitch.isEnabled = true
       siteSwitch.isChecked = false
-      siteSettings.alpha = 0.6f
+      siteSettings.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
       return
     }
 
@@ -112,19 +129,21 @@ class EpoxySiteView @JvmOverloads constructor(
       siteSwitch.isEnabled = false
 
       siteSettings.isEnabled = false
-      siteSettings.alpha = 0.6f
+      siteSettings.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
       return
     }
 
     siteSwitch.isEnabled = true
     siteSwitch.isChecked = siteEnableState == SiteEnableState.Active
-    siteSettings.isEnabled = siteEnableState == SiteEnableState.Active
 
+    siteSettings.isEnabled = siteEnableState == SiteEnableState.Active
     siteSettings.alpha = if (siteEnableState == SiteEnableState.Active) {
       1f
     } else {
-      0.6f
+      themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
     }
+
+    updateSettingsTint()
   }
 
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
@@ -171,6 +190,19 @@ class EpoxySiteView @JvmOverloads constructor(
   fun unbind() {
     this.requestDisposable?.dispose()
     this.requestDisposable = null
+  }
+
+  private fun updateSettingsTint() {
+    if (siteSettings.drawable == null) {
+      return
+    }
+
+    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    siteSettings.setImageDrawable(themeEngine.tintDrawable(siteSettings.drawable, isDarkColor))
+  }
+
+  private fun updateSiteNameTextColor() {
+    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   companion object {

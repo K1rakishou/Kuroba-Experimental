@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_marginTop="20dp"
         android:text="@string/save_new_folder" />
 
-    <com.google.android.material.textfield.TextInputLayout
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
         android:id="@+id/new_folder_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,13 +36,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_marginRight="20dp"
         android:layout_marginTop="8dp">
 
-        <com.google.android.material.textfield.TextInputEditText
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
             android:id="@+id/new_folder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/new_folder_hint"
             android:inputType="textUri" />
 
-    </com.google.android.material.textfield.TextInputLayout>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
 </com.github.k1rakishou.chan.ui.layout.NewFolderLayout>

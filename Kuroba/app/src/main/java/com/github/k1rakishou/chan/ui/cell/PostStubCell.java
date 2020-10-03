@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.cell;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
@@ -26,12 +27,15 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -40,6 +44,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
 public class PostStubCell
@@ -47,6 +53,10 @@ public class PostStubCell
         implements PostCellInterface, View.OnClickListener {
     private static final int TITLE_MAX_LENGTH = 100;
 
+    @Inject
+    ThemeEngine themeEngine;
+
+    private ChanTheme theme;
     private Post post;
     private ChanSettings.PostViewMode postViewMode;
     private boolean showDivider;
@@ -55,19 +65,26 @@ public class PostStubCell
     PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private TextView title;
-    private View divider;
+    private ColorizableDivider divider;
     private boolean inPopup;
 
     public PostStubCell(Context context) {
         super(context);
+        init();
     }
 
     public PostStubCell(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public PostStubCell(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        Chan.inject(this);
     }
 
     @Override
@@ -77,6 +94,7 @@ public class PostStubCell
         title = findViewById(R.id.title);
         ImageView options = findViewById(R.id.options);
         AndroidUtils.setBoundlessRoundRippleBackground(options);
+
         divider = findViewById(R.id.divider);
 
         int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get());
@@ -91,6 +109,7 @@ public class PostStubCell
         divider.setLayoutParams(dividerParams);
 
         setOnClickListener(this);
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
 
         options.setOnClickListener(v -> {
             List<FloatingListMenuItem> items = new ArrayList<>();
@@ -141,12 +160,13 @@ public class PostStubCell
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
             boolean compact,
-            Theme theme
+            ChanTheme theme
     ) {
-        if (this.post == post) {
+        if (post.equals(this.post) && theme.equals(this.theme)) {
             return;
         }
 
+        this.theme = theme;
         this.post = post;
         this.inPopup = inPopup;
         this.callback = callback;
@@ -184,12 +204,17 @@ public class PostStubCell
             } else {
                 titleText = post.getComment();
             }
+
             title.setText(titleText);
         }
 
-        divider.setVisibility(postViewMode == ChanSettings.PostViewMode.CARD
-                ? GONE :
-                (showDivider ? VISIBLE : GONE));
+        title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+
+        divider.setVisibility(
+                postViewMode == ChanSettings.PostViewMode.CARD
+                        ? GONE
+                        : (showDivider ? VISIBLE : GONE)
+        );
 
         if (callback != null) {
             callback.onPostBind(post);

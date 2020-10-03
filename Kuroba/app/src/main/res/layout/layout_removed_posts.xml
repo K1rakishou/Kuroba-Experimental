@@ -20,9 +20,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:id="@+id/removed_posts_view_holder"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#88000000"
     android:clickable="true"
     android:focusable="true"
+    android:background="#80000000"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
@@ -33,7 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="?backcolor"
         android:elevation="4dp"
         android:minWidth="320dp"
         android:orientation="vertical"
@@ -43,7 +42,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="UselessParent">
 
-        <androidx.cardview.widget.CardView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -58,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:focusable="true"
                 android:orientation="vertical">
 
-                <ListView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
                     android:id="@+id/removed_posts_posts_list"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
@@ -72,13 +71,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:gravity="center_horizontal"
                     android:layout_marginBottom="16dp">
 
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/removed_posts_select_all"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/select_all" />
 
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/removed_posts_restore_posts"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -89,7 +88,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
     </com.github.k1rakishou.chan.ui.layout.PostRepliesContainer>
 

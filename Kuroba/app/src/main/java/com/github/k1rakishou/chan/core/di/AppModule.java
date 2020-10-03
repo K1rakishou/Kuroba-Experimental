@@ -24,11 +24,12 @@ import android.os.Environment;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
@@ -176,20 +177,21 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeHelper themeHelper) {
+    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeEngine themeEngine) {
         Logger.d(DI_TAG, "Image loader v2");
         return new ImageLoaderV2(
                 coilImageLoader,
                 ChanSettings.verboseLogs.get(),
-                themeHelper
+                themeEngine
         );
     }
 
     @Provides
     @Singleton
-    public ThemeHelper provideThemeHelper() {
-        Logger.d(DI_TAG, "Theme helper");
-        return new ThemeHelper();
+    public ThemeEngine provideThemeEngine(ThemeParser themeParser) {
+        Logger.d(DI_TAG, "ThemeEngine");
+
+        return new ThemeEngine(themeParser);
     }
 
     @Provides

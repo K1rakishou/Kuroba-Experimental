@@ -15,7 +15,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
-        android:textColor="?attr/text_color_primary"
         android:textSize="18sp"
         android:maxLines="1"
         android:ellipsize="end"
@@ -26,7 +25,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:textColor="?attr/text_color_hint"
         android:textSize="16sp"
         tools:text="/a/ - Anime and Manga is 4chan's imageboard dedicated to the discussion of Japanese animation and manga." />
 

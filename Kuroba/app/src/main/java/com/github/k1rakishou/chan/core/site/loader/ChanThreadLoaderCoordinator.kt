@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUs
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
@@ -71,7 +71,7 @@ class ChanThreadLoaderCoordinator(
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
-  private val themeHelper: ThemeHelper,
+  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) : CoroutineScope {
   private val job = SupervisorJob()
@@ -83,7 +83,6 @@ class ChanThreadLoaderCoordinator(
     ReloadPostsFromDatabaseUseCase(
       gson,
       chanPostRepository,
-      themeHelper,
       boardManager
     )
   }
@@ -96,7 +95,7 @@ class ChanThreadLoaderCoordinator(
       filterEngine,
       postFilterManager,
       savedReplyManager,
-      themeHelper,
+      themeEngine,
       boardManager
     )
   }
@@ -128,7 +127,7 @@ class ChanThreadLoaderCoordinator(
   ): Job {
     Logger.d(TAG, "loadThread($url, $requestParams)")
 
-    return launch {
+    return launch(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
 
@@ -165,11 +164,27 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
+  suspend fun reloadThreadFromDatabase(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanLoaderResponse? {
+    Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
+    BackgroundUtils.ensureBackgroundThread()
+
+    return databasePostLoader.loadPosts(threadDescriptor)
+  }
+
+  suspend fun reloadCatalogFromDatabase(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): ChanLoaderResponse? {
+    Logger.d(TAG, "reloadThreadFromDatabase(${threadDescriptors.size})")
+    BackgroundUtils.ensureBackgroundThread()
+
+    return databasePostLoader.loadCatalog(threadDescriptors)
+  }
+
   private suspend fun fallbackPostLoadOnNetworkError(
     requestParams: ChanLoaderRequestParams,
     error: Exception
   ): ThreadLoadResult {
-    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams)
+    BackgroundUtils.ensureBackgroundThread()
+
+    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams.chanDescriptor)
       ?: throw error
 
     val isThreadDeleted = error is ServerException && error.statusCode == 404

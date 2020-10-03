@@ -21,171 +21,180 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:orientation="vertical"
     android:padding="16dp">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:textColor="?attr/text_color_secondary">
-
-        <CheckBox
-            android:id="@+id/enabled"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/filter_enabled" />
-
-        <Space
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
-
-        <ImageView
-            android:id="@+id/help"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/item_background"
-            android:paddingLeft="4dp"
-            android:paddingTop="4dp"
-            android:paddingRight="4dp"
-            android:paddingBottom="4dp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="4dp"
-        android:paddingTop="8dp"
-        android:text="@string/filter_filter"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/type"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="8dp"
-            android:paddingLeft="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp" />
-
-        <TextView
-            android:id="@+id/boards"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:drawablePadding="8dp" />
-
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="4dp"
-        android:paddingTop="8dp"
-        android:text="@string/filter_action"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/action"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:drawablePadding="8dp"
-            android:paddingLeft="4dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp" />
+        android:layout_height="match_parent">
 
         <LinearLayout
-            android:id="@+id/color_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <View
-                android:id="@+id/color_preview"
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:layout_marginLeft="8dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginRight="8dp"
-                android:layout_marginBottom="4dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                    android:id="@+id/enabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_enabled" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <ImageView
+                    android:id="@+id/help"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/item_background"
+                    android:paddingLeft="4dp"
+                    android:paddingTop="4dp"
+                    android:paddingRight="4dp"
+                    android:paddingBottom="4dp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/filter_label_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingTop="8dp"
+                android:text="@string/filter_filter"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                    android:id="@+id/type"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="8dp"
+                    android:paddingLeft="4dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                    android:id="@+id/boards"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:drawablePadding="8dp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/action_label_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingTop="8dp"
+                android:text="@string/filter_action"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                    android:id="@+id/action"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="8dp"
+                    android:paddingLeft="4dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <LinearLayout
+                    android:id="@+id/color_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:id="@+id/color_preview"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginRight="8dp"
+                        android:layout_marginBottom="4dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                android:id="@+id/apply_to_replies_checkbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/apply_to_replies"
+                android:textSize="16sp" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                android:id="@+id/only_on_op_checkbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/only_on_op"
+                android:textSize="16sp" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                android:id="@+id/apply_to_saved_checkbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/apply_to_saved"
+                android:textSize="16sp" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/pattern_label_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingTop="8dp"
+                android:text="@string/filter_pattern"
+                android:textSize="16sp" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                android:id="@+id/pattern"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/filter_pattern"
+                android:textSize="14sp"
+                tools:ignore="TextFields" />
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/test_pattern_label_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingTop="8dp"
+                android:text="@string/filter_match_test"
+                android:textSize="16sp" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                android:id="@+id/pattern_preview_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="4dp"
+                android:paddingTop="8dp" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                android:id="@+id/pattern_preview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/filter_preview"
+                android:textSize="14sp" />
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <androidx.appcompat.widget.AppCompatCheckBox
-        android:id="@+id/apply_to_replies_checkbox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/apply_to_replies"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <androidx.appcompat.widget.AppCompatCheckBox
-        android:id="@+id/only_on_op_checkbox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/only_on_op"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <androidx.appcompat.widget.AppCompatCheckBox
-        android:id="@+id/apply_to_saved_checkbox"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/apply_to_saved"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="4dp"
-        android:paddingTop="8dp"
-        android:text="@string/filter_pattern"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/pattern"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/filter_pattern"
-        android:textSize="14sp"
-        tools:ignore="TextFields" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="4dp"
-        android:paddingTop="8dp"
-        android:text="@string/filter_match_test"
-        android:textColor="?attr/text_color_secondary"
-        android:textSize="16sp" />
-
-    <TextView
-        android:id="@+id/pattern_preview_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="4dp"
-        android:paddingTop="8dp" />
-
-    <EditText
-        android:id="@+id/pattern_preview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/filter_preview"
-        android:textSize="14sp" />
+    </ScrollView>
 
 </com.github.k1rakishou.chan.ui.layout.FilterLayout>

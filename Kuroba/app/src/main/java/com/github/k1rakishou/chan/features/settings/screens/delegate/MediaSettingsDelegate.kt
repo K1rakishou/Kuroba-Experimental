@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.widget.Toast
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.k1rakishou.chan.features.settings.screens.delegate.base_directory.MediaSettingsControllerPresenter
@@ -24,7 +25,8 @@ class MediaSettingsDelegate(
   private val navigationController: NavigationController,
   private val fileManager: FileManager,
   private val fileChooser: FileChooser,
-  private val runtimePermissionsHelper: RuntimePermissionsHelper
+  private val runtimePermissionsHelper: RuntimePermissionsHelper,
+  private val dialogFactory: DialogFactory
 ) : SaveLocationSetupDelegate.MediaControllerCallbacks {
   private var initialized = false
 
@@ -41,7 +43,8 @@ class MediaSettingsDelegate(
       context,
       this,
       presenter,
-      fileManager
+      fileManager,
+      dialogFactory
     )
   }
 
@@ -49,7 +52,8 @@ class MediaSettingsDelegate(
     SaveLocationSetupDelegate(
       context,
       this,
-      presenter
+      presenter,
+      dialogFactory
     )
   }
 

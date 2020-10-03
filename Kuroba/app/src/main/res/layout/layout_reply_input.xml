@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:singleLine="true"
                     android:textSize="16sp" />
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/flag"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -82,7 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <EditText
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/options"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -93,7 +93,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <EditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/subject"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -126,7 +126,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_alignParentTop="true"
                     android:layout_alignParentRight="true"
                     android:paddingRight="8dp"
-                    android:textColor="?text_color_secondary"
                     android:textSize="12sp"
                     tools:ignore="RelativeOverlap" />
 
@@ -140,9 +139,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:orientation="horizontal"
                 tools:ignore="SpUsage">
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_quote"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -153,9 +151,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_spoiler"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -166,9 +163,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_code"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -179,9 +175,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_eqn"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -192,9 +187,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_math"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="50dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -205,9 +199,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:visibility="gone"
                     tools:visibility="visible" />
 
-                <Button
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                     android:id="@+id/comment_sjis"
-                    style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="50dp"
                     android:layout_height="40dp"
                     android:layout_margin="0dp"
@@ -220,7 +213,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <CheckBox
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                 android:id="@+id/spoiler"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -263,7 +256,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <EditText
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                 android:id="@+id/file_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -24,8 +24,11 @@ import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.ColorUtils;
 
 public class DropdownArrowDrawable extends Drawable {
+    private static final int ALPHA = 88;
+
     private Paint paint = new Paint();
     private Path path = new Path();
     private int width;
@@ -34,15 +37,27 @@ public class DropdownArrowDrawable extends Drawable {
     private int color;
     private int pressedColor;
 
-    public DropdownArrowDrawable(int width, int height, boolean down, int color, int pressedColor) {
+    public DropdownArrowDrawable(int width, int height, boolean down) {
+        this(width, height, down, 0xffffffff);
+    }
+
+    public DropdownArrowDrawable(int width, int height, boolean down, int color) {
         this.width = width;
         this.height = height;
         this.rotation = down ? 0f : 1f;
         this.color = color;
-        this.pressedColor = pressedColor;
+        this.pressedColor = ColorUtils.setAlphaComponent(color, ALPHA);
 
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(color);
+    }
+
+    public void updateColor(int color) {
+        this.color = color;
+        this.pressedColor = ColorUtils.setAlphaComponent(color, ALPHA);
+
+        paint.setColor(color);
+        invalidateSelf();
     }
 
     @Override
@@ -84,7 +99,9 @@ public class DropdownArrowDrawable extends Drawable {
                 break;
             }
         }
+
         int color = pressed ? pressedColor : this.color;
+
         if (color != paint.getColor()) {
             int prevAlpha = paint.getAlpha();
             paint.setColor(color);

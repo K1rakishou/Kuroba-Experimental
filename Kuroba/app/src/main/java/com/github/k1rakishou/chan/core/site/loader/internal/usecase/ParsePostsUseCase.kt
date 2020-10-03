@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.hashSetWithCap
@@ -27,7 +27,7 @@ class ParsePostsUseCase(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
-  private val themeHelper: ThemeHelper,
+  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) {
 
@@ -66,7 +66,7 @@ class ParsePostsUseCase(
                 filterEngine,
                 postFilterManager,
                 savedReplyManager,
-                themeHelper.theme,
+                themeEngine.chanTheme,
                 filters,
                 postToParse,
                 chanReader,

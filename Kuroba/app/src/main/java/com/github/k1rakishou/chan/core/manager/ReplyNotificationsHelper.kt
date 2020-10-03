@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType
@@ -54,7 +55,8 @@ class ReplyNotificationsHelper(
   private val notificationManager: NotificationManager,
   private val bookmarksManager: BookmarksManager,
   private val chanPostRepository: ChanPostRepository,
-  private val imageLoaderV2: ImageLoaderV2
+  private val imageLoaderV2: ImageLoaderV2,
+  private val themeEngine: ThemeEngine
 ) {
   private val debouncer = SuspendDebouncer(appScope)
   private val working = AtomicBoolean(false)
@@ -642,7 +644,7 @@ class ReplyNotificationsHelper(
         setDefaults(Notification.DEFAULT_VIBRATE)
       }
 
-      setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+      setLights(themeEngine.chanTheme.accentColor, 1000, 1000)
     }
 
     return this
@@ -712,7 +714,7 @@ class ReplyNotificationsHelper(
       )
 
       summaryChannel.enableLights(true)
-      summaryChannel.lightColor = appContext.resources.getColor(R.color.accent)
+      summaryChannel.lightColor = themeEngine.chanTheme.accentColor
       summaryChannel.enableVibration(true)
 
       notificationManagerCompat.createNotificationChannel(summaryChannel)

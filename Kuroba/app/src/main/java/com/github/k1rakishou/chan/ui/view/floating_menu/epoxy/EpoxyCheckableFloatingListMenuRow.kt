@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -9,20 +10,28 @@ import android.widget.TextView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.google.android.material.checkbox.MaterialCheckBox
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
 class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val holder: LinearLayout
   private val title: TextView
-  private val checkbox: MaterialCheckBox
+  private val checkbox: ColorizableCheckBox
 
   init {
+    Chan.inject(this)
     View.inflate(context, R.layout.epoxy_checkable_floating_list_menu_row, this)
 
     holder = findViewById(R.id.holder)
@@ -30,9 +39,24 @@ class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
     checkbox = findViewById(R.id.checkbox)
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    updateTitleColor()
+  }
+
   @ModelProp
   fun setTitle(text: String) {
     title.text = text
+    updateTitleColor()
   }
 
   @ModelProp
@@ -68,6 +92,15 @@ class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
       checkbox.isChecked = !checkbox.isChecked
       callback.invoke(checkbox.isChecked)
     }
+  }
+
+  private fun updateTitleColor() {
+    val colorStateList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf(-android.R.attr.state_enabled)),
+      intArrayOf(themeEngine.chanTheme.textColorPrimary, themeEngine.chanTheme.textColorSecondary)
+    )
+
+    title.setTextColor(colorStateList)
   }
 
 }

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.mapper
 
+import android.text.SpannableString
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.utils.Logger
@@ -63,7 +64,7 @@ object ArchiveThreadMapper {
       .isSavedReply(false)
       .deleted(false)
 
-    postBuilder.postCommentBuilder.setComment(archivePost.comment)
+    postBuilder.postCommentBuilder.setComment(SpannableString(archivePost.comment))
 
     return postBuilder
   }
@@ -104,7 +105,7 @@ object ArchiveThreadMapper {
       .isSavedReply(false)
       .deleted(false)
 
-    postBuilder.postCommentBuilder.setComment(archivePost.comment)
+    postBuilder.postCommentBuilder.setComment(SpannableString(archivePost.comment))
     postBuilder.setArchiveDescriptor(archiveDescriptor)
 
     return postBuilder

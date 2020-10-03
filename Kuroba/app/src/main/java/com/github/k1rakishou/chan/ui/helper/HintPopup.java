@@ -21,17 +21,25 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.RotateDrawable;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.google.android.material.textview.MaterialTextView;
+
+import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
@@ -40,21 +48,11 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread;
 
 public class HintPopup {
-    public static HintPopup show(Context context, View anchor, int text) {
-        return show(context, anchor, getString(text));
-    }
+    private static final TimeInterpolator WIGGLER
+            = input -> (float) Math.sin(60 * input * 2.0 * Math.PI);
 
-    public static HintPopup show(final Context context, final View anchor, final String text) {
-        return show(context, anchor, text, 0, 0);
-    }
-
-    public static HintPopup show(
-            final Context context, final View anchor, final String text, final int offsetX, final int offsetY
-    ) {
-        HintPopup hintPopup = new HintPopup(context, anchor, text, offsetX, offsetY, false);
-        hintPopup.show();
-        return hintPopup;
-    }
+    @Inject
+    ThemeEngine themeEngine;
 
     private PopupWindow popupWindow;
     @Nullable
@@ -77,6 +75,8 @@ public class HintPopup {
             final int offsetY,
             final boolean top
     ) {
+        Chan.inject(this);
+
         this.context = context;
         this.anchor = anchor;
         this.offsetX = offsetX;
@@ -91,12 +91,32 @@ public class HintPopup {
         popupView = inflate(context, top ? R.layout.popup_hint_top : R.layout.popup_hint);
         popupView.setOnClickListener((view) -> dismiss());
 
-        TextView textView = popupView.findViewById(R.id.text);
+        FrameLayout arrow = popupView.findViewById(R.id.arrow);
+        FrameLayout content = popupView.findViewById(R.id.content);
+
+        updateArrowDrawableColor(arrow);
+        updateContentDrawableColor(content);
+
+        MaterialTextView textView = popupView.findViewById(R.id.text);
         textView.setText(text);
 
         popupWindow = new PopupWindow(popupView, WRAP_CONTENT, WRAP_CONTENT);
         popupWindow.setOutsideTouchable(true);
         popupWindow.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+    }
+
+    private void updateContentDrawableColor(FrameLayout content) {
+        LayerDrawable layerDrawable = ((LayerDrawable) content.getBackground());
+        GradientDrawable arrowDrawable = (GradientDrawable) layerDrawable.findDrawableByLayerId(R.id.rounded_rectangle);
+        arrowDrawable.setColor(themeEngine.getChanTheme().getAccentColor());
+    }
+
+    private void updateArrowDrawableColor(FrameLayout arrow) {
+        LayerDrawable layerDrawable = ((LayerDrawable) arrow.getBackground());
+        RotateDrawable rotateDrawable = (RotateDrawable) layerDrawable.findDrawableByLayerId(R.id.arrow_drawable);
+        GradientDrawable arrowDrawable = (GradientDrawable) rotateDrawable.getDrawable();
+
+        arrowDrawable.setColor(themeEngine.getChanTheme().getAccentColor());
     }
 
     public void show() {
@@ -112,17 +132,21 @@ public class HintPopup {
                 }
             }
 
-            if (!dismissed && BackgroundUtils.isInForeground()) {
-                popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-                int xoff = -popupView.getMeasuredWidth() + offsetX - dp(2) + (centered ? 0 : anchor.getWidth());
-                int yoff = -dp(25) + offsetY + (top ? -anchor.getHeight() - dp(30) : 0);
-                popupWindow.showAsDropDown(anchor, xoff, yoff);
+            if (dismissed || !BackgroundUtils.isInForeground()) {
+                return;
+            }
 
-                if (wiggle) {
-                    TimeInterpolator wiggler = input -> (float) Math.sin(60 * input * 2.0 * Math.PI);
+            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            int xoff = -popupView.getMeasuredWidth() + offsetX - dp(2) + (centered ? 0 : anchor.getWidth());
+            int yoff = -dp(25) + offsetY + (top ? -anchor.getHeight() - dp(30) : 0);
+            popupWindow.showAsDropDown(anchor, xoff, yoff);
 
-                    popupView.animate().translationY(dp(2)).setInterpolator(wiggler).setDuration(60000).start();
-                }
+            if (wiggle) {
+                popupView.animate()
+                        .translationY(dp(2))
+                        .setInterpolator(WIGGLER)
+                        .setDuration(60000)
+                        .start();
             }
         }, 400);
     }
@@ -139,5 +163,25 @@ public class HintPopup {
         popupWindow.dismiss();
         dismissed = true;
         context = null;
+    }
+
+    public static HintPopup show(Context context, View anchor, int text) {
+        return show(context, anchor, getString(text));
+    }
+
+    public static HintPopup show(final Context context, final View anchor, final String text) {
+        return show(context, anchor, text, 0, 0);
+    }
+
+    public static HintPopup show(
+            final Context context,
+            final View anchor,
+            final String text,
+            final int offsetX,
+            final int offsetY
+    ) {
+        HintPopup hintPopup = new HintPopup(context, anchor, text, offsetX, offsetY, false);
+        hintPopup.show();
+        return hintPopup;
     }
 }

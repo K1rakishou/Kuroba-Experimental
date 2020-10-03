@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.layout;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Build;
@@ -36,9 +35,6 @@ import android.view.MotionEvent;
 import android.view.SubMenu;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -47,6 +43,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
@@ -72,7 +69,10 @@ import com.github.k1rakishou.chan.ui.helper.HintPopup;
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -94,7 +94,6 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.requestViewAndKeyboardFocus;
@@ -102,15 +101,14 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
 
 // TODO(KurobaEx): When catalog reply is opened and we open any thread via "tabs" the opened thread
 //  will be glitched, it won't have the bottomNavBar because we have a replyLayout opened.
-public class ReplyLayout
-        extends LoadView
-        implements View.OnClickListener,
+public class ReplyLayout extends LoadView implements View.OnClickListener,
         ReplyPresenter.ReplyPresenterCallback,
         TextWatcher,
         ImageDecoder.ImageDecoderCallback,
         SelectionListeningEditText.SelectionChangedListener,
         CaptchaHolder.CaptchaValidationListener,
-        KeyboardStateListener {
+        KeyboardStateListener,
+        ThemeEngine.ThemeChangesListener {
     private static final String TAG = "ReplyLayout";
     private static final int ATTACH_IMAGE_BY_URL_HINT_OFFSET_X = dp(64f);
 
@@ -119,7 +117,7 @@ public class ReplyLayout
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     SiteManager siteManager;
     @Inject
@@ -139,21 +137,21 @@ public class ReplyLayout
     // Reply views:
     private View replyInputLayout;
     private TextView message;
-    private EditText name;
-    private EditText subject;
-    private EditText flag;
-    private EditText options;
-    private EditText fileName;
+    private ColorizableEditText name;
+    private ColorizableEditText subject;
+    private ColorizableEditText flag;
+    private ColorizableEditText options;
+    private ColorizableEditText fileName;
     private LinearLayout nameOptions;
-    private Button commentQuoteButton;
-    private Button commentSpoilerButton;
-    private Button commentCodeButton;
-    private Button commentEqnButton;
-    private Button commentMathButton;
-    private Button commentSJISButton;
+    private ColorizableBarButton commentQuoteButton;
+    private ColorizableBarButton commentSpoilerButton;
+    private ColorizableBarButton commentCodeButton;
+    private ColorizableBarButton commentEqnButton;
+    private ColorizableBarButton commentMathButton;
+    private ColorizableBarButton commentSJISButton;
     private SelectionListeningEditText comment;
     private TextView commentCounter;
-    private CheckBox spoiler;
+    private ColorizableCheckBox spoiler;
     private LinearLayout previewHolder;
     private ImageView preview;
     private TextView previewMessage;
@@ -165,6 +163,7 @@ public class ReplyLayout
     private DropdownArrowDrawable moreDropdown;
     @Nullable
     private HintPopup hintPopup = null;
+    private boolean isCounterOverflowed = false;
 
     // Captcha views:
     private FrameLayout captchaContainer;
@@ -195,6 +194,7 @@ public class ReplyLayout
 
         EventBus.getDefault().register(this);
         globalWindowInsetsManager.addKeyboardUpdatesListener(this);
+        themeEngine.addListener(this);
     }
 
     @Override
@@ -208,9 +208,32 @@ public class ReplyLayout
 
         dismissHint();
 
+        themeEngine.removeListener(this);
         EventBus.getDefault().unregister(this);
-
         globalWindowInsetsManager.removeKeyboardUpdatesListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        commentCounter.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+
+        if (attach.getDrawable() != null) {
+            attach.setImageDrawable(themeEngine.tintDrawable(attach.getDrawable(), isDarkColor));
+        }
+
+        moreDropdown.updateColor(themeEngine.resolveTintColor(isDarkColor));
+
+        if (submit.getDrawable() != null) {
+            submit.setImageDrawable(themeEngine.tintDrawable(submit.getDrawable(), isDarkColor));
+        }
+
+        int textColor = isCounterOverflowed
+                ? themeEngine.getChanTheme().getErrorColor()
+                : themeEngine.getChanTheme().getTextColorSecondary();
+
+        commentCounter.setTextColor(textColor);
     }
 
     private void updateWrappingMode() {
@@ -269,9 +292,6 @@ public class ReplyLayout
         progressLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_progress, this, false);
         currentProgress = progressLayout.findViewById(R.id.current_progress);
 
-        spoiler.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-        spoiler.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-
         // Setup reply layout views
         fileName.setOnLongClickListener(v -> presenter.fileNameLongClicked());
         commentQuoteButton.setOnClickListener(this);
@@ -293,18 +313,9 @@ public class ReplyLayout
 
         previewHolder.setOnClickListener(this);
 
-        moreDropdown = new DropdownArrowDrawable(
-                dp(16),
-                dp(16),
-                false,
-                getAttrColor(getContext(), R.attr.dropdown_dark_color),
-                getAttrColor(getContext(), R.attr.dropdown_dark_pressed_color)
-        );
-        more.setImageDrawable(moreDropdown);
         AndroidUtils.setBoundlessRoundRippleBackground(more);
         more.setOnClickListener(this);
 
-        themeHelper.getTheme().imageDrawable.apply(attach);
         AndroidUtils.setBoundlessRoundRippleBackground(attach);
         attach.setOnClickListener(this);
         attach.setOnLongClickListener(v -> {
@@ -318,7 +329,6 @@ public class ReplyLayout
         AndroidUtils.setBoundlessRoundRippleBackground(captchaImage);
         captcha.setOnClickListener(this);
 
-        themeHelper.getTheme().sendDrawable.apply(submit);
         AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
         submit.setOnLongClickListener(v -> {
@@ -339,14 +349,29 @@ public class ReplyLayout
         // Setup captcha layout views
         captchaContainer.setLayoutParams(new LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
-        themeHelper.getTheme().refreshDrawable.apply(captchaHardReset);
         AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset);
         captchaHardReset.setOnClickListener(this);
 
+        moreDropdown = new DropdownArrowDrawable(
+                dp(16),
+                dp(16),
+                false
+        );
+
+        attach.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_image_white_24dp));
+        submit.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_send_white_24dp));
+
+        more.setImageDrawable(moreDropdown);
+        captchaHardReset.setImageDrawable(
+                ContextCompat.getDrawable(getContext(), R.drawable.ic_refresh_white_24dp)
+        );
+
         setView(replyInputLayout);
+        setElevation(dp(4));
 
         // Presenter
         presenter.create(this);
+        onThemeChanged();
     }
 
     public void setCallback(ReplyLayoutCallback callback) {
@@ -779,6 +804,7 @@ public class ReplyLayout
         animator.addUpdateListener(animation ->
                 moreDropdown.setRotation((float) animation.getAnimatedValue()));
 
+        more.setImageDrawable(moreDropdown);
         animator.start();
     }
 
@@ -840,11 +866,12 @@ public class ReplyLayout
     @SuppressLint("SetTextI18n")
     @Override
     public void updateCommentCount(int count, int maxCount, boolean over) {
+        this.isCounterOverflowed = over;
         commentCounter.setText(count + "/" + maxCount);
 
         int textColor = over
-                ? 0xffff0000
-                : getAttrColor(getContext(), R.attr.text_color_secondary);
+                ? themeEngine.getChanTheme().getErrorColor()
+                : themeEngine.getChanTheme().getTextColorSecondary();
 
         commentCounter.setTextColor(textColor);
     }
@@ -865,16 +892,36 @@ public class ReplyLayout
     @Override
     public void openPreview(boolean show, File previewFile) {
         previewHolder.setClickable(false);
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
 
         if (show) {
-            ImageDecoder.decodeFileOnBackgroundThread(previewFile, dp(400), dp(300), this);
-            themeHelper.getTheme().clearDrawable.apply(attach);
+            ImageDecoder.decodeFileOnBackgroundThread(
+                    previewFile,
+                    dp(400),
+                    dp(300),
+                    this
+            );
+
+            attach.setImageDrawable(
+                    themeEngine.getDrawableTinted(
+                            getContext(),
+                            R.drawable.ic_clear_white_24dp,
+                            isDarkColor
+                    )
+            );
         } else {
             spoiler.setVisibility(GONE);
             previewHolder.setVisibility(GONE);
             previewMessage.setVisibility(GONE);
             callback.updatePadding();
-            themeHelper.getTheme().imageDrawable.apply(attach);
+
+            attach.setImageDrawable(
+                    themeEngine.getDrawableTinted(
+                            getContext(),
+                            R.drawable.ic_image_white_24dp,
+                            isDarkColor
+                    )
+            );
         }
 
         // the delay is taken from LayoutTransition, as this class is set to automatically animate

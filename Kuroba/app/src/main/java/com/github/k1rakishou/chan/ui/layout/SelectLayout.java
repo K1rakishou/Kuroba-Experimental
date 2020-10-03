@@ -17,13 +17,10 @@
 package com.github.k1rakishou.chan.ui.layout;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -32,7 +29,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import java.util.ArrayList;
@@ -48,10 +48,10 @@ public class SelectLayout<T>
         implements SearchLayout.SearchLayoutCallback, View.OnClickListener {
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
-    private RecyclerView recyclerView;
-    private Button checkAllButton;
+    private ColorizableRecyclerView recyclerView;
+    private ColorizableBarButton checkAllButton;
 
     private List<SelectItem<T>> items = new ArrayList<>();
     private SelectAdapter adapter;
@@ -161,14 +161,19 @@ public class SelectLayout<T>
         @Override
         public void onBindViewHolder(BoardSelectViewHolder holder, int position) {
             SelectItem item = displayList.get(position);
+
             holder.checkBox.setChecked(item.checked);
             holder.text.setText(item.name);
+
             if (item.description != null) {
                 holder.description.setVisibility(VISIBLE);
                 holder.description.setText(item.description);
             } else {
                 holder.description.setVisibility(GONE);
             }
+
+            holder.text.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+            holder.description.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
         }
 
         @Override
@@ -213,7 +218,7 @@ public class SelectLayout<T>
     private class BoardSelectViewHolder
             extends RecyclerView.ViewHolder
             implements CompoundButton.OnCheckedChangeListener, OnClickListener {
-        private CheckBox checkBox;
+        private ColorizableCheckBox checkBox;
         private TextView text;
         private TextView description;
 
@@ -222,10 +227,7 @@ public class SelectLayout<T>
             checkBox = itemView.findViewById(R.id.checkbox);
             text = itemView.findViewById(R.id.text);
             description = itemView.findViewById(R.id.description);
-
             checkBox.setOnCheckedChangeListener(this);
-            checkBox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-            checkBox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
 
             itemView.setOnClickListener(this);
         }
@@ -233,7 +235,7 @@ public class SelectLayout<T>
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
             if (buttonView == checkBox) {
-                SelectItem board = adapter.displayList.get(getAdapterPosition());
+                SelectItem<?> board = adapter.displayList.get(getAdapterPosition());
                 board.checked = isChecked;
                 updateAllSelected();
             }

@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.common.DoNotStrip;
@@ -31,7 +32,7 @@ public class ThumbnailImageView
 
     public ThumbnailImageView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        playIcon = context.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
+        playIcon = ContextCompat.getDrawable(context, R.drawable.ic_play_circle_outline_white_24dp);
     }
 
     public void setType(ChanPostImageType type) {

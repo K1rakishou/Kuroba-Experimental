@@ -14,11 +14,11 @@
         android:layout_gravity="bottom"
         android:layout_margin="16dp">
 
-        <androidx.cardview.widget.CardView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+            android:id="@+id/card_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="?backcolor_secondary">
+            android:layout_gravity="bottom">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -38,7 +38,7 @@
                         android:layout_weight="1"
                         android:layout_height="match_parent"/>
 
-                    <com.google.android.material.button.MaterialButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/open_all_sites_settings"
                         style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="wrap_content"
@@ -47,7 +47,7 @@
 
                 </LinearLayout>
 
-                <com.airbnb.epoxy.EpoxyRecyclerView
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
                     android:id="@+id/epoxy_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -56,7 +56,7 @@
 
             </LinearLayout>
 
-        </androidx.cardview.widget.CardView>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
     </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
 

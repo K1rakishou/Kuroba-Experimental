@@ -16,6 +16,11 @@ class SettingsNotificationManager {
    * */
   private val activeNotificationsSubject = BehaviorProcessor.createDefault(Unit)
 
+  @Synchronized
+  fun onThemeChanged() {
+    activeNotificationsSubject.onNext(Unit)
+  }
+
   /**
    * If [notifications] doesn't contain [notificationType] yet, then notifies
    * all observers that there is a new notification

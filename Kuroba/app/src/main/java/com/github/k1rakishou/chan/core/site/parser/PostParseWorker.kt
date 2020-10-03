@@ -21,7 +21,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostFilter
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -34,7 +34,7 @@ internal class PostParseWorker(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
-  private val currentTheme: Theme,
+  private val currentTheme: ChanTheme,
   private val filters: List<ChanFilter>,
   private val postBuilder: Post.Builder,
   private val reader: ChanReader,

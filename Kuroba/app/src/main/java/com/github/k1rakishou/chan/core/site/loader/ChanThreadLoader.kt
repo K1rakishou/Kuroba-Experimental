@@ -25,7 +25,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator.Companion.getChanUrl
 import com.github.k1rakishou.chan.ui.helper.PostHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.Logger
@@ -65,7 +65,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -98,7 +98,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       appConstants,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
-      themeHelper,
+      themeEngine,
       boardManager
     )
   }
@@ -206,7 +206,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
 
   private fun requestMoreDataInternal(): Disposable {
     return Single.fromCallable {
-      return@fromCallable Try { getData() }
+      return@fromCallable Try { reloadFromNetwork() }
         .peekError { requestJob = null }
     }
       .subscribeOn(backgroundScheduler)
@@ -225,18 +225,73 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
       })
   }
 
-  fun quickLoad() {
+  fun reloadThreadFromDatabase() {
+    BackgroundUtils.ensureMainThread()
+    require(chanDescriptor is ChanDescriptor.ThreadDescriptor) { "$chanDescriptor is not a thread descriptor!" }
+
+    launch(Dispatchers.IO) {
+      Logger.d(TAG, "reloadThreadFromDatabase() Requested thread /${chanDescriptor}/")
+      chanPostRepository.awaitUntilInitialized()
+
+      val chanLoaderResponse = chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+      if (chanLoaderResponse == null) {
+        Logger.e(TAG, "reloadThreadFromDatabase() reloadThreadFromDatabase returned null for ${chanDescriptor}")
+        return@launch
+      }
+
+      synchronized(this) {
+        thread?.clearPosts()
+        thread = null
+      }
+
+      chanPostRepository.deleteThreadsFromCache(listOf(chanDescriptor))
+      onResponse(chanLoaderResponse)
+    }
+  }
+
+  fun reloadCatalogFromDatabase(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+    require(chanDescriptor is ChanDescriptor.CatalogDescriptor) { "$chanDescriptor is not a catalog descriptor!" }
+
+    launch(Dispatchers.IO) {
+      Logger.d(TAG, "reloadCatalogFromDatabase() Requested catalog /${chanDescriptor}/")
+      chanPostRepository.awaitUntilInitialized()
+
+      val chanLoaderResponse = chanThreadLoaderCoordinator.reloadCatalogFromDatabase(threadDescriptors)
+      if (chanLoaderResponse == null) {
+        Logger.e(TAG, "reloadCatalogFromDatabase() reloadCatalogFromDatabase returned null for ${chanDescriptor}")
+        return@launch
+      }
+
+      synchronized(this) {
+        thread?.clearPosts()
+        thread = null
+      }
+
+      chanPostRepository.deleteThreadsFromCache(threadDescriptors)
+      onResponse(chanLoaderResponse)
+    }
+  }
+
+  fun quickLoad(requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
 
-    val localThread = synchronized(this) {
-      checkNotNull(thread) { "Cannot quick load without already loaded thread" }
+    val hasThread = synchronized(this) { thread != null }
+    if (!hasThread) {
+      return
     }
 
     launch {
       BackgroundUtils.ensureMainThread()
 
-      listeners.forEach { listener -> listener.onChanLoaderData(localThread) }
-      requestMoreData()
+      val currentThread = synchronized(this) { thread }
+        ?: return@launch
+
+      listeners.forEach { listener -> listener.onChanLoaderData(currentThread) }
+
+      if (requestNewPosts) {
+        requestMoreData()
+      }
     }
   }
 
@@ -303,20 +358,20 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   }
 
   @Synchronized
-  private fun getData() {
+  private fun reloadFromNetwork() {
     BackgroundUtils.ensureBackgroundThread()
 
     if (requestJob != null) {
-      Logger.d(TAG, "getData() requestJob is not null!")
+      Logger.d(TAG, "reloadFromNetwork() requestJob is not null!")
       return
     }
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        Logger.d(TAG, "Requested thread /${chanDescriptor}/")
+        Logger.d(TAG, "reloadFromNetwork() Requested thread /${chanDescriptor}/")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        Logger.d(TAG, "Requested catalog /${chanDescriptor}/")
+        Logger.d(TAG, "reloadFromNetwork() Requested catalog /${chanDescriptor}/")
       }
     }
 

@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.setup
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.epoxy.EpoxyRecyclerView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
@@ -13,10 +13,12 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -34,12 +37,15 @@ class AddBoardsController(
 ) : BaseFloatingController(context), AddBoardsView {
   private val presenter = AddBoardsPresenter(siteDescriptor)
 
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
-  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var checkAll: MaterialButton
-  private lateinit var cancel: MaterialButton
-  private lateinit var addBoards: MaterialButton
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var checkAll: ColorizableBarButton
+  private lateinit var cancel: ColorizableBarButton
+  private lateinit var addBoards: ColorizableBarButton
   private lateinit var addBoardsExecutor: RendezvousCoroutineExecutor
 
   private var presenting = true
@@ -49,6 +55,7 @@ class AddBoardsController(
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
+    Chan.inject(this)
 
     searchView = view.findViewById(R.id.search_view)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)

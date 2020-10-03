@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.model;
 
+import android.text.SpannableString;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -452,7 +454,6 @@ public class Post implements Comparable<Post> {
         public String posterId = "";
         public String moderatorCapcode = "";
         public int idColor;
-        public boolean isLightColor;
         public boolean isSavedReply;
         public Set<Long> repliesToIds = new HashSet<>();
 
@@ -591,7 +592,7 @@ public class Post implements Comparable<Post> {
         }
 
         public Builder comment(CharSequence comment) {
-            this.postCommentBuilder.setComment(comment);
+            this.postCommentBuilder.setComment(new SpannableString(comment));
             return this;
         }
 
@@ -624,8 +625,6 @@ public class Post implements Comparable<Post> {
             int b = (hash >> 8) & 0xff;
 
             this.idColor = (0xff << 24) + (r << 16) + (g << 8) + b;
-            this.isLightColor = (r * 0.299f) + (g * 0.587f) + (b * 0.114f) > 125f;
-
             return this;
         }
 

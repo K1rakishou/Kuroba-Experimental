@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.ui.view.floating_menu
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyCheckableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyFloatingListMenuRow
 
@@ -14,7 +14,7 @@ class FloatingListMenu @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val recycler: EpoxyRecyclerView
+  private val recycler: ColorizableEpoxyRecyclerView
   private val menuItems = mutableListOf<FloatingListMenuItem>()
 
   private var itemClickListener: ((item: FloatingListMenuItem) -> Unit)? = null

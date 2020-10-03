@@ -23,12 +23,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:clickable="true"
     android:focusable="true">
 
-    <androidx.cardview.widget.CardView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:id="@+id/container"
         android:layout_width="300dp"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="#00000000"
-        app:cardElevation="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,104 +45,87 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_height="300dp"
                 android:scaleType="fitCenter" />
 
-            <LinearLayout
+            <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
                 android:id="@+id/reencode_options_group"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
-                android:background="?backcolor_secondary"
                 android:orientation="vertical"
                 android:paddingTop="8dp">
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/image_options_remove_filename"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:buttonTint="?text_color_primary"
-                    android:text="@string/image_options_remove_filename"
-                    android:textColor="?text_color_primary" />
+                    android:text="@string/image_options_remove_filename" />
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/image_options_change_image_checksum"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:buttonTint="?text_color_primary"
-                    android:text="@string/image_options_change_image_checksum"
-                    android:textColor="?text_color_primary" />
+                    android:text="@string/image_options_change_image_checksum" />
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/image_options_fix_exif"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:buttonTint="?text_color_primary"
-                    android:text="@string/image_options_fix_exif"
-                    android:textColor="?text_color_primary" />
+                    android:text="@string/image_options_fix_exif" />
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/image_options_remove_metadata"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:buttonTint="?text_color_primary"
-                    android:text="@string/image_options_remove_metadata"
-                    android:textColor="?text_color_primary" />
+                    android:text="@string/image_options_remove_metadata" />
 
-                <androidx.appcompat.widget.AppCompatCheckBox
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/image_options_reencode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
-                    android:buttonTint="?text_color_primary"
-                    android:text="@string/image_options_re_encode"
-                    android:textColor="?text_color_primary" />
+                    android:text="@string/image_options_re_encode" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/image_options_cancel"
-                        style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginRight="8dp"
-                        android:buttonTint="?text_color_primary"
                         android:text="@string/cancel"
-                        android:textColor="?text_color_primary"
                         app:layout_constraintBottom_toBottomOf="@+id/image_options_ok"
                         app:layout_constraintEnd_toStartOf="@+id/image_options_ok"
                         app:layout_constraintTop_toTopOf="@+id/image_options_ok" />
 
-                    <androidx.appcompat.widget.AppCompatButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/image_options_ok"
-                        style="?android:attr/buttonBarButtonStyle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:layout_marginRight="8dp"
-                        android:buttonTint="?text_color_primary"
                         android:text="@string/apply_options"
-                        android:textColor="?text_color_primary"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-            </LinearLayout>
+            </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

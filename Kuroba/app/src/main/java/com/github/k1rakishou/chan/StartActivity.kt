@@ -20,14 +20,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.method.LinkMovementMethod
-import android.text.util.Linkify
 import android.view.KeyEvent
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
@@ -39,7 +34,6 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
@@ -51,7 +45,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
@@ -75,14 +69,15 @@ import kotlin.time.measureTime
 @DoNotStrip
 class StartActivity : AppCompatActivity(),
   FSAFActivityCallbacks,
-  StartActivityCallbacks {
+  StartActivityCallbacks,
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var siteResolver: SiteResolver
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
@@ -103,6 +98,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -139,6 +136,9 @@ class StartActivity : AppCompatActivity(),
       val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
+
+    themeEngine.addListener(this)
+    themeEngine.refreshViews()
   }
 
   override fun onDestroy() {
@@ -146,6 +146,9 @@ class StartActivity : AppCompatActivity(),
 
     compositeDisposable.clear()
     job.cancel()
+
+    themeEngine.removeRootView()
+    themeEngine.removeListener(this)
 
     if (::updateManager.isInitialized) {
       updateManager.onDestroy()
@@ -166,6 +169,10 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
+  override fun onThemeChanged() {
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
+  }
+
   @OptIn(ExperimentalTime::class)
   private fun createUi() {
     val injectTime = measureTime { Chan.inject(this) }
@@ -175,16 +182,16 @@ class StartActivity : AppCompatActivity(),
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 
-    themeHelper.setupContext(this)
+    themeEngine.setupContext(this)
     fileChooser.setCallbacks(this)
     imagePickDelegate = ImagePickDelegate(this)
-    runtimePermissionsHelper = RuntimePermissionsHelper(this)
+    runtimePermissionsHelper = RuntimePermissionsHelper(this, dialogFactory)
     updateManager = UpdateManager(this)
 
     contentView = findViewById(android.R.id.content)
 
-    window.setupFullscreen(themeHelper.theme)
-    window.setupStatusAndNavBarColors()
+    window.setupFullscreen()
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     // Setup base controllers, and decide if to use the split layout for tablets
     drawerController = DrawerController(this).apply {
@@ -198,6 +205,7 @@ class StartActivity : AppCompatActivity(),
     setupLayout()
 
     setContentView(drawerController.view)
+    themeEngine.setRootView(drawerController.view)
     pushController(drawerController)
 
     drawerController.attachBottomNavViewToToolbar()
@@ -212,37 +220,6 @@ class StartActivity : AppCompatActivity(),
     }
 
     browseController?.showLoading()
-    showAppBetaVersionWarning()
-  }
-
-  private fun showAppBetaVersionWarning() {
-    if (!AndroidUtils.isBetaBuild()) {
-      return
-    }
-
-    if (PersistableChanState.appBetaVersionWarningShown.get()) {
-      return
-    }
-
-    PersistableChanState.appBetaVersionWarningShown.set(true)
-
-    val message = "This application is in early beta version.\n" +
-      "Auto-updater doesn't work yet, so you will have to download new versions manually.\n" +
-      "You can find them here: https://github.com/K1rakishou/Kuroba-Experimental/releases\n" +
-      "Expect lots of crashes and other bugs.\n" +
-      "Don't forget to report all the bugs on github: https://github.com/K1rakishou/Kuroba-Experimental/issues\n\n"
-
-    val messageText = SpannableString(message)
-    Linkify.addLinks(messageText, Linkify.WEB_URLS)
-
-    val dialog = AlertDialog.Builder(this)
-      .setTitle("Beta version")
-      .setMessage(messageText)
-      .setPositiveButton(R.string.ok) { dialog, _ -> dialog.dismiss() }
-      .create()
-
-    dialog.show()
-    (dialog.findViewById<TextView>(android.R.id.message))?.movementMethod = LinkMovementMethod.getInstance()
   }
 
   private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
@@ -581,11 +558,13 @@ class StartActivity : AppCompatActivity(),
 
     when (layoutMode) {
       ChanSettings.LayoutMode.SPLIT -> {
-        val split = SplitNavigationController(this)
-        split.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
-        drawerController.pushChildController(split)
+        val split = SplitNavigationController(
+          this,
+          AndroidUtils.inflate(this, R.layout.layout_split_empty),
+          drawerController
+        )
 
-        split.setDrawerCallbacks(drawerController)
+        drawerController.pushChildController(split)
         split.setLeftController(mainNavigationController, false)
       }
       ChanSettings.LayoutMode.PHONE,
@@ -595,20 +574,20 @@ class StartActivity : AppCompatActivity(),
       ChanSettings.LayoutMode.AUTO -> throw IllegalStateException("Shouldn't happen")
     }
 
-    browseController = BrowseController(this)
+    browseController = BrowseController(this, drawerController)
 
     if (layoutMode == ChanSettings.LayoutMode.SLIDE) {
-      val slideController = ThreadSlideController(this)
-      slideController.setEmptyView(AndroidUtils.inflate(this, R.layout.layout_split_empty))
-      mainNavigationController.pushController(slideController, false)
+      val slideController = ThreadSlideController(
+        this,
+        AndroidUtils.inflate(this, R.layout.layout_split_empty),
+        drawerController
+      )
 
-      slideController.setDrawerCallbacks(drawerController)
+      mainNavigationController.pushController(slideController, false)
       slideController.setLeftController(browseController, false)
     } else {
       mainNavigationController.pushController(browseController, false)
     }
-
-    browseController!!.drawerCallbacks = drawerController
   }
 
   private fun isKnownAction(action: String): Boolean {
@@ -760,6 +739,22 @@ class StartActivity : AppCompatActivity(),
 
     for (controller in stack) {
       controller.onConfigurationChanged(newConfig)
+    }
+
+    if (AndroidUtils.isAndroid10()) {
+      applyLightDarkThemeIfNeeded(newConfig)
+    }
+  }
+
+  private fun applyLightDarkThemeIfNeeded(newConfig: Configuration) {
+    val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
+      return
+    }
+
+    when (nightModeFlags) {
+      Configuration.UI_MODE_NIGHT_YES -> themeEngine.switchTheme(switchToDarkTheme = true)
+      Configuration.UI_MODE_NIGHT_NO -> themeEngine.switchTheme(switchToDarkTheme = false)
     }
   }
 

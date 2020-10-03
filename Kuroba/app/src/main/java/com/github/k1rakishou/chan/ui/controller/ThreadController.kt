@@ -48,7 +48,8 @@ import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 
 abstract class ThreadController(
-  context: Context
+  context: Context,
+  var drawerCallbacks: DrawerCallbacks?
 ) : Controller(context),
   ThreadLayoutCallback,
   ImageViewerCallback,
@@ -65,12 +66,6 @@ abstract class ThreadController(
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
-  var drawerCallbacks: DrawerCallbacks? = null
-    set(value) {
-      threadLayout.setDrawerCallbacks(value)
-      field = value
-    }
-
   val chanDescriptor: ChanDescriptor?
     get() = threadLayout.presenter.chanDescriptor
 
@@ -85,6 +80,7 @@ abstract class ThreadController(
 
     threadLayout = AndroidUtils.inflate(context, R.layout.layout_thread, null) as ThreadLayout
     threadLayout.create(this)
+    threadLayout.setDrawerCallbacks(drawerCallbacks)
 
     swipeRefreshLayout = object : SwipeRefreshLayout(context) {
       override fun canChildScrollUp(): Boolean {

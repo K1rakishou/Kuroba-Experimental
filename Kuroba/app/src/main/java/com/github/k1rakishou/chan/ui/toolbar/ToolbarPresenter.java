@@ -20,8 +20,8 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 
 import javax.inject.Inject;
 
@@ -33,14 +33,14 @@ public class ToolbarPresenter {
     BottomNavBarVisibilityStateManager bottomNavBarVisibilityStateManager;
 
     private Callback callback;
-    private ThemeHelper themeHelper;
+    private ThemeEngine themeEngine;
 
     private NavigationItem item;
     private NavigationItem transition;
 
-    public ToolbarPresenter(Callback callback, ThemeHelper themeHelper) {
+    public ToolbarPresenter(Callback callback, ThemeEngine themeEngine) {
         this.callback = callback;
-        this.themeHelper = themeHelper;
+        this.themeEngine = themeEngine;
 
         inject(this);
     }
@@ -55,7 +55,7 @@ public class ToolbarPresenter {
 
     void set(
             NavigationItem newItem,
-            Theme theme,
+            ChanTheme theme,
             AnimationStyle animation
     ) {
         set(newItem, theme, animation, null);
@@ -63,7 +63,7 @@ public class ToolbarPresenter {
 
     void set(
             NavigationItem newItem,
-            Theme theme,
+            ChanTheme theme,
             AnimationStyle animation,
             @Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener
     ) {
@@ -84,7 +84,7 @@ public class ToolbarPresenter {
     void startTransition(NavigationItem newItem) {
         cancelTransitionIfNeeded();
         if (closeSearchIfNeeded()) {
-            callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
+            callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
         }
 
         transition = newItem;
@@ -101,7 +101,7 @@ public class ToolbarPresenter {
 
         if (didComplete) {
             item = transition;
-            callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE);
+            callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
         }
 
         transition = null;
@@ -136,7 +136,7 @@ public class ToolbarPresenter {
         item.searchText = input;
         item.search = true;
 
-        callback.showForNavigationItem(item, themeHelper.getTheme(), AnimationStyle.NONE, listener);
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE, listener);
         callback.onSearchVisibilityChanged(item, true);
     }
 
@@ -203,10 +203,10 @@ public class ToolbarPresenter {
     }
 
     interface Callback {
-        void showForNavigationItem(NavigationItem item, Theme theme, AnimationStyle animation);
+        void showForNavigationItem(NavigationItem item, ChanTheme theme, AnimationStyle animation);
         void showForNavigationItem(
                 NavigationItem item,
-                Theme theme,
+                ChanTheme theme,
                 AnimationStyle animation,
                 ToolbarContainer.ToolbarTransitionAnimationListener listener
         );

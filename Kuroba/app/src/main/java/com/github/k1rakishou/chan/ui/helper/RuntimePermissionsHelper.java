@@ -24,11 +24,13 @@ import android.net.Uri;
 import android.provider.Settings;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
+
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.openIntent;
@@ -37,11 +39,15 @@ public class RuntimePermissionsHelper {
     private static final int RUNTIME_PERMISSION_RESULT_ID = 3;
 
     private ActivityCompat.OnRequestPermissionsResultCallback callbackActvity;
-
+    private DialogFactory dialogFactory;
     private CallbackHolder pendingCallback;
 
-    public RuntimePermissionsHelper(ActivityCompat.OnRequestPermissionsResultCallback callbackActvity) {
+    public RuntimePermissionsHelper(
+            ActivityCompat.OnRequestPermissionsResultCallback callbackActvity,
+            DialogFactory dialogFactory
+    ) {
         this.callbackActvity = callbackActvity;
+        this.dialogFactory = dialogFactory;
     }
 
     public boolean hasPermission(String permission) {
@@ -84,20 +90,32 @@ public class RuntimePermissionsHelper {
     }
 
     public void showPermissionRequiredDialog(
-            final Context context, String title, String message, final PermissionRequiredDialogCallback callback
+            final Context context,
+            String title,
+            String message,
+            final PermissionRequiredDialogCallback callback
     ) {
-        new AlertDialog.Builder(context).setTitle(title)
-                .setMessage(message)
-                .setCancelable(false)
-                .setNeutralButton(R.string.permission_app_settings, (dialog, which) -> {
+        DialogFactory.Builder.newBuilder(context, dialogFactory)
+                .withTitle(title)
+                .withDescription(message)
+                .withNeutralButtonTextId(R.string.permission_app_settings)
+                .withOnNeutralButtonClickListener((dialog) -> {
                     callback.retryPermissionRequest();
-                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+
+                    Intent intent = new Intent(
+                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                             Uri.parse("package:" + context.getPackageName())
                     );
                     openIntent(intent);
+
+                    return Unit.INSTANCE;
                 })
-                .setPositiveButton(R.string.permission_grant, (dialog, which) -> callback.retryPermissionRequest())
-                .show();
+                .withPositiveButtonTextId(R.string.permission_grant)
+                .withOnPositiveButtonClickListener((dialog) -> {
+                    callback.retryPermissionRequest();
+                    return Unit.INSTANCE;
+                })
+                .create();
     }
 
     public interface PermissionRequiredDialogCallback {

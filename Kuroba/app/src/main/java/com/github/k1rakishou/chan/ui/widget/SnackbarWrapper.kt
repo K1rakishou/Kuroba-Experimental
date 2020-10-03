@@ -1,12 +1,12 @@
 package com.github.k1rakishou.chan.ui.widget
 
-import android.content.Context
+import android.graphics.Color
 import android.view.View
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -22,12 +22,12 @@ class SnackbarWrapper private constructor(
 ) {
 
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   init {
     Chan.inject(this)
 
-    snackbar?.view?.setBackgroundColor(themeHelper.theme.primaryColor.color)
+    snackbar?.view?.setBackgroundColor(themeEngine.chanTheme.primaryColor)
   }
 
   fun dismiss() {
@@ -143,32 +143,38 @@ class SnackbarWrapper private constructor(
     )
 
     @JvmStatic
-    fun create(view: View, textId: Int, duration: Int): SnackbarWrapper {
+    fun create(theme: ChanTheme, view: View, textId: Int, duration: Int): SnackbarWrapper {
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, textId, duration)
       snackbar.isGestureInsetBottomIgnored = false
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
-      fixSnackbarColors(view.context, snackbar)
+      fixSnackbarColors(theme, snackbar)
       return SnackbarWrapper(snackbar)
     }
 
     @JvmStatic
-    fun create(view: View, text: String, duration: Int): SnackbarWrapper {
+    fun create(theme: ChanTheme, view: View, text: String, duration: Int): SnackbarWrapper {
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, text, duration)
       snackbar.isGestureInsetBottomIgnored = false
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
-      fixSnackbarColors(view.context, snackbar)
+      fixSnackbarColors(theme, snackbar)
       return SnackbarWrapper(snackbar)
     }
 
-    private fun fixSnackbarColors(context: Context, snackbar: Snackbar) {
-      snackbar.setTextColor(AndroidUtils.getAttrColor(context, R.attr.text_color_primary))
-      snackbar.setActionTextColor(AndroidUtils.getAttrColor(context, R.attr.colorAccent))
+    private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {
+      val isDarkColor = AndroidUtils.isDarkColor(theme.primaryColor)
+      if (isDarkColor) {
+        snackbar.setTextColor(Color.WHITE)
+      } else {
+        snackbar.setTextColor(Color.BLACK)
+      }
+
+      snackbar.setActionTextColor(theme.accentColor)
     }
   }
 }

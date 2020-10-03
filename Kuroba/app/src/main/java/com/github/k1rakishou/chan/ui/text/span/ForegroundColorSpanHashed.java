@@ -21,8 +21,8 @@ import android.text.style.ForegroundColorSpan;
 /**
  * A version of ForegroundColorSpan that has proper equals and hashCode implementations. Used to fix the hashcode result from SpannableStringBuilder.
  */
-public class ForegroundColorSpanHashed
-        extends ForegroundColorSpan {
+public class ForegroundColorSpanHashed extends ForegroundColorSpan {
+
     public ForegroundColorSpanHashed(int color) {
         super(color);
     }

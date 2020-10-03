@@ -36,8 +36,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView
  * Container for a view with an ProgressBar. Toggles between the view and a
  * ProgressBar.
  */
-public class LoadView
-        extends FrameLayout {
+public class LoadView extends FrameLayout {
     private int fadeDuration = 200;
     private Listener listener;
 

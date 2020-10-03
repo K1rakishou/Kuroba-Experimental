@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
@@ -19,6 +18,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -27,13 +27,12 @@ import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
 class MainSettingsControllerV2(context: Context)
-  : BaseSettingsController(context),
-  ToolbarSearchCallback {
+  : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
 
-  lateinit var recyclerView: EpoxyRecyclerView
+  lateinit var recyclerView: ColorizableEpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
 
   private val defaultScreen = MainScreen
@@ -350,7 +349,7 @@ class MainSettingsControllerV2(context: Context)
             clickListener { view ->
               val prev = settingV2.getCurrent()
 
-              showInputDialog(view, settingV2) { curr ->
+              showInputDialog(settingV2) { curr ->
                 if (prev != curr) {
                   updateRestartRefreshButton(settingV2)
                 }

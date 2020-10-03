@@ -11,7 +11,6 @@
         android:paddingRight="16dp"
         android:paddingTop="8dp"
         android:paddingBottom="2dp"
-        android:textColor="?text_color_secondary"
         tools:text="Test group name"/>
 
 </merge>

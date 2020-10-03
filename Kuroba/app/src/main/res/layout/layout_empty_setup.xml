@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/header"
         style="@style/TextAppearance.AppCompat.Headline"
         android:layout_width="wrap_content"
@@ -27,7 +27,7 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.5" />
 
-    <TextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/body"
         style="@style/TextAppearance.AppCompat.Subhead"
         android:layout_width="wrap_content"
@@ -42,7 +42,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/header" />
 
-    <TextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/feature"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

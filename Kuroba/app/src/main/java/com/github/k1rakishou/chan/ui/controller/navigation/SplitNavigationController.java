@@ -21,9 +21,11 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
@@ -32,17 +34,22 @@ import com.github.k1rakishou.chan.controller.transition.PushControllerTransition
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
+import javax.inject.Inject;
 
 public class SplitNavigationController
         extends Controller
-        implements DoubleNavigationController {
+        implements DoubleNavigationController, ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     public Controller leftController;
     public Controller rightController;
 
@@ -51,15 +58,16 @@ public class SplitNavigationController
     private FrameLayout leftControllerView;
     private FrameLayout rightControllerView;
     private ViewGroup emptyView;
+    private TextView selectThreadText;
 
     private PopupController popup;
     private StyledToolbarNavigationController popupChild;
 
-    public SplitNavigationController(Context context) {
+    public SplitNavigationController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
         super(context);
-    }
+        Chan.inject(this);
 
-    public void setDrawerCallbacks(@NotNull DrawerCallbacks drawerCallbacks) {
+        this.emptyView = emptyView;
         this.drawerCallbacks = drawerCallbacks;
     }
 
@@ -72,9 +80,6 @@ public class SplitNavigationController
         SplitNavigationControllerLayout container = new SplitNavigationControllerLayout(context);
         view = container;
 
-        View dividerView = new View(context);
-        dividerView.setBackgroundColor(getAttrColor(context, R.attr.divider_split_color));
-
         leftControllerView = new FrameLayout(context);
         rightControllerView = new FrameLayout(context);
 
@@ -83,22 +88,30 @@ public class SplitNavigationController
 
         container.setLeftView(leftControllerView);
         container.setRightView(rightControllerView);
-        container.setDivider(dividerView);
+        container.setDivider(new View(context));
         container.build();
 
+        selectThreadText = emptyView.findViewById(R.id.select_thread_text);
+
         setRightController(null, false);
+        themeEngine.addListener(this);
+
+        onThemeChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        themeEngine.removeListener(this);
         drawerCallbacks = null;
     }
 
     @Override
-    public void setEmptyView(ViewGroup emptyView) {
-        this.emptyView = emptyView;
+    public void onThemeChanged() {
+        if (selectThreadText != null) {
+            selectThreadText.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        }
     }
 
     @Override
@@ -149,7 +162,7 @@ public class SplitNavigationController
 
     @Override
     public void switchToController(boolean leftController, boolean animated) {
-
+        // both are always visible
     }
 
     @Override

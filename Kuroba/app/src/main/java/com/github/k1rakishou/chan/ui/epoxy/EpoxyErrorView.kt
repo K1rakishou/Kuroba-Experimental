@@ -6,7 +6,10 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_MATCH_HEIGHT)
 class EpoxyErrorView @JvmOverloads constructor(
@@ -14,9 +17,14 @@ class EpoxyErrorView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private val errorTextView: TextView
 
   init {
+    Chan.inject(this)
     inflate(context, R.layout.epoxy_error_view, this)
 
     errorTextView = findViewById(R.id.error_text)

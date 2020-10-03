@@ -12,7 +12,7 @@ import coil.size.Scale
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
 import com.github.k1rakishou.common.DoNotStrip
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
 class ImageLoaderV2(
   private val imageLoader: ImageLoader,
   private val verboseLogsEnabled: Boolean,
-  private val themeHelper: ThemeHelper
+  private val themeEngine: ThemeEngine
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
@@ -244,7 +244,7 @@ class ImageLoaderV2(
       return imageNotFoundDrawable!!
     }
 
-    val drawable = themeHelper.tintDrawable(
+    val drawable = themeEngine.tintDrawable(
       context,
       R.drawable.ic_image_not_found
     )
@@ -267,7 +267,7 @@ class ImageLoaderV2(
       return imageErrorLoadingDrawable!!
     }
 
-    val drawable = themeHelper.tintDrawable(
+    val drawable = themeEngine.tintDrawable(
       context,
       R.drawable.ic_image_error_loading
     )

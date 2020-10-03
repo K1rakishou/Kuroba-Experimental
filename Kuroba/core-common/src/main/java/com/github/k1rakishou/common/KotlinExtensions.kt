@@ -12,6 +12,7 @@ import java.util.*
 import java.util.regex.Matcher
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -20,6 +21,8 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
     val call = newCall(request)
 
     continuation.invokeOnCancellation {
+      // TODO(KurobaEx): this might now work because request cancellation must occur on a
+      //  background thread and there is a possibility that it doesn't sometimes
       Try { call.cancel() }.ignore()
     }
 
@@ -371,26 +374,34 @@ fun safeCapacity(initialCapacity: Int): Int {
   }
 }
 
-fun <T> mutableListWithCap(initialCapacity: Int): MutableList<T> {
+inline fun <T> mutableListWithCap(initialCapacity: Int): MutableList<T> {
   return ArrayList(safeCapacity(initialCapacity))
 }
 
-fun <T> mutableListWithCap(collection: Collection<*>): MutableList<T> {
+inline fun <T> mutableListWithCap(collection: Collection<*>): MutableList<T> {
   return ArrayList(safeCapacity(collection.size))
 }
 
-fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, V> {
+inline fun <K, V> mutableMapWithCap(initialCapacity: Int): MutableMap<K, V> {
   return HashMap(safeCapacity(initialCapacity))
 }
 
-fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
+inline fun <K, V> mutableMapWithCap(collection: Collection<*>): MutableMap<K, V> {
   return HashMap(safeCapacity(collection.size))
 }
 
-fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
+inline fun <K, V> linkedMapWithCap(initialCapacity: Int): LinkedHashMap<K, V> {
+  return LinkedHashMap(safeCapacity(initialCapacity))
+}
+
+inline fun <K, V> linkedMapWithCap(collection: Collection<*>): LinkedHashMap<K, V> {
+  return LinkedHashMap(safeCapacity(collection.size))
+}
+
+inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
   return HashSet(safeCapacity(initialCapacity))
 }
 
-fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
+inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
   return HashSet(safeCapacity(collection.size))
 }

@@ -2,14 +2,13 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <TextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/text_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
         android:layout_margin="16dp"
         android:textSize="20sp"
-        android:textColor="?text_color_primary"
         android:ellipsize="end"
         tools:text="@string/lorem_ipsum"/>
 

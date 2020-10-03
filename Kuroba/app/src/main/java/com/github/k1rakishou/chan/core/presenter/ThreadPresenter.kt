@@ -297,12 +297,15 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun quickReload() {
+  fun quickReload(showLoading: Boolean = true, requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
 
     if (isBound) {
-      threadPresenterCallback?.showLoading()
-      chanLoader?.quickLoad()
+      if (showLoading) {
+        threadPresenterCallback?.showLoading()
+      }
+
+      chanLoader?.quickLoad(requestNewPosts)
     }
   }
 
@@ -802,21 +805,6 @@ class ThreadPresenter @Inject constructor(
         }
       }
     }
-  }
-
-  fun getPostFromPostImage(postImage: PostImage): Post? {
-    val posts = threadPresenterCallback?.displayingPosts
-      ?: return null
-
-    for (post in posts) {
-      for (image in post.postImages) {
-        if (image === postImage) {
-          return post
-        }
-      }
-    }
-
-    return null
   }
 
   override fun onPostClicked(post: Post) {

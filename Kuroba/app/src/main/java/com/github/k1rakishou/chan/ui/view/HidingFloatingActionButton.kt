@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.Animator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -28,16 +29,16 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar.SnackbarLayout
 import javax.inject.Inject
 
-class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
+class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
@@ -46,6 +47,7 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   private var bottomNavViewHeight = 0
   private var listeningForInsetsChanges = false
   private var animating = false
+  private var isCatalogFloatingActionButton: Boolean? = null
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -75,18 +77,20 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
   }
 
   private fun init() {
-    Chan.inject(this)
+    if (!isInEditMode) {
+      Chan.inject(this)
 
-    // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
-    // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
-    // when in SPLIT mode.
-    bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      AndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
-    } else {
-      0
+      // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
+      // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
+      // when in SPLIT mode.
+      bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+        AndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+      } else {
+        0
+      }
+
+      startListeningForInsetsChangesIfNeeded()
     }
-
-    startListeningForInsetsChangesIfNeeded()
   }
 
   fun setToolbar(toolbar: Toolbar) {
@@ -99,23 +103,16 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     }
   }
 
+  fun setIsCatalogFloatingActionButton(isCatalog: Boolean) {
+    isCatalogFloatingActionButton = isCatalog
+  }
+
   override fun show() {
-    val isReplyLayoutOpen = findThreadLayout()?.isReplyLayoutOpen() ?: false
-    if (isReplyLayoutOpen) {
+    if (isCurrentReplyLayoutOpened()) {
       return
     }
 
     super.show()
-  }
-
-  private fun findThreadLayout(): ThreadLayout? {
-    var parent = this.parent
-
-    while (parent != null && parent !is ThreadLayout) {
-      parent = parent.parent
-    }
-
-    return parent as? ThreadLayout
   }
 
   override fun onAttachedToWindow() {
@@ -133,21 +130,12 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     startListeningForInsetsChangesIfNeeded()
   }
 
-  override fun setOnClickListener(listener: OnClickListener?) {
-    super.setOnClickListener { view ->
-      if (this.visibility == View.VISIBLE && !animating) {
-        listener?.onClick(view)
-      }
-    }
-  }
-
-  private fun startListeningForInsetsChangesIfNeeded() {
-    if (listeningForInsetsChanges) {
-      return
+  override fun onTouchEvent(ev: MotionEvent): Boolean {
+    if (this.visibility != View.VISIBLE || animating) {
+      return false
     }
 
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
-    listeningForInsetsChanges = true
+    return super.onTouchEvent(ev)
   }
 
   override fun onDetachedFromWindow() {
@@ -163,23 +151,16 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
     coordinatorLayout = null
   }
 
-  private fun stopListeningForInsetsChanges() {
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    listeningForInsetsChanges = false
-  }
-
   override fun onInsetsChanged() {
     updatePaddings()
   }
 
-  private fun updatePaddings() {
-    val fabBottomMargin = AndroidUtils.getDimen(R.dimen.hiding_fab_margin)
-
-    updateMargins(bottom = fabBottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom())
-  }
-
   override fun onCollapseTranslation(offset: Float) {
     if (isSnackbarShowing) {
+      return
+    }
+
+    if (offset >= 1f && isCurrentReplyLayoutOpened()) {
       return
     }
 
@@ -206,8 +187,10 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
       return
     }
 
-    isClickable = !collapse
-    isFocusable = !collapse
+    if (!collapse && isCurrentReplyLayoutOpened()) {
+      // Prevent showing FAB when the reply layout is opened
+      return
+    }
 
     val scale = if (collapse) {
       0f
@@ -239,6 +222,51 @@ class HidingFloatingActionButton : FloatingActionButton, ToolbarCollapseCallback
         .setInterpolator(SLOWDOWN)
         .start()
     }
+  }
+
+  private fun stopListeningForInsetsChanges() {
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    listeningForInsetsChanges = false
+  }
+
+  private fun startListeningForInsetsChangesIfNeeded() {
+    if (listeningForInsetsChanges) {
+      return
+    }
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    listeningForInsetsChanges = true
+  }
+
+  private fun updatePaddings() {
+    val fabBottomMargin = AndroidUtils.getDimen(R.dimen.hiding_fab_margin)
+
+    updateMargins(bottom = fabBottomMargin + bottomNavViewHeight + globalWindowInsetsManager.bottom())
+  }
+
+  private fun isCurrentReplyLayoutOpened(): Boolean {
+    val threadLayout = findThreadLayout()
+      ?: return true
+    val isCatalogButton = isCatalogFloatingActionButton
+      ?: return true
+    val isCatalogReplyLayout = threadLayout.isCatalogReplyLayout()
+      ?: return true
+
+    if (isCatalogButton == isCatalogReplyLayout && threadLayout.isReplyLayoutOpen()) {
+      return true
+    }
+
+    return false
+  }
+
+  private fun findThreadLayout(): ThreadLayout? {
+    var parent = this.parent
+
+    while (parent != null && parent !is ThreadLayout) {
+      parent = parent.parent
+    }
+
+    return parent as? ThreadLayout
   }
 
   companion object {

@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.textview.MaterialTextView
@@ -29,6 +30,8 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val searchPostRootContainer: ConstraintLayout
   private val searchPostOpInfo: MaterialTextView
@@ -96,6 +99,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostOpInfo.text = postOpInfo
     searchPostOpInfo.setVisibilityFast(View.VISIBLE)
+    searchPostOpInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp
@@ -108,8 +112,8 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostInfo.text = postInfo
     searchPostInfo.setVisibilityFast(View.VISIBLE)
+    searchPostInfo.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
-
 
   @ModelProp
   fun setPostComment(comment: CharSequence) {
@@ -121,6 +125,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
 
     searchPostComment.text = comment
     searchPostCommentContainer.setVisibilityFast(View.VISIBLE)
+    searchPostComment.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
   @ModelProp

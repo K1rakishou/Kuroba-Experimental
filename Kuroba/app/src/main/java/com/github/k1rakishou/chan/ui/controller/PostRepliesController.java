@@ -35,9 +35,11 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.util.ArrayList;
@@ -49,18 +51,26 @@ import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
-        extends BaseFloatingController {
+        extends BaseFloatingController implements ThemeEngine.ThemeChangesListener {
     private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
     private LoadView loadView;
-    private RecyclerView repliesView;
+    private ColorizableRecyclerView repliesView;
     private PostPopupHelper.RepliesData displayingData;
     private boolean first = true;
+
+    private TextView repliesBackText;
+    private TextView repliesCloseText;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.layout_post_replies_container;
+    }
 
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
         super(context);
@@ -78,23 +88,56 @@ public class PostRepliesController
         view.setOnClickListener(v -> postPopupHelper.pop());
 
         loadView = view.findViewById(R.id.loadview);
+        themeEngine.addListener(this);
     }
 
     @Override
-    protected int getLayoutId() {
-        return R.layout.layout_post_replies_container;
+    public void onShow() {
+        super.onShow();
+
+        onThemeChanged();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
+        themeEngine.removeListener(this);
         forceRecycleAllReplyViews();
         repliesView.setAdapter(null);
     }
 
+    @Override
+    public void onThemeChanged() {
+        if (themeEngine == null) {
+            return;
+        }
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+
+        Drawable backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
+        Drawable doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);
+
+        if (repliesBackText != null) {
+            repliesBackText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
+        }
+
+        if (repliesCloseText != null) {
+            repliesCloseText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
+        }
+
+        if (repliesView != null) {
+            RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
+            if (adapter instanceof RepliesAdapter) {
+                ((RepliesAdapter) adapter).refresh();
+            }
+        }
+    }
+
     private void forceRecycleAllReplyViews() {
-        RecyclerView.Adapter adapter = repliesView.getAdapter();
+        RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
         if (adapter instanceof RepliesAdapter) {
             repliesView.getRecycledViewPool().clear();
             ((RepliesAdapter) adapter).clear();
@@ -144,6 +187,8 @@ public class PostRepliesController
         displayingData = data;
 
         View dataView = inflate(context, R.layout.layout_post_replies_bottombuttons);
+        dataView.setId(R.id.post_replies_data_view_id);
+
         repliesView = dataView.findViewById(R.id.post_list);
         View repliesBack = dataView.findViewById(R.id.replies_back);
         repliesBack.setOnClickListener(v -> postPopupHelper.pop());
@@ -151,22 +196,17 @@ public class PostRepliesController
         View repliesClose = dataView.findViewById(R.id.replies_close);
         repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
 
-        Drawable backDrawable = themeHelper.getTheme().backDrawable.makeDrawable(context);
-        Drawable doneDrawable = themeHelper.getTheme().doneDrawable.makeDrawable(context);
-
-        TextView repliesBackText = dataView.findViewById(R.id.replies_back_icon);
-        TextView repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
-        repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
-        repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
+        repliesBackText = dataView.findViewById(R.id.replies_back_icon);
+        repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
 
         PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
         postPreloadedInfoHolder.preloadPostsInfo(data.posts);
 
         RepliesAdapter repliesAdapter = new RepliesAdapter(
-                themeHelper,
                 presenter,
                 postPreloadedInfoHolder,
-                chanDescriptor
+                chanDescriptor,
+                themeEngine
         );
 
         repliesAdapter.setHasStableIds(true);
@@ -180,6 +220,8 @@ public class PostRepliesController
 
         first = false;
         restoreScrollPosition(data.forPost.no);
+
+        onThemeChanged();
     }
 
     private void storeScrollPosition() {
@@ -228,22 +270,22 @@ public class PostRepliesController
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
         public static final int POST_REPLY_VIEW_TYPE = 0;
 
-        private ThemeHelper themeHelper;
         private ThreadPresenter presenter;
         private PostPreloadedInfoHolder postPreloadedInfoHolder;
         private ChanDescriptor chanDescriptor;
         private PostPopupHelper.RepliesData data;
+        private ThemeEngine themeEngine;
 
         public RepliesAdapter(
-                ThemeHelper themeHelper,
                 ThreadPresenter presenter,
                 PostPreloadedInfoHolder postPreloadedInfoHolder,
-                ChanDescriptor chanDescriptor
+                ChanDescriptor chanDescriptor,
+                ThemeEngine themeEngine
         ) {
-            this.themeHelper = themeHelper;
             this.presenter = presenter;
             this.postPreloadedInfoHolder = postPreloadedInfoHolder;
             this.chanDescriptor = chanDescriptor;
+            this.themeEngine = themeEngine;
         }
 
         @NonNull
@@ -251,7 +293,7 @@ public class PostRepliesController
         public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = inflate(parent.getContext(), R.layout.cell_post, parent, false);
 
-            return new ReplyViewHolder(view, themeHelper);
+            return new ReplyViewHolder(view);
         }
 
         @Override
@@ -263,7 +305,8 @@ public class PostRepliesController
                     data.posts.get(position),
                     data.forPost.no,
                     position,
-                    getItemCount()
+                    getItemCount(),
+                    themeEngine
             );
         }
 
@@ -296,6 +339,10 @@ public class PostRepliesController
             notifyDataSetChanged();
         }
 
+        public void refresh() {
+            notifyDataSetChanged();
+        }
+
         public void clear() {
             data.posts.clear();
             notifyDataSetChanged();
@@ -304,13 +351,11 @@ public class PostRepliesController
 
     private static class ReplyViewHolder extends RecyclerView.ViewHolder {
         private PostCellInterface postCellInterface;
-        private ThemeHelper themeHelper;
 
-        public ReplyViewHolder(@NonNull View itemView, ThemeHelper themeHelper) {
+        public ReplyViewHolder(@NonNull View itemView) {
             super(itemView);
 
             this.postCellInterface = (PostCellInterface) itemView;
-            this.themeHelper = themeHelper;
         }
 
         public void onBind(
@@ -320,7 +365,8 @@ public class PostRepliesController
                 Post post,
                 long markedNo,
                 int position,
-                int itemCount
+                int itemCount,
+                ThemeEngine themeEngine
         ) {
             boolean showDivider = position < itemCount - 1;
 
@@ -338,7 +384,7 @@ public class PostRepliesController
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
                     false,
-                    themeHelper.getTheme()
+                    themeEngine.getChanTheme()
             );
         }
     }

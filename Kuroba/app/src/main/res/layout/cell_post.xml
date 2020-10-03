@@ -63,8 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_alignWithParentIfMissing="true"
             android:layout_below="@id/icons"
             android:layout_alignParentRight="true"
-            android:layout_toRightOf="@+id/thumbnail_view"
-            android:textColor="?attr/text_color_primary" />
+            android:layout_toRightOf="@+id/thumbnail_view" />
 
         <TextView
             android:id="@+id/replies"
@@ -73,7 +72,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_alignWithParentIfMissing="true"
             android:layout_below="@id/comment"
             android:layout_toRightOf="@+id/thumbnail_view"
-            android:textColor="?attr/text_color_secondary"
             app:singleLine="true" />
 
         <View
@@ -91,8 +89,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="1dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:background="?attr/divider_color" />
+            android:layout_alignParentBottom="true" />
 
         <ImageView
             android:id="@+id/options"
@@ -102,8 +99,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_alignParentRight="true"
             android:padding="4dp"
             android:src="@drawable/ic_more_vert_24dp"
-            tools:ignore="ContentDescription"
-            app:tint="?attr/text_color_secondary" />
+            tools:ignore="ContentDescription" />
 
     </RelativeLayout>
 

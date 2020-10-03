@@ -25,7 +25,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.text.*
 import android.text.method.LinkMovementMethod
-import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.text.style.UnderlineSpan
 import android.util.AttributeSet
@@ -51,18 +50,18 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
-import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed
-import com.github.k1rakishou.chan.ui.text.span.ClearableSpan
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.Theme
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.text.span.*
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
+import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
+import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 import okhttp3.HttpUrl
 import java.io.IOException
 import java.text.BreakIterator
@@ -82,7 +81,7 @@ class PostCell : LinearLayout, PostCellInterface {
   @Inject
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var relativeLayoutContainer: RelativeLayout
   private lateinit var title: TextView
@@ -95,6 +94,9 @@ class PostCell : LinearLayout, PostCellInterface {
   private lateinit var postAttentionLabel: View
   private lateinit var gestureDetector: GestureDetector
   private lateinit var chanDescriptor: ChanDescriptor
+  private lateinit var linkClickSpan: ColorizableBackgroundColorSpan
+  private lateinit var quoteClickSpan: ColorizableBackgroundColorSpan
+  private lateinit var theme: ChanTheme
 
   private var post: Post? = null
   private var callback: PostCellCallback? = null
@@ -153,8 +155,10 @@ class PostCell : LinearLayout, PostCellInterface {
     icons.height = AndroidUtils.sp(textSizeSp.toFloat())
     icons.setSpacing(AndroidUtils.dp(4f))
     icons.setPadding(paddingPx, AndroidUtils.dp(4f), paddingPx, 0)
+
     comment.textSize = textSizeSp.toFloat()
     comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
+
     replies.textSize = textSizeSp.toFloat()
     replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
 
@@ -200,6 +204,9 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
+
+    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
+    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -223,7 +230,7 @@ class PostCell : LinearLayout, PostCellInterface {
     showDivider: Boolean,
     postViewMode: PostViewMode,
     compact: Boolean,
-    theme: Theme
+    theme: ChanTheme
   ) {
 
     val filterHash = postFilterManager.getFilterHash(post.postDescriptor)
@@ -236,6 +243,7 @@ class PostCell : LinearLayout, PostCellInterface {
       && this.markedNo == markedNo
       && this.showDivider == showDivider
       && this.filterHash == filterHash
+      && this.theme == theme
     ) {
       return
     }
@@ -252,9 +260,10 @@ class PostCell : LinearLayout, PostCellInterface {
     this.markedNo = markedNo
     this.showDivider = showDivider
     this.filterHash = filterHash
+    this.theme = theme
 
     hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
-    bindPost(theme, post)
+    bindPost(post)
 
     if (inPopup) {
       setOnTouchListener { _, ev -> gestureDetector.onTouchEvent(ev) }
@@ -315,7 +324,7 @@ class PostCell : LinearLayout, PostCellInterface {
     callback = null
   }
 
-  private fun bindPost(theme: Theme, post: Post) {
+  private fun bindPost(post: Post) {
     if (callback == null) {
       throw NullPointerException("Callback is null during bindPost()")
     }
@@ -326,14 +335,17 @@ class PostCell : LinearLayout, PostCellInterface {
     setPostLinkableListener(post, true)
 
     repliesAdditionalArea.isClickable = threadMode
-    options.setColorFilter(theme.textSecondary)
+    options.setColorFilter(theme.textColorSecondary)
     replies.isClickable = threadMode
 
     val selectableItemBackgroundBorderless =
-      themeHelper.getAttributeResource(android.R.attr.selectableItemBackgroundBorderless)
+      themeEngine.getAttributeResource(android.R.attr.selectableItemBackgroundBorderless)
 
     replies.setBackgroundResource(selectableItemBackgroundBorderless)
     options.setBackgroundResource(selectableItemBackgroundBorderless)
+
+    replies.setTextColor(theme.textColorSecondary)
+    divider.setBackgroundColor(theme.dividerColor)
 
     if (!threadMode) {
       replies.setBackgroundResource(0)
@@ -401,7 +413,7 @@ class PostCell : LinearLayout, PostCellInterface {
     }
   }
 
-  private fun bindPostAttentionLabel(theme: Theme, post: Post) {
+  private fun bindPostAttentionLabel(theme: ChanTheme, post: Post) {
     if (callback == null) {
       return
     }
@@ -420,7 +432,7 @@ class PostCell : LinearLayout, PostCellInterface {
     if (ChanSettings.markUnseenPosts.get()) {
       if (callback != null && !callback!!.hasAlreadySeenPost(post)) {
         postAttentionLabel.setVisibilityFast(View.VISIBLE)
-        postAttentionLabel.setBackgroundColorFast(theme.subjectColor)
+        postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
         return
       }
     }
@@ -429,17 +441,16 @@ class PostCell : LinearLayout, PostCellInterface {
     postAttentionLabel.setVisibilityFast(View.GONE)
   }
 
-  private fun bindBackgroundColor(theme: Theme, post: Post) {
+  private fun bindBackgroundColor(theme: ChanTheme, post: Post) {
     when {
-      highlighted -> setBackgroundColorFast(theme.highlightedColor)
-      post.isSavedReply -> setBackgroundColorFast(theme.savedReplyColor)
-      postSelected -> setBackgroundColorFast(theme.selectedColor)
+      postSelected || highlighted -> setBackgroundColorFast(theme.postHighlightedColor)
+      post.isSavedReply -> setBackgroundColorFast(theme.postSavedReplyColor)
       threadMode -> setBackgroundResource(0)
       else -> setBackgroundResource(R.drawable.item_background)
     }
   }
 
-  private fun bindTitle(theme: Theme, post: Post) {
+  private fun bindTitle(theme: ChanTheme, post: Post) {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
     var postIndexText = ""
 
@@ -460,7 +471,7 @@ class PostCell : LinearLayout, PostCellInterface {
     val time = postPreloadedInfoHolder!!.getPostTime(post)
     val date = SpannableString("$noText $time")
 
-    date.setSpan(ForegroundColorSpanHashed(theme.detailsColor), 0, date.length, 0)
+    date.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, date.length, 0)
     date.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length, 0)
 
     if (ChanSettings.tapNoReply.get()) {
@@ -508,13 +519,13 @@ class PostCell : LinearLayout, PostCellInterface {
       titleParts.add(fileInfo)
 
       if (postFileName) {
-        fileInfo.setSpan(ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length, 0)
+        fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
         fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
         fileInfo.setSpan(UnderlineSpan(), 0, fileInfo.length, 0)
       }
 
       if (postFileInfo) {
-        fileInfo.setSpan(ForegroundColorSpanHashed(theme.detailsColor), 0, fileInfo.length, 0)
+        fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
         fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
       }
     }
@@ -545,26 +556,15 @@ class PostCell : LinearLayout, PostCellInterface {
     return stringBuilder.toString()
   }
 
-  private fun bindPostComment(theme: Theme, post: Post, commentText: CharSequence) {
+  private fun bindPostComment(theme: ChanTheme, post: Post, commentText: CharSequence) {
     if (post.httpIcons != null) {
       comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
     } else {
       comment.setPadding(paddingPx, paddingPx / 2, paddingPx, 0)
     }
 
-    if (!theme.altFontIsMain && ChanSettings.fontAlternate.get()) {
-      comment.typeface = theme.altFont
-    }
-
-    if (theme.altFontIsMain) {
-      comment.typeface = if (ChanSettings.fontAlternate.get()) {
-        Typeface.DEFAULT
-      } else {
-        theme.altFont
-      }
-    }
-
-    comment.setTextColor(theme.textPrimary)
+    comment.typeface = Typeface.DEFAULT
+    comment.setTextColor(theme.textColorPrimary)
 
     val newVisibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
       View.GONE
@@ -584,7 +584,7 @@ class PostCell : LinearLayout, PostCellInterface {
   }
 
   @Suppress("ReplaceGetOrSet")
-  private fun bindIcons(theme: Theme, post: Post) {
+  private fun bindIcons(theme: ChanTheme, post: Post) {
     icons.edit()
     icons.set(PostIcons.STICKY, post.isSticky)
     icons.set(PostIcons.CLOSED, post.isClosed)
@@ -653,6 +653,9 @@ class PostCell : LinearLayout, PostCellInterface {
   private fun bindThreadPost(post: Post, commentText: CharSequence) {
     comment.setTextIsSelectable(true)
     comment.setText(commentText, TextView.BufferType.SPANNABLE)
+
+    comment.setHandlesColors(theme)
+    comment.setEditTextCursorColor(theme)
 
     comment.customSelectionActionModeCallback = object : ActionMode.Callback {
       private var quoteMenuItem: MenuItem? = null
@@ -813,7 +816,8 @@ class PostCell : LinearLayout, PostCellInterface {
 
     if (!bind) {
       if (commentSpanned is Spannable) {
-        commentSpanned.removeSpan(BACKGROUND_SPAN)
+        commentSpanned.removeSpan(linkClickSpan)
+        commentSpanned.removeSpan(quoteClickSpan)
       }
     }
   }
@@ -871,7 +875,8 @@ class PostCell : LinearLayout, PostCellInterface {
         return true
       }
 
-      buffer.removeSpan(BACKGROUND_SPAN)
+      buffer.removeSpan(linkClickSpan)
+      buffer.removeSpan(quoteClickSpan)
       return true
     }
 
@@ -907,8 +912,14 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       if (action == MotionEvent.ACTION_DOWN && clickableSpan1 is PostLinkable) {
+        val span = if (clickableSpan1.type == PostLinkable.Type.LINK) {
+          linkClickSpan
+        } else {
+          quoteClickSpan
+        }
+
         buffer.setSpan(
-          BACKGROUND_SPAN,
+          span,
           buffer.getSpanStart(clickableSpan1),
           buffer.getSpanEnd(clickableSpan1),
           0
@@ -917,7 +928,8 @@ class PostCell : LinearLayout, PostCellInterface {
       }
 
       if (action == MotionEvent.ACTION_CANCEL) {
-        buffer.removeSpan(BACKGROUND_SPAN)
+        buffer.removeSpan(linkClickSpan)
+        buffer.removeSpan(quoteClickSpan)
       }
     }
 
@@ -980,7 +992,8 @@ class PostCell : LinearLayout, PostCellInterface {
         }
       }
 
-      buffer.removeSpan(BACKGROUND_SPAN)
+      buffer.removeSpan(linkClickSpan)
+      buffer.removeSpan(quoteClickSpan)
     }
   }
 
@@ -1098,10 +1111,10 @@ class PostCell : LinearLayout, PostCellInterface {
     fun setHttpIcons(
       imageLoaderV2: ImageLoaderV2,
       icons: List<PostHttpIcon>,
-      theme: Theme,
+      theme: ChanTheme,
       size: Int
     ) {
-      httpIconTextColor = theme.detailsColor
+      httpIconTextColor = theme.postDetailsColor
       httpIconTextSize = size
       httpIcons = ArrayList(icons.size)
 
@@ -1316,7 +1329,6 @@ class PostCell : LinearLayout, PostCellInterface {
       BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.error_icon)
     )
 
-    private val BACKGROUND_SPAN = BackgroundColorSpan(0x6633B5E5)
     private val CELL_POST_THUMBNAIL_SIZE = AndroidUtils.getDimen(R.dimen.cell_post_thumbnail_size)
     private val THUMBNAIL_ROUNDING = AndroidUtils.dp(2f)
     private val THUMBNAIL_BOTTOM_MARGIN = AndroidUtils.dp(5f)

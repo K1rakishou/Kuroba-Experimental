@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.github.k1rakishou.chan.ui.view.TouchBlockingFrameLayout
+            <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
                 android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
@@ -45,28 +45,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </RelativeLayout>
 
-        <com.github.k1rakishou.chan.ui.view.TouchBlockingLinearLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
             android:id="@+id/drawer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:background="?backcolor"
             android:clipToPadding="false"
             android:orientation="vertical">
 
-            <com.airbnb.epoxy.EpoxyRecyclerView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
                 android:id="@+id/drawer_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scrollbars="vertical"/>
 
-            <View
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
                 android:id="@+id/divider"
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?divider_color" />
+                android:layout_height="1dp" />
 
-        </com.github.k1rakishou.chan.ui.view.TouchBlockingLinearLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
 
     </com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout>
 

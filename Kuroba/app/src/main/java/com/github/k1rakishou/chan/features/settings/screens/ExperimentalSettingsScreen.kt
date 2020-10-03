@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
@@ -17,7 +18,8 @@ import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 class ExperimentalSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder
+  private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   ExperimentalScreen,
@@ -27,7 +29,8 @@ class ExperimentalSettingsScreen(
     ExclusionZoneSettingsDelegate(
       context,
       navigationController,
-      exclusionZonesHolder
+      exclusionZonesHolder,
+      dialogFactory
     )
   }
 

@@ -21,16 +21,16 @@ import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Context
-import android.content.DialogInterface
-import android.content.res.ColorStateList
 import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
-import android.widget.*
 import android.widget.AdapterView.OnItemClickListener
-import androidx.appcompat.app.AlertDialog
+import android.widget.ArrayAdapter
+import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -58,7 +58,9 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallb
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -94,7 +96,8 @@ class ThreadLayout @JvmOverloads constructor(
   RemovedPostsCallbacks,
   View.OnClickListener,
   ThreadListLayoutCallback,
-  CoroutineScope {
+  CoroutineScope,
+  ThemeEngine.ThemeChangesListener {
 
   private enum class Visible {
     EMPTY, LOADING, THREAD, ERROR
@@ -103,7 +106,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var presenter: ThreadPresenter
   @Inject
-  lateinit var themeHelper: ThemeHelper
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
@@ -114,6 +117,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -122,8 +127,8 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var threadListLayout: ThreadListLayout
   private lateinit var errorLayout: LinearLayout
   private lateinit var errorText: TextView
-  private lateinit var errorRetryButton: Button
-  private lateinit var openThreadInArchiveButton: Button
+  private lateinit var errorRetryButton: ColorizableButton
+  private lateinit var openThreadInArchiveButton: ColorizableButton
   private lateinit var postPopupHelper: PostPopupHelper
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
@@ -170,7 +175,9 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
   init {
-    Chan.inject(this)
+    if (!isInEditMode) {
+      Chan.inject(this)
+    }
   }
 
   fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
@@ -203,7 +210,7 @@ class ThreadLayout @JvmOverloads constructor(
     postPopupHelper = PostPopupHelper(context, presenter, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
-    errorText.typeface = themeHelper.theme.mainFont
+    errorText.typeface = themeEngine.chanTheme.mainFont
     errorRetryButton.setOnClickListener(this)
     openThreadInArchiveButton.setOnClickListener(this)
 
@@ -215,16 +222,25 @@ class ThreadLayout @JvmOverloads constructor(
     } else {
       replyButton.setOnClickListener(this)
       replyButton.setToolbar(callback.toolbar!!)
-
-      themeHelper.theme.applyFabColor(replyButton)
     }
+
+    themeEngine.addListener(this)
   }
 
   fun destroy() {
     drawerCallbacks = null
+    themeEngine.removeListener(this)
     presenter.unbindChanDescriptor(true)
     threadListLayout.onDestroy()
     job.cancelChildren()
+  }
+
+  override fun onThemeChanged() {
+    if (!presenter.isBound) {
+      return
+    }
+
+    presenter.quickReload(showLoading = false, requestNewPosts = false)
   }
 
   override fun onClick(v: View) {
@@ -326,6 +342,10 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.showPosts(thread, filter, visible != Visible.THREAD)
     switchVisible(Visible.THREAD)
     callback.onShowPosts()
+
+    replyButton.setIsCatalogFloatingActionButton(
+      thread.chanDescriptor is ChanDescriptor.CatalogDescriptor
+    )
   }
 
   override fun postClicked(post: Post) {
@@ -378,10 +398,11 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showPostInfo(info: String) {
-    AlertDialog.Builder(context).setTitle(R.string.post_info_title)
-      .setMessage(info)
-      .setPositiveButton(R.string.ok, null)
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.post_info_title,
+      descriptionText = info
+    )
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
@@ -393,9 +414,10 @@ class ThreadLayout @JvmOverloads constructor(
       keys[i] = linkables[i].key.toString()
     }
 
-    AlertDialog.Builder(context)
-      .setItems(keys, { _, which -> presenter.onPostLinkableClicked(post, linkables[which]) })
-      .show()
+    dialogFactory.createWithStringArray(
+      context = context,
+      keys
+    ) { which -> presenter.onPostLinkableClicked(post, linkables[which]) }
   }
 
   override fun clipboardPost(post: Post) {
@@ -404,22 +426,24 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun openLink(link: String) {
-    if (ChanSettings.openLinkConfirmation.get()) {
-      AlertDialog.Builder(context).setNegativeButton(R.string.cancel, null)
-        .setPositiveButton(R.string.ok) { dialog: DialogInterface?, which: Int -> openLinkConfirmed(link) }
-        .setTitle(R.string.open_link_confirmation)
-        .setMessage(link)
-        .show()
-    } else {
+    if (!ChanSettings.openLinkConfirmation.get()) {
       openLinkConfirmed(link)
+      return
     }
+
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.open_link_confirmation,
+      descriptionText = link,
+      onPositiveButtonClickListener = { openLinkConfirmed(link) }
+    )
   }
 
   private fun openLinkConfirmed(link: String) {
     if (ChanSettings.openLinkBrowser.get()) {
       AndroidUtils.openLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeHelper.theme)
+      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 
@@ -522,12 +546,18 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    val hashList = ListView(context)
-    val dialog = AlertDialog.Builder(context).setTitle("Select an image to filter.")
-      .setView(hashList)
-      .create()
+    val hashList = ColorizableListView(context)
 
-    dialog.setCanceledOnTouchOutside(true)
+    val dialog = dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleText = "Select an image to filter.",
+      customView = hashList,
+      cancelable = true,
+    )
+
+    if (dialog == null) {
+      return
+    }
 
     val hashes: MutableList<String> = ArrayList()
     for (image in post.postImages) {
@@ -541,8 +571,6 @@ class ThreadLayout @JvmOverloads constructor(
       callback.openFilterForType(FilterType.IMAGE, hashes[position])
       dialog.dismiss()
     }
-
-    dialog.show()
   }
 
   override fun selectPost(post: Long) {
@@ -603,15 +631,12 @@ class ThreadLayout @JvmOverloads constructor(
     val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
 
-    checkBox.buttonTintList = ColorStateList.valueOf(themeHelper.theme.textPrimary)
-    checkBox.setTextColor(ColorStateList.valueOf(themeHelper.theme.textPrimary))
-
-    AlertDialog.Builder(context)
-      .setTitle(R.string.delete_confirm)
-      .setView(view)
-      .setNegativeButton(R.string.cancel, null)
-      .setPositiveButton(R.string.delete, { _, _ -> presenter.deletePostConfirmed(post, checkBox.isChecked) })
-      .show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.delete_confirm,
+      customView = view,
+      onPositiveButtonClickListener = { presenter.deletePostConfirmed(post, checkBox.isChecked) }
+    )
   }
 
   override fun showDeleting() {
@@ -625,10 +650,10 @@ class ThreadLayout @JvmOverloads constructor(
       deletingDialog!!.dismiss()
       deletingDialog = null
 
-      AlertDialog.Builder(context)
-        .setMessage(message)
-        .setPositiveButton(R.string.ok, null)
-        .show()
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        descriptionText = message
+      )
     }
   }
 
@@ -653,7 +678,7 @@ class ThreadLayout @JvmOverloads constructor(
         R.string.thread_removed
       }
 
-      SnackbarWrapper.create(this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(themeEngine.chanTheme, this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.undo, {
           serializedCoroutineExecutor.post {
             postFilterManager.remove(post.postDescriptor)
@@ -693,7 +718,7 @@ class ThreadLayout @JvmOverloads constructor(
         AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
       }
 
-      SnackbarWrapper.create(this, formattedString, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(themeEngine.chanTheme, this, formattedString, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
@@ -730,6 +755,7 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
 
       SnackbarWrapper.create(
+        themeEngine.chanTheme,
         this,
         AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
         Snackbar.LENGTH_LONG
@@ -785,7 +811,7 @@ class ThreadLayout @JvmOverloads constructor(
       val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
       dismissSnackbar()
 
-      newPostsNotification = SnackbarWrapper.create(this, text, Snackbar.LENGTH_LONG).apply {
+      newPostsNotification = SnackbarWrapper.create(themeEngine.chanTheme, this, text, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.thread_new_posts_goto) {
           presenter.onNewPostsViewClicked()
           dismissSnackbar()
@@ -817,6 +843,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
+  fun isCatalogReplyLayout(): Boolean? = threadListLayout.replyPresenter.isCatalogReplyLayout()
 
   fun getThumbnail(postImage: PostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {
@@ -863,50 +890,52 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun switchVisible(visible: Visible) {
-    if (this.visible != visible) {
-      if (this.visible != null) {
-        if (this.visible == Visible.THREAD) {
-          threadListLayout.cleanup()
-          postPopupHelper.popAll()
+    if (this.visible == visible) {
+      return
+    }
 
-          if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
-            showSearch(false)
-          }
+    if (this.visible != null) {
+      if (this.visible == Visible.THREAD) {
+        threadListLayout.cleanup()
+        postPopupHelper.popAll()
 
-          showReplyButton(false)
-          dismissSnackbar()
+        if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
+          showSearch(false)
         }
+
+        showReplyButton(false)
+        dismissSnackbar()
       }
+    }
 
-      this.visible = visible
+    this.visible = visible
 
-      when (visible) {
-        Visible.EMPTY -> {
-          loadView.setView(inflateEmptyView())
-          showReplyButton(false)
-        }
-        Visible.LOADING -> {
-          val view = loadView.setView(progressLayout)
+    when (visible) {
+      Visible.EMPTY -> {
+        loadView.setView(inflateEmptyView())
+        showReplyButton(false)
+      }
+      Visible.LOADING -> {
+        val view = loadView.setView(progressLayout)
 
-          if (refreshedFromSwipe) {
-            refreshedFromSwipe = false
-            view.visibility = View.GONE
-          } else {
-            view.visibility = View.VISIBLE
-          }
+        if (refreshedFromSwipe) {
+          refreshedFromSwipe = false
+          view.visibility = View.GONE
+        } else {
+          view.visibility = View.VISIBLE
+        }
 
-          showReplyButton(false)
-        }
-        Visible.THREAD -> {
-          callback.hideSwipeRefreshLayout()
-          loadView.setView(threadListLayout)
-          showReplyButton(true)
-        }
-        Visible.ERROR -> {
-          callback.hideSwipeRefreshLayout()
-          loadView.setView(errorLayout)
-          showReplyButton(false)
-        }
+        showReplyButton(false)
+      }
+      Visible.THREAD -> {
+        callback.hideSwipeRefreshLayout()
+        loadView.setView(threadListLayout)
+        showReplyButton(true)
+      }
+      Visible.ERROR -> {
+        callback.hideSwipeRefreshLayout()
+        loadView.setView(errorLayout)
+        showReplyButton(false)
       }
     }
   }
@@ -964,12 +993,13 @@ class ThreadLayout @JvmOverloads constructor(
       AndroidUtils.getString(R.string.thread_layout_remove_whole_chain_as_well)
     }
 
-    val alertDialog = AlertDialog.Builder(context).setMessage(message)
-      .setPositiveButton(positiveButtonText, { _, _ -> presenter.hideOrRemovePosts(hide, true, post, threadNo) })
-      .setNegativeButton(negativeButtonText, { _, _ -> presenter.hideOrRemovePosts(hide, false, post, threadNo) })
-      .create()
-
-    alertDialog.show()
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      negativeButtonText = negativeButtonText,
+      onNegativeButtonClickListener = { presenter.hideOrRemovePosts(hide, false, post, threadNo) },
+      positiveButtonText = positiveButtonText,
+      onPositiveButtonClickListener = { presenter.hideOrRemovePosts(hide, true, post, threadNo) }
+    )
   }
 
   interface ThreadLayoutCallback {

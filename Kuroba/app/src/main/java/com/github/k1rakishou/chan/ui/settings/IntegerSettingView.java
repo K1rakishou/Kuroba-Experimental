@@ -20,14 +20,19 @@ import android.text.InputType;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+
+import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -40,6 +45,10 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 public class IntegerSettingView
         extends SettingView
         implements View.OnClickListener {
+
+    @Inject
+    DialogFactory dialogFactory;
+
     private final Setting<Integer> setting;
     private final String dialogTitle;
 
@@ -48,9 +57,14 @@ public class IntegerSettingView
     }
 
     public IntegerSettingView(
-            SettingsController settingsController, Setting<Integer> setting, String name, String dialogTitle
+            SettingsController settingsController,
+            Setting<Integer> setting,
+            String name,
+            String dialogTitle
     ) {
         super(settingsController, name);
+        Chan.inject(this);
+
         this.setting = setting;
         this.dialogTitle = dialogTitle;
     }
@@ -71,25 +85,31 @@ public class IntegerSettingView
         LinearLayout container = new LinearLayout(v.getContext());
         container.setPadding(dp(24), dp(8), dp(24), 0);
 
-        final EditText editText = new EditText(v.getContext());
+        final ColorizableEditText editText = new ColorizableEditText(v.getContext());
         editText.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
         editText.setText(setting.get().toString());
         editText.setInputType(InputType.TYPE_CLASS_NUMBER);
         editText.setSingleLine(true);
         editText.setSelection(editText.getText().length());
-
         container.addView(editText, MATCH_PARENT, WRAP_CONTENT);
 
-        AlertDialog dialog = new AlertDialog.Builder(v.getContext()).setPositiveButton(R.string.ok, (d, which) -> {
-            try {
-                setting.set(Integer.parseInt(editText.getText().toString()));
-            } catch (Exception e) {
-                setting.set(setting.getDefault());
-            }
+        AlertDialog dialog = DialogFactory.Builder.newBuilder(v.getContext(), dialogFactory)
+                .withCustomView(container)
+                .withTitle(dialogTitle)
+                .withOnPositiveButtonClickListener((dialog1) -> {
+                    try {
+                        setting.set(Integer.parseInt(editText.getText().toString()));
+                    } catch (Exception e) {
+                        setting.set(setting.getDefault());
+                    }
 
-            settingsController.onPreferenceChange(IntegerSettingView.this);
-        }).setNegativeButton(R.string.cancel, null).setTitle(dialogTitle).setView(container).create();
-        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
-        dialog.show();
+                    settingsController.onPreferenceChange(IntegerSettingView.this);
+                    return Unit.INSTANCE;
+                })
+                .create();
+
+        if (dialog != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
     }
 }

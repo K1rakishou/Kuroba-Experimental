@@ -24,35 +24,69 @@ import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+
+import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.requestKeyboardFocus;
 
-public class SearchLayout
-        extends LinearLayout {
-    private EditText searchView;
+public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
+    private ColorizableEditText searchView;
     private ImageView clearButton;
     private boolean autoRequestFocus = true;
 
     public SearchLayout(Context context) {
         super(context);
+        init();
     }
 
     public SearchLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
     }
 
     public SearchLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init();
+    }
+
+    private void init() {
+        if (!isInEditMode()) {
+            Chan.inject(this);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (clearButton != null) {
+            clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextColorPrimary());
+        }
     }
 
     public void setAutoRequestFocus(boolean request) {
@@ -60,12 +94,10 @@ public class SearchLayout
     }
 
     public void setCallback(final SearchLayoutCallback callback) {
-        searchView = new EditText(getContext());
+        searchView = new ColorizableEditText(getContext());
         searchView.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_ACTION_DONE);
         searchView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         searchView.setHint(getString(R.string.search_hint));
-        searchView.setHintTextColor(getAttrColor(getContext(), R.attr.text_color_hint));
-        searchView.setTextColor(getAttrColor(getContext(), R.attr.text_color_primary));
         searchView.setSingleLine(true);
         searchView.setBackgroundResource(0);
         searchView.setPadding(0, 0, 0, 0);
@@ -111,13 +143,14 @@ public class SearchLayout
 
         clearButton.setAlpha(0f);
         clearButton.setImageResource(R.drawable.ic_clear_white_24dp);
-        clearButton.getDrawable().setTint(getAttrColor(getContext(), R.attr.text_color_primary));
         clearButton.setScaleType(ImageView.ScaleType.CENTER);
         clearButton.setOnClickListener(v -> {
             searchView.setText("");
             requestKeyboardFocus(searchView);
         });
+
         addView(clearButton, dp(48), MATCH_PARENT);
+        onThemeChanged();
     }
 
     public void setText(String text) {

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.settings.setting
 
 import android.content.Context
+import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.BooleanSetting
 import com.github.k1rakishou.chan.core.settings.Setting
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
@@ -20,7 +21,7 @@ class InputSettingV2<T : Any> : SettingV2() {
   var dependsOnSetting: BooleanSetting? = null
     private set
 
-  var inputType: InputType? = null
+  var inputType: DialogFactory.DialogInputType? = null
     private set
 
   fun getCurrent(): T? = setting?.get()
@@ -83,11 +84,6 @@ class InputSettingV2<T : Any> : SettingV2() {
       "notificationType=$notificationType)"
   }
 
-  enum class InputType {
-    String,
-    Integer
-  }
-
   companion object {
     private const val TAG = "StringSettingV2"
 
@@ -96,7 +92,7 @@ class InputSettingV2<T : Any> : SettingV2() {
       context: Context,
       identifier: SettingsIdentifier,
       setting: Setting<T>,
-      inputType: InputType,
+      inputType: DialogFactory.DialogInputType,
       dependsOnSetting: BooleanSetting? = null,
       topDescriptionIdFunc: (() -> Int)? = null,
       topDescriptionStringFunc: (() -> String)? = null,

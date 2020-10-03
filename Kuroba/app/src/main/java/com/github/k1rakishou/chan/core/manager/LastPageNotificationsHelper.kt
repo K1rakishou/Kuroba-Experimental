@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -26,7 +27,8 @@ class LastPageNotificationsHelper(
   private val appContext: Context,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val pageRequestManager: PageRequestManager,
-  private val bookmarksManager: BookmarksManager
+  private val bookmarksManager: BookmarksManager,
+  private val themeEngine: ThemeEngine
 ) {
 
   fun showOrUpdateNotifications(watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
@@ -137,7 +139,7 @@ class LastPageNotificationsHelper(
       setDefaults(Notification.DEFAULT_VIBRATE)
     }
 
-    setLights(appContext.resources.getColor(R.color.accent), 1000, 1000)
+    setLights(themeEngine.chanTheme.accentColor, 1000, 1000)
     return this
   }
 
@@ -233,7 +235,7 @@ class LastPageNotificationsHelper(
       )
 
       lastPageAlertChannel.enableLights(true)
-      lastPageAlertChannel.lightColor = appContext.resources.getColor(R.color.accent)
+      lastPageAlertChannel.lightColor = themeEngine.chanTheme.accentColor
       lastPageAlertChannel.enableVibration(true)
 
       notificationManagerCompat.createNotificationChannel(lastPageAlertChannel)

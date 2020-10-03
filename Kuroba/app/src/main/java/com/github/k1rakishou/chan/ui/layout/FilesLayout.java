@@ -29,23 +29,31 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
+import javax.inject.Inject;
 
 public class FilesLayout
         extends LinearLayout
-        implements FilesAdapter.Callback, View.OnClickListener {
+        implements FilesAdapter.Callback, View.OnClickListener, ThemeEngine.ThemeChangesListener {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private ViewGroup backLayout;
     private ImageView backImage;
     private TextView backText;
-    private RecyclerView recyclerView;
+    private ColorizableRecyclerView recyclerView;
 
     private LinearLayoutManager layoutManager;
     private FilesAdapter filesAdapter;
@@ -58,14 +66,47 @@ public class FilesLayout
 
     public FilesLayout(Context context) {
         this(context, null);
+        init();
     }
 
     public FilesLayout(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+        init();
     }
 
     public FilesLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
+    }
+
+    private void init() {
+        if (!isInEditMode()) {
+            Chan.inject(this);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        backText.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+
+        if (filesAdapter != null) {
+            filesAdapter.refresh();
+        }
+
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+        backImage.setImageDrawable(themeEngine.tintDrawable(backImage.getDrawable(), isDarkColor));
     }
 
     @Override
@@ -73,11 +114,11 @@ public class FilesLayout
         super.onFinishInflate();
         backLayout = findViewById(R.id.back_layout);
         backImage = backLayout.findViewById(R.id.back_image);
-        backImage.setImageDrawable(DrawableCompat.wrap(backImage.getDrawable()));
         backText = backLayout.findViewById(R.id.back_text);
         recyclerView = findViewById(R.id.recycler);
 
         backLayout.setOnClickListener(this);
+        onThemeChanged();
     }
 
     public void initialize() {
@@ -118,7 +159,11 @@ public class FilesLayout
         backLayout.setEnabled(enabled);
         Drawable wrapped = DrawableCompat.wrap(backImage.getDrawable());
         backImage.setImageDrawable(wrapped);
-        int color = getAttrColor(getContext(), enabled ? R.attr.text_color_primary : R.attr.text_color_hint);
+
+        int color = enabled
+                ? themeEngine.getChanTheme().getTextColorPrimary()
+                : themeEngine.getChanTheme().getTextColorHint();
+
         DrawableCompat.setTint(wrapped, color);
         backText.setEnabled(enabled);
         backText.setTextColor(color);

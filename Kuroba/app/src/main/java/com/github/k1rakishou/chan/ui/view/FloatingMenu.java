@@ -31,7 +31,7 @@ import android.widget.TextView;
 import androidx.appcompat.widget.ListPopupWindow;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import java.util.ArrayList;
@@ -41,13 +41,12 @@ import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class FloatingMenu {
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private final Context context;
     private View anchor;
@@ -172,7 +171,7 @@ public class FloatingMenu {
             popupWindow.setWidth(measureContentWidth(adapter));
         } else {
             FloatingMenuArrayAdapter arrayAdapter = new FloatingMenuArrayAdapter(
-                    themeHelper,
+                    themeEngine,
                     context,
                     R.layout.toolbar_menu_item,
                     items
@@ -280,17 +279,17 @@ public class FloatingMenu {
     }
 
     private static class FloatingMenuArrayAdapter extends ArrayAdapter<FloatingMenuItem> {
-        private ThemeHelper themeHelper;
+        private ThemeEngine themeEngine;
 
         public FloatingMenuArrayAdapter(
-                ThemeHelper themeHelper,
+                ThemeEngine themeEngine,
                 Context context,
                 int resource,
                 List<FloatingMenuItem> objects
         ) {
             super(context, resource, objects);
 
-            this.themeHelper = themeHelper;
+            this.themeEngine = themeEngine;
         }
 
         @Override
@@ -303,10 +302,13 @@ public class FloatingMenu {
 
             TextView textView = (TextView) convertView;
             textView.setText(item.getText());
-            textView.setTextColor(getAttrColor(getContext(),
-                    item.isEnabled() ? R.attr.text_color_primary : R.attr.text_color_hint
-            ));
-            textView.setTypeface(themeHelper.getTheme().mainFont);
+
+            textView.setTextColor(
+                    item.isEnabled()
+                            ? themeEngine.getChanTheme().getTextColorPrimary()
+                            : themeEngine.getChanTheme().getTextColorHint()
+            );
+            textView.setTypeface(themeEngine.getChanTheme().getMainFont());
 
             return textView;
         }

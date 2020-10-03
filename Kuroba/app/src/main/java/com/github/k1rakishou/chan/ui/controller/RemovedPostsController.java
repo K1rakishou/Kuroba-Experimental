@@ -1,29 +1,28 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
-import android.widget.ListView;
+import android.widget.ListAdapter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.appcompat.widget.AppCompatCheckBox;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -45,20 +44,25 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class RemovedPostsController
         extends BaseFloatingController
-        implements View.OnClickListener {
+        implements View.OnClickListener, ThemeEngine.ThemeChangesListener {
     private static final String TAG = "RemovedPostsController";
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private RemovedPostsHelper removedPostsHelper;
 
     private ConstraintLayout viewHolder;
-    private ListView postsListView;
-    private AppCompatButton restorePostsButton;
-    private AppCompatButton selectAllButton;
+    private ColorizableListView postsListView;
+    private ColorizableBarButton restorePostsButton;
+    private ColorizableBarButton selectAllButton;
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.layout_removed_posts;
+    }
 
     @Nullable
     private RemovedPostAdapter adapter;
@@ -83,13 +87,22 @@ public class RemovedPostsController
         restorePostsButton.setOnClickListener(this);
         selectAllButton.setOnClickListener(this);
 
-        selectAllButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeHelper.getTheme().textPrimary, 32));
-        restorePostsButton.setBackgroundColor(ColorUtils.setAlphaComponent(themeHelper.getTheme().textPrimary, 32));
+        themeEngine.addListener(this);
     }
 
     @Override
-    protected int getLayoutId() {
-        return R.layout.layout_removed_posts;
+    public void onDestroy() {
+        super.onDestroy();
+
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        ListAdapter adapter = postsListView.getAdapter();
+        if (adapter instanceof RemovedPostAdapter) {
+            ((RemovedPostAdapter) adapter).refresh();
+        }
     }
 
     @Override
@@ -118,7 +131,7 @@ public class RemovedPostsController
             adapter = new RemovedPostAdapter(
                     context,
                     imageLoaderV2,
-                    themeHelper,
+                    themeEngine,
                     R.layout.layout_removed_posts
             );
 
@@ -190,19 +203,19 @@ public class RemovedPostsController
 
     public static class RemovedPostAdapter extends ArrayAdapter<RemovedPost> {
         private ImageLoaderV2 imageLoaderV2;
-        private ThemeHelper themeHelper;
+        private ThemeEngine themeEngine;
         private List<RemovedPost> removedPostsCopy = new ArrayList<>();
 
         public RemovedPostAdapter(
                 @NonNull Context context,
                 ImageLoaderV2 imageLoaderV2,
-                ThemeHelper themeHelper,
+                ThemeEngine themeEngine,
                 int resource
         ) {
             super(context, resource);
 
             this.imageLoaderV2 = imageLoaderV2;
-            this.themeHelper = themeHelper;
+            this.themeEngine = themeEngine;
         }
 
         @NonNull
@@ -222,14 +235,15 @@ public class RemovedPostsController
             LinearLayout viewHolder = convertView.findViewById(R.id.removed_post_view_holder);
             AppCompatTextView postNo = convertView.findViewById(R.id.removed_post_no);
             AppCompatTextView postComment = convertView.findViewById(R.id.removed_post_comment);
-            AppCompatCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
+            ColorizableCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
+
+            postNo.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            postComment.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
 
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
-            checkbox.setButtonTintList(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
-            checkbox.setTextColor(ColorStateList.valueOf(themeHelper.getTheme().textPrimary));
 
             if (removedPost.images.size() > 0) {
                 // load only the first image
@@ -322,6 +336,10 @@ public class RemovedPostsController
                 removedPostsCopy.get(i).setChecked(select);
             }
 
+            notifyDataSetChanged();
+        }
+
+        public void refresh() {
             notifyDataSetChanged();
         }
     }

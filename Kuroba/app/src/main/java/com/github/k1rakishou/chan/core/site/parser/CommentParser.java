@@ -32,11 +32,13 @@ import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
+import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -99,7 +101,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 .cssClass("prettyprint")
                 .monospace()
                 .size(sp(12f))
-                .backgroundColor(StyleRule.BackgroundColor.CODE)
+                .backgroundColorId(ChanThemeColorId.BackColorSecondary)
         );
 
         rule(tagRule("span")
@@ -108,10 +110,10 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         );
 
         rule(tagRule("span").cssClass("abbr").nullify());
-        rule(tagRule("span").foregroundColor(StyleRule.ForegroundColor.INLINE_QUOTE).linkify());
+        rule(tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor).linkify());
 
         rule(tagRule("strong").bold());
-        rule(tagRule("strong-red;").bold().foregroundColor(StyleRule.ForegroundColor.RED));
+        rule(tagRule("strong-red;").bold().foregroundColorId(ChanThemeColorId.AccentColor));
 
         return this;
     }
@@ -141,7 +143,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     @Nullable
     public CharSequence handleTag(
             PostParser.Callback callback,
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             String tag,
             CharSequence text,
@@ -166,7 +168,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleDeadlink(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             CharSequence text,
@@ -200,7 +202,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         SpannableString res = new SpannableString(link.getKey());
         PostLinkable pl = new PostLinkable(
-                theme,
                 link.getKey(),
                 link.getLinkValue(),
                 link.getType()
@@ -219,7 +220,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleAnchor(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             CharSequence text,
@@ -249,7 +250,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private void addReply(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder post,
             PostLinkable.Link handlerLink,
@@ -282,7 +283,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(handlerLink.getKey());
 
         PostLinkable pl = new PostLinkable(
-                theme,
                 handlerLink.getKey(),
                 handlerLink.getLinkValue(),
                 handlerLink.getType()
@@ -343,7 +343,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private void addMockReply(
-            Theme theme,
+            ChanTheme theme,
             Post.Builder post,
             SpannableStringBuilder spannableStringBuilder,
             long mockReplyPostNo
@@ -355,7 +355,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(replyText);
 
         PostLinkable pl = new PostLinkable(
-                theme,
                 replyText,
                 new PostLinkable.Value.LongValue(mockReplyPostNo),
                 PostLinkable.Type.QUOTE
@@ -374,7 +373,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleFortune(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder builder,
             CharSequence text,
@@ -402,7 +401,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     public CharSequence handleTable(
-            Theme theme,
+            ChanTheme theme,
             PostParser.Callback callback,
             Post.Builder builder,
             CharSequence text,
@@ -454,7 +453,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         // Overrides the text (possibly) parsed by child nodes.
         return span(
                 TextUtils.concat(parts.toArray(new CharSequence[0])),
-                new ForegroundColorSpanHashed(theme.inlineQuoteColor),
+                new ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }

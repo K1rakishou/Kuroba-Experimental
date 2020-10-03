@@ -19,16 +19,13 @@ package com.github.k1rakishou.chan.ui.controller.settings;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
-import com.github.k1rakishou.chan.ui.settings.BooleanSettingView;
 import com.github.k1rakishou.chan.ui.settings.IntegerSettingView;
 import com.github.k1rakishou.chan.ui.settings.LinkSettingView;
 import com.github.k1rakishou.chan.ui.settings.ListSettingView;
@@ -40,8 +37,6 @@ import com.github.k1rakishou.chan.utils.AndroidUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import io.reactivex.disposables.CompositeDisposable;
 
 import static android.view.View.GONE;
@@ -49,7 +44,6 @@ import static android.view.View.VISIBLE;
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.findViewsById;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.isTablet;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.updatePaddings;
@@ -59,9 +53,6 @@ public class SettingsController
         extends Controller
         implements AndroidUtils.OnMeasuredCallback {
     private final String TAG = "SettingsController";
-
-    @Inject
-    protected SettingsNotificationManager settingsNotificationManager;
 
     protected LinearLayout content;
     private List<SettingsGroup> groups = new ArrayList<>();
@@ -128,18 +119,6 @@ public class SettingsController
         return false;
     }
 
-    protected void addGroup(SettingsGroup settingsGroup) {
-        groups.add(settingsGroup);
-    }
-
-    protected void addRequiresRestart(SettingView settingView) {
-        requiresRestart.add(settingView);
-    }
-
-    protected void addRequiresUiRefresh(SettingView settingView) {
-        requiresUiRefresh.add(settingView);
-    }
-
     public void onPreferenceChange(SettingView item) {
         if ((item instanceof ListSettingView) || (item instanceof StringSettingView)
                 || (item instanceof IntegerSettingView) || (item instanceof LinkSettingView)) {
@@ -164,74 +143,9 @@ public class SettingsController
             itemMargin = dp(16);
         }
 
-        List<View> groups = findViewsById(content, R.id.group);
-        for (View group : groups) {
-            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) group.getLayoutParams();
-            params.leftMargin = margin;
-            params.rightMargin = margin;
-            group.setLayoutParams(params);
-        }
-
         List<View> items = findViewsById(content, R.id.preference_item);
         for (View item : items) {
             updatePaddings(item, itemMargin, itemMargin, -1, -1);
-        }
-    }
-
-    protected void setSettingViewVisibility(SettingView settingView, boolean visible) {
-        settingView.view.setVisibility(visible ? VISIBLE : GONE);
-
-        if (settingView.divider != null) {
-            settingView.divider.setVisibility(visible ? VISIBLE : GONE);
-        }
-    }
-
-    protected void setupLayout() {
-        view = inflate(context, R.layout.settings_layout);
-        content = view.findViewById(R.id.scrollview_content);
-    }
-
-    protected void buildPreferences() {
-        boolean firstGroup = true;
-        content.removeAllViews();
-
-        for (SettingsGroup group : groups) {
-            LinearLayout groupLayout = (LinearLayout) inflate(context, R.layout.setting_group, content, false);
-            ((TextView) groupLayout.findViewById(R.id.header)).setText(group.name);
-
-            if (firstGroup) {
-                firstGroup = false;
-                ((LinearLayout.LayoutParams) groupLayout.getLayoutParams()).topMargin = 0;
-            }
-
-            content.addView(groupLayout);
-
-            for (int i = 0; i < group.settingViews.size(); i++) {
-                SettingView settingView = group.settingViews.get(i);
-
-                ViewGroup preferenceView = null;
-                String topValue = settingView.getTopDescription();
-                String bottomValue = settingView.getBottomDescription();
-
-                if ((settingView instanceof ListSettingView) || (settingView instanceof LinkSettingView)
-                        || (settingView instanceof StringSettingView) || (settingView instanceof IntegerSettingView)) {
-                    preferenceView = (ViewGroup) inflate(context, R.layout.setting_link, groupLayout, false);
-                } else if (settingView instanceof BooleanSettingView) {
-                    preferenceView = (ViewGroup) inflate(context, R.layout.setting_boolean, groupLayout, false);
-                }
-
-                if (preferenceView != null) {
-                    setDescriptionText(preferenceView, topValue, bottomValue);
-
-                    groupLayout.addView(preferenceView);
-                    settingView.setView(preferenceView);
-                }
-
-                if (i < group.settingViews.size() - 1) {
-                    settingView.divider = inflate(context, R.layout.setting_divider, groupLayout, false);
-                    groupLayout.addView(settingView.divider);
-                }
-            }
         }
     }
 

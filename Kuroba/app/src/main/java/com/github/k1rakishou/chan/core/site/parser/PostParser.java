@@ -16,21 +16,23 @@
  */
 package com.github.k1rakishou.chan.core.site.parser;
 
+import android.text.Spannable;
+
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 
 public interface PostParser {
     Post parse(
-            @NonNull Theme theme,
+            @NonNull ChanTheme theme,
             Post.Builder builder,
             Callback callback
     );
 
-    CharSequence parseComment(
-            Theme theme,
+    Spannable parseComment(
+            ChanTheme theme,
             Post.Builder post,
             CharSequence commentRaw,
             boolean addPostImages,

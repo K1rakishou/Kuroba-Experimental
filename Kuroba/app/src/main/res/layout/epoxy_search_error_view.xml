@@ -9,13 +9,13 @@
         android:orientation="vertical">
 
         <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/search_post_error_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="8dp"
             android:gravity="center_horizontal"
             android:text="@string/unhandled_error"
-            android:textColor="?text_color_primary"
             android:textSize="24sp" />
 
         <com.google.android.material.textview.MaterialTextView
@@ -26,11 +26,10 @@
             android:ellipsize="end"
             android:gravity="center_horizontal"
             android:maxLines="10"
-            android:textColor="?text_color_primary"
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum" />
 
-        <com.google.android.material.button.MaterialButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
             android:id="@+id/search_post_error_retry_button"
             android:layout_width="160dp"
             android:layout_height="wrap_content"

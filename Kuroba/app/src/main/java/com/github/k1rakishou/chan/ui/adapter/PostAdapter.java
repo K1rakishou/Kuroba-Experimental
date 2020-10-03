@@ -33,8 +33,8 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -66,12 +66,13 @@ public class PostAdapter
     @Inject
     ChanThreadViewableInfoManager chanThreadViewableInfoManager;
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private final PostAdapterCallback postAdapterCallback;
     private final PostCellInterface.PostCellCallback postCellCallback;
     private RecyclerView recyclerView;
     private PostFilterManager postFilterManager;
+    private ChanTheme chanTheme;
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
@@ -93,15 +94,13 @@ public class PostAdapter
 
     private ChanSettings.PostViewMode postViewMode;
     private boolean compact = false;
-    private Theme theme;
 
     public PostAdapter(
             PostFilterManager postFilterManager,
             RecyclerView recyclerView,
             PostAdapterCallback postAdapterCallback,
             PostCellInterface.PostCellCallback postCellCallback,
-            ThreadStatusCell.Callback statusCellCallback,
-            Theme theme
+            ThreadStatusCell.Callback statusCellCallback
     ) {
         inject(this);
 
@@ -110,9 +109,8 @@ public class PostAdapter
         this.postAdapterCallback = postAdapterCallback;
         this.postCellCallback = postCellCallback;
         this.statusCellCallback = statusCellCallback;
-        this.theme = theme;
 
-        themeHelper.preloadAttributeResource(
+        themeEngine.preloadAttributeResource(
                 recyclerView.getContext(),
                 android.R.attr.selectableItemBackgroundBorderless
         );
@@ -153,6 +151,7 @@ public class PostAdapter
                 return new PostViewHolder(postCellStub);
             case TYPE_LAST_SEEN:
                 return new LastSeenViewHolder(
+                        themeEngine,
                         inflate(inflateContext, R.layout.cell_post_last_seen, parent, false)
                 );
             case TYPE_STATUS:
@@ -175,7 +174,6 @@ public class PostAdapter
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         int itemViewType = getItemViewType(position);
-
 
         switch (itemViewType) {
             case TYPE_POST:
@@ -206,7 +204,7 @@ public class PostAdapter
                         true,
                         postViewMode,
                         compact,
-                        theme
+                        chanTheme
                 );
 
                 if (itemViewType == TYPE_POST_STUB) {
@@ -217,6 +215,7 @@ public class PostAdapter
                 ((ThreadStatusCell) holder.itemView).update();
                 break;
             case TYPE_LAST_SEEN:
+                ((LastSeenViewHolder) holder).updateLabelColor();
                 break;
         }
     }
@@ -324,12 +323,15 @@ public class PostAdapter
     public void setThread(
             ChanDescriptor chanDescriptor,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
-            List<PostIndexed> indexedPosts
+            List<PostIndexed> indexedPosts,
+            ChanTheme chanTheme
     ) {
         BackgroundUtils.ensureMainThread();
 
         this.chanDescriptor = chanDescriptor;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
+        this.chanTheme = chanTheme;
+
         showError(null);
 
         List<Post> posts = extractPosts(indexedPosts);
@@ -534,24 +536,30 @@ public class PostAdapter
         return post.no;
     }
 
-    public static class PostViewHolder
-            extends RecyclerView.ViewHolder {
+    public static class PostViewHolder extends RecyclerView.ViewHolder {
         public PostViewHolder(PostCellInterface postView) {
             super((View) postView);
         }
     }
 
-    public static class StatusViewHolder
-            extends RecyclerView.ViewHolder {
+    public static class StatusViewHolder extends RecyclerView.ViewHolder {
         public StatusViewHolder(ThreadStatusCell threadStatusCell) {
             super(threadStatusCell);
         }
     }
 
-    public static class LastSeenViewHolder
-            extends RecyclerView.ViewHolder {
-        public LastSeenViewHolder(View itemView) {
+    public static class LastSeenViewHolder extends RecyclerView.ViewHolder {
+        private final ThemeEngine themeEngine;
+
+        public LastSeenViewHolder(ThemeEngine themeEngine, View itemView) {
             super(itemView);
+
+            this.themeEngine = themeEngine;
+            updateLabelColor();
+        }
+
+        public void updateLabelColor() {
+            itemView.setBackgroundColor(themeEngine.getChanTheme().getAccentColor());
         }
     }
 

@@ -26,14 +26,16 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.view.FixedRatioThumbnailView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
@@ -49,10 +51,10 @@ public class LegacyCaptchaLayout
         implements AuthenticationLayoutInterface, View.OnClickListener {
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
 
     private FixedRatioThumbnailView image;
-    private EditText input;
+    private ColorizableEditText input;
     private ImageView submit;
     private WebView internalWebView;
     private AuthenticationLayoutCallback callback;
@@ -99,7 +101,8 @@ public class LegacyCaptchaLayout
         });
 
         submit = findViewById(R.id.submit);
-        themeHelper.getTheme().sendDrawable.apply(submit);
+        submit.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_send_white_24dp));
+
         AndroidUtils.setBoundlessRoundRippleBackground(submit);
         submit.setOnClickListener(this);
 

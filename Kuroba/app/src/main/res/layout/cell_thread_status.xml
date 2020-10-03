@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:padding="8dp"
-        android:textColor="?text_color_secondary" />
+        android:padding="8dp" />
 
 </com.github.k1rakishou.chan.ui.cell.ThreadStatusCell>

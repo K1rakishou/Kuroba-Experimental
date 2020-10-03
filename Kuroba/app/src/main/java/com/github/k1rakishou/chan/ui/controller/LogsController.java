@@ -23,8 +23,10 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -32,17 +34,19 @@ import com.github.k1rakishou.chan.utils.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
+
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAttrColor;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.setClipboardContent;
 
-public class LogsController
-        extends Controller {
+public class LogsController extends Controller {
     private static final String TAG = "LogsController";
     private static final int DEFAULT_LINES_COUNT = 250;
-
     private static final int ACTION_LOGS_COPY = 1;
+
+    @Inject
+    ThemeEngine themeEngine;
 
     private TextView logTextView;
     private String logText;
@@ -54,6 +58,7 @@ public class LogsController
     @Override
     public void onCreate() {
         super.onCreate();
+        Chan.inject(this);
 
         navigation.setTitle(R.string.settings_logs_screen);
 
@@ -68,7 +73,7 @@ public class LogsController
                 .build();
 
         ScrollView container = new ScrollView(context);
-        container.setBackgroundColor(getAttrColor(context, R.attr.backcolor));
+        container.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
         logTextView = new TextView(context);
         container.addView(logTextView, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 

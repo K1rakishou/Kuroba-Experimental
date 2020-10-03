@@ -3,9 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:clickable="true"
-    android:focusable="true"
     android:padding="4dp"
     tools:parentTag="android.widget.FrameLayout">
 
@@ -13,7 +10,9 @@
         android:id="@+id/history_entry_view_holder"
         android:layout_width="match_parent"
         android:layout_height="@dimen/history_entry_thread_image_size"
-        android:background="?android:selectableItemBackground"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
         android:orientation="horizontal">
 
         <RelativeLayout
@@ -32,8 +31,8 @@
                 android:id="@+id/history_entry_site_image"
                 android:layout_width="@dimen/history_entry_site_image_size"
                 android:layout_height="@dimen/history_entry_site_image_size"
-                android:layout_alignParentEnd="true"
                 android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
                 android:scaleType="centerCrop"
                 tools:src="@drawable/ic_baseline_settings" />
 

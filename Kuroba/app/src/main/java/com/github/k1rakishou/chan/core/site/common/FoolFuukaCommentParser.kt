@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.ui.theme.Theme
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.model.data.archive.ArchiveType
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -24,7 +24,7 @@ class FoolFuukaCommentParser(
 
   override fun handleTag(
     callback: PostParser.Callback,
-    theme: Theme,
+    theme: ChanTheme,
     post: Post.Builder,
     tag: String,
     text: CharSequence,

@@ -17,13 +17,12 @@
 package com.github.k1rakishou.chan.ui.cell;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import androidx.cardview.widget.CardView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
@@ -33,8 +32,9 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
-import com.github.k1rakishou.chan.ui.theme.Theme;
-import com.github.k1rakishou.chan.ui.theme.ThemeHelper;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -51,16 +51,17 @@ import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpO
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
-public class CardPostCell
-        extends CardView
-        implements PostCellInterface, View.OnClickListener, View.OnLongClickListener {
+public class CardPostCell extends ColorizableCardView implements PostCellInterface,
+        View.OnClickListener, View.OnLongClickListener {
+
     private static final int COMMENT_MAX_LENGTH = 200;
 
     @Inject
-    ThemeHelper themeHelper;
+    ThemeEngine themeEngine;
     @Inject
     PostFilterManager postFilterManager;
 
+    private ChanTheme theme;
     private Post post;
     private ChanDescriptor chanDescriptor;
     private PostCellInterface.PostCellCallback callback;
@@ -108,6 +109,7 @@ public class CardPostCell
         comment = findViewById(R.id.comment);
         replies = findViewById(R.id.replies);
         options = findViewById(R.id.options);
+
         AndroidUtils.setBoundlessRoundRippleBackground(options);
         filterMatchColor = findViewById(R.id.filter_match_color);
 
@@ -160,15 +162,16 @@ public class CardPostCell
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
             boolean compact,
-            Theme theme
+            ChanTheme theme
     ) {
-        if (this.post == post) {
+        if (post.equals(this.post) && theme.equals(this.theme)) {
             return;
         }
 
         this.inPopup = inPopup;
         this.chanDescriptor = chanDescriptor;
         this.post = post;
+        this.theme = theme;
         this.callback = callback;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 
@@ -267,7 +270,7 @@ public class CardPostCell
         }
 
         comment.setText(commentText);
-        comment.setTextColor(themeHelper.getTheme().textPrimary);
+        comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
         String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
         if (!ChanSettings.neverShowPages.get()) {
@@ -278,6 +281,7 @@ public class CardPostCell
         }
 
         replies.setText(status);
+        replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         if (callback != null) {
             callback.onPostBind(post);
@@ -300,5 +304,6 @@ public class CardPostCell
 
         int optionsPadding = compact ? 0 : dp(5);
         options.setPadding(0, optionsPadding, optionsPadding, 0);
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
     }
 }

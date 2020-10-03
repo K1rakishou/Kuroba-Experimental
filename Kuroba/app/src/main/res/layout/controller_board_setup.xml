@@ -14,17 +14,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/backcolor">
+    android:layout_height="match_parent">
 
     <com.github.k1rakishou.chan.ui.view.CrossfadeView
         android:id="@+id/crossfade"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
             android:id="@+id/boards_recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -55,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     </com.github.k1rakishou.chan.ui.view.CrossfadeView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
         android:id="@+id/add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -63,4 +62,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_margin="16dp"
         android:src="@drawable/ic_add_white_24dp" />
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout>

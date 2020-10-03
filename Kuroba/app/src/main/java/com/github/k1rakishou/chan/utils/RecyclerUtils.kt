@@ -39,12 +39,16 @@ object RecyclerUtils {
     var index = 0
     var top = 0
 
-    if (recyclerView.layoutManager!!.childCount > 0) {
-      val topChild = recyclerView.layoutManager!!.getChildAt(0)
-      index = (topChild!!.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
+    val layoutManager = recyclerView.layoutManager
+      ?: return IndexAndTop(index, top)
+
+    if (layoutManager.childCount > 0) {
+      val topChild = layoutManager.getChildAt(0)
+        ?: return IndexAndTop(index, top)
+
+      index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
       val params = topChild.layoutParams as RecyclerView.LayoutParams
-      val layoutManager = recyclerView.layoutManager
-      top = layoutManager!!.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
+      top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
     }
 
     return IndexAndTop(index, top)

@@ -15,7 +15,6 @@
         android:layout_marginBottom="16dp"
         android:ellipsize="end"
         android:gravity="center"
-        android:textColor="?text_color_primary"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

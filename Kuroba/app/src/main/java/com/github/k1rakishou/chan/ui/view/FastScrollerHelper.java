@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.Theme;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class FastScrollerHelper {
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
-            Theme currentTheme
+            ChanTheme currentTheme
     ) {
         Context context = recyclerView.getContext();
         StateListDrawable thumb = getThumb(currentTheme);
@@ -67,16 +67,16 @@ public class FastScrollerHelper {
         );
     }
 
-    private static StateListDrawable getThumb(Theme curTheme) {
+    private static StateListDrawable getThumb(ChanTheme curTheme) {
         StateListDrawable list = new StateListDrawable();
-        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.accentColor.color));
-        list.addState(new int[]{}, new ColorDrawable(curTheme.textSecondary));
+        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.getAccentColor()));
+        list.addState(new int[]{}, new ColorDrawable(curTheme.getTextColorSecondary()));
         return list;
     }
 
-    private static StateListDrawable getTrack(Theme curTheme) {
+    private static StateListDrawable getTrack(ChanTheme curTheme) {
         StateListDrawable list = new StateListDrawable();
-        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.textHint));
+        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.getTextColorHint()));
         list.addState(new int[]{}, new ColorDrawable(0));
         return list;
     }
