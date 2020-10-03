@@ -174,7 +174,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     val currentSettingsTheme = ChanSettings.getThemeAndColor()
 
     for (i in themes.indices) {
-      val theme = themes.get(i)
+      val theme = themes[i]
       val primaryColor = theme.primaryColor
       if (theme.name == currentSettingsTheme.theme) {
         // Current theme
@@ -247,10 +247,6 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   }
 
   private inner class Adapter : ViewPagerAdapter() {
-
-    override fun getPageTitle(position: Int): CharSequence? {
-      return super.getPageTitle(position)
-    }
 
     override fun getView(position: Int, parent: ViewGroup): View {
       val theme = themes[position]

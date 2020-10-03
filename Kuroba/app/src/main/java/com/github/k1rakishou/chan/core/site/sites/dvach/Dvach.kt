@@ -79,7 +79,7 @@ class Dvach : CommonSite() {
       SiteOptionsSetting(
         "Captcha type",
         captchaType!!,
-        Arrays.asList("Javascript", "Noscript")
+        mutableListOf("Javascript", "Noscript")
       )
     )
   }
@@ -221,13 +221,13 @@ class Dvach : CommonSite() {
           is HttpCall.HttpCallResult.Success -> {
             val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
 
-            when (loginResponse) {
+            return when (loginResponse) {
               is DvachLoginResponse.Success -> {
                 passCookie.set(loginResponse.authCookie)
-                return SiteActions.LoginResult.LoginComplete(loginResponse)
+                SiteActions.LoginResult.LoginComplete(loginResponse)
               }
               is DvachLoginResponse.Failure -> {
-                return SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
+                SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
               }
             }
           }

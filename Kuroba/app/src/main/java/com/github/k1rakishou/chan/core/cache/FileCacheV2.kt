@@ -566,9 +566,7 @@ class FileCacheV2(
     }
 
     val outputFile = cacheHandler.getOrCreateCacheFile(url)
-    if (outputFile == null) {
-      return Flowable.error(FileCacheException.CouldNotCreateOutputCacheFile(url))
-    }
+      ?: return Flowable.error(FileCacheException.CouldNotCreateOutputCacheFile(url))
 
     if (cacheHandler.isAlreadyDownloaded(outputFile)) {
       return Flowable.just(FileDownloadResult.Success(outputFile, 0L))

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.helper
 
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import kotlin.math.max
 
 class BoardDescriptorsComparator<T>(
   private val query: String,
@@ -51,7 +52,7 @@ class BoardDescriptorsComparator<T>(
         ++occurrenceLen
       }
 
-      val newMaxLen = Math.max(maxLen, occurrenceLen)
+      val newMaxLen = max(maxLen, occurrenceLen)
       if (newMaxLen > maxLen) {
         position = index
       }

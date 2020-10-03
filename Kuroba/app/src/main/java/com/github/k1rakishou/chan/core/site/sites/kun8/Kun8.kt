@@ -61,9 +61,8 @@ class Kun8 : CommonSite() {
 
       override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilters: Int, arg: Map<String, String>): HttpUrl {
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
-        val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }
 
-        val extension = when (ext) {
+        val extension = when (val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }) {
           "jpeg", "jpg", "png", "gif" -> ext
           else -> "jpg"
         }

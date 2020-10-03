@@ -157,7 +157,7 @@ class ReplyNotificationsHelper(
 
     val sortedUnreadNotificationsGrouped = sortNotifications(unreadNotificationsGrouped)
     val notificationTime = sortedUnreadNotificationsGrouped.values.flatten()
-      .maxBy { threadBookmarkReply -> threadBookmarkReply.time }
+      .maxByOrNull { threadBookmarkReply -> threadBookmarkReply.time }
       ?.time
       ?: DateTime.now()
 
@@ -270,7 +270,7 @@ class ReplyNotificationsHelper(
     }
 
     val notificationTime = unseenThreadBookmarkReplies
-      .maxBy { threadBookmarkReply -> threadBookmarkReply.time }
+      .maxByOrNull { threadBookmarkReply -> threadBookmarkReply.time }
       ?.time
       ?: DateTime.now()
 
@@ -778,7 +778,7 @@ class ReplyNotificationsHelper(
       return
     }
 
-    val maxNotificationId = visibleNotifications.maxBy { notification -> notification.id }?.id ?: 0
+    val maxNotificationId = visibleNotifications.maxByOrNull { notification -> notification.id }?.id ?: 0
     if (maxNotificationId > NotificationConstants.ReplyNotifications.notificationIdCounter.get()) {
       NotificationConstants.ReplyNotifications.notificationIdCounter.set(maxNotificationId)
     }

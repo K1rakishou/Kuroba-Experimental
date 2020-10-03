@@ -238,7 +238,7 @@ class BookmarkWatcherCoordinator(
     }
   }
 
-  sealed class WatchSettingChange() {
+  sealed class WatchSettingChange {
     data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()

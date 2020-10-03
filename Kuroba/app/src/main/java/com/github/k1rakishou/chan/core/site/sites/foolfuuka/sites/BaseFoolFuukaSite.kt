@@ -30,17 +30,17 @@ abstract class BaseFoolFuukaSite : CommonSite() {
       // https://archived.moe/
       val baseUrl = url.toString()
 
-      when (chanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> return "${baseUrl}${chanDescriptor.boardCode()}"
-        is ChanDescriptor.ThreadDescriptor -> {
-          if (postNo == null) {
-            // https://archived.moe/a/thread/208364509/
-            return "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
-          } else {
-            // https://archived.moe/a/thread/208364509#208364685
-            return "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#${postNo}"
+      return when (chanDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> "${baseUrl}${chanDescriptor.boardCode()}"
+          is ChanDescriptor.ThreadDescriptor -> {
+            if (postNo == null) {
+              // https://archived.moe/a/thread/208364509/
+              "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
+            } else {
+              // https://archived.moe/a/thread/208364509#208364685
+              "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#${postNo}"
+            }
           }
-        }
       }
     }
 

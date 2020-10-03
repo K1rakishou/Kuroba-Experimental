@@ -46,7 +46,7 @@ public class DividerItemDecoration
     public static final int VERTICAL = LinearLayout.VERTICAL;
 
     private static final String TAG = "DividerItem";
-    private static final int[] ATTRS = new int[]{android.R.attr.listDivider};
+    private static final int[] ATTRS = {android.R.attr.listDivider};
 
     private Drawable mDivider;
 
@@ -114,12 +114,10 @@ public class DividerItemDecoration
 
     private void drawVertical(Canvas canvas, RecyclerView parent) {
         canvas.save();
-        final int left;
-        final int right;
         // Clover changed: still apply insets even when it's not set to clipPadding, plus don't
         // clip the top and bottom.
-        left = parent.getPaddingLeft();
-        right = parent.getWidth() - parent.getPaddingRight();
+        final int left = parent.getPaddingLeft();
+        final int right = parent.getWidth() - parent.getPaddingRight();
         canvas.clipRect(left, 0, right, parent.getHeight());
 
         final int childCount = parent.getChildCount();

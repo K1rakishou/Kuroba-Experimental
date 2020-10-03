@@ -251,10 +251,10 @@ class ImageLoaderV2(
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_not_found" }
 
-    if (drawable is BitmapDrawable) {
-      imageNotFoundDrawable = drawable
+    imageNotFoundDrawable = if (drawable is BitmapDrawable) {
+      drawable
     } else {
-      imageNotFoundDrawable = BitmapDrawable(context.resources, drawable.toBitmap())
+      BitmapDrawable(context.resources, drawable.toBitmap())
     }
 
 
@@ -274,10 +274,10 @@ class ImageLoaderV2(
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_error_loading" }
 
-    if (drawable is BitmapDrawable) {
-      imageErrorLoadingDrawable = drawable
+    imageErrorLoadingDrawable = if (drawable is BitmapDrawable) {
+      drawable
     } else {
-      imageErrorLoadingDrawable = BitmapDrawable(context.resources, drawable.toBitmap())
+      BitmapDrawable(context.resources, drawable.toBitmap())
     }
 
     return imageErrorLoadingDrawable!!

@@ -17,13 +17,13 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.text.Html
 import android.text.method.LinkMovementMethod
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.site.Site
@@ -116,7 +116,7 @@ class LoginController(
     val bottomDescription = view.findViewById<TextView>(R.id.bottom_description)
 
     if (site is Chan4) {
-      bottomDescription.text = Html.fromHtml(AndroidUtils.getString(R.string.setting_pass_bottom_description))
+      bottomDescription.text = AndroidUtils.getString(R.string.setting_pass_bottom_description).parseAsHtml()
       bottomDescription.movementMethod = LinkMovementMethod.getInstance()
       return
     }
@@ -158,17 +158,17 @@ class LoginController(
   }
 
   private fun createLoginRequest(): AbstractLoginRequest {
-    when (site) {
+    return when (site) {
       is Chan4 -> {
         val user = inputToken.text.toString()
         val pass = inputPin.text.toString()
 
-        return Chan4LoginRequest(user, pass)
+        Chan4LoginRequest(user, pass)
       }
       is Dvach -> {
         val passcode = inputToken.text.toString()
 
-        return DvachLoginRequest(passcode)
+        DvachLoginRequest(passcode)
       }
       else -> throw NotImplementedError("Not supported")
     }

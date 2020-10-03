@@ -301,13 +301,10 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   private fun findView(classType: Class<out View>): View? {
-    for (i in 0 until childCount) {
-      if (getChildAt(i).javaClass == classType) {
-        return getChildAt(i)
-      }
-    }
 
-    return null
+    return (0 until childCount)
+      .firstOrNull { getChildAt(it).javaClass == classType }
+      ?.let(this@MultiImageView::getChildAt)
   }
 
   override fun isImageAlreadySaved(): Boolean {

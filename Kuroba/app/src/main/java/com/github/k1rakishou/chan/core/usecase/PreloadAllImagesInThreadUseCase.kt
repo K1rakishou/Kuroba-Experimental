@@ -38,9 +38,7 @@ class PreloadAllImagesInThreadUseCase(
 
     val isTheSameJob = mutex.withLock {
       val localActiveJob = activeJob
-      if (localActiveJob == null) {
-        return@withLock false
-      }
+        ?: return@withLock false
 
       if (localActiveJob.threadDescriptor == threadDescriptor) {
         return@withLock true
@@ -167,8 +165,8 @@ class PreloadAllImagesInThreadUseCase(
 
   private suspend fun removeImage(imageToPreload: ImageToPreload) {
     mutex.withLock {
-      preloading.get(imageToPreload.chanDescriptor)?.remove(imageToPreload.url)
-      alreadyPreloaded.get(imageToPreload.chanDescriptor)?.remove(imageToPreload.url)
+      preloading[imageToPreload.chanDescriptor]?.remove(imageToPreload.url)
+      alreadyPreloaded[imageToPreload.chanDescriptor]?.remove(imageToPreload.url)
     }
   }
 
@@ -188,8 +186,8 @@ class PreloadAllImagesInThreadUseCase(
         val url = postImage.imageUrl!!.toString()
 
         val preloadingOrPreloaded = mutex.withLock {
-          (alreadyPreloaded.get(chanDescriptor)?.contains(url) ?: false)
-            || (preloading.get(chanDescriptor)?.contains(url) ?: false)
+          (alreadyPreloaded[chanDescriptor]?.contains(url) ?: false)
+            || (preloading[chanDescriptor]?.contains(url) ?: false)
         }
 
         if (preloadingOrPreloaded) {

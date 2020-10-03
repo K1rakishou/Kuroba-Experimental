@@ -10,23 +10,23 @@ sealed class ModularResult<V : Any?> {
 
   @CheckReturnValue
   fun peekError(func: (Throwable) -> Unit): ModularResult<V> {
-    when (this) {
-      is Value -> return this
+    return when (this) {
+      is Value -> this
       is Error -> {
         func(this.error)
-        return this
+        this
       }
     }
   }
 
   @CheckReturnValue
   fun peekValue(func: (V) -> Unit): ModularResult<V> {
-    when (this) {
+    return when (this) {
       is Value -> {
         func(this.value)
-        return this
+        this
       }
-      is Error -> return this
+      is Error -> this
     }
   }
 

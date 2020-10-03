@@ -101,12 +101,12 @@ class ParsePostsUseCase(
       return postsToParseNoSet
     }
 
-    when (chanDescriptor) {
+    return when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        return postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
+        postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        return postsToParseNoSet
+        postsToParseNoSet
       }
     }
   }

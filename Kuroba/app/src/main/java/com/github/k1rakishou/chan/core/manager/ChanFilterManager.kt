@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.math.max
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -237,7 +238,7 @@ class ChanFilterManager(
   }
 
   private fun mergePrevAndNewFilters(prevChanFilter: ChanFilter, newChanFilter: ChanFilter): ChanFilter {
-    val databaseId = Math.max(prevChanFilter.getDatabaseId(), newChanFilter.getDatabaseId())
+    val databaseId = max(prevChanFilter.getDatabaseId(), newChanFilter.getDatabaseId())
 
     return ChanFilter(
       filterDatabaseId = databaseId,

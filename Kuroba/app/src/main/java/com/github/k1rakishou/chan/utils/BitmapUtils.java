@@ -40,8 +40,8 @@ public class BitmapUtils {
     private static final String TEMP_FILE_NAME = "temp_file_name";
     private static final String TEMP_FILE_NAME_WITH_CACHE_DIR = "cache/" + TEMP_FILE_NAME;
 
-    private static final byte[] PNG_HEADER = new byte[]{-119, 80, 78, 71, 13, 10, 26, 10};
-    private static final byte[] JPEG_HEADER = new byte[]{-1, -40};
+    private static final byte[] PNG_HEADER = {-119, 80, 78, 71, 13, 10, 26, 10};
+    private static final byte[] JPEG_HEADER = {-1, -40};
 
     private static final Random random = new Random();
 
@@ -223,20 +223,18 @@ public class BitmapUtils {
                 }
             }
 
-            {
-                boolean isJpegHeader = true;
-                int size = Math.min(JPEG_HEADER.length, header.length);
+            boolean isJpegHeader = true;
+            int size = Math.min(JPEG_HEADER.length, header.length);
 
-                for (int i = 0; i < size; ++i) {
-                    if (header[i] != JPEG_HEADER[i]) {
-                        isJpegHeader = false;
-                        break;
-                    }
+            for (int i = 0; i < size; ++i) {
+                if (header[i] != JPEG_HEADER[i]) {
+                    isJpegHeader = false;
+                    break;
                 }
+            }
 
-                if (isJpegHeader) {
-                    return JPEG;
-                }
+            if (isJpegHeader) {
+                return JPEG;
             }
 
             return null;

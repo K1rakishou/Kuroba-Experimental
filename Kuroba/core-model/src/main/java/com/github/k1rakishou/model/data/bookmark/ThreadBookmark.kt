@@ -5,6 +5,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.math.max
 
 class ThreadBookmark private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -58,15 +59,15 @@ class ThreadBookmark private constructor(
   }
 
   fun unseenPostsCount(): Int {
-    return Math.max(0, totalPostsCount - seenPostsCount)
+    return max(0, totalPostsCount - seenPostsCount)
   }
 
   fun updateLastViewedPostNo(newLastViewedPostNo: Long) {
-    lastViewedPostNo = Math.max(lastViewedPostNo, newLastViewedPostNo)
+    lastViewedPostNo = max(lastViewedPostNo, newLastViewedPostNo)
   }
 
   fun updateSeenPostCount(newSeenPostsCount: Int) {
-    seenPostsCount = Math.max(seenPostsCount, newSeenPostsCount)
+    seenPostsCount = max(seenPostsCount, newSeenPostsCount)
   }
 
   fun updateTotalPostsCount(newPostsCount: Int) {
@@ -74,7 +75,7 @@ class ThreadBookmark private constructor(
   }
 
   fun updateSeenPostCountInRollingSticky(totalPostsCount: Int, newPostsCount: Int) {
-    seenPostsCount = Math.max(0, totalPostsCount - newPostsCount)
+    seenPostsCount = max(0, totalPostsCount - newPostsCount)
   }
 
   fun setBumpLimit(bumpLimit: Boolean) {

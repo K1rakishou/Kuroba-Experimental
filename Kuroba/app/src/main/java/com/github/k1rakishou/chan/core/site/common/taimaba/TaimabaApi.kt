@@ -75,8 +75,7 @@ class TaimabaApi(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      val key = reader.nextName()
-      when (key) {
+      when (reader.nextName()) {
         "no" -> builder.id(reader.nextInt().toLong())
         "resto" -> {
           opId = reader.nextInt()
@@ -254,10 +253,7 @@ class TaimabaApi(
       val originalPost = postObjects.firstOrNull { postObject ->
         postObject is ThreadBookmarkInfoPostObject.OriginalPost
       } as? ThreadBookmarkInfoPostObject.OriginalPost
-
-      if (originalPost == null) {
-        throw IllegalStateException("Thread $threadDescriptor has no OP")
-      }
+        ?: throw IllegalStateException("Thread $threadDescriptor has no OP")
 
       check(threadDescriptor.threadNo == originalPost.postNo) {
         "Original post has incorrect postNo, " +

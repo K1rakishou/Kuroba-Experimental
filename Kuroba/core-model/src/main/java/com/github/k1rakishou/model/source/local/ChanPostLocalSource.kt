@@ -506,11 +506,7 @@ class ChanPostLocalSource(
     val chanBoardEntity = chanBoardDao.selectBoardId(
       postDescriptor.descriptor.siteName(),
       postDescriptor.descriptor.boardCode()
-    )
-
-    if (chanBoardEntity == null) {
-      return null
-    }
+    ) ?: return null
 
     return chanThreadDao.select(
       chanBoardEntity.boardId,
@@ -526,11 +522,7 @@ class ChanPostLocalSource(
     val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
-    )
-
-    if (chanBoardEntity == null) {
-      return null
-    }
+    ) ?: return null
 
     return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)
   }
@@ -559,11 +551,7 @@ class ChanPostLocalSource(
     val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
-    )
-
-    if (chanBoardEntity == null) {
-      return
-    }
+    ) ?: return
 
     chanThreadDao.deleteThread(chanBoardEntity.boardId, threadDescriptor.threadNo)
   }
@@ -576,16 +564,10 @@ class ChanPostLocalSource(
     val chanBoardEntity = chanBoardDao.selectBoardId(
       threadDescriptor.siteName(),
       threadDescriptor.boardCode()
-    )
-
-    if (chanBoardEntity == null) {
-      return
-    }
+    ) ?: return
 
     val chanThreadEntity = chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)
-    if (chanThreadEntity == null) {
-      return
-    }
+      ?: return
 
     chanPostDao.deletePost(chanThreadEntity.threadId, postDescriptor.postNo, postDescriptor.postSubNo)
   }

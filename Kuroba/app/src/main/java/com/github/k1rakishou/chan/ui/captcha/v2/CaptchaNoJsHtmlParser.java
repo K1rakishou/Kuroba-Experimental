@@ -208,19 +208,16 @@ public class CaptchaNoJsHtmlParser {
     private Pair<Integer, Integer> calculateColumnsAndRows(CaptchaInfo.CaptchaType captchaType)
             throws CaptchaNoJsV2ParsingError {
         switch (captchaType) {
-            case CANONICAL: {
+            case CANONICAL:
                 // 3x3 captcha with square images
                 return new Pair<>(3, 3);
-            }
 
-            case NO_CANONICAL: {
+            case NO_CANONICAL:
                 // 2x4 captcha with rectangle images (store fronts)
                 return new Pair<>(2, 4);
-            }
 
-            default: {
+            default:
                 throw new CaptchaNoJsV2ParsingError("Unknown captcha type");
-            }
         }
     }
 

@@ -66,7 +66,7 @@ public class FilesAdapter
         int itemViewType = getItemViewType(position);
         switch (itemViewType) {
             case ITEM_TYPE_FILE:
-            case ITEM_TYPE_FOLDER: {
+            case ITEM_TYPE_FOLDER:
                 boolean isFile = itemViewType == ITEM_TYPE_FILE;
 
                 FileWatcher.FileItem item = getItem(position);
@@ -92,7 +92,6 @@ public class FilesAdapter
                 }
 
                 break;
-            }
         }
     }
 

@@ -72,7 +72,7 @@ public class RemovedPostsHelper {
         Map<Long, ChanPostHide> fastLookupMap = new HashMap<>();
 
         for (ChanPostHide postHide : hiddenPosts) {
-            fastLookupMap.put((long) postHide.getPostDescriptor().getPostNo(), postHide);
+            fastLookupMap.put(postHide.getPostDescriptor().getPostNo(), postHide);
         }
 
         for (Post post : threadPosts) {

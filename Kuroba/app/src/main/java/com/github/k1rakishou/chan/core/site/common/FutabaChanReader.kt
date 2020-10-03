@@ -106,8 +106,7 @@ class FutabaChanReader(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      val key = reader.nextName()
-      when (key) {
+      when (reader.nextName()) {
         "no" -> builder.id(reader.nextInt().toLong())
         "sub" -> builder.subject(reader.nextString())
         "name" -> builder.name(reader.nextString())
@@ -290,10 +289,7 @@ class FutabaChanReader(
       val originalPost = postObjects.firstOrNull { postObject ->
         postObject is ThreadBookmarkInfoPostObject.OriginalPost
       } as? ThreadBookmarkInfoPostObject.OriginalPost
-
-      if (originalPost == null) {
-        throw IllegalStateException("Thread $threadDescriptor has no OP")
-      }
+        ?: throw IllegalStateException("Thread $threadDescriptor has no OP")
 
       check(threadDescriptor.threadNo == originalPost.postNo) {
         "Original post has incorrect postNo, " +

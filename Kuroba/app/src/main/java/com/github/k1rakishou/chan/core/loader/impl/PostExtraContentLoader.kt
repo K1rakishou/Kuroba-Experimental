@@ -173,12 +173,8 @@ internal class PostExtraContentLoader(
         val originalUrl = postLinkable.key.toString()
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
           fetcher.linkMatchesToService(originalUrl)
-        }
-
-        if (fetcher == null) {
-          // No fetcher found for this link type
+        } ?: // No fetcher found for this link type
           return@forEach
-        }
 
         if (!fetcher.isEnabled()) {
           // Fetcher may be disabled by some settings or some other conditions

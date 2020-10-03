@@ -78,10 +78,8 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
         "called when not initialized, awaiting... stacktrace=${getStackTrace()}")
     }
 
-    val result = withTimeoutOrNull(TimeUnit.MINUTES.toMillis(MAX_WAIT_TIME_MINUTES)) { value.awaitSilently() }
-    if (result == null) {
-      throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!!")
-    }
+    withTimeoutOrNull(TimeUnit.MINUTES.toMillis(MAX_WAIT_TIME_MINUTES)) { value.awaitSilently() }
+      ?: throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!!")
 
     if (logStates) {
       Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, done")

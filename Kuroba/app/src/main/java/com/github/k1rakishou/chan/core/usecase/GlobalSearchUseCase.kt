@@ -24,10 +24,10 @@ class GlobalSearchUseCase(
   private val chan4SearchPostParser: Chan4SearchPostParser
 ) : ISuspendUseCase<SearchParams, SearchResult> {
   override suspend fun execute(parameter: SearchParams): SearchResult {
-    try {
-      return withContext(Dispatchers.IO) { doSearch(parameter) }
+    return try {
+      withContext(Dispatchers.IO) { doSearch(parameter) }
     } catch (error: Throwable) {
-      return SearchResult.Failure(SearchError.UnknownError(error))
+      SearchResult.Failure(SearchError.UnknownError(error))
     }
   }
 

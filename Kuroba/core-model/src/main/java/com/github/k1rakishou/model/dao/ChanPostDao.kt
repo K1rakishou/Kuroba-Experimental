@@ -18,12 +18,12 @@ abstract class ChanPostDao {
     postsToIgnore: Collection<Long>,
     maxCount: Int
   ): List<ChanPostFull> {
-    if (postsToIgnore.isNotEmpty()) {
-      return postsToIgnore
+    return if (postsToIgnore.isNotEmpty()) {
+      postsToIgnore
         .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
         .flatMap { postsToIgnoreChunk -> selectAllByThreadIdGrouped(ownerThreadId, postsToIgnoreChunk, maxCount) }
     } else {
-      return selectAllByThreadIdGrouped(ownerThreadId, emptyList(), maxCount)
+      selectAllByThreadIdGrouped(ownerThreadId, emptyList(), maxCount)
     }
   }
 

@@ -233,7 +233,7 @@ class StartActivity : AppCompatActivity(),
       "Don't forget to report all the bugs on github: https://github.com/K1rakishou/Kuroba-Experimental/issues\n\n"
 
     val messageText = SpannableString(message)
-    Linkify.addLinks(messageText, Linkify.WEB_URLS);
+    Linkify.addLinks(messageText, Linkify.WEB_URLS)
 
     val dialog = AlertDialog.Builder(this)
       .setTitle("Beta version")
@@ -381,13 +381,7 @@ class StartActivity : AppCompatActivity(),
       return true
     }
 
-    for (childController in controller.childControllers) {
-      if (isControllerPresent(childController, predicate)) {
-        return true
-      }
-    }
-
-    return false
+    return controller.childControllers.any { isControllerPresent(it, predicate) }
   }
 
   private suspend fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
@@ -751,13 +745,8 @@ class StartActivity : AppCompatActivity(),
   }
 
   fun isControllerAdded(predicate: Function1<Controller, Boolean>): Boolean {
-    for (controller in stack) {
-      if (isControllerPresent(controller, predicate)) {
-        return true
-      }
-    }
 
-    return false
+    return stack.any { isControllerPresent(it, predicate) }
   }
 
   fun popController(controller: Controller?) {

@@ -169,9 +169,7 @@ class PostHideHelper(
     // find all replies to the post recursively
     val postWithAllReplies = findPostWithReplies(parentPost.no, ArrayList(postsFastLookupMap.values))
     val postNoWithAllReplies: MutableSet<Long> = HashSet(postWithAllReplies.size)
-    for (p in postWithAllReplies) {
-      postNoWithAllReplies.add(p.no)
-    }
+    postWithAllReplies.mapTo(postNoWithAllReplies, Post::no)
     for (no in postNoWithAllReplies) {
       if (no == parentPost.no) {
         // do nothing with the parent post

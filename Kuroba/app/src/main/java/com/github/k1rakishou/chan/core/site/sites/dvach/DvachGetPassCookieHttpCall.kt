@@ -73,13 +73,13 @@ class DvachGetPassCookieHttpCall(
       }
     }
 
-    if (tokenCookie != null) {
-      loginResponse = DvachLoginResponse.Success(
+    loginResponse = if (tokenCookie != null) {
+      DvachLoginResponse.Success(
         "Success! Your device is now authorized.",
         tokenCookie
       )
     } else {
-      loginResponse = DvachLoginResponse.Failure("Could not get pass id")
+      DvachLoginResponse.Failure("Could not get pass id")
     }
 
   }

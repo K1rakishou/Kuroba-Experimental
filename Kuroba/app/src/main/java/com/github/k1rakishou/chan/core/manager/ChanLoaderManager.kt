@@ -75,10 +75,8 @@ class ChanLoaderManager {
       return
     }
 
-    val foundChanLoader = threadLoadersCache[chanDescriptor]
-    if (foundChanLoader == null) {
-      throw IllegalStateException("The released loader does not exist (chanDescriptor=$chanDescriptor)")
-    }
+    threadLoadersCache[chanDescriptor]
+      ?: throw IllegalStateException("The released loader does not exist (chanDescriptor=$chanDescriptor)")
 
     if (chanLoader.removeListener(listener)) {
       threadLoadersCache.put(chanDescriptor, chanLoader)

@@ -136,11 +136,7 @@ public class PostImage {
             return false;
         }
 
-        if (imageUrl == null) {
-            return false;
-        }
-
-        return true;
+        return imageUrl != null;
     }
 
     public boolean canBeUsedForPrefetch() {

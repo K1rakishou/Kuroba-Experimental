@@ -122,16 +122,13 @@ class PostCell : LinearLayout, PostCellInterface {
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
 
   constructor(context: Context?)
-    : super(context) {
-  }
+    : super(context)
 
   constructor(context: Context?, attrs: AttributeSet?)
-    : super(context, attrs) {
-  }
+    : super(context, attrs)
 
   constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int)
-    : super(context, attrs, defStyleAttr) {
-  }
+    : super(context, attrs, defStyleAttr)
 
   override fun onFinishInflate() {
     super.onFinishInflate()
@@ -280,10 +277,10 @@ class PostCell : LinearLayout, PostCellInterface {
         continue
       }
 
-      if (isTextOnly) {
-        return null
+      return if (isTextOnly) {
+        null
       } else {
-        return thumbnailViews[i]
+        thumbnailViews[i]
       }
     }
 

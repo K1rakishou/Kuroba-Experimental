@@ -286,17 +286,17 @@ open class Chan4 : SiteBase() {
         Chan4DeleteHttpCall(this@Chan4, deleteRequest)
       )
 
-      when (deleteResult) {
-        is HttpCall.HttpCallResult.Success -> {
-          return SiteActions.DeleteResult.DeleteComplete(
-            deleteResult.httpCall.deleteResponse
-          )
-        }
-        is HttpCall.HttpCallResult.Fail -> {
-          return SiteActions.DeleteResult.DeleteError(
-            deleteResult.error
-          )
-        }
+      return when (deleteResult) {
+          is HttpCall.HttpCallResult.Success -> {
+            SiteActions.DeleteResult.DeleteComplete(
+              deleteResult.httpCall.deleteResponse
+            )
+          }
+          is HttpCall.HttpCallResult.Fail -> {
+            SiteActions.DeleteResult.DeleteError(
+              deleteResult.error
+            )
+          }
       }
     }
 
@@ -315,13 +315,13 @@ open class Chan4 : SiteBase() {
         is HttpCall.HttpCallResult.Success -> {
           val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
 
-          when (loginResponse) {
+          return when (loginResponse) {
             is Chan4LoginResponse.Success -> {
               passToken.set(loginResponse.authCookie)
-              return SiteActions.LoginResult.LoginComplete(loginResponse)
+              SiteActions.LoginResult.LoginComplete(loginResponse)
             }
             is Chan4LoginResponse.Failure -> {
-              return SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
+              SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
             }
           }
         }
@@ -539,10 +539,10 @@ open class Chan4 : SiteBase() {
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
         if (chanDescriptor.isCatalogDescriptor()) {
-          if (postNo != null && postNo > 0) {
-            return "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/thread/" + postNo
+          return if (postNo != null && postNo > 0) {
+            "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/thread/" + postNo
           } else {
-            return "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/"
+            "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/"
           }
         }
 

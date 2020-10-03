@@ -107,11 +107,7 @@ class PostLinkable(
   }
 
   override fun hashCode(): Int {
-    var result = 0
-
-    for (c in key.toString().toCharArray()) {
-      result += c.toInt()
-    }
+    var result = key.toString().toCharArray().sumBy(Char::toInt)
 
     result *= 31
     result = 31 * result + linkableValue.hashCode()

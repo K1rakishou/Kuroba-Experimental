@@ -64,9 +64,7 @@ class SnackbarWrapper private constructor(
         snackbar?.removeCallback(this)
 
         val bottomNavigationView = findBottomNavigationView(view)
-        if (bottomNavigationView == null) {
-          return
-        }
+          ?: return
 
         if (bottomNavigationView.isFullyVisible()) {
           findFab(view)?.show()
@@ -102,9 +100,7 @@ class SnackbarWrapper private constructor(
 
   private fun updateSnackbarBottomPaddingSuperHacky(snackbarView: View) {
     val bottomNavView = findBottomNavigationView(snackbarView)
-    if (bottomNavView == null) {
-      return
-    }
+      ?: return
 
     if (snackbarView.y + snackbarView.height > bottomNavView.y) {
       val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
