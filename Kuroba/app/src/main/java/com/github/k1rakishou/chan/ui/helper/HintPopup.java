@@ -132,19 +132,21 @@ public class HintPopup {
                 }
             }
 
-            if (!dismissed && BackgroundUtils.isInForeground()) {
-                popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-                int xoff = -popupView.getMeasuredWidth() + offsetX - dp(2) + (centered ? 0 : anchor.getWidth());
-                int yoff = -dp(25) + offsetY + (top ? -anchor.getHeight() - dp(30) : 0);
-                popupWindow.showAsDropDown(anchor, xoff, yoff);
+            if (dismissed || !BackgroundUtils.isInForeground()) {
+                return;
+            }
 
-                if (wiggle) {
-                    popupView.animate()
-                            .translationY(dp(2))
-                            .setInterpolator(WIGGLER)
-                            .setDuration(60000)
-                            .start();
-                }
+            popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+            int xoff = -popupView.getMeasuredWidth() + offsetX - dp(2) + (centered ? 0 : anchor.getWidth());
+            int yoff = -dp(25) + offsetY + (top ? -anchor.getHeight() - dp(30) : 0);
+            popupWindow.showAsDropDown(anchor, xoff, yoff);
+
+            if (wiggle) {
+                popupView.animate()
+                        .translationY(dp(2))
+                        .setInterpolator(WIGGLER)
+                        .setDuration(60000)
+                        .start();
             }
         }, 400);
     }

@@ -40,8 +40,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.requestKeyboardFocus;
 
-public class SearchLayout
-        extends LinearLayout {
+public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
     @Inject
     ThemeEngine themeEngine;
@@ -68,6 +67,25 @@ public class SearchLayout
     private void init() {
         if (!isInEditMode()) {
             Chan.inject(this);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        if (clearButton != null) {
+            clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextColorPrimary());
         }
     }
 
@@ -125,13 +143,14 @@ public class SearchLayout
 
         clearButton.setAlpha(0f);
         clearButton.setImageResource(R.drawable.ic_clear_white_24dp);
-        clearButton.getDrawable().setTint(themeEngine.getChanTheme().getTextColorPrimary());
         clearButton.setScaleType(ImageView.ScaleType.CENTER);
         clearButton.setOnClickListener(v -> {
             searchView.setText("");
             requestKeyboardFocus(searchView);
         });
+
         addView(clearButton, dp(48), MATCH_PARENT);
+        onThemeChanged();
     }
 
     public void setText(String text) {
