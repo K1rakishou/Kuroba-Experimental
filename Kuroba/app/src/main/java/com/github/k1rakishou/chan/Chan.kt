@@ -47,6 +47,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
@@ -252,7 +253,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       // if there's any uncaught crash stuff, just dump them to the log and exit immediately
       Logger.e(TAG, "Unhandled exception", e)
       onUnhandledException(e, exceptionToString(false, e))
-      System.exit(999)
+      exitProcess(999)
     }
   }
 

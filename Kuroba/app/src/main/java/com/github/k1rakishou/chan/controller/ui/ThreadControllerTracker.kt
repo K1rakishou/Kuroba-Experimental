@@ -118,7 +118,7 @@ class ThreadControllerTracker(
       return false
     }
 
-    val translationX = Math.max(0, event.x.toInt() - trackStartPosition)
+    val translationX = max(0, event.x.toInt() - trackStartPosition)
     setTopControllerTranslation(translationX)
 
     velocityTracker!!.addMovement(event)
@@ -136,7 +136,7 @@ class ThreadControllerTracker(
           val isEnoughVelocity = velocity > 0 && abs(velocity) > FLING_MIN_VELOCITY && abs(velocity) < maxFlingPixels
 
           if (isEnoughVelocity || translationX >= getWidthFunc() * 3 / 4) {
-            velocity = Math.max(MAX_VELOCITY, velocity);
+            velocity = max(MAX_VELOCITY, velocity)
             scroller.fling(translationX, 0, velocity, 0, 0, Int.MAX_VALUE, 0, 0)
 
             // Make sure the animation always goes past the end

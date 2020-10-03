@@ -89,7 +89,7 @@ class LastPageNotificationsHelper(
   private fun getNotification(
     threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
   ): Notification {
-    val threadsOnLastPageCount = threadsWithTitles.count()
+    val threadsOnLastPageCount = threadsWithTitles.size
     val title = appContext.resources.getString(
       R.string.last_page_notification_threads_hit_last_page_format,
       threadsOnLastPageCount

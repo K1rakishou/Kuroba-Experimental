@@ -124,11 +124,7 @@ internal class NormalPostLoader(
       }
 
       // If there's a post in the list from the server, that's not in the cached list, add it.
-      for (serverPost in allPosts) {
-        if (!cachedPostsByNo.containsKey(serverPost.no)) {
-          newPosts.add(serverPost)
-        }
-      }
+      allPosts.filterNotTo(newPosts) { cachedPostsByNo.containsKey(it.no) }
     } else {
       newPosts.addAll(allPosts)
     }

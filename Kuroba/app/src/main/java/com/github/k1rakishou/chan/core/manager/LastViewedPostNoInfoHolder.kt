@@ -4,6 +4,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.math.max
 
 class LastViewedPostNoInfoHolder {
   private val lock = ReentrantReadWriteLock()
@@ -14,7 +15,7 @@ class LastViewedPostNoInfoHolder {
 
     lock.write {
       val prevPostNo = positions[threadDescriptor] ?: 0L
-      positions[threadDescriptor] = Math.max(prevPostNo, newPostNo)
+      positions[threadDescriptor] = max(prevPostNo, newPostNo)
     }
   }
 

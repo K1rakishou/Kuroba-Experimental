@@ -125,7 +125,7 @@ public class FilterEngine {
      */
     @AnyThread
     public boolean matches(ChanFilter filter, Post.Builder post) {
-        if (!post.moderatorCapcode.equals("") || post.sticky) {
+        if (!post.moderatorCapcode.isEmpty() || post.sticky) {
             return false;
         }
 
@@ -209,7 +209,7 @@ public class FilterEngine {
      */
     @AnyThread
     public boolean matches(ChanFilter filter, Post post) {
-        if (!post.capcode.equals("") || post.isSticky()) {
+        if (!post.capcode.isEmpty() || post.isSticky()) {
             return false;
         }
 

@@ -23,10 +23,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import android.text.Html
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.content.FileProvider
+import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
@@ -366,9 +366,9 @@ class UpdateManager(
     BackgroundUtils.ensureMainThread()
 
     // Show dialog because release updates are infrequent so it's fine
-    val text = Html.fromHtml(
+    val text = (
       "<h3>" + getApplicationLabel() + " was updated to " + BuildConfig.VERSION_NAME + "</h3>"
-    )
+    ).parseAsHtml()
 
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
@@ -627,7 +627,7 @@ class UpdateManager(
         updateDownloadDialog = ProgressDialog(context).apply {
           setCanceledOnTouchOutside(true)
 
-          setOnDismissListener {_ ->
+          setOnDismissListener {
             showToast(context, "Download will continue in background.")
             updateDownloadDialog = null
           }

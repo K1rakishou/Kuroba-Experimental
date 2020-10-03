@@ -191,7 +191,7 @@ public class FilesLayout
         }
     }
 
-    private class FileItemHistory {
+    private static class FileItemHistory {
         int index, top;
         FileWatcher.FileItem clickedItem;
     }

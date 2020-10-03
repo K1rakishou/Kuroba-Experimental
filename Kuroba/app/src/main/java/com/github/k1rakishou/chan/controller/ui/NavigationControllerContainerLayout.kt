@@ -137,11 +137,7 @@ class NavigationControllerContainerLayout : FrameLayout {
     val zones = zonesMap[orientation]
 
     if (zones != null && zones.isNotEmpty()) {
-      val rects: MutableList<Rect> = ArrayList()
-
-      for (exclusionZone in zones) {
-        rects.add(exclusionZone.zoneRect)
-      }
+      val rects: MutableList<Rect> = zones.mapTo(ArrayList(), ExclusionZone::zoneRect)
 
       systemGestureExclusionRects = rects
     }

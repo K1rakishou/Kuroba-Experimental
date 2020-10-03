@@ -147,13 +147,8 @@ class PostsFilter(
 
     companion object {
       fun find(name: String): Order? {
-        for (mode in values()) {
-          if (mode.orderName == name) {
-            return mode
-          }
-        }
 
-        return null
+        return values().firstOrNull { it.orderName == name }
       }
 
       @JvmStatic

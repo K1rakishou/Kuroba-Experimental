@@ -87,7 +87,7 @@ abstract class ThreadController(
         return threadLayout.canChildScrollUp()
       }
     }
-    swipeRefreshLayout.setId(R.id.swipe_refresh_layout)
+    swipeRefreshLayout.id = R.id.swipe_refresh_layout
     swipeRefreshLayout.addView(threadLayout)
     swipeRefreshLayout.setOnRefreshListener(this)
     view = swipeRefreshLayout

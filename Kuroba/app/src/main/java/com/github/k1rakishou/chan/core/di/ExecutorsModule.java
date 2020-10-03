@@ -33,16 +33,14 @@ public class ExecutorsModule {
             throw new IllegalArgumentException("threadCount must be > 0");
         }
 
-        return Executors.newFixedThreadPool(threadCount, runnable -> {
-            return new Thread(
-                    runnable,
-                    String.format(
-                            Locale.ENGLISH,
-                            name,
-                            threadIndex.getAndIncrement()
-                    )
-            );
-        });
+        return Executors.newFixedThreadPool(threadCount, runnable -> new Thread(
+                runnable,
+                String.format(
+                        Locale.ENGLISH,
+                        name,
+                        threadIndex.getAndIncrement()
+                )
+        ));
     }
 
 }

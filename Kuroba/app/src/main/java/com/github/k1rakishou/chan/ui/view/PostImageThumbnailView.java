@@ -162,9 +162,9 @@ public class PostImageThumbnailView extends ThumbnailView {
         boolean hasImageUrl = postImage.imageUrl != null;
 
         if (highRes && hasImageUrl && (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get())) {
-            url = postImage.type == ChanPostImageType.STATIC
-                    ? postImage.imageUrl.toString()
-                    : postImage.getThumbnailUrl().toString();
+            url = (postImage.type == ChanPostImageType.STATIC
+                    ? postImage.imageUrl
+                    : postImage.getThumbnailUrl()).toString();
         }
 
         return url;

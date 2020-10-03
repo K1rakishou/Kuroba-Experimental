@@ -801,9 +801,8 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
         animator.setInterpolator(new DecelerateInterpolator(2f));
         animator.setDuration(400);
-        animator.addUpdateListener(animation -> {
-            moreDropdown.setRotation((float) animation.getAnimatedValue());
-        });
+        animator.addUpdateListener(animation ->
+                moreDropdown.setRotation((float) animation.getAnimatedValue()));
 
         more.setImageDrawable(moreDropdown);
         animator.start();

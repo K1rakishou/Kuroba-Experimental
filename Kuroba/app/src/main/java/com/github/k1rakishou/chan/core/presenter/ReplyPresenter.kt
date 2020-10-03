@@ -180,19 +180,19 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onBack(): Boolean {
-    when {
+    return when {
       page == Page.LOADING -> {
-        return true
+        true
       }
       page == Page.AUTHENTICATION -> {
         switchPage(Page.INPUT)
-        return true
+        true
       }
       isExpanded -> {
         onMoreClicked()
-        return true
+        true
       }
-      else -> return false
+      else -> false
     }
   }
 

@@ -313,7 +313,7 @@ class BookmarkWatcherDelegate(
 
               return@filter postNo > lastViewedPostNo
             }
-            .count()
+            .size
 
           threadBookmark.updateSeenPostCountInRollingSticky(totalPostsCount, newPostsCount)
         }
@@ -350,21 +350,18 @@ class BookmarkWatcherDelegate(
     val alreadyRead = lastViewedPostNo >= postReplyDescriptor.postNo
 
     if (!threadBookmark.threadBookmarkReplies.containsKey(postReplyDescriptor)) {
-      threadBookmark.threadBookmarkReplies.put(
-        postReplyDescriptor,
-        ThreadBookmarkReply(
-          postDescriptor = postReplyDescriptor,
-          repliesTo = PostDescriptor.create(threadDescriptor, myPostNo),
-          // If lastViewPostNo is greater or equal to reply's postNo then we have already seen/read
-          // that reply and we don't need to notify the user about it. This happens when the user
-          // replies to a thread then someone else replies to him and before we update the bookmarks
-          // the user scroll below the reply position. In such case we don't want to show any kind
-          // of notifications because the user has already seen/read the reply.
-          alreadySeen = alreadyRead,
-          alreadyNotified = alreadyRead,
-          alreadyRead = alreadyRead,
-          time = DateTime.now()
-        )
+      threadBookmark.threadBookmarkReplies[postReplyDescriptor] = ThreadBookmarkReply(
+        postDescriptor = postReplyDescriptor,
+        repliesTo = PostDescriptor.create(threadDescriptor, myPostNo),
+        // If lastViewPostNo is greater or equal to reply's postNo then we have already seen/read
+        // that reply and we don't need to notify the user about it. This happens when the user
+        // replies to a thread then someone else replies to him and before we update the bookmarks
+        // the user scroll below the reply position. In such case we don't want to show any kind
+        // of notifications because the user has already seen/read the reply.
+        alreadySeen = alreadyRead,
+        alreadyNotified = alreadyRead,
+        alreadyRead = alreadyRead,
+        time = DateTime.now()
       )
     } else {
       val existingReply = checkNotNull(threadBookmark.threadBookmarkReplies[postReplyDescriptor])

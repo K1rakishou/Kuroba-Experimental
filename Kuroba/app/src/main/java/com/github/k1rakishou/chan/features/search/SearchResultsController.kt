@@ -139,9 +139,7 @@ class SearchResultsController(
 
   private fun tryRestorePreviousPosition() {
     val indexAndTop = presenter.lastRecyclerViewScrollStateOrNull()
-    if (indexAndTop == null) {
-      return
-    }
+      ?: return
 
     (epoxyRecyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
       indexAndTop.index,
@@ -161,7 +159,7 @@ class SearchResultsController(
         query
       )
     } else {
-      navigation.title = AndroidUtils.getString(
+      navigation.title = getString(
         R.string.controller_search_results,
         siteDescriptor.siteName,
         query,

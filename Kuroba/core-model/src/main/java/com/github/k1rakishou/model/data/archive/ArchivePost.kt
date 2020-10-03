@@ -18,10 +18,10 @@ class ArchivePost(
 
   var moderatorCapcode: String = ""
     set(value) {
-      if (shouldFilterCapcode(value)) {
-        field = ""
+      field = if (shouldFilterCapcode(value)) {
+        ""
       } else {
-        field = value
+        value
       }
     }
 

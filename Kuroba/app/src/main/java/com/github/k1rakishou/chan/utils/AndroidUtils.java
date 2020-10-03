@@ -43,7 +43,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.StatFs;
-import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -61,6 +60,7 @@ import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.chan.BuildConfig;
@@ -731,11 +731,9 @@ public class AndroidUtils {
     }
 
     public static long getAvailableSpaceInBytes(File file) {
-        long availableSpace = -1L;
         StatFs stat = new StatFs(file.getPath());
-        availableSpace = stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
 
-        return availableSpace;
+        return stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
     }
 
     /**

@@ -149,10 +149,7 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
             callback,
             callbackWithClickAction
           ).lastOrNull()
-
-          if (clickCallback == null) {
-            throw IllegalArgumentException("Both callbacks are null")
-          }
+            ?: throw IllegalArgumentException("Both callbacks are null")
 
           settingV2._callback = fun(): SettingClickAction {
             return when (val callbackResult = clickCallback.invoke()) {

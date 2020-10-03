@@ -94,7 +94,7 @@ class BrowseControllerTracker(
       event.downTime,
       event.eventTime,
       event.action,
-      Math.max(0f, event.x - trackStartPosition),
+      max(0f, event.x - trackStartPosition),
       event.y,
       0
     )

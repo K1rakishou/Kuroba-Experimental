@@ -225,13 +225,8 @@ abstract class CommonSite : SiteBase() {
     abstract val names: Array<String>
     
     override fun matchesName(value: String): Boolean {
-      for (s in names) {
-        if (value == s) {
-          return true
-        }
-      }
-      
-      return false
+
+      return names.contains(value)
     }
     
     override fun matchesMediaHost(url: HttpUrl): Boolean {

@@ -28,7 +28,7 @@ class ChanPostRepository(
 ) : AbstractRepository(database, logger) {
   private val TAG = "$loggerTag ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
-  private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache, loggerTag, logger,)
+  private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache, loggerTag, logger)
 
   init {
     applicationScope.launch(Dispatchers.Default) {
@@ -524,12 +524,8 @@ class ChanPostRepository(
     val fromCache = postCache.getPostFromCache(
       chanPost.postDescriptor,
       chanPost.isOp
-    )
-
-    if (fromCache == null) {
-      // Post is not cached yet - update
+    ) ?: // Post is not cached yet - update
       return true
-    }
 
     if (fromCache.isOp) {
       // Cached post is an original post - always update

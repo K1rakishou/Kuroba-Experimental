@@ -20,7 +20,7 @@ object ArchiveThreadMapper {
     archiveThread: ArchiveThread,
     archiveDescriptor: ArchiveDescriptor
   ): List<Post.Builder> {
-    val repliesCount = archiveThread.posts.filter { post -> !post.isOP }.count()
+    val repliesCount = archiveThread.posts.filter { post -> !post.isOP }.size
     val imagesCount = archiveThread.posts.sumBy { post -> post.archivePostMediaList.size }
 
     return archiveThread.posts.mapNotNull { post ->

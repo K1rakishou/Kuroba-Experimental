@@ -100,13 +100,8 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     return lock.read {
-      for (siteDescriptorOrdered in orders) {
-        if (isSiteActive(siteDescriptorOrdered)) {
-          return@read siteDescriptorOrdered
-        }
-      }
 
-      return@read null
+      return@read orders.firstOrNull(this@SiteManager::isSiteActive)
     }
   }
 
@@ -320,7 +315,7 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     val moved = lock.write {
-      if (orders.get(from) != siteDescriptor) {
+      if (orders[from] != siteDescriptor) {
         return@write false
       }
 

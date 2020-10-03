@@ -622,7 +622,7 @@ open class ViewThreadController(
         val view: View? = navigation.findItem(ToolbarMenu.OVERFLOW_ID).view
         if (view != null) {
           dismissHintPopup()
-          hintPopup = HintPopup.show(context, view, AndroidUtils.getString(R.string.thread_up_down_hint), -AndroidUtils.dp(1f), 0)
+          hintPopup = HintPopup.show(context, view, getString(R.string.thread_up_down_hint), -AndroidUtils.dp(1f), 0)
         }
       }, 600)
     } else if (counter == 3) {
@@ -630,7 +630,7 @@ open class ViewThreadController(
         val view: View? = navigation.findItem(ACTION_PIN).view
         if (view != null) {
           dismissHintPopup()
-          hintPopup = HintPopup.show(context, view, AndroidUtils.getString(R.string.thread_pin_hint), -AndroidUtils.dp(1f), 0)
+          hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -AndroidUtils.dp(1f), 0)
         }
       }, 600)
     }

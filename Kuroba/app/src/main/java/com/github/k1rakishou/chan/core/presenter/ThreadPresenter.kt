@@ -133,10 +133,10 @@ class ThreadPresenter @Inject constructor(
         return null
       }
 
-      if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        return LocalSearchType.ThreadSearch
+      return if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        LocalSearchType.ThreadSearch
       } else {
-        return LocalSearchType.CatalogSearch
+        LocalSearchType.CatalogSearch
       }
     }
 
@@ -539,13 +539,8 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun needUpdatePost(batchResult: LoaderBatchResult): Boolean {
-    for (loaderResult in batchResult.results) {
-      if (loaderResult is Succeeded && loaderResult.needUpdateView) {
-        return true
-      }
-    }
 
-    return false
+    return batchResult.results.any { it is Succeeded && it.needUpdateView }
   }
 
   override suspend fun onChanLoaderData(result: ChanThread) {
@@ -1380,7 +1375,7 @@ class ThreadPresenter @Inject constructor(
       val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
       if (savedReply?.password == null) {
         threadPresenterCallback?.hideDeleting(
-          AndroidUtils.getString(R.string.delete_error_post_is_not_saved)
+          getString(R.string.delete_error_post_is_not_saved)
         )
         return@launch
       }
@@ -1393,9 +1388,9 @@ class ThreadPresenter @Inject constructor(
           val deleteResponse = deleteResult.deleteResponse
 
           val message = when {
-            deleteResponse.deleted -> AndroidUtils.getString(R.string.delete_success)
+            deleteResponse.deleted -> getString(R.string.delete_success)
             !TextUtils.isEmpty(deleteResponse.errorMessage) -> deleteResponse.errorMessage
-            else -> AndroidUtils.getString(R.string.delete_error)
+            else -> getString(R.string.delete_error)
           }
 
           if (deleteResponse.deleted) {
@@ -1417,7 +1412,7 @@ class ThreadPresenter @Inject constructor(
           threadPresenterCallback?.hideDeleting(message)
         }
         is SiteActions.DeleteResult.DeleteError -> {
-          val message = AndroidUtils.getString(
+          val message = getString(
             R.string.delete_error,
             deleteResult.error.errorMessageOrClassName()
           )

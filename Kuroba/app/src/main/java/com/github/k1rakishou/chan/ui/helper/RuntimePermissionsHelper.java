@@ -122,7 +122,7 @@ public class RuntimePermissionsHelper {
         void retryPermissionRequest();
     }
 
-    private class CallbackHolder {
+    private static class CallbackHolder {
         private Callback callback;
         private String permission;
     }

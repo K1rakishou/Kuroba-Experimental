@@ -96,6 +96,7 @@ public class DropdownArrowDrawable extends Drawable {
         for (int state : states) {
             if (state == android.R.attr.state_pressed) {
                 pressed = true;
+                break;
             }
         }
 

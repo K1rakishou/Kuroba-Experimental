@@ -79,20 +79,20 @@ internal class PartialContentSupportChecker(
             checkedChanHosts[host] ?: false
           }
 
-          if (supportsPartialContent) {
+          return if (supportsPartialContent) {
             // Fast path: we already had a file size and already checked whether this
             // chan supports Partial Content. So we don't need to send HEAD request.
-            return Single.just(
+            Single.just(
               PartialContentCheckResult(
-                supportsPartialContentDownload = true,
-                // We are not sure about this one but it doesn't matter
-                // because we have another similar check in the downloader.
-                notFoundOnServer = false,
-                length = fileSize
+                      supportsPartialContentDownload = true,
+                      // We are not sure about this one but it doesn't matter
+                      // because we have another similar check in the downloader.
+                      notFoundOnServer = false,
+                      length = fileSize
               )
             )
           } else {
-            return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
+            Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
           }
         }
       }

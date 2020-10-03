@@ -112,13 +112,7 @@ data class ChanPost(
       return false
     }
 
-    for (i in postImages.indices) {
-      if (postImages[i] != other.postImages[i]) {
-        return false
-      }
-    }
-
-    return true
+    return postImages.indices.none { postImages[it] != other.postImages[it] }
   }
 
   override fun hashCode(): Int {

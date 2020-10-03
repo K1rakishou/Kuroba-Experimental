@@ -24,6 +24,4 @@ import kotlinx.android.parcel.Parcelize
 data class ChanState(
   val board: DescriptorParcelable,
   val thread: DescriptorParcelable
-) : Parcelable {
-
-}
+) : Parcelable
