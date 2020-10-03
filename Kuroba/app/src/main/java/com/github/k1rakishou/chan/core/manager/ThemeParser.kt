@@ -144,6 +144,11 @@ class ThemeParser(
 
     val rawJson = FileReader(descriptor.fileDescriptor).readText()
     val serializableTheme = gson.fromJson(rawJson, SerializableTheme::class.java)
+
+    if (serializableTheme.name.isBlank()) {
+      return ThemeParseResult.BadName(serializableTheme.name)
+    }
+
     val hasUnparsedFields = serializableTheme.hasUnparsedFields()
 
     val theme = serializableTheme.toChanTheme(defaultTheme)
@@ -240,29 +245,29 @@ class ThemeParser(
   ) {
 
     fun hasUnparsedFields(): Boolean {
-      return accentColor == null ||
-        primaryColor == null ||
-        backColor == null ||
-        errorColor == null ||
-        textColorPrimary == null ||
-        textColorSecondary == null ||
-        textColorHint == null ||
-        postHighlightedColor == null ||
-        postSavedReplyColor == null ||
-        postSubjectColor == null ||
-        postDetailsColor == null ||
-        postNameColor == null ||
-        postInlineQuoteColor == null ||
-        postQuoteColor == null ||
-        postHighlightQuoteColor == null ||
-        postLinkColor == null ||
-        postSpoilerColor == null ||
-        postSpoilerRevealTextColor == null ||
-        postUnseenLabelColor == null ||
-        dividerColor == null ||
-        bookmarkCounterNotWatchingColor == null ||
-        bookmarkCounterHasRepliesColor == null ||
-        bookmarkCounterNormalColor == null
+      return accentColor == null || accentColor.toColorOrNull() == null ||
+        primaryColor == null || primaryColor.toColorOrNull() == null ||
+        backColor == null || backColor.toColorOrNull() == null ||
+        errorColor == null || errorColor.toColorOrNull() == null ||
+        textColorPrimary == null || textColorPrimary.toColorOrNull() == null ||
+        textColorSecondary == null || textColorSecondary.toColorOrNull() == null ||
+        textColorHint == null || textColorHint.toColorOrNull() == null ||
+        postHighlightedColor == null || postHighlightedColor.toColorOrNull() == null ||
+        postSavedReplyColor == null || postSavedReplyColor.toColorOrNull() == null ||
+        postSubjectColor == null || postSubjectColor.toColorOrNull() == null ||
+        postDetailsColor == null || postDetailsColor.toColorOrNull() == null ||
+        postNameColor == null || postNameColor.toColorOrNull() == null ||
+        postInlineQuoteColor == null || postInlineQuoteColor.toColorOrNull() == null ||
+        postQuoteColor == null || postQuoteColor.toColorOrNull() == null ||
+        postHighlightQuoteColor == null || postHighlightQuoteColor.toColorOrNull() == null ||
+        postLinkColor == null || postLinkColor.toColorOrNull() == null ||
+        postSpoilerColor == null || postSpoilerColor.toColorOrNull() == null ||
+        postSpoilerRevealTextColor == null || postSpoilerRevealTextColor.toColorOrNull() == null ||
+        postUnseenLabelColor == null || postUnseenLabelColor.toColorOrNull() == null ||
+        dividerColor == null || dividerColor.toColorOrNull() == null ||
+        bookmarkCounterNotWatchingColor == null || bookmarkCounterNotWatchingColor.toColorOrNull() == null ||
+        bookmarkCounterHasRepliesColor == null || bookmarkCounterHasRepliesColor.toColorOrNull() == null ||
+        bookmarkCounterNormalColor == null || bookmarkCounterNormalColor.toColorOrNull() == null
     }
 
     fun toChanTheme(defaultTheme: ChanTheme): ChanTheme {
@@ -368,7 +373,8 @@ class ThemeParser(
 
   sealed class ThemeParseResult {
     class Error(val error: Throwable) : ThemeParseResult()
-    class Success(val chanTheme: ChanTheme, hasUnparsedFields: Boolean) : ThemeParseResult()
+    class BadName(val name: String) : ThemeParseResult()
+    class Success(val chanTheme: ChanTheme, val hasUnparsedFields: Boolean) : ThemeParseResult()
   }
 
   sealed class ThemeExportResult {

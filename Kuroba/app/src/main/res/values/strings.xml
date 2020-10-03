@@ -396,6 +396,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_comment_button_sjis_tag">[sjis]</string>
     <string name="reply_attach_long_click_hint">Long tap to attach image by it\'s URL from the clipboard</string>
 
+
+
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
     <string name="delete_success">Post deleted</string>
@@ -1042,6 +1044,18 @@ Don't have a 4chan Pass?<br>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
-    <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for fdroid builds</string>
+    <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
+
+    <string name="theme_settings_controller_failed_to_open_output_file">Failed to open output file</string>
+    <string name="theme_settings_controller_failed_to_open_theme_file">Failed to open theme file</string>
+    <string name="theme_settings_controller_failed_to_export_theme">Failed to export theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_import_theme">Failed to import theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_parse_some_colors">Failed to parse some colors. Those colors were reset to default</string>
+    <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
+    <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
+    <string name="theme_settings_controller_canceled">Canceled: %1$s</string>
+    <string name="theme_settings_controller_current_theme">Current theme: %1$s</string>
+    <string name="theme_settings_controller_theme_light">Light</string>
+    <string name="theme_settings_controller_theme_dark">Dark</string>
 
 </resources>

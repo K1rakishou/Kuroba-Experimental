@@ -29,6 +29,7 @@ import android.view.ViewGroup
 import android.widget.EdgeEffect
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.text.getSpans
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -67,6 +68,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileChooserCallback
@@ -228,7 +230,7 @@ class ThemeSettingsController(context: Context)
     }
 
     if (!themeEngine.resetTheme(isDarkTheme)) {
-      showToast("Failed to reset theme")
+      showToastLong(context.getString(R.string.theme_settings_controller_failed_to_reset_theme))
       return
     }
 
@@ -250,7 +252,7 @@ class ThemeSettingsController(context: Context)
 
     fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
       override fun onCancel(reason: String) {
-        showToast("Canceled: $reason")
+        showToastLong(context.getString(R.string.theme_settings_controller_canceled, reason))
       }
 
       override fun onResult(uri: Uri) {
@@ -268,7 +270,7 @@ class ThemeSettingsController(context: Context)
 
     fileChooser.openChooseFileDialog(object : FileChooserCallback() {
       override fun onCancel(reason: String) {
-        showToast("Canceled: $reason")
+        showToastLong(context.getString(R.string.theme_settings_controller_canceled, reason))
       }
 
       override fun onResult(uri: Uri) {
@@ -280,38 +282,67 @@ class ThemeSettingsController(context: Context)
   private fun onFileToExportSelected(uri: Uri, isDarkTheme: Boolean) {
     val file = fileManager.fromUri(uri)
     if (file == null) {
-      showToast("Failed to open output file")
+      showToastLong(context.getString(R.string.theme_settings_controller_failed_to_open_output_file))
       return
     }
 
     mainScope.launch {
       when (val result = themeEngine.exportTheme(file, isDarkTheme)) {
         is ThemeParser.ThemeExportResult.Error -> {
-          showToast("Failed to export theme: ${result.error.errorMessageOrClassName()}")
+          val message = context.getString(
+            R.string.theme_settings_controller_failed_to_export_theme,
+            result.error.errorMessageOrClassName()
+          )
+
+          showToastLong(message)
         }
-        ThemeParser.ThemeExportResult.Success -> showToast("Done")
-      }
+        ThemeParser.ThemeExportResult.Success -> {
+          showToastLong(context.getString(R.string.done))
+        }
+      }.exhaustive
     }
   }
 
   private fun onFileToImportSelected(uri: Uri, isDarkTheme: Boolean) {
     val file = fileManager.fromUri(uri)
     if (file == null) {
-      showToast("Failed to open theme file")
+      showToastLong(context.getString(R.string.theme_settings_controller_failed_to_open_theme_file))
       return
     }
 
     mainScope.launch {
       when (val result = themeEngine.tryParseAndApplyTheme(file, isDarkTheme)) {
         is ThemeParser.ThemeParseResult.Error -> {
-          showToast("Failed to import theme: ${result.error.errorMessageOrClassName()}")
+          val message = context.getString(
+            R.string.theme_settings_controller_failed_to_import_theme,
+            result.error.errorMessageOrClassName()
+          )
+
+          showToastLong(message)
+        }
+        is ThemeParser.ThemeParseResult.BadName -> {
+          val message = context.getString(
+            R.string.theme_settings_controller_failed_to_parse_bad_name,
+            result.name
+          )
+
+          showToastLong(message)
         }
         is ThemeParser.ThemeParseResult.Success -> {
-          showToast("Done")
+          if (result.hasUnparsedFields) {
+            showToastLong(context.getString(R.string.theme_settings_controller_failed_to_parse_some_colors))
+          } else {
+            showToastLong(context.getString(R.string.done))
+          }
+
           reload()
         }
-      }
+      }.exhaustive
     }
+  }
+
+  private fun showToastLong(message: String) {
+    showToast(message, Toast.LENGTH_LONG)
   }
 
   private fun updateColors(adapter: Adapter, position: Int, root: LinearLayout) {
@@ -329,12 +360,15 @@ class ThemeSettingsController(context: Context)
   @SuppressLint("SetTextI18n")
   private fun updateCurrentThemeIndicator(isLightTheme: Boolean) {
     val themeType = if (isLightTheme) {
-      "Light"
+      context.getString(R.string.theme_settings_controller_theme_light)
     } else {
-      "Dark"
+      context.getString(R.string.theme_settings_controller_theme_dark)
     }
 
-    currentThemeIndicator.text = "Current theme: $themeType"
+    currentThemeIndicator.text = context.getString(
+      R.string.theme_settings_controller_current_theme,
+      themeType
+    )
   }
 
   private fun FloatingActionButton.updateColors(theme: ChanTheme) {
