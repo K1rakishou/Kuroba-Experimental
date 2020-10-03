@@ -187,7 +187,6 @@ public class ChanSettings {
 
     //region APPEARANCE
     // Theme
-    private static final StringSetting theme;
     public static final BooleanSetting imageViewerFullscreenMode;
     public static final BooleanSetting isCurrentThemeDark;
 
@@ -337,7 +336,6 @@ public class ChanSettings {
 
             //region APPEARANCE
             // Theme
-            theme = new StringSetting(p, "preference_theme", "tomorrow");
             imageViewerFullscreenMode = new BooleanSetting(p, "image_viewer_fullscreen_mode", true);
             isCurrentThemeDark = new BooleanSetting(p, "is_current_theme_dark", true);
 
@@ -505,25 +503,6 @@ public class ChanSettings {
             Logger.e(TAG, "Error while trying to deserialize JsCaptchaCookiesJar", error);
             return JsCaptchaCookiesJar.empty();
         }
-    }
-
-    public static ThemeColor getThemeAndColor() {
-        String themeRaw = ChanSettings.theme.get();
-
-        String theme = themeRaw;
-        String color = null;
-        String accentColor = null;
-
-        String[] splitted = themeRaw.split(",");
-        if (splitted.length >= 2) {
-            theme = splitted[0];
-            color = splitted[1];
-            if (splitted.length == 3) {
-                accentColor = splitted[2];
-            }
-        }
-
-        return new ThemeColor(theme, color, accentColor);
     }
 
     /**

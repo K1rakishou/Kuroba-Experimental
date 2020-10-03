@@ -34,7 +34,7 @@ class ColorizableListView @JvmOverloads constructor(
       return
     }
 
-    changeEdgeEffect(themeEngine)
+    changeEdgeEffect(themeEngine.chanTheme)
   }
 
 }

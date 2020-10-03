@@ -1,23 +1,24 @@
 package com.github.k1rakishou.chan.core.model
 
+import android.text.Spannable
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 
 // Thread safe
 class PostCommentBuilder(
-  private var comment: CharSequence? = null,
+  private var comment: Spannable? = null,
   private val postLinkables: MutableSet<PostLinkable> = mutableSetOf()
 ) {
   var commentUpdateCounter: Int = 0
     private set
 
   @Synchronized
-  fun setComment(comment: CharSequence) {
+  fun setComment(comment: Spannable) {
     this.comment = comment
     ++this.commentUpdateCounter
   }
 
   @Synchronized
-  fun setParsedComment(comment: CharSequence) {
+  fun setParsedComment(comment: Spannable) {
     this.comment = comment
   }
 
@@ -48,6 +49,7 @@ class PostCommentBuilder(
   @Synchronized
   fun toPostComment(): PostComment {
     val c = checkNotNull(comment) { "Comment is null!" }
+    require(c is Spannable) { "Comment is not instance of Spannable! comment=${c::class.java.simpleName}" }
 
     return PostComment(c, postLinkables.toList())
   }

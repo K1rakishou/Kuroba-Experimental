@@ -83,7 +83,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_alignParentRight="true"
             android:layout_toRightOf="@id/replies" />
 
-        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
+        <View
             android:id="@+id/divider"
             android:layout_width="match_parent"
             android:layout_height="1dp"

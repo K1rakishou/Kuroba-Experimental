@@ -37,7 +37,7 @@ class ColorizableTextView @JvmOverloads constructor(
 
     highlightColor = themeEngine.chanTheme.accentColor
     setLinkTextColor(themeEngine.chanTheme.postLinkColor)
-    setHandlesColors(themeEngine)
+    setHandlesColors(themeEngine.chanTheme)
 
     setTextColor(
       ColorStateList(

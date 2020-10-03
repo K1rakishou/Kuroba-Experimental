@@ -23,8 +23,8 @@ open class ThemeEngine {
 
   private var rootView: View? = null
 
-  private lateinit var defaultDarkTheme: ChanTheme
-  private lateinit var defaultLightTheme: ChanTheme
+  lateinit var defaultDarkTheme: ChanTheme
+  lateinit var defaultLightTheme: ChanTheme
 
   open lateinit var chanTheme: ChanTheme
 

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.mapper
 
+import android.text.SpannableString
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
@@ -128,7 +129,7 @@ object ChanPostMapper {
                 .repliesTo(chanPost.repliesTo)
                 .fromCache(chanPost.isFromCache)
 
-        postBuilder.postCommentBuilder.setComment(postComment)
+        postBuilder.postCommentBuilder.setComment(SpannableString(postComment))
         postBuilder.linkables(
           postComment.toSpanned().getSpans(0, postComment.length, PostLinkable::class.java).toList()
         )

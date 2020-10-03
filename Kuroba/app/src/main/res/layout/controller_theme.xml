@@ -17,18 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/text"
+            android:id="@+id/current_theme_indicator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp" />
+            android:gravity="center_horizontal"
+            android:textSize="20sp"
+            android:textColor="#000"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            tools:text="Current theme: Light"/>
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/pager"
@@ -36,13 +43,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="0dp"
             android:layout_weight="1"
             android:clipToPadding="false"
-            android:paddingBottom="88dp"
-            android:paddingLeft="56dp"
-            android:paddingRight="56dp" />
+            android:paddingLeft="16dp"
+            android:paddingTop="16dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="32dp" />
 
     </LinearLayout>
 
-    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

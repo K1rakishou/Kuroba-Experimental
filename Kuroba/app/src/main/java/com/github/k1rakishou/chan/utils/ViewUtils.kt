@@ -9,16 +9,17 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import androidx.viewpager.widget.ViewPager
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import java.lang.reflect.Field
 
 
 object ViewUtils {
   private const val TAG = "ViewUtils"
 
-  fun TextView.setEditTextCursorColor(themeEngine: ThemeEngine) {
+  fun TextView.setEditTextCursorColor(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
-      themeEngine.chanTheme.accentColor,
+      theme.accentColor,
       0x80
     )
 
@@ -65,9 +66,9 @@ object ViewUtils {
     }
   }
 
-  fun TextView.setHandlesColors(themeEngine: ThemeEngine) {
+  fun TextView.setHandlesColors(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
-      themeEngine.chanTheme.accentColor,
+      theme.accentColor,
       0x80
     )
 
@@ -131,17 +132,19 @@ object ViewUtils {
   }
 
   @SuppressLint("UseCompatLoadingForDrawables")
-  fun AbsListView.changeEdgeEffect(themeEngine: ThemeEngine) {
+  fun AbsListView.changeEdgeEffect(theme: ChanTheme) {
+    val color = theme.accentColor
+
     if (AndroidUtils.isAndroid10()) {
-      bottomEdgeEffectColor = themeEngine.chanTheme.accentColor
-      topEdgeEffectColor = themeEngine.chanTheme.accentColor
+      bottomEdgeEffectColor = color
+      topEdgeEffectColor = color
       return
     }
 
     val edgeEffectTop = EdgeEffect(context)
-    edgeEffectTop.color = themeEngine.chanTheme.accentColor
+    edgeEffectTop.color = color
     val edgeEffectBottom = EdgeEffect(context)
-    edgeEffectBottom.color = themeEngine.chanTheme.accentColor
+    edgeEffectBottom.color = color
 
     try {
       val f1: Field = AbsListView::class.java.getDeclaredField("mEdgeGlowTop")
@@ -152,7 +155,28 @@ object ViewUtils {
       f2.isAccessible = true
       f2.set(this, edgeEffectBottom)
     } catch (error: Exception) {
-      Logger.e(TAG, "changeEdgeEffect() failure", error)
+      Logger.e(TAG, "AbsListView.changeEdgeEffect() failure", error)
+    }
+  }
+
+  fun ViewPager.changeEdgeEffect(theme: ChanTheme) {
+    val color = theme.accentColor
+
+    val leftEdge = EdgeEffect(context)
+    leftEdge.color = color
+    val rightEdge = EdgeEffect(context)
+    rightEdge.color = color
+
+    try {
+      val f1: Field = ViewPager::class.java.getDeclaredField("mLeftEdge")
+      f1.isAccessible = true
+      f1.set(this, leftEdge)
+
+      val f2: Field = ViewPager::class.java.getDeclaredField("mRightEdge")
+      f2.isAccessible = true
+      f2.set(this, rightEdge)
+    } catch (error: Exception) {
+      Logger.e(TAG, "ViewPager.changeEdgeEffect() failure", error)
     }
   }
 

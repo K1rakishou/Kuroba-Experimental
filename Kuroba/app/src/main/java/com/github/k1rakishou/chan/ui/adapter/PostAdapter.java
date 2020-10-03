@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
+import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -71,6 +72,7 @@ public class PostAdapter
     private final PostCellInterface.PostCellCallback postCellCallback;
     private RecyclerView recyclerView;
     private PostFilterManager postFilterManager;
+    private ChanTheme chanTheme;
 
     private final ThreadStatusCell.Callback statusCellCallback;
     private final List<Post> displayList = new ArrayList<>();
@@ -202,7 +204,7 @@ public class PostAdapter
                         true,
                         postViewMode,
                         compact,
-                        themeEngine.getChanTheme()
+                        chanTheme
                 );
 
                 if (itemViewType == TYPE_POST_STUB) {
@@ -321,12 +323,15 @@ public class PostAdapter
     public void setThread(
             ChanDescriptor chanDescriptor,
             PostPreloadedInfoHolder postPreloadedInfoHolder,
-            List<PostIndexed> indexedPosts
+            List<PostIndexed> indexedPosts,
+            ChanTheme chanTheme
     ) {
         BackgroundUtils.ensureMainThread();
 
         this.chanDescriptor = chanDescriptor;
         this.postPreloadedInfoHolder = postPreloadedInfoHolder;
+        this.chanTheme = chanTheme;
+
         showError(null);
 
         List<Post> posts = extractPosts(indexedPosts);

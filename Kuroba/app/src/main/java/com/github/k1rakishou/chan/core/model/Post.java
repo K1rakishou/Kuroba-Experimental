@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.model;
 
+import android.text.SpannableString;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -590,7 +592,7 @@ public class Post implements Comparable<Post> {
         }
 
         public Builder comment(CharSequence comment) {
-            this.postCommentBuilder.setComment(comment);
+            this.postCommentBuilder.setComment(new SpannableString(comment));
             return this;
         }
 

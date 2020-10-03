@@ -480,7 +480,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.setThread(
       thread.chanDescriptor,
       thread.postPreloadedInfoHolder,
-      filter.apply(thread.getPosts())
+      filter.apply(thread.getPosts()),
+      themeEngine.chanTheme
     )
 
     val chanDescriptor = currentChanDescriptorOrNull()

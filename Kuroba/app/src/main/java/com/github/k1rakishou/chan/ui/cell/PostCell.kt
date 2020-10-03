@@ -332,8 +332,6 @@ class PostCell : LinearLayout, PostCellInterface {
       throw NullPointerException("Callback is null during bindPost()")
     }
 
-    val theme = themeEngine.chanTheme
-
     // Assume that we're in thread mode if the loadable is null
     threadMode = callback?.getChanDescriptor()?.isThreadDescriptor() ?: false
 
@@ -659,8 +657,8 @@ class PostCell : LinearLayout, PostCellInterface {
     comment.setTextIsSelectable(true)
     comment.setText(commentText, TextView.BufferType.SPANNABLE)
 
-    comment.setHandlesColors(themeEngine)
-    comment.setEditTextCursorColor(themeEngine)
+    comment.setHandlesColors(theme)
+    comment.setEditTextCursorColor(theme)
 
     comment.customSelectionActionModeCallback = object : ActionMode.Callback {
       private var quoteMenuItem: MenuItem? = null

@@ -19,23 +19,22 @@ package com.github.k1rakishou.chan.ui.controller.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.text.SpannableString
-import android.text.TextUtils
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
-import android.view.Gravity
+import android.graphics.Color
+import android.text.Spannable
+import android.text.style.CharacterStyle
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.view.ViewGroup
-import android.widget.BaseAdapter
+import android.widget.EdgeEffect
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.text.getSpans
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
@@ -53,22 +52,22 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.text.span.ColorizableBackgroundColorSpan
+import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
+import com.github.k1rakishou.chan.ui.text.span.ThemeEditorPostLinkable
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCallback
-import com.github.k1rakishou.chan.ui.view.FloatingMenu
-import com.github.k1rakishou.chan.ui.view.FloatingMenu.FloatingMenuCallback
-import com.github.k1rakishou.chan.ui.view.FloatingMenuItem
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -131,10 +130,11 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   }
 
   private lateinit var pager: ViewPager
-  private lateinit var done: ColorizableFloatingActionButton
-  private lateinit var textView: TextView
+  private lateinit var done: FloatingActionButton
+  private lateinit var currentThemeIndicator: TextView
   private var selectedAccentColor: Int = 0
 
+  @Suppress("DEPRECATION")
   override fun onCreate() {
     super.onCreate()
     Chan.inject(this)
@@ -143,316 +143,282 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     navigation.swipeable = false
     view = AndroidUtils.inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
+    currentThemeIndicator = view.findViewById(R.id.current_theme_indicator)
     done = view.findViewById(R.id.add)
     done.setOnClickListener(this)
-    textView = view.findViewById(R.id.text)
+    done.updateColors(themeEngine.chanTheme)
+    updateCurrentThemeIndicator(true)
 
-    val changeAccentColor = SpannableString(AndroidUtils.getString(R.string.setting_theme_accent))
-
-    changeAccentColor.setSpan(object : ClickableSpan() {
-      override fun onClick(widget: View) {
-        showAccentColorPicker()
-      }
-    }, 0, changeAccentColor.length, 0)
-
-    textView.text = TextUtils.concat(
-      AndroidUtils.getString(R.string.setting_theme_explanation),
-      "\n",
-      changeAccentColor
-    )
-
-    textView.movementMethod = LinkMovementMethod.getInstance()
-
+    val root = view.findViewById<LinearLayout>(R.id.root)
     val adapter = Adapter()
     pager.adapter = adapter
+    pager.changeEdgeEffect(themeEngine.chanTheme)
+    pager.setOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+      override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+        // no-op
+      }
 
-    val currentSettingsTheme = ChanSettings.getThemeAndColor()
+      override fun onPageSelected(position: Int) {
+        updateColors(adapter, position, root)
+      }
 
-//    val primaryColor = theme.primaryColor
-//    if (theme.name == currentSettingsTheme.theme) {
-//      // Current theme
-//      pager.setCurrentItem(i, false)
-//    }
-//
-//    selectedPrimaryColors.add(primaryColor)
+      override fun onPageScrollStateChanged(state: Int) {
+        // no-op
+      }
+    })
 
     selectedAccentColor = themeEngine.chanTheme.accentColor
     done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor)
+
+    view.postDelayed({ updateColors(adapter, 0, root) }, 125L)
+  }
+
+  private fun updateColors(adapter: Adapter, position: Int, root: LinearLayout) {
+    val theme = adapter.themeMap[position]
+      ?: return
+
+    val compositeColor = (theme.backColor.toLong() + theme.primaryColor.toLong()) / 2
+    val backgroundColor = AndroidUtils.getComplementaryColor(compositeColor.toInt())
+    root.setBackgroundColor(backgroundColor)
+
+    done.updateColors(theme)
+    updateCurrentThemeIndicator(theme.isLightTheme)
+  }
+
+  @SuppressLint("SetTextI18n")
+  private fun updateCurrentThemeIndicator(isLightTheme: Boolean) {
+    val themeType = if (isLightTheme) {
+      "Light"
+    } else {
+      "Dark"
+    }
+
+    currentThemeIndicator.text = "Current theme: $themeType"
+  }
+
+  private fun FloatingActionButton.updateColors(theme: ChanTheme) {
+    backgroundTintList = ColorStateList.valueOf(theme.accentColor)
+
+    val isDarkColor = AndroidUtils.isDarkColor(theme.accentColor)
+    if (isDarkColor) {
+      drawable.setTint(Color.WHITE)
+    } else {
+      drawable.setTint(Color.BLACK)
+    }
   }
 
   override fun onClick(v: View) {
     if (v === done) {
-      saveTheme()
+      // TODO(KurobaEx-themes):
     }
-  }
-
-  private fun saveTheme() {
-//    val currentItem = pager.currentItem
-//    val selectedTheme = themeEngine.chanTheme
-//    val selectedColor = selectedPrimaryColors[currentItem]
-
-    // TODO(KurobaEx):
-//    themeHelper.changeTheme(selectedTheme, selectedColor, selectedAccentColor)
-    (context as StartActivity).restartApp()
-  }
-
-  private fun showAccentColorPicker() {
-    val items: MutableList<FloatingMenuItem> = ArrayList()
-    var selected: FloatingMenuItem? = null
-
-//    for (color in themeHelper.colors) {
-//      val floatingMenuItem = FloatingMenuItem(
-//        ColorsAdapterItem(color, color.color),
-//        color.displayName
-//      )
-//
-//      items.add(floatingMenuItem)
-//      if (color == selectedAccentColor) {
-//        selected = floatingMenuItem
-//      }
-//    }
-
-    val menu = getColorsMenu(items, selected, textView)
-    menu.setCallback(object : FloatingMenuCallback {
-      override fun onFloatingMenuItemClicked(menu: FloatingMenu, item: FloatingMenuItem) {
-        // TODO(KurobaEx):
-//        val colorItem = item.id as ColorsAdapterItem
-//        selectedAccentColor = colorItem.color
-//        done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor.color)
-      }
-
-      override fun onFloatingMenuDismissed(menu: FloatingMenu) {}
-    })
-
-    menu.setPopupHeight(AndroidUtils.dp(300f))
-    menu.show()
-  }
-
-  private fun getColorsMenu(
-    items: List<FloatingMenuItem>,
-    selected: FloatingMenuItem?,
-    anchor: View?
-  ): FloatingMenu {
-    val menu = FloatingMenu(context)
-    menu.setItems(items)
-    menu.setAdapter(ColorsAdapter(items))
-    menu.setSelectedItem(selected)
-    menu.setAnchor(anchor, Gravity.CENTER, 0, AndroidUtils.dp(5f))
-    return menu
   }
 
   private inner class Adapter : ViewPagerAdapter() {
-
-    override fun getPageTitle(position: Int): CharSequence? {
-      return super.getPageTitle(position)
-    }
+    val themeMap = mutableMapOf<Int, ChanTheme>()
 
     override fun getView(position: Int, parent: ViewGroup): View {
-      val theme = themeEngine.chanTheme
-      val parser = CommentParser(mockReplyManager).addDefaultRules()
-
-      val postParser = DefaultPostParser(parser, postFilterManager)
-      val builder1 = Post.Builder()
-        .boardDescriptor(dummyBoardDescriptor)
-        .id(123456789)
-        .opId(123456789)
-        .op(true)
-        .replies(1)
-        .setUnixTimestampSeconds(
-          TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30))
-        )
-        .subject("Lorem ipsum")
-        .comment("<span class=\"deadlink\">&gt;&gt;987654321</span><br>" + "http://example.com/<br>"
-          + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
-          + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>")
-
-      val post1 = postParser.parse(theme, builder1, parserCallback)
-      post1.repliesFrom.add(234567890L)
-
-      val builder2 = Post.Builder()
-        .boardDescriptor(dummyBoardDescriptor)
-        .id(234567890)
-        .opId(123456789)
-        .setUnixTimestampSeconds(
-          TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15))
-        )
-        .comment("<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
-          + "Lorem ipsum dolor sit amet, consectetur adipiscing elit.")
-        .postImages(listOf(
-          PostImage.Builder()
-            .serverFilename("123123123123.jpg")
-            .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-            .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-            .filename("icon")
-            .extension("png")
-            .build()))
-
-      val post2 = postParser.parse(theme, builder2, parserCallback)
-
-      val posts: MutableList<Post> = ArrayList()
-      posts.add(post1)
-      posts.add(post2)
-
-      val linearLayout = LinearLayout(context)
-      linearLayout.orientation = LinearLayout.VERTICAL
-      linearLayout.setBackgroundColor(theme.backColor)
-
-      val postsView = ColorizableRecyclerView(context)
-
-      val layoutManager = LinearLayoutManager(context)
-      layoutManager.orientation = RecyclerView.VERTICAL
-      postsView.layoutManager = layoutManager
-
-      val adapter = PostAdapter(
-        postFilterManager,
-        postsView,
-        object : PostAdapterCallback {
-          override fun getChanDescriptor(): ChanDescriptor? {
-            return dummyThreadDescriptor
-          }
-
-          override fun onUnhidePostClick(post: Post) {}
-        },
-        dummyPostCallback,
-        object : ThreadStatusCell.Callback {
-          override fun getTimeUntilLoadMore(): Long {
-            return 0
-          }
-
-          override fun isWatching(): Boolean {
-            return false
-          }
-
-          override fun getChanThread(): ChanThread? {
-            return null
-          }
-
-          override fun getPage(op: Post): BoardPage? {
-            return null
-          }
-
-          override fun onListStatusClicked() {}
-        }
-      )
-
-      val postPreloadedInfoHolder = PostPreloadedInfoHolder()
-      postPreloadedInfoHolder.preloadPostsInfo(posts)
-      adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts))
-      adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
-      postsView.adapter = adapter
-
-      val toolbar = Toolbar(context)
-
-      val colorClick = View.OnClickListener {
-        val items: MutableList<FloatingMenuItem> = ArrayList()
-        var selected: FloatingMenuItem? = null
-
-        // TODO(KurobaEx):
-//        for (color in themeHelper.colors) {
-//          val floatingMenuItem = FloatingMenuItem(ColorsAdapterItem(color, color.color500), color.displayName)
-//          items.add(floatingMenuItem)
-//          if (color == selectedPrimaryColors[position]) {
-//            selected = floatingMenuItem
-//          }
-//        }
-
-        val menu = getColorsMenu(items, selected, toolbar)
-
-        menu.setCallback(object : FloatingMenuCallback {
-          override fun onFloatingMenuItemClicked(menu: FloatingMenu, item: FloatingMenuItem) {
-//            val colorItem = item.id as ColorsAdapterItem
-//            selectedPrimaryColors[position] = colorItem.color
-//            toolbar.setBackgroundColor(colorItem.color.color)
-          }
-
-          override fun onFloatingMenuDismissed(menu: FloatingMenu) {}
-        })
-        menu.show()
+      val theme = when (position) {
+        0 -> themeEngine.defaultLightTheme
+        1 -> themeEngine.defaultDarkTheme
+        else -> throw IllegalStateException("Bad position: $position")
       }
 
-      toolbar.setCallback(object : ToolbarCallback {
-        override fun onMenuOrBackClicked(isArrow: Boolean) {
-          colorClick.onClick(toolbar)
+      themeMap[position] = theme
+
+      return createSimpleThreadView(theme)
+    }
+
+    override fun getCount(): Int {
+      return 2
+    }
+  }
+
+  private fun createSimpleThreadView(theme: ChanTheme): LinearLayout {
+    val parser = CommentParser(mockReplyManager)
+      .addDefaultRules()
+
+    val postParser = DefaultPostParser(parser, postFilterManager)
+    val builder1 = Post.Builder()
+      .boardDescriptor(dummyBoardDescriptor)
+      .id(123456789)
+      .opId(123456789)
+      .op(true)
+      .replies(1)
+      .setUnixTimestampSeconds(
+        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30))
+      )
+      .subject("Lorem ipsum")
+      .name("OP")
+      .comment("<span class=\"deadlink\">&gt;&gt;987654321</span><br>" + "http://example.com/<br>"
+        + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
+        + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>")
+
+    val post1 = postParser.parse(theme, builder1, parserCallback)
+    post1.repliesFrom.add(234567890L)
+
+    val builder2 = Post.Builder()
+      .boardDescriptor(dummyBoardDescriptor)
+      .id(234567890)
+      .opId(123456789)
+      .setUnixTimestampSeconds(
+        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15))
+      )
+      .comment("<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
+        + "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+      )
+      .name("Test name")
+      .tripcode("!N4EoL/Xuog")
+      .postImages(listOf(
+        PostImage.Builder()
+          .serverFilename("123123123123.jpg")
+          .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+          .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+          .filename("icon")
+          .extension("png")
+          .build()))
+
+    val post2 = postParser.parse(theme, builder2, parserCallback)
+
+    val posts: MutableList<Post> = ArrayList()
+    posts.add(post1)
+    posts.add(post2)
+
+    hackSpanColors(post1.subject, theme)
+    hackSpanColors(post1.tripcode, theme)
+    hackSpanColors(post1.comment, theme)
+
+    hackSpanColors(post2.subject, theme)
+    hackSpanColors(post2.tripcode, theme)
+    hackSpanColors(post2.comment, theme)
+
+    val linearLayout = LinearLayout(context)
+    linearLayout.orientation = LinearLayout.VERTICAL
+    linearLayout.setBackgroundColor(theme.backColor)
+
+    val postsView = RecyclerView(context)
+    postsView.edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+      override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
+        return EdgeEffect(view.context).apply { color = theme.accentColor }
+      }
+    }
+
+    val layoutManager = LinearLayoutManager(context)
+    layoutManager.orientation = RecyclerView.VERTICAL
+    postsView.layoutManager = layoutManager
+
+    val adapter = PostAdapter(
+      postFilterManager,
+      postsView,
+      object : PostAdapterCallback {
+        override fun getChanDescriptor(): ChanDescriptor? {
+          return dummyThreadDescriptor
         }
 
-        override fun onSearchVisibilityChanged(item: NavigationItem, visible: Boolean) {}
-        override fun onSearchEntered(item: NavigationItem, entered: String) {}
-      })
+        override fun onUnhidePostClick(post: Post) {}
+      },
+      dummyPostCallback,
+      object : ThreadStatusCell.Callback {
+        override fun getTimeUntilLoadMore(): Long {
+          return 0
+        }
 
-      toolbar.setBackgroundColor(theme.backColor)
+        override fun isWatching(): Boolean {
+          return false
+        }
 
-      val item = NavigationItem()
-      item.title = theme.name
-      item.hasBack = false
+        override fun getChanThread(): ChanThread? {
+          return null
+        }
 
-      toolbar.setNavigationItem(false, true, item, theme)
-      toolbar.setOnClickListener(colorClick)
+        override fun getPage(op: Post): BoardPage? {
+          return null
+        }
 
-      linearLayout.addView(
-        toolbar,
-        LinearLayout.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          AndroidUtils.getDimen(R.dimen.toolbar_height)
-        )
+        override fun onListStatusClicked() {}
+      }
+    )
+
+    val postPreloadedInfoHolder = PostPreloadedInfoHolder()
+    postPreloadedInfoHolder.preloadPostsInfo(posts)
+    adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts), theme)
+    adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
+    postsView.adapter = adapter
+
+    val toolbar = Toolbar(context)
+    toolbar.setBackgroundColor(theme.primaryColor)
+
+    val item = NavigationItem()
+    item.title = theme.name
+    item.hasBack = false
+
+    toolbar.setNavigationItem(false, true, item, theme)
+
+    linearLayout.addView(
+      toolbar,
+      LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        AndroidUtils.getDimen(R.dimen.toolbar_height)
       )
-      linearLayout.addView(
-        postsView,
-        LinearLayout.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+    )
+    linearLayout.addView(
+      postsView,
+      LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
       )
+    )
 
-      return linearLayout
-    }
-
-    private fun indexPosts(posts: List<Post>): List<PostIndexed> {
-      return posts.mapIndexed { index, post -> PostIndexed(post, index, index) }
-    }
-
-    override fun getCount(): Int {
-      return 1
-    }
+    return linearLayout
   }
 
-  private inner class ColorsAdapter(private val items: List<FloatingMenuItem>) : BaseAdapter() {
-
-    @SuppressLint("ViewHolder")
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-      val textView = AndroidUtils.inflate(
-        parent.context,
-        R.layout.toolbar_menu_item,
-        parent,
-        false
-      ) as TextView
-
-      textView.text = getItem(position)
-      textView.typeface = themeEngine.chanTheme.mainFont
-
-//      val color = items[position].id as ColorsAdapterItem
-//      textView.setBackgroundColor(color.bg)
-//
-//      val lightColor =
-//        (Color.red(color.bg) * 0.299f + Color.green(color.bg) * 0.587f + Color.blue(color.bg) * 0.114f > 125f)
-//
-//      textView.setTextColor(if (lightColor) Color.BLACK else Color.WHITE)
-      return textView
-    }
-
-    override fun getCount(): Int {
-      return items.size
-    }
-
-    override fun getItem(position: Int): String {
-      return items[position].text
-    }
-
-    override fun getItemId(position: Int): Long {
-      return position.toLong()
-    }
-
+  private fun indexPosts(posts: List<Post>): List<PostIndexed> {
+    return posts.mapIndexed { index, post -> PostIndexed(post, index, index) }
   }
 
-//  private class ColorsAdapterItem(var color: PrimaryColor, var bg: Int)
+  private fun hackSpanColors(input: CharSequence?, theme: ChanTheme) {
+    if (input !is Spannable) {
+      return
+    }
+
+    val spans = input.getSpans<CharacterStyle>()
+
+    for (span in spans) {
+      if (span is ColorizableBackgroundColorSpan || span is ColorizableForegroundColorSpan) {
+        val start = input.getSpanStart(span)
+        val end = input.getSpanEnd(span)
+        val flags = input.getSpanFlags(span)
+
+        val newColor = when (span) {
+          is ColorizableForegroundColorSpan -> span.chanThemeColorId
+          is ColorizableBackgroundColorSpan -> span.chanThemeColorId
+          else -> throw IllegalStateException("Unknown span: ${span::class.java.simpleName}")
+        }
+
+        input.removeSpan(span)
+        input.setSpan(
+          ForegroundColorSpan(theme.getColorByColorId(newColor)),
+          start,
+          end,
+          flags,
+        )
+
+        continue
+      }
+
+      if (span is PostLinkable) {
+        val start = input.getSpanStart(span)
+        val end = input.getSpanEnd(span)
+        val flags = input.getSpanFlags(span)
+
+        input.removeSpan(span)
+        input.setSpan(
+          ThemeEditorPostLinkable(theme, span.key, span.linkableValue, span.type),
+          start,
+          end,
+          flags,
+        )
+      }
+    }
+  }
 
 }

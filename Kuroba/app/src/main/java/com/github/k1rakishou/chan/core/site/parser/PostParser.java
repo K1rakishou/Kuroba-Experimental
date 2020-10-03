@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site.parser;
 
+import android.text.Spannable;
+
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.core.model.Post;
@@ -29,7 +31,7 @@ public interface PostParser {
             Callback callback
     );
 
-    CharSequence parseComment(
+    Spannable parseComment(
             ChanTheme theme,
             Post.Builder post,
             CharSequence commentRaw,

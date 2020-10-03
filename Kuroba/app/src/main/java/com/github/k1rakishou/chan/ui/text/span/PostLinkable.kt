@@ -21,6 +21,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
 import javax.inject.Inject
@@ -31,7 +32,7 @@ import javax.inject.Inject
  * location the TextView was tapped, and handled if it was a PostLinkable.
  */
 @DoNotStrip
-class PostLinkable(
+open class PostLinkable(
   val key: CharSequence,
   val linkableValue: Value,
   val type: Type
@@ -58,7 +59,7 @@ class PostLinkable(
   }
 
   override fun updateDrawState(ds: TextPaint) {
-    val theme = themeEngine.chanTheme
+    val theme = getTheme()
 
     when (type) {
       Type.QUOTE,
@@ -106,6 +107,8 @@ class PostLinkable(
       }
     }
   }
+
+  open fun getTheme(): ChanTheme = themeEngine.chanTheme
 
   override fun hashCode(): Int {
     var result = 0

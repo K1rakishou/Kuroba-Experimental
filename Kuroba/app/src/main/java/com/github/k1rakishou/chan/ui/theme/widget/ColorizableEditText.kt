@@ -43,8 +43,8 @@ open class ColorizableEditText @JvmOverloads constructor(
     highlightColor = themeEngine.chanTheme.accentColor
     setLinkTextColor(themeEngine.chanTheme.postLinkColor)
 
-    setEditTextCursorColor(themeEngine)
-    setHandlesColors(themeEngine)
+    setEditTextCursorColor(themeEngine.chanTheme)
+    setHandlesColors(themeEngine.chanTheme)
 
     setHintTextColor(
       ColorStateList(

@@ -16,7 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
+import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
 import androidx.annotation.GuardedBy;
@@ -93,7 +95,7 @@ public class DefaultPostParser implements PostParser {
         parseSpans(theme, builder);
 
         if (builder.postCommentBuilder.hasComment()) {
-            CharSequence parsedComment = parseComment(
+            Spannable parsedComment = parseComment(
                     theme,
                     builder,
                     builder.postCommentBuilder.getComment(),
@@ -154,10 +156,7 @@ public class DefaultPostParser implements PostParser {
             builder.subject = subjectSpan;
         }
 
-        if (!TextUtils.isEmpty(builder.name)
-                && (!builder.name.equals(defaultName)
-                || ChanSettings.showAnonymousName.get())
-        ) {
+        if (!TextUtils.isEmpty(builder.name) && (!builder.name.equals(defaultName) || ChanSettings.showAnonymousName.get())) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
                     new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
@@ -208,35 +207,43 @@ public class DefaultPostParser implements PostParser {
             );
         }
 
-        CharSequence nameTripcodeIdCapcodeSpan = new SpannableString("");
+        SpannableStringBuilder nameTripcodeIdCapcodeSpan = new SpannableStringBuilder("");
         if (nameSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, nameSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(nameSpan)
+                    .append(" ");
         }
 
         if (tripcodeSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, tripcodeSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(tripcodeSpan)
+                    .append(" ");
         }
 
         if (idSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, idSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(idSpan)
+                    .append(" ");
         }
 
         if (capcodeSpan != null) {
-            nameTripcodeIdCapcodeSpan = TextUtils.concat(nameTripcodeIdCapcodeSpan, capcodeSpan, " ");
+            nameTripcodeIdCapcodeSpan
+                    .append(capcodeSpan)
+                    .append(" ");
         }
 
-        builder.tripcode = nameTripcodeIdCapcodeSpan;
+        builder.tripcode = SpannableString.valueOf(nameTripcodeIdCapcodeSpan);
     }
 
     @Override
-    public CharSequence parseComment(
+    public Spannable parseComment(
             ChanTheme theme,
             Post.Builder post,
             CharSequence commentRaw,
             boolean addPostImages,
             Callback callback
     ) {
-        CharSequence total = new SpannableString("");
+        SpannableStringBuilder total = new SpannableStringBuilder("");
 
         try {
             String comment = commentRaw.toString().replace("<wbr>", "");
@@ -252,7 +259,9 @@ public class DefaultPostParser implements PostParser {
                 }
             }
 
-            total = TextUtils.concat(texts.toArray(new CharSequence[0]));
+            for (CharSequence text : texts) {
+                total.append(text);
+            }
         } catch (Exception e) {
             Logger.e(TAG, "Error parsing comment html", e);
         }
@@ -261,7 +270,7 @@ public class DefaultPostParser implements PostParser {
             CommentParserHelper.addPostImages(post);
         }
 
-        return total;
+        return SpannableString.valueOf(total);
     }
 
     private CharSequence parseNode(
