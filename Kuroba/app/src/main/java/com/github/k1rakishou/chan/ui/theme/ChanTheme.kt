@@ -10,8 +10,8 @@ import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 
 @SuppressLint("ResourceType")
 abstract class ChanTheme {
+  // Don't forget to update ThemeParser's gson when this class changes !!!
   abstract val context: Context
-  abstract val version: Int
   abstract val name: String
   abstract val isLightTheme: Boolean
   abstract val lightStatusBar: Boolean
@@ -40,6 +40,8 @@ abstract class ChanTheme {
   abstract val bookmarkCounterHasRepliesColor: Int
   abstract val bookmarkCounterNormalColor: Int
 
+  val isDarkTheme: Boolean = !isLightTheme
+
   open val mainFont: Typeface = ROBOTO_MEDIUM
   open val altFont: Typeface = ROBOTO_CONDENSED
 
@@ -59,7 +61,6 @@ abstract class ChanTheme {
   }
 
   fun <T : ChanTheme> copy(
-    version: Int,
     name: String,
     isLightTheme: Boolean,
     lightStatusBar: Boolean,
@@ -90,7 +91,6 @@ abstract class ChanTheme {
   ): T {
     return DefaultDarkTheme(
       context = context,
-      version = version,
       name = name,
       isLightTheme = isLightTheme,
       lightStatusBar = lightStatusBar,
@@ -162,8 +162,6 @@ abstract class ChanTheme {
   }
 
   companion object {
-    const val CURRENT_THEME_SCHEMA_VERSION = 1
-
     private val ROBOTO_MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val ROBOTO_CONDENSED = Typeface.create("sans-serif-condensed", Typeface.NORMAL)
 

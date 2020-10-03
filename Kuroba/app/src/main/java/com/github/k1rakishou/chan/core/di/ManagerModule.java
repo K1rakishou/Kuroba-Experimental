@@ -53,6 +53,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
@@ -584,9 +585,22 @@ public class ManagerModule {
             ApplicationVisibilityManager applicationVisibilityManager,
             ThemeEngine themeEngine
     ) {
+        Logger.d(AppModule.DI_TAG, "DialogFactory");
+
         return new DialogFactory(
                 applicationVisibilityManager,
                 themeEngine
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThemeParser provideThemeParser(Context appContext, FileManager fileManager) {
+        Logger.d(AppModule.DI_TAG, "ThemeParser");
+
+        return new ThemeParser(
+                appContext,
+                fileManager
         );
     }
 

@@ -24,6 +24,7 @@ import android.os.Environment;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
@@ -187,10 +188,10 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ThemeEngine provideThemeEngine() {
+    public ThemeEngine provideThemeEngine(ThemeParser themeParser) {
         Logger.d(DI_TAG, "ThemeEngine");
 
-        return new ThemeEngine();
+        return new ThemeEngine(themeParser);
     }
 
     @Provides

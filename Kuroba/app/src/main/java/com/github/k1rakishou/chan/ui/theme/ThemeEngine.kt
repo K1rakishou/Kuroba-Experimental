@@ -13,11 +13,15 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.ThemeParser
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.fsaf.file.ExternalFile
 
-open class ThemeEngine {
+open class ThemeEngine(
+  private val themeParser: ThemeParser
+) {
   private val listeners = hashSetOf<ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
@@ -26,19 +30,27 @@ open class ThemeEngine {
   lateinit var defaultDarkTheme: ChanTheme
   lateinit var defaultLightTheme: ChanTheme
 
+  private var actualDarkTheme: ChanTheme? = null
+  private var actualLightTheme: ChanTheme? = null
+
   open lateinit var chanTheme: ChanTheme
 
   fun initialize(context: Context) {
-    // TODO(KurobaEx-themes): add theme parsing
     defaultDarkTheme = DefaultDarkTheme(context)
     defaultLightTheme = DefaultLightTheme(context)
 
+    actualDarkTheme = themeParser.readThemeFromDisk(defaultDarkTheme)
+    actualLightTheme = themeParser.readThemeFromDisk(defaultLightTheme)
+
     chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
-      defaultDarkTheme
+      actualDarkTheme ?: defaultDarkTheme
     } else {
-      defaultLightTheme
+      actualLightTheme ?: defaultLightTheme
     }
   }
+
+  fun lightTheme(): ChanTheme = actualLightTheme ?: defaultLightTheme
+  fun darkTheme(): ChanTheme = actualDarkTheme ?: defaultDarkTheme
 
   fun setRootView(view: View) {
     this.rootView = view.rootView
@@ -60,12 +72,7 @@ open class ThemeEngine {
     val isNextThemeDark = !ChanSettings.isCurrentThemeDark.get()
     ChanSettings.isCurrentThemeDark.setSync(isNextThemeDark)
 
-    chanTheme = if (isNextThemeDark) {
-      defaultDarkTheme
-    } else {
-      defaultLightTheme
-    }
-
+    chanTheme = getThemeInternal(isNextThemeDark)
     refreshViews()
   }
 
@@ -77,27 +84,7 @@ open class ThemeEngine {
       return
     }
 
-    chanTheme = if (switchToDarkTheme) {
-      defaultDarkTheme
-    } else {
-      defaultLightTheme
-    }
-
-    refreshViews()
-  }
-
-  /**
-   * Updates the current theme with the new theme which may have different colors. If the new and old
-   * theme are the same (all colors are the same) then nothing will change.
-   * */
-  fun updateTheme(newTheme: ChanTheme) {
-    if (chanTheme == newTheme) {
-      return
-    }
-
-    chanTheme = newTheme
-    ChanSettings.isCurrentThemeDark.setSync(!newTheme.isLightTheme)
-
+    chanTheme = getThemeInternal(switchToDarkTheme)
     refreshViews()
   }
 
@@ -188,6 +175,60 @@ open class ThemeEngine {
     }
 
     context.setTaskDescription(taskDescription)
+  }
+
+  private fun getThemeInternal(isDarkTheme: Boolean): ChanTheme {
+    return if (isDarkTheme) {
+      actualDarkTheme ?: defaultDarkTheme
+    } else {
+      actualLightTheme ?: defaultLightTheme
+    }
+  }
+
+  suspend fun tryParseAndApplyTheme(file: ExternalFile, isDarkTheme: Boolean): ThemeParser.ThemeParseResult {
+    val defaultTheme = if (isDarkTheme) {
+      defaultDarkTheme
+    } else {
+      defaultLightTheme
+    }
+
+    val themeParseResult = themeParser.parseTheme(file, defaultTheme)
+    if (themeParseResult !is ThemeParser.ThemeParseResult.Success) {
+      return themeParseResult
+    }
+
+    if (isDarkTheme) {
+      actualDarkTheme = themeParseResult.chanTheme
+    } else {
+      actualLightTheme = themeParseResult.chanTheme
+    }
+
+    chanTheme = themeParseResult.chanTheme
+    refreshViews()
+
+    return themeParseResult
+  }
+
+  suspend fun exportTheme(file: ExternalFile, darkTheme: Boolean): ThemeParser.ThemeExportResult {
+    return themeParser.exportTheme(file, getThemeInternal(darkTheme))
+  }
+
+  fun resetTheme(darkTheme: Boolean): Boolean {
+    val result = themeParser.deleteThemeFile(darkTheme)
+    if (!result) {
+      return false
+    }
+
+    if (darkTheme) {
+      actualDarkTheme = null
+    } else {
+      actualLightTheme = null
+    }
+
+    chanTheme = getThemeInternal(darkTheme)
+    refreshViews()
+
+    return true
   }
 
   interface ThemeChangesListener {

@@ -168,6 +168,13 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_switch_to_light_theme">Switch to light theme</string>
     <string name="action_switch_to_dark_theme">Switch to dark theme</string>
 
+    <string name="action_import_light_theme">Import Light theme</string>
+    <string name="action_import_dark_theme">Import Dark theme</string>
+    <string name="action_export_light_theme">Export Light theme</string>
+    <string name="action_export_dark_theme">Export Dark theme</string>
+    <string name="action_reset_light_theme">Reset Light theme</string>
+    <string name="action_reset_dark_theme">Reset Dark theme</string>
+
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>

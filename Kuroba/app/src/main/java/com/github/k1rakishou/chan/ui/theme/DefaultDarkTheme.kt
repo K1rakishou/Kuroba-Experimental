@@ -5,7 +5,6 @@ import android.graphics.Color
 
 data class DefaultDarkTheme(
   override val context: Context,
-  override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Kuroneko",
   override val isLightTheme: Boolean = false,
   override val lightStatusBar: Boolean = true,

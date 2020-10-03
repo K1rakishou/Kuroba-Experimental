@@ -5,7 +5,6 @@ import android.graphics.Color
 
 data class DefaultLightTheme(
   override val context: Context,
-  override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Default light theme",
   override val isLightTheme: Boolean = true,
   override val lightStatusBar: Boolean = true,

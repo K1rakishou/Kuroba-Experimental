@@ -20,6 +20,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.net.Uri
 import android.text.Spannable
 import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
@@ -38,6 +39,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
+import com.github.k1rakishou.chan.core.manager.ThemeParser
 import com.github.k1rakishou.chan.core.model.ChanThread
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
@@ -58,22 +60,28 @@ import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.text.span.ThemeEditorPostLinkable
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
-import com.github.k1rakishou.chan.ui.toolbar.Toolbar
+import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.callback.FileChooserCallback
+import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class ThemeSettingsController(context: Context) : Controller(context), View.OnClickListener {
+class ThemeSettingsController(context: Context)
+  : Controller(context), ToolbarMenuItem.ToobarThreedotMenuCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -81,6 +89,10 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var mockReplyManager: MockReplyManager
+  @Inject
+  lateinit var fileManager: FileManager
+  @Inject
+  lateinit var fileChooser: FileChooser
 
   private val dummyBoardDescriptor =
     BoardDescriptor.create("test_site", "test_board")
@@ -132,7 +144,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
   private lateinit var pager: ViewPager
   private lateinit var done: FloatingActionButton
   private lateinit var currentThemeIndicator: TextView
-  private var selectedAccentColor: Int = 0
+  private var currentItemIndex = 0
 
   @Suppress("DEPRECATION")
   override fun onCreate() {
@@ -141,17 +153,54 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
     navigation.setTitle(R.string.settings_screen_theme)
     navigation.swipeable = false
+
+    navigation.buildMenu(ToolbarMenuType.ThreadListMenu)
+      .withOverflow(navigationController, this)
+      .withSubItem(
+        ACTION_IMPORT_LIGHT_THEME,
+        R.string.action_import_light_theme
+      ) { item -> importTheme(item) }
+      .withSubItem(
+        ACTION_EXPORT_LIGHT_THEME,
+        R.string.action_export_light_theme
+      ) { item -> exportTheme(item) }
+      .withSubItem(
+        ACTION_RESET_LIGHT_THEME,
+        R.string.action_reset_light_theme
+      ) { item -> resetTheme(item) }
+      .withSubItem(
+        ACTION_IMPORT_DARK_THEME,
+        R.string.action_import_dark_theme
+      ) { item -> importTheme(item) }
+      .withSubItem(
+        ACTION_EXPORT_DARK_THEME,
+        R.string.action_export_dark_theme
+      ) { item -> exportTheme(item) }
+      .withSubItem(
+        ACTION_RESET_DARK_THEME,
+        R.string.action_reset_dark_theme
+      ) { item -> resetTheme(item) }
+      .build()
+      .build()
+
     view = AndroidUtils.inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
     currentThemeIndicator = view.findViewById(R.id.current_theme_indicator)
     done = view.findViewById(R.id.add)
-    done.setOnClickListener(this)
     done.updateColors(themeEngine.chanTheme)
     updateCurrentThemeIndicator(true)
 
+    done.backgroundTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
+
+    reload()
+  }
+
+  private fun reload() {
     val root = view.findViewById<LinearLayout>(R.id.root)
+
     val adapter = Adapter()
     pager.adapter = adapter
+    pager.setCurrentItem(currentItemIndex, false)
     pager.changeEdgeEffect(themeEngine.chanTheme)
     pager.setOnPageChangeListener(object : ViewPager.OnPageChangeListener {
       override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
@@ -160,6 +209,7 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
 
       override fun onPageSelected(position: Int) {
         updateColors(adapter, position, root)
+        currentItemIndex = position
       }
 
       override fun onPageScrollStateChanged(state: Int) {
@@ -167,10 +217,101 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
       }
     })
 
-    selectedAccentColor = themeEngine.chanTheme.accentColor
-    done.backgroundTintList = ColorStateList.valueOf(selectedAccentColor)
-
     view.postDelayed({ updateColors(adapter, 0, root) }, 125L)
+  }
+
+  private fun resetTheme(item: ToolbarMenuSubItem) {
+    val isDarkTheme = when (item.id) {
+      ACTION_RESET_DARK_THEME -> true
+      ACTION_RESET_LIGHT_THEME -> false
+      else -> throw IllegalStateException("Unknown action: ${item.id}")
+    }
+
+    if (!themeEngine.resetTheme(isDarkTheme)) {
+      showToast("Failed to reset theme")
+      return
+    }
+
+    reload()
+  }
+
+  private fun exportTheme(item: ToolbarMenuSubItem) {
+    val isDarkTheme = when (item.id) {
+      ACTION_EXPORT_DARK_THEME -> true
+      ACTION_EXPORT_LIGHT_THEME -> false
+      else -> throw IllegalStateException("Unknown action: ${item.id}")
+    }
+
+    val fileName = if (isDarkTheme) {
+      ThemeParser.DARK_THEME_FILE_NAME
+    } else {
+      ThemeParser.LIGHT_THEME_FILE_NAME
+    }
+
+    fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
+      override fun onCancel(reason: String) {
+        showToast("Canceled: $reason")
+      }
+
+      override fun onResult(uri: Uri) {
+        onFileToExportSelected(uri, isDarkTheme)
+      }
+    })
+  }
+
+  private fun importTheme(item: ToolbarMenuSubItem) {
+    val isDarkTheme = when (item.id) {
+      ACTION_IMPORT_DARK_THEME -> true
+      ACTION_IMPORT_LIGHT_THEME -> false
+      else -> throw IllegalStateException("Unknown action: ${item.id}")
+    }
+
+    fileChooser.openChooseFileDialog(object : FileChooserCallback() {
+      override fun onCancel(reason: String) {
+        showToast("Canceled: $reason")
+      }
+
+      override fun onResult(uri: Uri) {
+        onFileToImportSelected(uri, isDarkTheme)
+      }
+    })
+  }
+
+  private fun onFileToExportSelected(uri: Uri, isDarkTheme: Boolean) {
+    val file = fileManager.fromUri(uri)
+    if (file == null) {
+      showToast("Failed to open output file")
+      return
+    }
+
+    mainScope.launch {
+      when (val result = themeEngine.exportTheme(file, isDarkTheme)) {
+        is ThemeParser.ThemeExportResult.Error -> {
+          showToast("Failed to export theme: ${result.error.errorMessageOrClassName()}")
+        }
+        ThemeParser.ThemeExportResult.Success -> showToast("Done")
+      }
+    }
+  }
+
+  private fun onFileToImportSelected(uri: Uri, isDarkTheme: Boolean) {
+    val file = fileManager.fromUri(uri)
+    if (file == null) {
+      showToast("Failed to open theme file")
+      return
+    }
+
+    mainScope.launch {
+      when (val result = themeEngine.tryParseAndApplyTheme(file, isDarkTheme)) {
+        is ThemeParser.ThemeParseResult.Error -> {
+          showToast("Failed to import theme: ${result.error.errorMessageOrClassName()}")
+        }
+        is ThemeParser.ThemeParseResult.Success -> {
+          showToast("Done")
+          reload()
+        }
+      }
+    }
   }
 
   private fun updateColors(adapter: Adapter, position: Int, root: LinearLayout) {
@@ -207,19 +348,13 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
     }
   }
 
-  override fun onClick(v: View) {
-    if (v === done) {
-      // TODO(KurobaEx-themes):
-    }
-  }
-
   private inner class Adapter : ViewPagerAdapter() {
     val themeMap = mutableMapOf<Int, ChanTheme>()
 
     override fun getView(position: Int, parent: ViewGroup): View {
       val theme = when (position) {
-        0 -> themeEngine.defaultLightTheme
-        1 -> themeEngine.defaultDarkTheme
+        0 -> themeEngine.lightTheme()
+        1 -> themeEngine.darkTheme()
         else -> throw IllegalStateException("Bad position: $position")
       }
 
@@ -419,6 +554,23 @@ class ThemeSettingsController(context: Context) : Controller(context), View.OnCl
         )
       }
     }
+  }
+
+  override fun onMenuShown() {
+    // no-op
+  }
+
+  override fun onMenuHidden() {
+    // no-op
+  }
+
+  companion object {
+    private const val ACTION_IMPORT_LIGHT_THEME = 1
+    private const val ACTION_IMPORT_DARK_THEME = 2
+    private const val ACTION_EXPORT_LIGHT_THEME = 3
+    private const val ACTION_EXPORT_DARK_THEME = 4
+    private const val ACTION_RESET_LIGHT_THEME = 5
+    private const val ACTION_RESET_DARK_THEME = 6
   }
 
 }
