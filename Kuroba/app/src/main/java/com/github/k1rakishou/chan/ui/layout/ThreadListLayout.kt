@@ -451,7 +451,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
 
-        setBackgroundColor(themeEngine.chanTheme.backColorSecondary)
+        setBackgroundColor(themeEngine.chanTheme.backColorSecondary())
       }
     }
 

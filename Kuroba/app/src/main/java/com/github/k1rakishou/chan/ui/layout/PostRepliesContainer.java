@@ -67,7 +67,7 @@ public class PostRepliesContainer extends LinearLayout implements ThemeEngine.Th
 
     @Override
     public void onThemeChanged() {
-        setBackgroundColor(themeEngine.chanTheme.getBackColorSecondary());
+        setBackgroundColor(themeEngine.chanTheme.getBackColor());
     }
 
     @Override

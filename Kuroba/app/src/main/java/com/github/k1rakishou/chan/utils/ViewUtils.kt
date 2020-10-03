@@ -7,6 +7,7 @@ import android.widget.AbsListView
 import android.widget.EdgeEffect
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import java.lang.reflect.Field
@@ -16,14 +17,19 @@ object ViewUtils {
   private const val TAG = "ViewUtils"
 
   fun TextView.setEditTextCursorColor(themeEngine: ThemeEngine) {
+    val accentColorWithAlpha = ColorUtils.setAlphaComponent(
+      themeEngine.chanTheme.accentColor,
+      0x80
+    )
+
     try {
       if (AndroidUtils.isAndroid10()) {
         textCursorDrawable?.mutate()?.let { cursor ->
-          DrawableCompat.setTint(cursor, themeEngine.chanTheme.accentColor)
+          DrawableCompat.setTint(cursor, accentColorWithAlpha)
           textCursorDrawable = cursor
         }
 
-        highlightColor = themeEngine.chanTheme.accentColor
+        highlightColor = accentColorWithAlpha
         return
       }
 
@@ -39,7 +45,7 @@ object ViewUtils {
 
       // Get the drawable and set a color filter
       val drawable = ContextCompat.getDrawable(context, drawableResId)
-      DrawableCompat.setTint(drawable!!, themeEngine.chanTheme.accentColor)
+      DrawableCompat.setTint(drawable!!, accentColorWithAlpha)
 
       // Set the drawables
       if (Build.VERSION.SDK_INT >= 28) {
@@ -60,20 +66,25 @@ object ViewUtils {
   }
 
   fun TextView.setHandlesColors(themeEngine: ThemeEngine) {
+    val accentColorWithAlpha = ColorUtils.setAlphaComponent(
+      themeEngine.chanTheme.accentColor,
+      0x80
+    )
+
     try {
       if (AndroidUtils.isAndroid10()) {
         textSelectHandle?.mutate()?.let { handle ->
-          DrawableCompat.setTint(handle, themeEngine.chanTheme.accentColor)
+          DrawableCompat.setTint(handle, accentColorWithAlpha)
           setTextSelectHandle(handle)
         }
 
         textSelectHandleLeft?.mutate()?.let { handle ->
-          DrawableCompat.setTint(handle, themeEngine.chanTheme.accentColor)
+          DrawableCompat.setTint(handle, accentColorWithAlpha)
           setTextSelectHandleLeft(handle)
         }
 
         textSelectHandleRight?.mutate()?.let { handle ->
-          DrawableCompat.setTint(handle, themeEngine.chanTheme.accentColor)
+          DrawableCompat.setTint(handle, accentColorWithAlpha)
           setTextSelectHandleRight(handle)
         }
 
@@ -109,7 +120,7 @@ object ViewUtils {
 
         if (handleDrawable != null) {
           val drawable = handleDrawable.mutate()
-          DrawableCompat.setTint(drawable, themeEngine.chanTheme.accentColor)
+          DrawableCompat.setTint(drawable, accentColorWithAlpha)
 
           handleField[editor] = drawable
         }

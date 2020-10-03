@@ -30,8 +30,8 @@ open class ThemeEngine {
 
   fun initialize(context: Context) {
     // TODO(KurobaEx-themes): add theme parsing
-    defaultDarkTheme = DefaultDarkChanTheme(context)
-    defaultLightTheme = DefaultLightChanTheme(context)
+    defaultDarkTheme = DefaultDarkTheme(context)
+    defaultLightTheme = DefaultLightTheme(context)
 
     chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
       defaultDarkTheme
@@ -172,7 +172,7 @@ open class ThemeEngine {
       TaskDescription(
         null,
         R.drawable.ic_stat_notify,
-        chanTheme.backColorSecondary
+        chanTheme.primaryColor
       )
     } else {
       val taskDescriptionBitmap = BitmapFactory.decodeResource(
@@ -183,7 +183,7 @@ open class ThemeEngine {
       TaskDescription(
         null,
         taskDescriptionBitmap,
-        chanTheme.backColorSecondary
+        chanTheme.primaryColor
       )
     }
 

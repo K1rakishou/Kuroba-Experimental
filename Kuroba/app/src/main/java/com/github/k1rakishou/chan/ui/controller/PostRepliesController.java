@@ -113,7 +113,7 @@ public class PostRepliesController
             return;
         }
 
-        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColorSecondary());
+        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
 
         Drawable backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
         Drawable doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);

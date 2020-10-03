@@ -41,6 +41,7 @@ class BookmarksPresenter(
   lateinit var archivesManager: ArchivesManager
 
   private val isSearchMode = AtomicBoolean(false)
+  private val bookmarksRefreshed = AtomicBoolean(false)
 
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
@@ -90,6 +91,10 @@ class BookmarksPresenter(
               }
             }
           }
+      }
+
+      if (bookmarksRefreshed.compareAndSet(false, true)) {
+        bookmarksManager.refreshBookmarks()
       }
 
       reloadBookmarks()

@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.ui.theme
 import android.content.Context
 import android.graphics.Color
 
-data class DefaultLightChanTheme(
+data class DefaultLightTheme(
   override val context: Context,
   override val version: Int = CURRENT_THEME_SCHEMA_VERSION,
   override val name: String = "Default light theme",
@@ -13,7 +13,6 @@ data class DefaultLightChanTheme(
   override val accentColor: Int = Color.parseColor("#00a0a0"),
   override val primaryColor: Int = Color.parseColor("#0D47A1"),
   override val backColor: Int = Color.parseColor("#d6daf0"),
-  override val backColorSecondary: Int = Color.parseColor("#eef2ff"),
   override val errorColor: Int = Color.parseColor("#ff4444"),
   override val textColorPrimary: Int = Color.parseColor("#000000"),
   override val textColorSecondary: Int = Color.parseColor("#6b6b6b"),

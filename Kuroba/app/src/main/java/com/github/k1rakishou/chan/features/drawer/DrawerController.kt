@@ -209,6 +209,12 @@ class DrawerController(
     onThemeChanged()
   }
 
+  override fun onShow() {
+    super.onShow()
+
+    drawerPresenter.updateBadge()
+  }
+
   override fun onThemeChanged() {
     drawerPresenter.onThemeChanged()
     settingsNotificationManager.onThemeChanged()
@@ -516,7 +522,11 @@ class DrawerController(
     val backgroundColor = if (state.hasUnreadReplies) {
       themeEngine.chanTheme.accentColor
     } else {
-      themeEngine.chanTheme.backColorSecondary
+      if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
+        Color.LTGRAY
+      } else {
+        Color.DKGRAY
+      }
     }
 
     badgeDrawable.backgroundColor = backgroundColor

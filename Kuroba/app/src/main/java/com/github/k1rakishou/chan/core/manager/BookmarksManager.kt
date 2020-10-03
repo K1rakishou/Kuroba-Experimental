@@ -578,6 +578,10 @@ class BookmarksManager(
     }
   }
 
+  fun refreshBookmarks() {
+    bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
+  }
+
   private fun ensureBookmarksAndOrdersConsistency() {
     if (isDevFlavor) {
       check(bookmarks.size == orders.size) {

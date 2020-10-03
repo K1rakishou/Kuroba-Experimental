@@ -19,7 +19,6 @@ abstract class ChanTheme {
   abstract val accentColor: Int
   abstract val primaryColor: Int
   abstract val backColor: Int
-  abstract val backColorSecondary: Int
   abstract val errorColor: Int
   abstract val textColorPrimary: Int
   abstract val textColorSecondary: Int
@@ -45,6 +44,7 @@ abstract class ChanTheme {
   open val altFont: Typeface = ROBOTO_CONDENSED
 
   val defaultColors by lazy { loadDefaultColors() }
+  val defaultBoldTypeface by lazy { Typeface.create(Typeface.DEFAULT, Typeface.BOLD) }
 
   private fun loadDefaultColors(): DefaultColors {
     val controlNormalColor = if (isLightTheme) {
@@ -67,7 +67,6 @@ abstract class ChanTheme {
     accentColor: Int,
     primaryColor: Int,
     backColor: Int,
-    backColorSecondary: Int,
     errorColor: Int,
     textPrimaryColor: Int,
     textSecondaryColor: Int,
@@ -89,7 +88,7 @@ abstract class ChanTheme {
     bookmarkCounterHasRepliesColor: Int,
     bookmarkCounterNormalColor: Int,
   ): T {
-    return DefaultDarkChanTheme(
+    return DefaultDarkTheme(
       context = context,
       version = version,
       name = name,
@@ -99,7 +98,6 @@ abstract class ChanTheme {
       accentColor = accentColor,
       primaryColor = primaryColor,
       backColor = backColor,
-      backColorSecondary = backColorSecondary,
       errorColor = errorColor,
       textColorPrimary = textPrimaryColor,
       textColorSecondary = textSecondaryColor,
@@ -144,9 +142,13 @@ abstract class ChanTheme {
       ChanThemeColorId.AccentColor -> accentColor
       ChanThemeColorId.PostInlineQuoteColor -> postInlineQuoteColor
       ChanThemeColorId.PostQuoteColor -> postQuoteColor
-      ChanThemeColorId.BackColorSecondary -> backColorSecondary
+      ChanThemeColorId.BackColorSecondary -> backColorSecondary()
       ChanThemeColorId.PostLinkColor -> postLinkColor
     }
+  }
+
+  fun backColorSecondary(): Int {
+    return AndroidUtils.manipulateColor(backColor, .7f)
   }
 
   data class DefaultColors(

@@ -78,6 +78,7 @@ class PostLinkable(
 
           if (value == markedNo) {
             ds.color = theme.postHighlightQuoteColor
+            ds.typeface = theme.defaultBoldTypeface
           } else {
             ds.color = theme.postQuoteColor
           }

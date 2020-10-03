@@ -190,7 +190,7 @@ class DrawerPresenter(
     setState(HistoryControllerState.Data(navHistoryList))
   }
 
-  private fun updateBadge() {
+  fun updateBadge() {
     if (!bookmarksManager.isReady()) {
       return
     }
