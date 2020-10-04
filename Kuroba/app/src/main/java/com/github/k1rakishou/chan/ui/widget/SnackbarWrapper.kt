@@ -170,11 +170,11 @@ class SnackbarWrapper private constructor(
       val isDarkColor = AndroidUtils.isDarkColor(theme.primaryColor)
       if (isDarkColor) {
         snackbar.setTextColor(Color.WHITE)
+        snackbar.setActionTextColor(Color.WHITE)
       } else {
         snackbar.setTextColor(Color.BLACK)
+        snackbar.setActionTextColor(Color.BLACK)
       }
-
-      snackbar.setActionTextColor(theme.accentColor)
     }
   }
 }
