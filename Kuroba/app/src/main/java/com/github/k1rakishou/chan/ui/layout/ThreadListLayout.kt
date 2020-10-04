@@ -128,7 +128,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var postViewMode: PostViewMode? = null
   private var spanCount = 2
   private var searchOpen = false
-  private var onToolbarHeightKnownAlreadyCalled = false
   private var lastPostCount = 0
   private var hat: Bitmap? = null
   private var showingThread: ChanThread? = null
@@ -331,11 +330,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {
-    if (onToolbarHeightKnownAlreadyCalled) {
-      return
-    }
-
-    onToolbarHeightKnownAlreadyCalled = true
     setRecyclerViewPadding()
   }
 
