@@ -363,14 +363,34 @@ public class Toolbar
         }
 
         View positionZero = layoutManager.findViewByPosition(0);
-        View lastPosition = layoutManager.findViewByPosition(adapter.getItemCount() - 1);
+        boolean isAtVeryBottom = (adapter.getItemCount() - 1) == getLastCompletelyVisiblePosition(recyclerView);
 
-        boolean allowHide = lastPosition == null && (positionZero == null || positionZero.getTop() < 0);
-        if (allowHide || lastScrollDeltaOffset <= 0) {
+        boolean allowHide = !isAtVeryBottom
+                && (positionZero == null || positionZero.getTop() < 0)
+                || lastScrollDeltaOffset <= 0;
+
+        if (allowHide) {
             setCollapse(lastScrollDeltaOffset <= 0 ? TOOLBAR_COLLAPSE_SHOW : TOOLBAR_COLLAPSE_HIDE, true);
         } else {
             setCollapse(TOOLBAR_COLLAPSE_SHOW, true);
         }
+    }
+
+    private int getLastCompletelyVisiblePosition(RecyclerView recyclerView) {
+        RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
+        if (layoutManager == null) {
+            return -1;
+        }
+
+        if (layoutManager instanceof GridLayoutManager) {
+            return ((GridLayoutManager) layoutManager).findLastCompletelyVisibleItemPosition();
+        }
+
+        if (layoutManager instanceof LinearLayoutManager) {
+            return ((LinearLayoutManager) layoutManager).findLastCompletelyVisibleItemPosition();
+        }
+
+        throw new IllegalStateException("Not supported LayoutManager: " + layoutManager.getClass().getSimpleName());
     }
 
     public void openSearchWithCallback(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
