@@ -95,6 +95,11 @@ internal class PostExtraContentLoader(
             val spanUpdateBatchList = spanUpdateBatchResultList
               .mapNotNull { it.valueOrNull() }
 
+            if (spanUpdateBatchList.isEmpty()) {
+              // All results are errors
+              return@flatMap failed()
+            }
+
             return@flatMap updateSpans(spanUpdateBatchList, postLoaderData)
           }
           .doOnError { error -> Logger.e(TAG, "Internal unhandled error", error) }
@@ -157,6 +162,7 @@ internal class PostExtraContentLoader(
 
     return fetcher.fetch(requestUrl, linkInfoRequest)
       .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+      .onErrorReturn { error -> ModularResult.Error(error) }
   }
 
   private fun createNewRequests(
