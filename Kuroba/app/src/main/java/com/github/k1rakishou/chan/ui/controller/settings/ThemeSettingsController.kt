@@ -24,12 +24,15 @@ import android.net.Uri
 import android.text.Spannable
 import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EdgeEffect
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.content.ContextCompat
 import androidx.core.text.getSpans
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -66,6 +69,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
@@ -144,7 +148,6 @@ class ThemeSettingsController(context: Context)
   }
 
   private lateinit var pager: ViewPager
-  private lateinit var done: FloatingActionButton
   private lateinit var currentThemeIndicator: TextView
   private var currentItemIndex = 0
 
@@ -188,11 +191,7 @@ class ThemeSettingsController(context: Context)
     view = AndroidUtils.inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
     currentThemeIndicator = view.findViewById(R.id.current_theme_indicator)
-    done = view.findViewById(R.id.add)
-    done.updateColors(themeEngine.chanTheme)
     updateCurrentThemeIndicator(true)
-
-    done.backgroundTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
 
     reload()
   }
@@ -353,7 +352,6 @@ class ThemeSettingsController(context: Context)
     val backgroundColor = AndroidUtils.getComplementaryColor(compositeColor.toInt())
     root.setBackgroundColor(backgroundColor)
 
-    done.updateColors(theme)
     updateCurrentThemeIndicator(theme.isLightTheme)
   }
 
@@ -402,7 +400,7 @@ class ThemeSettingsController(context: Context)
     }
   }
 
-  private fun createSimpleThreadView(theme: ChanTheme): LinearLayout {
+  private fun createSimpleThreadView(theme: ChanTheme): CoordinatorLayout {
     val parser = CommentParser(mockReplyManager)
       .addDefaultRules()
 
@@ -461,6 +459,11 @@ class ThemeSettingsController(context: Context)
     hackSpanColors(post2.comment, theme)
 
     val linearLayout = LinearLayout(context)
+    linearLayout.layoutParams = LinearLayout.LayoutParams(
+      LinearLayout.LayoutParams.MATCH_PARENT,
+      LinearLayout.LayoutParams.MATCH_PARENT
+    )
+
     linearLayout.orientation = LinearLayout.VERTICAL
     linearLayout.setBackgroundColor(theme.backColor)
 
@@ -522,6 +525,12 @@ class ThemeSettingsController(context: Context)
 
     toolbar.setNavigationItem(false, true, item, theme)
 
+    val fab = FloatingActionButton(context)
+    fab.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_create_white_24dp))
+    fab.imageTintList = ColorStateList.valueOf(Color.WHITE)
+    fab.updateColors(theme)
+    fab.backgroundTintList = ColorStateList.valueOf(theme.accentColor)
+
     linearLayout.addView(
       toolbar,
       LinearLayout.LayoutParams(
@@ -537,7 +546,21 @@ class ThemeSettingsController(context: Context)
       )
     )
 
-    return linearLayout
+    val coordinatorLayout = CoordinatorLayout(context)
+    coordinatorLayout.addView(linearLayout)
+
+    val params = CoordinatorLayout.LayoutParams(
+      CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+      CoordinatorLayout.LayoutParams.WRAP_CONTENT
+    ).apply {
+      gravity = Gravity.END or Gravity.BOTTOM
+      bottomMargin = dp(16f)
+      marginEnd = dp(16f)
+    }
+
+    coordinatorLayout.addView(fab, params)
+
+    return coordinatorLayout
   }
 
   private fun indexPosts(posts: List<Post>): List<PostIndexed> {
