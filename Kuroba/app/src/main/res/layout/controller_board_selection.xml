@@ -8,11 +8,9 @@
     android:focusable="true">
 
     <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-        android:id="@+id/container_with_max_size"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_margin="16dp">
+        android:layout_margin="8dp">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
             android:id="@+id/card_view"

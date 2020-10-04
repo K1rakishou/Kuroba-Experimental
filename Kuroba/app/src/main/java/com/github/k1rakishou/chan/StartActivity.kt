@@ -261,6 +261,7 @@ class StartActivity : AppCompatActivity(),
 
       globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
       globalWindowInsetsManager.fireCallbacks()
+      globalWindowInsetsManager.fireInsetsUpdateCallbacks()
 
       drawerController.view.updatePaddings(
         left = globalWindowInsetsManager.left(),
