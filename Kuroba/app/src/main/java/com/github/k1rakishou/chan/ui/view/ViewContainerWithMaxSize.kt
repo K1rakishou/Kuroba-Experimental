@@ -2,7 +2,9 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.content.Context
 import android.util.AttributeSet
-import android.widget.FrameLayout
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.graphics.component1
+import androidx.core.graphics.component2
 import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
@@ -10,13 +12,15 @@ import androidx.core.view.marginTop
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.updateMargins
 import javax.inject.Inject
 
 class ViewContainerWithMaxSize @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr), WindowInsetsListener {
+) : CoordinatorLayout(context, attrs, defStyleAttr), WindowInsetsListener {
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -30,10 +34,20 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
+    val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
+    this.maxWidth = displayWidth
+    this.maxHeight = displayHeight
+
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onInsetsChanged() {
+    if (globalWindowInsetsManager.isKeyboardOpened) {
+      updateMargins(bottom = globalWindowInsetsManager.keyboardHeight)
+    } else {
+      updateMargins(bottom = 0)
+    }
+
     requestLayout()
     invalidate()
   }

@@ -2,8 +2,6 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.core.graphics.component1
-import androidx.core.graphics.component2
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.Chan
@@ -19,8 +17,6 @@ import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -32,6 +28,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.collections.component1
+import kotlin.collections.component2
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -66,11 +64,6 @@ class BoardSelectionController(
     searchView = view.findViewById(R.id.search_view)
     searchView.setAutoRequestFocus(false)
     openSitesButton = view.findViewById(R.id.open_all_sites_settings)
-
-    val container = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
-    val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
-    container.maxWidth = displayWidth
-    container.maxHeight = displayHeight
 
     openSitesButton.setOnClickListener {
       callback.onOpenSitesSettingsClicked()

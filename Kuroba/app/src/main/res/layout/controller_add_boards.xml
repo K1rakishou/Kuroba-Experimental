@@ -9,83 +9,91 @@
     android:clickable="true"
     android:focusable="true">
 
-    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
-        android:id="@+id/card_view"
+    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp">
 
-        <LinearLayout
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+            android:id="@+id/card_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <com.github.k1rakishou.chan.ui.layout.SearchLayout
-                android:id="@+id/search_view"
-                android:layout_width="match_parent"
-                android:layout_height="42dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp" />
-
-            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-                android:id="@+id/epoxy_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:scrollbars="vertical" />
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
-                android:id="@+id/buttons_holder"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:orientation="horizontal">
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-                    android:id="@+id/check_uncheck_all_boards"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/controller_add_boards_check_all" />
+                <com.github.k1rakishou.chan.ui.layout.SearchLayout
+                    android:id="@+id/search_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+                    android:id="@+id/epoxy_recycler_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:scrollbars="vertical" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:id="@+id/buttons_holder"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-                        android:id="@+id/cancel_adding_boards"
+                        android:id="@+id/check_uncheck_all_boards"
                         style="?android:attr/buttonBarButtonStyle"
-                        android:layout_width="84dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
-                        android:text="@string/cancel" />
+                        android:text="@string/controller_add_boards_check_all" />
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-                        android:id="@+id/add_boards"
-                        style="?android:attr/buttonBarButtonStyle"
-                        android:layout_width="50dp"
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/add" />
+                        android:orientation="horizontal">
 
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/cancel_adding_boards"
+                            style="?android:attr/buttonBarButtonStyle"
+                            android:layout_width="84dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="16dp"
+                            android:text="@string/cancel" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/add_boards"
+                            style="?android:attr/buttonBarButtonStyle"
+                            android:layout_width="50dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/add" />
+
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
             </LinearLayout>
 
-        </LinearLayout>
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
-    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
+    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
 
 </FrameLayout>

@@ -65,6 +65,9 @@ class GlobalWindowInsetsManager {
     )
 
     initialized = true
+  }
+
+  fun fireInsetsUpdateCallbacks() {
     insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
   }
 
