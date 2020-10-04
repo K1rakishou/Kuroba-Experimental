@@ -181,11 +181,15 @@ class PageRequestManager(
 
   private fun shouldUpdate(boardDescriptor: BoardDescriptor) {
     launch {
+      siteManager.awaitUntilInitialized()
+
       val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       if (site == null) {
         Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
         return@launch
       }
+
+      boardManager.awaitUntilInitialized()
 
       val board = boardManager.byBoardDescriptor(boardDescriptor)
       if (board == null) {
@@ -219,11 +223,15 @@ class PageRequestManager(
       return
     }
 
+    siteManager.awaitUntilInitialized()
+
     val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
       return
     }
+
+    boardManager.awaitUntilInitialized()
 
     val board = boardManager.byBoardDescriptor(boardDescriptor)
     if (board == null) {
