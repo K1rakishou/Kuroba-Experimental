@@ -371,7 +371,7 @@ public class PostAdapter
                 for (int i = 0, displayListSize = displayList.size() - 1; i < displayListSize; i++) {
                     Post post = displayList.get(i);
                     if (post.no == chanThreadViewableInfoView.getLastViewedPostNo()) {
-                        return lastSeenIndicatorPosition = i + 1;
+                        return i + 1;
                     }
                 }
             }
