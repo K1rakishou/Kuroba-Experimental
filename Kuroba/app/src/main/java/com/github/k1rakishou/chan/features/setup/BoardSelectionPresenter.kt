@@ -112,7 +112,12 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
       boardCellData.boardDescriptor
     }
 
-    return boardCellDataList.sortedWith(comparator)
+    return try {
+      boardCellDataList.sortedWith(comparator)
+    } catch (error: IllegalArgumentException) {
+      val descriptors = boardCellDataList.map { boardCellData -> boardCellData.boardDescriptor }
+      throw IllegalAccessException("Bug in BoardDescriptorsComparator, query=$query, descriptors=${descriptors}")
+    }
   }
 
   private fun setState(state: BoardSelectionControllerState) {
