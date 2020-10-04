@@ -248,7 +248,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:id="@+id/preview_message"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

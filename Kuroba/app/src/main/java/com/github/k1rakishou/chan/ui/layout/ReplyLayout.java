@@ -73,6 +73,7 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
@@ -132,7 +133,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
     // Progress view (when sending request to the server)
     private View progressLayout;
-    private TextView currentProgress;
+    private ColorizableTextView currentProgress;
 
     // Reply views:
     private View replyInputLayout;
@@ -154,7 +155,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     private ColorizableCheckBox spoiler;
     private LinearLayout previewHolder;
     private ImageView preview;
-    private TextView previewMessage;
+    private ColorizableTextView previewMessage;
     private ImageView attach;
     private ConstraintLayout captcha;
     private TextView validCaptchasCount;

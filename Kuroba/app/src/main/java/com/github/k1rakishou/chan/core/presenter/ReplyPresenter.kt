@@ -500,6 +500,7 @@ class ReplyPresenter @Inject constructor(
   private fun makeSubmitCall() {
     launch {
       switchPage(Page.LOADING)
+      Logger.d(TAG, "makeSubmitCall() chanDescriptor=${draft.chanDescriptor}")
 
       site.actions().post(draft)
         .catch { error -> onPostError(error) }
@@ -523,8 +524,14 @@ class ReplyPresenter @Inject constructor(
 
   private suspend fun onPostComplete(replyResponse: ReplyResponse) {
     when {
-      replyResponse.posted -> onPostedSuccessfully(replyResponse)
-      replyResponse.requireAuthentication -> switchPage(Page.AUTHENTICATION)
+      replyResponse.posted -> {
+        Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
+        onPostedSuccessfully(replyResponse)
+      }
+      replyResponse.requireAuthentication -> {
+        Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
+        switchPage(Page.AUTHENTICATION)
+      }
       else -> {
         var errorMessage = AndroidUtils.getString(R.string.reply_error)
         if (replyResponse.errorMessage != null) {
@@ -534,7 +541,7 @@ class ReplyPresenter @Inject constructor(
           )
         }
 
-        Logger.e(TAG, "onPostComplete error: $errorMessage")
+        Logger.e(TAG, "onPostComplete() error: $errorMessage")
         switchPage(Page.INPUT)
         callback.openMessage(errorMessage)
       }
