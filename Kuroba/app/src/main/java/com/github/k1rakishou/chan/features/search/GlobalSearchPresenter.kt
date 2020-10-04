@@ -38,22 +38,43 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
 
     scope.launch {
       if (searchResultsStateStorage.searchInputState != null) {
-        val searchInputState = searchResultsStateStorage.searchInputState!!
-        setState(GlobalSearchControllerState.Data(searchInputState))
-        withViewNormal {
-          if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
-            restoreSearchResultsController(
-              searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
-              searchInputState.query
-            )
-          }
+        if (tryRestorePrevState()) {
+          return@launch
         }
-        return@launch
+
+        // fallthrough
       }
 
       siteManager.awaitUntilInitialized()
       loadDefaultSearchState()
     }
+  }
+
+  private fun tryRestorePrevState(): Boolean {
+    val searchInputState = searchResultsStateStorage.searchInputState!!
+
+    val isQueryOk = if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
+      searchInputState.query.length >= MIN_SEARCH_QUERY_LENGTH
+    } else {
+      true
+    }
+
+    if (isQueryOk) {
+      setState(GlobalSearchControllerState.Data(searchInputState))
+
+      withViewNormal {
+        if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
+          restoreSearchResultsController(
+            searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
+            searchInputState.query
+          )
+        }
+      }
+
+      return true
+    }
+
+    return false
   }
 
   fun listenForStateChanges(): Flowable<GlobalSearchControllerState> {
