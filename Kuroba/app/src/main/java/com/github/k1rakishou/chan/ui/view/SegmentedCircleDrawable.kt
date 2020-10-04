@@ -11,12 +11,14 @@ class SegmentedCircleDrawable : Drawable() {
   private var currentPercent: Float = .1f
 
   fun percentage(percent: Float) {
-    require(percent in 0f..1f)
-
     currentPercent = percent
 
     if (currentPercent < .1f) {
       currentPercent = .1f
+    }
+
+    if (currentPercent > 1f) {
+      currentPercent =  1f
     }
   }
 
