@@ -148,7 +148,13 @@ class AddBoardsPresenter(
       selectableBoardCellData.boardCellData.boardDescriptor
     }
 
-    val sortedBoards = matchedBoards.sortedWith(comparator)
+    val sortedBoards = try {
+      matchedBoards.sortedWith(comparator)
+    } catch (error: IllegalArgumentException) {
+      val descriptors = matchedBoards.map { matchedBoard -> matchedBoard.boardCellData.boardDescriptor }
+      throw IllegalAccessException("Bug in BoardDescriptorsComparator, query=$query, descriptors=${descriptors}")
+    }
+
     setState(AddBoardsControllerState.Data(sortedBoards))
   }
 

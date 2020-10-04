@@ -16,14 +16,6 @@ class BoardDescriptorsComparator<T>(
       return boardCode1.compareTo(boardCode2)
     }
 
-    if (query.length > boardCode1.length && query.length <= boardCode2.length) {
-      return -1
-    }
-
-    if (query.length > boardCode2.length && query.length <= boardCode1.length) {
-      return 1
-    }
-
     val (maxOccurrenceLen1, position1) = queryOccurrenceLengthAndPosition(query, boardCode1)
     val (maxOccurrenceLen2, position2) = queryOccurrenceLengthAndPosition(query, boardCode2)
 
