@@ -147,8 +147,10 @@ class StartActivity : AppCompatActivity(),
     compositeDisposable.clear()
     job.cancel()
 
-    themeEngine.removeRootView()
-    themeEngine.removeListener(this)
+    if (::themeEngine.isInitialized) {
+      themeEngine.removeRootView()
+      themeEngine.removeListener(this)
+    }
 
     if (::updateManager.isInitialized) {
       updateManager.onDestroy()
