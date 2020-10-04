@@ -8,6 +8,9 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 /**
  * A super useful class for cases when you want to initialize something in a class (that may take
@@ -61,7 +64,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
+  @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (value.isCompleted) {
       if (logStates) {
@@ -78,8 +81,15 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
         "called when not initialized, awaiting... stacktrace=${getStackTrace()}")
     }
 
-    withTimeoutOrNull(TimeUnit.MINUTES.toMillis(MAX_WAIT_TIME_MINUTES)) { value.awaitSilently() }
-      ?: throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!!")
+    val (res, time) = measureTimedValue {
+      withTimeoutOrNull(TimeUnit.MINUTES.toMillis(MAX_WAIT_TIME_MINUTES)) {
+        value.awaitSilently()
+      }
+    }
+
+    if (res == null) {
+      throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!! time=$time")
+    }
 
     if (logStates) {
       Log.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, done")
@@ -88,7 +98,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     return
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
+  @OptIn(ExperimentalTime::class)
   fun awaitUntilInitializedBlocking() {
     if (value.isCompleted) {
       if (logStates) {
@@ -106,10 +116,10 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     val countDownLatch = CountDownLatch(1)
-    invokeAfterInitialized { countDownLatch.countDown() }
+    val time = measureTime { invokeAfterInitialized { countDownLatch.countDown() } }
 
     if (!countDownLatch.await(MAX_WAIT_TIME_MINUTES, TimeUnit.MINUTES)) {
-      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() TIMEOUT!!!")
+      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() TIMEOUT!!! time=$time")
     }
 
     if (logStates) {
