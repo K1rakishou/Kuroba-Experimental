@@ -109,7 +109,8 @@ class ThemeParser(
 
       val themeFile = File(context.filesDir, fileName)
       if (!themeFile.exists()) {
-        throw IOException("Theme (${themeFile.absolutePath}) does not exist on disk")
+        Logger.d(TAG, "Theme (${themeFile.absolutePath}) does not exist on the disk")
+        return null
       }
 
       val serializableTheme = gson.fromJson(
