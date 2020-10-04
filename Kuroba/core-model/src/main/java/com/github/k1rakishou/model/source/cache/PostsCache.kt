@@ -1,9 +1,7 @@
 package com.github.k1rakishou.model.source.cache
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.common.MurmurHashUtils
-import com.github.k1rakishou.common.linkedMapWithCap
-import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.*
 import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -171,37 +169,6 @@ class PostsCache(
     }
   }
 
-  suspend fun getLatest(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
-    return mutex.withLock {
-      accessTimes[threadDescriptor] = System.currentTimeMillis()
-
-      val navigableMap = postsCache[threadDescriptor]
-        ?: return@withLock emptyList()
-
-      val navigableKeySet = postsCache[threadDescriptor]?.navigableKeySet()
-        ?: return@withLock emptyList()
-
-      val resultList = mutableListOf<ChanPost>()
-      var count = 0
-
-      for (postDescriptor in navigableKeySet.iterator()) {
-        if (count >= maxCount) {
-          break
-        }
-
-        ++count
-
-        val chanPost = navigableMap[postDescriptor]
-          ?: continue
-
-        chanPost.isFromCache = true
-        resultList += chanPost
-      }
-
-      return@withLock resultList
-    }
-  }
-
   suspend fun getTotalCachedPostsCount(): Int {
     return mutex.withLock {
       return@withLock currentValuesCount.get()
@@ -309,25 +276,41 @@ class PostsCache(
 
   suspend fun getAll(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): List<ChanPost> {
     return mutex.withLock {
-      accessTimes[threadDescriptor] = System.currentTimeMillis()
+      val originalPost = originalPostsCache[threadDescriptor]
+        ?: return@withLock emptyList()
 
       val posts = postsCache[threadDescriptor]?.values?.toList()?.takeLast(maxCount)
         ?: emptyList()
 
-      return@withLock posts
+      val resultList = mutableListWithCap<ChanPost>(maxCount + 1)
+      resultList.add(originalPost)
+      resultList.addAll(posts)
+
+      accessTimes[threadDescriptor] = System.currentTimeMillis()
+
+      return@withLock resultList
         .onEach { post -> post.isFromCache = true }
     }
   }
 
   suspend fun getAllPostNoSet(threadDescriptor: ChanDescriptor.ThreadDescriptor, maxCount: Int): Set<Long> {
     return mutex.withLock {
+      val originalPost = originalPostsCache[threadDescriptor]?.postDescriptor?.postNo
+        ?: return@withLock emptySet()
+
       accessTimes[threadDescriptor] = System.currentTimeMillis()
 
-      return@withLock postsCache[threadDescriptor]?.values
+      val posts = postsCache[threadDescriptor]?.values
         ?.map { it.postDescriptor.postNo }
         ?.takeLast(maxCount)
         ?.toSet()
         ?: emptySet()
+
+      val resultList = hashSetWithCap<Long>(maxCount + 1)
+      resultList.add(originalPost)
+      resultList.addAll(posts)
+
+      return@withLock resultList
     }
   }
 
@@ -365,7 +348,8 @@ class PostsCache(
       currentValuesCount.addAndGet(-count)
     }
 
-    logger.log(tag, "Evicting ${keysToEvict.size} threads, postsToEvict=${amountToEvictParam - amountOfPostsToEvict}")
+    logger.log(tag, "Evicting ${keysToEvict.size} threads, " +
+            "postsToEvict=${amountToEvictParam - amountOfPostsToEvict}")
 
     if (currentValuesCount.get() < 0) {
       currentValuesCount.set(0)
