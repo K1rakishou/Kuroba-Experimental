@@ -21,7 +21,6 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.PostHideHelper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostIndexed
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.Logger
 import java.util.*
 import javax.inject.Inject
@@ -57,11 +56,9 @@ class PostsFilter(
         return emptyList()
       }
 
-    if (ChanSettings.verboseLogs.get()) {
-      Logger.d(TAG, "originalPosts.size=${original.size}, " +
-        "retainedPosts.size=${retainedPosts.size}, " +
-        "query=\"$query\"")
-    }
+    Logger.d(TAG, "originalPosts.size=${original.size}, " +
+      "retainedPosts.size=${retainedPosts.size}, " +
+      "query=\"$query\"")
 
     val indexedPosts: MutableList<PostIndexed> = ArrayList(retainedPosts.size)
 

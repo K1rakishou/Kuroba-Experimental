@@ -344,10 +344,7 @@ public class PostAdapter
         lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor);
 
         notifyDataSetChanged();
-
-        if (ChanSettings.verboseLogs.get()) {
-            Logger.d(TAG, "setThread() notifyDataSetChanged called, displayList.size=" + displayList.size());
-        }
+        Logger.d(TAG, "setThread() notifyDataSetChanged called, displayList.size=" + displayList.size());
     }
 
     private List<Post> extractPosts(List<PostIndexed> indexedPosts) {
