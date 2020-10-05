@@ -48,9 +48,7 @@ import java.lang.annotation.RetentionPolicy;
  * Clover changed: the original FastScroller didn't account for the recyclerview top padding we
  * require. A minimum thumb length parameter was also added.
  */
-public class FastScroller
-        extends ItemDecoration
-        implements OnItemTouchListener {
+public class FastScroller extends ItemDecoration implements OnItemTouchListener {
     @IntDef({STATE_HIDDEN, STATE_VISIBLE, STATE_DRAGGING})
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {}
@@ -87,6 +85,9 @@ public class FastScroller
 
     private static final int[] PRESSED_STATE_SET = {android.R.attr.state_pressed};
     private static final int[] EMPTY_STATE_SET = {};
+
+    @Nullable
+    private ThumbDragListener thumbDragListener;
 
     @Nullable
     private final PostInfoMapItemDecoration postInfoMapItemDecoration;
@@ -208,6 +209,14 @@ public class FastScroller
         attachToRecyclerView(recyclerView);
     }
 
+    public void setThumbDragListener(ThumbDragListener listener) {
+        this.thumbDragListener = listener;
+    }
+
+    public void onCleanup() {
+        thumbDragListener = null;
+    }
+
     public void attachToRecyclerView(@Nullable RecyclerView recyclerView) {
         if (mRecyclerView == recyclerView) {
             return; // nothing to do
@@ -262,6 +271,7 @@ public class FastScroller
         } else if (state == STATE_VISIBLE) {
             resetHideDelay(HIDE_DELAY_AFTER_VISIBLE_MS);
         }
+
         mState = state;
     }
 
@@ -569,6 +579,11 @@ public class FastScroller
                     mVerticalDragY = (int) me.getY();
                     mVerticalDragThumbHeight = verticalThumbHeight;
                 }
+
+                if (thumbDragListener != null) {
+                    thumbDragListener.onDragStarted();
+                }
+
                 setState(STATE_DRAGGING);
             }
         } else if (me.getAction() == MotionEvent.ACTION_UP && mState == STATE_DRAGGING) {
@@ -576,6 +591,10 @@ public class FastScroller
             mHorizontalDragX = 0;
             setState(STATE_VISIBLE);
             mDragState = DRAG_NONE;
+
+            if (thumbDragListener != null) {
+                thumbDragListener.onDragEnded();
+            }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {
             show();
             if (mDragState == DRAG_X) {
@@ -675,14 +694,9 @@ public class FastScroller
 
     @VisibleForTesting
     boolean isPointInsideVerticalThumb(float x, float y) {
-        // width divided by 2 for rtl? keeping it the same as upstream, but seems illogical.
-        boolean insideRTLorLTR = isLayoutRTL()
+        return isLayoutRTL()
                 ? x <= mRecyclerViewLeftPadding + mTargetWidth / 2.0f
                 : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mTargetWidth;
-        return insideRTLorLTR;
-
-//        return insideRTLorLTR && y >= mVerticalThumbCenterY - verticalThumbHeight / 2.0f - mTargetWidth
-//                && y <= mVerticalThumbCenterY + verticalThumbHeight / 2.0f + mTargetWidth;
     }
 
     @VisibleForTesting
@@ -745,5 +759,10 @@ public class FastScroller
             mVerticalTrackDrawable.setAlpha(alpha);
             requestRedraw();
         }
+    }
+
+    public interface ThumbDragListener {
+        public void onDragStarted();
+        public void onDragEnded();
     }
 }

@@ -306,6 +306,10 @@ public class Toolbar
         setCollapse(Toolbar.TOOLBAR_COLLAPSE_SHOW, animated);
     }
 
+    public void collapseHide(boolean animated) {
+        setCollapse(Toolbar.TOOLBAR_COLLAPSE_HIDE, animated);
+    }
+
     public void setCollapse(int offset, boolean animated) {
         scrollOffset += offset;
         scrollOffset = Math.max(0, Math.min(getHeight(), scrollOffset));
