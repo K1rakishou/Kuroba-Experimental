@@ -89,7 +89,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   ReplyLayoutCallback,
   Toolbar.ToolbarHeightUpdatesCallback,
   CoroutineScope,
-  ThemeEngine.ThemeChangesListener{
+  ThemeEngine.ThemeChangesListener,
+  FastScroller.ThumbDragListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -174,7 +175,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val scrollListener: RecyclerView.OnScrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-      onRecyclerViewScrolled()
+      onRecyclerViewScrolled(recyclerView)
     }
   }
 
@@ -333,7 +334,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setRecyclerViewPadding()
   }
 
-  private fun onRecyclerViewScrolled() {
+  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
     // onScrolled can be called after cleanup()
     if (showingThread == null) {
       return
@@ -361,7 +362,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     if (last == postAdapter.itemCount - 1) {
-      threadListLayoutCallback?.showToolbar()
+      val isDragging = fastScroller?.isDragging ?: false
+      if (!isDragging) {
+        threadListLayoutCallback?.showToolbar()
+      }
     }
   }
 
@@ -868,13 +872,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.showImageReencodingWindow(supportsReencode)
   }
 
-  private fun shouldToolbarCollapse(): Boolean {
+  private fun canToolbarCollapse(): Boolean {
     return (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT
       && !ChanSettings.neverHideToolbar.get())
   }
 
   private fun attachToolbarScroll(attach: Boolean) {
-    if (shouldToolbarCollapse()) {
+    if (canToolbarCollapse()) {
       val toolbar = threadListLayoutCallback?.toolbar
         ?: return
 
@@ -888,7 +892,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun showToolbarIfNeeded() {
-    if (shouldToolbarCollapse()) {
+    if (canToolbarCollapse()) {
       // Of coming back to focus from a dual controller, like the threadlistcontroller,
       // check if we should show the toolbar again (after the other controller made it hide).
       // It should show if the search or reply is open, or if the thread was scrolled at the
@@ -910,38 +914,71 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (!enabled) {
       if (fastScroller != null) {
         recyclerView.removeItemDecoration(fastScroller!!)
+        fastScroller?.onCleanup()
         fastScroller = null
       }
 
       postInfoMapItemDecoration = null
-    } else {
-      val thread = thread
-      if (thread != null) {
-        if (thread.chanDescriptor.isThreadDescriptor() && postInfoMapItemDecoration == null) {
-          postInfoMapItemDecoration = PostInfoMapItemDecoration(
-            context,
-            ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-          )
-        }
-        if (postInfoMapItemDecoration != null) {
-          postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
-            thread.postsCount
-          )
-        }
-        if (fastScroller == null) {
-          fastScroller = FastScrollerHelper.create(
-            toolbarPaddingTop(),
-            globalWindowInsetsManager,
-            recyclerView,
-            postInfoMapItemDecoration,
-            themeEngine.chanTheme
-          )
-        }
+      recyclerView.isVerticalScrollBarEnabled = true
+
+      return
+    }
+
+    val thread = thread
+    if (thread != null) {
+      if (thread.chanDescriptor.isThreadDescriptor() && postInfoMapItemDecoration == null) {
+        postInfoMapItemDecoration = PostInfoMapItemDecoration(
+          context,
+          ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
+        )
+      }
+
+      if (postInfoMapItemDecoration != null) {
+        postInfoMapItemDecoration!!.setItems(
+          extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
+          thread.postsCount
+        )
+      }
+
+      if (fastScroller == null) {
+        val scroller = FastScrollerHelper.create(
+          toolbarPaddingTop(),
+          globalWindowInsetsManager,
+          recyclerView,
+          postInfoMapItemDecoration,
+          themeEngine.chanTheme
+        )
+        scroller.setThumbDragListener(this)
+
+        fastScroller = scroller
       }
     }
 
-    recyclerView.isVerticalScrollBarEnabled = !enabled
+    recyclerView.isVerticalScrollBarEnabled = false
+  }
+
+  override fun onDragStarted() {
+    if (!canToolbarCollapse()) {
+      return
+    }
+
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    toolbar.detachRecyclerViewScrollStateListener(recyclerView)
+    toolbar.collapseHide(true)
+  }
+
+  override fun onDragEnded() {
+    if (!canToolbarCollapse()) {
+      return
+    }
+
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    toolbar.attachRecyclerViewScrollStateListener(recyclerView)
+    toolbar.collapseShow(true)
   }
 
   override fun updatePadding() {
