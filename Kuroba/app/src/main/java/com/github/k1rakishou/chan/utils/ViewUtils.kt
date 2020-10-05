@@ -11,6 +11,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.common.errorMessageOrClassName
 import java.lang.reflect.Field
 
 
@@ -62,7 +63,7 @@ object ViewUtils {
       }
 
     } catch (error: Exception) {
-      Logger.e(TAG, "setEditTextCursorColor() failure", error)
+      Logger.e(TAG, "setEditTextCursorColor() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -97,7 +98,7 @@ object ViewUtils {
         editorField.isAccessible = true
       }
 
-      val editor = editorField[this]
+      val editor = editorField.get(this)
       val editorClass: Class<*> = editor.javaClass
       val handleNames = arrayOf("mSelectHandleLeft", "mSelectHandleRight", "mSelectHandleCenter")
       val resNames = arrayOf("mTextSelectHandleLeftRes", "mTextSelectHandleRightRes", "mTextSelectHandleRes")
@@ -127,7 +128,7 @@ object ViewUtils {
         }
       }
     } catch (error: Exception) {
-      Logger.e(TAG, "setHandlesColors() failure", error)
+      Logger.e(TAG, "setHandlesColors() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -155,7 +156,7 @@ object ViewUtils {
       f2.isAccessible = true
       f2.set(this, edgeEffectBottom)
     } catch (error: Exception) {
-      Logger.e(TAG, "AbsListView.changeEdgeEffect() failure", error)
+      Logger.e(TAG, "AbsListView.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -176,7 +177,7 @@ object ViewUtils {
       f2.isAccessible = true
       f2.set(this, rightEdge)
     } catch (error: Exception) {
-      Logger.e(TAG, "ViewPager.changeEdgeEffect() failure", error)
+      Logger.e(TAG, "ViewPager.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 

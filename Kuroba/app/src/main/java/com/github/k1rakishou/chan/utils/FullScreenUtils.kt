@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.ui.theme.ChanTheme
 
 
 object FullScreenUtils {
+
   fun Window.setupFullscreen() {
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
@@ -15,8 +16,6 @@ object FullScreenUtils {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
       attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     }
-
-    decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
   }
 
   fun Window.setupStatusAndNavBarColors(theme: ChanTheme) {
@@ -48,21 +47,30 @@ object FullScreenUtils {
   }
 
   fun Window.hideSystemUI(theme: ChanTheme) {
-    decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-      or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-      or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-      or View.SYSTEM_UI_FLAG_FULLSCREEN
-      or View.SYSTEM_UI_FLAG_IMMERSIVE)
+    if (AndroidUtils.isAndroid10()) {
+      decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+        or View.SYSTEM_UI_FLAG_FULLSCREEN
+        or View.SYSTEM_UI_FLAG_IMMERSIVE)
+    } else {
+      setFlags(
+        WindowManager.LayoutParams.FLAG_FULLSCREEN,
+        WindowManager.LayoutParams.FLAG_FULLSCREEN
+      )
+    }
 
-    setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
     setupStatusAndNavBarColors(theme)
   }
 
   fun Window.showSystemUI(theme: ChanTheme) {
-    decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+    if (AndroidUtils.isAndroid10()) {
+      decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+    } else {
+      clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+    }
 
-    clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     setupStatusAndNavBarColors(theme)
   }
 
