@@ -57,7 +57,7 @@ class BookmarksPresenter(
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
           .asFlow()
-          .debounce(500.milliseconds)
+          .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
               ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
@@ -72,7 +72,7 @@ class BookmarksPresenter(
 
       scope.launch {
         searchSubject.asFlow()
-          .debounce(350.milliseconds)
+          .debounce(250.milliseconds)
           .collect { query ->
             setState(BookmarksControllerState.Loading)
 

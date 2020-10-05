@@ -216,7 +216,7 @@ class DrawerPresenter(
 
   companion object {
     private const val TAG = "DrawerPresenter"
-    private const val HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS = 1_000L
+    private const val HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS = 100L
   }
 
 }

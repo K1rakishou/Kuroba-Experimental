@@ -170,6 +170,6 @@ class BoardsSetupPresenter(
 
   companion object {
     private const val TAG = "BoardsSetupPresenter"
-    private const val DEBOUNCE_TIME_MS = 500L
+    private const val DEBOUNCE_TIME_MS = 100L
   }
 }
