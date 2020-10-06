@@ -35,20 +35,16 @@ class BookmarkWatcherCoordinator(
     Logger.d(TAG, "BookmarkWatcherCoordinator.initialize()")
 
     applicationVisibilityManager.addListener { applicationVisibility ->
+      if (!bookmarksManager.isReady()) {
+        return@addListener
+      }
+
       if (isDevFlavor) {
         Logger.d(TAG, "Calling onBookmarksChanged() app visibility changed " +
           "(applicationVisibility = $applicationVisibility)")
       }
 
-      if (applicationVisibility == ApplicationVisibility.Background) {
-        bookmarksManager.awaitUntilInitializedBlocking()
-        onBookmarksChanged()
-      } else {
-        appScope.launch {
-          bookmarksManager.awaitUntilInitialized()
-          onBookmarksChanged()
-        }
-      }
+      onBookmarksChanged()
     }
 
     appScope.launch {

@@ -142,17 +142,6 @@ class BookmarksManager(
     Logger.d(TAG, "BookmarksManager initialization completed, took $duration")
   }
 
-  @OptIn(ExperimentalTime::class)
-  fun awaitUntilInitializedBlocking() {
-    if (isReady()) {
-      return
-    }
-
-    Logger.d(TAG, "BookmarksManager (blocking) is not ready yet, waiting...")
-    val duration = measureTime { suspendableInitializer.awaitUntilInitializedBlocking() }
-    Logger.d(TAG, "BookmarksManager (blocking) initialization completed, took $duration")
-  }
-
   fun isReady() = suspendableInitializer.isInitialized()
 
   fun exists(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {

@@ -5,11 +5,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 /**
@@ -96,35 +94,6 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     return
-  }
-
-  @OptIn(ExperimentalTime::class)
-  fun awaitUntilInitializedBlocking() {
-    if (value.isCompleted) {
-      if (logStates) {
-        Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when already initialized")
-      }
-
-      // This will throw if it was initialized with an error
-      value.getCompleted()
-      return
-    }
-
-    if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() " +
-        "called when not initialized, awaiting... stacktrace=${getStackTrace()}")
-    }
-
-    val countDownLatch = CountDownLatch(1)
-    val time = measureTime { invokeAfterInitialized { countDownLatch.countDown() } }
-
-    if (!countDownLatch.await(MAX_WAIT_TIME_MINUTES, TimeUnit.MINUTES)) {
-      throw RuntimeException("SuspendableInitializer awaitUntilInitializedBlocking() TIMEOUT!!! time=$time")
-    }
-
-    if (logStates) {
-      Log.d(tag, "SuspendableInitializer awaitUntilInitializedBlocking() called when not initialized, done")
-    }
   }
 
   fun isInitialized() = value.isCompleted

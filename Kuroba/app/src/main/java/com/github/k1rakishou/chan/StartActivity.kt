@@ -50,7 +50,7 @@ import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -124,8 +124,10 @@ class StartActivity : AppCompatActivity(),
   @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    Logger.d(TAG, "onCreate() start savedInstanceState==null: ${savedInstanceState == null}")
 
     if (intentMismatchWorkaround()) {
+      Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, savedInstanceState==null: ${savedInstanceState == null}")
       return
     }
 
@@ -139,10 +141,13 @@ class StartActivity : AppCompatActivity(),
 
     themeEngine.addListener(this)
     themeEngine.refreshViews()
+
+    Logger.d(TAG, "onCreate() end savedInstanceState==null: ${savedInstanceState == null}")
   }
 
   override fun onDestroy() {
     super.onDestroy()
+    Logger.d(TAG, "onDestroy()")
 
     compositeDisposable.clear()
     job.cancel()
@@ -263,7 +268,7 @@ class StartActivity : AppCompatActivity(),
       globalWindowInsetsManager.fireCallbacks()
       globalWindowInsetsManager.fireInsetsUpdateCallbacks()
 
-      drawerController.view.updatePaddings(
+      drawerController.view.updateMargins(
         left = globalWindowInsetsManager.left(),
         right = globalWindowInsetsManager.right()
       )

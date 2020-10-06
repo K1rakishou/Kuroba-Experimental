@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent">
 
         <RelativeLayout
+            android:id="@+id/drawer_content_part"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -46,7 +47,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </RelativeLayout>
 
         <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
-            android:id="@+id/drawer"
+            android:id="@+id/drawer_part"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="start"

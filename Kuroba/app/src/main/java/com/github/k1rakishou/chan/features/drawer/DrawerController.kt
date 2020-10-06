@@ -147,7 +147,7 @@ class DrawerController(
     container = view.findViewById(R.id.container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
-    drawer = view.findViewById(R.id.drawer)
+    drawer = view.findViewById(R.id.drawer_part)
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
     divider = view.findViewById(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
