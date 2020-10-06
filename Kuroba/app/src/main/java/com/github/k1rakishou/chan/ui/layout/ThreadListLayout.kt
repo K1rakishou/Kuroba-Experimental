@@ -747,9 +747,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         if (top is PostStubCell) {
           // PostStubCell does not have grid_card_margin
           top.getTop() != searchExtraHeight + dp(1f)
-          } else {
+        } else {
           top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
-          }
+        }
       }
     }
 
@@ -762,6 +762,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
       }
     }
+    
     return true
   }
 
