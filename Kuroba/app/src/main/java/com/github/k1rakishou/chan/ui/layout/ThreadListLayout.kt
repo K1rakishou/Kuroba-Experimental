@@ -735,31 +735,31 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return true
     }
 
-    val top = layoutManager?.findViewByPosition(0)
+    val topView = layoutManager?.findViewByPosition(0)
       ?: return true
 
     if (searchOpen) {
       val searchExtraHeight = findViewById<View>(R.id.search_status).height
 
       return if (postViewMode == PostViewMode.LIST) {
-        top.top != searchExtraHeight
+        topView.top != searchExtraHeight
       } else {
-        if (top is PostStubCell) {
+        if (topView is PostStubCell) {
           // PostStubCell does not have grid_card_margin
-          top.getTop() != searchExtraHeight + dp(1f)
+          topView.top != searchExtraHeight + dp(1f)
         } else {
-          top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
+          topView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
         }
       }
     }
 
     when (postViewMode) {
-      PostViewMode.LIST -> return top.top != toolbarHeight()
-      PostViewMode.CARD -> return if (top is PostStubCell) {
+      PostViewMode.LIST -> return topView.top != toolbarHeight()
+      PostViewMode.CARD -> return if (topView is PostStubCell) {
         // PostStubCell does not have grid_card_margin
-        top.getTop() != toolbarHeight() + dp(1f)
+        topView.top != toolbarHeight() + dp(1f)
       } else {
-        top.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
+        topView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
       }
     }
     
