@@ -439,7 +439,6 @@ class KurobaSettingsImportUseCase(
           if (action == null ||
             applyToReplies == null ||
             applyToSaved == null ||
-            boardsRaw == null ||
             color == null ||
             enabled == null ||
             onlyOnOp == null ||
@@ -448,7 +447,7 @@ class KurobaSettingsImportUseCase(
             type == null
           ) {
             Logger.e(TAG, "readFilters() Failed to read filter info: action=${action}, " +
-              "applyToReplies=${applyToReplies}, applyToSaved=${applyToSaved}, boards=${boardsRaw}, " +
+              "applyToReplies=${applyToReplies}, applyToSaved=${applyToSaved}, " +
               "color=${color}, enabled=${enabled}, onlyOnOp=${onlyOnOp}, order=${order}, " +
               "pattern=${pattern}, type=${type}")
             return@jsonObject
@@ -460,7 +459,12 @@ class KurobaSettingsImportUseCase(
           }
 
           val boardDescriptors = try {
-            parseBoardDescriptors(siteIdMap, boardsRaw)
+            if (boardsRaw != null) {
+              parseBoardDescriptors(siteIdMap, boardsRaw)
+            } else {
+              // Let's just assume that boardsRaw==null means that the filter is applied to all boards
+              emptySet()
+            }
           } catch (error: Throwable) {
             Logger.e(TAG, "readFilters() Failed to parse boardDescriptors", error)
             return@jsonObject
@@ -586,23 +590,38 @@ class KurobaSettingsImportUseCase(
 
         if (databaseSiteId == null || boardCode.isNullOrEmpty()) {
           throw KurobaSettingsImportException.ParsingException(
-            "Bad databaseSiteId=($databaseSiteId) or boardCode=($boardCode)"
+            "Bad databaseSiteId=($databaseSiteId) or boardCode=($boardCode), split=$split, " +
+              "siteIdMap=${siteIdMapToString(siteIdMap)}"
           )
         }
 
         val siteId = siteIdMap[databaseSiteId]
           ?: throw KurobaSettingsImportException.ParsingException(
-            "Failed to find siteId by it's databaseSiteId=($databaseSiteId)"
+            "Failed to find siteId by it's databaseSiteId=($databaseSiteId), split=$split, " +
+              "siteIdMap=${siteIdMapToString(siteIdMap)}"
           )
 
         val siteName = kurobaSites[siteId]
           ?: throw KurobaSettingsImportException.ParsingException(
-            "Failed to find site name by siteId: $siteId"
+            "Failed to find site name by siteId: $siteId, split=$split, " +
+              "siteIdMap=${siteIdMapToString(siteIdMap)}"
           )
 
         return@map BoardDescriptor(SiteDescriptor(siteName), boardCode)
       }
       .toSet()
+  }
+
+  private fun siteIdMapToString(siteIdMap: Map<Int, Int>): String {
+    return buildString {
+      append("siteIdMap={")
+
+      siteIdMap.forEach { (dbId, siteClassId) ->
+        append("(dbId=$dbId, siteClassId=$siteClassId) ")
+      }
+
+      append("}")
+    }
   }
 
   private suspend fun activateSiteSuspend(siteDescriptor: SiteDescriptor) {
@@ -656,6 +675,10 @@ data class SimpleBookmark(
 )
 
 sealed class KurobaSettingsImportException(message: String) : Exception(message) {
-  class DatabaseIsNotEmpty(tableName: String) : KurobaSettingsImportException("Database is not empty (table name = $tableName)")
+  class DatabaseIsNotEmpty(tableName: String) : KurobaSettingsImportException(
+    "Database is not empty (table name = $tableName). You need to clear the app data! " +
+      "Import from Kuroba is only possible on fresh install."
+  )
+
   class ParsingException(message: String) : KurobaSettingsImportException(message)
 }

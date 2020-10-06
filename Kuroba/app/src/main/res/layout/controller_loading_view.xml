@@ -45,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -60,7 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 app:layout_constraintTop_toTopOf="parent"
                 tools:ignore="HardcodedText" />
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:id="@+id/text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
