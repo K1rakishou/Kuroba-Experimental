@@ -11,16 +11,14 @@ import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.common.updateMargins
 import javax.inject.Inject
 
 class ViewContainerWithMaxSize @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : CoordinatorLayout(context, attrs, defStyleAttr), WindowInsetsListener {
+) : CoordinatorLayout(context, attrs, defStyleAttr) {
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -37,25 +35,6 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
     this.maxWidth = displayWidth
     this.maxHeight = displayHeight
-
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
-  }
-
-  override fun onInsetsChanged() {
-    if (globalWindowInsetsManager.isKeyboardOpened) {
-      updateMargins(bottom = globalWindowInsetsManager.keyboardHeight)
-    } else {
-      updateMargins(bottom = 0)
-    }
-
-    requestLayout()
-    invalidate()
-  }
-
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
