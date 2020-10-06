@@ -120,12 +120,8 @@ abstract class ThreadController(
     EventBus.getDefault().unregister(this)
   }
 
-  fun passMotionEventIntoDrawer(event: MotionEvent?): Boolean {
-    return if (drawerCallbacks == null) {
-      false
-    } else {
-      drawerCallbacks!!.passMotionEventIntoDrawer(event!!)
-    }
+  fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {
+    return drawerCallbacks?.passMotionEventIntoDrawer(event) ?: false
   }
 
   fun showLoading() {

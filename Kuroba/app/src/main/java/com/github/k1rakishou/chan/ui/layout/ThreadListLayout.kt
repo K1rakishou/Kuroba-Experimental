@@ -729,6 +729,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return true
     }
 
+    val isDragging = fastScroller?.isDragging ?: false
+    if (isDragging) {
+      // Disable SwipeRefresh layout when dragging the fast scroller
+      return true
+    }
+
     val top = layoutManager?.findViewByPosition(0)
       ?: return true
 
