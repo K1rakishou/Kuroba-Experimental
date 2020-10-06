@@ -23,6 +23,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PorterDuff
@@ -35,6 +36,7 @@ import android.view.View
 import android.view.View.OnTouchListener
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.ProgressBar
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
@@ -61,6 +63,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -115,6 +118,8 @@ class MultiImageView @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var appConstants: AppConstants
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var mainScope: CoroutineScope
 
@@ -710,6 +715,7 @@ class MultiImageView @JvmOverloads constructor(
         R.drawable.ic_volume_up_white_24dp,
         null
       )
+      updateExoBufferingViewColors(exoVideoView)
 
       setExoControlsViewGlobalTouchListener(exoVideoView)
       updatePlayerControlsInsets(exoVideoView)
@@ -765,6 +771,7 @@ class MultiImageView @JvmOverloads constructor(
                 R.drawable.ic_volume_up_white_24dp,
                 null
               )
+              updateExoBufferingViewColors(exoVideoView)
 
               setExoControlsViewGlobalTouchListener(exoVideoView)
               updatePlayerControlsInsets(exoVideoView)
@@ -788,6 +795,15 @@ class MultiImageView @JvmOverloads constructor(
           )
         }
       })
+    }
+  }
+
+  private fun updateExoBufferingViewColors(exoVideoView: PlayerView) {
+    exoVideoView.findViewById<View>(R.id.exo_buffering)?.let { progressView ->
+      (progressView as? ProgressBar)?.progressTintList =
+        ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
+      (progressView as? ProgressBar)?.indeterminateTintList =
+        ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
     }
   }
 

@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.controller;
 import android.content.Context;
 import android.view.ViewGroup;
 import android.widget.ScrollView;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -27,6 +26,7 @@ import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -48,7 +48,7 @@ public class LogsController extends Controller {
     @Inject
     ThemeEngine themeEngine;
 
-    private TextView logTextView;
+    private ColorizableTextView logTextView;
     private String logText;
 
     public LogsController(Context context) {
@@ -74,7 +74,7 @@ public class LogsController extends Controller {
 
         ScrollView container = new ScrollView(context);
         container.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
-        logTextView = new TextView(context);
+        logTextView = new ColorizableTextView(context);
         container.addView(logTextView, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
 
         view = container;

@@ -9,9 +9,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.appcompat.widget.AppCompatCheckBox
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 
 internal class CrashLogsListArrayAdapter(
   context: Context,
@@ -34,7 +34,7 @@ internal class CrashLogsListArrayAdapter(
     }
 
     val cellView = inflater.inflate(R.layout.cell_crashlog_item, parent, false)
-    val fileNameView = cellView.findViewById<TextView>(R.id.cell_crashlog_file_name)
+    val fileNameView = cellView.findViewById<ColorizableTextView>(R.id.cell_crashlog_file_name)
     val checkBox = cellView.findViewById<AppCompatCheckBox>(R.id.cell_crashlog_send_checkbox)
     val clickArea = cellView.findViewById<FrameLayout>(R.id.cell_crashlog_click_area)
 
