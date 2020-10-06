@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
@@ -118,6 +119,7 @@ class StartActivity : AppCompatActivity(),
   lateinit var updateManager: UpdateManager
     private set
 
+  private lateinit var mainRootLayoutMargins: TouchBlockingFrameLayout
   private lateinit var mainNavigationController: NavigationController
   private lateinit var drawerController: DrawerController
 
@@ -206,6 +208,7 @@ class StartActivity : AppCompatActivity(),
       onShow()
     }
 
+    mainRootLayoutMargins = drawerController.view.findViewById(R.id.main_root_layout_margins)
     listenForWindowInsetsChanges()
 
     mainNavigationController = StyledToolbarNavigationController(this)
@@ -268,7 +271,7 @@ class StartActivity : AppCompatActivity(),
       globalWindowInsetsManager.fireCallbacks()
       globalWindowInsetsManager.fireInsetsUpdateCallbacks()
 
-      drawerController.view.updateMargins(
+      mainRootLayoutMargins.updateMargins(
         left = globalWindowInsetsManager.left(),
         right = globalWindowInsetsManager.right()
       )

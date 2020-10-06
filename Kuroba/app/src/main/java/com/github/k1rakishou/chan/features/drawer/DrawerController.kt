@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
@@ -84,7 +85,7 @@ class DrawerController(
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
 
-  private lateinit var rootLayout: FrameLayout
+  private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
   private lateinit var drawerLayout: DrawerLayout
   private lateinit var drawer: LinearLayout
@@ -143,7 +144,7 @@ class DrawerController(
     Chan.inject(this)
 
     view = inflate(context, R.layout.controller_navigation_drawer)
-    rootLayout = view.findViewById(R.id.root_layout)
+    rootLayout = view.findViewById(R.id.main_root_layout)
     container = view.findViewById(R.id.container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
