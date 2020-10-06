@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.AppConstants;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,8 @@ public class CaptchaNoJsLayoutV2
     ProxiedOkHttpClient okHttpClient;
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    AppConstants appConstants;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
         this(context, null, 0);
@@ -98,7 +101,7 @@ public class CaptchaNoJsLayoutV2
         super(context, attrs, defStyleAttr);
         inject(this);
 
-        this.presenter = new CaptchaNoJsPresenterV2(this, okHttpClient, context);
+        this.presenter = new CaptchaNoJsPresenterV2(this, okHttpClient, appConstants, context);
         this.adapter = new CaptchaNoJsV2Adapter();
 
         View view = inflate(context, R.layout.layout_captcha_nojs_v2, this);

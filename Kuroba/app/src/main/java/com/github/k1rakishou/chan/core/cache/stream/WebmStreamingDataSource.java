@@ -241,12 +241,13 @@ public class WebmStreamingDataSource extends BaseDataSource {
             @Nullable Uri uri,
             RawFile file,
             FileManager fileManager,
-            boolean verboseLogs
+            boolean verboseLogs,
+            AppConstants appConstants
     ) {
         super(/* isNetwork= */ true);
         Logger.d(TAG, "WebmStreamingDataSource");
 
-        this.dataSource = new DefaultHttpDataSourceFactory(AppConstants.USER_AGENT)
+        this.dataSource = new DefaultHttpDataSourceFactory(appConstants.getUserAgent())
                 .createDataSource();
 
         this.verboseLogs = verboseLogs;

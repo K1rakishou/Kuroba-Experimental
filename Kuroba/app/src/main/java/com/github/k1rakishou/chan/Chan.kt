@@ -261,6 +261,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "maxPostsCountInPostsCache = " + appConstants.maxPostsCountInPostsCache)
     Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
     Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
+    Logger.d(TAG, "userAgent = " + appConstants.userAgent)
   }
 
   private fun exceptionToString(isCalledFromRxJavaHandler: Boolean, e: Throwable): String {

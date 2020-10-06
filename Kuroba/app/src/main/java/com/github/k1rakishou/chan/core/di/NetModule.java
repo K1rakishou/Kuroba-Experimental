@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
@@ -69,26 +70,45 @@ public class NetModule {
             FileManager fileManager,
             CacheHandler cacheHandler,
             SiteResolver siteResolver,
-            @Named(DOWNLOADER_OKHTTP_CLIENT_NAME) OkHttpClient okHttpClient
+            @Named(DOWNLOADER_OKHTTP_CLIENT_NAME) OkHttpClient okHttpClient,
+            AppConstants appConstants
     ) {
         Logger.d(AppModule.DI_TAG, "File cache V2");
-        return new FileCacheV2(fileManager, cacheHandler, siteResolver, okHttpClient, connectivityManager);
+        return new FileCacheV2(
+                fileManager,
+                cacheHandler,
+                siteResolver,
+                okHttpClient,
+                connectivityManager,
+                appConstants
+        );
     }
 
     @Provides
     @Singleton
     public WebmStreamingSource provideWebmStreamingSource(
-            FileManager fileManager, FileCacheV2 fileCacheV2, CacheHandler cacheHandler
+            FileManager fileManager,
+            FileCacheV2 fileCacheV2,
+            CacheHandler cacheHandler,
+            AppConstants appConstants
     ) {
         Logger.d(AppModule.DI_TAG, "WebmStreamingSource");
-        return new WebmStreamingSource(fileManager, fileCacheV2, cacheHandler);
+        return new WebmStreamingSource(
+                fileManager,
+                fileCacheV2,
+                cacheHandler,
+                appConstants
+        );
     }
 
     @Provides
     @Singleton
-    public HttpCallManager provideHttpCallManager(ProxiedOkHttpClient okHttpClient) {
+    public HttpCallManager provideHttpCallManager(
+            ProxiedOkHttpClient okHttpClient,
+            AppConstants appConstants
+    ) {
         Logger.d(AppModule.DI_TAG, "Http call manager");
-        return new HttpCallManager(okHttpClient);
+        return new HttpCallManager(okHttpClient, appConstants);
     }
 
     /**

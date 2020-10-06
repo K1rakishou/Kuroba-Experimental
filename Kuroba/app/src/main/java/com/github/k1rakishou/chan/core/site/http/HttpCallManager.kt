@@ -36,7 +36,8 @@ import javax.inject.Inject
  */
 @DoNotStrip
 class HttpCallManager @Inject constructor(
-  private val okHttpClient: ProxiedOkHttpClient
+  private val okHttpClient: ProxiedOkHttpClient,
+  private val appConstants: AppConstants
 ) {
   
   /**
@@ -84,7 +85,7 @@ class HttpCallManager @Inject constructor(
   ): HttpCall.HttpCallResult<T> {
     return withContext(Dispatchers.IO) {
       val request = requestBuilder
-        .header("User-Agent", AppConstants.USER_AGENT)
+        .header("User-Agent", appConstants.userAgent)
         .build()
 
       val response = Try { okHttpClient.proxiedClient.suspendCall(request) }

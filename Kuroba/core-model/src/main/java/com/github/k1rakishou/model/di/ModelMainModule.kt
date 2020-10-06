@@ -309,9 +309,10 @@ class ModelMainModule {
     logger: Logger,
     okHttpClient: OkHttpClient,
     @LoggerTagPrefix loggerTag: String,
-    archivesJsonParser: ArchivesJsonParser
+    archivesJsonParser: ArchivesJsonParser,
+    appConstants: AppConstants
   ): ArchivesRemoteSource {
-    return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser)
+    return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser, appConstants)
   }
 
   /**

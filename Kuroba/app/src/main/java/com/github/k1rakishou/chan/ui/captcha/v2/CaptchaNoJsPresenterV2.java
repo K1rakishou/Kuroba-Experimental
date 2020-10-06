@@ -61,6 +61,7 @@ public class CaptchaNoJsPresenterV2 {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final CaptchaNoJsHtmlParser parser;
     private final ProxiedOkHttpClient okHttpClient;
+    private final AppConstants appConstants;
 
     @Nullable
     private AuthenticationCallbacks callbacks;
@@ -76,10 +77,12 @@ public class CaptchaNoJsPresenterV2 {
     public CaptchaNoJsPresenterV2(
             @Nullable AuthenticationCallbacks callbacks,
             ProxiedOkHttpClient okHttpClient,
+            AppConstants appConstants,
             Context context
     ) {
         this.callbacks = callbacks;
         this.okHttpClient = okHttpClient;
+        this.appConstants = appConstants;
         this.parser = new CaptchaNoJsHtmlParser(context, okHttpClient);
     }
 
@@ -128,7 +131,7 @@ public class CaptchaNoJsPresenterV2 {
                     Request request = new Request.Builder().url(recaptchaUrl)
                             .post(body)
                             .header("Referer", recaptchaUrl)
-                            .header("User-Agent", AppConstants.USER_AGENT)
+                            .header("User-Agent", appConstants.getUserAgent())
                             .header("Accept", acceptHeader)
                             .header("Accept-Encoding", acceptEncodingHeader)
                             .header("Accept-Language", acceptLanguageHeader)
@@ -226,7 +229,7 @@ public class CaptchaNoJsPresenterV2 {
 
         Request request = new Request.Builder().url(recaptchaUrl)
                 .header("Referer", baseUrl)
-                .header("User-Agent", AppConstants.USER_AGENT)
+                .header("User-Agent", appConstants.getUserAgent())
                 .header("Accept", acceptHeader)
                 .header("Accept-Encoding", acceptEncodingHeader)
                 .header("Accept-Language", acceptLanguageHeader)

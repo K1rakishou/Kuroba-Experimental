@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.PostUtils
 import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -30,7 +31,8 @@ class FileCacheV2(
   private val cacheHandler: CacheHandler,
   private val siteResolver: SiteResolver,
   private val okHttpClient: OkHttpClient,
-  private val connectivityManager: ConnectivityManager
+  private val connectivityManager: ConnectivityManager,
+  private val appConstants: AppConstants
 ) {
   private val activeDownloads = ActiveDownloads()
 
@@ -58,13 +60,15 @@ class FileCacheV2(
     okHttpClient,
     activeDownloads,
     siteResolver,
-    MAX_TIMEOUT_MS
+    MAX_TIMEOUT_MS,
+    appConstants
   )
 
   private val chunkDownloader = ChunkDownloader(
     okHttpClient,
     activeDownloads,
-    verboseLogs
+    verboseLogs,
+    appConstants
   )
 
   private val chunkReader = ChunkPersister(

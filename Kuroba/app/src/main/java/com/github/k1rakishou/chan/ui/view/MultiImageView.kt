@@ -80,7 +80,6 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import kotlinx.coroutines.*
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
@@ -114,6 +113,8 @@ class MultiImageView @JvmOverloads constructor(
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var appConstants: AppConstants
 
   private lateinit var mainScope: CoroutineScope
 
@@ -684,8 +685,7 @@ class MultiImageView @JvmOverloads constructor(
       AndroidUtils.openIntent(intent)
       onModeLoaded(Mode.VIDEO, null)
     } else {
-      val userAgent = Util.getUserAgent(AndroidUtils.getAppContext(), AppConstants.USER_AGENT)
-      val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, userAgent)
+      val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, appConstants.userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
       val videoSource = progressiveFactory.createMediaSource(
               MediaItem.Builder().setUri(Uri.fromFile(file)).build())

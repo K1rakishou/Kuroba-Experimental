@@ -18,7 +18,8 @@ class ArchivesRemoteSource(
   okHttpClient: OkHttpClient,
   loggerTag: String,
   logger: Logger,
-  private val archivesJsonParser: ArchivesJsonParser
+  private val archivesJsonParser: ArchivesJsonParser,
+  private val appConstants: AppConstants
 ) : AbstractRemoteSource(okHttpClient, logger) {
   private val TAG = "$loggerTag ArchivesRemoteSource"
 
@@ -35,7 +36,7 @@ class ArchivesRemoteSource(
       // We need to have a user agent for archived.moe
       // If we won't send a valid user agent then all the "remote_media_link"s will be
       // redirect links instead of real links.
-      .header("User-Agent", AppConstants.USER_AGENT)
+      .header("User-Agent", appConstants.userAgent)
       .build()
 
     val response = withTimeout(MAX_ARCHIVE_FETCH_WAIT_TIME_MS) { okHttpClient.suspendCall(httpRequest) }

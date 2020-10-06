@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -21,7 +22,8 @@ import java.io.IOException
 class WebmStreamingSource(
   private val fileManager: FileManager,
   private val fileCacheV2: FileCacheV2,
-  private val cacheHandler: CacheHandler
+  private val cacheHandler: CacheHandler,
+  private val appConstants: AppConstants
 ) {
 
   fun createMediaSource(postImage: PostImage, callback: MediaSourceCallback) {
@@ -42,7 +44,8 @@ class WebmStreamingSource(
       uri,
       rawFile,
       fileManager,
-      ChanSettings.verboseLogs.get()
+      ChanSettings.verboseLogs.get(),
+      appConstants
     )
 
     fileCacheSource.addListener { file ->

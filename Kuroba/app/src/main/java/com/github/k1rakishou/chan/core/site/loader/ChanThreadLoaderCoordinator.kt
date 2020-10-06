@@ -135,7 +135,7 @@ class ChanThreadLoaderCoordinator(
         val request = Request.Builder()
           .url(url)
           .get()
-          .header("User-Agent", AppConstants.USER_AGENT)
+          .header("User-Agent", appConstants.userAgent)
           .build()
 
         val (response, time) = try {

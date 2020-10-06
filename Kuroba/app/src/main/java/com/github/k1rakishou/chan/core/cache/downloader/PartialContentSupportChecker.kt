@@ -27,7 +27,8 @@ internal class PartialContentSupportChecker(
   private val okHttpClient: OkHttpClient,
   private val activeDownloads: ActiveDownloads,
   private val siteResolver: SiteResolver,
-  private val maxTimeoutMs: Long
+  private val maxTimeoutMs: Long,
+  private val appConstants: AppConstants
 ) {
   // Thread safe
   private val cachedResults = LruCache<String, PartialContentCheckResult>(1024)
@@ -107,7 +108,7 @@ internal class PartialContentSupportChecker(
 
     val headRequest = Request.Builder()
       .head()
-      .header("User-Agent", AppConstants.USER_AGENT)
+      .header("User-Agent", appConstants.userAgent)
       .url(url)
       .build()
 

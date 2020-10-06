@@ -12,7 +12,8 @@ import java.io.IOException
 internal class ChunkDownloader(
   private val okHttpClient: OkHttpClient,
   private val activeDownloads: ActiveDownloads,
-  private val verboseLogs: Boolean
+  private val verboseLogs: Boolean,
+  private val appConstants: AppConstants
 ) {
 
   fun downloadChunk(
@@ -34,7 +35,7 @@ internal class ChunkDownloader(
 
     val builder = Request.Builder()
       .url(url)
-      .header("User-Agent", AppConstants.USER_AGENT)
+      .header("User-Agent", appConstants.userAgent)
 
     if (!chunk.isWholeFile()) {
       // If chunk.isWholeFile == true that means that either the file size is too small

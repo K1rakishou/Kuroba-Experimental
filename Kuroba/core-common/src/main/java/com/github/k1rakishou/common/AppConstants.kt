@@ -2,6 +2,7 @@ package com.github.k1rakishou.common
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Build
 
 class AppConstants(
   context: Context,
@@ -10,23 +11,26 @@ class AppConstants(
   val maxPostsCountInPostsCache: Int
   val maxAmountOfPostsInDatabase: Int
   val maxAmountOfThreadsInDatabase: Int
+  val userAgent: String
 
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
-    maxAmountOfPostsInDatabase = if (!isDev) {
-      125_000
-    } else {
+    maxAmountOfPostsInDatabase = if (isDev) {
       5000
+    } else {
+      125_000
     }
 
-    maxAmountOfThreadsInDatabase = if (!isDev) {
-      12_500
-    } else {
+    maxAmountOfThreadsInDatabase = if (isDev) {
       500
+    } else {
+      12_500
     }
 
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)
+
+    userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
@@ -55,7 +59,7 @@ class AppConstants(
     private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 16 * 1024
     private const val DEV_BUILD_POSTS_CACHE_COUNT = 3000
 
-    const val USER_AGENT =
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"
+    private const val USER_AGENT_FORMAT =
+      "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
   }
 }
