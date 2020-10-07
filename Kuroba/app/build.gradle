@@ -46,7 +46,7 @@ android {
         // bump the PATCH (ZZ) version otherwise, for anything small
         int major = 0
         int minor = 2
-        int patch = 8
+        int patch = 9
 
         /**
          * ------------------------------------------------------------
