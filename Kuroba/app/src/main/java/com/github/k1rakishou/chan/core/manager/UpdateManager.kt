@@ -310,8 +310,10 @@ class UpdateManager(
   ): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    if ((responseRelease.versionCode > BuildConfig.VERSION_CODE || getFlavorType() == FlavorType.Beta)
-      && BackgroundUtils.isInForeground()) {
+    val canUpdate = responseRelease.versionCode > BuildConfig.VERSION_CODE
+            || getFlavorType() == FlavorType.Beta
+
+    if (canUpdate && BackgroundUtils.isInForeground()) {
       // Do not spam dialogs if this is not the manual update check, use the notifications
       // instead
       if (manual) {

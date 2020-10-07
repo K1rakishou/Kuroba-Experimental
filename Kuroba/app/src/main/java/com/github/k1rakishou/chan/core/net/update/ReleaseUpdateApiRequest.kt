@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.net.update
 import android.os.Build
 import android.text.Spanned
 import androidx.core.text.parseAsHtml
+import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
@@ -62,20 +63,18 @@ class ReleaseUpdateApiRequest(
   }
   
   private fun readBody(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
+    val updateComment = reader.nextString()
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
       val updateLog: Node = Parser.builder()
         .build()
-        .parse(reader.nextString())
+        .parse(updateComment)
       
       val changelog = HtmlRenderer.builder().build().render(updateLog)
       
       responseRelease.body = ("Changelog:\n${changelog}".trimIndent()).parseAsHtml()
     } else {
-      responseRelease.body = ("Changelog:" +
-        "\nSee the release on Github for details!" +
-        "\nYour Android API is too low to properly render the changelog from the site, " +
-        "as a result of libraries used on the project."
-      ).parseAsHtml()
+      responseRelease.body = "Changelog:\n${updateComment}".trimIndent().toSpanned()
     }
   }
   
