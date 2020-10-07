@@ -14,5 +14,6 @@ enum class ChanThemeColorId(val id: Int) {
   PostInlineQuoteColor(3),
   PostQuoteColor(4),
   BackColorSecondary(5),
-  PostLinkColor(6)
+  PostLinkColor(6),
+  TextColorPrimary(7),
 }

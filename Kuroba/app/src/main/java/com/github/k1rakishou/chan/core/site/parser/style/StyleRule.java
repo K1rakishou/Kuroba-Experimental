@@ -211,12 +211,12 @@ public class StyleRule {
 
         List<Object> spansToApply = new ArrayList<>(2);
 
-        if (foregroundChanThemeColorId != null) {
-            spansToApply.add(new ColorizableForegroundColorSpan(foregroundChanThemeColorId));
-        }
-
         if (backgroundChanThemeColorId != null) {
             spansToApply.add(new ColorizableBackgroundColorSpan(backgroundChanThemeColorId));
+        }
+
+        if (foregroundChanThemeColorId != null) {
+            spansToApply.add(new ColorizableForegroundColorSpan(foregroundChanThemeColorId));
         }
 
         if (strikeThrough) {

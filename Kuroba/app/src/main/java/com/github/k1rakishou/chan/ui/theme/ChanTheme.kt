@@ -144,6 +144,7 @@ abstract class ChanTheme {
       ChanThemeColorId.PostQuoteColor -> postQuoteColor
       ChanThemeColorId.BackColorSecondary -> backColorSecondary()
       ChanThemeColorId.PostLinkColor -> postLinkColor
+      ChanThemeColorId.TextColorPrimary -> textColorPrimary
     }
   }
 

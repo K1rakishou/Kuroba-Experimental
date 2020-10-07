@@ -102,6 +102,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 .monospace()
                 .size(sp(12f))
                 .backgroundColorId(ChanThemeColorId.BackColorSecondary)
+                .foregroundColorId(ChanThemeColorId.TextColorPrimary)
         );
 
         rule(tagRule("span")
