@@ -54,10 +54,7 @@ object FullScreenUtils {
         or View.SYSTEM_UI_FLAG_FULLSCREEN
         or View.SYSTEM_UI_FLAG_IMMERSIVE)
     } else {
-      setFlags(
-        WindowManager.LayoutParams.FLAG_FULLSCREEN,
-        WindowManager.LayoutParams.FLAG_FULLSCREEN
-      )
+      addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
 
     setupStatusAndNavBarColors(theme)
@@ -65,8 +62,7 @@ object FullScreenUtils {
 
   fun Window.showSystemUI(theme: ChanTheme) {
     if (AndroidUtils.isAndroid10()) {
-      decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+      decorView.systemUiVisibility = 0
     } else {
       clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
     }
