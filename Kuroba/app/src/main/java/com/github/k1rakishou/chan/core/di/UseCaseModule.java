@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.usecase.PreloadAllImagesInThreadUseCase;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
@@ -49,7 +50,8 @@ public class UseCaseModule {
             CoroutineScope appScope,
             ProxiedOkHttpClient okHttpClient,
             SiteManager siteManager,
-            BookmarksManager bookmarksManager
+            BookmarksManager bookmarksManager,
+            AppConstants appConstants
 
     ) {
         Logger.d(AppModule.DI_TAG, "FetchThreadBookmarkInfoUseCase");
@@ -60,7 +62,8 @@ public class UseCaseModule {
                 appScope,
                 okHttpClient,
                 siteManager,
-                bookmarksManager
+                bookmarksManager,
+                appConstants
         );
     }
 
