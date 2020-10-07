@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
@@ -27,7 +28,8 @@ class FetchThreadBookmarkInfoUseCase(
   private val appScope: CoroutineScope,
   private val okHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
-  private val bookmarksManager: BookmarksManager
+  private val bookmarksManager: BookmarksManager,
+  private val appConstants: AppConstants
 ) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, ModularResult<List<ThreadBookmarkFetchResult>>> {
 
   override suspend fun execute(parameter: List<ChanDescriptor.ThreadDescriptor>): ModularResult<List<ThreadBookmarkFetchResult>> {
@@ -38,8 +40,11 @@ class FetchThreadBookmarkInfoUseCase(
   private suspend fun fetchThreadBookmarkInfoBatched(
     watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ): List<ThreadBookmarkFetchResult> {
+    val batchSize = (appConstants.processorsCount * BATCH_PER_CORE)
+      .coerceAtLeast(MIN_BATCHES_COUNT)
+
     return watchingBookmarkDescriptors
-      .chunked(BATCH_SIZE)
+      .chunked(batchSize)
       .flatMap { chunk ->
         return@flatMap supervisorScope {
           return@supervisorScope chunk.map { threadDescriptor ->
@@ -143,7 +148,8 @@ class FetchThreadBookmarkInfoUseCase(
 
   companion object {
     private const val TAG = "FetchThreadBookmarkInfoUseCase"
-    private const val BATCH_SIZE = 8
+    private const val BATCH_PER_CORE = 4
+    private const val MIN_BATCHES_COUNT = 8
     private const val NOT_FOUND_STATUS = 404
   }
 }

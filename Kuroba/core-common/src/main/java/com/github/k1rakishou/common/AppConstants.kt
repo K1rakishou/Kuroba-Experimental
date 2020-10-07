@@ -12,6 +12,7 @@ class AppConstants(
   val maxAmountOfPostsInDatabase: Int
   val maxAmountOfThreadsInDatabase: Int
   val userAgent: String
+  val processorsCount: Int
 
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
@@ -29,8 +30,8 @@ class AppConstants(
     }
 
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)
-
     userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+    processorsCount = Runtime.getRuntime().availableProcessors()
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
