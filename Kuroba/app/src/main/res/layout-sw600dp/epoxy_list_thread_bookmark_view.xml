@@ -16,13 +16,26 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/thread_bookmark_image"
-            android:layout_width="@dimen/thread_list_bookmark_view_image_size"
-            android:layout_height="@dimen/thread_list_bookmark_view_image_size"
-            android:padding="4dp"
-            android:scaleType="centerCrop"
-            tools:src="@drawable/ic_baseline_settings" />
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/thread_bookmark_image"
+                android:layout_width="@dimen/thread_list_bookmark_view_image_size"
+                android:layout_height="@dimen/thread_list_bookmark_view_image_size"
+                android:padding="4dp"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_baseline_settings" />
+
+            <com.github.k1rakishou.chan.ui.view.SelectionCheckView
+                android:id="@+id/selection_check_view"
+                android:visibility="gone"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                tools:visibility="visible"/>
+
+        </FrameLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/thread_bookmark_title"

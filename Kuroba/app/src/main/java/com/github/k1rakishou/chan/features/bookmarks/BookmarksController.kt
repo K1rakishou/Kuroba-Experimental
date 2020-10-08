@@ -2,13 +2,10 @@ package com.github.k1rakishou.chan.features.bookmarks
 
 import android.content.Context
 import android.content.res.Configuration
-import android.view.HapticFeedbackConstants
-import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
@@ -18,7 +15,10 @@ import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
-import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
+import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
@@ -29,7 +29,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
-import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
@@ -46,7 +45,8 @@ class BookmarksController(
   private var drawerCallbacks: DrawerCallbacks?
 ) : Controller(context),
   BookmarksView,
-  ToolbarNavigationController.ToolbarSearchCallback {
+  ToolbarNavigationController.ToolbarSearchCallback,
+  BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -56,9 +56,10 @@ class BookmarksController(
   lateinit var themeEngine: ThemeEngine
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
-  private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet())
+
+  private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
+  private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet(), bookmarksSelectionHelper)
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
   private val needRestoreScrollPosition = AtomicBoolean(true)
@@ -95,7 +96,6 @@ class BookmarksController(
         )
 
         onViewBookmarksModeChanged()
-        updateSwipingAndDragging()
 
         viewModeChanged.set(true)
         needRestoreScrollPosition.set(true)
@@ -130,7 +130,6 @@ class BookmarksController(
         .collect { state -> onStateChanged(state) }
     }
 
-    updateSwipingAndDragging()
     onViewBookmarksModeChanged()
     updateLayoutManager()
 
@@ -152,7 +151,32 @@ class BookmarksController(
   }
 
   override fun onBack(): Boolean {
-    return drawerCallbacks?.passOnBackToBottomPanel() ?: false
+    val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
+    if (result) {
+      bookmarksSelectionHelper.clearSelection()
+    }
+
+    return result
+  }
+
+  override fun onMenuItemClicked(
+    bookmarksMenuItemType: BookmarksSelectionHelper.BookmarksMenuItemType,
+    selectedItems: List<ChanDescriptor.ThreadDescriptor>
+  ) {
+    when (bookmarksMenuItemType) {
+      BookmarksSelectionHelper.BookmarksMenuItemType.Reorder -> {
+        // TODO(KurobaEx): Reordering
+      }
+      BookmarksSelectionHelper.BookmarksMenuItemType.Delete -> {
+        val deleted = bookmarksPresenter.deleteBookmarks(selectedItems)
+
+        // If deleted == true that means we will use the BookmarkManager's notification mechanisms
+        // to redraw bookmarks, otherwise if we couldn't delete bookmarks for some reason we need
+        // to cleat the selection checkboxes so we need to use BookmarksSelectionHelper's notification
+        // mechanisms
+        bookmarksSelectionHelper.clearSelection(!deleted)
+      }
+    }
   }
 
   private fun cleanupFastScroller() {
@@ -206,14 +230,6 @@ class BookmarksController(
     }
 
     bookmarksPresenter.serializeRecyclerScrollPosition(firstVisibleItemPosition)
-  }
-
-  private fun updateSwipingAndDragging() {
-    if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-      setupRecyclerSwipingAndDraggingForGridMode()
-    } else {
-      setupRecyclerSwipingAndDraggingForListMode()
-    }
   }
 
   private fun onClearAllBookmarksClicked(subItem: ToolbarMenuSubItem) {
@@ -355,11 +371,11 @@ class BookmarksController(
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
+                threadBookmarkSelection(bookmark.selection)
                 highlightBookmark(bookmark.highlight)
                 bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
-                bookmarkStatsClickListener {
-                  bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
-                }
+                bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
+                bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
               }
             } else {
               epoxyListThreadBookmarkViewHolder {
@@ -369,11 +385,11 @@ class BookmarksController(
                 threadDescriptor(bookmark.threadDescriptor)
                 titleString(bookmark.title)
                 threadBookmarkStats(bookmark.threadBookmarkStats)
+                threadBookmarkSelection(bookmark.selection)
                 highlightBookmark(bookmark.highlight)
                 bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
-                bookmarkStatsClickListener {
-                  bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
-                }
+                bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
+                bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
               }
             }
           }
@@ -382,6 +398,44 @@ class BookmarksController(
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun onBookmarkStatsClicked(bookmark: ThreadBookmarkItemView) {
+    if (bookmarksSelectionHelper.isInSelectionMode()) {
+      onBookmarkClicked(bookmark.threadDescriptor)
+      return
+    }
+
+    bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
+  }
+
+  private fun onBookmarkLongClicked(bookmark: ThreadBookmarkItemView) {
+    bookmarksSelectionHelper.toggleSelection(bookmark.threadDescriptor)
+
+    if (bookmarksSelectionHelper.isInSelectionMode()) {
+      drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+    } else {
+      drawerCallbacks?.hideBottomPanel()
+    }
+  }
+
+  private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (bookmarksSelectionHelper.isInSelectionMode()) {
+      bookmarksSelectionHelper.toggleSelection(threadDescriptor)
+
+      if (bookmarksSelectionHelper.isInSelectionMode()) {
+        // If still in selection mode after toggling this one item, update the bottom panel
+        drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+      } else {
+        drawerCallbacks?.hideBottomPanel()
+      }
+
+      return
+    }
+
+    serializedCoroutineExecutor.post {
+      (context as? StartActivity)?.loadThread(threadDescriptor, true)
+    }
   }
 
   private fun restoreScrollPosition() {
@@ -422,12 +476,6 @@ class BookmarksController(
     )
   }
 
-  private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    serializedCoroutineExecutor.post {
-      (context as? StartActivity)?.loadThread(threadDescriptor, true)
-    }
-  }
-
   private fun onViewBookmarksModeChanged() {
     val menuItem = navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)
       ?: return
@@ -440,106 +488,6 @@ class BookmarksController(
     }
 
     menuItem.setImage(drawableId)
-  }
-
-  private fun setupRecyclerSwipingAndDraggingForListMode() {
-    EpoxyTouchHelper
-      .initSwiping(epoxyRecyclerView)
-      .right()
-      .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
-        override fun onSwipeCompleted(
-          model: EpoxyListThreadBookmarkViewHolder_,
-          itemView: View?,
-          position: Int,
-          direction: Int
-        ) {
-          super.onSwipeCompleted(model, itemView, position, direction)
-
-          val threadDescriptor = model.threadDescriptor()
-          if (threadDescriptor != null) {
-            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
-          }
-        }
-      })
-
-    EpoxyTouchHelper
-      .initDragging(controller)
-      .withRecyclerView(epoxyRecyclerView)
-      .forVerticalList()
-      .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
-      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
-        override fun onDragStarted(
-          model: EpoxyListThreadBookmarkViewHolder_?,
-          itemView: View?,
-          adapterPosition: Int
-        ) {
-          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        }
-
-        override fun onModelMoved(
-          fromPosition: Int,
-          toPosition: Int,
-          modelBeingMoved: EpoxyListThreadBookmarkViewHolder_,
-          itemView: View?
-        ) {
-          bookmarksPresenter.onBookmarkMoving(fromPosition, toPosition)
-        }
-
-        override fun onDragReleased(model: EpoxyListThreadBookmarkViewHolder_?, itemView: View?) {
-          bookmarksPresenter.onBookmarkMoved()
-        }
-      })
-  }
-
-  private fun setupRecyclerSwipingAndDraggingForGridMode() {
-    EpoxyTouchHelper
-      .initSwiping(epoxyRecyclerView)
-      .right()
-      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
-        override fun onSwipeCompleted(
-          model: EpoxyGridThreadBookmarkViewHolder_,
-          itemView: View?,
-          position: Int,
-          direction: Int
-        ) {
-          super.onSwipeCompleted(model, itemView, position, direction)
-
-          val threadDescriptor = model.threadDescriptor()
-          if (threadDescriptor != null) {
-            bookmarksPresenter.onBookmarkSwipedAway(threadDescriptor)
-          }
-        }
-      })
-
-    EpoxyTouchHelper
-      .initDragging(controller)
-      .withRecyclerView(epoxyRecyclerView)
-      .forGrid()
-      .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
-      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
-        override fun onDragStarted(
-          model: EpoxyGridThreadBookmarkViewHolder_?,
-          itemView: View?,
-          adapterPosition: Int
-        ) {
-          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        }
-
-        override fun onModelMoved(
-          fromPosition: Int,
-          toPosition: Int,
-          modelBeingMoved: EpoxyGridThreadBookmarkViewHolder_,
-          itemView: View?
-        ) {
-          bookmarksPresenter.onBookmarkMoving(fromPosition, toPosition)
-        }
-
-        override fun onDragReleased(model: EpoxyGridThreadBookmarkViewHolder_?, itemView: View?) {
-          bookmarksPresenter.onBookmarkMoved()
-        }
-      })
   }
 
   private class BookmarksEpoxyController : EpoxyController() {

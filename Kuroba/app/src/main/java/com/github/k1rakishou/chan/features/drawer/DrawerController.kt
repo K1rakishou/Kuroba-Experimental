@@ -56,8 +56,9 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-import com.github.k1rakishou.chan.ui.view.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -512,7 +513,7 @@ class DrawerController(
     setDrawerEnabled(true)
   }
 
-  override fun showBottomPanel(items: List<BottomMenuPanel.BottomMenuPanelItem>) {
+  override fun showBottomPanel(items: List<BottomMenuPanelItem>) {
     // TODO(KurobaEx): disable bottomnavview
     bottomMenuPanel.show(items)
   }

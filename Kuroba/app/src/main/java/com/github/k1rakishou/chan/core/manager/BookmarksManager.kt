@@ -243,23 +243,40 @@ class BookmarksManager(
   }
 
   fun deleteBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    return deleteBookmarks(listOf(threadDescriptor))
+  }
+
+  fun deleteBookmarks(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+    require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    return lock.write {
-      if (!bookmarks.containsKey(threadDescriptor)) {
-        ensureBookmarksAndOrdersConsistency()
-        return@write false
+    val updated = lock.write {
+      var updated = false
+
+      for (threadDescriptor in threadDescriptors) {
+        if (!bookmarks.containsKey(threadDescriptor)) {
+          continue
+        }
+
+        bookmarks.remove(threadDescriptor)
+        orders.remove(threadDescriptor)
+
+        updated = true
       }
 
-      bookmarks.remove(threadDescriptor)
-      orders.remove(threadDescriptor)
-      ensureBookmarksAndOrdersConsistency()
-
-      bookmarksChanged(BookmarkChange.BookmarksDeleted(listOf(threadDescriptor)))
-      Logger.d(TAG, "Bookmark deleted ($threadDescriptor)")
-
-      return@write true
+      return@write updated
     }
+
+    ensureBookmarksAndOrdersConsistency()
+
+    if (!updated) {
+      return false
+    }
+
+    bookmarksChanged(BookmarkChange.BookmarksDeleted(threadDescriptors))
+    Logger.d(TAG, "Bookmarks deleted count ${threadDescriptors.size}")
+
+    return true
   }
 
   fun updateBookmark(

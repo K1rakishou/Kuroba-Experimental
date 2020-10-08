@@ -6,6 +6,7 @@ import com.airbnb.epoxy.EpoxyModelClass
 import com.airbnb.epoxy.EpoxyModelWithHolder
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -25,12 +26,16 @@ abstract class EpoxyListThreadBookmarkViewHolder
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var bookmarkClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
+  var bookmarkLongClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
+  @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var bookmarkStatsClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var context: Context? = null
 
   @EpoxyAttribute
   var threadBookmarkStats: ThreadBookmarkStats? = null
+  @EpoxyAttribute
+  var threadBookmarkSelection: ThreadBookmarkSelection? = null
   @EpoxyAttribute
   var titleString: String? = null
   @EpoxyAttribute
@@ -46,9 +51,11 @@ abstract class EpoxyListThreadBookmarkViewHolder
 
     holder.setImageLoaderRequestData(imageLoaderRequestData)
     holder.setDescriptor(threadDescriptor)
-    holder.setThreadBookmarkStats(false, threadBookmarkStats)
+    holder.bookmarkSelection(threadBookmarkSelection)
     holder.bookmarkClickListener(bookmarkClickListener)
+    holder.bookmarkLongClickListener(bookmarkLongClickListener)
     holder.bookmarkStatsClickListener(false, bookmarkStatsClickListener)
+    holder.setThreadBookmarkStats(false, threadBookmarkStats)
     holder.setTitle(titleString)
     holder.highlightBookmark(highlightBookmark)
 

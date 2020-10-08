@@ -366,6 +366,14 @@ fun View.resetClickListener() {
   isClickable = false
 }
 
+fun View.resetLongClickListener() {
+  setOnLongClickListener(null)
+
+  // setOnLongClickListener sets isClickable to true even when the callback is null
+  // (which is absolutely not obvious)
+  isClickable = false
+}
+
 fun safeCapacity(initialCapacity: Int): Int {
   return if (initialCapacity < 16) {
     16

@@ -8,5 +8,10 @@ data class ThreadBookmarkItemView(
   val title: String,
   val thumbnailUrl: HttpUrl?,
   val highlight: Boolean,
-  val threadBookmarkStats: ThreadBookmarkStats
+  val threadBookmarkStats: ThreadBookmarkStats,
+  val selection: ThreadBookmarkSelection? = null
+)
+
+data class ThreadBookmarkSelection(
+  val isSelected: Boolean
 )

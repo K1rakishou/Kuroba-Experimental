@@ -48,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_alignParentBottom="true"
                     app:menu="@menu/bottom_navigation_menu" />
 
-                <com.github.k1rakishou.chan.ui.view.BottomMenuPanel
+                <com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
                     android:id="@+id/bottom_menu_panel"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/bottom_nav_view_height"

@@ -19,11 +19,15 @@ import com.airbnb.epoxy.EpoxyHolder
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.resetClickListener
+import com.github.k1rakishou.common.resetLongClickListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -42,12 +46,14 @@ open class BaseThreadBookmarkViewHolder(
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
   private var requestDisposable: Disposable? = null
   private var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
+  private var threadBookmarkSelection: ThreadBookmarkSelection? = null
 
   private lateinit var viewRoot: FrameLayout
   private lateinit var viewHolder: LinearLayout
   private lateinit var bookmarkImage: AppCompatImageView
   private lateinit var bookmarkTitle: AppCompatTextView
   private lateinit var bookmarkStats: AppCompatTextView
+  private lateinit var selectionCheckView: SelectionCheckView
 
   private var bookmarkAdditionalStats: AppCompatTextView? = null
   private var bookmarkStatsHolder: LinearLayout? = null
@@ -64,6 +70,7 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkStats = itemView.findViewById(R.id.thread_bookmark_stats)
     bookmarkAdditionalStats = itemView.findViewById(R.id.thread_bookmark_additional_stats)
     bookmarkStatsHolder = itemView.findViewById(R.id.thread_bookmark_stats_holder)
+    selectionCheckView = itemView.findViewById(R.id.selection_check_view)
   }
 
   fun unbind() {
@@ -243,6 +250,34 @@ open class BaseThreadBookmarkViewHolder(
       viewRoot.resetClickListener()
     } else {
       viewRoot.setOnClickListener { threadDescriptor?.let { func.invoke(it) } }
+    }
+  }
+
+  fun bookmarkSelection(threadBookmarkSelection: ThreadBookmarkSelection?) {
+    this.threadBookmarkSelection = threadBookmarkSelection
+
+    if (threadBookmarkSelection == null) {
+      selectionCheckView.setVisibilityFast(View.GONE)
+      return
+    }
+
+    selectionCheckView.setVisibilityFast(View.VISIBLE)
+    selectionCheckView.setChecked(threadBookmarkSelection.isSelected)
+  }
+
+  fun bookmarkLongClickListener(func: ((ChanDescriptor.ThreadDescriptor) -> Unit)?) {
+    if (func == null) {
+      viewRoot.resetLongClickListener()
+      return
+    }
+
+    viewRoot.setOnLongClickListener {
+      if (threadDescriptor == null) {
+        return@setOnLongClickListener false
+      }
+
+      threadDescriptor?.let { func.invoke(it) }
+      return@setOnLongClickListener true
     }
   }
 

@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
+import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
@@ -31,7 +32,8 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
 class BookmarksPresenter(
-  private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>
+  private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
+  private val bookmarksSelectionHelper: BookmarksSelectionHelper
 ) : BasePresenter<BookmarksView>() {
 
   @Inject
@@ -79,6 +81,22 @@ class BookmarksPresenter(
             withContext(Dispatchers.Default) {
               ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
                 Logger.e(TAG, "showBookmarks() listenForBookmarksMoves error", error)
+                setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
+
+                return@withContext
+              }
+            }
+          }
+      }
+
+      scope.launch {
+        bookmarksSelectionHelper.listenForSelectionChanges()
+          .asFlow()
+          .debounce(100.milliseconds)
+          .collect {
+            withContext(Dispatchers.Default) {
+              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+                Logger.e(TAG, "showBookmarks() listenForSelectionChanges error", error)
                 setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
                 return@withContext
@@ -149,16 +167,16 @@ class BookmarksPresenter(
       .hide()
   }
 
-  fun onBookmarkSwipedAway(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    bookmarksManager.deleteBookmark(threadDescriptor)
-  }
-
   fun onBookmarkMoving(fromPosition: Int, toPosition: Int) {
     bookmarksManager.onBookmarkMoving(fromPosition, toPosition)
   }
 
   fun onBookmarkMoved() {
     bookmarksManager.onBookmarkMoved()
+  }
+
+  fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+    return bookmarksManager.deleteBookmarks(selectedItems)
   }
 
   fun hasBookmarks(): Boolean {
@@ -218,12 +236,19 @@ class BookmarksPresenter(
       if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
         val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
 
+        val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
+          ThreadBookmarkSelection(bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor))
+        } else {
+          null
+        }
+
         return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
           title = title,
           highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
           thumbnailUrl = threadBookmarkView.thumbnailUrl,
-          threadBookmarkStats = threadBookmarkStats
+          threadBookmarkStats = threadBookmarkStats,
+          selection = selection
         )
       }
 
