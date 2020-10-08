@@ -6,6 +6,7 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.chan.Chan.Companion.inject
@@ -14,6 +15,7 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
@@ -21,8 +23,11 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.view.FastScroller
+import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
@@ -43,6 +48,10 @@ class BookmarksController(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
@@ -50,6 +59,19 @@ class BookmarksController(
   private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet())
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
+  private val needRestoreScrollPosition = AtomicBoolean(true)
+  private var isInSearchMode = false
+  private var fastScroller: FastScroller? = null
+
+  private val onScrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      if (newState != RecyclerView.SCROLL_STATE_IDLE) {
+        return
+      }
+
+      onRecyclerViewScrolled(recyclerView)
+    }
+  }
 
   override fun onCreate() {
     super.onCreate()
@@ -74,13 +96,15 @@ class BookmarksController(
         updateSwipingAndDragging()
 
         viewModeChanged.set(true)
+        needRestoreScrollPosition.set(true)
+
         bookmarksPresenter.onViewBookmarksModeChanged()
       }
       .withOverflow(navigationController)
       .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
-        ToolbarMenuSubItem.ClickCallback { subItem -> onMarkAllBookmarksAsSeenClicked(subItem) })
+        ToolbarMenuSubItem.ClickCallback { bookmarksPresenter.markAllAsSeen() })
       .withSubItem(
         ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
         R.string.controller_bookmarks_prune_inactive_bookmarks,
@@ -109,6 +133,70 @@ class BookmarksController(
     updateLayoutManager()
 
     bookmarksPresenter.onCreate(this)
+
+    setupRecycler()
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    cleanupFastScroller()
+
+    epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+    bookmarksPresenter.onDestroy()
+  }
+
+  private fun cleanupFastScroller() {
+    fastScroller?.let { scroller ->
+      epoxyRecyclerView.removeItemDecoration(scroller)
+      scroller.onCleanup()
+    }
+
+    fastScroller = null
+  }
+
+  private fun setupRecycler() {
+    epoxyRecyclerView.addOnScrollListener(onScrollListener)
+    epoxyRecyclerView.isVerticalScrollBarEnabled = false
+
+    cleanupFastScroller()
+
+    val scroller = FastScrollerHelper.create(
+      navigationController!!.requireToolbar().toolbarHeight,
+      globalWindowInsetsManager,
+      epoxyRecyclerView,
+      null,
+      themeEngine.chanTheme
+    )
+
+    scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {
+      override fun onDragStarted() {
+        // no-op
+      }
+
+      override fun onDragEnded() {
+        onRecyclerViewScrolled(epoxyRecyclerView)
+      }
+    })
+
+    fastScroller = scroller
+  }
+
+  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
+    val firstVisibleItemPosition = when (val layoutManager = recyclerView.layoutManager) {
+      is GridLayoutManager -> layoutManager.findFirstVisibleItemPosition()
+      is LinearLayoutManager -> layoutManager.findFirstVisibleItemPosition()
+      else -> throw IllegalStateException(
+        "Unknown layout manager: " +
+          "${recyclerView.layoutManager?.javaClass?.simpleName}"
+      )
+    }
+
+    if (firstVisibleItemPosition == RecyclerView.NO_POSITION) {
+      return
+    }
+
+    bookmarksPresenter.serializeRecyclerScrollPosition(firstVisibleItemPosition)
   }
 
   private fun updateSwipingAndDragging() {
@@ -145,10 +233,6 @@ class BookmarksController(
     )
   }
 
-  private fun onMarkAllBookmarksAsSeenClicked(subItem: ToolbarMenuSubItem) {
-    bookmarksPresenter.markAllAsSeen()
-  }
-
   private fun updateLayoutManager(forced: Boolean = false) {
     if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
       if (!forced && epoxyRecyclerView.layoutManager is GridLayoutManager) {
@@ -175,14 +259,13 @@ class BookmarksController(
     }
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    bookmarksPresenter.onDestroy()
-  }
-
   override fun onSearchVisibilityChanged(visible: Boolean) {
+    isInSearchMode = visible
     bookmarksPresenter.onSearchModeChanged(visible)
+
+    if (!visible) {
+      needRestoreScrollPosition.set(true)
+    }
   }
 
   override fun onSearchEntered(entered: String?) {
@@ -226,7 +309,12 @@ class BookmarksController(
 
           epoxyTextView {
             id("bookmarks_nothing_found_by_search_query")
-            message(context.getString(R.string.controller_bookmarks_nothing_found_by_search_query, state.searchQuery))
+            message(
+              context.getString(
+                R.string.controller_bookmarks_nothing_found_by_search_query,
+                state.searchQuery
+              )
+            )
           }
         }
         is BookmarksControllerState.Error -> {
@@ -238,6 +326,12 @@ class BookmarksController(
           }
         }
         is BookmarksControllerState.Data -> {
+          addOneshotModelBuildListener {
+            if (!isInSearchMode && needRestoreScrollPosition.compareAndSet(true, false)) {
+              restoreScrollPosition()
+            }
+          }
+
           updateTitleWithStats(state)
 
           state.bookmarks.forEach { bookmark ->
@@ -279,6 +373,18 @@ class BookmarksController(
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun restoreScrollPosition() {
+    val scrollPosition = PersistableChanState.bookmarksRecyclerScrollPosition.get()
+    if (scrollPosition < 0) {
+      return
+    }
+
+    when (val layoutManager = epoxyRecyclerView.layoutManager) {
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+    }
   }
 
   private fun updateTitleWithoutStats() {
@@ -354,7 +460,11 @@ class BookmarksController(
       .forVerticalList()
       .withTarget(EpoxyListThreadBookmarkViewHolder_::class.java)
       .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyListThreadBookmarkViewHolder_>() {
-        override fun onDragStarted(model: EpoxyListThreadBookmarkViewHolder_?, itemView: View?, adapterPosition: Int) {
+        override fun onDragStarted(
+          model: EpoxyListThreadBookmarkViewHolder_?,
+          itemView: View?,
+          adapterPosition: Int
+        ) {
           itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
 
@@ -400,7 +510,11 @@ class BookmarksController(
       .forGrid()
       .withTarget(EpoxyGridThreadBookmarkViewHolder_::class.java)
       .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxyGridThreadBookmarkViewHolder_>() {
-        override fun onDragStarted(model: EpoxyGridThreadBookmarkViewHolder_?, itemView: View?, adapterPosition: Int) {
+        override fun onDragStarted(
+          model: EpoxyGridThreadBookmarkViewHolder_?,
+          itemView: View?,
+          adapterPosition: Int
+        ) {
           itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
 
