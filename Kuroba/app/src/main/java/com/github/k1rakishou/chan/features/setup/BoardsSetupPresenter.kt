@@ -90,10 +90,14 @@ class BoardsSetupPresenter(
     }
   }
 
-  fun onBoardMoved(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
-    if (boardManager.onBoardMoved(boardDescriptor, fromPosition, toPosition)) {
+  fun onBoardMoving(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
+    if (boardManager.onBoardMoving(boardDescriptor, fromPosition, toPosition)) {
       displayActiveBoards(withLoadingState = false)
     }
+  }
+
+  fun onBoardMoved() {
+    boardManager.onBoardMoved()
   }
 
   fun onBoardRemoved(boardDescriptor: BoardDescriptor) {

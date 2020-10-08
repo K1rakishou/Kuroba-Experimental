@@ -71,6 +71,7 @@ class BookmarksController(
         )
 
         onViewBookmarksModeChanged()
+        updateSwipingAndDragging()
 
         viewModeChanged.set(true)
         bookmarksPresenter.onViewBookmarksModeChanged()
@@ -103,16 +104,19 @@ class BookmarksController(
         .collect { state -> onStateChanged(state) }
     }
 
+    updateSwipingAndDragging()
+    onViewBookmarksModeChanged()
+    updateLayoutManager()
+
+    bookmarksPresenter.onCreate(this)
+  }
+
+  private fun updateSwipingAndDragging() {
     if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
       setupRecyclerSwipingAndDraggingForGridMode()
     } else {
       setupRecyclerSwipingAndDraggingForListMode()
     }
-
-    onViewBookmarksModeChanged()
-    updateLayoutManager()
-
-    bookmarksPresenter.onCreate(this)
   }
 
   private fun onClearAllBookmarksClicked(subItem: ToolbarMenuSubItem) {
@@ -360,7 +364,11 @@ class BookmarksController(
           modelBeingMoved: EpoxyListThreadBookmarkViewHolder_,
           itemView: View?
         ) {
-          bookmarksPresenter.onBookmarkMoved(fromPosition, toPosition)
+          bookmarksPresenter.onBookmarkMoving(fromPosition, toPosition)
+        }
+
+        override fun onDragReleased(model: EpoxyListThreadBookmarkViewHolder_?, itemView: View?) {
+          bookmarksPresenter.onBookmarkMoved()
         }
       })
   }
@@ -402,7 +410,11 @@ class BookmarksController(
           modelBeingMoved: EpoxyGridThreadBookmarkViewHolder_,
           itemView: View?
         ) {
-          bookmarksPresenter.onBookmarkMoved(fromPosition, toPosition)
+          bookmarksPresenter.onBookmarkMoving(fromPosition, toPosition)
+        }
+
+        override fun onDragReleased(model: EpoxyGridThreadBookmarkViewHolder_?, itemView: View?) {
+          bookmarksPresenter.onBookmarkMoved()
         }
       })
   }

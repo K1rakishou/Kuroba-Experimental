@@ -68,13 +68,16 @@ open class ArchivesManager(
     val result = Try {
       val allArchives = loadArchives()
 
-      val archiveDescriptors = allArchives.map { archive ->
+      val archiveDescriptors = allArchives.mapNotNull { archive ->
         require(archiveDescriptorIdMap.isNotEmpty()) { "archiveDescriptorIdMap is empty" }
 
         val archiveId = archiveDescriptorIdMap[archive.domain]
-          ?: throw NullPointerException("Couldn't find archiveId for archive with domain: ${archive.domain}")
+        if (archiveId == null) {
+          Logger.e(TAG, "Couldn't find archiveId for archive with domain: ${archive.domain}")
+          return@mapNotNull null
+        }
 
-        return@map ArchiveDescriptor(
+        return@mapNotNull ArchiveDescriptor(
           archiveId,
           archive.name,
           archive.domain,

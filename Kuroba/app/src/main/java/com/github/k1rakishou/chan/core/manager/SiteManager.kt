@@ -100,7 +100,6 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     return lock.read {
-
       return@read orders.firstOrNull(this@SiteManager::isSiteActive)
     }
   }
@@ -306,7 +305,7 @@ open class SiteManager(
     }
   }
 
-  fun onSiteMoved(siteDescriptor: SiteDescriptor, from: Int, to: Int): Boolean {
+  fun onSiteMoving(siteDescriptor: SiteDescriptor, from: Int, to: Int): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
 
     require(from >= 0) { "Bad from: $from" }
@@ -327,10 +326,12 @@ open class SiteManager(
       return false
     }
 
-    debouncer.post(DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
-    sitesChanged()
-
     return true
+  }
+
+  fun onSiteMoved() {
+    debouncer.post(SITE_MOVED_DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
+    sitesChanged()
   }
 
   fun updateUserSettings(siteDescriptor: SiteDescriptor, userSettings: JsonSettings) {
@@ -436,5 +437,6 @@ open class SiteManager(
     private const val TAG = "SiteManager"
 
     private const val DEBOUNCE_TIME_MS = 500L
+    private const val SITE_MOVED_DEBOUNCE_TIME_MS = 100L
   }
 }

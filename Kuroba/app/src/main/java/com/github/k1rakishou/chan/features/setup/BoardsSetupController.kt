@@ -69,8 +69,12 @@ class BoardsSetupController(
           itemView: View?
         ) {
           modelBeingMoved.boardDescriptor()?.let { boardDescriptor ->
-            presenter.onBoardMoved(boardDescriptor, fromPosition, toPosition)
+            presenter.onBoardMoving(boardDescriptor, fromPosition, toPosition)
           }
+        }
+
+        override fun onDragReleased(model: EpoxyBoardViewModel_?, itemView: View?) {
+          presenter.onBoardMoved()
         }
       })
 

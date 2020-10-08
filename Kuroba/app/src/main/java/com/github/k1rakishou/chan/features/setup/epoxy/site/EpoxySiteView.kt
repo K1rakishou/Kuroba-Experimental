@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup.epoxy
+package com.github.k1rakishou.chan.features.setup.epoxy.site
 
 import android.content.Context
 import android.util.AttributeSet
@@ -54,6 +54,8 @@ class EpoxySiteView @JvmOverloads constructor(
 
     siteSwitch.isClickable = false
     siteSwitch.isFocusable = false
+
+    siteIcon.setImageBitmap(null)
 
     val tintedDrawable = themeEngine.getDrawableTinted(
       context,

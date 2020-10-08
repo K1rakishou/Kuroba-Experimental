@@ -37,6 +37,7 @@ class BookmarksManager(
   private val lock = ReentrantReadWriteLock()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
+  private val bookmarkMovedSubject = PublishProcessor.create<Unit>()
   private val delayedBookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
@@ -120,6 +121,14 @@ class BookmarksManager(
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "listenForBookmarksChanges error", error) }
+      .hide()
+  }
+
+  fun listenForBookmarksMoves(): Flowable<Unit> {
+    return bookmarkMovedSubject
+      .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "listenForBookmarksMoves error", error) }
       .hide()
   }
 
@@ -466,7 +475,7 @@ class BookmarksManager(
     }
   }
 
-  fun onBookmarkMoved(from: Int, to: Int) {
+  fun onBookmarkMoving(from: Int, to: Int) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     require(from >= 0) { "Bad from: $from" }
@@ -474,10 +483,19 @@ class BookmarksManager(
 
     lock.write {
       orders.add(to, orders.removeAt(from))
-      bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
-
       Logger.d(TAG, "Bookmark moved (from=$from, to=$to)")
     }
+
+    bookmarkMovedSubject.onNext(Unit)
+  }
+
+  fun onBookmarkMoved() {
+    if (isDevFlavor) {
+      ensureBookmarksAndOrdersConsistency()
+    }
+
+    persistTaskSubject.onNext(Unit)
+    bookmarksChangedSubject.onNext(BookmarkChange.BookmarksUpdated(null))
   }
 
   fun bookmarksCount(): Int {

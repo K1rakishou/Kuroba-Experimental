@@ -152,7 +152,12 @@ interface Site {
    * @return the created board.
    */
   suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?>
+
+
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
 
+  /**
+   * This site supports global search of type [SiteGlobalSearchType]
+   * */
   fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 }

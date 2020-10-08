@@ -414,7 +414,7 @@ open class Chan4 : SiteBase() {
   }
 
   override fun siteDescriptor(): SiteDescriptor {
-    return SiteDescriptor(name())
+    return SITE_DESCRIPTOR
   }
 
   override fun icon(): SiteIcon {
@@ -509,6 +509,7 @@ open class Chan4 : SiteBase() {
 
   companion object {
     const val SITE_NAME = "4chan"
+    val SITE_DESCRIPTOR = SiteDescriptor(SITE_NAME)
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {

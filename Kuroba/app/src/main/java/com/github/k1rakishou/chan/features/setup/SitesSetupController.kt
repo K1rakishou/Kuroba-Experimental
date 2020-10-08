@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
-import com.github.k1rakishou.chan.features.setup.epoxy.EpoxySiteViewModel_
-import com.github.k1rakishou.chan.features.setup.epoxy.epoxySiteView
+import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteViewModel_
+import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
@@ -51,9 +51,14 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
           itemView: View?
         ) {
           modelBeingMoved.siteDescriptor()?.let { siteDescriptor ->
-            sitesPresenter.onSiteMoved(siteDescriptor, fromPosition, toPosition)
+            sitesPresenter.onSiteMoving(siteDescriptor, fromPosition, toPosition)
           }
         }
+
+        override fun onDragReleased(model: EpoxySiteViewModel_, itemView: View?) {
+          sitesPresenter.onSiteMoved()
+        }
+
       })
 
     compositeDisposable += sitesPresenter.listenForStateChanges()

@@ -34,6 +34,7 @@ class BoardManager(
 
   private val currentBoardSubject = BehaviorProcessor.create<CurrentBoard>()
   private val boardsChangedSubject = PublishProcessor.create<Unit>()
+  private val boardMovedSubject = PublishProcessor.create<Unit>()
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -110,6 +111,14 @@ class BoardManager(
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "Error while listening for sitesChangedSubject updates", error) }
+      .hide()
+  }
+
+  fun listenForBoardsMoves(): Flowable<Unit> {
+    return boardMovedSubject
+      .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error -> Logger.e(TAG, "Error while listening for boardMovedSubject updates", error) }
       .hide()
   }
 
@@ -397,7 +406,7 @@ class BoardManager(
     }
   }
 
-  fun onBoardMoved(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
+  fun onBoardMoving(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
@@ -417,10 +426,14 @@ class BoardManager(
       return false
     }
 
-    persistBoardsDebouncer.post(DEBOUNCE_TIME_MS) { persistBoards() }
-    boardsChanged()
+    boardMovedSubject.onNext(Unit)
 
     return true
+  }
+
+  fun onBoardMoved() {
+    persistBoardsDebouncer.post(BOARD_MOVED_DEBOUNCE_TIME_MS) { persistBoards() }
+    boardsChanged()
   }
 
   fun getAllBoardDescriptorsForSite(siteDescriptor: SiteDescriptor): Set<BoardDescriptor> {
@@ -589,5 +602,6 @@ class BoardManager(
   companion object {
     private const val TAG = "BoardManager"
     private const val DEBOUNCE_TIME_MS = 500L
+    private const val BOARD_MOVED_DEBOUNCE_TIME_MS = 100L
   }
 }

@@ -17,6 +17,7 @@ abstract class BaseFoolFuukaSite : CommonSite() {
   abstract fun rootUrl(): HttpUrl
 
   final override fun commentParserType(): CommentParserType = CommentParserType.FoolFuukaParser
+
   final override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties = chunkDownloaderSiteProperties
 
   class BaseFoolFuukaUrlHandler(

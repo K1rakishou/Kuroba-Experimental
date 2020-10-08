@@ -71,6 +71,22 @@ class BookmarksPresenter(
       }
 
       scope.launch {
+        bookmarksManager.listenForBookmarksMoves()
+          .asFlow()
+          .debounce(100.milliseconds)
+          .collect {
+            withContext(Dispatchers.Default) {
+              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+                Logger.e(TAG, "showBookmarks() listenForBookmarksMoves error", error)
+                setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
+
+                return@withContext
+              }
+            }
+          }
+      }
+
+      scope.launch {
         searchSubject.asFlow()
           .debounce(250.milliseconds)
           .collect { query ->
@@ -136,8 +152,12 @@ class BookmarksPresenter(
     bookmarksManager.deleteBookmark(threadDescriptor)
   }
 
-  fun onBookmarkMoved(fromPosition: Int, toPosition: Int) {
-    bookmarksManager.onBookmarkMoved(fromPosition, toPosition)
+  fun onBookmarkMoving(fromPosition: Int, toPosition: Int) {
+    bookmarksManager.onBookmarkMoving(fromPosition, toPosition)
+  }
+
+  fun onBookmarkMoved() {
+    bookmarksManager.onBookmarkMoved()
   }
 
   fun hasBookmarks(): Boolean {

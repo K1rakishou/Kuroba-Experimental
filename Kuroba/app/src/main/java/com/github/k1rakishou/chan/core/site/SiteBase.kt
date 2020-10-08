@@ -130,7 +130,6 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   override fun board(code: String): ChanBoard? {
-    // TODO(KurobaEx): wait until initialized
     val boardDescriptor = BoardDescriptor.create(siteDescriptor(), code)
     return boardManager.byBoardDescriptor(boardDescriptor)
   }
