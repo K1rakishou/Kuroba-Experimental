@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.utils
 
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
+import com.github.k1rakishou.common.errorMessageOrClassName
 
 object RecyclerUtils {
   private const val TAG = "RecyclerUtils"
@@ -29,8 +30,8 @@ object RecyclerUtils {
       field.isAccessible = true
       val recycler = field[recyclerView] as Recycler
       recycler.clear()
-    } catch (e: Exception) {
-      Logger.e(TAG, "Error clearing RecyclerView cache with reflection", e)
+    } catch (error: Exception) {
+      Logger.e(TAG, "Error clearing RecyclerView cache with reflection, error=${error.errorMessageOrClassName()}")
     }
   }
 

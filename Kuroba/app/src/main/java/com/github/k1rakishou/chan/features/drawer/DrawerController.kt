@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.ui.view.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
@@ -92,6 +93,7 @@ class DrawerController(
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var bottomNavView: HidingBottomNavigationView
   private lateinit var divider: ColorizableDivider
+  private lateinit var bottomMenuPanel: BottomMenuPanel
 
   private val drawerPresenter = DrawerPresenter(isDevBuild())
   private val childControllersStack = Stack<Controller>()
@@ -152,9 +154,13 @@ class DrawerController(
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
     divider = view.findViewById(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
+    bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
+
+    // Must be above bottomNavView
+    bottomMenuPanel.elevation = dp(6f).toFloat()
 
     bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
       if (bottomNavView.selectedItemId == menuItem.itemId) {
@@ -330,7 +336,7 @@ class DrawerController(
 
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors))
+    openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors, this))
     setBookmarksMenuItemSelected()
 
     setDrawerEnabled(false)
@@ -506,6 +512,34 @@ class DrawerController(
     setDrawerEnabled(true)
   }
 
+  override fun showBottomPanel(items: List<BottomMenuPanel.BottomMenuPanelItem>) {
+    // TODO(KurobaEx): disable bottomnavview
+    bottomMenuPanel.show(items)
+  }
+
+  override fun hideBottomPanel() {
+    // TODO(KurobaEx): enable bottomnavview
+    bottomMenuPanel.hide()
+  }
+
+  override fun passOnBackToBottomPanel(): Boolean {
+    return bottomMenuPanel.onBack()
+  }
+
+  fun setDrawerEnabled(enabled: Boolean) {
+    val lockMode = if (enabled) {
+      DrawerLayout.LOCK_MODE_UNLOCKED
+    } else {
+      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+    }
+
+    drawerLayout.setDrawerLockMode(lockMode, GravityCompat.START)
+
+    if (!enabled) {
+      drawerLayout.closeDrawer(drawer)
+    }
+  }
+
   private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
     if (state.totalUnseenPostsCount <= 0) {
       if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
@@ -635,20 +669,6 @@ class DrawerController(
       if (drawerLayout.isDrawerOpen(drawer)) {
         drawerLayout.closeDrawer(drawer)
       }
-    }
-  }
-
-  fun setDrawerEnabled(enabled: Boolean) {
-    val lockMode = if (enabled) {
-      DrawerLayout.LOCK_MODE_UNLOCKED
-    } else {
-      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-    }
-
-    drawerLayout.setDrawerLockMode(lockMode, GravityCompat.START)
-
-    if (!enabled) {
-      drawerLayout.closeDrawer(drawer)
     }
   }
 

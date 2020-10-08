@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import javax.inject.Inject
 
-class TouchBlockingLinearLayout @JvmOverloads constructor(
+open class TouchBlockingLinearLayout @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defStyle: Int = 0

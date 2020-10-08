@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -41,7 +42,8 @@ import javax.inject.Inject
 
 class BookmarksController(
   context: Context,
-  bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>
+  bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
+  private var drawerCallbacks: DrawerCallbacks?
 ) : Controller(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback {
@@ -142,8 +144,15 @@ class BookmarksController(
 
     cleanupFastScroller()
 
+    drawerCallbacks?.hideBottomPanel()
+    drawerCallbacks = null
+
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
     bookmarksPresenter.onDestroy()
+  }
+
+  override fun onBack(): Boolean {
+    return drawerCallbacks?.passOnBackToBottomPanel() ?: false
   }
 
   private fun cleanupFastScroller() {

@@ -17,9 +17,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_root_layout"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
         android:id="@+id/main_root_layout_margins"
@@ -45,9 +45,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:id="@+id/bottom_navigation_view"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/bottom_nav_view_height"
-                    android:background="?colorPrimary"
                     android:layout_alignParentBottom="true"
-                    app:menu="@menu/bottom_navigation_menu"/>
+                    app:menu="@menu/bottom_navigation_menu" />
+
+                <com.github.k1rakishou.chan.ui.view.BottomMenuPanel
+                    android:id="@+id/bottom_menu_panel"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/bottom_nav_view_height"
+                    android:layout_alignParentBottom="true" />
 
             </RelativeLayout>
 
@@ -63,7 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:id="@+id/drawer_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:scrollbars="vertical"/>
+                    android:scrollbars="vertical" />
 
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
                     android:id="@+id/divider"
