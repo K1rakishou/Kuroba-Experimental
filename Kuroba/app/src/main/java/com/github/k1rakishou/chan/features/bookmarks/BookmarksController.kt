@@ -164,9 +164,6 @@ class BookmarksController(
     selectedItems: List<ChanDescriptor.ThreadDescriptor>
   ) {
     when (bookmarksMenuItemType) {
-      BookmarksSelectionHelper.BookmarksMenuItemType.Reorder -> {
-        // TODO(KurobaEx): Reordering
-      }
       BookmarksSelectionHelper.BookmarksMenuItemType.Delete -> {
         val deleted = bookmarksPresenter.deleteBookmarks(selectedItems)
 

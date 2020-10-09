@@ -4,10 +4,11 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkFull
+import org.joda.time.DateTime
 
 object ThreadBookmarkMapper {
 
-  fun toThreadBookmarkEntity(threadBookmark: ThreadBookmark, ownerThreadId: Long, order: Int): ThreadBookmarkEntity {
+  fun toThreadBookmarkEntity(threadBookmark: ThreadBookmark, ownerThreadId: Long, createdOn: DateTime): ThreadBookmarkEntity {
     require(ownerThreadId != 0L) { "Database id cannot be 0" }
 
     return ThreadBookmarkEntity(
@@ -18,7 +19,7 @@ object ThreadBookmarkMapper {
       title = threadBookmark.title,
       thumbnailUrl = threadBookmark.thumbnailUrl,
       state = threadBookmark.state,
-      bookmarkOrder = order
+      createdOn = createdOn
     )
   }
 
@@ -27,8 +28,9 @@ object ThreadBookmarkMapper {
       threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
         siteName = threadBookmarkFull.siteName,
         boardCode = threadBookmarkFull.boardCode,
-        threadNo = threadBookmarkFull.threadNo
-      )
+        threadNo = threadBookmarkFull.threadNo,
+      ),
+      createdOn = threadBookmarkFull.threadBookmarkEntity.createdOn
     ).apply {
       this.seenPostsCount = threadBookmarkFull.threadBookmarkEntity.seenPostsCount
       this.totalPostsCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount

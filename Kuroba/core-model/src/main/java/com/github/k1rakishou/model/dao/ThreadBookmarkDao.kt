@@ -37,9 +37,8 @@ abstract class ThreadBookmarkDao {
         ON bookmarks.${ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
     INNER JOIN ${ChanBoardIdEntity.TABLE_NAME} boards
         ON boards.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
-    ORDER BY ${ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME} DESC
   """)
-  abstract suspend fun selectAllOrderedDesc(): List<ThreadBookmarkFull>
+  abstract suspend fun selectAllBookmarks(): List<ThreadBookmarkFull>
 
   @Transaction
   open suspend fun insertOrUpdateMany(threadBookmarkEntities: Collection<ThreadBookmarkEntity>) {

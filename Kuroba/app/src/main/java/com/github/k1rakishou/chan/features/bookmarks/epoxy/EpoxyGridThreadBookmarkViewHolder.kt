@@ -57,7 +57,7 @@ abstract class EpoxyGridThreadBookmarkViewHolder
     holder.bookmarkStatsClickListener(true, bookmarkStatsClickListener)
     holder.setThreadBookmarkStats(true, threadBookmarkStats)
     holder.setTitle(titleString)
-    holder.highlightBookmark(highlightBookmark)
+    holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(true, watching, it) }

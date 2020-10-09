@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.entity.bookmark
 import androidx.room.*
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import okhttp3.HttpUrl
+import org.joda.time.DateTime
 import java.util.*
 
 @Entity(
@@ -17,7 +18,7 @@ import java.util.*
     )
   ],
   indices = [
-    Index(ThreadBookmarkEntity.BOOKMARK_ORDER_COLUMN_NAME),
+    Index(ThreadBookmarkEntity.CREATED_ON_COLUMN_NAME),
     Index(
       value = [ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME],
       unique = true
@@ -42,8 +43,8 @@ data class ThreadBookmarkEntity(
   val thumbnailUrl: HttpUrl? = null,
   @ColumnInfo(name = STATE_COLUMN_NAME)
   val state: BitSet,
-  @ColumnInfo(name = BOOKMARK_ORDER_COLUMN_NAME)
-  val bookmarkOrder: Int
+  @ColumnInfo(name = CREATED_ON_COLUMN_NAME)
+  val createdOn: DateTime
 ) {
 
   companion object {
@@ -57,6 +58,6 @@ data class ThreadBookmarkEntity(
     const val TITLE_COLUMN_NAME = "title"
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val STATE_COLUMN_NAME = "state"
-    const val BOOKMARK_ORDER_COLUMN_NAME = "bookmark_order"
+    const val CREATED_ON_COLUMN_NAME = "created_on"
   }
 }

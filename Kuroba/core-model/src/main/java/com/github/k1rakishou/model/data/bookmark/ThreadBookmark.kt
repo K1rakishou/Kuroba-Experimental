@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.data.bookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
+import org.joda.time.DateTime
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.max
@@ -16,7 +17,8 @@ class ThreadBookmark private constructor(
   var title: String? = null,
   var thumbnailUrl: HttpUrl? = null,
   var state: BitSet,
-  var stickyThread: StickyThread = StickyThread.NotSticky
+  var stickyThread: StickyThread = StickyThread.NotSticky,
+  var createdOn: DateTime
 ) {
 
   fun isActive(): Boolean = state.get(BOOKMARK_STATE_WATCHING)
@@ -44,7 +46,8 @@ class ThreadBookmark private constructor(
       title = title,
       thumbnailUrl = thumbnailUrl,
       stickyThread = stickyThread,
-      state = BitSet.valueOf(state.toLongArray())
+      state = BitSet.valueOf(state.toLongArray()),
+      createdOn = createdOn
     )
   }
 
@@ -217,6 +220,7 @@ class ThreadBookmark private constructor(
     if (thumbnailUrl != other.thumbnailUrl) return false
     if (state != other.state) return false
     if (stickyThread != other.stickyThread) return false
+    if (createdOn != other.createdOn) return false
 
     return true
   }
@@ -231,6 +235,7 @@ class ThreadBookmark private constructor(
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
     result = 31 * result + stickyThread.hashCode()
     result = 31 * result + state.hashCode()
+    result = 31 * result + createdOn.hashCode()
     return result
   }
 
@@ -238,7 +243,7 @@ class ThreadBookmark private constructor(
     return "ThreadBookmark(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
-      "stickyThread=$stickyThread, state=${stateToString()})"
+      "stickyThread=$stickyThread, state=${stateToString()}, createdOn=${createdOn})"
   }
 
   private fun stateToString(): String {
@@ -340,14 +345,15 @@ class ThreadBookmark private constructor(
      * */
     const val BOOKMARK_STATE_STICKY_NO_CAP = 1 shl 8
 
-    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadBookmark {
+    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, createdOn: DateTime): ThreadBookmark {
       val bookmarkInitialState = BitSet()
       bookmarkInitialState.set(BOOKMARK_STATE_WATCHING)
       bookmarkInitialState.set(BOOKMARK_STATE_FIRST_FETCH)
 
       return ThreadBookmark(
         threadDescriptor = threadDescriptor,
-        state = bookmarkInitialState
+        state = bookmarkInitialState,
+        createdOn = createdOn
       )
     }
   }

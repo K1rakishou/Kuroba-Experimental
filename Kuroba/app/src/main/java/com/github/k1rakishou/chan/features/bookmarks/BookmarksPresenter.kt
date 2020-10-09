@@ -74,22 +74,6 @@ class BookmarksPresenter(
       }
 
       scope.launch {
-        bookmarksManager.listenForBookmarksMoves()
-          .asFlow()
-          .debounce(100.milliseconds)
-          .collect {
-            withContext(Dispatchers.Default) {
-              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
-                Logger.e(TAG, "showBookmarks() listenForBookmarksMoves error", error)
-                setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
-
-                return@withContext
-              }
-            }
-          }
-      }
-
-      scope.launch {
         bookmarksSelectionHelper.listenForSelectionChanges()
           .asFlow()
           .debounce(100.milliseconds)
@@ -167,14 +151,6 @@ class BookmarksPresenter(
       .hide()
   }
 
-  fun onBookmarkMoving(fromPosition: Int, toPosition: Int) {
-    bookmarksManager.onBookmarkMoving(fromPosition, toPosition)
-  }
-
-  fun onBookmarkMoved() {
-    bookmarksManager.onBookmarkMoved()
-  }
-
   fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     return bookmarksManager.deleteBookmarks(selectedItems)
   }
@@ -229,7 +205,7 @@ class BookmarksPresenter(
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
-    val bookmarks = bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
+    val bookmarks = bookmarksManager.mapNotNullAllBookmarks { threadBookmarkView ->
       val title = threadBookmarkView.title
         ?: "No title"
 
@@ -242,7 +218,7 @@ class BookmarksPresenter(
           null
         }
 
-        return@mapNotNullBookmarksOrdered ThreadBookmarkItemView(
+        return@mapNotNullAllBookmarks ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
           title = title,
           highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
@@ -252,8 +228,10 @@ class BookmarksPresenter(
         )
       }
 
-      return@mapNotNullBookmarksOrdered null
+      return@mapNotNullAllBookmarks null
     }
+
+    // TODO(KurobaEx): sort bookmarks
 
     if (bookmarks.isEmpty()) {
       if (isSearchMode.get()) {

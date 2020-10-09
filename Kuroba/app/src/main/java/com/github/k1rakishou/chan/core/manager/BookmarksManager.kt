@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.collect
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
+import org.joda.time.DateTime
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -37,7 +38,6 @@ class BookmarksManager(
   private val lock = ReentrantReadWriteLock()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
-  private val bookmarkMovedSubject = PublishProcessor.create<Unit>()
   private val delayedBookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
@@ -47,8 +47,6 @@ class BookmarksManager(
 
   @GuardedBy("lock")
   private val bookmarks = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(256)
-  @GuardedBy("lock")
-  private val orders = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(256)
 
   fun initialize() {
     Logger.d(TAG, "BookmarksManager.initialize()")
@@ -92,11 +90,9 @@ class BookmarksManager(
           is ModularResult.Value -> {
             lock.write {
               bookmarks.clear()
-              orders.clear()
 
               bookmarksResult.value.forEach { threadBookmark ->
                 bookmarks[threadBookmark.threadDescriptor] = threadBookmark
-                orders.add(threadBookmark.threadDescriptor)
               }
             }
 
@@ -121,14 +117,6 @@ class BookmarksManager(
       .onBackpressureLatest()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "listenForBookmarksChanges error", error) }
-      .hide()
-  }
-
-  fun listenForBookmarksMoves(): Flowable<Unit> {
-    return bookmarkMovedSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "listenForBookmarksMoves error", error) }
       .hide()
   }
 
@@ -185,18 +173,12 @@ class BookmarksManager(
         return@write false
       }
 
-      val threadBookmark = ThreadBookmark.create(threadDescriptor).apply {
+      val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
         this.title = title
         this.thumbnailUrl = thumbnailUrl
       }
 
-      if (isDevFlavor) {
-        check(!orders.contains(threadDescriptor)) { "orders already contains $threadDescriptor" }
-      }
-
-      orders.add(0, threadDescriptor)
       bookmarks[threadDescriptor] = threadBookmark
-      ensureBookmarksAndOrdersConsistency()
 
       if (persist) {
         persistBookmarksInternal()
@@ -222,18 +204,12 @@ class BookmarksManager(
         return@write false
       }
 
-      val threadBookmark = ThreadBookmark.create(threadDescriptor).apply {
+      val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
         this.title = title
         this.thumbnailUrl = thumbnailUrl
       }
 
-      if (isDevFlavor) {
-        check(!orders.contains(threadDescriptor)) { "orders already contains $threadDescriptor" }
-      }
-
-      orders.add(0, threadDescriptor)
       bookmarks[threadDescriptor] = threadBookmark
-      ensureBookmarksAndOrdersConsistency()
 
       bookmarksChanged(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
       Logger.d(TAG, "Bookmark created ($threadDescriptor)")
@@ -259,15 +235,12 @@ class BookmarksManager(
         }
 
         bookmarks.remove(threadDescriptor)
-        orders.remove(threadDescriptor)
 
         updated = true
       }
 
       return@write updated
     }
-
-    ensureBookmarksAndOrdersConsistency()
 
     if (!updated) {
       return false
@@ -305,8 +278,6 @@ class BookmarksManager(
         val oldThreadBookmark = bookmarks[threadDescriptor]
           ?: return@forEach
 
-        ensureContainsOrder(threadDescriptor)
-
         val mutatedBookmark = oldThreadBookmark.deepCopy()
         mutator(mutatedBookmark)
 
@@ -342,12 +313,9 @@ class BookmarksManager(
         }
       }
 
-      ensureBookmarksAndOrdersConsistency()
-
       if (toDelete.size > 0) {
         toDelete.forEach { threadDescriptor ->
           bookmarks.remove(threadDescriptor)
-          orders.remove(threadDescriptor)
         }
       }
 
@@ -362,7 +330,6 @@ class BookmarksManager(
       val allBookmarksDescriptors = bookmarks.keys.toList()
 
       bookmarks.clear()
-      orders.clear()
 
       bookmarksChanged(BookmarkChange.BookmarksDeleted(allBookmarksDescriptors))
     }
@@ -373,8 +340,6 @@ class BookmarksManager(
 
     lock.write {
       bookmarks[threadDescriptor]?.readAllPostsAndNotifications()
-      ensureBookmarksAndOrdersConsistency()
-
       bookmarksChanged(BookmarkChange.BookmarksUpdated(listOf(threadDescriptor)))
     }
   }
@@ -386,7 +351,6 @@ class BookmarksManager(
       bookmarks.entries.forEach { (_, threadBookmark) ->
         threadBookmark.readAllPostsAndNotifications()
       }
-      ensureBookmarksAndOrdersConsistency()
 
       bookmarksChanged(BookmarkChange.BookmarksUpdated(bookmarks.keys))
     }
@@ -400,11 +364,8 @@ class BookmarksManager(
 
     lock.read {
       if (!bookmarks.containsKey(threadDescriptor)) {
-        ensureNotContainsOrder(threadDescriptor)
         return@read
       }
-
-      ensureContainsOrder(threadDescriptor)
 
       val threadBookmark = bookmarks[threadDescriptor]
         ?: return@read
@@ -418,32 +379,13 @@ class BookmarksManager(
 
     return lock.read {
       if (!bookmarks.containsKey(threadDescriptor)) {
-        ensureNotContainsOrder(threadDescriptor)
         return@read null
       }
-
-      ensureContainsOrder(threadDescriptor)
 
       val threadBookmark = bookmarks[threadDescriptor]
         ?: return@read null
 
       return@read mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
-    }
-  }
-
-  fun iterateBookmarksOrderedWhile(viewer: (ThreadBookmarkView) -> Boolean) {
-    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
-
-    lock.read {
-      for (threadDescriptor in orders) {
-        val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks do not contain ${threadDescriptor} even though orders does"
-        }
-
-        if (!viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))) {
-          break
-        }
-      }
     }
   }
 
@@ -456,7 +398,7 @@ class BookmarksManager(
     return lock.read {
       return@read threadDescriptors.map { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks do not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor}"
         }
 
         return@map mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
@@ -464,13 +406,13 @@ class BookmarksManager(
     }
   }
 
-  fun <T> mapBookmarksOrdered(mapper: (ThreadBookmarkView) -> T): List<T> {
+  fun <T> mapAllBookmarks(mapper: (ThreadBookmarkView) -> T): List<T> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read orders.map { threadDescriptor ->
+      return@read bookmarks.keys.map { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks do not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor}"
         }
 
         return@map mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
@@ -478,13 +420,13 @@ class BookmarksManager(
     }
   }
 
-  fun <T : Any> mapNotNullBookmarksOrdered(mapper: (ThreadBookmarkView) -> T?): List<T> {
+  fun <T : Any> mapNotNullAllBookmarks(mapper: (ThreadBookmarkView) -> T?): List<T> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read orders.mapNotNull { threadDescriptor ->
+      return@read bookmarks.keys.mapNotNull { threadDescriptor ->
         val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks do not contain ${threadDescriptor} even though orders does"
+          "Bookmarks do not contain ${threadDescriptor}"
         }
 
         return@mapNotNull mapper(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
@@ -492,35 +434,10 @@ class BookmarksManager(
     }
   }
 
-  fun onBookmarkMoving(from: Int, to: Int) {
-    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
-
-    require(from >= 0) { "Bad from: $from" }
-    require(to >= 0) { "Bad to: $to" }
-
-    lock.write {
-      orders.add(to, orders.removeAt(from))
-      Logger.d(TAG, "Bookmark moved (from=$from, to=$to)")
-    }
-
-    bookmarkMovedSubject.onNext(Unit)
-  }
-
-  fun onBookmarkMoved() {
-    if (isDevFlavor) {
-      ensureBookmarksAndOrdersConsistency()
-    }
-
-    persistTaskSubject.onNext(Unit)
-    bookmarksChangedSubject.onNext(BookmarkChange.BookmarksUpdated(null))
-  }
-
   fun bookmarksCount(): Int {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      ensureBookmarksAndOrdersConsistency()
-
       return@read bookmarks.size
     }
   }
@@ -529,8 +446,6 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      ensureBookmarksAndOrdersConsistency()
-
       return@read bookmarks.values.count { threadBookmark ->
         val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
         val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
@@ -557,8 +472,6 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      ensureBookmarksAndOrdersConsistency()
-
       return@read bookmarks.values.sumBy { threadBookmark -> threadBookmark.unseenPostsCount() }
     }
   }
@@ -567,8 +480,6 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      ensureBookmarksAndOrdersConsistency()
-
       return@read bookmarks.values.any { threadBookmark -> threadBookmark.hasUnreadReplies() }
     }
   }
@@ -606,44 +517,12 @@ class BookmarksManager(
     bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
   }
 
-  private fun ensureBookmarksAndOrdersConsistency() {
-    if (isDevFlavor) {
-      check(bookmarks.size == orders.size) {
-        "Inconsistency detected! bookmarks.size (${bookmarks.size}) != orders.size (${orders.size})"
-      }
-    }
-  }
-
-  private fun ensureNotContainsOrder(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (isDevFlavor) {
-      check(!orders.contains(threadDescriptor)) {
-        "Orders contains ($threadDescriptor) when bookmarks doesn't!"
-      }
-    }
-  }
-
-  private fun ensureContainsOrder(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (isDevFlavor) {
-      check(orders.contains(threadDescriptor)) {
-        "Orders does not contain ($threadDescriptor) when bookmarks does!"
-      }
-    }
-  }
-
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
-    if (isDevFlavor) {
-      ensureBookmarksAndOrdersConsistency()
-    }
-
     persistTaskSubject.onNext(Unit)
     bookmarksChangedSubject.onNext(bookmarkChange)
   }
 
   private fun delayedBookmarksChanged(bookmarkChange: BookmarkChange) {
-    if (isDevFlavor) {
-      ensureBookmarksAndOrdersConsistency()
-    }
-
     delayedBookmarksChangedSubject.onNext(bookmarkChange)
   }
 
@@ -676,7 +555,7 @@ class BookmarksManager(
   private suspend fun persistBookmarksInternal() {
 
     try {
-      bookmarksRepository.persist(getBookmarksOrdered()).safeUnwrap { error ->
+      bookmarksRepository.persist(getAllBookmarks()).safeUnwrap { error ->
         Logger.e(TAG, "Failed to persist bookmarks", error)
         return
       }
@@ -685,16 +564,8 @@ class BookmarksManager(
     }
   }
 
-  private fun getBookmarksOrdered(): List<ThreadBookmark> {
-    return lock.read {
-      return@read orders.map { threadDescriptor ->
-        val threadBookmark = checkNotNull(bookmarks[threadDescriptor]) {
-          "Bookmarks do not contain ${threadDescriptor} even though orders does"
-        }
-
-        return@map threadBookmark.deepCopy()
-      }
-    }
+  private fun getAllBookmarks(): List<ThreadBookmark> {
+    return lock.read { bookmarks.values.map { bookmark -> bookmark.deepCopy() } }
   }
 
   enum class NotifyListenersOption {

@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
 import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
+import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
 
 @DoNotStrip
 @Database(
@@ -63,7 +64,7 @@ import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 3,
+  version = 4,
   exportSchema = true
 )
 @TypeConverters(
@@ -127,7 +128,8 @@ abstract class KurobaDatabase : RoomDatabase() {
       )
         .addMigrations(
           Migration_v1_to_v2(),
-          Migration_v2_to_v3()
+          Migration_v2_to_v3(),
+          Migration_v3_to_v4()
         )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()

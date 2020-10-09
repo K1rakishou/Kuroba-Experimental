@@ -22,15 +22,15 @@ class ThreadBookmarkLocalSource(
   private val TAG = "$loggerTag ThreadBookmarkLocalSource"
   private val threadBookmarkDao = database.threadBookmarkDao()
   private val threadBookmarkReplyDao = database.threadBookmarkReplyDao()
-  private val bookmarksCache = GenericCacheSource<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>()
+  private val bookmarksCache = GenericCacheSource<ChanDescriptor.ThreadDescriptor, ThreadBookmark>()
 
   suspend fun selectAll(): List<ThreadBookmark> {
     ensureInTransaction()
 
-    val bookmarks = threadBookmarkDao.selectAllOrderedDesc()
+    val bookmarks = threadBookmarkDao.selectAllBookmarks()
       .map { threadBookmarkFull -> ThreadBookmarkMapper.toThreadBookmark(threadBookmarkFull) }
 
-    val mapOfBookmarks = associateBookmarksOrdered(bookmarks)
+    val mapOfBookmarks = associateBookmarks(bookmarks)
     bookmarksCache.storeMany(mapOfBookmarks)
 
     return bookmarks
@@ -70,23 +70,22 @@ class ThreadBookmarkLocalSource(
     bookmarksCache.deleteMany(toDelete)
   }
 
-  private suspend fun insertOrUpdateBookmarks(toInsertOrUpdateInDatabase: List<OrderedThreadBookmark>) {
-    val toInsertOrUpdateThreadDescriptors = toInsertOrUpdateInDatabase.map { orderedThreadBookmark ->
-      return@map orderedThreadBookmark.threadBookmark.threadDescriptor
+  private suspend fun insertOrUpdateBookmarks(toInsertOrUpdateInDatabase: List<ThreadBookmark>) {
+    val toInsertOrUpdateThreadDescriptors = toInsertOrUpdateInDatabase.map { threadBookmark ->
+      return@map threadBookmark.threadDescriptor
     }
 
     val threadIdMap = chanDescriptorCache.getManyThreadIdsByThreadDescriptors(
       toInsertOrUpdateThreadDescriptors
     )
 
-    val toInsertOrUpdateThreadBookmarkEntities = toInsertOrUpdateInDatabase.map { orderedThreadBookmark ->
-      val threadBookmark = orderedThreadBookmark.threadBookmark
+    val toInsertOrUpdateThreadBookmarkEntities = toInsertOrUpdateInDatabase.map { threadBookmark ->
       val threadId = threadIdMap[threadBookmark.threadDescriptor] ?: -1L
 
       return@map ThreadBookmarkMapper.toThreadBookmarkEntity(
         threadBookmark,
         threadId,
-        orderedThreadBookmark.order
+        threadBookmark.createdOn
       )
     }
 
@@ -100,10 +99,10 @@ class ThreadBookmarkLocalSource(
       }
     }
 
-    val toInsertOrUpdateBookmarkReplyEntities = toInsertOrUpdateInDatabase.flatMapIndexed { index, orderedThreadBookmark ->
+    val toInsertOrUpdateBookmarkReplyEntities = toInsertOrUpdateInDatabase.flatMapIndexed { index, threadBookmark ->
       val threadBookmarkId = toInsertOrUpdateThreadBookmarkEntities[index].threadBookmarkId
 
-      return@flatMapIndexed orderedThreadBookmark.threadBookmark.threadBookmarkReplies.values.map { threadBookmarkReply ->
+      return@flatMapIndexed threadBookmark.threadBookmarkReplies.values.map { threadBookmarkReply ->
         ThreadBookmarkReplyMapper.toThreadBookmarkReplyEntity(
           threadBookmarkId,
           threadBookmarkReply
@@ -114,8 +113,8 @@ class ThreadBookmarkLocalSource(
     threadBookmarkReplyDao.insertOrUpdateMany(toInsertOrUpdateBookmarkReplyEntities)
 
     bookmarksCache.storeMany(
-      toInsertOrUpdateInDatabase.associateBy { orderedThreadBookmark ->
-        return@associateBy orderedThreadBookmark.threadBookmark.threadDescriptor
+      toInsertOrUpdateInDatabase.associateBy { threadBookmark ->
+        return@associateBy threadBookmark.threadDescriptor
       }
     )
 
@@ -124,7 +123,7 @@ class ThreadBookmarkLocalSource(
 
   private fun retainDeletedBookmarks(
     bookmarksDescriptors: Set<ChanDescriptor.ThreadDescriptor>,
-    cachedBookmarks: Map<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>
+    cachedBookmarks: Map<ChanDescriptor.ThreadDescriptor, ThreadBookmark>
   ): List<ChanDescriptor.ThreadDescriptor> {
     val list = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(cachedBookmarks.size / 2)
 
@@ -139,8 +138,8 @@ class ThreadBookmarkLocalSource(
 
   private fun retainUpdatedBookmarks(
     bookmarks: List<ThreadBookmark>,
-    cachedBookmarks: Map<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>
-  ): List<OrderedThreadBookmark> {
+    cachedBookmarks: Map<ChanDescriptor.ThreadDescriptor, ThreadBookmark>
+  ): List<ThreadBookmark> {
     if (bookmarks.isEmpty()) {
       return emptyList()
     }
@@ -148,41 +147,31 @@ class ThreadBookmarkLocalSource(
     return bookmarks.mapReverseIndexedNotNull { order, threadBookmark ->
       val threadDescriptor = threadBookmark.threadDescriptor
 
-      val orderedThreadBookmark = cachedBookmarks[threadDescriptor]
-        ?: return@mapReverseIndexedNotNull OrderedThreadBookmark(threadBookmark, order)
+      val cachedThreadBookmark = cachedBookmarks[threadDescriptor]
+        ?: return@mapReverseIndexedNotNull threadBookmark
 
-      if (orderedThreadBookmark.threadBookmark == threadBookmark
-        && orderedThreadBookmark.order == order) {
+      if (cachedThreadBookmark == threadBookmark) {
         return@mapReverseIndexedNotNull null
       }
 
-      return@mapReverseIndexedNotNull OrderedThreadBookmark(
-        threadBookmark.deepCopy(),
-        order
-      )
+      return@mapReverseIndexedNotNull threadBookmark.deepCopy()
     }
   }
 
-  private fun associateBookmarksOrdered(
+  private fun associateBookmarks(
     bookmarks: List<ThreadBookmark>
-  ): Map<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark> {
+  ): Map<ChanDescriptor.ThreadDescriptor, ThreadBookmark> {
     if (bookmarks.isEmpty()) {
       return emptyMap()
     }
 
-    val map = HashMap<ChanDescriptor.ThreadDescriptor, OrderedThreadBookmark>(bookmarks.size)
-    var order = bookmarks.lastIndex
+    val map = HashMap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(bookmarks.size)
 
     bookmarks.forEach { bookmark ->
-      map[bookmark.threadDescriptor] = OrderedThreadBookmark(bookmark.deepCopy(), order--)
+      map[bookmark.threadDescriptor] = bookmark.deepCopy()
     }
 
     return map
   }
-
-  data class OrderedThreadBookmark(
-    val threadBookmark: ThreadBookmark,
-    val order: Int
-  )
 
 }

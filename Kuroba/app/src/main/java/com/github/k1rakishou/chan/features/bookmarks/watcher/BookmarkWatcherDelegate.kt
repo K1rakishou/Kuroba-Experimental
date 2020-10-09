@@ -157,34 +157,34 @@ class BookmarkWatcherDelegate(
     updateCurrentlyOpenedThread: Boolean,
     currentThreadDescriptor: ChanDescriptor.ThreadDescriptor?
   ): List<ChanDescriptor.ThreadDescriptor> {
-    return bookmarksManager.mapNotNullBookmarksOrdered { threadBookmarkView ->
+    return bookmarksManager.mapNotNullAllBookmarks { threadBookmarkView ->
       if (!threadBookmarkView.isActive()) {
-        return@mapNotNullBookmarksOrdered null
+        return@mapNotNullAllBookmarks null
       }
 
       if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
         // We don't support fetching bookmark info from archives (For now at least)
-        return@mapNotNullBookmarksOrdered null
+        return@mapNotNullAllBookmarks null
       }
 
       if (updateCurrentlyOpenedThread) {
         if (threadBookmarkView.threadDescriptor != currentThreadDescriptor) {
           // Skip all threads that are not the currently opened thread
-          return@mapNotNullBookmarksOrdered null
+          return@mapNotNullAllBookmarks null
         }
 
-        return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
+        return@mapNotNullAllBookmarks threadBookmarkView.threadDescriptor
       }
 
       if (threadBookmarkView.threadDescriptor == currentThreadDescriptor) {
         // Skip current thread but only if this is the very first fetch (otherwise if we bookmark
         // an archived/dead thread it will stay in "Loading..." state forever.
         if (!threadBookmarkView.isFirstFetch()) {
-          return@mapNotNullBookmarksOrdered null
+          return@mapNotNullAllBookmarks null
         }
       }
 
-      return@mapNotNullBookmarksOrdered threadBookmarkView.threadDescriptor
+      return@mapNotNullAllBookmarks threadBookmarkView.threadDescriptor
     }
   }
 

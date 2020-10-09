@@ -108,10 +108,10 @@ class ReplyNotificationsHelper(
 
     val unreadNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
 
-    bookmarksManager.mapBookmarksOrdered { threadBookmarkView ->
+    bookmarksManager.mapAllBookmarks { threadBookmarkView ->
       val threadDescriptor = threadBookmarkView.threadDescriptor
 
-      return@mapBookmarksOrdered threadBookmarkView.threadBookmarkReplyViews.forEach { (_, threadBookmarkReplyView) ->
+      return@mapAllBookmarks threadBookmarkView.threadBookmarkReplyViews.forEach { (_, threadBookmarkReplyView) ->
         if (threadBookmarkReplyView.alreadyRead) {
           // Skip already read replies
           return@forEach

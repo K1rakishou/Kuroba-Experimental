@@ -19,15 +19,6 @@ class BookmarksSelectionHelper(
 
     val itemsList = mutableListOf<BottomMenuPanelItem>()
 
-    if (selectedItems.size == 1) {
-      itemsList += BottomMenuPanelItem(
-        BookmarksMenuItemId(BookmarksMenuItemType.Reorder),
-        R.drawable.ic_baseline_reorder_24,
-        R.string.bottom_menu_item_reorder,
-        { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Reorder, selectedItems) }
-      )
-    }
-
     itemsList += BottomMenuPanelItem(
       BookmarksMenuItemId(BookmarksMenuItemType.Delete),
       R.drawable.ic_baseline_delete_outline_24,
@@ -39,8 +30,7 @@ class BookmarksSelectionHelper(
   }
 
   enum class BookmarksMenuItemType(val id: Int) {
-    Reorder(0),
-    Delete(1)
+    Delete(0)
   }
 
   class BookmarksMenuItemId(val bookmarksMenuItemType: BookmarksMenuItemType) : BottomMenuPanelItemId {
