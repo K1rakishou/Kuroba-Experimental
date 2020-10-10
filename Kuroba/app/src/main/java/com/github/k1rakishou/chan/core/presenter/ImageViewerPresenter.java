@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -727,6 +728,7 @@ public class ImageViewerPresenter
 
         FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
                 context,
+                FloatingListMenuGravity.Center,
                 items,
                 item -> {
                     for (ImageSearch imageSearch : ImageSearch.engines) {

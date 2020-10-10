@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
 import com.github.k1rakishou.chan.features.settings.setting.*
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
@@ -58,7 +59,7 @@ class MainSettingsControllerV2(context: Context)
     view = inflate(context, R.layout.controller_settings_main)
     recyclerView = view.findViewById(R.id.settings_recycler_view)
 
-    navigation.buildMenu()
+    navigation.buildMenu(FloatingListMenuGravity.TopRight)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }

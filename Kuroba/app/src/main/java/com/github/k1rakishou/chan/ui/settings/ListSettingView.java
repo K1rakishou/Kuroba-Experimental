@@ -21,6 +21,7 @@ import android.view.View;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 
@@ -120,6 +121,7 @@ public class ListSettingView<T>
 
         FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
                 v.getContext(),
+                FloatingListMenuGravity.Center,
                 menuItems,
                 item -> {
                     T selectedKey = (T) item.getKey();

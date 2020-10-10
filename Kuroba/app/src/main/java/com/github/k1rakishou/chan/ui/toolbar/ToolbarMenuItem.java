@@ -26,9 +26,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
-import com.github.k1rakishou.chan.ui.controller.floating_menu.CatalogFloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
-import com.github.k1rakishou.chan.ui.controller.floating_menu.ThreadFloatingListMenuController;
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -57,7 +56,7 @@ public class ToolbarMenuItem {
     public int id;
     public boolean visible = true;
     public boolean enabled = true;
-    public ToolbarMenuType toolbarMenuType = ToolbarMenuType.Default;
+    public FloatingListMenuGravity floatingListMenuGravity = FloatingListMenuGravity.Center;
     public Drawable drawable;
     public final List<ToolbarMenuSubItem> subItems = new ArrayList<>();
     private ClickCallback clickCallback;
@@ -100,13 +99,13 @@ public class ToolbarMenuItem {
         this.clickCallback = clickCallback;
         this.navigationController = navigationController;
         this.threedotMenuCallback = threedotMenuCallback;
-        this.toolbarMenuType = ToolbarMenuType.Default;
+        this.floatingListMenuGravity = FloatingListMenuGravity.Center;
     }
 
     public ToolbarMenuItem(
             int id,
             int drawable,
-            ToolbarMenuType toolbarMenuType,
+            FloatingListMenuGravity floatingListMenuGravity,
             ClickCallback clickCallback,
             @NonNull NavigationController navigationController,
             @Nullable ToobarThreedotMenuCallback threedotMenuCallback
@@ -116,7 +115,7 @@ public class ToolbarMenuItem {
         this.clickCallback = clickCallback;
         this.navigationController = navigationController;
         this.threedotMenuCallback = threedotMenuCallback;
-        this.toolbarMenuType = toolbarMenuType;
+        this.floatingListMenuGravity = floatingListMenuGravity;
     }
 
     public void attach(ImageView view) {
@@ -266,32 +265,13 @@ public class ToolbarMenuItem {
             return Unit.INSTANCE;
         };
 
-        FloatingListMenuController floatingListMenuController;
-
-        if (toolbarMenuType == ToolbarMenuType.CatalogListMenu) {
-            floatingListMenuController = new CatalogFloatingListMenuController(
-                    view.getContext(),
-                    floatingListMenuItems,
-                    itemClickListener,
-                    menuDismissListener
-            );
-        } else if (toolbarMenuType == ToolbarMenuType.ThreadListMenu) {
-            floatingListMenuController = new ThreadFloatingListMenuController(
-                    view.getContext(),
-                    floatingListMenuItems,
-                    itemClickListener,
-                    menuDismissListener
-            );
-        } else {
-            floatingListMenuController = new FloatingListMenuController(
-                    view.getContext(),
-                    floatingListMenuItems,
-                    itemClickListener,
-                    menuDismissListener
-            );
-        }
-
-        return floatingListMenuController;
+        return new FloatingListMenuController(
+                view.getContext(),
+                floatingListMenuGravity,
+                floatingListMenuItems,
+                itemClickListener,
+                menuDismissListener
+        );
     }
 
     private int checkDuplicateMenuIds(
@@ -368,6 +348,7 @@ public class ToolbarMenuItem {
 
     public interface ToobarThreedotMenuCallback {
         void onMenuShown();
+
         void onMenuHidden();
     }
 }

@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkVie
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -88,7 +89,7 @@ class BookmarksController(
 
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
-    navigation.buildMenu()
+    navigation.buildMenu(FloatingListMenuGravity.TopRight)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }

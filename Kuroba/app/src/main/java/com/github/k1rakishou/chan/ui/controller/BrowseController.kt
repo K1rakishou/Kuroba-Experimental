@@ -42,13 +42,17 @@ import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.ui.toolbar.*
+import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.Logger
@@ -282,7 +286,13 @@ class BrowseController(
 
     menuBuiltOnce = true
 
-    val menuBuilder = navigation.buildMenu(ToolbarMenuType.CatalogListMenu)
+    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      FloatingListMenuGravity.TopLeft
+    } else {
+      FloatingListMenuGravity.Top
+    }
+
+    val menuBuilder = navigation.buildMenu(gravity)
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
 

@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.common.exhaustive
 import javax.inject.Inject
@@ -35,6 +36,7 @@ abstract class BaseSettingsController(
     val controller = FloatingListMenuController(
       context = context,
       items = items,
+      floatingListMenuGravity = FloatingListMenuGravity.Center,
       itemClickListener = { clickedItem ->
         settingV2.updateSetting(clickedItem.value)
         onItemClicked(clickedItem.value)

@@ -85,7 +85,8 @@ public class AlbumViewController
         // Navigation
         Drawable downloadDrawable = context.getDrawable(R.drawable.ic_file_download_white_24dp);
         downloadDrawable.setTint(Color.WHITE);
-        navigation.buildMenu().withItem(Integer.MAX_VALUE, downloadDrawable, this::downloadAlbumClicked).build();
+        navigation.buildMenu()
+                .withItem(Integer.MAX_VALUE, downloadDrawable, this::downloadAlbumClicked).build();
 
         navigation.title = title;
         navigation.subtitle = getQuantityString(R.plurals.image, postImages.size(), postImages.size());

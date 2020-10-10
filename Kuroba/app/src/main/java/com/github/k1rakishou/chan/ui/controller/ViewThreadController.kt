@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -147,7 +148,13 @@ open class ViewThreadController(
   }
 
   protected fun buildMenu() {
-    val menuBuilder = navigation.buildMenu(ToolbarMenuType.ThreadListMenu)
+    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      FloatingListMenuGravity.TopRight
+    } else {
+      FloatingListMenuGravity.Top
+    }
+
+    val menuBuilder = navigation.buildMenu(gravity)
 
     if (!ChanSettings.textOnly.get()) {
       menuBuilder
@@ -343,8 +350,15 @@ open class ViewThreadController(
       return
     }
 
+    val gravity = when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.BottomLeft
+      is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.BottomRight
+      else -> return
+    }
+
     val floatingListMenuController = FloatingListMenuController(
       context,
+      gravity,
       items,
       itemClickListener = { clickedItem ->
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)

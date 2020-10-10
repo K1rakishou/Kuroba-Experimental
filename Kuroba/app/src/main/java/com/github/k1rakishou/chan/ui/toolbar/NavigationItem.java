@@ -20,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
  * The navigation properties for a Controller. Controls common properties that parent controllers
  * need to know, such as the title of the controller.
  * <p>
- * This is also used to set up the toolbar menu, see {@link #buildMenu()}}.
+ * This is also used to set up the toolbar menu, see {@link #buildMenu(FloatingListMenuGravity)}.
  */
 public class NavigationItem {
     public String title = "";
@@ -66,11 +67,11 @@ public class NavigationItem {
     }
 
     public MenuBuilder buildMenu() {
-        return new MenuBuilder(ToolbarMenuType.Default, this);
+        return new MenuBuilder(FloatingListMenuGravity.TopRight, this);
     }
 
-    public MenuBuilder buildMenu(ToolbarMenuType toolbarMenuType) {
-        return new MenuBuilder(toolbarMenuType, this);
+    public MenuBuilder buildMenu(FloatingListMenuGravity floatingListMenuGravity) {
+        return new MenuBuilder(floatingListMenuGravity, this);
     }
 
     public void setMiddleMenu(ToolbarMiddleMenu middleMenu) {
@@ -92,11 +93,11 @@ public class NavigationItem {
     public static class MenuBuilder {
         private final NavigationItem navigationItem;
         private final ToolbarMenu menu;
-        private ToolbarMenuType toolbarMenuType;
+        private FloatingListMenuGravity floatingListMenuGravity;
 
-        public MenuBuilder(ToolbarMenuType toolbarMenuType, NavigationItem navigationItem) {
+        public MenuBuilder(FloatingListMenuGravity floatingListMenuGravity, NavigationItem navigationItem) {
             this.navigationItem = navigationItem;
-            this.toolbarMenuType = toolbarMenuType;
+            this.floatingListMenuGravity = floatingListMenuGravity;
             menu = new ToolbarMenu();
         }
 
@@ -113,7 +114,7 @@ public class NavigationItem {
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
-            menuItem.toolbarMenuType = toolbarMenuType;
+            menuItem.floatingListMenuGravity = floatingListMenuGravity;
             menu.addItem(menuItem);
             return this;
         }
@@ -123,7 +124,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            toolbarMenuType,
+                            floatingListMenuGravity,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             null
@@ -139,7 +140,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            toolbarMenuType,
+                            floatingListMenuGravity,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             threedotMenuCallback

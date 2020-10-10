@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
@@ -889,11 +890,22 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.Left
+        is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.Right
+        else -> return
+      }
+    } else {
+      FloatingListMenuGravity.Bottom
+    }
+
     val items = mutableListOf<FloatingListMenuItem>()
     items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
 
     val floatingListMenuController = FloatingListMenuController(
       context,
+      gravity,
       items,
       { item -> onThumbnailOptionClicked(item.key as Int, postImage, thumbnail) }
     )
@@ -1225,14 +1237,22 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>) {
-    val isThreadMode = currentChanDescriptor?.isThreadDescriptor()
-      ?: return
+    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.BottomLeft
+        is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.BottomRight
+        else -> return
+      }
+    } else {
+      FloatingListMenuGravity.Bottom
+    }
 
-    val floatingListMenuController = FloatingListMenuController.create(
+    val floatingListMenuController = FloatingListMenuController(
       context,
-      isThreadMode,
-      items
-    ) { item -> onPostOptionClicked(post, (item.key as Int), inPopup) }
+      gravity,
+      items,
+      { item -> onPostOptionClicked(post, (item.key as Int), inPopup) }
+    )
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }

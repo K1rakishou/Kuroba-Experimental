@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller.floating_menu
 
 import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
@@ -9,9 +10,10 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
-  protected val items: List<FloatingListMenuItem>,
-  protected val itemClickListener: (item: FloatingListMenuItem) -> Unit,
-  protected val menuDismissListener: (() -> Unit)? = null
+  private val floatingListMenuGravity: FloatingListMenuGravity,
+  private val items: List<FloatingListMenuItem>,
+  private val itemClickListener: (item: FloatingListMenuItem) -> Unit,
+  private val menuDismissListener: (() -> Unit)? = null
 ) : BaseFloatingController(context) {
   private lateinit var floatingListMenu: FloatingListMenu
   private lateinit var clickableArea: ConstraintLayout
@@ -29,7 +31,11 @@ open class FloatingListMenuController @JvmOverloads constructor(
       itemClickListener.invoke(clickedItem)
     }
 
-    setupListMenuGravity(floatingListMenu)
+    floatingListMenu.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      horizontalBias = floatingListMenuGravity.horizontalBias
+      verticalBias = floatingListMenuGravity.verticalBias
+    }
+
     floatingListMenu.setStackCallback { moreItems -> stack(moreItems) }
   }
 
@@ -59,38 +65,16 @@ open class FloatingListMenuController @JvmOverloads constructor(
 
   open fun stack(moreItems: List<FloatingListMenuItem>) {
     presentController(
-      FloatingListMenuController(context, moreItems, itemClickListener, menuDismissListener)
+      FloatingListMenuController(
+        context,
+        floatingListMenuGravity,
+        moreItems,
+        itemClickListener,
+        menuDismissListener
+      )
     )
-  }
-
-  open fun setupListMenuGravity(menu: FloatingListMenu) {
-    (menu.layoutParams as? ConstraintLayout.LayoutParams)?.let { params ->
-      params.verticalBias = 1f
-    }
   }
 
   override fun getLayoutId(): Int = R.layout.controller_floating_list_menu
 
-  companion object {
-    fun create(
-      context: Context,
-      isThreadMode: Boolean,
-      items: List<FloatingListMenuItem>,
-      itemClickListener: (item: FloatingListMenuItem) -> Unit
-    ): FloatingListMenuController {
-      return if (isThreadMode) {
-        ThreadFloatingListMenuController(
-          context,
-          items,
-          itemClickListener
-        )
-      } else {
-        CatalogFloatingListMenuController(
-          context,
-          items,
-          itemClickListener
-        )
-      }
-    }
-  }
 }
