@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.ui.toolbar
 
 class CheckableToolbarMenuSubItem @JvmOverloads constructor(
   id: Int,
-  textId: Int,
+  text: String,
   clicked: ClickCallback? = null,
   visible: Boolean = true,
   value: Any? = null,
-  @JvmField var isCurrentlySelected: Boolean = false
-) : ToolbarMenuSubItem(id, textId, clicked, visible, value)
+  @JvmField var isChecked: Boolean = false
+) : ToolbarMenuSubItem(id, text, clicked, visible, value)

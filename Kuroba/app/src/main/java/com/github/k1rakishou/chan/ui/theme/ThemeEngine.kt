@@ -77,12 +77,11 @@ open class ThemeEngine(
   }
 
   fun switchTheme(switchToDarkTheme: Boolean) {
-    val isCurrentThemeDark = !chanTheme.isLightTheme
-    ChanSettings.isCurrentThemeDark.set(switchToDarkTheme)
-
-    if (isCurrentThemeDark == switchToDarkTheme) {
+    if (chanTheme.isDarkTheme == switchToDarkTheme) {
       return
     }
+
+    ChanSettings.isCurrentThemeDark.set(switchToDarkTheme)
 
     chanTheme = getThemeInternal(switchToDarkTheme)
     refreshViews()

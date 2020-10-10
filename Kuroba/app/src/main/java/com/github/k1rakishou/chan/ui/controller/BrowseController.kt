@@ -52,6 +52,7 @@ import com.github.k1rakishou.chan.ui.toolbar.*
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -111,6 +112,9 @@ class BrowseController(
       threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
       threadLayout.presenter.setOrder(order)
     }
+
+    compositeDisposable += ChanSettings.isCurrentThemeDark.listenForChanges()
+      .subscribe { handleDayNightModeChange(context.resources.configuration) }
   }
 
   override fun onShow() {
@@ -127,14 +131,6 @@ class BrowseController(
       if (chanDescriptor != null) {
         historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
       }
-    }
-  }
-
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    super.onConfigurationChanged(newConfig)
-
-    if (AndroidUtils.isAndroid10()) {
-      handleDayNightModeChange(newConfig)
     }
   }
 
@@ -439,7 +435,7 @@ class BrowseController(
       resetSelectedSortOrderItem(sortSubItem)
 
       subItem as CheckableToolbarMenuSubItem
-      subItem.isCurrentlySelected = true
+      subItem.isChecked = true
 
       val presenter = threadLayout.presenter
       presenter.setOrder(order)
@@ -448,7 +444,7 @@ class BrowseController(
 
   private fun resetSelectedSortOrderItem(item: ToolbarMenuSubItem) {
     if (item is CheckableToolbarMenuSubItem) {
-      item.isCurrentlySelected = false
+      item.isChecked = false
     }
 
     for (nestedItem in item.moreItems) {
@@ -555,6 +551,10 @@ class BrowseController(
   }
 
   private fun handleDayNightModeChange(newConfig: Configuration) {
+    if (!AndroidUtils.isAndroid10()) {
+      return
+    }
+
     val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
     if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
       return

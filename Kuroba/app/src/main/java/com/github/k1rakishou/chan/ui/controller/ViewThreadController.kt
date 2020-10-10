@@ -412,11 +412,8 @@ open class ViewThreadController(
       ?: return
 
     if (clickedItemId == ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE) {
-      val useScrollingTextForThreadView = !ChanSettings.scrollingTextForThreadTitles.get()
-      ChanSettings.scrollingTextForThreadTitles.set(useScrollingTextForThreadView)
-
       item as CheckableToolbarMenuSubItem
-      item.isCurrentlySelected = useScrollingTextForThreadView
+      item.isChecked = ChanSettings.scrollingTextForThreadTitles.toggle()
 
       AndroidUtils.showToast(context, R.string.restart_the_app)
     } else {
@@ -430,25 +427,16 @@ open class ViewThreadController(
 
     when (clickedItemId) {
       ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR -> {
-        val markReplies = !ChanSettings.markRepliesToYourPostOnScrollbar.get()
-        ChanSettings.markRepliesToYourPostOnScrollbar.set(markReplies)
-
         item as CheckableToolbarMenuSubItem
-        item.isCurrentlySelected = markReplies
+        item.isChecked = ChanSettings.markRepliesToYourPostOnScrollbar.toggle()
       }
       ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR -> {
-        val markCrossThreadQuotes = !ChanSettings.markCrossThreadQuotesOnScrollbar.get()
-        ChanSettings.markCrossThreadQuotesOnScrollbar.set(markCrossThreadQuotes)
-
         item as CheckableToolbarMenuSubItem
-        item.isCurrentlySelected = markCrossThreadQuotes
+        item.isChecked = ChanSettings.markCrossThreadQuotesOnScrollbar.toggle()
       }
       ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR -> {
-        val markYourPostsOnScrollbar = !ChanSettings.markYourPostsOnScrollbar.get()
-        ChanSettings.markYourPostsOnScrollbar.set(markYourPostsOnScrollbar)
-
         item as CheckableToolbarMenuSubItem
-        item.isCurrentlySelected = markYourPostsOnScrollbar
+        item.isChecked = ChanSettings.markYourPostsOnScrollbar.toggle()
       }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }

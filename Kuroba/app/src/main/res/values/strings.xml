@@ -178,6 +178,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_export_dark_theme">Export Dark theme</string>
     <string name="action_reset_light_theme">Reset Light theme</string>
     <string name="action_reset_dark_theme">Reset Dark theme</string>
+    <string name="action_ignore_dark_night_mode">Ignore system Dark/Night mode</string>
 
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
@@ -1060,8 +1061,9 @@ Don't have a 4chan Pass?<br>
     <string name="theme_settings_controller_failed_to_parse_some_colors">Failed to parse some colors. Those colors were reset to default</string>
     <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
     <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
+    <string name="theme_settings_controller_wrong_theme_type">You cannot import \"%1$s\" theme into \"%2$s\" theme slot</string>
     <string name="theme_settings_controller_canceled">Canceled: %1$s</string>
-    <string name="theme_settings_controller_current_theme">Current theme: %1$s</string>
+    <string name="theme_settings_controller_theme">%1$s theme</string>
     <string name="theme_settings_controller_theme_light">Light</string>
     <string name="theme_settings_controller_theme_dark">Dark</string>
 

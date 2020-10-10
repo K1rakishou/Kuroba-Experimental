@@ -52,7 +52,7 @@ open class FloatingListMenuItem @JvmOverloads constructor(
             null,
             toolbarMenuSubItem.visible,
             nestedItems,
-            toolbarMenuSubItem.isCurrentlySelected
+            toolbarMenuSubItem.isChecked
           )
         }
         is ToolbarMenuSubItem -> {

@@ -86,8 +86,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class ThemeSettingsController(context: Context)
-  : Controller(context), ToolbarMenuItem.ToobarThreedotMenuCallback {
+class ThemeSettingsController(context: Context) : Controller(context),
+  ToolbarMenuItem.ToobarThreedotMenuCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -159,34 +159,19 @@ class ThemeSettingsController(context: Context)
     navigation.setTitle(R.string.settings_screen_theme)
     navigation.swipeable = false
 
-    navigation.buildMenu(ToolbarMenuType.ThreadListMenu)
-      .withOverflow(navigationController, this)
-      .withSubItem(
-        ACTION_IMPORT_LIGHT_THEME,
-        R.string.action_import_light_theme
-      ) { item -> importTheme(item) }
-      .withSubItem(
-        ACTION_EXPORT_LIGHT_THEME,
-        R.string.action_export_light_theme
-      ) { item -> exportTheme(item) }
-      .withSubItem(
-        ACTION_RESET_LIGHT_THEME,
-        R.string.action_reset_light_theme
-      ) { item -> resetTheme(item) }
-      .withSubItem(
-        ACTION_IMPORT_DARK_THEME,
-        R.string.action_import_dark_theme
-      ) { item -> importTheme(item) }
-      .withSubItem(
-        ACTION_EXPORT_DARK_THEME,
-        R.string.action_export_dark_theme
-      ) { item -> exportTheme(item) }
-      .withSubItem(
-        ACTION_RESET_DARK_THEME,
-        R.string.action_reset_dark_theme
-      ) { item -> resetTheme(item) }
-      .build()
-      .build()
+    if (AndroidUtils.isAndroid10()) {
+      navigation
+        .buildMenu(ToolbarMenuType.Default)
+        .withOverflow(navigationController, this)
+        .withCheckableSubItem(
+          ACTION_IGNORE_DARK_NIGHT_MODE,
+          R.string.action_ignore_dark_night_mode,
+          true,
+          ChanSettings.ignoreDarkNightMode.get()
+        ) { item -> onIgnoreDarkNightModeClick(item) }
+        .build()
+        .build()
+    }
 
     view = AndroidUtils.inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
@@ -194,6 +179,16 @@ class ThemeSettingsController(context: Context)
     updateCurrentThemeIndicator(true)
 
     reload()
+  }
+
+  private fun onIgnoreDarkNightModeClick(item: ToolbarMenuSubItem) {
+    navigation.findSubItem(ACTION_IGNORE_DARK_NIGHT_MODE)?.let { subItem ->
+      require(subItem is CheckableToolbarMenuSubItem) {
+        "subItem is not CheckableToolbarMenuSubItem, class=${subItem.javaClass.simpleName}"
+      }
+
+      subItem.isChecked = ChanSettings.ignoreDarkNightMode.toggle()
+    }
   }
 
   private fun reload() {
@@ -218,7 +213,7 @@ class ThemeSettingsController(context: Context)
       }
     })
 
-    view.postDelayed({ updateColors(adapter, 0, root) }, 125L)
+    view.postDelayed({ updateColors(adapter, 0, root) }, UPDATE_COLORS_DELAY_MS)
   }
 
   private fun resetTheme(item: ToolbarMenuSubItem) {
@@ -319,6 +314,30 @@ class ThemeSettingsController(context: Context)
 
           showToastLong(message)
         }
+        is ThemeParser.ThemeParseResult.AttemptToImportWrongTheme -> {
+          val lightThemeText = context.getString(R.string.theme_settings_controller_theme_light)
+          val darkThemeText = context.getString(R.string.theme_settings_controller_theme_dark)
+
+          val themeTypeText = if (result.themeIsLight) {
+            lightThemeText
+          } else {
+            darkThemeText
+          }
+
+          val themeSlotTypeText = if (result.themeSlotIsLight) {
+            lightThemeText
+          } else {
+            darkThemeText
+          }
+
+          val message = context.getString(
+            R.string.theme_settings_controller_wrong_theme_type,
+            themeTypeText,
+            themeSlotTypeText
+          )
+
+          showToastLong(message)
+        }
         is ThemeParser.ThemeParseResult.BadName -> {
           val message = context.getString(
             R.string.theme_settings_controller_failed_to_parse_bad_name,
@@ -364,7 +383,7 @@ class ThemeSettingsController(context: Context)
     }
 
     currentThemeIndicator.text = context.getString(
-      R.string.theme_settings_controller_current_theme,
+      R.string.theme_settings_controller_theme,
       themeType
     )
   }
@@ -380,7 +399,7 @@ class ThemeSettingsController(context: Context)
     }
   }
 
-  private inner class Adapter : ViewPagerAdapter() {
+  private inner class Adapter() : ViewPagerAdapter() {
     val themeMap = mutableMapOf<Int, ChanTheme>()
 
     override fun getView(position: Int, parent: ViewGroup): View {
@@ -400,7 +419,9 @@ class ThemeSettingsController(context: Context)
     }
   }
 
-  private fun createSimpleThreadView(theme: ChanTheme): CoordinatorLayout {
+  private fun createSimpleThreadView(
+    theme: ChanTheme
+  ): CoordinatorLayout {
     val parser = CommentParser(mockReplyManager)
       .addDefaultRules()
 
@@ -416,9 +437,11 @@ class ThemeSettingsController(context: Context)
       )
       .subject("Lorem ipsum")
       .name("OP")
-      .comment("<span class=\"deadlink\">&gt;&gt;987654321</span><br>" + "http://example.com/<br>"
-        + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
-        + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>")
+      .comment(
+        "<span class=\"deadlink\">&gt;&gt;987654321</span><br>" + "http://example.com/<br>"
+          + "Phasellus consequat semper sodales. Donec dolor lectus, aliquet nec mollis vel, rutrum vel enim.<br>"
+          + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>"
+      )
 
     val post1 = postParser.parse(theme, builder1, parserCallback)
     post1.repliesFrom.add(234567890L)
@@ -430,19 +453,23 @@ class ThemeSettingsController(context: Context)
       .setUnixTimestampSeconds(
         TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(15))
       )
-      .comment("<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
-        + "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+      .comment(
+        "<a href=\"#p123456789\" class=\"quotelink\">&gt;&gt;123456789</a><br>"
+          + "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
       )
       .name("Test name")
       .tripcode("!N4EoL/Xuog")
-      .postImages(listOf(
-        PostImage.Builder()
-          .serverFilename("123123123123.jpg")
-          .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-          .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-          .filename("icon")
-          .extension("png")
-          .build()))
+      .postImages(
+        listOf(
+          PostImage.Builder()
+            .serverFilename("123123123123.jpg")
+            .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .filename("icon")
+            .extension("png")
+            .build()
+        )
+      )
 
     val post2 = postParser.parse(theme, builder2, parserCallback)
 
@@ -522,6 +549,11 @@ class ThemeSettingsController(context: Context)
     val item = NavigationItem()
     item.title = theme.name
     item.hasBack = false
+    item.buildMenu()
+      .withOverflow(navigationController, this)
+      .addSubItems(theme.isDarkTheme)
+      .build()
+      .build()
 
     toolbar.setNavigationItem(false, true, item, theme)
 
@@ -561,6 +593,44 @@ class ThemeSettingsController(context: Context)
     coordinatorLayout.addView(fab, params)
 
     return coordinatorLayout
+  }
+
+  private fun NavigationItem.MenuOverflowBuilder.addSubItems(
+    darkTheme: Boolean,
+  ): NavigationItem.MenuOverflowBuilder {
+    if (darkTheme) {
+      return this.withSubItem(
+        ACTION_IMPORT_DARK_THEME,
+        R.string.action_import_dark_theme,
+        { item -> importTheme(item) }
+      )
+        .withSubItem(
+          ACTION_EXPORT_DARK_THEME,
+          R.string.action_export_dark_theme,
+          { item -> exportTheme(item) }
+        )
+        .withSubItem(
+          ACTION_RESET_DARK_THEME,
+          R.string.action_reset_dark_theme,
+          { item -> resetTheme(item) }
+        )
+    } else {
+      return this.withSubItem(
+        ACTION_IMPORT_LIGHT_THEME,
+        R.string.action_import_light_theme,
+        { item -> importTheme(item) }
+      )
+        .withSubItem(
+          ACTION_EXPORT_LIGHT_THEME,
+          R.string.action_export_light_theme,
+          { item -> exportTheme(item) }
+        )
+        .withSubItem(
+          ACTION_RESET_LIGHT_THEME,
+          R.string.action_reset_light_theme,
+          { item -> resetTheme(item) }
+        )
+    }
   }
 
   private fun indexPosts(posts: List<Post>): List<PostIndexed> {
@@ -628,6 +698,9 @@ class ThemeSettingsController(context: Context)
     private const val ACTION_EXPORT_DARK_THEME = 4
     private const val ACTION_RESET_LIGHT_THEME = 5
     private const val ACTION_RESET_DARK_THEME = 6
+    private const val ACTION_IGNORE_DARK_NIGHT_MODE = 7
+
+    private const val UPDATE_COLORS_DELAY_MS = 125L
   }
 
 }

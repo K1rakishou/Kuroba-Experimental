@@ -150,6 +150,14 @@ class ThemeParser(
       return ThemeParseResult.BadName(serializableTheme.name)
     }
 
+    if (serializableTheme.isLightTheme != defaultTheme.isLightTheme) {
+      // To avoid possibility of importing light themes as dark and vice versa
+      return ThemeParseResult.AttemptToImportWrongTheme(
+        themeIsLight = serializableTheme.isLightTheme,
+        themeSlotIsLight = defaultTheme.isLightTheme
+      )
+    }
+
     val hasUnparsedFields = serializableTheme.hasUnparsedFields()
 
     val theme = serializableTheme.toChanTheme(defaultTheme)
@@ -375,6 +383,7 @@ class ThemeParser(
   sealed class ThemeParseResult {
     class Error(val error: Throwable) : ThemeParseResult()
     class BadName(val name: String) : ThemeParseResult()
+    class AttemptToImportWrongTheme(val themeIsLight: Boolean, val themeSlotIsLight: Boolean) : ThemeParseResult()
     class Success(val chanTheme: ChanTheme, val hasUnparsedFields: Boolean) : ThemeParseResult()
   }
 

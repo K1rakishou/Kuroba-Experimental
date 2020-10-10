@@ -40,10 +40,10 @@ abstract class ChanTheme {
   abstract val bookmarkCounterHasRepliesColor: Int
   abstract val bookmarkCounterNormalColor: Int
 
-  val isDarkTheme: Boolean = !isLightTheme
+  val isDarkTheme: Boolean
+    get() = !isLightTheme
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
-  open val altFont: Typeface = ROBOTO_CONDENSED
 
   val defaultColors by lazy { loadDefaultColors() }
   val defaultBoldTypeface by lazy { Typeface.create(Typeface.DEFAULT, Typeface.BOLD) }

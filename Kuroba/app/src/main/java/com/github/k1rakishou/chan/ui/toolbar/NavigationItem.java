@@ -197,6 +197,30 @@ public class NavigationItem {
             return this;
         }
 
+        public MenuOverflowBuilder withCheckableSubItem(
+                int id,
+                int textId,
+                boolean visible,
+                boolean checked,
+                ToolbarMenuSubItem.ClickCallback clickCallback
+        ) {
+            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, getString(textId), clickCallback, visible, null, checked));
+
+            return this;
+        }
+
+        public MenuOverflowBuilder withCheckableSubItem(
+                int id,
+                String text,
+                boolean visible,
+                boolean checked,
+                ToolbarMenuSubItem.ClickCallback clickCallback
+        ) {
+            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, text, clickCallback, visible, null, checked));
+
+            return this;
+        }
+
         /**
          * Note: this method only supports one level of depth. If you need more you will have to
          * implement it yourself. The reason for that is that at the time of writing this there
@@ -300,7 +324,7 @@ public class NavigationItem {
             nestedMenuItems.add(
                     new CheckableToolbarMenuSubItem(
                             itemId,
-                            text,
+                            getString(text),
                             clickCallback,
                             visible,
                             value,

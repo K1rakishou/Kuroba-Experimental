@@ -752,7 +752,7 @@ class StartActivity : AppCompatActivity(),
       controller.onConfigurationChanged(newConfig)
     }
 
-    if (AndroidUtils.isAndroid10()) {
+    if (AndroidUtils.isAndroid10() && !ChanSettings.ignoreDarkNightMode.get()) {
       applyLightDarkThemeIfNeeded(newConfig)
     }
   }

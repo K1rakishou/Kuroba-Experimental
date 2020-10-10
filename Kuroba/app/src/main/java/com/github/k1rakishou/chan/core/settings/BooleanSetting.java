@@ -62,8 +62,11 @@ public class BooleanSetting
         }
     }
 
-    public void toggle() {
-        set(!get());
+    public boolean toggle() {
+        boolean newValue = !get();
+
+        set(newValue);
+        return newValue;
     }
 
     public Flowable<Boolean> listenForChanges() {
