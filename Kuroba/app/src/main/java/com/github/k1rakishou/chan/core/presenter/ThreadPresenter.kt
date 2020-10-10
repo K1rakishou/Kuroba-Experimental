@@ -1271,11 +1271,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun getTimeUntilLoadMore(): Long {
-    return if (isBound) {
-      chanLoader!!.timeUntilLoadMore
-    } else {
-      0L
-    }
+    return chanLoader?.timeUntilLoadMore ?: 0L
   }
 
   override fun isWatching(): Boolean {
@@ -1293,11 +1289,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun getChanThread(): ChanThread? {
-    return if (isBound) {
-      chanLoader!!.thread
-    } else {
-      null
-    }
+    return chanLoader?.thread
   }
 
   fun threadDescriptorOrNull(): ChanDescriptor.ThreadDescriptor? {

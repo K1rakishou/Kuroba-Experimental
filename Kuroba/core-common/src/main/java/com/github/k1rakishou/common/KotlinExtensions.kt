@@ -293,7 +293,7 @@ private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Bool
   return null
 }
 
-fun View.findChildren(predicate: (View) -> Boolean): Set<View> {
+fun <T: View> View.findChildren(predicate: (View) -> Boolean): Set<T> {
   val children = hashSetOf<View>()
 
   if (predicate(this)) {
@@ -301,7 +301,7 @@ fun View.findChildren(predicate: (View) -> Boolean): Set<View> {
   }
 
   findChildrenRecursively(children, this, predicate)
-  return children
+  return children as Set<T>
 }
 
 fun findChildrenRecursively(children: HashSet<View>, view: View, predicate: (View) -> Boolean) {

@@ -46,7 +46,8 @@ class BookmarksController(
 ) : Controller(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
-  BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
+  BookmarksSelectionHelper.OnBookmarkMenuItemClicked,
+  BookmarksSortingController.ReloadBookmarksListener {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -91,16 +92,10 @@ class BookmarksController(
         (navigationController as ToolbarNavigationController).showSearch()
       }
       .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, R.drawable.ic_baseline_view_list_24) {
-        PersistableChanState.viewThreadBookmarksGridMode.set(
-          PersistableChanState.viewThreadBookmarksGridMode.get().not()
-        )
-
-        onViewBookmarksModeChanged()
-
-        viewModeChanged.set(true)
-        needRestoreScrollPosition.set(true)
-
-        bookmarksPresenter.onViewBookmarksModeChanged()
+        onChangeViewModeClicked()
+      }
+      .withItem(ACTION_OPEN_SORT_SETTINGS, R.drawable.ic_baseline_sort_24) {
+        navigationController!!.presentController(BookmarksSortingController(context, this))
       }
       .withOverflow(navigationController)
       .withSubItem(
@@ -136,6 +131,19 @@ class BookmarksController(
     bookmarksPresenter.onCreate(this)
 
     setupRecycler()
+  }
+
+  private fun onChangeViewModeClicked() {
+    PersistableChanState.viewThreadBookmarksGridMode.set(
+      PersistableChanState.viewThreadBookmarksGridMode.get().not()
+    )
+
+    onViewBookmarksModeChanged()
+
+    viewModeChanged.set(true)
+    needRestoreScrollPosition.set(true)
+
+    bookmarksPresenter.onViewBookmarksModeChanged()
   }
 
   override fun onDestroy() {
@@ -174,6 +182,10 @@ class BookmarksController(
         bookmarksSelectionHelper.clearSelection(!deleted)
       }
     }
+  }
+
+  override fun reloadBookmarks() {
+    bookmarksPresenter.reloadBookmarks()
   }
 
   private fun cleanupFastScroller() {
@@ -502,6 +514,7 @@ class BookmarksController(
     private const val MAX_SPAN_COUNT = 6
 
     private const val ACTION_CHANGE_VIEW_BOOKMARK_MODE = 1000
+    private const val ACTION_OPEN_SORT_SETTINGS = 1001
 
     private const val ACTION_PRUNE_NON_ACTIVE_BOOKMARKS = 2000
     private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001

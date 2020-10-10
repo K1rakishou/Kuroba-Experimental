@@ -420,7 +420,7 @@ class BookmarksManager(
     }
   }
 
-  fun <T : Any> mapNotNullAllBookmarks(mapper: (ThreadBookmarkView) -> T?): List<T> {
+  fun <T> mapNotNullAllBookmarks(mapper: (ThreadBookmarkView) -> T?): List<T> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {

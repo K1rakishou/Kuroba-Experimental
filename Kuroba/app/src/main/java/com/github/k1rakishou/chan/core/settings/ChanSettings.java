@@ -59,8 +59,38 @@ public class ChanSettings {
     public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     @DoNotStrip
-    public enum MediaAutoLoadMode
-            implements OptionSettingItem {
+    public enum BookmarksSortOrder implements OptionSettingItem {
+        CreatedOnAscending("creation_time_asc", true),
+        CreatedOnDescending("creation_time_desc", false),
+        UnreadRepliesAscending("replies_ascending", true),
+        UnreadRepliesDescending("replies_descending", false),
+        UnreadPostsAscending("unread_posts_ascending", true),
+        UnreadPostsDescending("unread_posts_descending", false);
+
+        String key;
+        boolean isAscending;
+
+        BookmarksSortOrder(String key, boolean ascending) {
+            this.key = key;
+            this.isAscending = ascending;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        public boolean isAscending() {
+            return isAscending;
+        }
+
+        public static BookmarksSortOrder defaultOrder() {
+            return BookmarksSortOrder.CreatedOnDescending;
+        }
+    }
+
+    @DoNotStrip
+    public enum MediaAutoLoadMode implements OptionSettingItem {
         // ALways auto load, either wifi or mobile
         ALL("all"),
         // Only auto load if on wifi
@@ -312,6 +342,7 @@ public class ChanSettings {
     public static final IntegerSetting drawerAutoOpenCount;
     public static final BooleanSetting reencodeHintShown;
     public static final CounterSetting replyOpenCounter;
+    public static final OptionsSetting<BookmarksSortOrder> bookmarksSortOrder;
     //endregion
     //endregion
 
@@ -485,6 +516,12 @@ public class ChanSettings {
             drawerAutoOpenCount = new IntegerSetting(p, "drawer_auto_open_count", 0);
             reencodeHintShown = new BooleanSetting(p, "preference_reencode_hint_already_shown", false);
             replyOpenCounter = new CounterSetting(p, "reply_open_counter");
+
+            bookmarksSortOrder = new OptionsSetting<>(p,
+                    "bookmarks_comparator",
+                    BookmarksSortOrder.class,
+                    BookmarksSortOrder.defaultOrder()
+            );
             //endregion
 
             scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);

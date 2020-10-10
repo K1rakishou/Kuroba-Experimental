@@ -4,6 +4,7 @@ import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
+import org.joda.time.DateTime
 import java.util.*
 import kotlin.math.max
 
@@ -16,7 +17,8 @@ class ThreadBookmarkView private constructor(
   val title: String? = null,
   val thumbnailUrl: HttpUrl? = null,
   private val state: BitSet,
-  private val stickyThread: StickyThread = StickyThread.NotSticky
+  private val stickyThread: StickyThread = StickyThread.NotSticky,
+  val createdOn: DateTime
 ) {
 
   /**
@@ -51,6 +53,7 @@ class ThreadBookmarkView private constructor(
     if (thumbnailUrl != other.thumbnailUrl) return false
     if (stickyThread != other.stickyThread) return false
     if (state != other.state) return false
+    if (createdOn != other.createdOn) return false
 
     return true
   }
@@ -65,6 +68,7 @@ class ThreadBookmarkView private constructor(
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
     result = 31 * result + stickyThread.hashCode()
     result = 31 * result + state.hashCode()
+    result = 31 * result + createdOn.hashCode()
     return result
   }
 
@@ -72,7 +76,7 @@ class ThreadBookmarkView private constructor(
     return "ThreadBookmarkView(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplyViews=$threadBookmarkReplyViews, title=${title?.take(20)}, " +
-      "thumbnailUrl=$thumbnailUrl, stickyThread=$stickyThread, state=$state)"
+      "thumbnailUrl=$thumbnailUrl, stickyThread=$stickyThread, state=$state, createdOn=$createdOn)"
   }
 
   companion object {
@@ -86,7 +90,8 @@ class ThreadBookmarkView private constructor(
         title = threadBookmark.title,
         thumbnailUrl = threadBookmark.thumbnailUrl,
         stickyThread = threadBookmark.stickyThread,
-        state = threadBookmark.state
+        state = threadBookmark.state,
+        createdOn = threadBookmark.createdOn
       )
     }
 

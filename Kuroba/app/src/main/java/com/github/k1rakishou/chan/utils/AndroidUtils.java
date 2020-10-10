@@ -60,8 +60,8 @@ import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.preference.PreferenceManager;
 import androidx.core.graphics.ColorUtils;
+import androidx.preference.PreferenceManager;
 
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
@@ -522,6 +522,17 @@ public class AndroidUtils {
         TypedValue outValue = new TypedValue();
         view.getContext().getTheme().resolveAttribute(
                 android.R.attr.selectableItemBackgroundBorderless,
+                outValue,
+                true
+        );
+
+        view.setBackgroundResource(outValue.resourceId);
+    }
+
+    public static void setRippleBackground(View view) {
+        TypedValue outValue = new TypedValue();
+        view.getContext().getTheme().resolveAttribute(
+                android.R.attr.selectableItemBackground,
                 outValue,
                 true
         );

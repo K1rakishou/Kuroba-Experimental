@@ -32,6 +32,8 @@ class Migration_v3_to_v4 : Migration(3, 4) {
 
       val now = DateTime.now().millis
 
+      // We need to preserve the original order but also convert old "order" field (which was
+      // bookmark index) into "createdOn" (which is the creation time now).
       database.execSQL("""
         UPDATE `thread_bookmark_temp`
         SET created_on = created_on + $now

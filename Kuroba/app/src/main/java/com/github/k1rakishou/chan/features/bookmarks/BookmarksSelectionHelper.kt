@@ -40,7 +40,10 @@ class BookmarksSelectionHelper(
   }
 
   interface OnBookmarkMenuItemClicked {
-    fun onMenuItemClicked(bookmarksMenuItemType: BookmarksMenuItemType, selectedItems: List<ChanDescriptor.ThreadDescriptor>)
+    fun onMenuItemClicked(
+      bookmarksMenuItemType: BookmarksMenuItemType,
+      selectedItems: List<ChanDescriptor.ThreadDescriptor>
+    )
   }
 
 }

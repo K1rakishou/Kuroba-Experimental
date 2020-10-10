@@ -813,7 +813,7 @@ class MultiImageView @JvmOverloads constructor(
    * */
   @SuppressLint("ClickableViewAccessibility")
   private fun setExoControlsViewGlobalTouchListener(exoVideoView: PlayerView) {
-    val views = exoVideoView.findChildren { childView ->
+    val views = exoVideoView.findChildren<View> { childView ->
       childView.id in childrenToInterceptClicks
     }
 

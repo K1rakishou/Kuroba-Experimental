@@ -107,6 +107,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="help">Help</string>
     <string name="more">More</string>
     <string name="retry">Retry</string>
+    <string name="apply">Apply</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
@@ -333,6 +334,10 @@ Note that for country code filtering, troll country codes should be prepended wi
             10) Filename"]]>
     </string>
     <string name="filters_controller_open_regex101">Open regex101</string>
+
+    <string name="controller_bookmarks_sorting_by_creation_time">Sort by creation time</string>
+    <string name="controller_bookmarks_sorting_by_unread_replies">Sort by unread replies</string>
+    <string name="controller_bookmarks_sorting_by_unread_posts">Sort by unread posts</string>
 
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>
@@ -733,7 +738,6 @@ Don't have a 4chan Pass?<br>
     "</string>
 
     <string name="settings_screen_theme">Themes</string>
-    <string name="apply_options">Apply</string>
     <string name="image_quality">Image quality: %1$d</string>
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
