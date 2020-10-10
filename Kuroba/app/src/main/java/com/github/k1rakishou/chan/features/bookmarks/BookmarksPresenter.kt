@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
@@ -193,10 +192,6 @@ class BookmarksPresenter(
       threadDescriptor,
       BookmarksManager.NotifyListenersOption.NotifyEager
     ) { threadBookmark -> threadBookmark.toggleWatching() }
-  }
-
-  fun serializeRecyclerScrollPosition(firstVisibleItemPosition: Int) {
-    PersistableChanState.bookmarksRecyclerScrollPosition.set(firstVisibleItemPosition)
   }
 
   private suspend fun showBookmarks(searchQuery: String?) {

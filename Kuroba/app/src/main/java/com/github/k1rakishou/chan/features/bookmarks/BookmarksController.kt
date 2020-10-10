@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -222,23 +223,6 @@ class BookmarksController(
     })
 
     fastScroller = scroller
-  }
-
-  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
-    val firstVisibleItemPosition = when (val layoutManager = recyclerView.layoutManager) {
-      is GridLayoutManager -> layoutManager.findFirstVisibleItemPosition()
-      is LinearLayoutManager -> layoutManager.findFirstVisibleItemPosition()
-      else -> throw IllegalStateException(
-        "Unknown layout manager: " +
-          "${recyclerView.layoutManager?.javaClass?.simpleName}"
-      )
-    }
-
-    if (firstVisibleItemPosition == RecyclerView.NO_POSITION) {
-      return
-    }
-
-    bookmarksPresenter.serializeRecyclerScrollPosition(firstVisibleItemPosition)
   }
 
   private fun onClearAllBookmarksClicked(subItem: ToolbarMenuSubItem) {
@@ -447,15 +431,35 @@ class BookmarksController(
     }
   }
 
-  private fun restoreScrollPosition() {
-    val scrollPosition = PersistableChanState.bookmarksRecyclerScrollPosition.get()
-    if (scrollPosition < 0) {
-      return
+  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
+    val isGridLayoutManager = when (recyclerView.layoutManager) {
+      is GridLayoutManager -> true
+      is LinearLayoutManager -> false
+      else -> throw IllegalStateException("Unknown layout manager: " +
+        "${recyclerView.layoutManager?.javaClass?.simpleName}"
+      )
     }
 
+    PersistableChanState.storeBookmarksRecyclerIndexAndTopInfo(
+      isGridLayoutManager,
+      RecyclerUtils.getIndexAndTop(recyclerView)
+    )
+  }
+
+  private fun restoreScrollPosition() {
+    val isForGridLayoutManager = when (epoxyRecyclerView.layoutManager) {
+      is GridLayoutManager -> true
+      is LinearLayoutManager -> false
+      else -> throw IllegalStateException("Unknown layout manager: " +
+        "${epoxyRecyclerView.layoutManager?.javaClass?.simpleName}"
+      )
+    }
+
+    val indexAndTop = PersistableChanState.getBookmarksRecyclerIndexAndTopInfo(isForGridLayoutManager)
+
     when (val layoutManager = epoxyRecyclerView.layoutManager) {
-      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
-      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)
     }
   }
 

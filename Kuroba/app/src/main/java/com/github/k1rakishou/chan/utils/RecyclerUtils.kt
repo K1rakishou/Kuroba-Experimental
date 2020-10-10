@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.utils
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.google.gson.annotations.SerializedName
 
 object RecyclerUtils {
   private const val TAG = "RecyclerUtils"
@@ -55,5 +56,10 @@ object RecyclerUtils {
     return IndexAndTop(index, top)
   }
 
-  class IndexAndTop(var index: Int = 0, var top: Int = 0)
+  data class IndexAndTop(
+    @SerializedName("index")
+    var index: Int = 0,
+    @SerializedName("top")
+    var top: Int = 0
+  )
 }
