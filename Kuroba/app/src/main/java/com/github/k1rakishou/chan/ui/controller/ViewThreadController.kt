@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import android.view.View
+import android.widget.Toast
 import androidx.core.util.Pair
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -337,7 +338,7 @@ open class ViewThreadController(
         descriptor.toString()
       )
 
-      showToast(message)
+      showToast(message, Toast.LENGTH_LONG)
       return
     }
 
