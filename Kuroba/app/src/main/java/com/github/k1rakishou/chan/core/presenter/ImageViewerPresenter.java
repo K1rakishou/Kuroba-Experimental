@@ -325,27 +325,28 @@ public class ImageViewerPresenter
             }
         }
 
-        ChanSettings.ImageClickPreloadStrategy strategy = ChanSettings.imageClickPreloadStrategy.get();
-
         if (swipeDirection == SwipeDirection.Forward) {
             preloadNext();
+            return;
         } else if (swipeDirection == SwipeDirection.Backward) {
             preloadPrevious();
-        } else {
-            switch (strategy) {
-                case PreloadNext:
-                    preloadNext();
-                    break;
-                case PreloadPrevious:
-                    preloadPrevious();
-                    break;
-                case PreloadBoth:
-                    preloadNext();
-                    preloadPrevious();
-                    break;
-                case PreloadNeither:
-                    break;
-            }
+            return;
+        }
+
+        ChanSettings.ImageClickPreloadStrategy strategy = ChanSettings.imageClickPreloadStrategy.get();
+        switch (strategy) {
+            case PreloadNext:
+                preloadNext();
+                break;
+            case PreloadPrevious:
+                preloadPrevious();
+                break;
+            case PreloadBoth:
+                preloadNext();
+                preloadPrevious();
+                break;
+            case PreloadNeither:
+                break;
         }
     }
 
@@ -401,18 +402,20 @@ public class ImageViewerPresenter
     }
 
     private void doPreloading(PostImage postImage) {
-        boolean load = false;
-        boolean loadChunked = true;
+        boolean allowedToPreload = false;
 
-        if (postImage.type == ChanPostImageType.STATIC || postImage.type == ChanPostImageType.GIF) {
-            load = imageAutoLoad(postImage);
-        } else if (postImage.type == ChanPostImageType.MOVIE) {
-            load = videoAutoLoad(postImage);
+        // Do not auto preload PDF/SWF files
+        if (postImage.type == ChanPostImageType.MOVIE) {
+            allowedToPreload = videoAutoLoad(postImage);
+        } else if (postImage.type == ChanPostImageType.STATIC || postImage.type == ChanPostImageType.GIF) {
+            allowedToPreload = imageAutoLoad(postImage);
         }
 
-        if (!load) {
+        if (!allowedToPreload) {
             return;
         }
+
+        boolean loadChunked = true;
 
         // If the file is a webm file and webm streaming is turned on we don't want to download the
         // webm chunked because it will most likely corrupt the file since we will forcefully stop
@@ -650,8 +653,8 @@ public class ImageViewerPresenter
     }
 
     private boolean imageAutoLoad(PostImage postImage) {
-        if (!postImage.isInlined) {
-            return true;
+        if (postImage.isInlined) {
+            return false;
         }
 
         HttpUrl imageUrl = postImage.imageUrl;
@@ -665,8 +668,8 @@ public class ImageViewerPresenter
     }
 
     private boolean videoAutoLoad(PostImage postImage) {
-        if (!postImage.isInlined) {
-            return true;
+        if (postImage.isInlined) {
+            return false;
         }
 
         return imageAutoLoad(postImage)
