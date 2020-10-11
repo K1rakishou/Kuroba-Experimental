@@ -792,6 +792,7 @@ Don't have a 4chan Pass?<br>
     <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>
     <string name="thread_presenter_cloudflare_preloading_dialog_title">Cloudflare image preloading</string>
     <string name="thread_presenter_cloudflare_preloading_dialog_description">This option will force Cloudflare to preload all images in this thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make all subsequent image downloads in this thread way faster because you will be loading them from Cloudflare servers, not 4chan\'s. You can start viewing images right away but some of them might not get preloaded by the time you some of them, so it\'s better to wait until all of them are preloaded (you will be notified).</string>
+    <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread.</string>
 
     <string name="thread_presenter_started_preloading_images">Started preloading %1$d images</string>
     <string name="thread_presenter_all_images_already_preloaded">All images have already been preloaded</string>

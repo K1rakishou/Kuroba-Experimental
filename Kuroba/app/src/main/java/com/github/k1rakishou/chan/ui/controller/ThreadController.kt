@@ -260,7 +260,7 @@ abstract class ThreadController(
     return false
   }
 
-  override fun showAvailableArchivesList(descriptor: ChanDescriptor.ThreadDescriptor) {
+  override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     // no-op
   }
 

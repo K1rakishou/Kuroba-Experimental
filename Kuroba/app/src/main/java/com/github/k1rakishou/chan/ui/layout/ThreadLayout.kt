@@ -784,6 +784,10 @@ class ThreadLayout @JvmOverloads constructor(
     }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
   }
 
+  override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    callback.showAvailableArchivesList(threadDescriptor)
+  }
+
   override fun showNewPostsNotification(show: Boolean, more: Int) {
     if (!show) {
       dismissSnackbar()
@@ -1018,7 +1022,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
-    fun showAvailableArchivesList(descriptor: ChanDescriptor.ThreadDescriptor)
+    fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
   }
 
   companion object {

@@ -324,21 +324,26 @@ open class ViewThreadController(
     Logger.d(TAG, "showAvailableArchives($descriptor)")
     
     val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
+      .filter { archiveDescriptor ->
+        return@filter siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
+          ?: false
+      }
+
     if (supportedArchiveDescriptors.isEmpty()) {
       Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
+
+      val message = getString(
+        R.string.thread_presenter_no_archives_found_to_open_thread,
+        descriptor.toString()
+      )
+
+      showToast(message)
       return
     }
 
     val items = mutableListOf<FloatingListMenuItem>()
 
     supportedArchiveDescriptors.forEach { archiveDescriptor ->
-      val siteEnabled = siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
-        ?: false
-
-      if (!siteEnabled) {
-        return@forEach
-      }
-
       items += FloatingListMenuItem(
         archiveDescriptor,
         archiveDescriptor.name
@@ -482,6 +487,7 @@ open class ViewThreadController(
 
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
+      titleTextId = R.string.open_thread_confirmation,
       descriptionText = fullThreadName,
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.ok),
@@ -723,8 +729,8 @@ open class ViewThreadController(
     return true
   }
 
-  override fun showAvailableArchivesList(descriptor: ThreadDescriptor) {
-    showAvailableArchives(descriptor)
+  override fun showAvailableArchivesList(threadDescriptor: ThreadDescriptor) {
+    showAvailableArchives(threadDescriptor)
   }
 
   override fun onMenuShown() {

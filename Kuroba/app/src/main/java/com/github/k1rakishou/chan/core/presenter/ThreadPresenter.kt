@@ -1123,6 +1123,10 @@ class ThreadPresenter @Inject constructor(
 
   override fun onPostLinkableClicked(post: Post, linkable: PostLinkable) {
     serializedCoroutineExecutor.post {
+      if (!isBound) {
+        return@post
+      }
+
       val thread = chanLoader?.thread
         ?: return@post
       val siteName = currentChanDescriptor?.siteName()
@@ -1132,7 +1136,7 @@ class ThreadPresenter @Inject constructor(
         Logger.d(TAG, "onPostLinkableClicked, linkable=${linkable}")
       }
 
-      if (linkable.type == PostLinkable.Type.QUOTE && isBound) {
+      if (linkable.type == PostLinkable.Type.QUOTE) {
         val postId = linkable.linkableValue.extractLongOrNull()
         if (postId == null) {
           Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
@@ -1158,7 +1162,7 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      if (linkable.type == PostLinkable.Type.THREAD && isBound) {
+      if (linkable.type == PostLinkable.Type.THREAD) {
         val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
         if (threadLink == null) {
           Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
@@ -1185,7 +1189,7 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      if (linkable.type == PostLinkable.Type.BOARD && isBound) {
+      if (linkable.type == PostLinkable.Type.BOARD) {
         val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
         if (link == null) {
           Logger.e(TAG, "Bad board linkable: linkableValue = ${linkable.linkableValue}")
@@ -1204,7 +1208,7 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      if (linkable.type == PostLinkable.Type.SEARCH && isBound) {
+      if (linkable.type == PostLinkable.Type.SEARCH) {
         val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
         if (searchLink == null) {
           Logger.e(TAG, "Bad search linkable: linkableValue = ${linkable.linkableValue}")
@@ -1224,6 +1228,21 @@ class ThreadPresenter @Inject constructor(
         // TODO(KurobaEx):
 //        localSearchManager.onSearchEntered(LocalSearchType.CatalogSearch, searchLink.search)
 //        threadPresenterCallback?.setBoard(boardDescriptor, true)
+        return@post
+      }
+
+      if (linkable.type == PostLinkable.Type.DEAD) {
+        val descriptor = currentChanDescriptor
+          ?: return@post
+        val postNo = linkable.linkableValue.extractLongOrNull()
+          ?: return@post
+
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          descriptor,
+          postNo
+        )
+
+        threadPresenterCallback?.showAvailableArchivesList(threadDescriptor)
       }
     }
   }
@@ -1680,6 +1699,7 @@ class ThreadPresenter @Inject constructor(
     fun onPostUpdated(post: Post)
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
     fun showToolbar()
+    fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
   }
 
   companion object {
