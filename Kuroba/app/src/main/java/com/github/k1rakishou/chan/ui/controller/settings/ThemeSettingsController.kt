@@ -41,6 +41,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
 import com.github.k1rakishou.chan.core.manager.ThemeParser
@@ -96,6 +97,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var mockReplyManager: MockReplyManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var fileManager: FileManager
   @Inject
@@ -426,7 +429,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     val parser = CommentParser(mockReplyManager)
       .addDefaultRules()
 
-    val postParser = DefaultPostParser(parser, postFilterManager)
+    val postParser = DefaultPostParser(parser, postFilterManager, archivesManager)
     val builder1 = Post.Builder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(123456789)

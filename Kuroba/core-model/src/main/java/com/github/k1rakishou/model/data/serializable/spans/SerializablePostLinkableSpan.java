@@ -45,7 +45,8 @@ public class SerializablePostLinkableSpan {
         Thread(3),
         Board(4),
         Search(5),
-        Dead(6);
+        Dead(6),
+        Archive(7);
 
         private int typeValue;
 
@@ -73,6 +74,8 @@ public class SerializablePostLinkableSpan {
                     return Search;
                 case 6:
                     return Dead;
+                case 7:
+                    return Archive;
                 default:
                     throw new IllegalArgumentException("Not implemented for value = " + value);
             }

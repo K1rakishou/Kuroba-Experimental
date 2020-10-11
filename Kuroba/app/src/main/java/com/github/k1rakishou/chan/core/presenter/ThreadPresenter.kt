@@ -61,10 +61,7 @@ import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.*
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
@@ -85,6 +82,7 @@ class ThreadPresenter @Inject constructor(
   private val postHideManager: PostHideManager,
   private val chanPostRepository: ChanPostRepository,
   private val mockReplyManager: MockReplyManager,
+  private val archivesManager: ArchivesManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
   private val historyNavigationManager: HistoryNavigationManager,
@@ -1200,7 +1198,7 @@ class ThreadPresenter @Inject constructor(
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board == null) {
-          showToast(context, R.string.site_uses_dynamic_boards)
+          showToast(context, R.string.archive_is_not_enabled)
           return@post
         }
 
@@ -1243,6 +1241,39 @@ class ThreadPresenter @Inject constructor(
         )
 
         threadPresenterCallback?.showAvailableArchivesList(threadDescriptor)
+        return@post
+      }
+
+      if (linkable.type == PostLinkable.Type.ARCHIVE) {
+        val archiveThreadLink = (linkable.linkableValue as? PostLinkable.Value.ArchiveThreadLink)
+          ?: return@post
+
+        val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(archiveThreadLink.archiveType)
+          ?: return@post
+
+        val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor(archiveDescriptor.domain))?.enabled()
+          ?: false
+
+        if (!isSiteEnabled) {
+          showToast(context, getString(R.string.archive_is_not_enabled, archiveDescriptor.domain))
+          return@post
+        }
+
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          archiveDescriptor.domain,
+          archiveThreadLink.board,
+          archiveThreadLink.threadId
+        )
+
+        val postNo = archiveThreadLink.postId
+        if (postNo != null) {
+          chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
+            chanThreadViewableInfo.markedPostNo = postNo
+          }
+        }
+
+        threadPresenterCallback?.openThreadInArchive(threadDescriptor)
+        return@post
       }
     }
   }
@@ -1665,6 +1696,7 @@ class ThreadPresenter @Inject constructor(
     fun clipboardPost(post: Post)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)

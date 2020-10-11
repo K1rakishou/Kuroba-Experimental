@@ -5,8 +5,7 @@ import com.github.k1rakishou.model.data.serializable.spans.SerializablePostLinka
 import com.google.gson.annotations.SerializedName;
 
 @DoNotStrip
-public class PostLinkableLinkValue
-        extends PostLinkableValue {
+public class PostLinkableLinkValue extends PostLinkableValue {
     @SerializedName("link")
     private String link;
 

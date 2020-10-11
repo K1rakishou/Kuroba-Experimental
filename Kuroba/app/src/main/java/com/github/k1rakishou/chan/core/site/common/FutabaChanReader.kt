@@ -40,7 +40,7 @@ class FutabaChanReader(
       if (parser == null) {
         val commentParser = CommentParser(mockReplyManager).addDefaultRules()
         val foolFuukaCommentParser = FoolFuukaCommentParser(mockReplyManager, archivesManager)
-        val defaultPostParser = DefaultPostParser(commentParser, postFilterManager)
+        val defaultPostParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
 
         for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
           defaultPostParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)

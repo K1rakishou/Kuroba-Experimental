@@ -5,6 +5,7 @@ import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 
+import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
@@ -25,8 +26,12 @@ public class DvachPostParser extends DefaultPostParser {
     private Pattern colorPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\);");
     private static final String TAG = "DvachPostParser";
 
-    public DvachPostParser(CommentParser commentParser, PostFilterManager postFilterManager) {
-        super(commentParser, postFilterManager);
+    public DvachPostParser(
+            CommentParser commentParser,
+            PostFilterManager postFilterManager,
+            ArchivesManager archivesManager
+    ) {
+        super(commentParser, postFilterManager, archivesManager);
     }
 
     @Override

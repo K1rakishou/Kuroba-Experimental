@@ -32,6 +32,10 @@ enum class ArchiveType(
             TokyoChronos.domain to TokyoChronos,
         )
 
+        fun hasDomain(domain: String): Boolean {
+            return map.containsKey(domain)
+        }
+
         fun byDomain(domain: String): ArchiveType {
             return map[domain]
                 ?: throw IllegalArgumentException("Unsupported archive: ${domain}")

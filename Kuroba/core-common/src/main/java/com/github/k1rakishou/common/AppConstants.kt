@@ -4,7 +4,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 
-class AppConstants(
+open class AppConstants(
   context: Context,
   private val isDev: Boolean
 ) {

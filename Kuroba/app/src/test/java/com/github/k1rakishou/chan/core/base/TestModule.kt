@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.*
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -29,12 +30,21 @@ class TestModule {
   private var chunkPersister: ChunkPersister? = null
   private var chunkMerger: ChunkMerger? = null
   private var siteResolver: SiteResolver? = null
+  private var appConstants: AppConstants? = null
 
   private var cacheDirFile: RawFile? = null
   private var chunksCacheDirFile: RawFile? = null
 
   fun provideApplication() = RuntimeEnvironment.application
   fun provideContext() = provideApplication().applicationContext
+
+  internal fun provideAppConstants(): AppConstants {
+    if (appConstants == null) {
+      appConstants = mock()
+    }
+
+    return appConstants!!
+  }
 
   internal fun provideChunkReader(): ChunkPersister {
     if (chunkPersister == null) {
@@ -77,7 +87,8 @@ class TestModule {
         provideOkHttpClient(),
         provideActiveDownloads(),
         provideSiteResolver(),
-        250L
+        250L,
+        provideAppConstants()
       )
     }
 
@@ -114,7 +125,8 @@ class TestModule {
       chunkDownloader = ChunkDownloader(
         provideOkHttpClient(),
         provideActiveDownloads(),
-        false
+        false,
+        provideAppConstants()
       )
     }
 
