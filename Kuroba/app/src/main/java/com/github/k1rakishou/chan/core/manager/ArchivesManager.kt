@@ -126,6 +126,18 @@ open class ArchivesManager(
     return lock.read { allArchiveDescriptors.toList() }
   }
 
+  fun extractArchiveTypeFromLinkOrNull(link: String): ArchiveType? {
+    return lock.read {
+      for (archiveDescriptor in allArchiveDescriptors) {
+        if (link.contains(archiveDescriptor.domain, ignoreCase = true)) {
+          return@read archiveDescriptor.archiveType
+        }
+      }
+
+      return@read null
+    }
+  }
+
   fun getRequestLinkForThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     archiveDescriptor: ArchiveDescriptor
@@ -191,6 +203,14 @@ open class ArchivesManager(
   fun isSiteArchive(siteDescriptor: SiteDescriptor): Boolean {
     return lock.read {
       return@read allArchiveDescriptors.any { archiveDescriptor -> archiveDescriptor.domain == siteDescriptor.siteName }
+    }
+  }
+
+  fun getArchiveDescriptorByArchiveType(archiveType: ArchiveType): ArchiveDescriptor? {
+    return lock.read {
+      return@read allArchiveDescriptors.firstOrNull { archiveDescriptor ->
+        return@firstOrNull archiveDescriptor.archiveType == archiveType
+      }
     }
   }
 

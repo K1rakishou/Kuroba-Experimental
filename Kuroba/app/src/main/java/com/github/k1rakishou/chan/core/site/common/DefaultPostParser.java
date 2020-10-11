@@ -23,7 +23,9 @@ import android.text.TextUtils;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
@@ -34,9 +36,12 @@ import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
+import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.model.data.archive.ArchiveType;
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
 import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
@@ -51,21 +56,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import kotlin.text.StringsKt;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
 
 public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
-    private CommentParser commentParser;
-    private PostFilterManager postFilterManager;
+    private final CommentParser commentParser;
+    private final PostFilterManager postFilterManager;
+    private final ArchivesManager archivesManager;
 
     @GuardedBy("this")
     private Map<ArchiveDescriptor, CommentParser> archiveCommentParsers = new HashMap<>();
 
-    public DefaultPostParser(CommentParser commentParser, PostFilterManager postFilterManager) {
+    public DefaultPostParser(
+            CommentParser commentParser,
+            PostFilterManager postFilterManager,
+            ArchivesManager archivesManager
+    ) {
         this.commentParser = commentParser;
         this.postFilterManager = postFilterManager;
+        this.archivesManager = archivesManager;
     }
 
     public void addArchiveCommentParser(
@@ -282,10 +297,11 @@ public class DefaultPostParser implements PostParser {
         if (node instanceof TextNode) {
             String text = ((TextNode) node).text();
 
-            SpannableString spannable = new SpannableString(text);
-            CommentParserHelper.detectLinks(post, text, spannable);
-
-            return spannable;
+            return CommentParserHelper.detectLinks(
+                    post,
+                    text,
+                    this::handleLink
+            );
         } else if (node instanceof Element) {
             String nodeName = node.nodeName();
             String styleAttr = node.attr("style");
@@ -325,6 +341,52 @@ public class DefaultPostParser implements PostParser {
             Logger.e(TAG, "Unknown node instance: " + node.getClass().getName());
             return ""; // ?
         }
+    }
+
+    @Nullable
+    private PostLinkable handleLink(String link) {
+        ArchiveType archiveType = archivesManager.extractArchiveTypeFromLinkOrNull(link);
+        if (archiveType == null) {
+            return null;
+        }
+
+        Pattern archiveLinkPattern = FoolFuukaCommentParser.ALL_ARCHIVE_LINKS_PATTERNS_MAP.get(archiveType);
+        if (archiveLinkPattern == null) {
+            return null;
+        }
+
+        Matcher matcher = archiveLinkPattern.matcher(link);
+        if (!matcher.find()) {
+            return null;
+        }
+
+        String boardCode = KotlinExtensionsKt.groupOrNull(matcher, 1);
+        if (TextUtils.isEmpty(boardCode)) {
+            return null;
+        }
+
+        String threadNoStr = KotlinExtensionsKt.groupOrNull(matcher, 2);
+        if (TextUtils.isEmpty(threadNoStr)) {
+            return null;
+        }
+
+        String postNoStr = KotlinExtensionsKt.groupOrNull(matcher, 3);
+
+        Long threadNo = StringsKt.toLongOrNull(threadNoStr);
+        Long postNo = StringsKt.toLongOrNull(postNoStr);
+
+        PostLinkable.Value.ArchiveThreadLink archiveThreadLink = new PostLinkable.Value.ArchiveThreadLink(
+                archiveType,
+                boardCode,
+                threadNo,
+                postNo
+        );
+
+        return new PostLinkable(
+                archiveThreadLink.urlText(),
+                archiveThreadLink,
+                PostLinkable.Type.ARCHIVE
+        );
     }
 
     private CommentParser getParserOrThrow(Post.Builder post) {

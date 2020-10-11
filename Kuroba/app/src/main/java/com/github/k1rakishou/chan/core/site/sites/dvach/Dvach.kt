@@ -85,7 +85,7 @@ class Dvach : CommonSite() {
   }
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = DvachPostParser(commentParser, postFilterManager)
+    postParser = DvachPostParser(commentParser, postFilterManager, archivesManager)
   }
 
   override fun setup() {

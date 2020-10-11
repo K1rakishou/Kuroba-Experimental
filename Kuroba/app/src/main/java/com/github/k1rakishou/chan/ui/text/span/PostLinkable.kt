@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.model.data.archive.ArchiveType
 import javax.inject.Inject
 
 /**
@@ -67,7 +68,8 @@ open class PostLinkable(
       Type.THREAD,
       Type.BOARD,
       Type.SEARCH,
-      Type.DEAD -> {
+      Type.DEAD,
+      Type.ARCHIVE -> {
         if (type == Type.QUOTE) {
           val value = when (linkableValue) {
             is Value.IntegerValue -> linkableValue.value.toLong()
@@ -147,7 +149,8 @@ open class PostLinkable(
     THREAD,
     BOARD,
     SEARCH,
-    DEAD
+    DEAD,
+    ARCHIVE
   }
 
   sealed class Value {
@@ -158,7 +161,8 @@ open class PostLinkable(
         is LongValue -> value
         is StringValue,
         is ThreadLink,
-        is SearchLink -> null
+        is ArchiveThreadLink,
+        is SearchLink,
         NoValue -> null
       }
     }
@@ -169,6 +173,31 @@ open class PostLinkable(
     data class StringValue(val value: CharSequence) : Value()
     data class ThreadLink(var board: String, var threadId: Long, var postId: Long) : Value()
     data class SearchLink(var board: String, var search: String) : Value()
+
+    data class ArchiveThreadLink(
+      val archiveType: ArchiveType,
+      val board: String,
+      val threadId: Long,
+      val postId: Long?
+    ) : Value() {
+
+      fun urlText(): String {
+        return buildString {
+          append(">>>")
+          append(archiveType.domain)
+          append("/")
+          append(board)
+          append("/")
+          append(threadId)
+
+          if (postId != null) {
+            append("#")
+            append(postId)
+          }
+        }
+      }
+    }
+
   }
 
 }

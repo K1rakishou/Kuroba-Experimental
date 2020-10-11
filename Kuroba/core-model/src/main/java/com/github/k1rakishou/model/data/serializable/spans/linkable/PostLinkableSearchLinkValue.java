@@ -5,8 +5,7 @@ import com.github.k1rakishou.model.data.serializable.spans.SerializablePostLinka
 import com.google.gson.annotations.SerializedName;
 
 @DoNotStrip
-public class PostLinkableSearchLinkValue
-        extends PostLinkableValue {
+public class PostLinkableSearchLinkValue extends PostLinkableValue {
     @SerializedName("board")
     private String board;
     @SerializedName("search")

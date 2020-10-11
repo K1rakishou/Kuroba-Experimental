@@ -268,7 +268,11 @@ public class StyleRule {
         }
 
         if (linkify && post != null) {
-            CommentParserHelper.detectLinks(post, resultText.toString(), new SpannableString(resultText));
+            CommentParserHelper.detectLinks(
+                    post,
+                    resultText.toString(),
+                    new SpannableString(resultText)
+            );
         }
 
         return resultText;

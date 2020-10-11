@@ -6,7 +6,9 @@ import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
 import com.github.k1rakishou.chan.ui.text.span.*
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.model.data.archive.ArchiveType
 import com.github.k1rakishou.model.data.serializable.spans.*
 import com.github.k1rakishou.model.data.serializable.spans.SerializablePostLinkableSpan.PostLinkableType
 import com.github.k1rakishou.model.data.serializable.spans.SerializableSpannableString.SpanInfo
@@ -46,7 +48,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(serializableForegroundColorSpan)
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is ColorizableForegroundColorSpan) {
         val spanInfo = SpanInfo(
           SpanType.ColorizableForegroundColorSpan,
@@ -57,7 +62,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(SerializableColorizableForegroundColorSpan(span.chanThemeColorId))
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is BackgroundColorSpanHashed) {
         val serializableBackgroundColorSpan = SerializableBackgroundColorSpan(span.backgroundColor)
         val spanInfo = SpanInfo(
@@ -69,7 +77,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(serializableBackgroundColorSpan)
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is ColorizableBackgroundColorSpan) {
         val spanInfo = SpanInfo(
           SpanType.ColorizableBackgroundColorSpan,
@@ -80,7 +91,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(SerializableColorizableBackgroundColorSpan(span.chanThemeColorId))
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is StrikethroughSpan) {
         val spanInfo = SpanInfo(
           SpanType.StrikethroughSpanType,
@@ -91,7 +105,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = null
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is StyleSpan) {
         val serializableStyleSpan = SerializableStyleSpan(span.style)
         val spanInfo = SpanInfo(
@@ -103,7 +120,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(serializableStyleSpan)
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is TypefaceSpan) {
         val serializableTypefaceSpan = SerializableTypefaceSpan(span.family)
         val spanInfo = SpanInfo(
@@ -115,7 +135,10 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(serializableTypefaceSpan)
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is AbsoluteSizeSpanHashed) {
         val serializableAbsoluteSizeSpan = SerializableAbsoluteSizeSpan(span.size)
         val spanInfo = SpanInfo(
@@ -127,9 +150,13 @@ object SpannableStringMapper {
 
         spanInfo.spanData = gson.toJson(serializableAbsoluteSizeSpan)
         serializableSpannableString.addSpanInfo(spanInfo)
+
+        continue
       }
+
       if (span is PostLinkable) {
         serializePostLinkable(gson, serializableSpannableString, span, spanStart, spanEnd, flags)
+        continue
       }
     }
 
@@ -239,7 +266,8 @@ object SpannableStringMapper {
           throw RuntimeException(
             "PostLinkable value is not of SearchLink type, key = "
               + postLinkable.key + ", type = "
-              + postLinkable.type.name)
+              + postLinkable.type.name
+          )
         }
 
         val searchLink = postLinkable.linkableValue
@@ -252,6 +280,29 @@ object SpannableStringMapper {
         )
 
         serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Search.typeValue)
+      }
+      PostLinkable.Type.ARCHIVE -> {
+        if (postLinkable.linkableValue !is PostLinkable.Value.ArchiveThreadLink) {
+          throw RuntimeException(
+            "PostLinkable value is not of ArchiveThreadLink type, key = "
+              + postLinkable.key + ", type = "
+              + postLinkable.type.name
+          )
+        }
+
+        val archiveThreadLink = postLinkable.linkableValue
+
+        postLinkableValueJson = gson.toJson(
+          PostLinkableArchiveLinkValue(
+            PostLinkableType.Archive,
+            archiveThreadLink.archiveType.domain,
+            archiveThreadLink.board,
+            archiveThreadLink.threadId,
+            archiveThreadLink.postId
+          )
+        )
+
+        serializablePostLinkableSpan.setPostLinkableType(PostLinkableType.Archive.typeValue)
       }
       else -> throw IllegalArgumentException("Not implemented for type " + postLinkable.type.name)
     }
@@ -384,14 +435,26 @@ object SpannableStringMapper {
       SerializablePostLinkableSpan::class.java
     )
 
-    val postLinkable = when (serializablePostLinkableSpan.postLinkableType) {
+    val postLinkable = extractPostLinkable(gson, serializablePostLinkableSpan)
+      ?: return
+
+    spannableString.setSpan(
+      postLinkable,
+      spanInfo.spanStart,
+      spanInfo.spanEnd,
+      spanInfo.flags
+    )
+  }
+
+  private fun extractPostLinkable(gson: Gson, serializablePostLinkableSpan: SerializablePostLinkableSpan): PostLinkable? {
+    when (serializablePostLinkableSpan.postLinkableType) {
       PostLinkableType.Dead -> {
         val postLinkableQuoteValue = gson.fromJson(
           serializablePostLinkableSpan.postLinkableValueJson,
           PostLinkableQuoteValue::class.java
         )
 
-        PostLinkable(
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
           PostLinkable.Type.DEAD
@@ -403,7 +466,7 @@ object SpannableStringMapper {
           PostLinkableQuoteValue::class.java
         )
 
-        PostLinkable(
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
           PostLinkable.Type.QUOTE
@@ -415,24 +478,26 @@ object SpannableStringMapper {
           PostLinkableLinkValue::class.java
         )
 
-        PostLinkable(
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.StringValue(postLinkableLinkValue.link),
           PostLinkable.Type.LINK
         )
       }
-      PostLinkableType.Spoiler -> PostLinkable(
-        serializablePostLinkableSpan.key,
-        PostLinkable.Value.NoValue,
-        PostLinkable.Type.SPOILER
-      )
+      PostLinkableType.Spoiler -> {
+        return PostLinkable(
+          serializablePostLinkableSpan.key,
+          PostLinkable.Value.NoValue,
+          PostLinkable.Type.SPOILER
+        )
+      }
       PostLinkableType.Thread -> {
         val postLinkThreadLinkValue = gson.fromJson(
           serializablePostLinkableSpan.postLinkableValueJson,
           PostLinkThreadLinkValue::class.java
         )
 
-        PostLinkable(
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.ThreadLink(
             postLinkThreadLinkValue.board,
@@ -447,7 +512,8 @@ object SpannableStringMapper {
           serializablePostLinkableSpan.postLinkableValueJson,
           PostLinkableBoardLinkValue::class.java
         )
-        PostLinkable(
+
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.StringValue(postLinkableBoardLinkValue.boardLink),
           PostLinkable.Type.BOARD
@@ -458,7 +524,8 @@ object SpannableStringMapper {
           serializablePostLinkableSpan.postLinkableValueJson,
           PostLinkableSearchLinkValue::class.java
         )
-        PostLinkable(
+
+        return PostLinkable(
           serializablePostLinkableSpan.key,
           PostLinkable.Value.SearchLink(
             postLinkableSearchLinkValue.board,
@@ -467,15 +534,31 @@ object SpannableStringMapper {
           PostLinkable.Type.SEARCH
         )
       }
-      else -> throw IllegalArgumentException("Not implemented for type " +
-        serializablePostLinkableSpan.postLinkableType.name)
-    }
+      PostLinkableType.Archive -> {
+        val postLinkableArchiveLinkValue = gson.fromJson(
+          serializablePostLinkableSpan.postLinkableValueJson,
+          PostLinkableArchiveLinkValue::class.java
+        )
 
-    spannableString.setSpan(
-      postLinkable,
-      spanInfo.spanStart,
-      spanInfo.spanEnd,
-      spanInfo.flags
-    )
+        if (!ArchiveType.hasDomain(postLinkableArchiveLinkValue.archiveDomain)) {
+          Logger.e(TAG, "Unknown archive domain: ${postLinkableArchiveLinkValue.archiveDomain}")
+          return null
+        }
+
+        val archiveThreadLink = PostLinkable.Value.ArchiveThreadLink(
+          ArchiveType.byDomain(postLinkableArchiveLinkValue.archiveDomain),
+          postLinkableArchiveLinkValue.boardCode,
+          postLinkableArchiveLinkValue.threadNo,
+          postLinkableArchiveLinkValue.postNo
+        )
+
+        return PostLinkable(
+          archiveThreadLink.urlText(),
+          archiveThreadLink,
+          PostLinkable.Type.ARCHIVE
+        )
+      }
+      else -> throw IllegalArgumentException("Not implemented for type " + serializablePostLinkableSpan.postLinkableType.name)
+    }
   }
 }
