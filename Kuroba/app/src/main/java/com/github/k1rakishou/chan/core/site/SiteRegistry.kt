@@ -52,6 +52,7 @@ object SiteRegistry {
     URL_HANDLERS.add(Fireden.URL_HANDLER)
     URL_HANDLERS.add(B4k.URL_HANDLER)
     URL_HANDLERS.add(ArchiveOfSins.URL_HANDLER)
+    URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -68,6 +69,7 @@ object SiteRegistry {
     addSiteToSiteClassesMap(Fireden.SITE_NAME, Fireden::class.java)
     addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
     addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
+    addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {

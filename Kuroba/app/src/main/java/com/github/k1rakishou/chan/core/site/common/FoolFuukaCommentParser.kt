@@ -82,6 +82,7 @@ class FoolFuukaCommentParser(
       ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
       ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
       ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
+      ArchiveType.TokyoChronos -> TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN
 
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,
@@ -110,22 +111,15 @@ class FoolFuukaCommentParser(
     // https://archive.domain/g/thread/75659307/#75659307
     // https://archive.domain/g/thread/75659307#p75659307
 
-    private val DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?desuarchive\\.org/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val B4K_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?arch\\.b4k\\.co/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val FOR_PLEBS_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?archive\\.4plebs\\.org/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val NYAFUU_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?archive\\.nyafuu\\.org/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?archive\\.rebeccablacktech\\.com/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val FIREDEN_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?boards\\.fireden\\.net/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?archived\\.moe/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
-    private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN =
-      Pattern.compile("(https://)?archiveofsins\\.com/(.*?)/thread/(\\d*?)/?#p?(\\d*)")
+    private val DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?desuarchive\\.org\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val B4K_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?arch.b4k\\.co\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val FOR_PLEBS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?archive.4plebs\\.org\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val NYAFUU_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?archive.nyafuu\\.org\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?archive.rebeccablacktech\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val FIREDEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?boards.fireden\\.net\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?archived\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?\$")
+    private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/thread\\/(\\d+)(?:#)?(\\d+)?\\/?\$")
 
     private val FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)/?#p?(\\d+)")
   }

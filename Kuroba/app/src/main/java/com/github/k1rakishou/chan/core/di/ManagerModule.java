@@ -179,9 +179,9 @@ public class ManagerModule {
     ) {
         Logger.d(AppModule.DI_TAG, "Archives manager");
         return new ArchivesManager(
+                gson,
                 appContext,
                 appScope,
-                gson,
                 appConstants,
                 ChanSettings.verboseLogs.get()
         );
