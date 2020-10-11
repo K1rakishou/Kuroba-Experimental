@@ -350,15 +350,9 @@ open class ViewThreadController(
       return
     }
 
-    val gravity = when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.BottomLeft
-      is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.BottomRight
-      else -> return
-    }
-
     val floatingListMenuController = FloatingListMenuController(
       context,
-      gravity,
+      FloatingListMenuGravity.TopRight,
       items,
       itemClickListener = { clickedItem ->
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)

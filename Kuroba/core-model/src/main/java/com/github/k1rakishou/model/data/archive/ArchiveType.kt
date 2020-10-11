@@ -13,7 +13,8 @@ enum class ArchiveType(
     Bstats("archive.b-stats.org"),
     ArchivedMoe("archived.moe"),
     TheBarchive("thebarchive.com"),
-    ArchiveOfSins("archiveofsins.com");
+    ArchiveOfSins("archiveofsins.com"),
+    TokyoChronos("tokyochronos.net");
 
     companion object {
         private val map = hashMapOf(
@@ -27,7 +28,8 @@ enum class ArchiveType(
             Bstats.domain to Bstats,
             ArchivedMoe.domain to ArchivedMoe,
             TheBarchive.domain to TheBarchive,
-            ArchiveOfSins.domain to ArchiveOfSins
+            ArchiveOfSins.domain to ArchiveOfSins,
+            TokyoChronos.domain to TokyoChronos,
         )
 
         fun byDomain(domain: String): ArchiveType {
