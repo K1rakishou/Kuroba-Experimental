@@ -6,26 +6,47 @@
     android:background="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_name"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:textSize="18sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        tools:text="/a/ - Anime and Manga" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_description"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:textSize="16sp"
-        tools:text="/a/ - Anime and Manga is 4chan's imageboard dedicated to the discussion of Japanese animation and manga." />
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/board_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="18sp"
+            tools:text="/a/ - Anime and Manga" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/board_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textSize="16sp"
+            tools:text="/a/ - Anime and Manga is 4chan's imageboard dedicated to the discussion of Japanese animation and manga." />
+
+    </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/board_reorder"
+        android:layout_width="40dp"
+        android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="6dp"
+        android:padding="6dp"
+        tools:src="@drawable/ic_reorder_white_24dp" />
 
 </LinearLayout>

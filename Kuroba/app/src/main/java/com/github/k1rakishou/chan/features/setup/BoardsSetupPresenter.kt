@@ -80,6 +80,7 @@ class BoardsSetupPresenter(
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
           setState(BoardsSetupControllerState.Error(error.errorMessageOrClassName()))
+          boardInfoLoaded.set(true)
           return@launch
         }
 
@@ -92,7 +93,7 @@ class BoardsSetupPresenter(
 
   fun onBoardMoving(boardDescriptor: BoardDescriptor, fromPosition: Int, toPosition: Int) {
     if (boardManager.onBoardMoving(boardDescriptor, fromPosition, toPosition)) {
-      displayActiveBoards(withLoadingState = false)
+      displayActiveBoards(withLoadingState = false, withDebouncing = false)
     }
   }
 
@@ -109,12 +110,12 @@ class BoardsSetupPresenter(
       )
 
       if (deactivated) {
-        displayActiveBoards(withLoadingState = false)
+        displayActiveBoards(withLoadingState = false, withDebouncing = true)
       }
     }
   }
 
-  fun displayActiveBoards(withLoadingState: Boolean = true) {
+  fun displayActiveBoards(withLoadingState: Boolean = true, withDebouncing: Boolean = true) {
     if (!boardInfoLoaded.get()) {
       return
     }
@@ -123,11 +124,20 @@ class BoardsSetupPresenter(
       setState(BoardsSetupControllerState.Loading)
     }
 
-    suspendDebouncer.post(DEBOUNCE_TIME_MS) {
-      boardManager.awaitUntilInitialized()
-      siteManager.awaitUntilInitialized()
+    if (withDebouncing) {
+      suspendDebouncer.post(DEBOUNCE_TIME_MS) {
+        boardManager.awaitUntilInitialized()
+        siteManager.awaitUntilInitialized()
 
-      displayActiveBoardsInternal()
+        displayActiveBoardsInternal()
+      }
+    } else {
+      scope.launch {
+        boardManager.awaitUntilInitialized()
+        siteManager.awaitUntilInitialized()
+
+        displayActiveBoardsInternal()
+      }
     }
   }
 

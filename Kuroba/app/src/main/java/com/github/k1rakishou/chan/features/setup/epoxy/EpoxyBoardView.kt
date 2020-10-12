@@ -3,11 +3,13 @@ package com.github.k1rakishou.chan.features.setup.epoxy
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
+import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
@@ -25,6 +27,7 @@ class EpoxyBoardView @JvmOverloads constructor(
   var descriptor: BoardDescriptor? = null
   private val boardName: MaterialTextView
   private val boardDescription: MaterialTextView
+  val boardReorder: AppCompatImageView
 
   init {
     Chan.inject(this)
@@ -32,9 +35,18 @@ class EpoxyBoardView @JvmOverloads constructor(
 
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)
+    boardReorder = findViewById(R.id.board_reorder)
 
     updateBoardNameColor()
     updateBoardDescriptionColor()
+
+    boardReorder.setImageDrawable(
+      themeEngine.getDrawableTinted(
+        context,
+        R.drawable.ic_reorder_white_24dp,
+        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+      )
+    )
   }
 
   override fun onAttachedToWindow() {
@@ -50,6 +62,7 @@ class EpoxyBoardView @JvmOverloads constructor(
   override fun onThemeChanged() {
     updateBoardDescriptionColor()
     updateBoardNameColor()
+    updateReorderTint()
   }
 
   @ModelProp
@@ -75,6 +88,15 @@ class EpoxyBoardView @JvmOverloads constructor(
 
   private fun updateBoardNameColor() {
     boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+  }
+
+  private fun updateReorderTint() {
+    if (boardReorder.drawable == null) {
+      return
+    }
+
+    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    boardReorder.setImageDrawable(themeEngine.tintDrawable(boardReorder.drawable, isDarkColor))
   }
 
 }

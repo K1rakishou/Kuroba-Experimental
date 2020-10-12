@@ -55,6 +55,6 @@
         android:focusable="true"
         android:gravity="center_vertical"
         android:padding="6dp"
-        tools:src="@drawable/ic_reorder_black_24dp" />
+        tools:src="@drawable/ic_reorder_white_24dp" />
 
 </LinearLayout>

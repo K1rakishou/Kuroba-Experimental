@@ -241,7 +241,6 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
       if (itemView is EpoxySiteView) {
         itemView.siteReorder.setOnTouchListener { v, event ->
           if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             itemTouchHelper.startDrag(holder)
           }
 

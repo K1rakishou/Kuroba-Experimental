@@ -426,8 +426,6 @@ class BoardManager(
       return false
     }
 
-    boardMovedSubject.onNext(Unit)
-
     return true
   }
 

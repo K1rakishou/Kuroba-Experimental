@@ -77,7 +77,7 @@ class EpoxySiteView @JvmOverloads constructor(
     siteReorder.setImageDrawable(
       themeEngine.getDrawableTinted(
         context,
-        R.drawable.ic_reorder_black_24dp,
+        R.drawable.ic_reorder_white_24dp,
         AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
       )
     )

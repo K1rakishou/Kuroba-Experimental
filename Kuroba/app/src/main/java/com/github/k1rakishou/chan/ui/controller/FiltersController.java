@@ -406,7 +406,7 @@ public class FiltersController
             subtext = itemView.findViewById(R.id.subtext);
 
             ImageView reorder = itemView.findViewById(R.id.reorder);
-            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_reorder_black_24dp);
+            Drawable drawable = ContextCompat.getDrawable(context, R.drawable.ic_reorder_white_24dp);
             Drawable drawableMutable = DrawableCompat.wrap(drawable).mutate();
             DrawableCompat.setTint(drawableMutable, themeEngine.getChanTheme().getTextColorHint());
             reorder.setImageDrawable(drawableMutable);
