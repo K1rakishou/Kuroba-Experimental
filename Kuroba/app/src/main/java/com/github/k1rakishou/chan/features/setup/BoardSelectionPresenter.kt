@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.setup
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
@@ -28,6 +29,8 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   override fun onCreate(view: BoardSelectionView) {
     super.onCreate(view)
@@ -63,7 +66,12 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
   private fun showActiveSitesWithBoardsSorted(query: String = "") {
     val resultMap = linkedMapOf<SiteCellData, List<BoardCellData>>()
 
-    siteManager.viewActiveSitesOrdered { chanSiteData, site ->
+    siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
+      if (archivesManager.isSiteArchive(site.siteDescriptor())) {
+        // Skip archives since they have no boards (at least for now)
+        return@viewActiveSitesOrderedWhile true
+      }
+
       val siteCellData = SiteCellData(
         chanSiteData.siteDescriptor,
         site.icon().url.toString(),
@@ -72,7 +80,7 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
       )
 
       resultMap[siteCellData] = collectBoards(query, chanSiteData)
-      return@viewActiveSitesOrdered true
+      return@viewActiveSitesOrderedWhile true
     }
 
     if (resultMap.isEmpty()) {

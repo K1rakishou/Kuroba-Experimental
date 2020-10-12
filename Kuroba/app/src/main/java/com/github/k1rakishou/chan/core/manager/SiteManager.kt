@@ -280,7 +280,7 @@ open class SiteManager(
     }
   }
 
-  fun viewActiveSitesOrdered(viewer: (ChanSiteData, Site) -> Boolean) {
+  fun viewActiveSitesOrderedWhile(viewer: (ChanSiteData, Site) -> Boolean) {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 

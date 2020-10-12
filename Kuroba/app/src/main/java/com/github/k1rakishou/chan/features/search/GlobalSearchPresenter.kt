@@ -139,12 +139,12 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   private fun loadDefaultSearchState() {
     val sitesSupportingSearch = mutableListOf<SiteDescriptor>()
 
-    siteManager.viewActiveSitesOrdered { chanSiteData, site ->
+    siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
       if (site.siteGlobalSearchType() != SiteGlobalSearchType.SearchNotSupported) {
         sitesSupportingSearch += chanSiteData.siteDescriptor
       }
 
-      return@viewActiveSitesOrdered true
+      return@viewActiveSitesOrderedWhile true
     }
 
     if (sitesSupportingSearch.isEmpty()) {
