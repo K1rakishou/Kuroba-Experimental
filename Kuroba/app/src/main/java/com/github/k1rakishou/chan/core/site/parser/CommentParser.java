@@ -59,11 +59,11 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
 public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
 
-    protected static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
-    protected static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
-    protected static final String OP_REPLY_SUFFIX = " (OP)";
-    protected static final String DEAD_REPLY_SUFFIX = " (DEAD)";
-    protected static final String EXTERN_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
+    public static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
+    public static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
+    public static final String OP_REPLY_SUFFIX = " (OP)";
+    public static final String DEAD_REPLY_SUFFIX = " (DEAD)";
+    public static final String EXTERNAL_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
 
     private MockReplyManager mockReplyManager;
     private Map<String, List<StyleRule>> rules = new HashMap<>();
@@ -265,7 +265,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         if (handlerLink.getType() == PostLinkable.Type.THREAD) {
-            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERN_THREAD_LINK_SUFFIX));
+            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERNAL_THREAD_LINK_SUFFIX));
         }
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE

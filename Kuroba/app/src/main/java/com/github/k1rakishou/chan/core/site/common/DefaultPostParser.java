@@ -371,9 +371,12 @@ public class DefaultPostParser implements PostParser {
         }
 
         String postNoStr = KotlinExtensionsKt.groupOrNull(matcher, 3);
+        Long postNo = null;
+        if (postNoStr != null) {
+            postNo = StringsKt.toLongOrNull(postNoStr);
+        }
 
         Long threadNo = StringsKt.toLongOrNull(threadNoStr);
-        Long postNo = StringsKt.toLongOrNull(postNoStr);
 
         PostLinkable.Value.ArchiveThreadLink archiveThreadLink = new PostLinkable.Value.ArchiveThreadLink(
                 archiveType,

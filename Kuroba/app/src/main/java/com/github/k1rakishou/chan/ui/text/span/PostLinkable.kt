@@ -21,6 +21,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
@@ -194,6 +195,8 @@ open class PostLinkable(
             append("#")
             append(postId)
           }
+
+          append(CommentParser.EXTERNAL_THREAD_LINK_SUFFIX)
         }
       }
     }

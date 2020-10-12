@@ -157,7 +157,6 @@ class ChanThreadViewableInfoManager(
   }
 
   private fun persist(chanDescriptor: ChanDescriptor) {
-    // TODO(KurobaEx): we need a debouncer with keys here
     suspendDebouncer.post(DEBOUNCE_TIME) {
       val chanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor]?.deepCopy() }
       if (chanThreadViewableInfo != null) {
